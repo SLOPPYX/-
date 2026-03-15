@@ -373,9 +373,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 <div class="toast" id="toast"></div>
 
 <script>
-// ════════════════════════════════════════════════════
-// TELEGRAM INIT
-// ════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// ИНИЦИАЛИЗАЦИЯ TELEGRAM
+// ═══════════════════════════════════════════════════════
 const tg = window.Telegram.WebApp;
 tg.expand();
 tg.enableClosingConfirmation();
@@ -383,156 +383,176 @@ try { tg.setHeaderColor('#050510'); tg.setBackgroundColor('#050510'); } catch(e)
 tg.BackButton.show();
 tg.BackButton.onClick(saveAndClose);
 
-// ════════════════════════════════════════════════════
-// PARAMS
-// ════════════════════════════════════════════════════
-const P        = new URLSearchParams(window.location.search);
-const USER_ID  = P.get('user_id') || String(tg.initDataUnsafe?.user?.id || '');
-const BOT_TOKEN= P.get('token') || '';   // передаётся из бота в URL
-const URL_BAL  = parseInt(P.get('balance') || '0', 10);
-const USER_NAME= decodeURIComponent(P.get('name') || '') || tg.initDataUnsafe?.user?.first_name || 'Игрок';
+// ═══════════════════════════════════════════════════════
+// ПАРАМЕТРЫ (передаются из бота в URL)
+// user_id  — Telegram ID пользователя
+// balance  — текущий баланс из бота (ВСЕГДА СВЕЖИЙ)
+// token    — BOT_TOKEN для fetch-сохранения
+// name     — имя пользователя
+// ═══════════════════════════════════════════════════════
+const P         = new URLSearchParams(window.location.search);
+const USER_ID   = P.get('user_id') || String(tg.initDataUnsafe?.user?.id || '');
+const BOT_TOKEN = P.get('token')   || '';
+const URL_BAL   = parseInt(P.get('balance') || '0', 10);
+const USER_NAME = decodeURIComponent(P.get('name') || '')
+                  || tg.initDataUnsafe?.user?.first_name || 'Игрок';
 
-// ── localStorage ключ по user_id ──
-const STORE_KEY = USER_ID ? `cx_${USER_ID}` : null;
+// ═══════════════════════════════════════════════════════
+// ХРАНИЛИЩЕ: localStorage по user_id
+// При каждом открытии — берём URL_BAL (свежий из бота).
+// localStorage только для резервного восстановления если
+// URL_BAL = 0 (на случай проблем с передачей).
+// ═══════════════════════════════════════════════════════
+const LS_KEY = USER_ID ? `cx2_${USER_ID}` : null;
 
-function loadStored() {
-  if (!STORE_KEY) return null;
+function lsLoad() {
+  if (!LS_KEY) return null;
   try {
-    const d = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
-    // Актуально если < 2 часов И баланс есть
-    if (d && d.balance >= 0 && Date.now() - (d.ts||0) < 2*60*60*1000) return d;
+    const d = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+    if (d && typeof d.balance === 'number' && Date.now() - (d.ts||0) < 4*3600*1000) return d;
   } catch(e) {}
   return null;
 }
-function saveStored(bal) {
-  if (!STORE_KEY) return;
-  try { localStorage.setItem(STORE_KEY, JSON.stringify({ balance: bal, ts: Date.now() })); } catch(e) {}
-}
-function clearStored() {
-  if (!STORE_KEY) return;
-  try { localStorage.removeItem(STORE_KEY); } catch(e) {}
+function lsSave(bal) {
+  if (!LS_KEY) return;
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ balance: bal, ts: Date.now() })); } catch(e) {}
 }
 
-// ── Выбор начального баланса ──
-// Всегда берём URL_BAL (свежий из бота), localStorage только как fallback если URL пуст
-const stored   = loadStored();
-const INIT_BAL = URL_BAL > 0 ? URL_BAL : (stored ? stored.balance : 0);
+// Приоритет: URL_BAL (из бота) > localStorage > 0
+const lsData  = lsLoad();
+const INIT_BAL = URL_BAL > 0
+  ? URL_BAL
+  : (lsData && lsData.balance > 0 ? lsData.balance : 0);
 
-let balance    = INIT_BAL;
-let currentBet = 100;
-let spinning   = false;
-let autoMode   = false;
-let autoTimer  = null;
-let speedMode  = 'normal';
-// lastSaved отслеживаем чтобы не слать лишние запросы
-let lastSavedBal = INIT_BAL;
-// Очередь сохранений — одно за раз
-let saveInProgress = false;
-let pendingSave    = false;
+// ═══════════════════════════════════════════════════════
+// СОСТОЯНИЕ ИГРЫ
+// ═══════════════════════════════════════════════════════
+let balance     = INIT_BAL;
+let currentBet  = 100;
+let spinning    = false;
+let autoMode    = false;
+let autoTimer   = null;
+let speedMode   = 'normal';   // 'normal' | 'fast'
 
+// Сохранение
+let lastSyncBal    = INIT_BAL;  // последний успешно отправленный в бот
+let syncInFlight   = false;     // запрос уже летит
+let syncQueued     = false;     // ждёт отправки
+
+// Статистика сессии
 const S = {
   spins:0, wins:0, losses:0, profit:0,
   totalWon:0, totalLost:0, bestWin:0,
   history:[], streak:0, streakType:null,
 };
 
-// ════════════════════════════════════════════════════
-// SYMBOLS
-// ════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// СИМВОЛЫ
+// ═══════════════════════════════════════════════════════
 const SYMS = [
   {e:'💎',m:50,w:1},{e:'7️⃣',m:20,w:2},{e:'🍒',m:10,w:4},
   {e:'⭐',m:5,w:6},{e:'🔔',m:3,w:9},{e:'🍋',m:2,w:14},
   {e:'🍊',m:0,w:32},{e:'🍇',m:0,w:32},
 ];
-const TW = SYMS.reduce((a,s)=>a+s.w,0);
-function rnd(){ let r=Math.random()*TW; for(const s of SYMS){r-=s.w;if(r<=0)return s;} return SYMS[SYMS.length-1]; }
+const TW = SYMS.reduce((a,s)=>a+s.w, 0);
+function rnd() {
+  let r = Math.random() * TW;
+  for (const s of SYMS) { r -= s.w; if (r <= 0) return s; }
+  return SYMS[SYMS.length-1];
+}
 
-// ════════════════════════════════════════════════════
-// TABS
-// ════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// ВКЛАДКИ
+// ═══════════════════════════════════════════════════════
 function showPage(n) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-'+n).classList.add('active');
   document.getElementById('tab-'+n).classList.add('active');
-  if (n==='profile') updateProfile();
+  if (n === 'profile') updateProfile();
 }
 
-// ════════════════════════════════════════════════════
-// BALANCE UI
-// ════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// БАЛАНС UI
+// ═══════════════════════════════════════════════════════
 function updateBalUI() {
-  document.getElementById('balanceVal').textContent = balance.toLocaleString('ru-RU');
-  document.getElementById('pBal').textContent = balance.toLocaleString('ru-RU');
+  const fmt = balance.toLocaleString('ru-RU');
+  document.getElementById('balanceVal').textContent = fmt;
+  document.getElementById('pBal').textContent = fmt;
   const p = document.getElementById('balancePill');
-  p.classList.remove('pulse'); void p.offsetWidth; p.classList.add('pulse');
+  p.classList.remove('pulse');
+  void p.offsetWidth;
+  p.classList.add('pulse');
 }
 
-// ════════════════════════════════════════════════════
-// SPEED
-// ════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// СКОРОСТЬ
+// ═══════════════════════════════════════════════════════
 function setSpeed(m) {
   speedMode = m;
-  ['normal','fast'].forEach(s=>{
-    document.getElementById('spd-'+s).classList.toggle('active', s===m);
-  });
+  ['normal','fast'].forEach(s =>
+    document.getElementById('spd-'+s).classList.toggle('active', s===m)
+  );
 }
 
-// ════════════════════════════════════════════════════
-// AUTO SPIN
-// ════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// АВТО-СПИН (бесконечный до остановки или нуля)
+// ═══════════════════════════════════════════════════════
 function toggleAuto() {
   if (autoMode) { stopAuto(); return; }
   autoMode = true;
   document.getElementById('spd-auto').classList.add('auto-active');
   document.getElementById('autoPanel').classList.add('visible');
-  runAutoSpin();
+  runAutoLoop();
 }
 function stopAuto() {
   autoMode = false;
   clearTimeout(autoTimer);
   document.getElementById('spd-auto').classList.remove('auto-active');
   document.getElementById('autoPanel').classList.remove('visible');
-  showToast('Авто-спин остановлен','info');
+  showToast('Авто-спин остановлен', 'info');
 }
-async function runAutoSpin() {
-  if (!autoMode) return;
-  if (balance < currentBet) { stopAuto(); showToast('Недостаточно токенов!','error'); return; }
-  await spin();
-  if (!autoMode) return;
-  if (balance < currentBet) { stopAuto(); return; }
-  const delay = speedMode==='fast' ? 120 : 350;
-  autoTimer = setTimeout(runAutoSpin, delay);
+async function runAutoLoop() {
+  while (autoMode) {
+    if (balance < currentBet) { stopAuto(); showToast('Недостаточно токенов!','error'); break; }
+    await spin();
+    if (!autoMode) break;
+    // Пауза между спинами
+    await sleep(speedMode === 'fast' ? 100 : 300);
+  }
 }
 
-// ════════════════════════════════════════════════════
-// BET
-// ════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// СТАВКА
+// ═══════════════════════════════════════════════════════
 function selectBet(v) {
   if (v > balance) { showToast('Недостаточно токенов','error'); return; }
   currentBet = v;
-  document.querySelectorAll('.bet-btn').forEach(b=>b.classList.toggle('active', parseInt(b.dataset.bet)===v));
+  document.querySelectorAll('.bet-btn').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.bet) === v)
+  );
   document.getElementById('customInput').value = '';
 }
 function applyCustom() {
   const v = parseInt(document.getElementById('customInput').value, 10);
-  if (!v||v<1) { showToast('Введи корректную ставку','error'); return; }
-  if (v>balance) { showToast('Недостаточно токенов','error'); return; }
+  if (!v || v < 1)   { showToast('Введи корректную ставку','error'); return; }
+  if (v > balance)   { showToast('Недостаточно токенов','error'); return; }
   currentBet = v;
-  document.querySelectorAll('.bet-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.bet-btn').forEach(b => b.classList.remove('active'));
   showToast(`Ставка: ${v.toLocaleString('ru-RU')}`, 'info');
 }
 function refreshBets() {
-  document.querySelectorAll('.bet-btn').forEach(b=>{
+  document.querySelectorAll('.bet-btn').forEach(b => {
     const v = parseInt(b.dataset.bet);
-    b.classList.toggle('disabled', v>balance);
-    if (v===currentBet) b.classList.add('active');
+    b.classList.toggle('disabled', v > balance);
+    if (v === currentBet) b.classList.add('active');
   });
 }
 
-// ════════════════════════════════════════════════════
-// SPIN — работает бесконечно пока есть баланс
-// ════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// СПИН — основная функция
+// Гарантирует: spinning всегда сбрасывается в false
+// ═══════════════════════════════════════════════════════
 async function spin() {
   if (spinning) return;
   if (balance < currentBet) {
@@ -542,162 +562,184 @@ async function spin() {
   }
 
   spinning = true;
-  // Разблокируем кнопки только если не авто-режим
   const btn  = document.getElementById('spinBtn');
   const bBtn = document.getElementById('bSpinBtn');
-  btn.disabled = bBtn.disabled = true;
-
-  balance -= currentBet;
-  updateBalUI();
-
-  const reels   = ['r0','r1','r2'].map(id=>document.getElementById(id));
-  const result  = document.getElementById('resultStrip');
-  const machine = document.getElementById('machineShell');
-  machine.classList.remove('winning');
-  reels.forEach(r=>r.classList.remove('win-glow'));
-
-  const final = [rnd(), rnd(), rnd()];
-
-  if (speedMode === 'fast') {
-    // Мгновенный результат
-    reels.forEach((r,i)=>{ r.textContent=final[i].e; r.classList.remove('spinning'); });
-  } else {
-    result.className = 'result-strip idle';
-    result.textContent = 'КРУТИМ...';
-    btn.textContent = '⏳ КРУТИМ...';
-    reels.forEach(r=>{ r.classList.add('spinning'); r.textContent='🎲'; });
-    const tick = setInterval(()=>reels.forEach(r=>{ r.textContent=rnd().e; }), 75);
-    await sleep(650);
-    clearInterval(tick);
-    for (let i=0; i<3; i++) {
-      await sleep(140);
-      reels[i].classList.remove('spinning');
-      reels[i].classList.add('stopping');
-      reels[i].textContent = final[i].e;
-      setTimeout(()=>reels[i].classList.remove('stopping'), 200);
-    }
-    await sleep(180);
-  }
-
-  // ── Считаем результат ──
-  const isWin = final[0].e===final[1].e && final[1].e===final[2].e && final[0].m>0;
-  const mult  = isWin ? final[0].m : 0;
-  S.spins++;
-
-  if (isWin) {
-    const prize = currentBet * mult;
-    balance += prize;
-    S.wins++; S.profit += prize-currentBet; S.totalWon += prize;
-    if (prize>S.bestWin) S.bestWin = prize;
-    S.history.push('w');
-    S.streak = S.streakType==='w' ? S.streak+1 : 1; S.streakType='w';
-
-    if (speedMode !== 'fast') {
-      machine.classList.add('winning');
-      reels.forEach(r=>r.classList.add('win-glow'));
-      setTimeout(()=>{ machine.classList.remove('winning'); reels.forEach(r=>r.classList.remove('win-glow')); }, 1600);
-      spawnParticles();
-    }
-    result.className = 'result-strip win';
-    result.textContent = `🎉 ПОБЕДА! ×${mult}  +${(currentBet*mult).toLocaleString('ru-RU')} токенов`;
-    if (speedMode!=='fast') showToast(`+${prize.toLocaleString('ru-RU')} 🎉`, 'gold');
-
-  } else {
-    S.losses++; S.profit -= currentBet; S.totalLost += currentBet;
-    S.history.push('l');
-    S.streak = S.streakType==='l' ? S.streak+1 : 1; S.streakType='l';
-    result.className = 'result-strip loss';
-    result.textContent = `😔 Не повезло  −${currentBet.toLocaleString('ru-RU')} токенов`;
-  }
-
-  if (S.history.length>20) S.history = S.history.slice(-20);
-  updateBalUI();
-  refreshBets();
-  updateMiniStats();
-
-  btn.textContent = '🎰 КРУТИТЬ';
-  document.getElementById('spinCount').textContent = `×${S.spins}`;
-
-  // Адаптация ставки
-  if (currentBet>balance && balance>0) {
-    const avail=[100,500,1000,5000].filter(b=>b<=balance);
-    if (avail.length) { currentBet=avail[avail.length-1]; refreshBets(); }
-  }
-
-  // ── СОХРАНЯЕМ БАЛАНС ПОСЛЕ КАЖДОГО СПИНА ──
-  // Сохраняем в localStorage сразу (мгновенно)
-  saveStored(balance);
-  // Отправляем в бот через fetch (асинхронно, не блокирует)
-  sendBalanceToBot();
-
-  if (balance <= 0) {
-    result.textContent += '  |  Токены закончились 😢';
-    btn.disabled = bBtn.disabled = true;
-    if (autoMode) stopAuto();
-    spinning = false;
-    return;
-  }
-
-  if (speedMode !== 'fast') await sleep(180);
-  btn.disabled = bBtn.disabled = false;
-  spinning = false;
-}
-
-// ════════════════════════════════════════════════════
-// ОТПРАВКА БАЛАНСА В БОТ через Telegram Bot API
-//
-// ВАЖНО: tg.sendData() закрывает WebApp — поэтому
-// для промежуточных сохранений используем fetch к API,
-// а tg.sendData() только при финальном закрытии.
-// ════════════════════════════════════════════════════
-
-// Отправляем обновление баланса через sendMessage с parse
-// Бот получает специальное сообщение и обновляет баланс
-async function sendBalanceToBot() {
-  if (balance === lastSavedBal) return;
-  if (saveInProgress) { pendingSave = true; return; }
-  if (!USER_ID || !BOT_TOKEN) {
-    // Нет токена — используем только localStorage
-    lastSavedBal = balance;
-    setSave('ok','СОХРАНЕНО ЛОКАЛЬНО');
-    return;
-  }
-
-  saveInProgress = true;
-  pendingSave = false;
-  setSave('saving','СОХРАНЕНИЕ...');
-
-  const newBal = balance;
-  const payload = {
-    chat_id: USER_ID,
-    text: JSON.stringify({
-      action: 'casino_balance_update',
-      balance: newBal,
-      user_id: USER_ID,
-      spins: S.spins,
-    })
-  };
+  btn.disabled  = true;
+  bBtn.disabled = true;
 
   try {
-    // Используем Telegram Bot API sendMessage
-    const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    balance -= currentBet;
+    updateBalUI();
+
+    const reels   = ['r0','r1','r2'].map(id => document.getElementById(id));
+    const result  = document.getElementById('resultStrip');
+    const machine = document.getElementById('machineShell');
+
+    machine.classList.remove('winning');
+    reels.forEach(r => r.classList.remove('win-glow'));
+
+    const final = [rnd(), rnd(), rnd()];
+
+    // ── Анимация ──
+    if (speedMode === 'fast') {
+      reels.forEach((r,i) => { r.textContent = final[i].e; r.classList.remove('spinning'); });
+      result.className = 'result-strip idle';
+    } else {
+      result.className  = 'result-strip idle';
+      result.textContent = 'КРУТИМ...';
+      btn.textContent   = '⏳ КРУТИМ...';
+      reels.forEach(r => { r.classList.add('spinning'); r.textContent = '🎲'; });
+      const tick = setInterval(() => reels.forEach(r => { r.textContent = rnd().e; }), 75);
+      await sleep(650);
+      clearInterval(tick);
+      for (let i = 0; i < 3; i++) {
+        await sleep(140);
+        reels[i].classList.remove('spinning');
+        reels[i].classList.add('stopping');
+        reels[i].textContent = final[i].e;
+        setTimeout(() => reels[i].classList.remove('stopping'), 200);
+      }
+      await sleep(180);
+    }
+
+    // ── Результат ──
+    const isWin = final[0].e === final[1].e && final[1].e === final[2].e && final[0].m > 0;
+    const mult  = isWin ? final[0].m : 0;
+    S.spins++;
+
+    if (isWin) {
+      const prize = currentBet * mult;
+      balance += prize;
+      S.wins++;
+      S.profit   += prize - currentBet;
+      S.totalWon += prize;
+      if (prize > S.bestWin) S.bestWin = prize;
+      S.history.push('w');
+      S.streak = S.streakType === 'w' ? S.streak+1 : 1;
+      S.streakType = 'w';
+
+      if (speedMode !== 'fast') {
+        machine.classList.add('winning');
+        reels.forEach(r => r.classList.add('win-glow'));
+        setTimeout(() => {
+          machine.classList.remove('winning');
+          reels.forEach(r => r.classList.remove('win-glow'));
+        }, 1600);
+        spawnParticles();
+      }
+      result.className  = 'result-strip win';
+      result.textContent = `🎉 ПОБЕДА! ×${mult}  +${(currentBet*mult).toLocaleString('ru-RU')} токенов`;
+      if (speedMode !== 'fast') showToast(`+${prize.toLocaleString('ru-RU')} 🎉`, 'gold');
+
+    } else {
+      S.losses++;
+      S.profit    -= currentBet;
+      S.totalLost += currentBet;
+      S.history.push('l');
+      S.streak = S.streakType === 'l' ? S.streak+1 : 1;
+      S.streakType = 'l';
+      result.className  = 'result-strip loss';
+      result.textContent = `😔 Не повезло  −${currentBet.toLocaleString('ru-RU')} токенов`;
+    }
+
+    if (S.history.length > 20) S.history = S.history.slice(-20);
+    updateBalUI();
+    refreshBets();
+    updateMiniStats();
+    btn.textContent = '🎰 КРУТИТЬ';
+    document.getElementById('spinCount').textContent = `×${S.spins}`;
+
+    // Авто-адаптация ставки если не хватает
+    if (currentBet > balance && balance > 0) {
+      const avail = [100,500,1000,5000].filter(b => b <= balance);
+      if (avail.length) { currentBet = avail[avail.length-1]; refreshBets(); }
+    }
+
+    // ── СОХРАНЕНИЕ ПОСЛЕ КАЖДОГО СПИНА ──
+    lsSave(balance);           // localStorage — мгновенно
+    scheduleSync();            // в бот — асинхронно, не блокирует
+
+    if (balance <= 0) {
+      result.textContent += '  |  Токены закончились 😢';
+      if (autoMode) stopAuto();
+    }
+
+  } catch(err) {
+    console.error('Spin error:', err);
+  } finally {
+    // ВСЕГДА сбрасываем spinning и разблокируем кнопки
+    spinning      = false;
+    btn.disabled  = false;
+    bBtn.disabled = false;
+    btn.textContent = '🎰 КРУТИТЬ';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// СИНХРОНИЗАЦИЯ БАЛАНСА С БОТОМ
+//
+// Стратегия:
+//   1. После каждого спина — scheduleSync() (debounce 300мс)
+//   2. При закрытии — syncNow() + tg.sendData()
+//   3. Если fetch не работает — только localStorage
+//
+// Используем sendMessage к Bot API.
+// Бот принимает JSON с action=casino_balance_update ТИХО
+// (не отвечает пользователю в чат).
+// ═══════════════════════════════════════════════════════
+let syncTimer = null;
+
+function scheduleSync() {
+  // Debounce — если много быстрых спинов, шлём не чаще раза в 500мс
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncNow, 500);
+}
+
+async function syncNow() {
+  if (balance === lastSyncBal) return;  // нет изменений
+  if (syncInFlight) { syncQueued = true; return; }
+  if (!USER_ID || !BOT_TOKEN) {
+    lastSyncBal = balance;
+    setSave('ok', 'ЛОКАЛЬНО');
+    return;
+  }
+
+  syncInFlight = true;
+  syncQueued   = false;
+  setSave('saving', 'СОХРАНЕНИЕ...');
+
+  const balToSync = balance;
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(4000),
+      body: JSON.stringify({
+        chat_id: USER_ID,
+        text: JSON.stringify({
+          action:  'casino_balance_update',
+          balance: balToSync,
+          user_id: USER_ID,
+          spins:   S.spins,
+        }),
+      }),
+      signal: AbortSignal.timeout(5000),
     });
-    if (resp.ok) {
-      lastSavedBal = newBal;
-      setSave('ok','СИНХРОНИЗИРОВАНО');
+
+    if (r.ok) {
+      lastSyncBal = balToSync;
+      setSave('ok', 'СИНХРОНИЗИРОВАНО');
     } else {
-      setSave('error','ОШИБКА СЕТИ');
+      const err = await r.json().catch(()=>({}));
+      console.warn('Sync error:', err);
+      setSave('error', 'ОШИБКА СЕТИ');
     }
   } catch(e) {
-    setSave('error','НЕТ СВЯЗИ');
+    setSave('error', 'НЕТ СВЯЗИ');
   } finally {
-    saveInProgress = false;
-    if (pendingSave && balance !== lastSavedBal) {
-      setTimeout(sendBalanceToBot, 500);
+    syncInFlight = false;
+    // Если пока летел запрос баланс изменился — шлём ещё раз
+    if (syncQueued || balance !== lastSyncBal) {
+      setTimeout(syncNow, 600);
     }
   }
 }
@@ -705,123 +747,166 @@ async function sendBalanceToBot() {
 function setSave(state, text) {
   const d = document.getElementById('saveDot');
   const t = document.getElementById('saveText');
-  if (d) d.className = 'save-dot'+(state==='ok'?'':' '+state);
+  if (d) d.className = 'save-dot' + (state === 'ok' ? '' : ' '+state);
   if (t) t.textContent = text;
 }
 
-// ── Финальное сохранение при закрытии через tg.sendData() ──
+// ── Финальное сохранение при закрытии ──
 function saveAndClose() {
   if (autoMode) stopAuto();
-  saveStored(balance);
+  lsSave(balance);
+  clearTimeout(syncTimer);
 
   const change  = balance - INIT_BAL;
-  const percent = INIT_BAL>0 ? Math.round((change/INIT_BAL)*100) : 0;
+  const percent = INIT_BAL > 0 ? Math.round((change / INIT_BAL) * 100) : 0;
 
+  // tg.sendData() → закрывает WebApp И сохраняет финальный баланс в бот
   try {
     tg.sendData(JSON.stringify({
-      action:  'casino_save',
-      balance: balance,
-      initial: INIT_BAL,
-      change:  change,
-      percent: percent,
-      user_id: USER_ID,
+      action:   'casino_save',
+      balance:  balance,
+      initial:  INIT_BAL,
+      change:   change,
+      percent:  percent,
+      user_id:  USER_ID,
       stats: {
-        totalSpins: S.spins, wins: S.wins, losses: S.losses,
-        profit: S.profit, bestWin: S.bestWin,
-        totalWon: S.totalWon, totalLost: S.totalLost,
-        winPct:  S.spins>0 ? Math.round(S.wins/S.spins*100) : 0,
-        lossPct: S.spins>0 ? Math.round(S.losses/S.spins*100) : 0,
-      }
+        totalSpins: S.spins,
+        wins:       S.wins,
+        losses:     S.losses,
+        profit:     S.profit,
+        bestWin:    S.bestWin,
+        totalWon:   S.totalWon,
+        totalLost:  S.totalLost,
+        winPct:     S.spins > 0 ? Math.round(S.wins   / S.spins * 100) : 0,
+        lossPct:    S.spins > 0 ? Math.round(S.losses / S.spins * 100) : 0,
+      },
     }));
-    // tg.sendData автоматически закрывает WebApp
+    // WebApp автоматически закроется после sendData
   } catch(e) {
     tg.close();
   }
 }
 
-// ════════════════════════════════════════════════════
-// STATS
-// ════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// МИНИ-СТАТИСТИКА
+// ═══════════════════════════════════════════════════════
 function updateMiniStats() {
   document.getElementById('sSpins').textContent = S.spins;
   document.getElementById('sWins').textContent  = S.wins;
   const pp = document.getElementById('sProfit');
-  pp.textContent = (S.profit>=0?'+':'')+S.profit.toLocaleString('ru-RU');
-  pp.style.color = S.profit>=0?'var(--green)':'var(--red)';
+  pp.textContent = (S.profit >= 0 ? '+' : '') + S.profit.toLocaleString('ru-RU');
+  pp.style.color = S.profit >= 0 ? 'var(--green)' : 'var(--red)';
 }
 
+// ═══════════════════════════════════════════════════════
+// ПРОФИЛЬ
+// ═══════════════════════════════════════════════════════
 function updateProfile() {
   document.getElementById('pName').textContent = USER_NAME.toUpperCase();
   document.getElementById('pBal').textContent  = balance.toLocaleString('ru-RU');
-  document.getElementById('pAvatar').textContent = S.wins>50?'👑':S.wins>20?'⭐':S.wins>10?'🎯':S.wins>5?'🎮':'🎲';
-  const total=S.spins, wins=S.wins, losses=S.losses;
-  const wPct=total>0?Math.round(wins/total*100):0, lPct=total>0?Math.round(losses/total*100):0;
-  const C=251.2;
-  document.getElementById('dWin').setAttribute('stroke-dasharray',`${total>0?(wins/total)*C:0} ${C}`);
-  document.getElementById('dLoss').setAttribute('stroke-dasharray',`${total>0?(losses/total)*C:0} ${C}`);
-  document.getElementById('dLoss').setAttribute('stroke-dashoffset',`${-(total>0?(wins/total)*C:0)}`);
-  document.getElementById('dPct').textContent=wPct+'%';
-  document.getElementById('wlW').innerHTML=`${wins} <span class="wl-pct w">${wPct}%</span>`;
-  document.getElementById('wlL').innerHTML=`${losses} <span class="wl-pct l">${lPct}%</span>`;
-  document.getElementById('pSpins').textContent=total;
-  document.getElementById('pWR').textContent=wPct+'%';
-  document.getElementById('pTW').textContent='+'+S.totalWon.toLocaleString('ru-RU');
-  document.getElementById('pTL').textContent='-'+S.totalLost.toLocaleString('ru-RU');
-  document.getElementById('pBest').textContent=S.bestWin>0?`+${S.bestWin.toLocaleString('ru-RU')} токенов`:'Пока нет';
-  const pp=document.getElementById('pProfit');
-  pp.textContent=(S.profit>=0?'+':'')+S.profit.toLocaleString('ru-RU')+' токенов';
-  pp.className='pstat-v '+(S.profit>=0?'pos':'neg');
-  const sd=document.getElementById('streakDots'); sd.innerHTML='';
-  S.history.slice(-10).forEach(r=>{ const d=document.createElement('div'); d.className='sd '+(r==='w'?'w':'l'); sd.appendChild(d); });
-  const sv=document.getElementById('streakV');
-  sv.textContent=S.streak>0?(S.streakType==='w'?'🔥':'❄️')+' '+S.streak:'—';
+  document.getElementById('pAvatar').textContent =
+    S.wins > 50 ? '👑' : S.wins > 20 ? '⭐' : S.wins > 10 ? '🎯' : S.wins > 5 ? '🎮' : '🎲';
+
+  const total = S.spins, wins = S.wins, losses = S.losses;
+  const wPct  = total > 0 ? Math.round(wins   / total * 100) : 0;
+  const lPct  = total > 0 ? Math.round(losses / total * 100) : 0;
+  const C     = 251.2;
+  const wA    = total > 0 ? (wins / total) * C : 0;
+  const lA    = total > 0 ? (losses / total) * C : 0;
+
+  document.getElementById('dWin').setAttribute('stroke-dasharray',   `${wA} ${C}`);
+  document.getElementById('dLoss').setAttribute('stroke-dasharray',  `${lA} ${C}`);
+  document.getElementById('dLoss').setAttribute('stroke-dashoffset', `${-wA}`);
+  document.getElementById('dPct').textContent = wPct + '%';
+
+  document.getElementById('wlW').innerHTML = `${wins} <span class="wl-pct w">${wPct}%</span>`;
+  document.getElementById('wlL').innerHTML = `${losses} <span class="wl-pct l">${lPct}%</span>`;
+
+  document.getElementById('pSpins').textContent = total;
+  document.getElementById('pWR').textContent    = wPct + '%';
+  document.getElementById('pTW').textContent    = '+' + S.totalWon.toLocaleString('ru-RU');
+  document.getElementById('pTL').textContent    = '-' + S.totalLost.toLocaleString('ru-RU');
+  document.getElementById('pBest').textContent  =
+    S.bestWin > 0 ? `+${S.bestWin.toLocaleString('ru-RU')} токенов` : 'Пока нет';
+
+  const pp = document.getElementById('pProfit');
+  pp.textContent = (S.profit >= 0 ? '+' : '') + S.profit.toLocaleString('ru-RU') + ' токенов';
+  pp.className   = 'pstat-v ' + (S.profit >= 0 ? 'pos' : 'neg');
+
+  const sd = document.getElementById('streakDots');
+  sd.innerHTML = '';
+  S.history.slice(-10).forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'sd ' + (r === 'w' ? 'w' : 'l');
+    sd.appendChild(d);
+  });
+  const sv = document.getElementById('streakV');
+  sv.textContent = S.streak > 0
+    ? (S.streakType === 'w' ? '🔥' : '❄️') + ' ' + S.streak
+    : '—';
 }
 
-// ════════════════════════════════════════════════════
-// PARTICLES
-// ════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// ЧАСТИЦЫ
+// ═══════════════════════════════════════════════════════
 function spawnParticles() {
-  const E=['💎','🌟','✨','💰','🎉','⭐','🔥','💫'];
-  for(let i=0;i<7;i++) setTimeout(()=>{
-    const p=document.createElement('div'); p.className='particle';
-    p.textContent=E[Math.floor(Math.random()*E.length)];
-    p.style.left=(18+Math.random()*64)+'%'; p.style.bottom='110px';
-    p.style.animationDuration=(1+Math.random()*.7)+'s';
-    document.body.appendChild(p); setTimeout(()=>p.remove(),1700);
-  }, i*72);
-}
-
-// ════════════════════════════════════════════════════
-// TOAST
-// ════════════════════════════════════════════════════
-let tt;
-function showToast(msg, type='info') {
-  const t=document.getElementById('toast');
-  clearTimeout(tt); t.textContent=msg; t.className=`toast ${type} show`;
-  tt=setTimeout(()=>{ t.className=`toast ${type}`; },2200);
-}
-function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
-
-// ════════════════════════════════════════════════════
-// INIT
-// ════════════════════════════════════════════════════
-function init() {
-  updateBalUI(); refreshBets(); updateMiniStats();
-  document.getElementById('pName').textContent=(USER_NAME||'Игрок').toUpperCase();
-  for(const b of [5000,1000,500,100]) { if(balance>=b){ selectBet(b); break; } }
-  setSave('ok', BOT_TOKEN ? 'СИНХРОНИЗИРОВАНО' : 'ЛОКАЛЬНОЕ СОХРАНЕНИЕ');
-
-  if (stored && URL_BAL === 0 && stored.balance > 0) {
-    showToast(`Баланс: ${balance.toLocaleString('ru-RU')} 💰`, 'gold');
+  const E = ['💎','🌟','✨','💰','🎉','⭐','🔥','💫'];
+  for (let i = 0; i < 7; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.textContent = E[Math.floor(Math.random() * E.length)];
+      p.style.left  = (18 + Math.random() * 64) + '%';
+      p.style.bottom = '110px';
+      p.style.animationDuration = (1 + Math.random() * .7) + 's';
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 1700);
+    }, i * 72);
   }
 }
 
-// Сохранение при закрытии вкладки/свайпе
-window.addEventListener('pagehide', ()=>{ saveStored(balance); });
-window.addEventListener('beforeunload', ()=>{ saveStored(balance); });
-// Видимость страницы — сохраняем когда уходим
-document.addEventListener('visibilitychange', ()=>{
-  if (document.visibilityState==='hidden') { saveStored(balance); sendBalanceToBot(); }
+// ═══════════════════════════════════════════════════════
+// TOAST / UTILS
+// ═══════════════════════════════════════════════════════
+let tt;
+function showToast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  clearTimeout(tt);
+  t.textContent = msg;
+  t.className   = `toast ${type} show`;
+  tt = setTimeout(() => { t.className = `toast ${type}`; }, 2200);
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+function init() {
+  updateBalUI();
+  refreshBets();
+  updateMiniStats();
+  document.getElementById('pName').textContent = (USER_NAME || 'Игрок').toUpperCase();
+
+  // Авто-выбор максимально доступной ставки
+  for (const b of [5000, 1000, 500, 100]) {
+    if (balance >= b) { selectBet(b); break; }
+  }
+
+  setSave('ok', BOT_TOKEN ? 'СИНХРОНИЗИРОВАНО' : 'ЛОКАЛЬНОЕ ХРАНЕНИЕ');
+
+  // Показываем откуда взяли баланс
+  if (URL_BAL > 0) {
+    // свежий из бота — норма, ничего не показываем
+  } else if (lsData && lsData.balance > 0) {
+    showToast(`Баланс восстановлен: ${balance.toLocaleString('ru-RU')} 💰`, 'gold');
+  }
+}
+
+// ── Сохранение при любом уходе со страницы ──
+window.addEventListener('pagehide',      () => { lsSave(balance); clearTimeout(syncTimer); syncNow(); });
+window.addEventListener('beforeunload',  () => { lsSave(balance); });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') { lsSave(balance); scheduleSync(); }
 });
 
 init();
