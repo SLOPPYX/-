@@ -859,19 +859,18 @@ function confirmExit() {
   exitCasino();
 }
 
-// ── Сам выход ──
+// ── Сам выход — надёжная реализация ──
 function exitCasino() {
   if (autoMode) stopAuto();
   clearTimeout(_botSyncTimer);
 
-  // Сохраняем везде
+  // Сохраняем везде локально
   ssSet(balance);
   lsSet(balance);
   csSet(balance);
-  setSave('saving', 'СОХРАНЕНИЕ...');
 
   const change = balance - INIT_BAL;
-  const payload = JSON.stringify({
+  const payload = {
     action:  'casino_save',
     balance: balance,
     initial: INIT_BAL,
@@ -887,15 +886,35 @@ function exitCasino() {
       totalLost:  S.totalLost,
       winPct:     S.spins > 0 ? Math.round(S.wins/S.spins*100) : 0,
     },
-  });
+  };
+
+  // Показываем статус на кнопке
+  const confirmBtn = document.querySelector('.exit-btn-confirm');
+  if (confirmBtn) {
+    confirmBtn.textContent = '⏳ Сохраняю...';
+    confirmBtn.disabled = true;
+  }
+
+  // tg.sendData() — передаёт данные в бот И закрывает WebApp
+  // Если не сработало через 800мс — закрываем сами
+  let closed = false;
+  const closeTimer = setTimeout(() => {
+    if (!closed) { closed = true; tg.close(); }
+  }, 800);
 
   try {
-    tg.sendData(payload);  // закрывает WebApp и сохраняет в бот
+    tg.sendData(JSON.stringify(payload));
+    closed = true;
+    clearTimeout(closeTimer);
+    // WebApp сам закроется после sendData
   } catch(e) {
-    tg.close();            // fallback
+    console.error('sendData error:', e);
+    clearTimeout(closeTimer);
+    // sendData не сработал — закрываем напрямую
+    // Баланс уже сохранён в хранилищах
+    tg.close();
   }
 }
-// BackButton тоже показывает диалог
 function saveAndClose() { showExitDialog(); }
 
 // ══════════════════════════════════════════════
@@ -1057,4 +1076,3 @@ init();
 </script>
 </body>
 </html>
-
