@@ -3,559 +3,202 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>CASINO</title>
+<title>SloppyX Casino</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #050510;
-  --bg2: #0a0a1f;
-  --panel: rgba(255,255,255,0.04);
-  --border: rgba(255,255,255,0.08);
-  --gold: #ffd700;
-  --gold2: #ff9f00;
-  --cyan: #00e5ff;
-  --purple: #bf00ff;
-  --pink: #ff0099;
-  --green: #00ff88;
-  --red: #ff3333;
-  --text: #e8e8ff;
-  --muted: rgba(232,232,255,0.35);
-  --font-display: 'Orbitron', monospace;
-  --font-body: 'Rajdhani', sans-serif;
+  --bg:#050510; --panel:rgba(255,255,255,0.04); --border:rgba(255,255,255,0.08);
+  --gold:#ffd700; --cyan:#00e5ff; --purple:#bf00ff; --pink:#ff0099;
+  --green:#00ff88; --red:#ff3333; --text:#e8e8ff; --muted:rgba(232,232,255,0.32);
+  --fd:'Orbitron',monospace; --fb:'Rajdhani',sans-serif;
 }
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;user-select:none;position:relative}
+.bg-grid{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(0,229,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.025) 1px,transparent 1px);background-size:36px 36px;pointer-events:none}
+.bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 70% 45% at 15% 20%,rgba(191,0,255,0.13) 0%,transparent 60%),radial-gradient(ellipse 55% 40% at 85% 80%,rgba(0,229,255,0.11) 0%,transparent 60%),radial-gradient(ellipse 45% 35% at 50% 50%,rgba(255,0,153,0.07) 0%,transparent 60%)}
+.app{position:relative;z-index:1;max-width:430px;margin:0 auto;padding-bottom:84px}
 
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+/* ── HEADER ── */
+.header{padding:18px 18px 0;display:flex;align-items:center;justify-content:space-between}
+.logo-wrap{display:flex;flex-direction:column;gap:2px}
+.logo-main{font-family:var(--fd);font-size:20px;font-weight:900;letter-spacing:5px;background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 10px rgba(0,229,255,0.5))}
+.logo-sub{font-family:var(--fd);font-size:9px;font-weight:400;letter-spacing:3px;color:var(--muted)}
+.balance-pill{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(255,215,0,0.13),rgba(255,159,0,0.08));border:1px solid rgba(255,215,0,0.3);border-radius:24px;padding:8px 16px;font-family:var(--fd);font-size:12px;font-weight:700;color:var(--gold);box-shadow:0 0 16px rgba(255,215,0,0.13);white-space:nowrap;transition:box-shadow .3s}
+.balance-pill.pulse{animation:bPulse .35s ease}
+@keyframes bPulse{0%,100%{box-shadow:0 0 16px rgba(255,215,0,0.13)}50%{box-shadow:0 0 30px rgba(255,215,0,0.55),0 0 60px rgba(255,215,0,0.22)}}
 
-body {
-  font-family: var(--font-body);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
-  user-select: none;
-  position: relative;
-}
+/* ── NAV ── */
+.nav{display:flex;gap:4px;padding:14px 18px 0}
+.nav-tab{flex:1;padding:9px 6px;background:var(--panel);border:1px solid var(--border);border-radius:11px;color:var(--muted);font-family:var(--fb);font-size:12px;font-weight:600;letter-spacing:.4px;cursor:pointer;text-align:center;transition:all .18s}
+.nav-tab.active{background:linear-gradient(135deg,rgba(191,0,255,0.2),rgba(0,229,255,0.14));border-color:rgba(0,229,255,0.4);color:var(--cyan);box-shadow:0 0 10px rgba(0,229,255,0.18)}
 
-/* ── Animated background ── */
-.bg-grid {
-  position: fixed; inset: 0; z-index: 0;
-  background-image:
-    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-}
-.bg-glow {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background:
-    radial-gradient(ellipse 60% 40% at 20% 20%, rgba(191,0,255,0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 35% at 80% 80%, rgba(0,229,255,0.10) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(255,0,153,0.06) 0%, transparent 60%);
-}
+/* ── PAGES ── */
+.page{display:none;padding:14px 18px}
+.page.active{display:block}
 
-/* ── Layout ── */
-.app { position: relative; z-index: 1; max-width: 430px; margin: 0 auto; padding-bottom: 80px; }
+/* ── SLOT MACHINE ── */
+.machine{background:linear-gradient(180deg,rgba(191,0,255,0.08) 0%,rgba(0,8,28,0.85) 100%);border:1px solid rgba(191,0,255,0.3);border-radius:22px;padding:18px;margin-bottom:14px;box-shadow:0 0 36px rgba(191,0,255,0.14),inset 0 1px 0 rgba(255,255,255,0.06);position:relative;overflow:hidden}
+.machine::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(191,0,255,0.9),transparent)}
+.win-scanline{display:none;position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);box-shadow:0 0 10px var(--gold);animation:scan .55s linear infinite;z-index:2}
+.machine.winning .win-scanline{display:block}
+@keyframes scan{from{top:0;opacity:1}to{top:100%;opacity:0}}
+.reels-frame{background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:14px 10px;margin-bottom:12px;position:relative}
+.reels-row{display:flex;justify-content:center;gap:10px}
+.reel{width:84px;height:84px;background:linear-gradient(180deg,#090020,#04000e,#090020);border:1.5px solid rgba(255,255,255,0.09);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:inset 0 0 18px rgba(0,0,0,0.65);transition:border-color .3s,box-shadow .3s;position:relative;overflow:hidden}
+.reel::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0.04) 0%,transparent 40%,transparent 60%,rgba(255,255,255,0.02) 100%);pointer-events:none}
+.reel.spinning{animation:rSpin .08s linear infinite}
+@keyframes rSpin{0%,100%{transform:translateY(0) scaleY(1)}25%{transform:translateY(-5px) scaleY(0.97)}75%{transform:translateY(5px) scaleY(0.97)}}
+.reel.stopping{animation:rStop .18s cubic-bezier(.34,1.56,.64,1)}
+@keyframes rStop{0%{transform:translateY(7px) scaleY(0.95)}100%{transform:translateY(0) scaleY(1)}}
+.reel.win-glow{border-color:var(--gold)!important;animation:rWin .45s ease-in-out infinite alternate}
+@keyframes rWin{from{box-shadow:0 0 22px var(--gold),inset 0 0 16px rgba(255,215,0,0.12)}to{box-shadow:0 0 40px var(--gold),0 0 70px rgba(255,215,0,0.35),inset 0 0 28px rgba(255,215,0,0.18)}}
+.result-strip{height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--fb);font-size:14px;font-weight:700;letter-spacing:.4px;text-align:center;padding:8px;transition:all .3s;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);color:var(--muted)}
+.result-strip.win{background:linear-gradient(135deg,rgba(0,255,136,0.12),rgba(0,229,255,0.07));border-color:rgba(0,255,136,0.4);color:var(--green);box-shadow:0 0 18px rgba(0,255,136,0.14);text-shadow:0 0 8px rgba(0,255,136,0.5)}
+.result-strip.loss{background:linear-gradient(135deg,rgba(255,51,51,0.1),rgba(255,0,153,0.06));border-color:rgba(255,51,51,0.3);color:var(--red)}
+.result-strip.idle{font-size:11px;letter-spacing:2.5px;text-transform:uppercase}
 
-/* ── Header ── */
-.header {
-  padding: 20px 20px 0;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.logo {
-  font-family: var(--font-display);
-  font-size: 22px; font-weight: 900; letter-spacing: 4px;
-  background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 12px rgba(0,229,255,0.5));
-}
-.balance-pill {
-  display: flex; align-items: center; gap: 6px;
-  background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,159,0,0.08));
-  border: 1px solid rgba(255,215,0,0.3);
-  border-radius: 24px; padding: 8px 16px;
-  font-family: var(--font-display); font-size: 13px; font-weight: 700;
-  color: var(--gold);
-  box-shadow: 0 0 16px rgba(255,215,0,0.15), inset 0 1px 0 rgba(255,255,255,0.05);
-  white-space: nowrap;
-  transition: all 0.3s;
-}
-.balance-pill.pulse { animation: balancePulse 0.4s ease; }
-@keyframes balancePulse {
-  0%,100% { box-shadow: 0 0 16px rgba(255,215,0,0.15); }
-  50%      { box-shadow: 0 0 30px rgba(255,215,0,0.5), 0 0 60px rgba(255,215,0,0.2); }
-}
-.balance-icon { font-size: 16px; }
+/* ── SPEED CONTROLS ── */
+.speed-row{display:flex;gap:6px;margin-bottom:12px}
+.speed-btn{flex:1;padding:9px 4px;background:var(--panel);border:1px solid var(--border);border-radius:9px;color:var(--muted);font-family:var(--fb);font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:all .18s;letter-spacing:.5px}
+.speed-btn:active{transform:scale(0.94)}
+.speed-btn.active{background:linear-gradient(135deg,rgba(0,229,255,0.18),rgba(191,0,255,0.12));border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 10px rgba(0,229,255,0.2)}
+.speed-btn.auto-active{background:linear-gradient(135deg,rgba(255,0,153,0.2),rgba(191,0,255,0.15));border-color:var(--pink);color:var(--pink);box-shadow:0 0 10px rgba(255,0,153,0.25);animation:autoPulse 1.2s ease infinite alternate}
+@keyframes autoPulse{from{box-shadow:0 0 10px rgba(255,0,153,0.25)}to{box-shadow:0 0 20px rgba(255,0,153,0.5)}}
 
-/* ── Nav Tabs ── */
-.nav {
-  display: flex; gap: 4px;
-  padding: 16px 20px 0;
-}
-.nav-tab {
-  flex: 1; padding: 10px 8px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  color: var(--muted); font-family: var(--font-body);
-  font-size: 13px; font-weight: 600; letter-spacing: 0.5px;
-  cursor: pointer; text-align: center;
-  transition: all 0.2s;
-}
-.nav-tab.active {
-  background: linear-gradient(135deg, rgba(191,0,255,0.2), rgba(0,229,255,0.15));
-  border-color: rgba(0,229,255,0.4);
-  color: var(--cyan);
-  box-shadow: 0 0 12px rgba(0,229,255,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
-}
+/* ── BET ── */
+.section-head{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:9px;display:flex;align-items:center;gap:8px}
+.section-head::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,0.07),transparent)}
+.bet-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}
+.bet-btn{padding:10px 3px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;color:var(--text);font-family:var(--fb);font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:all .16s}
+.bet-btn:active{transform:scale(0.93)}
+.bet-btn.active{background:linear-gradient(135deg,rgba(0,229,255,0.19),rgba(191,0,255,0.14));border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 12px rgba(0,229,255,0.22)}
+.bet-btn.disabled{opacity:.22;pointer-events:none}
+.custom-row{display:flex;gap:7px;margin-bottom:12px}
+.custom-input{flex:1;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;color:var(--text);font-family:var(--fb);font-size:13px;font-weight:600;outline:none;transition:border-color .2s}
+.custom-input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,229,255,0.09)}
+.custom-input::placeholder{color:var(--muted)}
+.custom-ok{padding:10px 16px;background:linear-gradient(135deg,rgba(0,229,255,0.18),rgba(191,0,255,0.13));border:1px solid var(--cyan);border-radius:9px;color:var(--cyan);font-family:var(--fb);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.8px;transition:all .16s}
+.custom-ok:active{transform:scale(0.94)}
 
-/* ── Pages ── */
-.page { display: none; padding: 16px 20px; }
-.page.active { display: block; }
+/* ── SPIN BUTTON ── */
+.spin-btn{width:100%;padding:17px;background:linear-gradient(135deg,#8800cc,#4400aa,#0077cc);background-size:200% 200%;animation:sBtnGlow 3s ease infinite;border:none;border-radius:15px;color:#fff;font-family:var(--fd);font-size:16px;font-weight:900;letter-spacing:3px;cursor:pointer;box-shadow:0 7px 28px rgba(136,0,204,0.5),inset 0 1px 0 rgba(255,255,255,0.14);transition:transform .14s,box-shadow .14s,opacity .18s;position:relative;overflow:hidden;margin-bottom:12px}
+.spin-btn::before{content:'';position:absolute;top:0;left:-100%;width:55%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.11),transparent);transition:left .45s}
+.spin-btn:hover::before{left:150%}
+@keyframes sBtnGlow{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.spin-btn:active:not(:disabled){transform:scale(0.97) translateY(2px);box-shadow:0 3px 14px rgba(136,0,204,0.4)}
+.spin-btn:disabled{background:linear-gradient(135deg,#280040,#180030);box-shadow:none;cursor:not-allowed;opacity:.5;animation:none}
+.spin-count{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:10px;opacity:.55;font-family:var(--fd)}
 
-/* ── Slot Machine ── */
-.machine-shell {
-  background: linear-gradient(180deg, rgba(191,0,255,0.08) 0%, rgba(0,10,30,0.8) 100%);
-  border: 1px solid rgba(191,0,255,0.3);
-  border-radius: 24px; padding: 20px;
-  margin-bottom: 16px;
-  box-shadow:
-    0 0 40px rgba(191,0,255,0.15),
-    inset 0 1px 0 rgba(255,255,255,0.06),
-    inset 0 -1px 0 rgba(0,0,0,0.4);
-  position: relative; overflow: hidden;
-}
-.machine-shell::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(191,0,255,0.8), transparent);
-}
+/* ── SAVE STATUS ── */
+.save-row{display:flex;align-items:center;justify-content:center;gap:6px;font-size:10px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px;transition:all .3s}
+.save-dot{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);animation:sdPulse 2s ease infinite}
+.save-dot.saving{background:var(--gold);box-shadow:0 0 5px var(--gold);animation:none}
+.save-dot.error{background:var(--red);box-shadow:0 0 5px var(--red);animation:none}
+@keyframes sdPulse{0%,100%{opacity:1}50%{opacity:.25}}
 
-.reels-frame {
-  background: rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 16px; padding: 16px 12px;
-  margin-bottom: 14px;
-  position: relative;
-}
-.reels-frame::before, .reels-frame::after {
-  content: ''; position: absolute; top: 50%; transform: translateY(-50%);
-  width: 3px; height: 60%; border-radius: 2px;
-}
-.reels-frame::before { left: 8px; background: linear-gradient(180deg, transparent, var(--purple), transparent); }
-.reels-frame::after  { right: 8px; background: linear-gradient(180deg, transparent, var(--cyan), transparent); }
+/* ── MINI STATS ── */
+.stats-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px}
+.scard{background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:11px 7px;text-align:center}
+.scard-v{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--cyan);display:block;margin-bottom:3px}
+.scard-l{font-size:10px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase}
 
-.reels-row { display: flex; justify-content: center; gap: 10px; }
+/* ── AUTO-SPIN PANEL ── */
+.auto-panel{background:linear-gradient(135deg,rgba(255,0,153,0.08),rgba(191,0,255,0.06));border:1px solid rgba(255,0,153,0.25);border-radius:14px;padding:14px;margin-bottom:14px;display:none}
+.auto-panel.visible{display:block}
+.auto-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.auto-label{font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:2px;color:var(--pink)}
+.auto-counter{font-family:var(--fd);font-size:18px;font-weight:900;color:var(--pink);text-shadow:0 0 12px rgba(255,0,153,0.5)}
+.auto-stop-btn{width:100%;padding:10px;background:rgba(255,0,153,0.15);border:1px solid rgba(255,0,153,0.4);border-radius:10px;color:var(--pink);font-family:var(--fb);font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .16s}
+.auto-stop-btn:active{transform:scale(0.96)}
 
-.reel {
-  width: 86px; height: 86px;
-  background: linear-gradient(180deg, #0a0020, #050015, #0a0020);
-  border: 1.5px solid rgba(255,255,255,0.1);
-  border-radius: 14px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 42px; line-height: 1;
-  position: relative; overflow: hidden;
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-.reel::before {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.02) 100%);
-  pointer-events: none;
-}
+/* ── PAYTABLE ── */
+.pt-card{background:var(--panel);border:1px solid var(--border);border-radius:15px;padding:15px;margin-bottom:11px}
+.pt-title{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:13px}
+.pt-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.pt-row:last-child{border-bottom:none}
+.pt-syms{font-size:19px;letter-spacing:2px}
+.pt-mult{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--gold)}
+.pt-mult.mega{color:var(--cyan);font-size:14px;text-shadow:0 0 8px var(--cyan)}
+.pt-mult.zero{color:var(--muted);font-size:11px;font-family:var(--fb)}
 
-.reel.spinning { animation: reelBounce 0.08s linear infinite; }
-@keyframes reelBounce {
-  0%,100% { transform: translateY(0) scaleY(1); }
-  25%     { transform: translateY(-5px) scaleY(0.97); }
-  75%     { transform: translateY(5px) scaleY(0.97); }
-}
-.reel.stopping { animation: reelStop 0.2s cubic-bezier(0.34,1.56,0.64,1); }
-@keyframes reelStop {
-  0%  { transform: translateY(8px) scaleY(0.95); }
-  100%{ transform: translateY(0) scaleY(1); }
-}
-.reel.win-glow {
-  border-color: var(--gold) !important;
-  box-shadow: 0 0 24px var(--gold), 0 0 50px rgba(255,215,0,0.4), inset 0 0 20px rgba(255,215,0,0.1) !important;
-  animation: reelWinPulse 0.5s ease-in-out infinite alternate;
-}
-@keyframes reelWinPulse {
-  from { box-shadow: 0 0 24px var(--gold), 0 0 50px rgba(255,215,0,0.4), inset 0 0 20px rgba(255,215,0,0.1); }
-  to   { box-shadow: 0 0 40px var(--gold), 0 0 80px rgba(255,215,0,0.6), inset 0 0 30px rgba(255,215,0,0.2); }
-}
+/* ── PROFILE ── */
+.profile-top{text-align:center;padding:18px 0 20px;border-bottom:1px solid var(--border);margin-bottom:18px}
+.p-avatar{width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,rgba(191,0,255,0.28),rgba(0,229,255,0.28));border:2px solid rgba(0,229,255,0.4);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 11px;box-shadow:0 0 18px rgba(0,229,255,0.18)}
+.p-name{font-family:var(--fd);font-size:14px;font-weight:700;margin-bottom:5px}
+.p-bal{font-family:var(--fd);font-size:21px;font-weight:900;color:var(--gold);text-shadow:0 0 14px rgba(255,215,0,0.35)}
+.p-bal-lbl{font-size:11px;color:var(--muted);margin-top:2px}
+.wl-wrap{display:flex;align-items:center;gap:20px;background:var(--panel);border:1px solid var(--border);border-radius:15px;padding:18px;margin-bottom:16px}
+.donut-wrap{position:relative;flex-shrink:0}
+.donut-svg{width:100px;height:100px;transform:rotate(-90deg)}
+.donut-bg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:11}
+.donut-win{fill:none;stroke:var(--green);stroke-width:11;stroke-linecap:round;transition:stroke-dasharray 1s ease}
+.donut-loss{fill:none;stroke:var(--red);stroke-width:11;stroke-linecap:round;transition:stroke-dasharray 1s ease}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.d-pct{font-family:var(--fd);font-size:17px;font-weight:900;color:var(--green)}
+.d-lbl{font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.wl-legend{flex:1}
+.wl-item{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.wl-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.wl-dot.w{background:var(--green);box-shadow:0 0 7px var(--green)}
+.wl-dot.l{background:var(--red);box-shadow:0 0 7px var(--red)}
+.wl-il{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;display:block}
+.wl-iv{font-family:var(--fd);font-size:16px;font-weight:700}
+.wl-iv.w{color:var(--green)} .wl-iv.l{color:var(--red)}
+.wl-pct{font-size:10px;font-family:var(--fd);font-weight:600;margin-left:3px}
+.wl-pct.w{color:rgba(0,255,136,.55)} .wl-pct.l{color:rgba(255,51,51,.55)}
+.pg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+.pstat{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:14px}
+.pstat-v{font-family:var(--fd);font-size:19px;font-weight:900;color:var(--text);margin-bottom:3px;display:block}
+.pstat-v.pos{color:var(--green)} .pstat-v.neg{color:var(--red)}
+.pstat-l{font-size:10px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase}
+.best-card{background:linear-gradient(135deg,rgba(255,215,0,0.08),rgba(255,159,0,0.05));border:1px solid rgba(255,215,0,0.22);border-radius:13px;padding:15px;display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.best-ico{font-size:34px;flex-shrink:0}
+.best-v{font-family:var(--fd);font-size:20px;font-weight:900;color:var(--gold);text-shadow:0 0 10px rgba(255,215,0,0.35)}
+.best-l{font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.4px}
+.streak-card{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:15px;display:flex;align-items:center;justify-content:space-between}
+.streak-v{font-family:var(--fd);font-size:22px;font-weight:900;color:var(--purple)}
+.streak-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.streak-dots{display:flex;gap:4px;flex-wrap:wrap;max-width:110px;justify-content:flex-end}
+.sd{width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,0.07);transition:background .18s}
+.sd.w{background:var(--green);box-shadow:0 0 5px var(--green)}
+.sd.l{background:var(--red);box-shadow:0 0 5px var(--red)}
 
-/* Win scanline effect */
-.win-scanline {
-  display: none; position: absolute; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
-  box-shadow: 0 0 10px var(--gold);
-  animation: scanline 0.6s linear infinite;
-}
-.machine-shell.winning .win-scanline { display: block; }
-@keyframes scanline {
-  from { top: 0; opacity: 1; }
-  to   { top: 100%; opacity: 0; }
-}
+/* ── BOTTOM BAR ── */
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;z-index:50;max-width:430px;margin:0 auto;background:rgba(4,4,14,0.96);border-top:1px solid var(--border);backdrop-filter:blur(18px);padding:9px 16px 14px;display:flex;gap:7px}
+.bb-btn{flex:1;padding:11px 6px;border:1px solid var(--border);border-radius:11px;color:var(--muted);font-family:var(--fb);font-size:11px;font-weight:600;letter-spacing:.4px;cursor:pointer;text-align:center;background:rgba(255,255,255,0.03);transition:all .18s}
+.bb-btn:active{transform:scale(0.95)}
+.bb-btn.primary{background:linear-gradient(135deg,rgba(191,0,255,0.22),rgba(0,229,255,0.14));border-color:rgba(0,229,255,0.35);color:var(--cyan);box-shadow:0 0 12px rgba(0,229,255,0.14)}
 
-/* Result strip */
-.result-strip {
-  height: 48px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-body); font-size: 15px; font-weight: 700;
-  letter-spacing: 0.5px; transition: all 0.35s;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-  color: var(--muted);
-}
-.result-strip.win {
-  background: linear-gradient(135deg, rgba(0,255,136,0.12), rgba(0,229,255,0.08));
-  border-color: rgba(0,255,136,0.4);
-  color: var(--green);
-  box-shadow: 0 0 20px rgba(0,255,136,0.15);
-  text-shadow: 0 0 10px rgba(0,255,136,0.5);
-}
-.result-strip.loss {
-  background: linear-gradient(135deg, rgba(255,51,51,0.1), rgba(255,0,153,0.07));
-  border-color: rgba(255,51,51,0.3);
-  color: var(--red);
-}
-.result-strip.idle { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; }
+/* ── TOAST ── */
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(16px);opacity:0;pointer-events:none;background:rgba(8,8,24,0.96);border-radius:11px;padding:11px 22px;font-family:var(--fb);font-size:13px;font-weight:600;box-shadow:0 7px 28px rgba(0,0,0,.5);transition:all .28s cubic-bezier(.34,1.56,.64,1);z-index:999;white-space:nowrap;border:1px solid rgba(255,255,255,.08)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.success{border-color:rgba(0,255,136,.4);color:var(--green)}
+.toast.error{border-color:rgba(255,51,51,.4);color:var(--red)}
+.toast.info{border-color:rgba(0,229,255,.4);color:var(--cyan)}
+.toast.gold{border-color:rgba(255,215,0,.4);color:var(--gold)}
 
-/* ── Bet Section ── */
-.section-head {
-  font-family: var(--font-display); font-size: 10px; font-weight: 700;
-  letter-spacing: 3px; text-transform: uppercase; color: var(--muted);
-  margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
-}
-.section-head::after {
-  content: ''; flex: 1; height: 1px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent);
-}
+/* ── PARTICLES ── */
+.particle{position:fixed;pointer-events:none;z-index:100;font-size:22px;animation:pFly 1.4s ease-out forwards}
+@keyframes pFly{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-110px) scale(.25);opacity:0}}
 
-.bet-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 12px; }
-
-.bet-btn {
-  padding: 11px 4px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px;
-  color: var(--text); font-family: var(--font-body); font-size: 13px; font-weight: 700;
-  cursor: pointer; text-align: center;
-  transition: all 0.18s;
-  position: relative; overflow: hidden;
-}
-.bet-btn::after {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
-  opacity: 0; transition: opacity 0.2s;
-}
-.bet-btn:active::after { opacity: 1; }
-.bet-btn:active { transform: scale(0.94); }
-.bet-btn.active {
-  background: linear-gradient(135deg, rgba(0,229,255,0.2), rgba(191,0,255,0.15));
-  border-color: var(--cyan);
-  color: var(--cyan);
-  box-shadow: 0 0 14px rgba(0,229,255,0.25), inset 0 1px 0 rgba(255,255,255,0.07);
-}
-.bet-btn.disabled { opacity: 0.25; pointer-events: none; }
-
-.custom-row { display: flex; gap: 8px; margin-bottom: 14px; }
-.custom-input {
-  flex: 1; padding: 11px 14px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px;
-  color: var(--text); font-family: var(--font-body); font-size: 14px; font-weight: 600;
-  outline: none; transition: border-color 0.2s;
-}
-.custom-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(0,229,255,0.1); }
-.custom-input::placeholder { color: var(--muted); }
-.custom-ok {
-  padding: 11px 18px;
-  background: linear-gradient(135deg, rgba(0,229,255,0.2), rgba(191,0,255,0.15));
-  border: 1px solid var(--cyan);
-  border-radius: 10px;
-  color: var(--cyan); font-family: var(--font-body); font-size: 13px; font-weight: 700;
-  cursor: pointer; letter-spacing: 1px;
-  transition: all 0.18s;
-}
-.custom-ok:active { transform: scale(0.95); opacity: 0.85; }
-
-/* ── Spin Button ── */
-.spin-wrap { position: relative; margin-bottom: 16px; }
-.spin-btn {
-  width: 100%; padding: 18px;
-  background: linear-gradient(135deg, #8800cc, #4400aa, #0088cc);
-  background-size: 200% 200%; animation: spinBtnGlow 3s ease infinite;
-  border: none; border-radius: 16px;
-  color: #fff; font-family: var(--font-display); font-size: 17px; font-weight: 900;
-  letter-spacing: 3px; cursor: pointer;
-  box-shadow: 0 8px 32px rgba(136,0,204,0.5), 0 2px 8px rgba(0,0,0,0.4),
-              inset 0 1px 0 rgba(255,255,255,0.15);
-  transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
-  position: relative; overflow: hidden;
-}
-.spin-btn::before {
-  content: ''; position: absolute; top: 0; left: -100%;
-  width: 60%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
-  transition: left 0.5s;
-}
-.spin-btn:hover::before { left: 150%; }
-@keyframes spinBtnGlow {
-  0%,100% { background-position: 0% 50%; }
-  50%     { background-position: 100% 50%; }
-}
-.spin-btn:active:not(:disabled) { transform: scale(0.97) translateY(2px); box-shadow: 0 4px 16px rgba(136,0,204,0.4); }
-.spin-btn:disabled {
-  background: linear-gradient(135deg, #2a0044, #1a0033);
-  box-shadow: none; cursor: not-allowed; opacity: 0.5;
-  animation: none;
-}
-
-/* Quick spin indicator */
-.spin-count {
-  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
-  font-size: 11px; opacity: 0.6; font-family: var(--font-display);
-}
-
-/* ── Stats Mini ── */
-.stats-mini { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 16px; }
-.stat-card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px; padding: 12px 8px;
-  text-align: center;
-}
-.stat-card-val {
-  font-family: var(--font-display); font-size: 15px; font-weight: 700;
-  color: var(--cyan);
-  display: block; margin-bottom: 3px;
-}
-.stat-card-lbl { font-size: 11px; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; }
-
-/* ── Paytable ── */
-.paytable-card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 16px; padding: 16px;
-  margin-bottom: 12px;
-}
-.pt-title {
-  font-family: var(--font-display); font-size: 10px; font-weight: 700;
-  letter-spacing: 3px; text-transform: uppercase; color: var(--muted);
-  text-align: center; margin-bottom: 14px;
-}
-.pt-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
-}
-.pt-row:last-child { border-bottom: none; }
-.pt-syms { font-size: 20px; letter-spacing: 3px; }
-.pt-mult {
-  font-family: var(--font-display); font-size: 13px; font-weight: 700;
-  color: var(--gold);
-}
-.pt-mult.mega { color: var(--cyan); font-size: 15px; text-shadow: 0 0 8px var(--cyan); }
-.pt-mult.zero { color: var(--muted); font-size: 12px; font-family: var(--font-body); }
-
-/* ── PROFILE PAGE ── */
-.profile-header {
-  text-align: center; padding: 20px 0 24px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 20px;
-}
-.profile-avatar {
-  width: 72px; height: 72px; border-radius: 50%;
-  background: linear-gradient(135deg, rgba(191,0,255,0.3), rgba(0,229,255,0.3));
-  border: 2px solid rgba(0,229,255,0.4);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 32px; margin: 0 auto 12px;
-  box-shadow: 0 0 20px rgba(0,229,255,0.2);
-}
-.profile-name {
-  font-family: var(--font-display); font-size: 16px; font-weight: 700;
-  color: var(--text); margin-bottom: 6px;
-}
-.profile-balance {
-  font-family: var(--font-display); font-size: 22px; font-weight: 900;
-  color: var(--gold);
-  text-shadow: 0 0 16px rgba(255,215,0,0.4);
-}
-.profile-balance-lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-/* Win/Loss doughnut */
-.wl-section { margin-bottom: 20px; }
-.wl-chart-wrap {
-  display: flex; align-items: center; gap: 24px;
-  background: var(--panel); border: 1px solid var(--border);
-  border-radius: 16px; padding: 20px;
-}
-.donut-wrap { position: relative; flex-shrink: 0; }
-.donut-svg { width: 110px; height: 110px; transform: rotate(-90deg); }
-.donut-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 12; }
-.donut-win { fill: none; stroke: var(--green); stroke-width: 12; stroke-linecap: round; transition: stroke-dasharray 1s ease; }
-.donut-loss { fill: none; stroke: var(--red); stroke-width: 12; stroke-linecap: round; transition: stroke-dasharray 1s ease; }
-.donut-center {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-.donut-pct { font-family: var(--font-display); font-size: 18px; font-weight: 900; color: var(--green); }
-.donut-pct-lbl { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
-.wl-legend { flex: 1; }
-.wl-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.wl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.wl-dot.win  { background: var(--green); box-shadow: 0 0 8px var(--green); }
-.wl-dot.loss { background: var(--red);   box-shadow: 0 0 8px var(--red); }
-.wl-item-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; }
-.wl-item-val   { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
-.wl-item-val.win  { color: var(--green); }
-.wl-item-val.loss { color: var(--red); }
-.wl-item-pct { font-size: 11px; font-family: var(--font-display); font-weight: 600; margin-left: 4px; }
-.wl-item-pct.win  { color: rgba(0,255,136,0.6); }
-.wl-item-pct.loss { color: rgba(255,51,51,0.6); }
-
-/* Profile stats grid */
-.profile-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-.pstat {
-  background: var(--panel); border: 1px solid var(--border);
-  border-radius: 14px; padding: 16px;
-}
-.pstat-val {
-  font-family: var(--font-display); font-size: 20px; font-weight: 900;
-  color: var(--text); margin-bottom: 4px; display: block;
-}
-.pstat-val.positive { color: var(--green); }
-.pstat-val.negative { color: var(--red); }
-.pstat-lbl { font-size: 11px; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; }
-
-/* Best win card */
-.best-win-card {
-  background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,159,0,0.05));
-  border: 1px solid rgba(255,215,0,0.25);
-  border-radius: 14px; padding: 16px;
-  display: flex; align-items: center; gap: 16px; margin-bottom: 10px;
-}
-.best-win-icon { font-size: 36px; flex-shrink: 0; }
-.best-win-val {
-  font-family: var(--font-display); font-size: 22px; font-weight: 900;
-  color: var(--gold); text-shadow: 0 0 12px rgba(255,215,0,0.4);
-}
-.best-win-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 0.5px; }
-
-/* Streak card */
-.streak-card {
-  background: var(--panel); border: 1px solid var(--border);
-  border-radius: 14px; padding: 16px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.streak-left .streak-val {
-  font-family: var(--font-display); font-size: 24px; font-weight: 900; color: var(--purple);
-}
-.streak-left .streak-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-.streak-icons { display: flex; gap: 4px; flex-wrap: wrap; max-width: 120px; justify-content: flex-end; }
-.streak-dot {
-  width: 14px; height: 14px; border-radius: 50%;
-  background: rgba(255,255,255,0.08);
-  transition: background 0.2s;
-}
-.streak-dot.w { background: var(--green); box-shadow: 0 0 6px var(--green); }
-.streak-dot.l { background: var(--red); box-shadow: 0 0 6px var(--red); }
-
-/* Save status */
-.save-status {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  font-size: 11px; color: var(--muted); letter-spacing: 1px;
-  text-transform: uppercase; margin-bottom: 6px;
-  transition: all 0.3s;
-}
-.save-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 6px var(--green);
-  animation: savePulse 2s ease infinite;
-}
-.save-dot.saving { background: var(--gold); box-shadow: 0 0 6px var(--gold); animation: none; }
-.save-dot.error  { background: var(--red);  box-shadow: 0 0 6px var(--red);  animation: none; }
-@keyframes savePulse {
-  0%,100% { opacity: 1; } 50% { opacity: 0.3; }
-}
-
-/* ── Toast ── */
-.toast {
-  position: fixed; bottom: 100px; left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  opacity: 0; pointer-events: none;
-  background: rgba(10,10,30,0.95);
-  border-radius: 12px; padding: 12px 24px;
-  font-family: var(--font-body); font-size: 14px; font-weight: 600;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
-  z-index: 999; white-space: nowrap;
-  border: 1px solid rgba(255,255,255,0.1);
-}
-.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-.toast.success { border-color: rgba(0,255,136,0.4); color: var(--green); }
-.toast.error   { border-color: rgba(255,51,51,0.4);  color: var(--red);  }
-.toast.info    { border-color: rgba(0,229,255,0.4);  color: var(--cyan); }
-
-/* ── Particles ── */
-.particle {
-  position: fixed; pointer-events: none; z-index: 100;
-  font-size: 24px; animation: particleFly 1.5s ease-out forwards;
-}
-@keyframes particleFly {
-  0%   { transform: translateY(0) scale(1); opacity: 1; }
-  100% { transform: translateY(-120px) scale(0.3); opacity: 0; }
-}
-
-/* ── Bottom nav ── */
-.bottom-bar {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
-  max-width: 430px; margin: 0 auto;
-  background: rgba(5,5,16,0.95);
-  border-top: 1px solid var(--border);
-  backdrop-filter: blur(20px);
-  padding: 10px 20px 14px;
-  display: flex; gap: 8px;
-}
-.bottom-btn {
-  flex: 1; padding: 12px 8px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  color: var(--muted); font-family: var(--font-body);
-  font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
-  cursor: pointer; text-align: center;
-  background: rgba(255,255,255,0.03);
-  transition: all 0.2s;
-}
-.bottom-btn:active { transform: scale(0.96); }
-.bottom-btn.primary {
-  background: linear-gradient(135deg, rgba(191,0,255,0.25), rgba(0,229,255,0.15));
-  border-color: rgba(0,229,255,0.35);
-  color: var(--cyan);
-  box-shadow: 0 0 14px rgba(0,229,255,0.15);
-}
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
 </style>
 </head>
 <body>
-
 <div class="bg-grid"></div>
 <div class="bg-glow"></div>
-
 <div class="app">
 
   <!-- HEADER -->
   <div class="header">
-    <div class="logo">CASINO</div>
+    <div class="logo-wrap">
+      <div class="logo-main">CASINO</div>
+      <div class="logo-sub">by SloppyX</div>
+    </div>
     <div class="balance-pill" id="balancePill">
-      <span class="balance-icon">💰</span>
-      <span id="balanceVal">0</span>
+      💰 <span id="balanceVal">0</span>
     </div>
   </div>
 
@@ -566,11 +209,10 @@ body {
     <div class="nav-tab" onclick="showPage('pay')" id="tab-pay">📊 Выплаты</div>
   </div>
 
-  <!-- ══ GAME PAGE ══ -->
+  <!-- ══ GAME ══ -->
   <div class="page active" id="page-game">
 
-    <!-- Slot Machine -->
-    <div class="machine-shell" id="machineShell">
+    <div class="machine" id="machineShell">
       <div class="win-scanline"></div>
       <div class="reels-frame">
         <div class="reels-row">
@@ -579,9 +221,23 @@ body {
           <div class="reel" id="r2">❓</div>
         </div>
       </div>
-      <div class="result-strip idle" id="resultStrip">
-        НАЖМИ КРУТИТЬ
+      <div class="result-strip idle" id="resultStrip">НАЖМИ КРУТИТЬ</div>
+    </div>
+
+    <!-- Speed controls -->
+    <div class="speed-row">
+      <div class="speed-btn active" id="spd-normal" onclick="setSpeed('normal')">🐢 Обычный</div>
+      <div class="speed-btn" id="spd-fast" onclick="setSpeed('fast')">⚡ Быстрый</div>
+      <div class="speed-btn" id="spd-auto" onclick="toggleAuto()">🤖 Авто</div>
+    </div>
+
+    <!-- Auto spin panel -->
+    <div class="auto-panel" id="autoPanel">
+      <div class="auto-info">
+        <div class="auto-label">АВТО-СПИН АКТИВЕН</div>
+        <div class="auto-counter" id="autoCounter">∞</div>
       </div>
+      <button class="auto-stop-btn" onclick="stopAuto()">⏹ ОСТАНОВИТЬ АВТО-СПИН</button>
     </div>
 
     <!-- Bet -->
@@ -598,134 +254,84 @@ body {
     </div>
 
     <!-- Save status -->
-    <div class="save-status" id="saveStatus">
+    <div class="save-row">
       <div class="save-dot" id="saveDot"></div>
       <span id="saveText">СИНХРОНИЗИРОВАНО</span>
     </div>
 
-    <!-- Spin -->
-    <div class="spin-wrap">
-      <button class="spin-btn" id="spinBtn" onclick="spin()">
-        🎰 КРУТИТЬ
-        <span class="spin-count" id="spinCount"></span>
-      </button>
-    </div>
+    <!-- Spin btn -->
+    <button class="spin-btn" id="spinBtn" onclick="spin()">
+      🎰 КРУТИТЬ
+      <span class="spin-count" id="spinCount"></span>
+    </button>
 
-    <!-- Stats mini -->
+    <!-- Mini stats -->
     <div class="stats-mini">
-      <div class="stat-card">
-        <span class="stat-card-val" id="sSpins">0</span>
-        <span class="stat-card-lbl">Спинов</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-card-val" id="sWins" style="color:var(--green)">0</span>
-        <span class="stat-card-lbl">Побед</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-card-val" id="sProfit">0</span>
-        <span class="stat-card-lbl">Прибыль</span>
-      </div>
+      <div class="scard"><span class="scard-v" id="sSpins">0</span><span class="scard-l">Спинов</span></div>
+      <div class="scard"><span class="scard-v" id="sWins" style="color:var(--green)">0</span><span class="scard-l">Побед</span></div>
+      <div class="scard"><span class="scard-v" id="sProfit">0</span><span class="scard-l">Прибыль</span></div>
     </div>
   </div>
 
-  <!-- ══ PROFILE PAGE ══ -->
+  <!-- ══ PROFILE ══ -->
   <div class="page" id="page-profile">
-    <div class="profile-header">
-      <div class="profile-avatar" id="profileAvatar">🎮</div>
-      <div class="profile-name" id="profileName">ИГРОК</div>
-      <div class="profile-balance" id="profileBalance">0</div>
-      <div class="profile-balance-lbl">токенов</div>
+    <div class="profile-top">
+      <div class="p-avatar" id="pAvatar">🎲</div>
+      <div class="p-name" id="pName">ИГРОК</div>
+      <div class="p-bal" id="pBal">0</div>
+      <div class="p-bal-lbl">токенов</div>
     </div>
 
-    <!-- Win/Loss Chart -->
-    <div class="section-head">Статистика побед</div>
-    <div class="wl-chart-wrap" style="margin-bottom:16px">
+    <div class="section-head">Статистика</div>
+    <div class="wl-wrap">
       <div class="donut-wrap">
         <svg class="donut-svg" viewBox="0 0 110 110">
           <circle class="donut-bg" cx="55" cy="55" r="40"/>
-          <circle class="donut-win"  cx="55" cy="55" r="40" id="donutWin"
-                  stroke-dasharray="0 251.2" stroke-dashoffset="0"/>
-          <circle class="donut-loss" cx="55" cy="55" r="40" id="donutLoss"
-                  stroke-dasharray="0 251.2" stroke-dashoffset="0"/>
+          <circle class="donut-win" cx="55" cy="55" r="40" id="dWin" stroke-dasharray="0 251.2"/>
+          <circle class="donut-loss" cx="55" cy="55" r="40" id="dLoss" stroke-dasharray="0 251.2"/>
         </svg>
-        <div class="donut-center">
-          <span class="donut-pct" id="donutPct">0%</span>
-          <span class="donut-pct-lbl">побед</span>
-        </div>
+        <div class="donut-center"><span class="d-pct" id="dPct">0%</span><span class="d-lbl">побед</span></div>
       </div>
       <div class="wl-legend">
         <div class="wl-item">
-          <div class="wl-dot win"></div>
-          <div>
-            <span class="wl-item-label">Победы</span>
-            <span class="wl-item-val win" id="wlWins">0
-              <span class="wl-item-pct win" id="wlWinPct"></span>
-            </span>
-          </div>
+          <div class="wl-dot w"></div>
+          <div><span class="wl-il">Победы</span><span class="wl-iv w" id="wlW">0 <span class="wl-pct w" id="wlWP"></span></span></div>
         </div>
         <div class="wl-item">
-          <div class="wl-dot loss"></div>
-          <div>
-            <span class="wl-item-label">Поражения</span>
-            <span class="wl-item-val loss" id="wlLosses">0
-              <span class="wl-item-pct loss" id="wlLossPct"></span>
-            </span>
-          </div>
+          <div class="wl-dot l"></div>
+          <div><span class="wl-il">Поражения</span><span class="wl-iv l" id="wlL">0 <span class="wl-pct l" id="wlLP"></span></span></div>
         </div>
       </div>
     </div>
 
-    <!-- Stats grid -->
-    <div class="section-head">Детальная статистика</div>
-    <div class="profile-stats">
-      <div class="pstat">
-        <span class="pstat-val" id="pSpins">0</span>
-        <span class="pstat-lbl">Всего спинов</span>
-      </div>
-      <div class="pstat">
-        <span class="pstat-val" id="pWinrate">0%</span>
-        <span class="pstat-lbl">Винрейт</span>
-      </div>
-      <div class="pstat">
-        <span class="pstat-val" id="pTotalWon">0</span>
-        <span class="pstat-lbl">Всего выиграно</span>
-      </div>
-      <div class="pstat">
-        <span class="pstat-val" id="pTotalLost">0</span>
-        <span class="pstat-lbl">Всего проиграно</span>
-      </div>
+    <div class="pg">
+      <div class="pstat"><span class="pstat-v" id="pSpins">0</span><span class="pstat-l">Всего спинов</span></div>
+      <div class="pstat"><span class="pstat-v" id="pWR">0%</span><span class="pstat-l">Винрейт</span></div>
+      <div class="pstat"><span class="pstat-v pos" id="pTW">0</span><span class="pstat-l">Выиграно</span></div>
+      <div class="pstat"><span class="pstat-v neg" id="pTL">0</span><span class="pstat-l">Проиграно</span></div>
     </div>
 
-    <!-- Best win -->
-    <div class="best-win-card" id="bestWinCard">
-      <div class="best-win-icon">🏆</div>
-      <div>
-        <div class="best-win-val" id="bestWinVal">0 токенов</div>
-        <div class="best-win-lbl">Лучший выигрыш за сессию</div>
-      </div>
+    <div class="best-card">
+      <div class="best-ico">🏆</div>
+      <div><div class="best-v" id="pBest">0 токенов</div><div class="best-l">Лучший выигрыш</div></div>
     </div>
 
-    <!-- Profit summary -->
     <div class="pstat" style="margin-bottom:14px">
-      <span class="pstat-val" id="pProfit" style="font-size:24px">0</span>
-      <span class="pstat-lbl">Чистая прибыль / убыток</span>
+      <span class="pstat-v" id="pProfit" style="font-size:22px">0</span>
+      <span class="pstat-l">Чистая прибыль / убыток</span>
     </div>
 
-    <!-- Last 10 spins -->
     <div class="section-head">Последние 10 спинов</div>
     <div class="streak-card">
-      <div class="streak-left">
-        <div class="streak-val" id="streakVal">—</div>
-        <div class="streak-lbl">Серия</div>
-      </div>
-      <div class="streak-icons" id="streakIcons"></div>
+      <div><div class="streak-v" id="streakV">—</div><div class="streak-l">Серия</div></div>
+      <div class="streak-dots" id="streakDots"></div>
     </div>
   </div>
 
-  <!-- ══ PAYTABLE PAGE ══ -->
+  <!-- ══ PAYTABLE ══ -->
   <div class="page" id="page-pay">
-    <div style="height:8px"></div>
-    <div class="paytable-card">
+    <div style="height:6px"></div>
+    <div class="pt-card">
       <div class="pt-title">Таблица выплат</div>
       <div class="pt-row"><span class="pt-syms">💎💎💎</span><span class="pt-mult mega">× 50 ✦</span></div>
       <div class="pt-row"><span class="pt-syms">7️⃣7️⃣7️⃣</span><span class="pt-mult" style="color:var(--pink)">× 20</span></div>
@@ -733,44 +339,43 @@ body {
       <div class="pt-row"><span class="pt-syms">⭐⭐⭐</span><span class="pt-mult" style="color:var(--cyan)">× 5</span></div>
       <div class="pt-row"><span class="pt-syms">🔔🔔🔔</span><span class="pt-mult">× 3</span></div>
       <div class="pt-row"><span class="pt-syms">🍋🍋🍋</span><span class="pt-mult" style="color:var(--text)">× 2</span></div>
-      <div class="pt-row"><span class="pt-syms" style="font-size:14px;color:var(--muted)">Остальное</span><span class="pt-mult zero">проигрыш</span></div>
+      <div class="pt-row"><span class="pt-syms" style="font-size:13px;color:var(--muted)">Остальное</span><span class="pt-mult zero">проигрыш</span></div>
     </div>
-    <div class="paytable-card">
-      <div class="pt-title">Как играть</div>
-      <p style="font-size:14px;color:var(--muted);line-height:1.7">
-        1. Выбери ставку из предложенных или введи свою<br>
-        2. Нажми <b style="color:var(--cyan)">КРУТИТЬ</b><br>
-        3. Три одинаковых символа = выигрыш!<br>
-        4. Баланс <b style="color:var(--green)">сохраняется автоматически</b> после каждого спина<br>
-        5. Можно закрыть в любой момент — токены не потеряются
+    <div class="pt-card">
+      <div class="pt-title">Режимы игры</div>
+      <p style="font-size:14px;color:var(--muted);line-height:1.8">
+        🐢 <b style="color:var(--text)">Обычный</b> — анимация барабанов ~1 сек<br>
+        ⚡ <b style="color:var(--cyan)">Быстрый</b> — мгновенный результат, без анимации<br>
+        🤖 <b style="color:var(--pink)">Авто-спин</b> — крутит бесконечно до остановки<br><br>
+        💾 Баланс <b style="color:var(--green)">сохраняется после каждого спина</b>.<br>
+        Закрой в любой момент — токены не потеряются.
       </p>
     </div>
-    <div class="paytable-card">
-      <div class="pt-title">Шансы выпадения</div>
-      <div class="pt-row"><span style="font-size:16px">💎</span><span style="font-size:12px;color:var(--muted)">1 / 100 спинов</span></div>
-      <div class="pt-row"><span style="font-size:16px">7️⃣</span><span style="font-size:12px;color:var(--muted)">2 / 100 спинов</span></div>
-      <div class="pt-row"><span style="font-size:16px">🍒</span><span style="font-size:12px;color:var(--muted)">4 / 100 спинов</span></div>
-      <div class="pt-row"><span style="font-size:16px">⭐</span><span style="font-size:12px;color:var(--muted)">6 / 100 спинов</span></div>
-      <div class="pt-row"><span style="font-size:16px">🔔</span><span style="font-size:12px;color:var(--muted)">9 / 100 спинов</span></div>
-      <div class="pt-row" style="border:none"><span style="font-size:16px">🍋</span><span style="font-size:12px;color:var(--muted)">14 / 100 спинов</span></div>
+    <div class="pt-card">
+      <div class="pt-title">Шансы (на 1 барабан)</div>
+      <div class="pt-row"><span style="font-size:16px">💎</span><span style="font-size:12px;color:var(--muted)">~1% (редкий)</span></div>
+      <div class="pt-row"><span style="font-size:16px">7️⃣</span><span style="font-size:12px;color:var(--muted)">~2%</span></div>
+      <div class="pt-row"><span style="font-size:16px">🍒</span><span style="font-size:12px;color:var(--muted)">~4%</span></div>
+      <div class="pt-row"><span style="font-size:16px">⭐</span><span style="font-size:12px;color:var(--muted)">~6%</span></div>
+      <div class="pt-row"><span style="font-size:16px">🔔</span><span style="font-size:12px;color:var(--muted)">~9%</span></div>
+      <div class="pt-row" style="border:none"><span style="font-size:16px">🍋</span><span style="font-size:12px;color:var(--muted)">~14%</span></div>
     </div>
   </div>
 
 </div><!-- /app -->
 
-<!-- Bottom bar -->
 <div class="bottom-bar">
-  <button class="bottom-btn" onclick="saveAndClose()">💾 Сохранить</button>
-  <button class="bottom-btn primary" onclick="spin()" id="bottomSpinBtn">🎰 Крутить!</button>
-  <button class="bottom-btn" onclick="saveAndClose()">✖ Выйти</button>
+  <button class="bb-btn" onclick="saveAndClose()">💾 Сохранить</button>
+  <button class="bb-btn primary" onclick="spin()" id="bSpinBtn">🎰 Крутить!</button>
+  <button class="bb-btn" onclick="saveAndClose()">✖ Выйти</button>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-// TELEGRAM WEB APP INIT
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════
+// TELEGRAM INIT
+// ═══════════════════════════════════════
 const tg = window.Telegram.WebApp;
 tg.expand();
 tg.enableClosingConfirmation();
@@ -778,412 +383,386 @@ try { tg.setHeaderColor('#050510'); tg.setBackgroundColor('#050510'); } catch(e)
 tg.BackButton.show();
 tg.BackButton.onClick(saveAndClose);
 
-// ═══════════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════════
-const params      = new URLSearchParams(window.location.search);
-const INIT_BAL    = parseInt(params.get('balance') || '0', 10);
-const USER_ID     = params.get('user_id') || '';
-const USER_NAME   = params.get('name') || tg.initDataUnsafe?.user?.first_name || 'Игрок';
+// ═══════════════════════════════════════
+// PARAMS & STORAGE KEY
+// ═══════════════════════════════════════
+const P         = new URLSearchParams(window.location.search);
+const USER_ID   = P.get('user_id') || tg.initDataUnsafe?.user?.id || '';
+const STORE_KEY = USER_ID ? `casino_${USER_ID}` : null;
+
+// Баланс: приоритет — localStorage (если есть актуальный) → URL param
+function getStoredBalance() {
+  if (!STORE_KEY) return null;
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    // Считаем актуальным если не старше 30 мин
+    if (Date.now() - (d.ts||0) < 30*60*1000) return d;
+  } catch(e) {}
+  return null;
+}
+function storeBalance(bal) {
+  if (!STORE_KEY) return;
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({ balance: bal, ts: Date.now() }));
+  } catch(e) {}
+}
+
+const URL_BAL   = parseInt(P.get('balance') || '0', 10);
+const stored    = getStoredBalance();
+// Берём актуальный баланс: если в localStorage >= 0 используем его,
+// но если URL_BAL > stored.balance — значит бот пополнил баланс → берём URL_BAL
+const INIT_BAL  = stored
+  ? (URL_BAL > stored.balance ? URL_BAL : stored.balance)
+  : URL_BAL;
+
+const USER_NAME = P.get('name') || tg.initDataUnsafe?.user?.first_name || 'Игрок';
 
 let balance    = INIT_BAL;
 let currentBet = 100;
 let spinning   = false;
-let saveTimer  = null;
-let lastSaved  = INIT_BAL;  // последний сохранённый баланс
+let autoMode   = false;
+let autoTimer  = null;
+let speedMode  = 'normal'; // 'normal' | 'fast'
+let lastSaved  = INIT_BAL;
 
-const session = {
-  spins: 0, wins: 0, losses: 0,
-  profit: 0, totalWon: 0, totalLost: 0,
-  bestWin: 0,
-  history: [],   // последние 20 результатов 'w'/'l'
-  currentStreak: 0, streakType: null,
-};
+// Сессионная статистика (не хранится между визитами)
+const S = { spins:0, wins:0, losses:0, profit:0, totalWon:0, totalLost:0, bestWin:0, history:[], streak:0, streakType:null };
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════
 // SYMBOLS
-// ═══════════════════════════════════════════════════════
-const SYMBOLS = [
-  { e:'💎', m:50,  w:1  },
-  { e:'7️⃣', m:20,  w:2  },
-  { e:'🍒', m:10,  w:4  },
-  { e:'⭐',  m:5,   w:6  },
-  { e:'🔔', m:3,   w:9  },
-  { e:'🍋', m:2,   w:14 },
-  { e:'🍊', m:0,   w:32 },
-  { e:'🍇', m:0,   w:32 },
+// ═══════════════════════════════════════
+const SYMS = [
+  {e:'💎',m:50,w:1},{e:'7️⃣',m:20,w:2},{e:'🍒',m:10,w:4},
+  {e:'⭐',m:5,w:6},{e:'🔔',m:3,w:9},{e:'🍋',m:2,w:14},
+  {e:'🍊',m:0,w:32},{e:'🍇',m:0,w:32},
 ];
-const TW = SYMBOLS.reduce((s,x)=>s+x.w, 0);
-function rndSym(){ let r=Math.random()*TW; for(const s of SYMBOLS){r-=s.w;if(r<=0)return s;} return SYMBOLS[SYMBOLS.length-1]; }
+const TW = SYMS.reduce((a,s)=>a+s.w,0);
+function rnd(){ let r=Math.random()*TW; for(const s of SYMS){r-=s.w;if(r<=0)return s;} return SYMS[SYMS.length-1]; }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════
 // TABS
-// ═══════════════════════════════════════════════════════
-function showPage(name) {
+// ═══════════════════════════════════════
+function showPage(n) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
-  document.getElementById('tab-'+name).classList.add('active');
-  if (name === 'profile') updateProfilePage();
+  document.getElementById('page-'+n).classList.add('active');
+  document.getElementById('tab-'+n).classList.add('active');
+  if (n==='profile') updateProfile();
 }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════
 // BALANCE UI
-// ═══════════════════════════════════════════════════════
-function updateBalanceUI() {
-  const el = document.getElementById('balanceVal');
-  el.textContent = balance.toLocaleString('ru-RU');
-  const pill = document.getElementById('balancePill');
-  pill.classList.remove('pulse');
-  void pill.offsetWidth;
-  pill.classList.add('pulse');
-  // Also update profile balance
-  document.getElementById('profileBalance').textContent = balance.toLocaleString('ru-RU');
+// ═══════════════════════════════════════
+function updateBalUI() {
+  document.getElementById('balanceVal').textContent = balance.toLocaleString('ru-RU');
+  document.getElementById('pBal').textContent = balance.toLocaleString('ru-RU');
+  const p = document.getElementById('balancePill');
+  p.classList.remove('pulse'); void p.offsetWidth; p.classList.add('pulse');
+  storeBalance(balance); // сохраняем в localStorage при каждом изменении
 }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════
+// SPEED MODE
+// ═══════════════════════════════════════
+function setSpeed(m) {
+  speedMode = m;
+  ['normal','fast'].forEach(s=>{
+    document.getElementById('spd-'+s).classList.toggle('active', s===m);
+  });
+}
+
+// ═══════════════════════════════════════
+// AUTO SPIN
+// ═══════════════════════════════════════
+function toggleAuto() {
+  if (autoMode) { stopAuto(); return; }
+  autoMode = true;
+  document.getElementById('spd-auto').classList.add('auto-active');
+  document.getElementById('autoPanel').classList.add('visible');
+  document.getElementById('autoCounter').textContent = '∞';
+  runAutoSpin();
+}
+function stopAuto() {
+  autoMode = false;
+  clearTimeout(autoTimer);
+  document.getElementById('spd-auto').classList.remove('auto-active');
+  document.getElementById('autoPanel').classList.remove('visible');
+  showToast('Авто-спин остановлен', 'info');
+}
+async function runAutoSpin() {
+  if (!autoMode) return;
+  if (balance < currentBet) { stopAuto(); showToast('Недостаточно токенов!', 'error'); return; }
+  await spin();
+  if (autoMode && balance >= currentBet) {
+    const delay = speedMode === 'fast' ? 150 : 400;
+    autoTimer = setTimeout(runAutoSpin, delay);
+  } else if (autoMode) {
+    stopAuto();
+  }
+}
+
+// ═══════════════════════════════════════
 // BET
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════
 function selectBet(v) {
   if (v > balance) { showToast('Недостаточно токенов', 'error'); return; }
   currentBet = v;
-  document.querySelectorAll('.bet-btn').forEach(b => {
-    b.classList.toggle('active', parseInt(b.dataset.bet)===v);
-  });
+  document.querySelectorAll('.bet-btn').forEach(b=>b.classList.toggle('active', parseInt(b.dataset.bet)===v));
   document.getElementById('customInput').value = '';
 }
 function applyCustom() {
   const v = parseInt(document.getElementById('customInput').value, 10);
-  if (!v || v < 1)        { showToast('Введи корректную ставку', 'error'); return; }
-  if (v > balance)        { showToast('Недостаточно токенов', 'error'); return; }
+  if (!v||v<1) { showToast('Введи корректную ставку', 'error'); return; }
+  if (v>balance) { showToast('Недостаточно токенов', 'error'); return; }
   currentBet = v;
   document.querySelectorAll('.bet-btn').forEach(b=>b.classList.remove('active'));
-  showToast(`Ставка: ${v.toLocaleString('ru-RU')} токенов`, 'info');
+  showToast(`Ставка: ${v.toLocaleString('ru-RU')}`, 'info');
 }
 function refreshBets() {
   document.querySelectorAll('.bet-btn').forEach(b=>{
-    const v = parseInt(b.dataset.bet);
+    const v=parseInt(b.dataset.bet);
     b.classList.toggle('disabled', v>balance);
-    if (v===currentBet) b.classList.add('active');
+    if(v===currentBet) b.classList.add('active');
   });
 }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════
 // SPIN
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════
 async function spin() {
   if (spinning) return;
-  if (balance < currentBet) { showToast('Недостаточно токенов!', 'error'); return; }
+  if (balance < currentBet) { showToast('Недостаточно токенов!', 'error'); if(autoMode) stopAuto(); return; }
 
   spinning = true;
-  const btn = document.getElementById('spinBtn');
-  const bBtn = document.getElementById('bottomSpinBtn');
+  const btn  = document.getElementById('spinBtn');
+  const bBtn = document.getElementById('bSpinBtn');
   btn.disabled = bBtn.disabled = true;
 
-  // Deduct bet
   balance -= currentBet;
-  updateBalanceUI();
+  updateBalUI();
 
-  const reels = ['r0','r1','r2'].map(id=>document.getElementById(id));
-  const result = document.getElementById('resultStrip');
+  const reels   = ['r0','r1','r2'].map(id=>document.getElementById(id));
+  const result  = document.getElementById('resultStrip');
   const machine = document.getElementById('machineShell');
-
-  // Reset
   machine.classList.remove('winning');
-  reels.forEach(r=>{ r.classList.remove('win-glow'); r.classList.add('spinning'); });
-  result.className = 'result-strip idle';
-  result.textContent = 'КРУТИМ...';
-  document.getElementById('spinBtn').textContent = '⏳ КРУТИМ...';
+  reels.forEach(r=>r.classList.remove('win-glow'));
 
-  // Random symbols during spin
-  const tick = setInterval(()=>{ reels.forEach(r=>{ r.textContent = rndSym().e; }); }, 75);
-  const final = [rndSym(), rndSym(), rndSym()];
+  const final = [rnd(), rnd(), rnd()];
 
-  await sleep(800);
-  clearInterval(tick);
-
-  // Stop reels one by one
-  for (let i=0; i<3; i++) {
-    await sleep(160);
-    reels[i].classList.remove('spinning');
-    reels[i].classList.add('stopping');
-    reels[i].textContent = final[i].e;
-    setTimeout(()=>reels[i].classList.remove('stopping'), 250);
+  if (speedMode === 'fast') {
+    // ── Быстрый режим — мгновенно ──
+    reels.forEach((r,i)=>{ r.textContent = final[i].e; r.classList.remove('spinning'); });
+    result.className = 'result-strip idle';
+  } else {
+    // ── Обычный режим — анимация ──
+    result.className = 'result-strip idle';
+    result.textContent = 'КРУТИМ...';
+    btn.textContent = '⏳ КРУТИМ...';
+    reels.forEach(r=>{ r.classList.add('spinning'); r.textContent = '🎲'; });
+    const tick = setInterval(()=>reels.forEach(r=>{ r.textContent = rnd().e; }), 75);
+    await sleep(700);
+    clearInterval(tick);
+    for(let i=0;i<3;i++){
+      await sleep(150);
+      reels[i].classList.remove('spinning');
+      reels[i].classList.add('stopping');
+      reels[i].textContent = final[i].e;
+      setTimeout(()=>reels[i].classList.remove('stopping'), 220);
+    }
+    await sleep(200);
   }
 
-  await sleep(220);
-
-  // Determine result
-  const isWin = final[0].e===final[1].e && final[1].e===final[2].e && final[0].m > 0;
+  // ── Результат ──
+  const isWin = final[0].e===final[1].e && final[1].e===final[2].e && final[0].m>0;
   const mult  = isWin ? final[0].m : 0;
-  session.spins++;
+  S.spins++;
 
   if (isWin) {
     const prize = currentBet * mult;
     balance += prize;
-    session.wins++;
-    session.profit += prize - currentBet;
-    session.totalWon += prize;
-    if (prize > session.bestWin) session.bestWin = prize;
-    session.history.push('w');
+    S.wins++; S.profit += prize-currentBet; S.totalWon += prize;
+    if (prize>S.bestWin) S.bestWin = prize;
+    S.history.push('w');
+    S.streak = S.streakType==='w' ? S.streak+1 : 1; S.streakType='w';
 
-    // Streak
-    if (session.streakType==='w') session.currentStreak++;
-    else { session.streakType='w'; session.currentStreak=1; }
-
-    machine.classList.add('winning');
-    reels.forEach(r=>r.classList.add('win-glow'));
+    if (speedMode !== 'fast') {
+      machine.classList.add('winning');
+      reels.forEach(r=>r.classList.add('win-glow'));
+      setTimeout(()=>{ machine.classList.remove('winning'); reels.forEach(r=>r.classList.remove('win-glow')); }, 1800);
+      spawnParticles();
+    }
     result.className = 'result-strip win';
-    result.textContent = `🎉 ПОБЕДА! ×${mult}  +${prize.toLocaleString('ru-RU')} токенов`;
-    showToast(`+${prize.toLocaleString('ru-RU')} 🎉`, 'success');
-    spawnParticles();
-    setTimeout(()=>{ machine.classList.remove('winning'); reels.forEach(r=>r.classList.remove('win-glow')); }, 2000);
+    result.textContent = `🎉 ПОБЕДА! ×${mult}  +${(currentBet*mult).toLocaleString('ru-RU')} токенов`;
+    if (speedMode !== 'fast') showToast(`+${prize.toLocaleString('ru-RU')} 🎉`, 'gold');
   } else {
-    session.losses++;
-    session.profit -= currentBet;
-    session.totalLost += currentBet;
-    session.history.push('l');
-
-    if (session.streakType==='l') session.currentStreak++;
-    else { session.streakType='l'; session.currentStreak=1; }
-
+    S.losses++; S.profit -= currentBet; S.totalLost += currentBet;
+    S.history.push('l');
+    S.streak = S.streakType==='l' ? S.streak+1 : 1; S.streakType='l';
     result.className = 'result-strip loss';
     result.textContent = `😔 Не повезло  −${currentBet.toLocaleString('ru-RU')} токенов`;
   }
 
-  // Keep history to last 20
-  if (session.history.length > 20) session.history = session.history.slice(-20);
-
-  updateBalanceUI();
+  if (S.history.length>20) S.history = S.history.slice(-20);
+  updateBalUI();
   refreshBets();
   updateMiniStats();
-  document.getElementById('spinBtn').textContent = '🎰 КРУТИТЬ';
-  document.getElementById('spinCount').textContent = `×${session.spins}`;
 
-  // Auto-adjust bet if not enough
-  if (currentBet > balance && balance > 0) {
-    const avail = [100,500,1000,5000].filter(b=>b<=balance);
-    if (avail.length) selectBet(avail[avail.length-1]);
+  btn.textContent = '🎰 КРУТИТЬ';
+  document.getElementById('spinCount').textContent = `×${S.spins}`;
+
+  // Авто-адаптация ставки
+  if (currentBet>balance && balance>0) {
+    const avail=[100,500,1000,5000].filter(b=>b<=balance);
+    if(avail.length) selectBet(avail[avail.length-1]);
   }
 
-  // ─── IMMEDIATELY SAVE TO BOT after every spin ───
+  // ── СОХРАНЯЕМ ПОСЛЕ КАЖДОГО СПИНА ──
   saveToBot(false);
 
   if (balance <= 0) {
-    result.textContent += '  |  Токены закончились';
+    result.textContent += '  |  Токены закончились 😢';
     btn.disabled = bBtn.disabled = true;
-    saveToBot(false);
+    if (autoMode) stopAuto();
     spinning = false;
     return;
   }
 
-  await sleep(250);
+  if (speedMode !== 'fast') await sleep(200);
   btn.disabled = bBtn.disabled = false;
   spinning = false;
 }
 
-// ═══════════════════════════════════════════════════════
-// SAVE TO BOT — called after EVERY spin + on close
-// ═══════════════════════════════════════════════════════
-function setSaveStatus(state, text) {
-  const dot = document.getElementById('saveDot');
-  const txt = document.getElementById('saveText');
-  dot.className = 'save-dot' + (state==='ok' ? '' : ' '+state);
-  txt.textContent = text;
+// ═══════════════════════════════════════
+// SAVE TO BOT — каждый спин + закрытие
+// ═══════════════════════════════════════
+function setSave(state, text) {
+  document.getElementById('saveDot').className = 'save-dot'+(state==='ok'?'':' '+state);
+  document.getElementById('saveText').textContent = text;
 }
 
-function saveToBot(closeAfter = false) {
-  if (balance === lastSaved && !closeAfter) return; // нет изменений
+function saveToBot(closeAfter=false) {
+  if (balance===lastSaved && !closeAfter) return;
+  setSave('saving','СОХРАНЕНИЕ...');
 
-  setSaveStatus('saving', 'СОХРАНЕНИЕ...');
-
-  const change  = balance - INIT_BAL;
-  const percent = INIT_BAL > 0 ? Math.round((change/INIT_BAL)*100) : 0;
-  const winPct  = session.spins > 0 ? Math.round(session.wins/session.spins*100) : 0;
-  const lossPct = session.spins > 0 ? Math.round(session.losses/session.spins*100) : 0;
+  const change  = balance - URL_BAL; // delta от начального URL-баланса
+  const percent = URL_BAL>0 ? Math.round((change/URL_BAL)*100) : 0;
 
   const payload = JSON.stringify({
-    action:   'casino_save',
-    balance:  balance,
-    initial:  INIT_BAL,
-    change:   change,
-    percent:  percent,
-    stats: {
-      totalSpins: session.spins,
-      wins:       session.wins,
-      losses:     session.losses,
-      profit:     session.profit,
-      winPct:     winPct,
-      lossPct:    lossPct,
-      bestWin:    session.bestWin,
-      totalWon:   session.totalWon,
-      totalLost:  session.totalLost,
+    action:'casino_save', balance, initial:URL_BAL, change, percent,
+    user_id: USER_ID,
+    stats:{
+      totalSpins:S.spins, wins:S.wins, losses:S.losses,
+      profit:S.profit, bestWin:S.bestWin,
+      totalWon:S.totalWon, totalLost:S.totalLost,
+      winPct: S.spins>0 ? Math.round(S.wins/S.spins*100) : 0,
+      lossPct: S.spins>0 ? Math.round(S.losses/S.spins*100) : 0,
     }
   });
 
   try {
     tg.sendData(payload);
     lastSaved = balance;
-    setSaveStatus('ok', 'СИНХРОНИЗИРОВАНО');
-    if (closeAfter) tg.close();
+    setSave('ok','СИНХРОНИЗИРОВАНО');
+    if (closeAfter) { setTimeout(()=>tg.close(), 300); }
   } catch(e) {
-    console.warn('sendData failed:', e);
-    setSaveStatus('error', 'ОШИБКА СОХРАНЕНИЯ');
-    // Retry once
+    setSave('error','ОШИБКА СОХРАНЕНИЯ');
     setTimeout(()=>{
-      try { tg.sendData(payload); lastSaved=balance; setSaveStatus('ok','СИНХРОНИЗИРОВАНО'); if(closeAfter) tg.close(); }
-      catch(e2) { console.error('Retry failed:', e2); if(closeAfter) tg.close(); }
-    }, 1000);
+      try { tg.sendData(payload); lastSaved=balance; setSave('ok','СИНХРОНИЗИРОВАНО'); if(closeAfter) tg.close(); }
+      catch(e2) { if(closeAfter) tg.close(); }
+    }, 800);
   }
 }
 
-function saveAndClose() {
-  saveToBot(true);
-}
+function saveAndClose() { if (autoMode) stopAuto(); saveToBot(true); }
 
-// ═══════════════════════════════════════════════════════
-// STATS UPDATE
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════
 function updateMiniStats() {
-  document.getElementById('sSpins').textContent = session.spins;
-  document.getElementById('sWins').textContent  = session.wins;
+  document.getElementById('sSpins').textContent = S.spins;
+  document.getElementById('sWins').textContent  = S.wins;
   const pp = document.getElementById('sProfit');
-  pp.textContent = (session.profit>=0?'+':'')+session.profit.toLocaleString('ru-RU');
-  pp.style.color = session.profit>=0 ? 'var(--green)' : 'var(--red)';
+  pp.textContent = (S.profit>=0?'+':'')+S.profit.toLocaleString('ru-RU');
+  pp.style.color = S.profit>=0?'var(--green)':'var(--red)';
 }
 
-function updateProfilePage() {
-  document.getElementById('profileName').textContent = USER_NAME.toUpperCase();
-  document.getElementById('profileBalance').textContent = balance.toLocaleString('ru-RU');
-  document.getElementById('profileAvatar').textContent = getAvatarEmoji();
+function updateProfile() {
+  document.getElementById('pName').textContent = USER_NAME.toUpperCase();
+  document.getElementById('pBal').textContent  = balance.toLocaleString('ru-RU');
+  document.getElementById('pAvatar').textContent = S.wins>50?'👑':S.wins>20?'⭐':S.wins>10?'🎯':S.wins>5?'🎮':'🎲';
 
-  const total   = session.spins;
-  const wins    = session.wins;
-  const losses  = session.losses;
-  const winPct  = total>0 ? Math.round(wins/total*100) : 0;
-  const lossPct = total>0 ? Math.round(losses/total*100) : 0;
+  const total=S.spins, wins=S.wins, losses=S.losses;
+  const wPct = total>0 ? Math.round(wins/total*100) : 0;
+  const lPct = total>0 ? Math.round(losses/total*100) : 0;
+  const C=251.2;
+  const wA=total>0?(wins/total)*C:0, lA=total>0?(losses/total)*C:0;
+  document.getElementById('dWin').setAttribute('stroke-dasharray',`${wA} ${C}`);
+  document.getElementById('dLoss').setAttribute('stroke-dasharray',`${lA} ${C}`);
+  document.getElementById('dLoss').setAttribute('stroke-dashoffset',`${-wA}`);
+  document.getElementById('dPct').textContent=wPct+'%';
+  document.getElementById('wlW').innerHTML=`${wins} <span class="wl-pct w">${wPct}%</span>`;
+  document.getElementById('wlL').innerHTML=`${losses} <span class="wl-pct l">${lPct}%</span>`;
+  document.getElementById('pSpins').textContent=total;
+  document.getElementById('pWR').textContent=wPct+'%';
+  document.getElementById('pTW').textContent='+'+S.totalWon.toLocaleString('ru-RU');
+  document.getElementById('pTL').textContent='-'+S.totalLost.toLocaleString('ru-RU');
+  document.getElementById('pBest').textContent=S.bestWin>0?`+${S.bestWin.toLocaleString('ru-RU')} токенов`:'Пока нет';
+  const pp=document.getElementById('pProfit');
+  pp.textContent=(S.profit>=0?'+':'')+S.profit.toLocaleString('ru-RU')+' токенов';
+  pp.className='pstat-v '+(S.profit>=0?'pos':'neg');
 
-  // Donut chart
-  const CIRC = 251.2;
-  const winArc  = total>0 ? (wins/total)*CIRC : 0;
-  const lossArc = total>0 ? (losses/total)*CIRC : 0;
-  document.getElementById('donutWin').setAttribute('stroke-dasharray',  `${winArc} ${CIRC}`);
-  document.getElementById('donutLoss').setAttribute('stroke-dasharray', `${lossArc} ${CIRC}`);
-  document.getElementById('donutLoss').setAttribute('stroke-dashoffset', `${-winArc}`);
-  document.getElementById('donutPct').textContent = winPct+'%';
-
-  // Legend
-  document.getElementById('wlWins').innerHTML =
-    `${wins} <span class="wl-item-pct win">${winPct}%</span>`;
-  document.getElementById('wlLosses').innerHTML =
-    `${losses} <span class="wl-item-pct loss">${lossPct}%</span>`;
-
-  // Grid stats
-  document.getElementById('pSpins').textContent   = total;
-  document.getElementById('pWinrate').textContent = winPct+'%';
-  const tw = document.getElementById('pTotalWon');
-  tw.textContent = '+'+session.totalWon.toLocaleString('ru-RU');
-  tw.className = 'pstat-val positive';
-  const tl = document.getElementById('pTotalLost');
-  tl.textContent = '-'+session.totalLost.toLocaleString('ru-RU');
-  tl.className = 'pstat-val negative';
-
-  // Best win
-  document.getElementById('bestWinVal').textContent =
-    session.bestWin > 0 ? `+${session.bestWin.toLocaleString('ru-RU')} токенов` : 'Пока нет';
-
-  // Profit
-  const pp = document.getElementById('pProfit');
-  pp.textContent = (session.profit>=0?'+':'')+session.profit.toLocaleString('ru-RU')+' токенов';
-  pp.className   = 'pstat-val '+(session.profit>=0?'positive':'negative');
-  pp.style.fontSize = '24px';
-
-  // Last spins streak
-  const icons = document.getElementById('streakIcons');
-  icons.innerHTML = '';
-  const last10 = session.history.slice(-10);
-  last10.forEach(r=>{
-    const d = document.createElement('div');
-    d.className = 'streak-dot '+(r==='w'?'w':'l');
-    icons.appendChild(d);
-  });
-  const sv = document.getElementById('streakVal');
-  if (session.currentStreak > 0) {
-    const emoji = session.streakType==='w' ? '🔥' : '❄️';
-    sv.textContent = emoji+' '+session.currentStreak;
-  } else {
-    sv.textContent = '—';
-  }
+  const sd=document.getElementById('streakDots');
+  sd.innerHTML='';
+  S.history.slice(-10).forEach(r=>{ const d=document.createElement('div'); d.className='sd '+(r==='w'?'w':'l'); sd.appendChild(d); });
+  const sv=document.getElementById('streakV');
+  sv.textContent=S.streak>0?(S.streakType==='w'?'🔥':'❄️')+' '+S.streak:'—';
 }
 
-function getAvatarEmoji() {
-  if (session.wins > 50)  return '👑';
-  if (session.wins > 20)  return '⭐';
-  if (session.wins > 10)  return '🎯';
-  if (session.wins > 5)   return '🎮';
-  return '🎲';
-}
-
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════
 // PARTICLES
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════
 function spawnParticles() {
-  const emojis = ['💎','🌟','✨','💰','🎉','⭐','🔥','💫'];
-  for (let i=0; i<8; i++) {
-    setTimeout(()=>{
-      const p = document.createElement('div');
-      p.className = 'particle';
-      p.textContent = emojis[Math.floor(Math.random()*emojis.length)];
-      p.style.left  = (20+Math.random()*60)+'%';
-      p.style.bottom = '120px';
-      p.style.animationDuration = (1+Math.random()*0.8)+'s';
-      document.body.appendChild(p);
-      setTimeout(()=>p.remove(), 2000);
-    }, i*80);
-  }
+  const E=['💎','🌟','✨','💰','🎉','⭐','🔥','💫'];
+  for(let i=0;i<7;i++) setTimeout(()=>{
+    const p=document.createElement('div'); p.className='particle';
+    p.textContent=E[Math.floor(Math.random()*E.length)];
+    p.style.left=(18+Math.random()*64)+'%'; p.style.bottom='110px';
+    p.style.animationDuration=(1+Math.random()*.7)+'s';
+    document.body.appendChild(p); setTimeout(()=>p.remove(),1800);
+  }, i*75);
 }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════
 // TOAST
-// ═══════════════════════════════════════════════════════
-let toastTimer;
-function showToast(msg, type='info') {
-  const t = document.getElementById('toast');
-  clearTimeout(toastTimer);
-  t.textContent = msg;
-  t.className = `toast ${type} show`;
-  toastTimer = setTimeout(()=>{ t.className = `toast ${type}`; }, 2500);
+// ═══════════════════════════════════════
+let tt;
+function showToast(msg,type='info') {
+  const t=document.getElementById('toast');
+  clearTimeout(tt);
+  t.textContent=msg; t.className=`toast ${type} show`;
+  tt=setTimeout(()=>{ t.className=`toast ${type}`; },2400);
 }
 
-// ═══════════════════════════════════════════════════════
-// UTILS
-// ═══════════════════════════════════════════════════════
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════
 // INIT
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════
 function init() {
-  updateBalanceUI();
-  refreshBets();
-  updateMiniStats();
-
-  // Set profile name
-  document.getElementById('profileName').textContent =
-    (USER_NAME || 'Игрок').toUpperCase();
-
-  // Auto-select best available bet
-  const bets = [5000,1000,500,100];
-  for (const b of bets) {
-    if (balance >= b) { selectBet(b); break; }
+  updateBalUI(); refreshBets(); updateMiniStats();
+  document.getElementById('pName').textContent=(USER_NAME||'Игрок').toUpperCase();
+  // Авто-выбор максимальной доступной ставки
+  for(const b of [5000,1000,500,100]) { if(balance>=b){ selectBet(b); break; } }
+  setSave('ok','СИНХРОНИЗИРОВАНО');
+  // Показываем баланс из localStorage если отличается от URL
+  if (stored && stored.balance !== URL_BAL) {
+    showToast(`Баланс восстановлен: ${balance.toLocaleString('ru-RU')} 💰`, 'gold');
   }
-
-  setSaveStatus('ok', 'СИНХРОНИЗИРОВАНО');
 }
 
-// Handle page close/swipe
-window.addEventListener('beforeunload', ()=>saveToBot(false));
-
+window.addEventListener('beforeunload', ()=>{ storeBalance(balance); saveToBot(false); });
 init();
 </script>
 </body>
