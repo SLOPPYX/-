@@ -170,6 +170,50 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .bb-btn:active{transform:scale(0.95)}
 .bb-btn.primary{background:linear-gradient(135deg,rgba(191,0,255,0.22),rgba(0,229,255,0.14));border-color:rgba(0,229,255,0.35);color:var(--cyan);box-shadow:0 0 12px rgba(0,229,255,0.14)}
 
+/* ── ДИАЛОГ ВЫХОДА ── */
+.exit-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(5,5,16,0.85);
+  backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;
+  padding:20px;
+}
+.exit-overlay.show{display:flex;}
+.exit-dialog{
+  background:linear-gradient(180deg,rgba(10,10,35,0.98),rgba(5,5,20,0.98));
+  border:1px solid rgba(0,229,255,0.3);
+  border-radius:20px;padding:28px 24px;
+  max-width:320px;width:100%;text-align:center;
+  box-shadow:0 0 40px rgba(0,229,255,0.15),inset 0 1px 0 rgba(255,255,255,0.07);
+  animation:dialogIn .2s ease-out;
+}
+@keyframes dialogIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.exit-icon{font-size:44px;margin-bottom:12px;}
+.exit-title{font-family:var(--fd);font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;letter-spacing:1px;}
+.exit-sub{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:22px;}
+.exit-sub span{color:var(--gold);font-family:var(--fd);font-weight:700;}
+.exit-btns{display:flex;flex-direction:column;gap:10px;}
+.exit-btn-cancel{
+  padding:13px;border-radius:12px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.12);
+  color:var(--muted);font-family:var(--fb);font-size:14px;font-weight:700;
+  cursor:pointer;letter-spacing:.5px;transition:all .18s;
+}
+.exit-btn-cancel:active{transform:scale(.97);}
+.exit-btn-cancel:hover{color:var(--text);border-color:rgba(255,255,255,0.25);}
+.exit-btn-confirm{
+  padding:14px;border-radius:12px;
+  background:linear-gradient(135deg,rgba(0,229,255,0.25),rgba(191,0,255,0.2));
+  border:1px solid var(--cyan);
+  color:var(--cyan);font-family:var(--fd);font-size:13px;font-weight:700;
+  cursor:pointer;letter-spacing:1px;
+  box-shadow:0 0 16px rgba(0,229,255,0.2);
+  transition:all .18s;
+}
+.exit-btn-confirm:active{transform:scale(.97);}
+.exit-btn-confirm:hover{box-shadow:0 0 24px rgba(0,229,255,0.35);}
+
 /* ── TOAST ── */
 .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(16px);opacity:0;pointer-events:none;background:rgba(8,8,24,0.96);border-radius:11px;padding:11px 22px;font-family:var(--fb);font-size:13px;font-weight:600;box-shadow:0 7px 28px rgba(0,0,0,.5);transition:all .28s cubic-bezier(.34,1.56,.64,1);z-index:999;white-space:nowrap;border:1px solid rgba(255,255,255,.08)}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
@@ -369,10 +413,23 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 </div><!-- /app -->
 
+<!-- Диалог подтверждения выхода -->
+<div class="exit-overlay" id="exitOverlay">
+  <div class="exit-dialog">
+    <div class="exit-icon">🎰</div>
+    <div class="exit-title">Выйти из казино?</div>
+    <div class="exit-sub">Баланс <span id="exitBalPreview">0</span> токенов<br>будет сохранён в боте</div>
+    <div class="exit-btns">
+      <button class="exit-btn-cancel" onclick="hideExitDialog()">⬅ Продолжить игру</button>
+      <button class="exit-btn-confirm" onclick="confirmExit()">💾 Сохранить и выйти</button>
+    </div>
+  </div>
+</div>
+
 <div class="bottom-bar">
-  <button class="bb-btn" onclick="saveAndClose()">💾 Сохранить</button>
+  <button class="bb-btn" onclick="showExitDialog()">💾 Сохранить</button>
   <button class="bb-btn primary" onclick="spin()" id="bSpinBtn">🎰 Крутить!</button>
-  <button class="bb-btn" onclick="saveAndClose()">✖ Выйти</button>
+  <button class="bb-btn" onclick="showExitDialog()">✖ Выйти</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -385,7 +442,7 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 try { tg.setHeaderColor('#050510'); tg.setBackgroundColor('#050510'); } catch(e){}
 tg.BackButton.show();
-tg.BackButton.onClick(exitCasino);
+tg.BackButton.onClick(showExitDialog);
 
 // ══════════════════════════════════════════════
 // ПАРАМЕТРЫ АККАУНТА из URL
@@ -543,29 +600,54 @@ function updateBalUI() {
   scheduleBotSync();
 }
 
-// Debounce синхронизация с ботом — не чаще 1 раза в 800мс
+// ══════════════════════════════════════════════
+// СИНХРОНИЗАЦИЯ С БОТОМ — БЕЗ СООБЩЕНИЙ В ЧАТ
+//
+// Используем Bot API: sendMessage + сразу deleteMessage.
+// Сообщение появляется на <1мс и сразу удаляется.
+// Пользователь ничего не видит. Бот получает баланс.
+// ══════════════════════════════════════════════
 let _botSyncTimer = null;
 let _lastBotBal   = -1;
+let _syncPending  = false;
+
 function scheduleBotSync() {
   clearTimeout(_botSyncTimer);
-  _botSyncTimer = setTimeout(syncWithBot, 800);
+  _botSyncTimer = setTimeout(syncWithBot, 600);
 }
+
 async function syncWithBot() {
   if (!BOT_TOKEN || !USER_ID) return;
   if (balance === _lastBotBal) return;
+  if (_syncPending) return;  // уже летит запрос
+  _syncPending = true;
   const balToSync = balance;
   try {
+    // Отправляем специальное сообщение с меткой __cs (casino sync)
     const r = await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
         chat_id: USER_ID,
-        text: JSON.stringify({ __casino_sync: true, balance: balToSync, uid: USER_ID }),
+        text: '__cs:' + balToSync,   // короткий тег, бот удалит сразу
+        disable_notification: true,  // без звука/уведомления
       }),
-      signal: AbortSignal.timeout(4000),
+      signal: AbortSignal.timeout(5000),
     });
-    if (r.ok) { _lastBotBal = balToSync; }
-  } catch(e) { /* тихо — не критично */ }
+    if (r.ok) {
+      const resp = await r.json();
+      _lastBotBal = balToSync;
+      // Сразу удаляем сообщение — пользователь ничего не увидит
+      if (resp.result && resp.result.message_id) {
+        fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/deleteMessage', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ chat_id: USER_ID, message_id: resp.result.message_id }),
+        }).catch(()=>{});
+      }
+    }
+  } catch(e) { /* тихо */ }
+  finally { _syncPending = false; }
 }
 
 function setSave(state, text) {
@@ -758,11 +840,31 @@ async function spin() {
 // ══════════════════════════════════════════════
 // ВЫХОД — сохраняем в бот через sendData
 // ══════════════════════════════════════════════
+// ── Показать диалог выхода ──
+function showExitDialog() {
+  if (autoMode) stopAuto();
+  document.getElementById('exitBalPreview').textContent =
+    balance.toLocaleString('ru-RU');
+  document.getElementById('exitOverlay').classList.add('show');
+}
+
+// ── Скрыть диалог (продолжить игру) ──
+function hideExitDialog() {
+  document.getElementById('exitOverlay').classList.remove('show');
+}
+
+// ── Подтвердить выход — сохраняем и закрываем ──
+function confirmExit() {
+  hideExitDialog();
+  exitCasino();
+}
+
+// ── Сам выход ──
 function exitCasino() {
   if (autoMode) stopAuto();
-  clearTimeout(_botSyncTimer);  // отменяем pending sync
+  clearTimeout(_botSyncTimer);
 
-  // Сохраняем во все хранилища перед выходом
+  // Сохраняем везде
   ssSet(balance);
   lsSet(balance);
   csSet(balance);
@@ -788,15 +890,13 @@ function exitCasino() {
   });
 
   try {
-    // tg.sendData() → бот получает данные → WebApp закрывается
-    tg.sendData(payload);
+    tg.sendData(payload);  // закрывает WebApp и сохраняет в бот
   } catch(e) {
-    // Если sendData недоступен — закрываем напрямую
-    // Баланс уже сохранён в хранилищах выше
-    tg.close();
+    tg.close();            // fallback
   }
 }
-function saveAndClose() { exitCasino(); }
+// BackButton тоже показывает диалог
+function saveAndClose() { showExitDialog(); }
 
 // ══════════════════════════════════════════════
 // ПРОФИЛЬ — показывает данные аккаунта из бота
@@ -957,3 +1057,4 @@ init();
 </script>
 </body>
 </html>
+
