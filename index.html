@@ -846,63 +846,36 @@ function confirmExit() {
   exitCasino();
 }
 
-// ── Сам выход — надёжная реализация ──
+// ── Сам выход — мгновенно ──
 function exitCasino() {
   if (autoMode) stopAuto();
   clearTimeout(_botSyncTimer);
 
-  // Сохраняем везде локально
+  // Сохраняем локально (синхронно, мгновенно)
   ssSet(balance);
   lsSet(balance);
-  csSet(balance);
+  // csSet уже вызывался после каждого спина — не нужен здесь
 
-  const change = balance - INIT_BAL;
-  const payload = {
+  const payload = JSON.stringify({
     action:  'casino_save',
     balance: balance,
     initial: INIT_BAL,
-    change:  change,
+    change:  balance - INIT_BAL,
     user_id: USER_ID,
     stats: {
-      totalSpins: S.spins,
-      wins:       S.wins,
-      losses:     S.losses,
-      profit:     S.profit,
-      bestWin:    S.bestWin,
-      totalWon:   S.totalWon,
-      totalLost:  S.totalLost,
-      winPct:     S.spins > 0 ? Math.round(S.wins/S.spins*100) : 0,
+      totalSpins: S.spins, wins: S.wins, losses: S.losses,
+      profit: S.profit,    bestWin: S.bestWin,
+      totalWon: S.totalWon, totalLost: S.totalLost,
+      winPct: S.spins > 0 ? Math.round(S.wins/S.spins*100) : 0,
     },
-  };
+  });
 
-  // Показываем статус на кнопке
-  const confirmBtn = document.querySelector('.exit-btn-confirm');
-  if (confirmBtn) {
-    confirmBtn.textContent = '⏳ Сохраняю...';
-    confirmBtn.disabled = true;
-  }
-
-  // Показываем что сохраняем
-  setSave('saving', 'СОХРАНЕНИЕ...');
-
-  // Пытаемся передать данные боту через sendData
-  // sendData работает только если WebApp открыт через кнопку бота
-  // При любом исходе закрываем WebApp — баланс уже в хранилищах
-  let didSend = false;
+  // sendData — мгновенно передаёт данные в бот и закрывает WebApp
+  // Если не сработало — tg.close() напрямую
   try {
-    if (tg.initData && tg.initData.length > 0) {
-      tg.sendData(JSON.stringify(payload));
-      didSend = true;
-      // Telegram сам закроет WebApp после sendData
-    }
+    tg.sendData(payload);
   } catch(e) {
-    console.error('sendData failed:', e);
-  }
-
-  if (!didSend) {
-    // sendData не сработал — закрываем напрямую
-    // Баланс уже сохранён в CloudStorage + localStorage выше
-    setTimeout(() => tg.close(), 300);
+    tg.close();
   }
 }
 function saveAndClose() { showExitDialog(); }
