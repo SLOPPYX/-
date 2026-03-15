@@ -243,13 +243,13 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     <!-- Bet -->
     <div class="section-head">Ставка</div>
     <div class="bet-grid" id="betGrid">
-      <div class="bet-btn" data-bet="100"  onclick="selectBet(100)">100</div>
-      <div class="bet-btn" data-bet="500"  onclick="selectBet(500)">500</div>
-      <div class="bet-btn" data-bet="1000" onclick="selectBet(1000)">1 000</div>
-      <div class="bet-btn" data-bet="5000" onclick="selectBet(5000)">5 000</div>
+      <div class="bet-btn" data-bet="10000"  onclick="selectBet(10000)">10K</div>
+      <div class="bet-btn" data-bet="25000"  onclick="selectBet(25000)">25K</div>
+      <div class="bet-btn" data-bet="50000"  onclick="selectBet(50000)">50K</div>
+      <div class="bet-btn" data-bet="100000" onclick="selectBet(100000)">100K</div>
     </div>
     <div class="custom-row">
-      <input class="custom-input" id="customInput" type="number" min="1" placeholder="Своя ставка...">
+      <input class="custom-input" id="customInput" type="number" min="10000" placeholder="Своя ставка (мин. 10 000)...">
       <button class="custom-ok" onclick="applyCustom()">ОК</button>
     </div>
 
@@ -422,7 +422,18 @@ const USER_WINS  = parseInt(P.get('wins') || '0', 10);
 //   URL_BAL (если > 0, т.е. бот передал) → CloudStorage → localStorage → 0
 // ══════════════════════════════════════════════
 const LS_KEY = `casx_${USER_ID}`;
-const CS_KEY = `bal_${USER_ID}`;   // уникальный ключ для каждого юзера
+const CS_KEY = `bal_${USER_ID}`;
+const SS_KEY = `ss_${USER_ID}`;  // sessionStorage — сохраняется при F5!
+
+// sessionStorage: МГНОВЕННЫЙ, не теряется при F5
+function ssGet(){
+  try{ const d=JSON.parse(sessionStorage.getItem(SS_KEY)||'null');
+    if(d && typeof d.b==='number') return d.b; }catch(e){}
+  return null;
+}
+function ssSet(b){
+  try{ sessionStorage.setItem(SS_KEY, JSON.stringify({b})); }catch(e){}
+}
 
 // localStorage
 function lsGet() {
@@ -522,9 +533,10 @@ function updateBalUI() {
   const p = document.getElementById('balancePill');
   p.classList.remove('pulse'); void p.offsetWidth; p.classList.add('pulse');
   // Сохраняем после каждого изменения баланса
-  lsSet(balance);
-  csSet(balance);    // async, не блокирует
-  setSave('ok','СИНХРОНИЗИРОВАНО ✓');
+  ssSet(balance);  // мгновенно — F5 safe!
+  lsSet(balance);  // постоянно — localStorage
+  csSet(balance);  // async — Telegram CloudStorage
+  setSave('ok', '💾 СОХРАНЕНО ✓');
 }
 
 function setSave(state, text) {
@@ -562,15 +574,17 @@ async function runAutoLoop() {
     if (balance < currentBet) { stopAuto(); showToast('Недостаточно токенов!','error'); break; }
     await spin();
     if (!autoMode) break;
-    await sleep(speedMode === 'fast' ? 80 : 300);
+    await sleep(speedMode === 'fast' ? 1500 : 2500);
   }
 }
 
 // ══════════════════════════════════════════════
 // СТАВКА
 // ══════════════════════════════════════════════
+const MIN_BET = 10000;
+
 function selectBet(v) {
-  if (v > balance) { showToast('Недостаточно токенов','error'); return; }
+  if (v > balance)  { showToast('Недостаточно токенов','error'); return; }
   currentBet = v;
   document.querySelectorAll('.bet-btn').forEach(b =>
     b.classList.toggle('active', parseInt(b.dataset.bet) === v)
@@ -579,8 +593,10 @@ function selectBet(v) {
 }
 function applyCustom() {
   const v = parseInt(document.getElementById('customInput').value, 10);
-  if (!v || v < 1)  { showToast('Введи корректную ставку','error'); return; }
-  if (v > balance)  { showToast('Недостаточно токенов','error'); return; }
+  if (!v || v < MIN_BET) {
+    showToast('Минимальная ставка: 10 000 токенов','error'); return;
+  }
+  if (v > balance) { showToast('Недостаточно токенов','error'); return; }
   currentBet = v;
   document.querySelectorAll('.bet-btn').forEach(b => b.classList.remove('active'));
   showToast(`Ставка: ${v.toLocaleString('ru-RU')}`, 'info');
@@ -690,9 +706,11 @@ async function spin() {
     btn.textContent = '🎰 КРУТИТЬ';
     document.getElementById('spinCount').textContent = `×${S.spins}`;
 
-    if (currentBet > balance && balance > 0) {
-      const avail = [100,500,1000,5000].filter(b => b <= balance);
+    if (currentBet > balance && balance >= MIN_BET) {
+      const avail = [10000,25000,50000,100000].filter(b => b <= balance);
       if (avail.length) { currentBet = avail[avail.length-1]; refreshBets(); }
+    } else if (balance < MIN_BET && autoMode) {
+      stopAuto();
     }
     if (balance <= 0) {
       result.textContent += '  |  Токены закончились 😢';
@@ -834,28 +852,40 @@ async function init() {
 
   let resolvedBal = 0;
 
-  if (URL_BAL > 0) {
-    // Бот передал свежий баланс — самый приоритетный
-    resolvedBal = URL_BAL;
-    // Сразу обновляем хранилища чтобы при перезагрузке (без URL) был актуальный баланс
-    lsSet(resolvedBal);
-    csSet(resolvedBal);
-    setSave('ok', 'БАЛАНС ИЗ БОТА ✓');
-  } else {
-    // URL пустой (перезагрузка страницы без бота) — берём из хранилищ
-    const csBal = await csGet();
-    const lsBal = lsGet();
+  // Приоритет загрузки баланса:
+  // 1. sessionStorage — МГНОВЕННО, сохраняется при F5 (лучший для перезагрузки)
+  // 2. URL_BAL — свежий из бота (если открыли через бот)
+  // 3. localStorage — постоянное хранилище
+  // 4. CloudStorage — Telegram серверы (медленно, async)
+  const ssBal = ssGet();
+  const lsBal = lsGet();
 
+  if (ssBal !== null && URL_BAL === 0) {
+    // F5 перезагрузка — берём из sessionStorage МГНОВЕННО
+    resolvedBal = ssBal;
+    setSave('ok', '⚡ БАЛАНС ВОССТАНОВЛЕН');
+  } else if (URL_BAL > 0) {
+    // Открыли через бот — URL_BAL самый актуальный
+    // Но если ssBal меньше URL_BAL — значит сыграли между визитами → берём меньшее
+    resolvedBal = (ssBal !== null && ssBal < URL_BAL) ? ssBal : URL_BAL;
+    ssSet(resolvedBal); lsSet(resolvedBal); csSet(resolvedBal);
+    setSave('ok', '✓ БАЛАНС ИЗ БОТА');
+  } else if (lsBal !== null) {
+    // localStorage — быстрый резерв
+    resolvedBal = lsBal;
+    ssSet(resolvedBal);
+    setSave('ok', '✓ ВОССТАНОВЛЕН');
+  } else {
+    // CloudStorage — последний шанс (async, медленно)
+    setSave('saving', 'ЗАГРУЗКА...');
+    const csBal = await csGet();
     if (csBal !== null) {
       resolvedBal = csBal;
-      setSave('ok', 'ВОССТАНОВЛЕН ✓');
-    } else if (lsBal !== null) {
-      resolvedBal = lsBal;
-      csSet(resolvedBal);   // синхронизируем в CloudStorage
-      setSave('ok', 'ВОССТАНОВЛЕН (локально) ✓');
+      ssSet(resolvedBal); lsSet(resolvedBal);
+      setSave('ok', '✓ ВОССТАНОВЛЕН');
     } else {
       resolvedBal = 0;
-      setSave('error', 'БАЛАНС НЕ НАЙДЕН');
+      setSave('error', 'Открой через бот');
     }
   }
 
@@ -867,16 +897,16 @@ async function init() {
   updateMiniStats();
   renderProfile();
 
-  for (const b of [5000, 1000, 500, 100]) {
+  for (const b of [100000, 50000, 25000, 10000]) {
     if (balance >= b) { selectBet(b); break; }
   }
 }
 
 // Сохраняем при любом уходе со страницы
-window.addEventListener('pagehide',     () => { lsSet(balance); csSet(balance); });
-window.addEventListener('beforeunload', () => { lsSet(balance); });
+window.addEventListener('pagehide',     () => { ssSet(balance); lsSet(balance); csSet(balance); });
+window.addEventListener('beforeunload', () => { ssSet(balance); lsSet(balance); });
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') { lsSet(balance); csSet(balance); }
+  if (document.visibilityState === 'hidden') { ssSet(balance); lsSet(balance); csSet(balance); }
 });
 
 init();
