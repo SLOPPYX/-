@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🎰 Казино</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #1a0033 0%, #0d001a 50%, #1a0033 100%);
+    min-height: 100vh;
+    color: #fff;
+    overflow-x: hidden;
+    user-select: none;
+  }
+
+  .container { max-width: 420px; margin: 0 auto; padding: 16px; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 16px 0 8px;
+  }
+  .header h1 { font-size: 28px; letter-spacing: 2px; text-shadow: 0 0 20px #ff00ff; }
+  .balance-box {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,215,0,0.15);
+    border: 1px solid rgba(255,215,0,0.4);
+    border-radius: 20px;
+    padding: 8px 20px;
+    margin-top: 10px;
+    font-size: 18px; font-weight: 700; color: #ffd700;
+  }
+
+  /* Slot machine */
+  .slot-machine {
+    background: linear-gradient(180deg, #2d0050 0%, #1a002e 100%);
+    border: 2px solid #9b59b6;
+    border-radius: 20px;
+    padding: 20px;
+    margin: 16px 0;
+    box-shadow: 0 0 30px rgba(155,89,182,0.4), inset 0 0 20px rgba(0,0,0,0.3);
+  }
+
+  .reels-container {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .reel {
+    width: 88px; height: 88px;
+    background: linear-gradient(180deg, #0d001a, #1a002e, #0d001a);
+    border: 2px solid #6c3483;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 44px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+    transition: transform 0.1s;
+  }
+  .reel.spinning {
+    animation: reelSpin 0.1s linear infinite;
+  }
+  @keyframes reelSpin {
+    0%   { transform: translateY(0); }
+    25%  { transform: translateY(-6px); }
+    75%  { transform: translateY(6px); }
+    100% { transform: translateY(0); }
+  }
+  .reel.win-flash {
+    animation: winFlash 0.4s ease-in-out 3;
+    border-color: #ffd700;
+    box-shadow: 0 0 20px #ffd700, inset 0 0 15px rgba(255,215,0,0.2);
+  }
+  @keyframes winFlash {
+    0%,100% { background: linear-gradient(180deg, #0d001a, #1a002e, #0d001a); }
+    50%     { background: linear-gradient(180deg, #2d1800, #3d2200, #2d1800); }
+  }
+
+  /* Result */
+  .result-box {
+    min-height: 52px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 12px;
+    font-size: 17px; font-weight: 600;
+    text-align: center;
+    padding: 10px;
+    transition: all 0.3s;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .result-box.win  { background: rgba(39,174,96,0.2);  border-color: #27ae60; color: #2ecc71; }
+  .result-box.loss { background: rgba(231,76,60,0.2);  border-color: #e74c3c; color: #ff6b6b; }
+  .result-box.idle { color: rgba(255,255,255,0.4); font-size: 14px; }
+
+  /* Bet selector */
+  .section-label {
+    font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+    color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;
+  }
+  .bet-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 8px; margin-bottom: 16px;
+  }
+  .bet-btn {
+    background: rgba(255,255,255,0.07);
+    border: 1.5px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 10px 4px;
+    color: #fff; font-size: 13px; font-weight: 600;
+    cursor: pointer; text-align: center;
+    transition: all 0.2s;
+  }
+  .bet-btn:active { transform: scale(0.95); }
+  .bet-btn.active {
+    background: rgba(155,89,182,0.35);
+    border-color: #9b59b6;
+    color: #ce8bff;
+    box-shadow: 0 0 10px rgba(155,89,182,0.4);
+  }
+  .bet-btn.disabled { opacity: 0.35; pointer-events: none; }
+
+  /* Custom bet input */
+  .custom-bet-row {
+    display: flex; gap: 8px; margin-bottom: 16px;
+  }
+  .custom-bet-input {
+    flex: 1;
+    background: rgba(255,255,255,0.07);
+    border: 1.5px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #fff; font-size: 14px; font-weight: 600;
+    outline: none;
+  }
+  .custom-bet-input:focus { border-color: #9b59b6; }
+  .custom-bet-input::placeholder { color: rgba(255,255,255,0.3); }
+  .custom-bet-apply {
+    background: rgba(155,89,182,0.3);
+    border: 1.5px solid #9b59b6;
+    border-radius: 10px;
+    padding: 10px 16px;
+    color: #ce8bff; font-size: 13px; font-weight: 600;
+    cursor: pointer;
+  }
+  .custom-bet-apply:active { transform: scale(0.95); }
+
+  /* Spin button */
+  .spin-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #8e44ad, #6c3483);
+    border: none; border-radius: 16px;
+    padding: 18px;
+    color: #fff; font-size: 20px; font-weight: 800;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(142,68,173,0.5);
+    transition: all 0.15s;
+    margin-bottom: 16px;
+  }
+  .spin-btn:active:not(:disabled) { transform: scale(0.97); box-shadow: 0 3px 10px rgba(142,68,173,0.4); }
+  .spin-btn:disabled {
+    background: linear-gradient(135deg, #4a235a, #2e1040);
+    box-shadow: none; cursor: not-allowed; opacity: 0.6;
+  }
+
+  /* Paytable */
+  .paytable {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .paytable-title {
+    text-align: center; font-size: 12px; letter-spacing: 1px;
+    text-transform: uppercase; color: rgba(255,255,255,0.4);
+    margin-bottom: 10px;
+  }
+  .paytable-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 14px;
+  }
+  .paytable-row:last-child { border-bottom: none; }
+  .paytable-symbols { font-size: 18px; letter-spacing: 2px; }
+  .paytable-mult { font-weight: 700; color: #ffd700; }
+  .paytable-mult.loss { color: #ff6b6b; }
+
+  /* Stats */
+  .stats-row {
+    display: flex; gap: 8px; margin-bottom: 16px;
+  }
+  .stat-box {
+    flex: 1; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 10px;
+    text-align: center;
+  }
+  .stat-value { font-size: 16px; font-weight: 700; color: #ce8bff; }
+  .stat-label { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+  /* Toast notification */
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px);
+    background: #27ae60; border-radius: 12px; padding: 12px 24px;
+    font-size: 15px; font-weight: 600; color: #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    transition: transform 0.3s ease;
+    z-index: 999; white-space: nowrap;
+  }
+  .toast.show  { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: #e74c3c; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <h1>🎰 КАЗИНО</h1>
+    <div class="balance-box">
+      💰 <span id="balance">0</span> <span style="font-size:13px;opacity:.7">токенов</span>
+    </div>
+  </div>
+
+  <!-- Slot Machine -->
+  <div class="slot-machine">
+    <div class="reels-container">
+      <div class="reel" id="reel0">❓</div>
+      <div class="reel" id="reel1">❓</div>
+      <div class="reel" id="reel2">❓</div>
+    </div>
+    <div class="result-box idle" id="resultBox">Крути барабаны!</div>
+  </div>
+
+  <!-- Bet -->
+  <div class="section-label">Выбери ставку</div>
+  <div class="bet-grid" id="betGrid">
+    <div class="bet-btn" data-bet="100" onclick="selectBet(100)">100</div>
+    <div class="bet-btn" data-bet="500" onclick="selectBet(500)">500</div>
+    <div class="bet-btn" data-bet="1000" onclick="selectBet(1000)">1 000</div>
+    <div class="bet-btn" data-bet="5000" onclick="selectBet(5000)">5 000</div>
+  </div>
+  <div class="custom-bet-row">
+    <input class="custom-bet-input" id="customBetInput" type="number" min="1" placeholder="Своя ставка...">
+    <button class="custom-bet-apply" onclick="applyCustomBet()">OK</button>
+  </div>
+
+  <!-- Spin -->
+  <button class="spin-btn" id="spinBtn" onclick="spin()">🎰 КРУТИТЬ!</button>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-value" id="statSpins">0</div>
+      <div class="stat-label">Спинов</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value" id="statWins">0</div>
+      <div class="stat-label">Побед</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value" id="statProfit" style="color:#ffd700">0</div>
+      <div class="stat-label">Прибыль</div>
+    </div>
+  </div>
+
+  <!-- Paytable -->
+  <div class="paytable">
+    <div class="paytable-title">Таблица выплат</div>
+    <div class="paytable-row">
+      <span class="paytable-symbols">💎💎💎</span>
+      <span class="paytable-mult">× 50</span>
+    </div>
+    <div class="paytable-row">
+      <span class="paytable-symbols">7️⃣7️⃣7️⃣</span>
+      <span class="paytable-mult">× 20</span>
+    </div>
+    <div class="paytable-row">
+      <span class="paytable-symbols">🍒🍒🍒</span>
+      <span class="paytable-mult">× 10</span>
+    </div>
+    <div class="paytable-row">
+      <span class="paytable-symbols">⭐⭐⭐</span>
+      <span class="paytable-mult">× 5</span>
+    </div>
+    <div class="paytable-row">
+      <span class="paytable-symbols">🔔🔔🔔</span>
+      <span class="paytable-mult">× 3</span>
+    </div>
+    <div class="paytable-row">
+      <span class="paytable-symbols">🍋🍋🍋</span>
+      <span class="paytable-mult">× 2</span>
+    </div>
+    <div class="paytable-row">
+      <span class="paytable-symbols" style="font-size:13px;color:rgba(255,255,255,.4)">Остальное</span>
+      <span class="paytable-mult loss">проигрыш</span>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Telegram Web App init ──
+const tg = window.Telegram.WebApp;
+tg.expand();
+tg.setHeaderColor('#1a0033');
+tg.setBackgroundColor('#1a0033');
+
+// ── Состояние ──
+let balance   = 0;
+let currentBet = 100;
+let spinning   = false;
+let stats = { spins: 0, wins: 0, profit: 0 };
+
+// ── Барабаны: символы и веса ──
+const SYMBOLS = [
+  { emoji: '💎', mult: 50,  weight: 1  },
+  { emoji: '7️⃣', mult: 20,  weight: 2  },
+  { emoji: '🍒', mult: 10,  weight: 4  },
+  { emoji: '⭐',  mult: 5,   weight: 6  },
+  { emoji: '🔔', mult: 3,   weight: 9  },
+  { emoji: '🍋', mult: 2,   weight: 14 },
+  { emoji: '🍊', mult: 0,   weight: 32 },
+  { emoji: '🍇', mult: 0,   weight: 32 },
+];
+const TOTAL_WEIGHT = SYMBOLS.reduce((s, x) => s + x.weight, 0);
+
+function randomSymbol() {
+  let r = Math.random() * TOTAL_WEIGHT;
+  for (const s of SYMBOLS) {
+    r -= s.weight;
+    if (r <= 0) return s;
+  }
+  return SYMBOLS[SYMBOLS.length - 1];
+}
+
+// ── Инициализация баланса из бота ──
+function initBalance() {
+  // Telegram передаёт initData, из которого бот извлекает user_id
+  // Здесь баланс приходит через URL параметр или initData
+  const params = new URLSearchParams(window.location.search);
+  balance = parseInt(params.get('balance') || '0', 10);
+
+  // Если есть initData — парсим userId для отправки обратно
+  updateBalanceUI();
+  refreshBetButtons();
+}
+
+function updateBalanceUI() {
+  document.getElementById('balance').textContent = balance.toLocaleString('ru-RU');
+}
+
+// ── Выбор ставки ──
+function selectBet(amount) {
+  if (amount > balance) { showToast('Недостаточно токенов!', true); return; }
+  currentBet = amount;
+  document.querySelectorAll('.bet-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.bet) === amount);
+  });
+  document.getElementById('customBetInput').value = '';
+}
+
+function applyCustomBet() {
+  const val = parseInt(document.getElementById('customBetInput').value, 10);
+  if (!val || val < 1) { showToast('Введите корректную ставку!', true); return; }
+  if (val > balance)   { showToast('Недостаточно токенов!', true); return; }
+  currentBet = val;
+  document.querySelectorAll('.bet-btn').forEach(b => b.classList.remove('active'));
+  showToast(`Ставка: ${val.toLocaleString('ru-RU')} токенов`);
+}
+
+function refreshBetButtons() {
+  document.querySelectorAll('.bet-btn').forEach(b => {
+    const v = parseInt(b.dataset.bet);
+    b.classList.toggle('disabled', v > balance);
+    if (v === currentBet) b.classList.add('active');
+  });
+}
+
+// ── Спин ──
+async function spin() {
+  if (spinning) return;
+  if (balance < currentBet) { showToast('Недостаточно токенов!', true); return; }
+
+  spinning = true;
+  const btn = document.getElementById('spinBtn');
+  btn.disabled = true;
+
+  // Списываем ставку визуально
+  balance -= currentBet;
+  updateBalanceUI();
+
+  // Анимация барабанов
+  const reels = [
+    document.getElementById('reel0'),
+    document.getElementById('reel1'),
+    document.getElementById('reel2'),
+  ];
+
+  reels.forEach(r => { r.classList.add('spinning'); r.textContent = '🎲'; });
+  document.getElementById('resultBox').className = 'result-box idle';
+  document.getElementById('resultBox').textContent = 'Крутим...';
+
+  // Рандомные символы во время анимации
+  const tickInterval = setInterval(() => {
+    reels.forEach(r => { r.textContent = randomSymbol().emoji; });
+  }, 80);
+
+  // Определяем результат
+  const results = [randomSymbol(), randomSymbol(), randomSymbol()];
+
+  await sleep(900);
+  clearInterval(tickInterval);
+
+  // Останавливаем барабаны с задержкой
+  for (let i = 0; i < 3; i++) {
+    await sleep(180);
+    reels[i].classList.remove('spinning');
+    reels[i].textContent = results[i].emoji;
+  }
+
+  await sleep(200);
+
+  // Считаем выигрыш
+  const isWin = results[0].emoji === results[1].emoji && results[1].emoji === results[2].emoji;
+  const mult  = isWin ? results[0].mult : 0;
+  let winnings = 0;
+
+  stats.spins++;
+
+  if (isWin && mult > 0) {
+    winnings = currentBet * mult;
+    balance += winnings;
+    stats.wins++;
+    stats.profit += winnings - currentBet;
+
+    reels.forEach(r => r.classList.add('win-flash'));
+    setTimeout(() => reels.forEach(r => r.classList.remove('win-flash')), 1300);
+
+    const resultBox = document.getElementById('resultBox');
+    resultBox.className = 'result-box win';
+    resultBox.textContent = `🎉 ПОБЕДА! ×${mult} → +${winnings.toLocaleString('ru-RU')} токенов`;
+    showToast(`+${winnings.toLocaleString('ru-RU')} токенов!`);
+  } else {
+    stats.profit -= currentBet;
+    const resultBox = document.getElementById('resultBox');
+    resultBox.className = 'result-box loss';
+    resultBox.textContent = `😔 Не повезло... −${currentBet.toLocaleString('ru-RU')} токенов`;
+  }
+
+  // Обновляем UI
+  updateBalanceUI();
+  refreshBetButtons();
+  updateStats();
+
+  // Адаптируем ставку если не хватает
+  if (currentBet > balance && balance > 0) {
+    const available = [100, 500, 1000, 5000].filter(b => b <= balance);
+    if (available.length) selectBet(available[available.length - 1]);
+  }
+
+  // Если баланс кончился
+  if (balance <= 0) {
+    document.getElementById('resultBox').textContent += ' | Токены закончились 😢';
+    btn.disabled = true;
+    spinning = false;
+    // Отправляем результат в бот
+    sendResultToBot();
+    return;
+  }
+
+  // Отправляем обновление баланса в бот после каждого спина
+  sendResultToBot();
+
+  await sleep(300);
+  btn.disabled = false;
+  spinning = false;
+}
+
+function updateStats() {
+  document.getElementById('statSpins').textContent = stats.spins;
+  document.getElementById('statWins').textContent  = stats.wins;
+  const p = document.getElementById('statProfit');
+  p.textContent = (stats.profit >= 0 ? '+' : '') + stats.profit.toLocaleString('ru-RU');
+  p.style.color = stats.profit >= 0 ? '#2ecc71' : '#ff6b6b';
+}
+
+// ── Отправка результата в бот ──
+function sendResultToBot() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const initialBalance = parseInt(params.get('balance') || '0', 10);
+    const change = balance - initialBalance;
+    const percent = initialBalance > 0 ? Math.round((change / initialBalance) * 100) : 0;
+
+    tg.sendData(JSON.stringify({
+      action: 'casino_save',
+      balance: balance,
+      initial: initialBalance,
+      change: change,
+      percent: percent,
+      stats: {
+        totalSpins: stats.spins,
+        wins: stats.wins,
+        profit: stats.profit,
+      }
+    }));
+  } catch (e) {
+    console.log('sendData error:', e);
+  }
+}
+
+// ── Utils ──
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '') + ' show';
+  setTimeout(() => { t.className = 'toast' + (isError ? ' error' : ''); }, 2500);
+}
+
+// ── Back button ──
+tg.BackButton.show();
+tg.BackButton.onClick(() => {
+  sendResultToBot();
+  tg.close();
+});
+
+// ── Кнопка закрытия ──
+tg.MainButton.setText('💾 Сохранить и выйти');
+tg.MainButton.show();
+tg.MainButton.onClick(() => {
+  sendResultToBot();
+  tg.close();
+});
+
+// ── Старт ──
+initBalance();
+</script>
+</body>
+</html>
