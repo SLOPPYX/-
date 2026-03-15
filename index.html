@@ -374,91 +374,123 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 <script>
 // ═══════════════════════════════════════════════════════
-// ИНИЦИАЛИЗАЦИЯ TELEGRAM
+// TELEGRAM INIT
 // ═══════════════════════════════════════════════════════
 const tg = window.Telegram.WebApp;
 tg.expand();
-tg.enableClosingConfirmation();
 try { tg.setHeaderColor('#050510'); tg.setBackgroundColor('#050510'); } catch(e){}
 tg.BackButton.show();
 tg.BackButton.onClick(saveAndClose);
 
 // ═══════════════════════════════════════════════════════
-// ПАРАМЕТРЫ (передаются из бота в URL)
-// user_id  — Telegram ID пользователя
-// balance  — текущий баланс из бота (ВСЕГДА СВЕЖИЙ)
-// token    — BOT_TOKEN для fetch-сохранения
-// name     — имя пользователя
+// ПАРАМЕТРЫ из URL (бот передаёт при каждом открытии)
 // ═══════════════════════════════════════════════════════
 const P         = new URLSearchParams(window.location.search);
 const USER_ID   = P.get('user_id') || String(tg.initDataUnsafe?.user?.id || '');
-const BOT_TOKEN = P.get('token')   || '';
 const URL_BAL   = parseInt(P.get('balance') || '0', 10);
 const USER_NAME = decodeURIComponent(P.get('name') || '')
                   || tg.initDataUnsafe?.user?.first_name || 'Игрок';
 
 // ═══════════════════════════════════════════════════════
-// ХРАНИЛИЩЕ: localStorage по user_id
-// При каждом открытии — берём URL_BAL (свежий из бота).
-// localStorage только для резервного восстановления если
-// URL_BAL = 0 (на случай проблем с передачей).
+// ЛОКАЛЬНОЕ ХРАНИЛИЩЕ — резерв при потере связи
+// Ключ уникален для каждого пользователя
 // ═══════════════════════════════════════════════════════
-const LS_KEY = USER_ID ? `cx2_${USER_ID}` : null;
+const LS_KEY = USER_ID ? `sl_${USER_ID}` : 'sl_guest';
 
+function lsSave(bal, spentFromBot) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      balance: bal,
+      spentFromBot: spentFromBot,
+      ts: Date.now(),
+    }));
+  } catch(e) {}
+}
 function lsLoad() {
-  if (!LS_KEY) return null;
   try {
     const d = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
-    if (d && typeof d.balance === 'number' && Date.now() - (d.ts||0) < 4*3600*1000) return d;
+    // Актуально если свежее 6 часов
+    if (d && typeof d.balance === 'number' && Date.now() - (d.ts||0) < 6*3600*1000) return d;
   } catch(e) {}
   return null;
 }
-function lsSave(bal) {
-  if (!LS_KEY) return;
-  try { localStorage.setItem(LS_KEY, JSON.stringify({ balance: bal, ts: Date.now() })); } catch(e) {}
-}
 
-// Приоритет: URL_BAL (из бота) > localStorage > 0
-const lsData  = lsLoad();
-const INIT_BAL = URL_BAL > 0
-  ? URL_BAL
-  : (lsData && lsData.balance > 0 ? lsData.balance : 0);
+// ── Определяем начальный баланс ──
+// URL_BAL — всегда свежий из бота (приоритет)
+// localStorage — резерв если URL_BAL = 0
+const lsData    = lsLoad();
+const INIT_BAL  = URL_BAL > 0 ? URL_BAL
+                : (lsData && lsData.balance > 0 ? lsData.balance : 0);
+
+// Сколько уже потрачено из "ботового" баланса в этой сессии
+// (чтобы правильно считать change при сохранении)
+let sessionSpent = 0;
 
 // ═══════════════════════════════════════════════════════
-// СОСТОЯНИЕ ИГРЫ
+// СОСТОЯНИЕ
 // ═══════════════════════════════════════════════════════
-let balance     = INIT_BAL;
-let currentBet  = 100;
-let spinning    = false;
-let autoMode    = false;
-let autoTimer   = null;
-let speedMode   = 'normal';   // 'normal' | 'fast'
+let balance    = INIT_BAL;
+let currentBet = 100;
+let spinning   = false;
+let autoMode   = false;
+let autoTimer  = null;
+let speedMode  = 'normal';
 
-// Сохранение
-let lastSyncBal    = INIT_BAL;  // последний успешно отправленный в бот
-let syncInFlight   = false;     // запрос уже летит
-let syncQueued     = false;     // ждёт отправки
+// Очередь финального сохранения
+let closePending = false;
 
 // Статистика сессии
 const S = {
-  spins:0, wins:0, losses:0, profit:0,
-  totalWon:0, totalLost:0, bestWin:0,
+  spins:0, wins:0, losses:0,
+  profit:0, totalWon:0, totalLost:0, bestWin:0,
   history:[], streak:0, streakType:null,
 };
 
 // ═══════════════════════════════════════════════════════
-// СИМВОЛЫ
+// СИМВОЛЫ И ПРАВИЛА ВЫИГРЫША
+//
+// Выигрыш по ставке (currentBet):
+//   3 одинаковых: ×mult (как раньше)
+//   2 одинаковых: ×0.5 ставки (маленький бонус)
 // ═══════════════════════════════════════════════════════
 const SYMS = [
-  {e:'💎',m:50,w:1},{e:'7️⃣',m:20,w:2},{e:'🍒',m:10,w:4},
-  {e:'⭐',m:5,w:6},{e:'🔔',m:3,w:9},{e:'🍋',m:2,w:14},
-  {e:'🍊',m:0,w:32},{e:'🍇',m:0,w:32},
+  {e:'💎', m3:50, m2:5,  w:1 },   // 3× = ×50 ставки, 2× = ×5
+  {e:'7️⃣', m3:20, m2:3,  w:2 },
+  {e:'🍒', m3:10, m2:2,  w:4 },
+  {e:'⭐',  m3:5,  m2:1,  w:6 },
+  {e:'🔔', m3:3,  m2:0,  w:9 },   // 2× колокола — нет выигрыша
+  {e:'🍋', m3:2,  m2:0,  w:14},
+  {e:'🍊', m3:0,  m2:0,  w:32},
+  {e:'🍇', m3:0,  m2:0,  w:32},
 ];
-const TW = SYMS.reduce((a,s)=>a+s.w, 0);
+const TW = SYMS.reduce((a,s) => a+s.w, 0);
 function rnd() {
   let r = Math.random() * TW;
   for (const s of SYMS) { r -= s.w; if (r <= 0) return s; }
   return SYMS[SYMS.length-1];
+}
+
+// Считаем результат спина
+function calcResult(final) {
+  const e0 = final[0].e, e1 = final[1].e, e2 = final[2].e;
+
+  // 3 одинаковых
+  if (e0 === e1 && e1 === e2) {
+    const sym = SYMS.find(s => s.e === e0);
+    if (sym && sym.m3 > 0) return { type:'win3', mult: sym.m3, emoji: e0 };
+  }
+
+  // 2 одинаковых (любая пара)
+  let pairSym = null;
+  if (e0 === e1)      pairSym = SYMS.find(s => s.e === e0);
+  else if (e0 === e2) pairSym = SYMS.find(s => s.e === e0);
+  else if (e1 === e2) pairSym = SYMS.find(s => s.e === e1);
+
+  if (pairSym && pairSym.m2 > 0) {
+    return { type:'win2', mult: pairSym.m2, emoji: pairSym.e };
+  }
+
+  return { type:'loss', mult: 0, emoji: '' };
 }
 
 // ═══════════════════════════════════════════════════════
@@ -483,10 +515,12 @@ function updateBalUI() {
   p.classList.remove('pulse');
   void p.offsetWidth;
   p.classList.add('pulse');
+  // Сохраняем в localStorage после каждого изменения
+  lsSave(balance, sessionSpent);
 }
 
 // ═══════════════════════════════════════════════════════
-// СКОРОСТЬ
+// РЕЖИМ СКОРОСТИ
 // ═══════════════════════════════════════════════════════
 function setSpeed(m) {
   speedMode = m;
@@ -496,7 +530,7 @@ function setSpeed(m) {
 }
 
 // ═══════════════════════════════════════════════════════
-// АВТО-СПИН (бесконечный до остановки или нуля)
+// АВТО-СПИН
 // ═══════════════════════════════════════════════════════
 function toggleAuto() {
   if (autoMode) { stopAuto(); return; }
@@ -517,8 +551,7 @@ async function runAutoLoop() {
     if (balance < currentBet) { stopAuto(); showToast('Недостаточно токенов!','error'); break; }
     await spin();
     if (!autoMode) break;
-    // Пауза между спинами
-    await sleep(speedMode === 'fast' ? 100 : 300);
+    await sleep(speedMode === 'fast' ? 80 : 280);
   }
 }
 
@@ -535,8 +568,8 @@ function selectBet(v) {
 }
 function applyCustom() {
   const v = parseInt(document.getElementById('customInput').value, 10);
-  if (!v || v < 1)   { showToast('Введи корректную ставку','error'); return; }
-  if (v > balance)   { showToast('Недостаточно токенов','error'); return; }
+  if (!v || v < 1)  { showToast('Введи корректную ставку','error'); return; }
+  if (v > balance)  { showToast('Недостаточно токенов','error'); return; }
   currentBet = v;
   document.querySelectorAll('.bet-btn').forEach(b => b.classList.remove('active'));
   showToast(`Ставка: ${v.toLocaleString('ru-RU')}`, 'info');
@@ -550,8 +583,7 @@ function refreshBets() {
 }
 
 // ═══════════════════════════════════════════════════════
-// СПИН — основная функция
-// Гарантирует: spinning всегда сбрасывается в false
+// СПИН — гарантировано разблокируется через finally
 // ═══════════════════════════════════════════════════════
 async function spin() {
   if (spinning) return;
@@ -564,17 +596,16 @@ async function spin() {
   spinning = true;
   const btn  = document.getElementById('spinBtn');
   const bBtn = document.getElementById('bSpinBtn');
-  btn.disabled  = true;
-  bBtn.disabled = true;
+  btn.disabled = bBtn.disabled = true;
 
   try {
-    balance -= currentBet;
+    balance      -= currentBet;
+    sessionSpent += currentBet;
     updateBalUI();
 
     const reels   = ['r0','r1','r2'].map(id => document.getElementById(id));
     const result  = document.getElementById('resultStrip');
     const machine = document.getElementById('machineShell');
-
     machine.classList.remove('winning');
     reels.forEach(r => r.classList.remove('win-glow'));
 
@@ -583,7 +614,6 @@ async function spin() {
     // ── Анимация ──
     if (speedMode === 'fast') {
       reels.forEach((r,i) => { r.textContent = final[i].e; r.classList.remove('spinning'); });
-      result.className = 'result-strip idle';
     } else {
       result.className  = 'result-strip idle';
       result.textContent = 'КРУТИМ...';
@@ -602,14 +632,14 @@ async function spin() {
       await sleep(180);
     }
 
-    // ── Результат ──
-    const isWin = final[0].e === final[1].e && final[1].e === final[2].e && final[0].m > 0;
-    const mult  = isWin ? final[0].m : 0;
+    // ── Считаем результат ──
+    const res  = calcResult(final);
     S.spins++;
 
-    if (isWin) {
-      const prize = currentBet * mult;
-      balance += prize;
+    if (res.type !== 'loss') {
+      const prize = Math.floor(currentBet * res.mult);
+      balance    += prize;
+      sessionSpent = Math.max(0, sessionSpent - prize); // уменьшаем потраченное на выигрыш
       S.wins++;
       S.profit   += prize - currentBet;
       S.totalWon += prize;
@@ -618,18 +648,22 @@ async function spin() {
       S.streak = S.streakType === 'w' ? S.streak+1 : 1;
       S.streakType = 'w';
 
+      const label = res.type === 'win3'
+        ? `🎉 ТРИ ${res.emoji}! ×${res.mult}  +${prize.toLocaleString('ru-RU')} токенов`
+        : `✨ Пара ${res.emoji}! ×${res.mult}  +${prize.toLocaleString('ru-RU')} токенов`;
+
       if (speedMode !== 'fast') {
         machine.classList.add('winning');
         reels.forEach(r => r.classList.add('win-glow'));
         setTimeout(() => {
           machine.classList.remove('winning');
           reels.forEach(r => r.classList.remove('win-glow'));
-        }, 1600);
-        spawnParticles();
+        }, res.type === 'win3' ? 2000 : 1200);
+        if (res.type === 'win3') spawnParticles();
       }
       result.className  = 'result-strip win';
-      result.textContent = `🎉 ПОБЕДА! ×${mult}  +${(currentBet*mult).toLocaleString('ru-RU')} токенов`;
-      if (speedMode !== 'fast') showToast(`+${prize.toLocaleString('ru-RU')} 🎉`, 'gold');
+      result.textContent = label;
+      if (speedMode !== 'fast') showToast(`+${prize.toLocaleString('ru-RU')} 💰`, 'gold');
 
     } else {
       S.losses++;
@@ -649,15 +683,11 @@ async function spin() {
     btn.textContent = '🎰 КРУТИТЬ';
     document.getElementById('spinCount').textContent = `×${S.spins}`;
 
-    // Авто-адаптация ставки если не хватает
+    // Авто-адаптация ставки
     if (currentBet > balance && balance > 0) {
       const avail = [100,500,1000,5000].filter(b => b <= balance);
       if (avail.length) { currentBet = avail[avail.length-1]; refreshBets(); }
     }
-
-    // ── СОХРАНЕНИЕ ПОСЛЕ КАЖДОГО СПИНА ──
-    lsSave(balance);           // localStorage — мгновенно
-    scheduleSync();            // в бот — асинхронно, не блокирует
 
     if (balance <= 0) {
       result.textContent += '  |  Токены закончились 😢';
@@ -667,128 +697,72 @@ async function spin() {
   } catch(err) {
     console.error('Spin error:', err);
   } finally {
-    // ВСЕГДА сбрасываем spinning и разблокируем кнопки
-    spinning      = false;
-    btn.disabled  = false;
-    bBtn.disabled = false;
-    btn.textContent = '🎰 КРУТИТЬ';
+    // ВСЕГДА разблокируем — даже при ошибке
+    spinning           = false;
+    btn.disabled       = false;
+    bBtn.disabled      = false;
+    btn.textContent    = '🎰 КРУТИТЬ';
   }
 }
 
 // ═══════════════════════════════════════════════════════
-// СИНХРОНИЗАЦИЯ БАЛАНСА С БОТОМ
+// СОХРАНЕНИЕ И ВЫХОД
 //
-// Стратегия:
-//   1. После каждого спина — scheduleSync() (debounce 300мс)
-//   2. При закрытии — syncNow() + tg.sendData()
-//   3. Если fetch не работает — только localStorage
+// Единственный надёжный способ сохранить баланс В БОТ —
+// это tg.sendData(). Он закрывает WebApp и бот получает данные.
 //
-// Используем sendMessage к Bot API.
-// Бот принимает JSON с action=casino_balance_update ТИХО
-// (не отвечает пользователю в чат).
+// localStorage сохраняется после КАЖДОГО спина как резерв.
+// При следующем открытии бот передаёт свежий баланс в URL.
 // ═══════════════════════════════════════════════════════
-let syncTimer = null;
+function saveAndClose() {
+  if (autoMode) stopAuto();
+  // Сохраняем в localStorage на случай проблем
+  lsSave(balance, sessionSpent);
 
-function scheduleSync() {
-  // Debounce — если много быстрых спинов, шлём не чаще раза в 500мс
-  clearTimeout(syncTimer);
-  syncTimer = setTimeout(syncNow, 500);
-}
+  const change  = balance - INIT_BAL;
+  const percent = INIT_BAL > 0 ? Math.round((change / INIT_BAL) * 100) : 0;
 
-async function syncNow() {
-  if (balance === lastSyncBal) return;  // нет изменений
-  if (syncInFlight) { syncQueued = true; return; }
-  if (!USER_ID || !BOT_TOKEN) {
-    lastSyncBal = balance;
-    setSave('ok', 'ЛОКАЛЬНО');
-    return;
-  }
+  const payload = JSON.stringify({
+    action:   'casino_save',
+    balance:  balance,
+    initial:  INIT_BAL,
+    change:   change,
+    percent:  percent,
+    user_id:  USER_ID,
+    stats: {
+      totalSpins: S.spins,
+      wins:       S.wins,
+      losses:     S.losses,
+      profit:     S.profit,
+      bestWin:    S.bestWin,
+      totalWon:   S.totalWon,
+      totalLost:  S.totalLost,
+      winPct:     S.spins > 0 ? Math.round(S.wins   / S.spins * 100) : 0,
+      lossPct:    S.spins > 0 ? Math.round(S.losses / S.spins * 100) : 0,
+    },
+  });
 
-  syncInFlight = true;
-  syncQueued   = false;
   setSave('saving', 'СОХРАНЕНИЕ...');
-
-  const balToSync = balance;
   try {
-    const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: USER_ID,
-        text: JSON.stringify({
-          action:  'casino_balance_update',
-          balance: balToSync,
-          user_id: USER_ID,
-          spins:   S.spins,
-        }),
-      }),
-      signal: AbortSignal.timeout(5000),
-    });
-
-    if (r.ok) {
-      lastSyncBal = balToSync;
-      setSave('ok', 'СИНХРОНИЗИРОВАНО');
-    } else {
-      const err = await r.json().catch(()=>({}));
-      console.warn('Sync error:', err);
-      setSave('error', 'ОШИБКА СЕТИ');
-    }
+    tg.sendData(payload);
+    // WebApp закроется автоматически после sendData
   } catch(e) {
-    setSave('error', 'НЕТ СВЯЗИ');
-  } finally {
-    syncInFlight = false;
-    // Если пока летел запрос баланс изменился — шлём ещё раз
-    if (syncQueued || balance !== lastSyncBal) {
-      setTimeout(syncNow, 600);
-    }
+    console.error('sendData failed:', e);
+    setSave('error', 'ОШИБКА!');
+    // Закрываем через секунду даже при ошибке
+    setTimeout(() => tg.close(), 1000);
   }
 }
 
 function setSave(state, text) {
   const d = document.getElementById('saveDot');
   const t = document.getElementById('saveText');
-  if (d) d.className = 'save-dot' + (state === 'ok' ? '' : ' '+state);
+  if (d) d.className = 'save-dot' + (state==='ok' ? '' : ' '+state);
   if (t) t.textContent = text;
 }
 
-// ── Финальное сохранение при закрытии ──
-function saveAndClose() {
-  if (autoMode) stopAuto();
-  lsSave(balance);
-  clearTimeout(syncTimer);
-
-  const change  = balance - INIT_BAL;
-  const percent = INIT_BAL > 0 ? Math.round((change / INIT_BAL) * 100) : 0;
-
-  // tg.sendData() → закрывает WebApp И сохраняет финальный баланс в бот
-  try {
-    tg.sendData(JSON.stringify({
-      action:   'casino_save',
-      balance:  balance,
-      initial:  INIT_BAL,
-      change:   change,
-      percent:  percent,
-      user_id:  USER_ID,
-      stats: {
-        totalSpins: S.spins,
-        wins:       S.wins,
-        losses:     S.losses,
-        profit:     S.profit,
-        bestWin:    S.bestWin,
-        totalWon:   S.totalWon,
-        totalLost:  S.totalLost,
-        winPct:     S.spins > 0 ? Math.round(S.wins   / S.spins * 100) : 0,
-        lossPct:    S.spins > 0 ? Math.round(S.losses / S.spins * 100) : 0,
-      },
-    }));
-    // WebApp автоматически закроется после sendData
-  } catch(e) {
-    tg.close();
-  }
-}
-
 // ═══════════════════════════════════════════════════════
-// МИНИ-СТАТИСТИКА
+// СТАТИСТИКА
 // ═══════════════════════════════════════════════════════
 function updateMiniStats() {
   document.getElementById('sSpins').textContent = S.spins;
@@ -798,9 +772,6 @@ function updateMiniStats() {
   pp.style.color = S.profit >= 0 ? 'var(--green)' : 'var(--red)';
 }
 
-// ═══════════════════════════════════════════════════════
-// ПРОФИЛЬ
-// ═══════════════════════════════════════════════════════
 function updateProfile() {
   document.getElementById('pName').textContent = USER_NAME.toUpperCase();
   document.getElementById('pBal').textContent  = balance.toLocaleString('ru-RU');
@@ -810,18 +781,16 @@ function updateProfile() {
   const total = S.spins, wins = S.wins, losses = S.losses;
   const wPct  = total > 0 ? Math.round(wins   / total * 100) : 0;
   const lPct  = total > 0 ? Math.round(losses / total * 100) : 0;
-  const C     = 251.2;
-  const wA    = total > 0 ? (wins / total) * C : 0;
-  const lA    = total > 0 ? (losses / total) * C : 0;
+  const C = 251.2;
+  const wA = total > 0 ? (wins   / total) * C : 0;
+  const lA = total > 0 ? (losses / total) * C : 0;
 
   document.getElementById('dWin').setAttribute('stroke-dasharray',   `${wA} ${C}`);
   document.getElementById('dLoss').setAttribute('stroke-dasharray',  `${lA} ${C}`);
   document.getElementById('dLoss').setAttribute('stroke-dashoffset', `${-wA}`);
   document.getElementById('dPct').textContent = wPct + '%';
-
-  document.getElementById('wlW').innerHTML = `${wins} <span class="wl-pct w">${wPct}%</span>`;
+  document.getElementById('wlW').innerHTML = `${wins}   <span class="wl-pct w">${wPct}%</span>`;
   document.getElementById('wlL').innerHTML = `${losses} <span class="wl-pct l">${lPct}%</span>`;
-
   document.getElementById('pSpins').textContent = total;
   document.getElementById('pWR').textContent    = wPct + '%';
   document.getElementById('pTW').textContent    = '+' + S.totalWon.toLocaleString('ru-RU');
@@ -840,10 +809,8 @@ function updateProfile() {
     d.className = 'sd ' + (r === 'w' ? 'w' : 'l');
     sd.appendChild(d);
   });
-  const sv = document.getElementById('streakV');
-  sv.textContent = S.streak > 0
-    ? (S.streakType === 'w' ? '🔥' : '❄️') + ' ' + S.streak
-    : '—';
+  document.getElementById('streakV').textContent =
+    S.streak > 0 ? (S.streakType === 'w' ? '🔥' : '❄️') + ' ' + S.streak : '—';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -851,17 +818,17 @@ function updateProfile() {
 // ═══════════════════════════════════════════════════════
 function spawnParticles() {
   const E = ['💎','🌟','✨','💰','🎉','⭐','🔥','💫'];
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 8; i++) {
     setTimeout(() => {
       const p = document.createElement('div');
       p.className = 'particle';
       p.textContent = E[Math.floor(Math.random() * E.length)];
-      p.style.left  = (18 + Math.random() * 64) + '%';
+      p.style.left   = (15 + Math.random() * 70) + '%';
       p.style.bottom = '110px';
-      p.style.animationDuration = (1 + Math.random() * .7) + 's';
+      p.style.animationDuration = (0.9 + Math.random() * 0.8) + 's';
       document.body.appendChild(p);
-      setTimeout(() => p.remove(), 1700);
-    }, i * 72);
+      setTimeout(() => p.remove(), 1800);
+    }, i * 70);
   }
 }
 
@@ -887,26 +854,24 @@ function init() {
   updateMiniStats();
   document.getElementById('pName').textContent = (USER_NAME || 'Игрок').toUpperCase();
 
-  // Авто-выбор максимально доступной ставки
   for (const b of [5000, 1000, 500, 100]) {
     if (balance >= b) { selectBet(b); break; }
   }
 
-  setSave('ok', BOT_TOKEN ? 'СИНХРОНИЗИРОВАНО' : 'ЛОКАЛЬНОЕ ХРАНЕНИЕ');
+  setSave('ok', 'ГОТОВО');
 
-  // Показываем откуда взяли баланс
   if (URL_BAL > 0) {
-    // свежий из бота — норма, ничего не показываем
+    // Баланс получен из бота — всё ОК
   } else if (lsData && lsData.balance > 0) {
     showToast(`Баланс восстановлен: ${balance.toLocaleString('ru-RU')} 💰`, 'gold');
   }
 }
 
-// ── Сохранение при любом уходе со страницы ──
-window.addEventListener('pagehide',      () => { lsSave(balance); clearTimeout(syncTimer); syncNow(); });
-window.addEventListener('beforeunload',  () => { lsSave(balance); });
+// Сохраняем при уходе со страницы (свайп, браузер)
+window.addEventListener('pagehide',     () => lsSave(balance, sessionSpent));
+window.addEventListener('beforeunload', () => lsSave(balance, sessionSpent));
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') { lsSave(balance); scheduleSync(); }
+  if (document.visibilityState === 'hidden') lsSave(balance, sessionSpent);
 });
 
 init();
