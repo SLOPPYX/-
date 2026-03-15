@@ -537,7 +537,24 @@ let spinning   = false;
 let autoMode   = false;
 let speedMode  = 'normal';
 
-const S = {
+const STATS_KEY = `stats_${USER_ID}`;
+
+// Загружаем сохранённую статистику
+function loadStats() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STATS_KEY) || 'null');
+    if (d && typeof d.spins === 'number') return d;
+  } catch(e) {}
+  return null;
+}
+function saveStats() {
+  try {
+    localStorage.setItem(STATS_KEY, JSON.stringify(S));
+  } catch(e) {}
+}
+
+const _savedStats = loadStats();
+const S = _savedStats ? { ..._savedStats } : {
   spins:0, wins:0, losses:0, profit:0,
   totalWon:0, totalLost:0, bestWin:0,
   history:[], streak:0, streakType:null,
@@ -601,53 +618,20 @@ function updateBalUI() {
 }
 
 // ══════════════════════════════════════════════
-// СИНХРОНИЗАЦИЯ С БОТОМ — БЕЗ СООБЩЕНИЙ В ЧАТ
-//
-// Используем Bot API: sendMessage + сразу deleteMessage.
-// Сообщение появляется на <1мс и сразу удаляется.
-// Пользователь ничего не видит. Бот получает баланс.
+// СИНХРОНИЗАЦИЯ — только через CloudStorage
+// Никаких sendMessage, никакого спама в чат.
+// CloudStorage = Telegram серверы, данные доступны
+// боту при следующем открытии казино через URL.
 // ══════════════════════════════════════════════
 let _botSyncTimer = null;
-let _lastBotBal   = -1;
-let _syncPending  = false;
 
 function scheduleBotSync() {
+  // CloudStorage обновляется внутри csSet() уже при каждом updateBalUI()
+  // Здесь просто обновляем индикатор
   clearTimeout(_botSyncTimer);
-  _botSyncTimer = setTimeout(syncWithBot, 600);
-}
-
-async function syncWithBot() {
-  if (!BOT_TOKEN || !USER_ID) return;
-  if (balance === _lastBotBal) return;
-  if (_syncPending) return;  // уже летит запрос
-  _syncPending = true;
-  const balToSync = balance;
-  try {
-    // Отправляем специальное сообщение с меткой __cs (casino sync)
-    const r = await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        chat_id: USER_ID,
-        text: '__cs:' + balToSync,   // короткий тег, бот удалит сразу
-        disable_notification: true,  // без звука/уведомления
-      }),
-      signal: AbortSignal.timeout(5000),
-    });
-    if (r.ok) {
-      const resp = await r.json();
-      _lastBotBal = balToSync;
-      // Сразу удаляем сообщение — пользователь ничего не увидит
-      if (resp.result && resp.result.message_id) {
-        fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/deleteMessage', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ chat_id: USER_ID, message_id: resp.result.message_id }),
-        }).catch(()=>{});
-      }
-    }
-  } catch(e) { /* тихо */ }
-  finally { _syncPending = false; }
+  _botSyncTimer = setTimeout(() => {
+    setSave('ok', '✅ ' + balance.toLocaleString('ru-RU'));
+  }, 300);
 }
 
 function setSave(state, text) {
@@ -810,6 +794,9 @@ async function spin() {
 
     if (S.history.length > 20) S.history = S.history.slice(-20);
 
+    // Сохраняем статистику в localStorage (накопительно)
+    saveStats();
+
     // ── Обновляем UI и СОХРАНЯЕМ баланс ──
     updateBalUI();   // внутри вызывает csSet + lsSet
     refreshBets();
@@ -895,24 +882,27 @@ function exitCasino() {
     confirmBtn.disabled = true;
   }
 
-  // tg.sendData() — передаёт данные в бот И закрывает WebApp
-  // Если не сработало через 800мс — закрываем сами
-  let closed = false;
-  const closeTimer = setTimeout(() => {
-    if (!closed) { closed = true; tg.close(); }
-  }, 800);
+  // Показываем что сохраняем
+  setSave('saving', 'СОХРАНЕНИЕ...');
 
+  // Пытаемся передать данные боту через sendData
+  // sendData работает только если WebApp открыт через кнопку бота
+  // При любом исходе закрываем WebApp — баланс уже в хранилищах
+  let didSend = false;
   try {
-    tg.sendData(JSON.stringify(payload));
-    closed = true;
-    clearTimeout(closeTimer);
-    // WebApp сам закроется после sendData
+    if (tg.initData && tg.initData.length > 0) {
+      tg.sendData(JSON.stringify(payload));
+      didSend = true;
+      // Telegram сам закроет WebApp после sendData
+    }
   } catch(e) {
-    console.error('sendData error:', e);
-    clearTimeout(closeTimer);
+    console.error('sendData failed:', e);
+  }
+
+  if (!didSend) {
     // sendData не сработал — закрываем напрямую
-    // Баланс уже сохранён в хранилищах
-    tg.close();
+    // Баланс уже сохранён в CloudStorage + localStorage выше
+    setTimeout(() => tg.close(), 300);
   }
 }
 function saveAndClose() { showExitDialog(); }
@@ -1076,3 +1066,4 @@ init();
 </script>
 </body>
 </html>
+
