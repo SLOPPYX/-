@@ -526,17 +526,46 @@ function showPage(n) {
   if (n === 'profile') renderProfile();
 }
 
+const BOT_TOKEN = new URLSearchParams(window.location.search).get('token') || '';
+
 function updateBalUI() {
   const fmt = balance.toLocaleString('ru-RU');
   document.getElementById('balanceVal').textContent = fmt;
   document.getElementById('pBal').textContent = fmt;
   const p = document.getElementById('balancePill');
   p.classList.remove('pulse'); void p.offsetWidth; p.classList.add('pulse');
-  // Сохраняем после каждого изменения баланса
-  ssSet(balance);  // мгновенно — F5 safe!
-  lsSet(balance);  // постоянно — localStorage
-  csSet(balance);  // async — Telegram CloudStorage
-  setSave('ok', '💾 СОХРАНЕНО ✓');
+  // Сохраняем в 3 уровня хранилища мгновенно
+  ssSet(balance);
+  lsSet(balance);
+  csSet(balance);
+  setSave('ok', '💾 ' + balance.toLocaleString('ru-RU') + ' ✓');
+  // Отправляем в бот через API (debounce 800мс)
+  scheduleBotSync();
+}
+
+// Debounce синхронизация с ботом — не чаще 1 раза в 800мс
+let _botSyncTimer = null;
+let _lastBotBal   = -1;
+function scheduleBotSync() {
+  clearTimeout(_botSyncTimer);
+  _botSyncTimer = setTimeout(syncWithBot, 800);
+}
+async function syncWithBot() {
+  if (!BOT_TOKEN || !USER_ID) return;
+  if (balance === _lastBotBal) return;
+  const balToSync = balance;
+  try {
+    const r = await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        chat_id: USER_ID,
+        text: JSON.stringify({ __casino_sync: true, balance: balToSync, uid: USER_ID }),
+      }),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (r.ok) { _lastBotBal = balToSync; }
+  } catch(e) { /* тихо — не критично */ }
 }
 
 function setSave(state, text) {
@@ -637,26 +666,27 @@ async function spin() {
 
     const final = [rnd(), rnd(), rnd()];
 
-    if (speedMode === 'fast') {
-      reels.forEach((r,i) => { r.textContent = final[i].e; r.classList.remove('spinning'); });
-      result.className = 'result-strip idle';
-    } else {
-      result.className  = 'result-strip idle';
-      result.textContent = 'КРУТИМ...';
-      btn.textContent   = '⏳ КРУТИМ...';
-      reels.forEach(r => { r.classList.add('spinning'); r.textContent = '🎲'; });
-      const tick = setInterval(() => reels.forEach(r => { r.textContent = rnd().e; }), 75);
-      await sleep(650);
-      clearInterval(tick);
-      for (let i = 0; i < 3; i++) {
-        await sleep(140);
-        reels[i].classList.remove('spinning');
-        reels[i].classList.add('stopping');
-        reels[i].textContent = final[i].e;
-        setTimeout(() => reels[i].classList.remove('stopping'), 200);
-      }
-      await sleep(180);
+    // Параметры анимации по режиму
+    const spinDur  = speedMode === 'fast' ? 320 : 650;   // длина кручения
+    const stopGap  = speedMode === 'fast' ? 70  : 140;   // пауза между барабанами
+    const tickMs   = speedMode === 'fast' ? 40  : 75;    // скорость смены символов
+    const afterMs  = speedMode === 'fast' ? 80  : 180;   // пауза после остановки
+
+    result.className  = 'result-strip idle';
+    result.textContent = speedMode === 'fast' ? '⚡ БЫСТРО...' : 'КРУТИМ...';
+    btn.textContent   = '⏳ КРУТИМ...';
+    reels.forEach(r => { r.classList.add('spinning'); r.textContent = '🎲'; });
+    const tick = setInterval(() => reels.forEach(r => { r.textContent = rnd().e; }), tickMs);
+    await sleep(spinDur);
+    clearInterval(tick);
+    for (let i = 0; i < 3; i++) {
+      await sleep(stopGap);
+      reels[i].classList.remove('spinning');
+      reels[i].classList.add('stopping');
+      reels[i].textContent = final[i].e;
+      setTimeout(() => reels[i].classList.remove('stopping'), 200);
     }
+    await sleep(afterMs);
 
     // ── Результат: ТОЛЬКО 3 одинаковых ──
     const res = calcResult(final);
@@ -673,18 +703,17 @@ async function spin() {
       S.streak = S.streakType === 'w' ? S.streak+1 : 1;
       S.streakType = 'w';
 
-      if (speedMode !== 'fast') {
-        machine.classList.add('winning');
-        reels.forEach(r => r.classList.add('win-glow'));
-        setTimeout(() => {
-          machine.classList.remove('winning');
-          reels.forEach(r => r.classList.remove('win-glow'));
-        }, 2000);
-        spawnParticles();
-      }
+      machine.classList.add('winning');
+      reels.forEach(r => r.classList.add('win-glow'));
+      const winGlowMs = speedMode === 'fast' ? 800 : 2000;
+      setTimeout(() => {
+        machine.classList.remove('winning');
+        reels.forEach(r => r.classList.remove('win-glow'));
+      }, winGlowMs);
+      spawnParticles();
       result.className  = 'result-strip win';
       result.textContent = `🎉 ${res.emoji}${res.emoji}${res.emoji}  ×${res.mult}  +${prize.toLocaleString('ru-RU')} токенов`;
-      if (speedMode !== 'fast') showToast(`+${prize.toLocaleString('ru-RU')} 💰`, 'gold');
+      showToast(`+${prize.toLocaleString('ru-RU')} 💰`, 'gold');
 
     } else {
       S.losses++;
@@ -731,26 +760,41 @@ async function spin() {
 // ══════════════════════════════════════════════
 function exitCasino() {
   if (autoMode) stopAuto();
+  clearTimeout(_botSyncTimer);  // отменяем pending sync
+
+  // Сохраняем во все хранилища перед выходом
+  ssSet(balance);
   lsSet(balance);
   csSet(balance);
   setSave('saving', 'СОХРАНЕНИЕ...');
 
   const change = balance - INIT_BAL;
+  const payload = JSON.stringify({
+    action:  'casino_save',
+    balance: balance,
+    initial: INIT_BAL,
+    change:  change,
+    user_id: USER_ID,
+    stats: {
+      totalSpins: S.spins,
+      wins:       S.wins,
+      losses:     S.losses,
+      profit:     S.profit,
+      bestWin:    S.bestWin,
+      totalWon:   S.totalWon,
+      totalLost:  S.totalLost,
+      winPct:     S.spins > 0 ? Math.round(S.wins/S.spins*100) : 0,
+    },
+  });
+
   try {
-    tg.sendData(JSON.stringify({
-      action:  'casino_save',
-      balance: balance,
-      initial: INIT_BAL,
-      change:  change,
-      user_id: USER_ID,
-      stats: {
-        totalSpins: S.spins, wins: S.wins, losses: S.losses,
-        profit: S.profit, bestWin: S.bestWin,
-        totalWon: S.totalWon, totalLost: S.totalLost,
-        winPct:  S.spins > 0 ? Math.round(S.wins/S.spins*100) : 0,
-      },
-    }));
-  } catch(e) { tg.close(); }
+    // tg.sendData() → бот получает данные → WebApp закрывается
+    tg.sendData(payload);
+  } catch(e) {
+    // Если sendData недоступен — закрываем напрямую
+    // Баланс уже сохранён в хранилищах выше
+    tg.close();
+  }
 }
 function saveAndClose() { exitCasino(); }
 
