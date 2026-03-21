@@ -855,16 +855,25 @@ function hideExitDialog() {
   document.getElementById('exitOverlay').classList.remove('show');
 }
 function confirmExit() {
-  // Сохраняем сразу
+  // 1. localStorage — мгновенно
   try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
-  // Передаём баланс боту — fire-and-forget, не ждём
+
+  // 2. API fetch — fire-and-forget
   if(API_URL && API_SECRET) {
     fetch(API_URL+'/casino/exit', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ uid:parseInt(USER_ID), secret:API_SECRET, balance }),
     }).catch(()=>{});
   }
-  tg.close();
+
+  // 3. tg.sendData — ГАРАНТИРОВАННАЯ доставка боту
+  // Telegram сам доставит данные и закроет WebApp
+  try {
+    tg.sendData(JSON.stringify({ action:'casino_exit', balance, user_id:USER_ID }));
+  } catch(e) {
+    // sendData недоступен — закрываем напрямую (данные уже в fetch)
+    tg.close();
+  }
 }
 function saveAndClose() { showExitDialog(); }
 
