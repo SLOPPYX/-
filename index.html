@@ -998,7 +998,68 @@ async function init() {
   if(bSpinBtn) { bSpinBtn.disabled=false; bSpinBtn.textContent='🎰 Крутить!'; }
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
   setSave('ok','✅ '+balance.toLocaleString('ru-RU'));
+
+  // Запускаем фоновый опрос баланса — обновляем пока казино открыто
+  startBalancePolling();
 }
+
+// ══════════════════════════════════════════════════════════
+// ФОНОВЫЙ ОПРОС БАЛАНСА
+// Каждые 5 секунд проверяем актуальный баланс из бота.
+// Если баланс вырос (пользователь пополнил в боте) — обновляем.
+// Если уменьшился (другое устройство) — тоже обновляем.
+// Во время спина не опрашиваем — не мешаем игре.
+// ══════════════════════════════════════════════════════════
+let _pollTimer = null;
+let _pollActive = false;
+
+function startBalancePolling() {
+  if(!API_URL || !API_SECRET) return;
+  stopBalancePolling();
+  _pollTimer = setInterval(pollBalance, 5000);  // каждые 5 сек
+}
+function stopBalancePolling() {
+  if(_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+}
+
+async function pollBalance() {
+  // Не опрашиваем во время спина — не мешаем игре
+  if(spinning || _pollActive) return;
+  _pollActive = true;
+  try {
+    const r = await fetch(
+      API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
+      { signal: AbortSignal.timeout(3000) }
+    );
+    if(r.ok) {
+      const d = await r.json();
+      if(d.ok && typeof d.balance==='number' && d.balance !== balance) {
+        const diff = d.balance - balance;
+        balance  = d.balance;
+        INIT_BAL = d.balance;
+        localStorage.setItem('bal_'+USER_ID, String(balance));
+        updateBalUI(); refreshBets();
+        // Показываем уведомление только если баланс вырос (пополнение)
+        if(diff > 0) {
+          showToast(`💰 Баланс обновлён: +${diff.toLocaleString('ru-RU')}`, 'gold');
+        }
+      }
+    }
+  } catch(e) { /* тихо */ }
+  finally { _pollActive = false; }
+}
+
+// Останавливаем polling при уходе со страницы
+window.addEventListener('pagehide', stopBalancePolling);
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'hidden') {
+    stopBalancePolling();
+  } else if(document.visibilityState === 'visible' && API_URL) {
+    // Вернулись на страницу — сразу обновляем и перезапускаем polling
+    pollBalance();
+    startBalancePolling();
+  }
+});
 
 init();
 </script>
