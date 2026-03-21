@@ -413,7 +413,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="pt-row"><span class="pt-syms">⭐⭐⭐</span><span class="pt-mult" style="color:var(--cyan)">× 10</span></div>
       <div class="pt-row"><span class="pt-syms">🔔🔔🔔</span><span class="pt-mult">× 5</span></div>
       <div class="pt-row"><span class="pt-syms">🍋🍋🍋</span><span class="pt-mult" style="color:var(--text)">× 3</span></div>
-      <div class="pt-row"><span class="pt-syms" style="font-size:12px">Любая пара 🍒🍒</span><span class="pt-mult" style="color:var(--muted)">× 1 (возврат)</span></div>
+      <div class="pt-row"><span class="pt-syms" style="font-size:12px">Пара 💎💎 / 7️⃣7️⃣ / 🍒🍒</span><span class="pt-mult" style="color:var(--cyan)">× 2</span></div>
+      <div class="pt-row"><span class="pt-syms" style="font-size:12px">Пара ⭐⭐ / 🔔🔔 / 🍋🍋</span><span class="pt-mult" style="color:var(--muted)">× 1 (возврат)</span></div>
       <div class="pt-row"><span class="pt-syms" style="font-size:13px;color:var(--muted)">Остальное</span><span class="pt-mult zero">проигрыш</span></div>
     </div>
     <div class="pt-card">
@@ -526,17 +527,18 @@ const S = _ss ? {..._ss} : { spins:0,wins:0,losses:0,profit:0,totalWon:0,totalLo
 // m2 = множитель за 2 одинаковых (×1 = возврат ставки)
 // w  = вес символа на барабане
 // ═══════════════════════════════════════════════════
-// TW = 20+30+50+60+70+80+20+20 = 350
-// Выигрыш ~40% / Проигрыш ~60% (математически точно)
+// TW = 35+45+65+75+85+90+15+15 = 425
+// Тройки: ~1 раз в 35 спинов | Выигрыш ~41% / Проигрыш ~59%
+// Пары 💎💎 7️⃣7️⃣ 🍒🍒 = ×2  |  Пары ⭐⭐ 🔔🔔 🍋🍋 = ×1
 const SYMS = [
-  {e:'💎', m3:100, m2:1, w:20},
-  {e:'7️⃣', m3:50,  m2:1, w:30},
-  {e:'🍒', m3:30,  m2:1, w:50},
-  {e:'⭐',  m3:10,  m2:1, w:60},
-  {e:'🔔', m3:5,   m2:1, w:70},
-  {e:'🍋', m3:3,   m2:1, w:80},
-  {e:'🍊', m3:0,   m2:0, w:20},
-  {e:'🍇', m3:0,   m2:0, w:20},
+  {e:'💎', m3:100, m2:2, w:35},
+  {e:'7️⃣', m3:50,  m2:2, w:45},
+  {e:'🍒', m3:30,  m2:2, w:65},
+  {e:'⭐',  m3:10,  m2:1, w:75},
+  {e:'🔔', m3:5,   m2:1, w:85},
+  {e:'🍋', m3:3,   m2:1, w:90},
+  {e:'🍊', m3:0,   m2:0, w:15},
+  {e:'🍇', m3:0,   m2:0, w:15},
 ];
 const TW = SYMS.reduce((a,s)=>a+s.w, 0);
 function rnd() {
@@ -800,10 +802,15 @@ async function spin() {
         showToast(`+${prize.toLocaleString('ru-RU')} 💰`, tier>=2 ? 'gold' : 'info');
 
       } else {
-        // Пара ×1 — возврат ставки, без свечения
+        // Пара — ×2 или ×1 в зависимости от символа
         result.className='result-strip win';
-        result.textContent=`🤝 Пара ${res.emoji}${res.emoji}  ×1  ±0 токенов (ставка возвращена)`;
-        showToast(`Пара ${res.emoji}${res.emoji} — ставка возвращена`, 'info');
+        if(res.mult >= 2) {
+          result.textContent=`✨ Пара ${res.emoji}${res.emoji}  ×${res.mult}  +${prize.toLocaleString('ru-RU')} токенов`;
+          showToast(`+${prize.toLocaleString('ru-RU')} ✨`, 'gold');
+        } else {
+          result.textContent=`🤝 Пара ${res.emoji}${res.emoji}  ×1  ±0 (ставка возвращена)`;
+          showToast(`Пара ${res.emoji}${res.emoji} — возврат`, 'info');
+        }
       }
 
     } else {
@@ -997,4 +1004,3 @@ init();
 </script>
 </body>
 </html>
-
