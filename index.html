@@ -606,19 +606,21 @@ function showPage(n) {
 // ══════════════════════════════════════════════════════════
 // БАЛАНС UI
 // ══════════════════════════════════════════════════════════
-function updateBalUI() {
-  const fmt = balance.toLocaleString('ru-RU');
+// Прямое обновление DOM — без rAF, без задержек
+function setBalDOM(val) {
+  const fmt = val.toLocaleString('ru-RU');
   document.getElementById('balanceVal').textContent = fmt;
-  document.getElementById('pBal').textContent = fmt;
-  // Без void offsetWidth (forced reflow!) — используем data-attr трюк
+  document.getElementById('pBal').textContent       = fmt;
+  // Перезапускаем CSS анимацию пилюли
   const p = document.getElementById('balancePill');
-  p.style.animation='none';
-  requestAnimationFrame(()=>{
-    p.style.animation='';
-    p.classList.remove('pulse');
-    p.classList.add('pulse');
-  });
-  setSave('ok', '✅ ' + fmt);
+  p.classList.remove('pulse');
+  void p.offsetWidth;
+  p.classList.add('pulse');
+}
+
+function updateBalUI() {
+  setBalDOM(balance);
+  setSave('ok', '✅ ' + balance.toLocaleString('ru-RU'));
 }
 
 function setSave(state, text) {
@@ -747,16 +749,15 @@ async function spin() {
     const apiResp = await apiPromise;
 
     if(apiResp && apiResp.ok) {
-      balance = apiResp.balance;  // баланс от бота — авторитетный
+      balance = apiResp.balance;
     } else {
       balance -= currentBet;
       if(res.win) balance += currentBet * res.mult;
       if(balance < 0) balance = 0;
     }
-    // Сохраняем и показываем СРАЗУ — ДО анимации результата
+    // Сразу в DOM и localStorage
     localStorage.setItem('bal_'+USER_ID, String(balance));
-    document.getElementById('balanceVal').textContent = balance.toLocaleString('ru-RU');
-    document.getElementById('pBal').textContent = balance.toLocaleString('ru-RU');
+    setBalDOM(balance);
     setSave('ok','✅ ' + balance.toLocaleString('ru-RU'));
 
     S.spins++;
@@ -957,53 +958,47 @@ function sleep(ms){
 async function init() {
   document.getElementById('pName').textContent=(USER_NAME||'Игрок').toUpperCase();
 
-  // Шаг 1: показываем что-то сразу (placeholder) — localStorage или URL
+  // URL_BAL — баланс переданный ботом в момент открытия (всегда актуальный)
+  // localStorage — резерв если URL_BAL = 0 (обновление страницы)
   const lsBal = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
-  balance  = lsBal > 0 ? lsBal : URL_BAL;
+  balance  = URL_BAL > 0 ? URL_BAL : (lsBal > 0 ? lsBal : 0);
   INIT_BAL = balance;
-  updateBalUI(); updateMiniStats();
+
+  // Показываем сразу
+  setBalDOM(balance);
+  refreshBets(); updateMiniStats();
+  setSave('ok', '✅ '+balance.toLocaleString('ru-RU'));
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
 
-  if(!API_URL || !API_SECRET) {
-    refreshBets();
-    setSave('ok', '✅ '+balance.toLocaleString('ru-RU'));
-    return;
-  }
-
-  // Шаг 2: ВСЕГДА запрашиваем актуальный баланс из бота
-  // Кнопка заблокирована пока не получим ответ
-  const spinBtn  = document.getElementById('spinBtn');
-  const bSpinBtn = document.getElementById('bSpinBtn');
-  if(spinBtn)  { spinBtn.disabled=true;  spinBtn.textContent='⏳'; }
-  if(bSpinBtn) { bSpinBtn.disabled=true; bSpinBtn.textContent='⏳'; }
-  setSave('saving','⏳ Загрузка...');
-
-  try {
-    const r = await fetch(
-      API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { signal: AbortSignal.timeout(4000) }
-    );
-    if(r.ok) {
-      const d = await r.json();
-      if(d.ok && typeof d.balance==='number') {
-        balance  = d.balance;
-        INIT_BAL = d.balance;
-        localStorage.setItem('bal_'+USER_ID, String(balance));
+  // Если есть API — загружаем актуальный баланс с сервера
+  if(API_URL && API_SECRET) {
+    const spinBtn  = document.getElementById('spinBtn');
+    const bSpinBtn = document.getElementById('bSpinBtn');
+    if(spinBtn)  { spinBtn.disabled=true;  spinBtn.textContent='⏳'; }
+    if(bSpinBtn) { bSpinBtn.disabled=true; bSpinBtn.textContent='⏳'; }
+    setSave('saving','⏳ Загрузка...');
+    try {
+      const r = await fetch(
+        API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
+        { signal: AbortSignal.timeout(4000) }
+      );
+      if(r.ok) {
+        const d = await r.json();
+        if(d.ok && typeof d.balance==='number') {
+          balance  = d.balance;
+          INIT_BAL = d.balance;
+          localStorage.setItem('bal_'+USER_ID, String(balance));
+          setBalDOM(balance);
+          for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
+        }
       }
-    }
-  } catch(e) { /* API недоступен — играем на кешированном */ }
-
-  // Разблокируем и показываем актуальный баланс
-  document.getElementById('balanceVal').textContent = balance.toLocaleString('ru-RU');
-  document.getElementById('pBal').textContent       = balance.toLocaleString('ru-RU');
-  setSave('ok','✅ '+balance.toLocaleString('ru-RU'));
-  refreshBets();
-  if(spinBtn)  { spinBtn.disabled=false;  spinBtn.textContent='🎰 КРУТИТЬ'; }
-  if(bSpinBtn) { bSpinBtn.disabled=false; bSpinBtn.textContent='🎰 Крутить!'; }
-  for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
-
-  // Запускаем фоновый опрос баланса — обновляем пока казино открыто
-  startBalancePolling();
+    } catch(e) {}
+    if(spinBtn)  { spinBtn.disabled=false;  spinBtn.textContent='🎰 КРУТИТЬ'; }
+    if(bSpinBtn) { bSpinBtn.disabled=false; bSpinBtn.textContent='🎰 Крутить!'; }
+    refreshBets();
+    setSave('ok','✅ '+balance.toLocaleString('ru-RU'));
+    startBalancePolling();
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1036,17 +1031,15 @@ async function pollBalance() {
     if(!r.ok) return;
     const d = await r.json();
     if(!d.ok || typeof d.balance !== 'number') return;
-    const srv = d.balance;
-    if(srv === balance) return;        // без изменений — ничего не делаем
-    const diff = srv - balance;
-    balance  = srv;
-    INIT_BAL = srv;
+
+    if(d.balance === balance) return;  // без изменений
+    const diff = d.balance - balance;
+    balance  = d.balance;
+    INIT_BAL = d.balance;
     localStorage.setItem('bal_'+USER_ID, String(balance));
-    // Обновляем DOM напрямую — без rAF, без задержек
-    document.getElementById('balanceVal').textContent = balance.toLocaleString('ru-RU');
-    document.getElementById('pBal').textContent       = balance.toLocaleString('ru-RU');
-    setSave('ok','✅ ' + balance.toLocaleString('ru-RU'));
+    setBalDOM(balance);  // прямой DOM
     refreshBets();
+    setSave('ok','✅ ' + balance.toLocaleString('ru-RU'));
     if(diff > 0) {
       showToast('💰 +' + diff.toLocaleString('ru-RU') + ' токенов!', 'gold');
       _showBanner('🎁 +' + diff.toLocaleString('ru-RU') + ' токенов!');
@@ -1090,4 +1083,3 @@ init();
 </script>
 </body>
 </html>
-
