@@ -471,15 +471,10 @@ try { tg.enableClosingConfirmation(); } catch(e){}
 // ПАРАМЕТРЫ из URL
 // ══════════════════════════════════════════════════════════
 const P          = new URLSearchParams(window.location.search);
-// USER_ID всегда число — бот передаёт числовой Telegram ID
-const USER_ID    = String(parseInt(P.get('user_id') || String(tg.initDataUnsafe?.user?.id || '0'), 10));
+const USER_ID    = P.get('user_id')    || String(tg.initDataUnsafe?.user?.id || '');
 const URL_BAL    = parseInt(P.get('balance') || '0', 10);
-// API_URL — двойное декодирование на случай двойного кодирования
-const _rawApiUrl = P.get('api_url') || '';
-const API_URL    = decodeURIComponent(decodeURIComponent(_rawApiUrl)).replace(/\/$/, '');
+const API_URL    = decodeURIComponent(P.get('api_url')    || '');
 const API_SECRET = P.get('api_secret') || '';
-// Диагностика при старте
-console.log('🎰 Casino init:', {USER_ID, API_URL: API_URL||'❌ пусто', API_SECRET: API_SECRET?'✅':'❌ пусто'});
 
 // ── Профиль: берём из URL, сохраняем в localStorage навсегда ──
 const PROF_KEY = 'profile_' + USER_ID;
@@ -993,68 +988,48 @@ function sleep(ms){
 // INIT
 // ══════════════════════════════════════════════════════════
 async function init() {
-  document.getElementById('pName').textContent=(USER_NAME||'Игрок').toUpperCase();
+  document.getElementById('pName').textContent = (USER_NAME||'Игрок').toUpperCase();
 
-  // Шаг 1: показываем placeholder мгновенно
-  // НЕ читаем localStorage здесь — он может быть устаревшим
-  // URL_BAL — баланс который бот передал при открытии (актуален при первом открытии)
-  balance = URL_BAL > 0 ? URL_BAL : 0;
+  // Показываем URL_BAL сразу — бот всегда передаёт актуальный
+  balance  = URL_BAL > 0 ? URL_BAL : 0;
   INIT_BAL = balance;
   updateBalUI(); updateMiniStats();
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
 
   if(!API_URL || !API_SECRET) {
-    // Нет API — читаем кеш как запасной вариант
-    const lsBal = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
-    if(lsBal > 0) { balance = lsBal; INIT_BAL = lsBal; updateBalUI(); }
     refreshBets();
+    setSave('ok','✅ '+balance.toLocaleString('ru-RU'));
     return;
   }
 
-  // Шаг 2: ВСЕГДА загружаем актуальный баланс из бота
-  // Кнопка заблокирована — нельзя играть пока не получим реальный баланс
+  // Блокируем — загружаем реальный баланс из бота
   const spinBtn  = document.getElementById('spinBtn');
   const bSpinBtn = document.getElementById('bSpinBtn');
   if(spinBtn)  { spinBtn.disabled=true;  spinBtn.textContent='⏳'; }
   if(bSpinBtn) { bSpinBtn.disabled=true; bSpinBtn.textContent='⏳'; }
   setSave('saving','⏳ Загрузка...');
 
-  let gotBalance = false;
-  if(!API_URL) {
-    console.error('❌ API_URL пустой! Проверь что ngrok запущен и /setngrok обновлён');
-    setApiStatus(false);
-  } else {
-    try {
-      const balUrl = API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET;
-      console.log('📡 Запрос баланса:', balUrl);
-      const r = await fetch(balUrl, { signal: AbortSignal.timeout(5000) });
-      console.log('📡 Ответ:', r.status, r.ok);
-      if(r.ok) {
-        const d = await r.json();
-        console.log('📡 Данные:', d);
-        if(d.ok && typeof d.balance === 'number') {
-          balance  = d.balance;
-          INIT_BAL = d.balance;
-          saveBalToCache();
-          updateBalUI();
-          gotBalance = true;
-          setApiStatus(true);
-        } else {
-          console.error('❌ Неверный ответ API:', d);
-        }
-      } else {
-        const err = await r.text();
-        console.error('❌ API вернул', r.status, err);
+  try {
+    const r = await fetch(
+      API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
+      { signal: AbortSignal.timeout(5000) }
+    );
+    if(r.ok) {
+      const d = await r.json();
+      if(d.ok && typeof d.balance==='number') {
+        balance  = d.balance;
+        INIT_BAL = d.balance;
+        // Сохраняем в кеш ТОЛЬКО актуальный баланс от бота
+        try { localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
+        updateBalUI();
+        setApiStatus(true);
       }
-    } catch(e) {
-      console.error('❌ Fetch упал:', e.message, '| URL:', API_URL);
+    } else {
+      // API ответил ошибкой — показываем что есть
+      setApiStatus(false);
     }
-  }
-
-  if(!gotBalance) {
-    const lsBal = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
-    if(lsBal > 0) { balance = lsBal; INIT_BAL = lsBal; updateBalUI(); }
-    setSave('ok', '✅ ' + balance.toLocaleString('ru-RU') + ' (кеш)');
+  } catch(e) {
+    // API недоступен — показываем URL_BAL как есть
     setApiStatus(false);
   }
 
@@ -1096,20 +1071,20 @@ async function pollBalance() {
     if(!r.ok) return;
     const d = await r.json();
     if(!d.ok || typeof d.balance !== 'number') return;
-    if(d.balance === balance) return;  // без изменений — выходим
+    if(d.balance === balance) return;
     const diff = d.balance - balance;
     balance  = d.balance;
     INIT_BAL = d.balance;
-    saveBalToCache();
+    try { localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
     updateBalUI();
     refreshBets();
-    setApiStatus(true);  // связь есть
+    setApiStatus(true);
     if(diff > 0) {
       showToast('💰 +' + diff.toLocaleString('ru-RU') + ' токенов!', 'gold');
       _showBanner('🎁 +' + diff.toLocaleString('ru-RU') + ' токенов!');
     }
   } catch(e) {
-    setApiStatus(false);  // ошибка polling — связь потеряна
+    setApiStatus(false);
   }
   finally { _pollActive = false; }
 }
