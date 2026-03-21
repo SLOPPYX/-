@@ -462,6 +462,8 @@ tg.expand();
 try { tg.setHeaderColor('#050510'); tg.setBackgroundColor('#050510'); } catch(e){}
 tg.BackButton.show();
 tg.BackButton.onClick(showExitDialog);
+// Крестик закрытия — показываем наш диалог
+try { tg.enableClosingConfirmation(); } catch(e){}
 
 // ══════════════════════════════════════════════════════════
 // ПАРАМЕТРЫ из URL
@@ -855,10 +857,10 @@ function hideExitDialog() {
   document.getElementById('exitOverlay').classList.remove('show');
 }
 function confirmExit() {
-  // 1. localStorage — мгновенно
+  // Сохраняем в localStorage
   try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
 
-  // 2. API fetch — fire-and-forget
+  // Отправляем баланс боту через API (fire-and-forget)
   if(API_URL && API_SECRET) {
     fetch(API_URL+'/casino/exit', {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -866,12 +868,11 @@ function confirmExit() {
     }).catch(()=>{});
   }
 
-  // 3. tg.sendData — ГАРАНТИРОВАННАЯ доставка боту
-  // Telegram сам доставит данные и закроет WebApp
+  // tg.sendData — Telegram доставит данные боту и закроет WebApp
+  // Если sendData не работает — закрываем напрямую
   try {
     tg.sendData(JSON.stringify({ action:'casino_exit', balance, user_id:USER_ID }));
   } catch(e) {
-    // sendData недоступен — закрываем напрямую (данные уже в fetch)
     tg.close();
   }
 }
@@ -984,11 +985,11 @@ async function init() {
       }
     } else {
       console.warn('API ответил с ошибкой:', r.status);
-      setSave('error', '⚠️ Ошибка API');
+      setSave('ok', '✅ '+balance.toLocaleString('ru-RU')+' (кеш)');
     }
   } catch(e) {
     console.warn('API недоступен:', e.message);
-    setSave('error', '⚠️ Нет связи с ботом');
+    setSave('ok', '✅ '+balance.toLocaleString('ru-RU')+' (кеш)');
   }
 
   if(spinBtn)  { spinBtn.disabled=false;  spinBtn.textContent='🎰 КРУТИТЬ'; }
