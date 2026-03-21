@@ -465,14 +465,9 @@ try { tg.setHeaderColor('#050510'); tg.setBackgroundColor('#050510'); } catch(e)
 tg.BackButton.show();
 tg.BackButton.onClick(showExitDialog);
 
-// Крестик закрытия → тоже наш диалог
-// enableClosingConfirmation показывает системный попап Telegram,
-// но мы дополнительно перехватываем через onEvent
+// Крестик — Telegram показывает системный попап "Закрыть?"
+// НЕ используем viewportChanged — он срабатывает при любом скролле/клавиатуре
 try { tg.enableClosingConfirmation(); } catch(e){}
-tg.onEvent('viewportChanged', function(e){
-  // Когда WebApp пытаются закрыть через крестик — viewport уменьшается
-  if(e && !e.is_state_stable) showExitDialog();
-});
 
 // ══════════════════════════════════════════════════════════
 // ПАРАМЕТРЫ из URL
@@ -872,21 +867,28 @@ function hideExitDialog() {
   document.getElementById('exitOverlay').classList.remove('show');
 }
 function confirmExit() {
-  // Сохраняем в localStorage мгновенно (синхронно)
+  // Сохраняем в localStorage мгновенно
   try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
 
-  // Fire-and-forget — не ждём ответа, закрываем сразу
-  // Баланс уже сохранён в боте после каждого спина через /casino/spin
-  if(API_URL && API_SECRET) {
-    fetch(API_URL+'/casino/exit', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ uid:parseInt(USER_ID), secret:API_SECRET }),
-    }).catch(()=>{});
+  // tg.sendData → закрывает WebApp И бот получает данные → присылает главное меню
+  try {
+    tg.sendData(JSON.stringify({
+      action:  'casino_exit',
+      balance: balance,
+      user_id: USER_ID,
+    }));
+    // WebApp закрывается автоматически
+  } catch(e) {
+    // Если sendData недоступен (нет initData) — fire-and-forget + close
+    if(API_URL && API_SECRET) {
+      fetch(API_URL+'/casino/exit', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ uid:parseInt(USER_ID), secret:API_SECRET }),
+      }).catch(()=>{});
+    }
+    tg.close();
   }
-
-  // Закрываем немедленно — без ожидания
-  tg.close();
 }
 function saveAndClose() { showExitDialog(); }
 
@@ -1089,18 +1091,14 @@ function showBalanceAlert(amount) {
   }, 3500);
 }
 
-// При возврате на вкладку — СРАЗУ обновляем баланс из бота
+// При возврате на страницу — сразу обновляем баланс из бота
 document.addEventListener('visibilitychange', () => {
   if(document.visibilityState === 'visible') {
-    // Мгновенно обновляем баланс при возврате (решает проблему с F5)
-    pollBalance();
+    pollBalance();  // мгновенно берём актуальный баланс
     if(!_pollTimer) startBalancePolling();
-  } else {
-    // Уходим — останавливаем polling чтобы не тратить ресурсы
-    stopBalancePolling();
   }
+  // НЕ останавливаем при скрытии — polling продолжается в фоне
 });
-// При загрузке страницы (в т.ч. после F5) — баланс уже берётся в init() из API
 window.addEventListener('pagehide', stopBalancePolling);
 
 init();
