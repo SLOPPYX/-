@@ -950,26 +950,31 @@ function sleep(ms){
 async function init() {
   document.getElementById('pName').textContent=(USER_NAME||'Игрок').toUpperCase();
 
-  // Показываем кеш сразу (мгновенно)
-  const lsBal = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
-  balance = lsBal > 0 ? lsBal : URL_BAL;
+  // Шаг 1: показываем placeholder мгновенно
+  // НЕ читаем localStorage здесь — он может быть устаревшим
+  // URL_BAL — баланс который бот передал при открытии (актуален при первом открытии)
+  balance = URL_BAL > 0 ? URL_BAL : 0;
   INIT_BAL = balance;
   updateBalUI(); updateMiniStats();
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
 
   if(!API_URL || !API_SECRET) {
+    // Нет API — читаем кеш как запасной вариант
+    const lsBal = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
+    if(lsBal > 0) { balance = lsBal; INIT_BAL = lsBal; updateBalUI(); }
     refreshBets();
-    setSave('ok', '✅ '+balance.toLocaleString('ru-RU'));
     return;
   }
 
-  // Блокируем кнопку — загружаем баланс из бота
+  // Шаг 2: ВСЕГДА загружаем актуальный баланс из бота
+  // Кнопка заблокирована — нельзя играть пока не получим реальный баланс
   const spinBtn  = document.getElementById('spinBtn');
   const bSpinBtn = document.getElementById('bSpinBtn');
   if(spinBtn)  { spinBtn.disabled=true;  spinBtn.textContent='⏳'; }
   if(bSpinBtn) { bSpinBtn.disabled=true; bSpinBtn.textContent='⏳'; }
-  setSave('saving','⏳ Подключение к боту...');
+  setSave('saving','⏳ Загрузка...');
 
+  let gotBalance = false;
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
@@ -977,20 +982,24 @@ async function init() {
     );
     if(r.ok) {
       const d = await r.json();
-      if(d.ok && typeof d.balance==='number') {
+      if(d.ok && typeof d.balance === 'number') {
         balance  = d.balance;
         INIT_BAL = d.balance;
-        saveBalToCache();
+        saveBalToCache();   // записываем актуальный кеш
         updateBalUI();
+        gotBalance = true;
         console.log('✅ Баланс из бота:', balance);
       }
-    } else {
-      console.warn('API ответил с ошибкой:', r.status);
-      setSave('ok', '✅ '+balance.toLocaleString('ru-RU')+' (кеш)');
     }
   } catch(e) {
-    console.warn('API недоступен:', e.message);
-    setSave('ok', '✅ '+balance.toLocaleString('ru-RU')+' (кеш)');
+    console.warn('Бот недоступен:', e.message);
+  }
+
+  if(!gotBalance) {
+    // Бот не ответил — берём из кеша как запасной вариант
+    const lsBal = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
+    if(lsBal > 0) { balance = lsBal; INIT_BAL = lsBal; updateBalUI(); }
+    setSave('ok', '✅ ' + balance.toLocaleString('ru-RU'));
   }
 
   if(spinBtn)  { spinBtn.disabled=false;  spinBtn.textContent='🎰 КРУТИТЬ'; }
