@@ -784,23 +784,27 @@ function showExitDialog() {
 function hideExitDialog() {
   document.getElementById('exitOverlay').classList.remove('show');
 }
-function confirmExit() {
-  // Сохраняем в localStorage немедленно (синхронно)
+async function confirmExit() {
+  const btn = document.querySelector('.exit-btn-confirm');
+  if(btn){ btn.textContent='⏳ Выход...'; btn.disabled=true; }
+
+  // Сохраняем в localStorage мгновенно
   try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
 
-  // tg.sendData: передаёт баланс боту И закрывает WebApp — мгновенно, без зависания
-  try {
-    tg.sendData(JSON.stringify({
-      action:  'casino_exit',
-      balance: balance,
-      user_id: USER_ID,
-      stats:   { totalSpins:S.spins, wins:S.wins, losses:S.losses }
-    }));
-    // WebApp закрывается сам, бот получит данные и пришлёт главное меню
-  } catch(e) {
-    // Запасной вариант (тест в браузере, нет initData)
-    tg.close();
+  // Отправляем на API бота — он сохранит баланс и пришлёт главное меню
+  if(API_URL && API_SECRET) {
+    try {
+      await fetch(API_URL+'/casino/exit', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ uid:parseInt(USER_ID), secret:API_SECRET }),
+        signal: AbortSignal.timeout(4000),
+      });
+    } catch(e) { /* тихо — баланс уже в localStorage */ }
   }
+
+  // Закрываем WebApp
+  tg.close();
 }
 function saveAndClose() { showExitDialog(); }
 
