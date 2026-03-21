@@ -471,10 +471,15 @@ try { tg.enableClosingConfirmation(); } catch(e){}
 // ПАРАМЕТРЫ из URL
 // ══════════════════════════════════════════════════════════
 const P          = new URLSearchParams(window.location.search);
-const USER_ID    = P.get('user_id')    || String(tg.initDataUnsafe?.user?.id || '');
+// USER_ID всегда число — бот передаёт числовой Telegram ID
+const USER_ID    = String(parseInt(P.get('user_id') || String(tg.initDataUnsafe?.user?.id || '0'), 10));
 const URL_BAL    = parseInt(P.get('balance') || '0', 10);
-const API_URL    = decodeURIComponent(P.get('api_url')    || '');
+// API_URL — двойное декодирование на случай двойного кодирования
+const _rawApiUrl = P.get('api_url') || '';
+const API_URL    = decodeURIComponent(decodeURIComponent(_rawApiUrl)).replace(/\/$/, '');
 const API_SECRET = P.get('api_secret') || '';
+// Диагностика при старте
+console.log('🎰 Casino init:', {USER_ID, API_URL: API_URL||'❌ пусто', API_SECRET: API_SECRET?'✅':'❌ пусто'});
 
 // ── Профиль: берём из URL, сохраняем в localStorage навсегда ──
 const PROF_KEY = 'profile_' + USER_ID;
@@ -1015,33 +1020,42 @@ async function init() {
   setSave('saving','⏳ Загрузка...');
 
   let gotBalance = false;
-  try {
-    const r = await fetch(
-      API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { signal: AbortSignal.timeout(5000) }
-    );
-    if(r.ok) {
-      const d = await r.json();
-      if(d.ok && typeof d.balance === 'number') {
-        balance  = d.balance;
-        INIT_BAL = d.balance;
-        saveBalToCache();   // записываем актуальный кеш
-        updateBalUI();
-        gotBalance = true;
-        console.log('✅ Баланс из бота:', balance);
-        setApiStatus(true);  // подключение OK
+  if(!API_URL) {
+    console.error('❌ API_URL пустой! Проверь что ngrok запущен и /setngrok обновлён');
+    setApiStatus(false);
+  } else {
+    try {
+      const balUrl = API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET;
+      console.log('📡 Запрос баланса:', balUrl);
+      const r = await fetch(balUrl, { signal: AbortSignal.timeout(5000) });
+      console.log('📡 Ответ:', r.status, r.ok);
+      if(r.ok) {
+        const d = await r.json();
+        console.log('📡 Данные:', d);
+        if(d.ok && typeof d.balance === 'number') {
+          balance  = d.balance;
+          INIT_BAL = d.balance;
+          saveBalToCache();
+          updateBalUI();
+          gotBalance = true;
+          setApiStatus(true);
+        } else {
+          console.error('❌ Неверный ответ API:', d);
+        }
+      } else {
+        const err = await r.text();
+        console.error('❌ API вернул', r.status, err);
       }
+    } catch(e) {
+      console.error('❌ Fetch упал:', e.message, '| URL:', API_URL);
     }
-  } catch(e) {
-    console.warn('Бот недоступен:', e.message);
   }
 
   if(!gotBalance) {
-    // Бот не ответил — берём из кеша как запасной вариант
     const lsBal = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
     if(lsBal > 0) { balance = lsBal; INIT_BAL = lsBal; updateBalUI(); }
     setSave('ok', '✅ ' + balance.toLocaleString('ru-RU') + ' (кеш)');
-    setApiStatus(false);  // нет связи — показываем предупреждение
+    setApiStatus(false);
   }
 
   if(spinBtn)  { spinBtn.disabled=false;  spinBtn.textContent='🎰 КРУТИТЬ'; }
@@ -1146,4 +1160,3 @@ init();
 </script>
 </body>
 </html>
-
