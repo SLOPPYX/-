@@ -866,8 +866,6 @@ async function spin() {
     refreshBets();
     updateMiniStats();
     btn.textContent='🎰 КРУТИТЬ';
-    // Мгновенный опрос после спина — не ждём следующего тика polling
-    setTimeout(pollBalance, 300);
     document.getElementById('spinCount').textContent=`×${S.spins}`;
 
     if(currentBet>balance && balance>=MIN_BET){
@@ -899,10 +897,14 @@ function hideExitDialog() {
   document.getElementById('exitOverlay').classList.remove('show');
 }
 function confirmExit() {
-  // Сохраняем в localStorage
+  // Меняем кнопку — визуальная обратная связь
+  const btn = document.querySelector('.exit-btn-confirm');
+  if(btn) { btn.textContent = '⏳'; btn.disabled = true; }
+
+  // Сохраняем в localStorage синхронно
   saveBalToCache();
 
-  // Отправляем баланс боту через API (fire-and-forget)
+  // API fire-and-forget
   if(API_URL && API_SECRET) {
     fetch(API_URL+'/casino/exit', {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -910,12 +912,15 @@ function confirmExit() {
     }).catch(()=>{});
   }
 
-  // tg.sendData — Telegram доставит данные боту и закроет WebApp
-  // Если sendData не работает — закрываем напрямую
+  // Закрываем через 500мс в любом случае — никогда не зависаем
+  const _closeTimer = setTimeout(() => tg.close(), 500);
+
+  // sendData — бот получит данные и пришлёт главное меню
   try {
     tg.sendData(JSON.stringify({ action:'casino_exit', balance, user_id:USER_ID }));
+    clearTimeout(_closeTimer);  // sendData сам закроет WebApp
   } catch(e) {
-    tg.close();
+    // sendData недоступен — закрываемся по таймеру выше
   }
 }
 function saveAndClose() { showExitDialog(); }
@@ -992,8 +997,10 @@ function sleep(ms){
 async function init() {
   document.getElementById('pName').textContent = (USER_NAME||'Игрок').toUpperCase();
 
-  // Показываем URL_BAL сразу — бот всегда передаёт актуальный
-  balance  = URL_BAL > 0 ? URL_BAL : 0;
+  // При F5 URL_BAL устаревший — берём localStorage как placeholder
+  // При первом открытии localStorage пустой — берём URL_BAL
+  const _lsBal = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
+  balance  = _lsBal > 0 ? _lsBal : (URL_BAL > 0 ? URL_BAL : 0);
   INIT_BAL = balance;
   updateBalUI(); updateMiniStats();
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
@@ -1014,7 +1021,7 @@ async function init() {
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { signal: AbortSignal.timeout(3000) }
+      { signal: AbortSignal.timeout(5000) }
     );
     if(r.ok) {
       const d = await r.json();
@@ -1056,7 +1063,7 @@ let _pollActive = false;
 function startBalancePolling() {
   if(!API_URL || !API_SECRET) return;
   stopBalancePolling();
-  _pollTimer = setInterval(pollBalance, 1500);  // каждые 1.5 сек
+  _pollTimer = setInterval(pollBalance, 3000);  // каждые 3 сек
 }
 function stopBalancePolling() {
   if(_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
@@ -1068,7 +1075,7 @@ async function pollBalance() {
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { signal: AbortSignal.timeout(1500) }
+      { signal: AbortSignal.timeout(3000) }
     );
     if(!r.ok) return;
     const d = await r.json();
