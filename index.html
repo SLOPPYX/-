@@ -79,7 +79,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .custom-input{flex:1;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;color:var(--text);font-family:var(--fb);font-size:13px;font-weight:600;outline:none;transition:border-color .2s}
 .custom-input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,229,255,0.09)}
 .custom-input::placeholder{color:var(--muted)}
-.custom-ok{padding:10px 16px;background:linear-gradient(135deg,rgba(0,229,255,0.18),rgba(191,0,255,0.13));border:1px solid var(--cyan);border-radius:9px;color:var(--cyan);font-family:var(--fb);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.8px;transition:all .16s}
+.custom-ok{padding:10px 14px;background:linear-gradient(135deg,rgba(0,229,255,0.18),rgba(191,0,255,0.13));border:1px solid var(--cyan);border-radius:9px;color:var(--cyan);font-family:var(--fb);font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.3px;transition:all .16s;white-space:nowrap}
 .custom-ok:active{transform:scale(0.94)}
 
 /* ── SPIN BUTTON ── */
@@ -312,7 +312,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     </div>
     <div class="custom-row">
       <input class="custom-input" id="customInput" type="number" min="10000" placeholder="Своя ставка (мин. 10 000)...">
-      <button class="custom-ok" onclick="applyCustom()">ОК</button>
+      <button class="custom-ok" onclick="applyCustom()">Сделать ставку</button>
     </div>
 
     <!-- Save status -->
@@ -493,15 +493,17 @@ const S = _ss ? {..._ss} : { spins:0,wins:0,losses:0,profit:0,totalWon:0,totalLo
 // ══════════════════════════════════════════════════════════
 // СИМВОЛЫ — только 3 одинаковых = выигрыш
 // ══════════════════════════════════════════════════════════
+// Веса на каждый барабан. Шанс тройки ≈ (w/TW)³
+// TW = 12+18+28+35+40+45+8+7 = 193
 const SYMS = [
-  {e:'💎', mult:100, w:5},   // 💎×100 — легендарный
-  {e:'7️⃣', mult:50,  w:8},   // 7️⃣×50
-  {e:'🍒', mult:15,  w:14},  // 🍒×15
-  {e:'⭐',  mult:8,   w:18},  // ⭐×8
-  {e:'🔔', mult:4,   w:22},  // 🔔×4
-  {e:'🍋', mult:3,   w:26},  // 🍋×3
-  {e:'🍊', mult:0,   w:20},  // нет выигрыша
-  {e:'🍇', mult:0,   w:19},  // нет выигрыша
+  {e:'💎', mult:100, w:12},  // (12/193)³ ≈ 0.024% — редкий джекпот
+  {e:'7️⃣', mult:50,  w:18},  // (18/193)³ ≈ 0.081%
+  {e:'🍒', mult:15,  w:28},  // (28/193)³ ≈ 0.30%
+  {e:'⭐',  mult:8,   w:35},  // (35/193)³ ≈ 0.58%
+  {e:'🔔', mult:4,   w:40},  // (40/193)³ ≈ 0.88%
+  {e:'🍋', mult:3,   w:45},  // (45/193)³ ≈ 1.25%  <- ~1 раз в 80 спинов
+  {e:'🍊', mult:0,   w:8},   // мусор минимизирован
+  {e:'🍇', mult:0,   w:7},   // мусор минимизирован
 ];
 const TW = SYMS.reduce((a,s)=>a+s.w, 0);
 function rnd() {
@@ -690,17 +692,13 @@ async function spin() {
     if(apiResp && apiResp.ok) {
       // Берём баланс от бота — он авторитетный
       balance = apiResp.balance;
-    } else if(!API_URL) {
-      // Нет API (тест в браузере) — считаем локально
+      setSave('ok','✅ ' + balance.toLocaleString('ru-RU'));
+    } else {
+      // API недоступен или нет URL — считаем локально, игра не прерывается
       balance -= currentBet;
       if(res.win) balance += currentBet * res.mult;
       if(balance < 0) balance = 0;
-    } else {
-      // API недоступен — показываем ошибку, не меняем баланс
-      setSave('error','ОШИБКА СВЯЗИ');
-      result.className='result-strip loss';
-      result.textContent='⚠️ Ошибка связи с ботом';
-      return;
+      if(API_URL) setSave('error','⚠️ Нет связи');
     }
 
     S.spins++;
@@ -866,10 +864,9 @@ async function refreshBalanceFromAPI() {
     );
     if(!r.ok) return;
     const d = await r.json();
-    if(d.ok && typeof d.balance === 'number' && d.balance !== balance) {
+    if(d.ok && typeof d.balance === 'number') {
       balance  = d.balance;
       INIT_BAL = d.balance;
-      // Обновляем UI только если баланс изменился
       updateBalUI(); refreshBets();
       setSave('ok','✅ ' + balance.toLocaleString('ru-RU'));
     }
@@ -883,4 +880,5 @@ init();
 </script>
 </body>
 </html>
+
 
