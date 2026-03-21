@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -607,22 +606,19 @@ function showPage(n) {
 // ══════════════════════════════════════════════════════════
 // БАЛАНС UI
 // ══════════════════════════════════════════════════════════
-function updateBalUI(flash) {
+function updateBalUI() {
   const fmt = balance.toLocaleString('ru-RU');
-  // Обновляем текст синхронно — гарантированно отображается
   document.getElementById('balanceVal').textContent = fmt;
   document.getElementById('pBal').textContent = fmt;
-  setSave('ok', '✅ ' + fmt);
-  // Анимация пилюли
+  // Без void offsetWidth (forced reflow!) — используем data-attr трюк
   const p = document.getElementById('balancePill');
-  p.classList.remove('pulse');
-  void p.offsetWidth;  // reflow — заставляет анимацию перезапуститься
-  p.classList.add('pulse');
-  // Если flash=true (пополнение) — дополнительная вспышка золотого цвета
-  if(flash) {
-    p.style.boxShadow = '0 0 30px rgba(255,215,0,0.8), 0 0 60px rgba(255,215,0,0.4)';
-    setTimeout(() => { p.style.boxShadow = ''; }, 800);
-  }
+  p.style.animation='none';
+  requestAnimationFrame(()=>{
+    p.style.animation='';
+    p.classList.remove('pulse');
+    p.classList.add('pulse');
+  });
+  setSave('ok', '✅ ' + fmt);
 }
 
 function setSave(state, text) {
@@ -751,16 +747,17 @@ async function spin() {
     const apiResp = await apiPromise;
 
     if(apiResp && apiResp.ok) {
-      // Берём баланс от бота — он авторитетный
-      balance = apiResp.balance;
-      setSave('ok','✅ ' + balance.toLocaleString('ru-RU'));
+      balance = apiResp.balance;  // баланс от бота — авторитетный
     } else {
-      // API недоступен или нет URL — считаем локально, игра не прерывается
       balance -= currentBet;
       if(res.win) balance += currentBet * res.mult;
       if(balance < 0) balance = 0;
-      // нет связи с API — считаем локально, тихо
     }
+    // Сохраняем и показываем СРАЗУ — ДО анимации результата
+    localStorage.setItem('bal_'+USER_ID, String(balance));
+    document.getElementById('balanceVal').textContent = balance.toLocaleString('ru-RU');
+    document.getElementById('pBal').textContent = balance.toLocaleString('ru-RU');
+    setSave('ok','✅ ' + balance.toLocaleString('ru-RU'));
 
     S.spins++;
     if(res.win) {
@@ -996,12 +993,14 @@ async function init() {
     }
   } catch(e) { /* API недоступен — играем на кешированном */ }
 
-  // Разблокируем в любом случае
-  updateBalUI(); refreshBets();
+  // Разблокируем и показываем актуальный баланс
+  document.getElementById('balanceVal').textContent = balance.toLocaleString('ru-RU');
+  document.getElementById('pBal').textContent       = balance.toLocaleString('ru-RU');
+  setSave('ok','✅ '+balance.toLocaleString('ru-RU'));
+  refreshBets();
   if(spinBtn)  { spinBtn.disabled=false;  spinBtn.textContent='🎰 КРУТИТЬ'; }
   if(bSpinBtn) { bSpinBtn.disabled=false; bSpinBtn.textContent='🎰 Крутить!'; }
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
-  setSave('ok','✅ '+balance.toLocaleString('ru-RU'));
 
   // Запускаем фоновый опрос баланса — обновляем пока казино открыто
   startBalancePolling();
@@ -1037,19 +1036,20 @@ async function pollBalance() {
     if(!r.ok) return;
     const d = await r.json();
     if(!d.ok || typeof d.balance !== 'number') return;
-
-    // БОТ — ГЛАВНЫЙ. Всегда применяем его баланс.
-    if(d.balance !== balance) {
-      const diff = d.balance - balance;
-      balance  = d.balance;
-      INIT_BAL = d.balance;
-      localStorage.setItem('bal_'+USER_ID, String(balance));
-      updateBalUI(diff > 0);  // flash=true при пополнении
-      refreshBets();
-      if(diff > 0) {
-        showToast('💰 +' + diff.toLocaleString('ru-RU') + ' токенов!', 'gold');
-        _showBanner('🎁 Пополнение: +' + diff.toLocaleString('ru-RU') + ' токенов!');
-      }
+    const srv = d.balance;
+    if(srv === balance) return;        // без изменений — ничего не делаем
+    const diff = srv - balance;
+    balance  = srv;
+    INIT_BAL = srv;
+    localStorage.setItem('bal_'+USER_ID, String(balance));
+    // Обновляем DOM напрямую — без rAF, без задержек
+    document.getElementById('balanceVal').textContent = balance.toLocaleString('ru-RU');
+    document.getElementById('pBal').textContent       = balance.toLocaleString('ru-RU');
+    setSave('ok','✅ ' + balance.toLocaleString('ru-RU'));
+    refreshBets();
+    if(diff > 0) {
+      showToast('💰 +' + diff.toLocaleString('ru-RU') + ' токенов!', 'gold');
+      _showBanner('🎁 +' + diff.toLocaleString('ru-RU') + ' токенов!');
     }
   } catch(e) {}
   finally { _pollActive = false; }
@@ -1090,3 +1090,4 @@ init();
 </script>
 </body>
 </html>
+
