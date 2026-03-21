@@ -958,10 +958,11 @@ function sleep(ms){
 async function init() {
   document.getElementById('pName').textContent=(USER_NAME||'Игрок').toUpperCase();
 
-  // URL_BAL — баланс переданный ботом в момент открытия (всегда актуальный)
-  // localStorage — резерв если URL_BAL = 0 (обновление страницы)
+  // Показываем localStorage сразу — пока API не ответил
+  // URL_BAL НЕ используем как приоритет — он может быть устаревшим
+  // (при повторном открытии казино Telegram открывает тот же старый URL)
   const lsBal = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
-  balance  = URL_BAL > 0 ? URL_BAL : (lsBal > 0 ? lsBal : 0);
+  balance  = lsBal > 0 ? lsBal : (URL_BAL > 0 ? URL_BAL : 0);
   INIT_BAL = balance;
 
   // Показываем сразу
