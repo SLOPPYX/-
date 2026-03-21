@@ -451,8 +451,19 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 const tg = window.Telegram.WebApp;
 tg.expand();
 try { tg.setHeaderColor('#050510'); tg.setBackgroundColor('#050510'); } catch(e){}
+
+// Кнопка "Назад" → диалог выхода
 tg.BackButton.show();
 tg.BackButton.onClick(showExitDialog);
+
+// Крестик закрытия → спрашиваем подтверждение
+// enableClosingConfirmation показывает нативный попап Telegram
+// Дополнительно перехватываем событие и показываем наш диалог
+try { tg.enableClosingConfirmation(); } catch(e){}
+tg.onEvent('viewportChanged', function(e){
+  // Если WebApp пытаются закрыть — показываем наш диалог
+  if(e && e.is_state_stable === false) showExitDialog();
+});
 
 // ══════════════════════════════════════════════════════════
 // ПАРАМЕТРЫ из URL
@@ -491,20 +502,20 @@ const _ss = loadStats();
 const S = _ss ? {..._ss} : { spins:0,wins:0,losses:0,profit:0,totalWon:0,totalLost:0,bestWin:0,history:[],streak:0,streakType:null };
 
 // ══════════════════════════════════════════════════════════
-// СИМВОЛЫ — только 3 одинаковых = выигрыш
+// СИМВОЛЫ — 3 одинаковых = выигрыш, 2 одинаковых = малый возврат
+// TW = 45+55+60+63+65+67+5+5 = 365
+// 💎 тройка: (45/365)³ ≈ 0.19% — в 8× чаще чем раньше
+// 7️⃣ тройка: (55/365)³ ≈ 0.34% — в 4× чаще
 // ══════════════════════════════════════════════════════════
-// Веса на каждый барабан
-// m3 = множитель за 3 одинаковых, m2 = за 2 одинаковых (возврат части)
-// TW = 20+28+45+58+65+72+6+6 = 300
 const SYMS = [
-  {e:'💎', m3:100, m2:5,  w:20},
-  {e:'7️⃣', m3:50,  m2:3,  w:28},
-  {e:'🍒', m3:15,  m2:2,  w:45},
-  {e:'⭐',  m3:8,   m2:1,  w:58},
+  {e:'💎', m3:100, m2:8,  w:45},
+  {e:'7️⃣', m3:50,  m2:4,  w:55},
+  {e:'🍒', m3:15,  m2:2,  w:60},
+  {e:'⭐',  m3:8,   m2:1,  w:63},
   {e:'🔔', m3:4,   m2:1,  w:65},
-  {e:'🍋', m3:3,   m2:0,  w:72},
-  {e:'🍊', m3:0,   m2:0,  w:6},
-  {e:'🍇', m3:0,   m2:0,  w:6},
+  {e:'🍋', m3:3,   m2:0,  w:67},
+  {e:'🍊', m3:0,   m2:0,  w:5},
+  {e:'🍇', m3:0,   m2:0,  w:5},
 ];
 const TW = SYMS.reduce((a,s)=>a+s.w, 0);
 function rnd() {
@@ -514,21 +525,16 @@ function rnd() {
 }
 function calcResult(f) {
   const e0=f[0].e, e1=f[1].e, e2=f[2].e;
-  // 3 одинаковых — главный выигрыш
+  // 3 одинаковых
   if(e0===e1 && e1===e2) {
-    const s = SYMS.find(x=>x.e===e0);
-    if(s && s.m3>0) return {win:true, mult:s.m3, emoji:e0, type:'triple'};
+    const s=SYMS.find(x=>x.e===e0);
+    if(s&&s.m3>0) return {win:true, mult:s.m3, emoji:e0, type:'triple'};
   }
-  // 2 одинаковых — малый возврат
-  let pair = null;
-  if(e0===e1) pair=e0;
-  else if(e0===e2) pair=e0;
-  else if(e1===e2) pair=e1;
-  if(pair) {
-    const s = SYMS.find(x=>x.e===pair);
-    if(s && s.m2>0) return {win:true, mult:s.m2, emoji:pair, type:'pair'};
-  }
-  return {win:false, mult:0, emoji:'', type:'loss'};
+  // 2 одинаковых (любая пара из трёх)
+  let pe=null;
+  if(e0===e1) pe=e0; else if(e0===e2) pe=e0; else if(e1===e2) pe=e1;
+  if(pe){ const s=SYMS.find(x=>x.e===pe); if(s&&s.m2>0) return {win:true,mult:s.m2,emoji:pe,type:'pair'}; }
+  return {win:false,mult:0,emoji:'',type:'loss'};
 }
 
 // ══════════════════════════════════════════════════════════
@@ -712,7 +718,7 @@ async function spin() {
       balance -= currentBet;
       if(res.win) balance += currentBet * res.mult;
       if(balance < 0) balance = 0;
-      if(API_URL) setSave('error','⚠️ Нет связи');
+      // нет API — считаем локально
     }
 
     S.spins++;
@@ -722,19 +728,19 @@ async function spin() {
       if(prize>S.bestWin) S.bestWin=prize;
       S.history.push('w');
       S.streak=S.streakType==='w'?S.streak+1:1; S.streakType='w';
-
-      machine.classList.add('winning');
-      reels.forEach(r=>r.classList.add('win-glow'));
-      setTimeout(()=>{ machine.classList.remove('winning'); reels.forEach(r=>r.classList.remove('win-glow')); }, speedMode==='fast'?800:1800);
-      if(speedMode!=='fast') spawnParticles();
       result.className='result-strip win';
-      const prizeAmt = apiResp ? apiResp.prize : currentBet*res.mult;
       if(res.type==='pair') {
-        result.textContent=`✨ Пара ${res.emoji}${res.emoji}  ×${res.mult}  +${prizeAmt.toLocaleString('ru-RU')} токенов`;
-        showToast(`+${prizeAmt.toLocaleString('ru-RU')} ✨`,'info');
+        // Пара — тихий выигрыш без анимации
+        result.textContent=`✨ Пара ${res.emoji}${res.emoji}  ×${res.mult}  +${prize.toLocaleString('ru-RU')} токенов`;
+        showToast(`+${prize.toLocaleString('ru-RU')} ✨`,'info');
       } else {
-        result.textContent=`🎉 ${res.emoji}${res.emoji}${res.emoji}  ×${res.mult}  +${prizeAmt.toLocaleString('ru-RU')} токенов`;
-        showToast(`+${prizeAmt.toLocaleString('ru-RU')} 💰`,'gold');
+        // Тройка — полная анимация
+        machine.classList.add('winning');
+        reels.forEach(r=>r.classList.add('win-glow'));
+        setTimeout(()=>{ machine.classList.remove('winning'); reels.forEach(r=>r.classList.remove('win-glow')); }, speedMode==='fast'?900:2000);
+        if(speedMode!=='fast') spawnParticles();
+        result.textContent=`🎉 ${res.emoji}${res.emoji}${res.emoji}  ×${res.mult}  +${prize.toLocaleString('ru-RU')} токенов`;
+        showToast(`+${prize.toLocaleString('ru-RU')} 💰`,'gold');
       }
     } else {
       S.losses++; S.profit-=currentBet; S.totalLost+=currentBet;
@@ -745,6 +751,7 @@ async function spin() {
     }
     if(S.history.length>20) S.history=S.history.slice(-20);
     saveStats();
+    saveLocalBalance();
 
     // Обновляем UI с реальным балансом от бота
     updateBalUI();
@@ -762,7 +769,6 @@ async function spin() {
 
   } catch(err) {
     console.error('Spin error:',err);
-    // тихо
   } finally {
     spinning=false;
     btn.disabled=bBtn.disabled=false;
@@ -783,29 +789,11 @@ function hideExitDialog() {
 }
 function confirmExit() {
   const btn = document.querySelector('.exit-btn-confirm');
-  if(btn){ btn.textContent='⏳ Выхожу...'; btn.disabled=true; }
-
-  // Отправляем баланс боту через sendData — бот сохранит и пришлёт главное меню
-  // sendData работает ТОЛЬКО когда WebApp открыт через кнопку в боте
-  const payload = JSON.stringify({
-    action:  'casino_exit',
-    balance: balance,
-    user_id: USER_ID,
-    stats: {
-      totalSpins: S.spins, wins: S.wins, losses: S.losses,
-      profit: S.profit, bestWin: S.bestWin,
-    }
-  });
-
-  try {
-    tg.sendData(payload);
-    // Telegram автоматически закроет WebApp после sendData
-    // Бот получит данные и пришлёт главное меню
-  } catch(e) {
-    // sendData не сработал (тест в браузере) — просто закрываем
-    apiExit().catch(()=>{});
-    setTimeout(()=>tg.close(), 150);
-  }
+  if(btn){ btn.textContent='✅ Сохранено!'; btn.disabled=true; }
+  // Fire-and-forget — не ждём ответа API, закрываем сразу
+  // Баланс уже сохранён после последнего спина
+  apiExit().catch(()=>{});
+  setTimeout(()=>tg.close(), 200);
 }
 function saveAndClose() { showExitDialog(); }
 
@@ -876,42 +864,49 @@ function sleep(ms){
 }
 
 // ══════════════════════════════════════════════════════════
-// INIT
+// INIT — загружаем АКТУАЛЬНЫЙ баланс из бота при каждом открытии
+// Порядок: 1) localStorage (мгновенно) → 2) API бота (актуально)
 // ══════════════════════════════════════════════════════════
-function init() {
+async function init() {
   document.getElementById('pName').textContent=(USER_NAME||'Игрок').toUpperCase();
-  // Сразу показываем баланс из URL — мгновенно, без задержек
+
+  // Шаг 1: показываем сразу из localStorage или URL
+  const LS_BAL = parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10);
+  if(URL_BAL > 0)      { balance = URL_BAL;  INIT_BAL = URL_BAL;  }
+  else if(LS_BAL > 0)  { balance = LS_BAL;   INIT_BAL = LS_BAL;   }
   updateBalUI(); refreshBets(); updateMiniStats();
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
 
-  if(API_URL && API_SECRET) {
-    setSave('ok','✅ ПОДКЛЮЧЕНО');
-    // Тихо обновляем баланс из API в фоне — не блокируем UI
-    refreshBalanceFromAPI();
-  } else {
-    setSave('error','⚠️ БОТ НЕДОСТУПЕН');
+  if(!API_URL || !API_SECRET) {
+    setSave('ok','✅ '+balance.toLocaleString('ru-RU'));
+    return;
   }
-}
 
-// Обновление баланса из API — неблокирующее, в фоне
-async function refreshBalanceFromAPI() {
+  // Шаг 2: запрашиваем реальный баланс из бота — всегда актуальный
+  setSave('saving','⏳ Загрузка...');
   try {
     const r = await fetch(
-      API_URL + '/casino/balance?uid=' + USER_ID + '&secret=' + API_SECRET,
+      API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
       { signal: AbortSignal.timeout(3000) }
     );
-    if(!r.ok) return;
-    const d = await r.json();
-    if(d.ok && typeof d.balance === 'number') {
-      balance  = d.balance;
-      INIT_BAL = d.balance;
-      updateBalUI(); refreshBets();
-      setSave('ok','✅ ' + balance.toLocaleString('ru-RU'));
+    if(r.ok) {
+      const d = await r.json();
+      if(d.ok && typeof d.balance==='number') {
+        balance = d.balance; INIT_BAL = d.balance;
+        localStorage.setItem('bal_'+USER_ID, String(balance));
+        updateBalUI(); refreshBets();
+        setSave('ok','✅ '+balance.toLocaleString('ru-RU'));
+        return;
+      }
     }
-  } catch(e) {
-    // Тихо — не показываем ошибку если API недоступен при фоновом обновлении
-    console.warn('Background balance refresh failed');
-  }
+  } catch(e) { /* API недоступен — используем localStorage */ }
+
+  setSave('ok','✅ '+balance.toLocaleString('ru-RU'));
+}
+
+// Сохраняем баланс в localStorage после каждого спина
+function saveLocalBalance() {
+  try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
 }
 
 init();
