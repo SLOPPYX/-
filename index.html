@@ -862,26 +862,25 @@ function showExitDialog() {
 function hideExitDialog() {
   document.getElementById('exitOverlay').classList.remove('show');
 }
-async function confirmExit() {
-  const btn = document.querySelector('.exit-btn-confirm');
-  if(btn){ btn.textContent='⏳ Выход...'; btn.disabled=true; }
-
-  // Сохраняем в localStorage мгновенно
+function confirmExit() {
+  // Сохраняем в localStorage мгновенно (синхронно)
   try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
 
-  // Отправляем на API бота — он сохранит баланс и пришлёт главное меню
+  // Отправляем баланс боту — fire-and-forget, не ждём ответа
   if(API_URL && API_SECRET) {
-    try {
-      await fetch(API_URL+'/casino/exit', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ uid:parseInt(USER_ID), secret:API_SECRET }),
-        signal: AbortSignal.timeout(4000),
-      });
-    } catch(e) { /* тихо — баланс уже в localStorage */ }
+    fetch(API_URL+'/casino/exit', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        uid:     parseInt(USER_ID),
+        secret:  API_SECRET,
+        balance: balance,          // передаём актуальный баланс
+      }),
+      signal: AbortSignal.timeout(3000),
+    }).catch(()=>{});
   }
 
-  // Закрываем WebApp
+  // Закрываем сразу — не ждём ответа API
   tg.close();
 }
 function saveAndClose() { showExitDialog(); }
@@ -958,11 +957,10 @@ function sleep(ms){
 async function init() {
   document.getElementById('pName').textContent=(USER_NAME||'Игрок').toUpperCase();
 
-  // Показываем localStorage сразу — пока API не ответил
-  // URL_BAL НЕ используем как приоритет — он может быть устаревшим
-  // (при повторном открытии казино Telegram открывает тот же старый URL)
+  // URL_BAL — баланс переданный ботом в момент открытия (всегда актуальный)
+  // localStorage — резерв если URL_BAL = 0 (обновление страницы)
   const lsBal = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
-  balance  = lsBal > 0 ? lsBal : (URL_BAL > 0 ? URL_BAL : 0);
+  balance  = URL_BAL > 0 ? URL_BAL : (lsBal > 0 ? lsBal : 0);
   INIT_BAL = balance;
 
   // Показываем сразу
