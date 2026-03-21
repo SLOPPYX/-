@@ -402,9 +402,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="pt-title">Таблица выплат</div>
       <div class="pt-row"><span class="pt-syms">💎💎💎</span><span class="pt-mult mega">× 100 ✦</span></div>
       <div class="pt-row"><span class="pt-syms">7️⃣7️⃣7️⃣</span><span class="pt-mult" style="color:var(--pink)">× 50</span></div>
-      <div class="pt-row"><span class="pt-syms">🍒🍒🍒</span><span class="pt-mult">× 15</span></div>
-      <div class="pt-row"><span class="pt-syms">⭐⭐⭐</span><span class="pt-mult" style="color:var(--cyan)">× 8</span></div>
-      <div class="pt-row"><span class="pt-syms">🔔🔔🔔</span><span class="pt-mult">× 4</span></div>
+      <div class="pt-row"><span class="pt-syms">🍒🍒🍒</span><span class="pt-mult" style="color:#ff6b6b">× 30</span></div>
+      <div class="pt-row"><span class="pt-syms">⭐⭐⭐</span><span class="pt-mult" style="color:var(--cyan)">× 10</span></div>
+      <div class="pt-row"><span class="pt-syms">🔔🔔🔔</span><span class="pt-mult">× 5</span></div>
       <div class="pt-row"><span class="pt-syms">🍋🍋🍋</span><span class="pt-mult" style="color:var(--text)">× 3</span></div>
       <div class="pt-row"><span class="pt-syms" style="font-size:13px;color:var(--muted)">Остальное</span><span class="pt-mult zero">проигрыш</span></div>
     </div>
@@ -516,15 +516,22 @@ const S = _ss ? {..._ss} : { spins:0,wins:0,losses:0,profit:0,totalWon:0,totalLo
 // ══════════════════════════════════════════════════════════
 // Веса на каждый барабан. Шанс тройки ≈ (w/TW)³
 // TW = 15+22+38+48+55+65+6+5 = 254
+// ═══════════════════════════════════════════
+// СИМВОЛЫ
+// Выигрыш ТОЛЬКО когда все 3 барабана одинаковые
+// mult = множитель к ставке
+// w    = вес (чем больше — тем чаще выпадает)
+// ═══════════════════════════════════════════
+// TW = 20+30+50+60+70+80+8+7 = 325
 const SYMS = [
-  {e:'💎', mult:100, w:15},  // (15/254)³ ≈ 0.021%
-  {e:'7️⃣', mult:50,  w:22},  // (22/254)³ ≈ 0.065%
-  {e:'🍒', mult:15,  w:38},  // (38/254)³ ≈ 0.335%
-  {e:'⭐',  mult:8,   w:48},  // (48/254)³ ≈ 0.676%
-  {e:'🔔', mult:4,   w:55},  // (55/254)³ ≈ 1.02%
-  {e:'🍋', mult:3,   w:65},  // (65/254)³ ≈ 1.68%  <- ~1 раз в 24 спина!
-  {e:'🍊', mult:0,   w:6},   // мусор минимален
-  {e:'🍇', mult:0,   w:5},   // мусор минимален
+  {e:'💎', mult:100, w:20},  // 3 алмаза  = ×100 ставки
+  {e:'7️⃣', mult:50,  w:30},  // 3 семёрки = ×50 ставки
+  {e:'🍒', mult:30,  w:50},  // 3 вишни   = ×30 ставки
+  {e:'⭐',  mult:10,  w:60},  // 3 звезды  = ×10 ставки
+  {e:'🔔', mult:5,   w:70},  // 3 колокол = ×5 ставки
+  {e:'🍋', mult:3,   w:80},  // 3 лимона  = ×3 ставки
+  {e:'🍊', mult:0,   w:8},   // нет выигрыша
+  {e:'🍇', mult:0,   w:7},   // нет выигрыша
 ];
 const TW = SYMS.reduce((a,s)=>a+s.w, 0);
 function rnd() {
@@ -724,19 +731,44 @@ async function spin() {
 
     S.spins++;
     if(res.win) {
-      const prize = apiResp ? apiResp.prize : currentBet*res.mult;
       S.wins++; S.profit+=prize-currentBet; S.totalWon+=prize;
       if(prize>S.bestWin) S.bestWin=prize;
       S.history.push('w');
       S.streak=S.streakType==='w'?S.streak+1:1; S.streakType='w';
 
+      const prize = apiResp ? apiResp.prize : currentBet*res.mult;
+      // Уровень победы по множителю
+      const tier = res.mult >= 100 ? 'mega'      // 💎×100
+                 : res.mult >= 50  ? 'big'        // 7️⃣×50
+                 : res.mult >= 30  ? 'great'      // 🍒×30
+                 : 'normal';                       // остальные
+
       machine.classList.add('winning');
       reels.forEach(r=>r.classList.add('win-glow'));
-      setTimeout(()=>{ machine.classList.remove('winning'); reels.forEach(r=>r.classList.remove('win-glow')); }, speedMode==='fast'?800:1800);
-      if(speedMode!=='fast') spawnParticles();
+
+      const glowTime = speedMode==='fast' ? 600
+                     : tier==='mega' ? 3000
+                     : tier==='big'  ? 2500
+                     : tier==='great'? 2000
+                     : 1500;
+      setTimeout(()=>{ machine.classList.remove('winning'); reels.forEach(r=>r.classList.remove('win-glow')); }, glowTime);
+
+      if(speedMode!=='fast') {
+        spawnParticles();
+        if(tier==='mega') { spawnParticles(); setTimeout(spawnParticles, 400); } // тройной залп
+        if(tier==='big')  { setTimeout(spawnParticles, 300); }                  // двойной залп
+      }
+
       result.className='result-strip win';
-      result.textContent=`🎉 ${res.emoji}${res.emoji}${res.emoji}  ×${res.mult}  +${(res.win?(apiResp?apiResp.prize:currentBet*res.mult):0).toLocaleString('ru-RU')} токенов`;
-      showToast(`+${(apiResp?apiResp.prize:currentBet*res.mult).toLocaleString('ru-RU')} 💰`,'gold');
+      // Заголовок зависит от уровня
+      const prefix = tier==='mega'  ? '🏆 ДЖЕКПОТ!'
+                   : tier==='big'   ? '🎰 БОЛЬШОЙ ВЫИГРЫШ!'
+                   : tier==='great' ? '🎉 ОТЛИЧНЫЙ ВЫИГРЫШ!'
+                   : '✨ ВЫИГРЫШ!';
+      result.textContent=`${prefix}  ${res.emoji}${res.emoji}${res.emoji}  ×${res.mult}  +${prize.toLocaleString('ru-RU')} токенов`;
+
+      const toastType = tier==='mega' || tier==='big' ? 'gold' : 'info';
+      showToast(`+${prize.toLocaleString('ru-RU')} 💰`,'gold');
     } else {
       S.losses++; S.profit-=currentBet; S.totalLost+=currentBet;
       S.history.push('l');
@@ -928,3 +960,4 @@ init();
 </script>
 </body>
 </html>
+
