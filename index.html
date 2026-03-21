@@ -259,6 +259,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="logo-main">CASINO</div>
       <div class="logo-sub">by SloppyX</div>
     </div>
+    <div id="apiStatus" style="display:none;font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;background:rgba(0,0,0,0.35);margin-bottom:5px;text-align:center;transition:all .3s"></div>
     <div class="balance-pill" id="balancePill">
       💰 <span id="balanceVal">0</span>
     </div>
@@ -626,6 +627,25 @@ function setSave(state, text) {
   if(d) d.className='save-dot'+(state==='ok'?'':' '+state);
   if(t) t.textContent=text;
 }
+// Статус подключения к боту
+let _apiOk = null;  // null=неизвестно, true=ок, false=нет связи
+function setApiStatus(ok) {
+  if(_apiOk === ok) return;  // не мигаем без причины
+  _apiOk = ok;
+  const el = document.getElementById('apiStatus');
+  if(!el) return;
+  if(ok) {
+    el.textContent = '🟢 Бот подключён';
+    el.style.color = 'var(--green)';
+    el.style.display = 'block';
+    // Прячем через 3 сек после успешного подключения
+    setTimeout(() => { if(_apiOk) el.style.display = 'none'; }, 3000);
+  } else {
+    el.textContent = '🔴 Нет связи с ботом — ngrok устарел? Перезапусти ngrok и переоткрой казино';
+    el.style.color = 'var(--red)';
+    el.style.display = 'block';
+  }
+}
 
 // ══════════════════════════════════════════════════════════
 // СКОРОСТЬ / АВТО-СПИН
@@ -989,6 +1009,7 @@ async function init() {
         updateBalUI();
         gotBalance = true;
         console.log('✅ Баланс из бота:', balance);
+        setApiStatus(true);  // подключение OK
       }
     }
   } catch(e) {
@@ -999,7 +1020,8 @@ async function init() {
     // Бот не ответил — берём из кеша как запасной вариант
     const lsBal = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
     if(lsBal > 0) { balance = lsBal; INIT_BAL = lsBal; updateBalUI(); }
-    setSave('ok', '✅ ' + balance.toLocaleString('ru-RU'));
+    setSave('ok', '✅ ' + balance.toLocaleString('ru-RU') + ' (кеш)');
+    setApiStatus(false);  // нет связи — показываем предупреждение
   }
 
   if(spinBtn)  { spinBtn.disabled=false;  spinBtn.textContent='🎰 КРУТИТЬ'; }
@@ -1047,11 +1069,14 @@ async function pollBalance() {
     saveBalToCache();
     updateBalUI();
     refreshBets();
+    setApiStatus(true);  // связь есть
     if(diff > 0) {
       showToast('💰 +' + diff.toLocaleString('ru-RU') + ' токенов!', 'gold');
       _showBanner('🎁 +' + diff.toLocaleString('ru-RU') + ' токенов!');
     }
-  } catch(e) {}
+  } catch(e) {
+    setApiStatus(false);  // ошибка polling — связь потеряна
+  }
   finally { _pollActive = false; }
 }
 
