@@ -586,7 +586,7 @@ async function apiExit() {
     await fetch(API_URL + '/casino/exit', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ uid: parseInt(USER_ID), secret: API_SECRET }),
+      body: JSON.stringify({ uid: parseInt(USER_ID), secret: API_SECRET, balance }),
       signal: AbortSignal.timeout(3000),
     });
   } catch(e) {}
@@ -1055,7 +1055,18 @@ document.addEventListener('visibilitychange', () => {
   }
   // НЕ останавливаем при скрытии — polling работает всегда
 });
-window.addEventListener('pagehide', stopBalancePolling);
+window.addEventListener('pagehide', () => {
+  stopBalancePolling();
+  // При любом закрытии страницы — сохраняем баланс в бот
+  if(API_URL && API_SECRET && USER_ID) {
+    try {
+      localStorage.setItem('bal_'+USER_ID, String(balance));
+      // sendBeacon — надёжная отправка при закрытии страницы
+      const data = JSON.stringify({ uid:parseInt(USER_ID), secret:API_SECRET, balance });
+      navigator.sendBeacon(API_URL+'/casino/exit', new Blob([data], {type:'application/json'}));
+    } catch(e) {}
+  }
+});
 
 init();
 </script>
