@@ -956,9 +956,10 @@ function sleep(ms){
 async function init() {
   document.getElementById('pName').textContent=(USER_NAME||'Игрок').toUpperCase();
 
-  // Шаг 1: показываем что-то сразу (placeholder) — localStorage или URL
+  // Шаг 1: показываем URL_BAL сразу (из бота при открытии)
+  // localStorage только если URL пустой (обновление страницы)
   const lsBal = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
-  balance  = lsBal > 0 ? lsBal : URL_BAL;
+  balance  = URL_BAL > 0 ? URL_BAL : (lsBal > 0 ? lsBal : 0);
   INIT_BAL = balance;
   updateBalUI(); updateMiniStats();
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
@@ -1017,7 +1018,6 @@ async function init() {
 // ══════════════════════════════════════════════════════════
 let _pollTimer  = null;
 let _pollActive = false;
-let _lastKnownBalance = -1;  // запоминаем для сравнения
 
 function startBalancePolling() {
   if(!API_URL || !API_SECRET) return;
@@ -1029,7 +1029,7 @@ function stopBalancePolling() {
 }
 
 async function pollBalance() {
-  if(spinning || _pollActive) return;  // не мешаем спину
+  if(spinning || _pollActive) return;
   _pollActive = true;
   try {
     const r = await fetch(
@@ -1042,26 +1042,18 @@ async function pollBalance() {
 
     const serverBal = d.balance;
 
-    // Первый раз — просто запоминаем
-    if(_lastKnownBalance === -1) {
-      _lastKnownBalance = serverBal;
-    }
+    // БОТ — ГЛАВНЫЙ ИСТОЧНИК.
+    // Если баланс в боте отличается от текущего — применяем сразу.
+    if(serverBal !== balance) {
+      const diff = serverBal - balance;
+      balance = serverBal;
+      INIT_BAL = serverBal;
+      localStorage.setItem('bal_'+USER_ID, String(balance));
+      updateBalUI(); refreshBets();
 
-    // Баланс изменился на сервере
-    if(serverBal !== _lastKnownBalance) {
-      const diff = serverBal - _lastKnownBalance;
-      _lastKnownBalance = serverBal;
-
-      // Обновляем только если отличается от текущего в казино
-      if(serverBal !== balance) {
-        balance = serverBal;
-        localStorage.setItem('bal_'+USER_ID, String(balance));
-        updateBalUI(); refreshBets();
-
-        if(diff > 0) {
-          // Пополнение — показываем заметное уведомление
-          showBalanceAlert(diff);
-        }
+      if(diff > 0) {
+        // Пополнение — показываем уведомление
+        showBalanceAlert(diff);
       }
     }
   } catch(e) { /* тихо */ }
