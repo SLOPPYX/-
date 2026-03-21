@@ -610,14 +610,15 @@ function showPage(n) {
 // ══════════════════════════════════════════════════════════
 function updateBalUI() {
   const fmt = balance.toLocaleString('ru-RU');
-  // Обновляем DOM синхронно — сразу видно
   document.getElementById('balanceVal').textContent = fmt;
   document.getElementById('pBal').textContent = fmt;
-  localStorage.setItem('bal_'+USER_ID, String(balance));
-  // Анимация пилюли
   const p = document.getElementById('balancePill');
   p.classList.remove('pulse'); void p.offsetWidth; p.classList.add('pulse');
   setSave('ok', '✅ ' + fmt);
+}
+// Вызывается ТОЛЬКО когда баланс пришёл с сервера бота
+function saveBalToCache() {
+  try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
 }
 
 function setSave(state, text) {
@@ -746,7 +747,8 @@ async function spin() {
     const apiResp = await apiPromise;
 
     if(apiResp && apiResp.ok) {
-      balance = apiResp.balance;  // берём из бота
+      balance = apiResp.balance;
+      saveBalToCache();
     } else {
       balance -= currentBet;
       if(res.win) balance += currentBet * res.mult;
@@ -818,8 +820,6 @@ async function spin() {
     }
     if(S.history.length>20) S.history=S.history.slice(-20);
     saveStats();
-    // Сохраняем баланс в localStorage — резерв при следующем открытии
-    if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(balance));
 
     // Обновляем UI с реальным балансом от бота
     updateBalUI();
@@ -858,7 +858,7 @@ function hideExitDialog() {
 }
 function confirmExit() {
   // Сохраняем в localStorage
-  try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
+  saveBalToCache();
 
   // Отправляем баланс боту через API (fire-and-forget)
   if(API_URL && API_SECRET) {
@@ -980,6 +980,7 @@ async function init() {
       if(d.ok && typeof d.balance==='number') {
         balance  = d.balance;
         INIT_BAL = d.balance;
+        saveBalToCache();
         updateBalUI();
         console.log('✅ Баланс из бота:', balance);
       }
@@ -1034,7 +1035,8 @@ async function pollBalance() {
     const diff = d.balance - balance;
     balance  = d.balance;
     INIT_BAL = d.balance;
-    updateBalUI();  // updateBalUI сам сохраняет в localStorage
+    saveBalToCache();
+    updateBalUI();
     refreshBets();
     if(diff > 0) {
       showToast('💰 +' + diff.toLocaleString('ru-RU') + ' токенов!', 'gold');
@@ -1078,7 +1080,7 @@ window.addEventListener('pagehide', () => {
   // При любом закрытии страницы — сохраняем баланс в бот
   if(API_URL && API_SECRET && USER_ID) {
     try {
-      localStorage.setItem('bal_'+USER_ID, String(balance));
+      saveBalToCache();
       // sendBeacon — надёжная отправка при закрытии страницы
       const data = JSON.stringify({ uid:parseInt(USER_ID), secret:API_SECRET, balance });
       navigator.sendBeacon(API_URL+'/casino/exit', new Blob([data], {type:'application/json'}));
