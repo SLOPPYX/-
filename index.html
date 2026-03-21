@@ -957,31 +957,39 @@ async function init() {
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
 
   if(!API_URL || !API_SECRET) {
-    refreshBets(); return;
+    refreshBets();
+    setSave('ok', '✅ '+balance.toLocaleString('ru-RU'));
+    return;
   }
 
-  // Загружаем АКТУАЛЬНЫЙ баланс из бота
-  // Кнопка заблокирована — нельзя играть на старый баланс
+  // Блокируем кнопку — загружаем баланс из бота
   const spinBtn  = document.getElementById('spinBtn');
   const bSpinBtn = document.getElementById('bSpinBtn');
   if(spinBtn)  { spinBtn.disabled=true;  spinBtn.textContent='⏳'; }
   if(bSpinBtn) { bSpinBtn.disabled=true; bSpinBtn.textContent='⏳'; }
-  setSave('saving','⏳ Загрузка...');
+  setSave('saving','⏳ Подключение к боту...');
 
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { signal: AbortSignal.timeout(4000) }
+      { signal: AbortSignal.timeout(5000) }
     );
     if(r.ok) {
       const d = await r.json();
       if(d.ok && typeof d.balance==='number') {
         balance  = d.balance;
         INIT_BAL = d.balance;
-        updateBalUI();  // показываем актуальный
+        updateBalUI();
+        console.log('✅ Баланс из бота:', balance);
       }
+    } else {
+      console.warn('API ответил с ошибкой:', r.status);
+      setSave('error', '⚠️ Ошибка API');
     }
-  } catch(e) { /* бот недоступен — играем на кеше */ }
+  } catch(e) {
+    console.warn('API недоступен:', e.message);
+    setSave('error', '⚠️ Нет связи с ботом');
+  }
 
   if(spinBtn)  { spinBtn.disabled=false;  spinBtn.textContent='🎰 КРУТИТЬ'; }
   if(bSpinBtn) { bSpinBtn.disabled=false; bSpinBtn.textContent='🎰 Крутить!'; }
