@@ -460,14 +460,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 const tg = window.Telegram.WebApp;
 tg.expand();
 try { tg.setHeaderColor('#050510'); tg.setBackgroundColor('#050510'); } catch(e){}
-
-// Кнопка "Назад" → наш диалог выхода
 tg.BackButton.show();
 tg.BackButton.onClick(showExitDialog);
-
-// Крестик — Telegram показывает системный попап "Закрыть?"
-// НЕ используем viewportChanged — он срабатывает при любом скролле/клавиатуре
-try { tg.enableClosingConfirmation(); } catch(e){}
 
 // ══════════════════════════════════════════════════════════
 // ПАРАМЕТРЫ из URL
@@ -866,29 +860,27 @@ function showExitDialog() {
 function hideExitDialog() {
   document.getElementById('exitOverlay').classList.remove('show');
 }
-function confirmExit() {
+async function confirmExit() {
+  const btn = document.querySelector('.exit-btn-confirm');
+  if(btn){ btn.textContent='⏳ Выход...'; btn.disabled=true; }
+
   // Сохраняем в localStorage мгновенно
   try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
 
-  // tg.sendData → закрывает WebApp И бот получает данные → присылает главное меню
-  try {
-    tg.sendData(JSON.stringify({
-      action:  'casino_exit',
-      balance: balance,
-      user_id: USER_ID,
-    }));
-    // WebApp закрывается автоматически
-  } catch(e) {
-    // Если sendData недоступен (нет initData) — fire-and-forget + close
-    if(API_URL && API_SECRET) {
-      fetch(API_URL+'/casino/exit', {
+  // Отправляем на API бота — он сохранит баланс и пришлёт главное меню
+  if(API_URL && API_SECRET) {
+    try {
+      await fetch(API_URL+'/casino/exit', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ uid:parseInt(USER_ID), secret:API_SECRET }),
-      }).catch(()=>{});
-    }
-    tg.close();
+        signal: AbortSignal.timeout(4000),
+      });
+    } catch(e) { /* тихо — баланс уже в localStorage */ }
   }
+
+  // Закрываем WebApp
+  tg.close();
 }
 function saveAndClose() { showExitDialog(); }
 
@@ -1018,88 +1010,83 @@ async function init() {
 // Если уменьшился (другое устройство) — тоже обновляем.
 // Во время спина не опрашиваем — не мешаем игре.
 // ══════════════════════════════════════════════════════════
-// ══════════════════════════════════════════════════════════
-// ФОНОВОЕ ОБНОВЛЕНИЕ БАЛАНСА
-// Опрашивает бота каждые 3 секунды — даже когда казино свёрнуто.
-// При пополнении токенов в боте — показывает уведомление.
-// ══════════════════════════════════════════════════════════
-let _pollTimer  = null;
+let _pollTimer = null;
 let _pollActive = false;
 
 function startBalancePolling() {
   if(!API_URL || !API_SECRET) return;
   stopBalancePolling();
-  _pollTimer = setInterval(pollBalance, 3000);  // каждые 3 сек
+  _pollTimer = setInterval(pollBalance, 3000);  // каждые 5 сек
 }
 function stopBalancePolling() {
   if(_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
 }
 
 async function pollBalance() {
-  if(spinning || _pollActive) return;
+  if(spinning || _pollActive) return;  // не мешаем спину
   _pollActive = true;
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { signal: AbortSignal.timeout(2500) }
+      { signal: AbortSignal.timeout(3000) }
     );
     if(!r.ok) return;
     const d = await r.json();
     if(!d.ok || typeof d.balance !== 'number') return;
 
     const serverBal = d.balance;
+    if(serverBal === balance) return;  // нет изменений
 
-    // БОТ — ГЛАВНЫЙ ИСТОЧНИК. Всегда применяем если отличается.
-    if(serverBal !== balance) {
-      const diff = serverBal - balance;
-      balance  = serverBal;
-      INIT_BAL = serverBal;
-      localStorage.setItem('bal_'+USER_ID, String(balance));
-      updateBalUI(); refreshBets();
-      if(diff > 0) showBalanceAlert(diff);
+    const diff = serverBal - balance;
+    balance  = serverBal;   // БОТ — ГЛАВНЫЙ ИСТОЧНИК
+    INIT_BAL = serverBal;
+    localStorage.setItem('bal_'+USER_ID, String(balance));
+    updateBalUI(); refreshBets();
+
+    if(diff > 0) {
+      // Пополнение — показываем баннер
+      showTopBanner(`🎁 +${diff.toLocaleString('ru-RU')} токенов!`);
+      showToast(`💰 +${diff.toLocaleString('ru-RU')}`, 'gold');
     }
   } catch(e) { /* тихо */ }
   finally { _pollActive = false; }
 }
 
-// Большое красивое уведомление при пополнении баланса
-function showBalanceAlert(amount) {
-  // Toast
-  showToast(`🎁 +${amount.toLocaleString('ru-RU')} токенов!`, 'gold');
-
-  // Если страница была скрыта — показываем дополнительный баннер
-  const banner = document.createElement('div');
-  banner.style.cssText = `
-    position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);
-    background:linear-gradient(135deg,rgba(255,215,0,0.25),rgba(255,159,0,0.15));
-    border:1.5px solid var(--gold);border-radius:14px;padding:12px 22px;
-    font-family:var(--fd);font-size:13px;font-weight:700;color:var(--gold);
-    text-align:center;z-index:1000;box-shadow:0 0 24px rgba(255,215,0,0.35);
-    opacity:0;transition:all .35s cubic-bezier(.34,1.56,.64,1);pointer-events:none;
-    white-space:nowrap;
-  `;
-  banner.textContent = `🎁 Пополнение: +${amount.toLocaleString('ru-RU')} токенов!`;
-  document.body.appendChild(banner);
-  requestAnimationFrame(()=>{
-    banner.style.opacity='1';
-    banner.style.transform='translateX(-50%) translateY(0)';
+// Баннер вверху страницы при пополнении
+function showTopBanner(msg) {
+  const b = document.createElement('div');
+  b.style.cssText = [
+    'position:fixed','top:60px','left:50%','transform:translateX(-50%) translateY(-10px)',
+    'background:linear-gradient(135deg,rgba(255,215,0,.25),rgba(255,140,0,.15))',
+    'border:1.5px solid var(--gold)','border-radius:14px','padding:10px 20px',
+    'font-family:var(--fd)','font-size:13px','font-weight:700','color:var(--gold)',
+    'z-index:9999','box-shadow:0 0 20px rgba(255,215,0,.35)',
+    'opacity:0','transition:all .3s cubic-bezier(.34,1.56,.64,1)',
+    'white-space:nowrap','pointer-events:none',
+  ].join(';');
+  b.textContent = msg;
+  document.body.appendChild(b);
+  requestAnimationFrame(() => {
+    b.style.opacity = '1';
+    b.style.transform = 'translateX(-50%) translateY(0)';
   });
-  setTimeout(()=>{
-    banner.style.opacity='0';
-    banner.style.transform='translateX(-50%) translateY(-20px)';
-    setTimeout(()=>banner.remove(), 400);
-  }, 3500);
+  setTimeout(() => {
+    b.style.opacity = '0';
+    b.style.transform = 'translateX(-50%) translateY(-10px)';
+    setTimeout(() => b.remove(), 350);
+  }, 3000);
 }
 
-// При возврате на страницу — сразу обновляем баланс из бота
+// Polling продолжается всегда — не останавливаем в фоне
+// При возврате на вкладку — сразу обновляем
+window.addEventListener('pagehide', stopBalancePolling);
 document.addEventListener('visibilitychange', () => {
-  if(document.visibilityState === 'visible') {
-    pollBalance();  // мгновенно берём актуальный баланс
+  if(document.visibilityState === 'visible' && API_URL) {
+    pollBalance();  // сразу обновляем при возврате
     if(!_pollTimer) startBalancePolling();
   }
-  // НЕ останавливаем при скрытии — polling продолжается в фоне
+  // НЕ останавливаем при скрытии — баланс обновляется всегда
 });
-window.addEventListener('pagehide', stopBalancePolling);
 
 init();
 </script>
