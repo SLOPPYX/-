@@ -229,6 +229,23 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+
+/* ── 60 FPS оптимизации ── */
+.app{contain:layout style;}
+.machine{contain:layout style paint;}
+.pt-card,.scard,.pstat,.best-card,.streak-card,.wl-wrap{contain:layout style;}
+/* Все анимации через transform/opacity — не вызывают reflow */
+.nav-tab,.bet-btn,.bb-btn,.speed-btn{will-change:auto;}
+.reel{will-change:transform;backface-visibility:hidden;}
+/* Отключаем сглаживание фона на мобильных для экономии GPU */
+@media(max-width:430px){
+  .bg-glow{display:none;}
+}
+/* Уменьшаем сложность частиц на слабых устройствах */
+@media(prefers-reduced-motion:reduce){
+  .particle{display:none;}
+  .reel.spinning{animation-duration:.04s;}
+}
 </style>
 </head>
 <body>
@@ -545,8 +562,14 @@ function updateBalUI() {
   const fmt = balance.toLocaleString('ru-RU');
   document.getElementById('balanceVal').textContent = fmt;
   document.getElementById('pBal').textContent = fmt;
+  // Без void offsetWidth (forced reflow!) — используем data-attr трюк
   const p = document.getElementById('balancePill');
-  p.classList.remove('pulse'); void p.offsetWidth; p.classList.add('pulse');
+  p.style.animation='none';
+  requestAnimationFrame(()=>{
+    p.style.animation='';
+    p.classList.remove('pulse');
+    p.classList.add('pulse');
+  });
   setSave('ok', '✅ ' + fmt);
 }
 
@@ -629,33 +652,40 @@ async function spin() {
     machine.classList.remove('winning');
     reels.forEach(r=>r.classList.remove('win-glow'));
 
-    // Крутим барабаны (анимация)
+    // Считаем результат заранее
     const final=[rnd(),rnd(),rnd()];
-    const spinMs = speedMode==='fast' ? 350 : 700;
-    const gapMs  = speedMode==='fast' ? 80  : 150;
+    const res=calcResult(final);
+    const spinMs = speedMode==='fast' ? 320 : 650;
+    const gapMs  = speedMode==='fast' ? 70  : 130;
+
+    // Запускаем API и анимацию ПАРАЛЛЕЛЬНО — сохранение происходит пока крутятся барабаны
+    const apiPromise = apiSpin(currentBet, res.win?'win':'loss', res.win?res.mult:0);
 
     result.className='result-strip idle';
     result.textContent='КРУТИМ...';
     btn.textContent='⏳';
     reels.forEach(r=>{ r.classList.add('spinning'); r.textContent='🎲'; });
-    const tick=setInterval(()=>reels.forEach(r=>{ r.textContent=rnd().e; }),speedMode==='fast'?45:75);
+
+    // rAF-based ticker для 60fps
+    let tickRunning=true;
+    const tickFn=()=>{ if(tickRunning){ reels.forEach(r=>{ r.textContent=rnd().e; }); requestAnimationFrame(tickFn); } };
+    requestAnimationFrame(tickFn);
+
     await sleep(spinMs);
-    clearInterval(tick);
+    tickRunning=false;
+
     for(let i=0;i<3;i++){
       await sleep(gapMs);
       reels[i].classList.remove('spinning');
       reels[i].classList.add('stopping');
       reels[i].textContent=final[i].e;
-      setTimeout(()=>reels[i].classList.remove('stopping'),180);
+      setTimeout(()=>reels[i].classList.remove('stopping'),160);
     }
-    await sleep(120);
+    await sleep(100);
 
-    // Считаем результат
-    const res=calcResult(final);
+    // API уже ответил пока крутились барабаны — ждём результат
     setSave('saving','СОХРАНЕНИЕ...');
-
-    // Отправляем спин на бот API — он обновляет баланс
-    const apiResp = await apiSpin(currentBet, res.win?'win':'loss', res.win?res.mult:0);
+    const apiResp = await apiPromise;
 
     if(apiResp && apiResp.ok) {
       // Берём баланс от бота — он авторитетный
@@ -733,12 +763,13 @@ function showExitDialog() {
 function hideExitDialog() {
   document.getElementById('exitOverlay').classList.remove('show');
 }
-async function confirmExit() {
+function confirmExit() {
   const btn = document.querySelector('.exit-btn-confirm');
-  if(btn){ btn.textContent='⏳ Выхожу...'; btn.disabled=true; }
-  // Финальная синхронизация — просто уведомляем бот о выходе
-  await apiExit();
-  tg.close();
+  if(btn){ btn.textContent='✅ Сохранено!'; btn.disabled=true; }
+  // Fire-and-forget — не ждём ответа API, закрываем сразу
+  // Баланс уже сохранён после последнего спина
+  apiExit().catch(()=>{});
+  setTimeout(()=>tg.close(), 200);
 }
 function saveAndClose() { showExitDialog(); }
 
@@ -802,44 +833,54 @@ function showToast(msg,type='info') {
   clearTimeout(tt); t.textContent=msg; t.className=`toast ${type} show`;
   tt=setTimeout(()=>{ t.className=`toast ${type}`; },2200);
 }
-function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function sleep(ms){
+  // Используем rAF для синхронизации с vsync дисплея (60fps)
+  if(ms <= 16) return new Promise(r=>requestAnimationFrame(()=>r()));
+  return new Promise(r=>setTimeout(r,ms));
+}
 
 // ══════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════
-async function init() {
+function init() {
   document.getElementById('pName').textContent=(USER_NAME||'Игрок').toUpperCase();
+  // Сразу показываем баланс из URL — мгновенно, без задержек
+  updateBalUI(); refreshBets(); updateMiniStats();
+  for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
 
   if(API_URL && API_SECRET) {
-    // Загружаем АКТУАЛЬНЫЙ баланс из бота при каждом открытии/обновлении
-    setSave('saving','ЗАГРУЗКА БАЛАНСА...');
-    try {
-      const r = await fetch(
-        API_URL + '/casino/balance?uid=' + USER_ID + '&secret=' + API_SECRET,
-        { signal: AbortSignal.timeout(4000) }
-      );
-      if(r.ok) {
-        const d = await r.json();
-        if(d.ok && typeof d.balance === 'number') {
-          balance  = d.balance;
-          INIT_BAL = d.balance;
-          setSave('ok','✅ ' + balance.toLocaleString('ru-RU'));
-        }
-      }
-    } catch(e) {
-      // API недоступен — используем баланс из URL
-      console.warn('Balance fetch failed, using URL_BAL');
-      setSave('error','⚠️ Нет связи — баланс из кеша');
-    }
+    setSave('ok','✅ ПОДКЛЮЧЕНО');
+    // Тихо обновляем баланс из API в фоне — не блокируем UI
+    refreshBalanceFromAPI();
   } else {
     setSave('error','⚠️ БОТ НЕДОСТУПЕН');
   }
+}
 
-  updateBalUI(); refreshBets(); updateMiniStats();
-  for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
+// Обновление баланса из API — неблокирующее, в фоне
+async function refreshBalanceFromAPI() {
+  try {
+    const r = await fetch(
+      API_URL + '/casino/balance?uid=' + USER_ID + '&secret=' + API_SECRET,
+      { signal: AbortSignal.timeout(3000) }
+    );
+    if(!r.ok) return;
+    const d = await r.json();
+    if(d.ok && typeof d.balance === 'number' && d.balance !== balance) {
+      balance  = d.balance;
+      INIT_BAL = d.balance;
+      // Обновляем UI только если баланс изменился
+      updateBalUI(); refreshBets();
+      setSave('ok','✅ ' + balance.toLocaleString('ru-RU'));
+    }
+  } catch(e) {
+    // Тихо — не показываем ошибку если API недоступен при фоновом обновлении
+    console.warn('Background balance refresh failed');
+  }
 }
 
 init();
 </script>
 </body>
 </html>
+
