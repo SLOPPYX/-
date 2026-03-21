@@ -14,7 +14,8 @@
   --fd:'Orbitron',monospace; --fb:'Rajdhani',sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;user-select:none;position:relative}
+*{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;user-select:none;position:relative;-webkit-overflow-scrolling:touch;overscroll-behavior:none}
 .bg-grid{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(0,229,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.025) 1px,transparent 1px);background-size:36px 36px;pointer-events:none}
 .bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 70% 45% at 15% 20%,rgba(191,0,255,0.13) 0%,transparent 60%),radial-gradient(ellipse 55% 40% at 85% 80%,rgba(0,229,255,0.11) 0%,transparent 60%),radial-gradient(ellipse 45% 35% at 50% 50%,rgba(255,0,153,0.07) 0%,transparent 60%)}
 .app{position:relative;z-index:1;max-width:430px;margin:0 auto;padding-bottom:84px}
@@ -45,12 +46,12 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 @keyframes scan{from{top:0;opacity:1}to{top:100%;opacity:0}}
 .reels-frame{background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:14px 10px;margin-bottom:12px;position:relative}
 .reels-row{display:flex;justify-content:center;gap:10px}
-.reel{width:84px;height:84px;background:linear-gradient(180deg,#090020,#04000e,#090020);border:1.5px solid rgba(255,255,255,0.09);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:inset 0 0 18px rgba(0,0,0,0.65);transition:border-color .3s,box-shadow .3s;position:relative;overflow:hidden}
+.reel{width:84px;height:84px;background:linear-gradient(180deg,#090020,#04000e,#090020);border:1.5px solid rgba(255,255,255,0.09);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:inset 0 0 18px rgba(0,0,0,0.65);transition:border-color .3s,box-shadow .3s;position:relative;overflow:hidden;will-change:transform;transform:translateZ(0)}
 .reel::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0.04) 0%,transparent 40%,transparent 60%,rgba(255,255,255,0.02) 100%);pointer-events:none}
 .reel.spinning{animation:rSpin .08s linear infinite}
-@keyframes rSpin{0%,100%{transform:translateY(0) scaleY(1)}25%{transform:translateY(-5px) scaleY(0.97)}75%{transform:translateY(5px) scaleY(0.97)}}
+@keyframes rSpin{0%,100%{transform:translate3d(0,0,0) scaleY(1)}25%{transform:translate3d(0,-5px,0) scaleY(0.97)}75%{transform:translate3d(0,5px,0) scaleY(0.97)}}
 .reel.stopping{animation:rStop .18s cubic-bezier(.34,1.56,.64,1)}
-@keyframes rStop{0%{transform:translateY(7px) scaleY(0.95)}100%{transform:translateY(0) scaleY(1)}}
+@keyframes rStop{0%{transform:translate3d(0,7px,0) scaleY(0.95)}100%{transform:translate3d(0,0,0) scaleY(1)}}
 .reel.win-glow{border-color:var(--gold)!important;animation:rWin .45s ease-in-out infinite alternate}
 @keyframes rWin{from{box-shadow:0 0 22px var(--gold),inset 0 0 16px rgba(255,215,0,0.12)}to{box-shadow:0 0 40px var(--gold),0 0 70px rgba(255,215,0,0.35),inset 0 0 28px rgba(255,215,0,0.18)}}
 .result-strip{height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--fb);font-size:14px;font-weight:700;letter-spacing:.4px;text-align:center;padding:8px;transition:all .3s;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);color:var(--muted)}
@@ -70,7 +71,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .section-head{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:9px;display:flex;align-items:center;gap:8px}
 .section-head::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,0.07),transparent)}
 .bet-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}
-.bet-btn{padding:10px 3px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;color:var(--text);font-family:var(--fb);font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:all .16s}
+.bet-btn{padding:10px 3px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;color:var(--text);font-family:var(--fb);font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:all .12s;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .bet-btn:active{transform:scale(0.93)}
 .bet-btn.active{background:linear-gradient(135deg,rgba(0,229,255,0.19),rgba(191,0,255,0.14));border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 12px rgba(0,229,255,0.22)}
 .bet-btn.disabled{opacity:.22;pointer-events:none}
@@ -82,7 +83,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .custom-ok:active{transform:scale(0.94)}
 
 /* ── SPIN BUTTON ── */
-.spin-btn{width:100%;padding:17px;background:linear-gradient(135deg,#8800cc,#4400aa,#0077cc);background-size:200% 200%;animation:sBtnGlow 3s ease infinite;border:none;border-radius:15px;color:#fff;font-family:var(--fd);font-size:16px;font-weight:900;letter-spacing:3px;cursor:pointer;box-shadow:0 7px 28px rgba(136,0,204,0.5),inset 0 1px 0 rgba(255,255,255,0.14);transition:transform .14s,box-shadow .14s,opacity .18s;position:relative;overflow:hidden;margin-bottom:12px}
+.spin-btn{width:100%;padding:17px;background:linear-gradient(135deg,#8800cc,#4400aa,#0077cc);background-size:200% 200%;animation:sBtnGlow 3s ease infinite;border:none;border-radius:15px;color:#fff;font-family:var(--fd);font-size:16px;font-weight:900;letter-spacing:3px;cursor:pointer;box-shadow:0 7px 28px rgba(136,0,204,0.5),inset 0 1px 0 rgba(255,255,255,0.14);transition:transform .1s,box-shadow .1s,opacity .15s;position:relative;overflow:hidden;margin-bottom:12px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .spin-btn::before{content:'';position:absolute;top:0;left:-100%;width:55%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.11),transparent);transition:left .45s}
 .spin-btn:hover::before{left:150%}
 @keyframes sBtnGlow{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
@@ -382,12 +383,12 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     <div style="height:6px"></div>
     <div class="pt-card">
       <div class="pt-title">Таблица выплат</div>
-      <div class="pt-row"><span class="pt-syms">💎💎💎</span><span class="pt-mult mega">× 50 ✦</span></div>
-      <div class="pt-row"><span class="pt-syms">7️⃣7️⃣7️⃣</span><span class="pt-mult" style="color:var(--pink)">× 20</span></div>
-      <div class="pt-row"><span class="pt-syms">🍒🍒🍒</span><span class="pt-mult">× 10</span></div>
-      <div class="pt-row"><span class="pt-syms">⭐⭐⭐</span><span class="pt-mult" style="color:var(--cyan)">× 5</span></div>
-      <div class="pt-row"><span class="pt-syms">🔔🔔🔔</span><span class="pt-mult">× 3</span></div>
-      <div class="pt-row"><span class="pt-syms">🍋🍋🍋</span><span class="pt-mult" style="color:var(--text)">× 2</span></div>
+      <div class="pt-row"><span class="pt-syms">💎💎💎</span><span class="pt-mult mega">× 100 ✦</span></div>
+      <div class="pt-row"><span class="pt-syms">7️⃣7️⃣7️⃣</span><span class="pt-mult" style="color:var(--pink)">× 50</span></div>
+      <div class="pt-row"><span class="pt-syms">🍒🍒🍒</span><span class="pt-mult">× 15</span></div>
+      <div class="pt-row"><span class="pt-syms">⭐⭐⭐</span><span class="pt-mult" style="color:var(--cyan)">× 8</span></div>
+      <div class="pt-row"><span class="pt-syms">🔔🔔🔔</span><span class="pt-mult">× 4</span></div>
+      <div class="pt-row"><span class="pt-syms">🍋🍋🍋</span><span class="pt-mult" style="color:var(--text)">× 3</span></div>
       <div class="pt-row"><span class="pt-syms" style="font-size:13px;color:var(--muted)">Остальное</span><span class="pt-mult zero">проигрыш</span></div>
     </div>
     <div class="pt-card">
@@ -400,15 +401,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
         Закрой в любой момент — токены не потеряются.
       </p>
     </div>
-    <div class="pt-card">
-      <div class="pt-title">Шансы (на 1 барабан)</div>
-      <div class="pt-row"><span style="font-size:16px">💎</span><span style="font-size:12px;color:var(--muted)">~1% (редкий)</span></div>
-      <div class="pt-row"><span style="font-size:16px">7️⃣</span><span style="font-size:12px;color:var(--muted)">~2%</span></div>
-      <div class="pt-row"><span style="font-size:16px">🍒</span><span style="font-size:12px;color:var(--muted)">~4%</span></div>
-      <div class="pt-row"><span style="font-size:16px">⭐</span><span style="font-size:12px;color:var(--muted)">~6%</span></div>
-      <div class="pt-row"><span style="font-size:16px">🔔</span><span style="font-size:12px;color:var(--muted)">~9%</span></div>
-      <div class="pt-row" style="border:none"><span style="font-size:16px">🍋</span><span style="font-size:12px;color:var(--muted)">~14%</span></div>
-    </div>
+
   </div>
 
 </div><!-- /app -->
@@ -484,14 +477,14 @@ const S = _ss ? {..._ss} : { spins:0,wins:0,losses:0,profit:0,totalWon:0,totalLo
 // СИМВОЛЫ — только 3 одинаковых = выигрыш
 // ══════════════════════════════════════════════════════════
 const SYMS = [
-  {e:'💎', mult:50, w:3},
-  {e:'7️⃣', mult:20, w:5},
-  {e:'🍒', mult:10, w:8},
-  {e:'⭐',  mult:5,  w:12},
-  {e:'🔔', mult:3,  w:15},
-  {e:'🍋', mult:2,  w:18},
-  {e:'🍊', mult:0,  w:20},
-  {e:'🍇', mult:0,  w:19},
+  {e:'💎', mult:100, w:5},   // 💎×100 — легендарный
+  {e:'7️⃣', mult:50,  w:8},   // 7️⃣×50
+  {e:'🍒', mult:15,  w:14},  // 🍒×15
+  {e:'⭐',  mult:8,   w:18},  // ⭐×8
+  {e:'🔔', mult:4,   w:22},  // 🔔×4
+  {e:'🍋', mult:3,   w:26},  // 🍋×3
+  {e:'🍊', mult:0,   w:20},  // нет выигрыша
+  {e:'🍇', mult:0,   w:19},  // нет выигрыша
 ];
 const TW = SYMS.reduce((a,s)=>a+s.w, 0);
 function rnd() {
@@ -814,16 +807,36 @@ function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 // ══════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════
-function init() {
-  updateBalUI(); refreshBets(); updateMiniStats();
+async function init() {
   document.getElementById('pName').textContent=(USER_NAME||'Игрок').toUpperCase();
-  for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
 
-  if(API_URL) {
-    setSave('ok','✅ ПОДКЛЮЧЕНО К БОТУ');
+  if(API_URL && API_SECRET) {
+    // Загружаем АКТУАЛЬНЫЙ баланс из бота при каждом открытии/обновлении
+    setSave('saving','ЗАГРУЗКА БАЛАНСА...');
+    try {
+      const r = await fetch(
+        API_URL + '/casino/balance?uid=' + USER_ID + '&secret=' + API_SECRET,
+        { signal: AbortSignal.timeout(4000) }
+      );
+      if(r.ok) {
+        const d = await r.json();
+        if(d.ok && typeof d.balance === 'number') {
+          balance  = d.balance;
+          INIT_BAL = d.balance;
+          setSave('ok','✅ ' + balance.toLocaleString('ru-RU'));
+        }
+      }
+    } catch(e) {
+      // API недоступен — используем баланс из URL
+      console.warn('Balance fetch failed, using URL_BAL');
+      setSave('error','⚠️ Нет связи — баланс из кеша');
+    }
   } else {
-    setSave('error','⚠️ БОТ НЕДОСТУПЕН (тест)');
+    setSave('error','⚠️ БОТ НЕДОСТУПЕН');
   }
+
+  updateBalUI(); refreshBets(); updateMiniStats();
+  for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
 }
 
 init();
