@@ -1016,14 +1016,14 @@ let _pollActive = false;
 function startBalancePolling() {
   if(!API_URL || !API_SECRET) return;
   stopBalancePolling();
-  _pollTimer = setInterval(pollBalance, 3000);  // каждые 5 сек
+  _pollTimer = setInterval(pollBalance, 3000);  // каждые 3 сек
 }
 function stopBalancePolling() {
   if(_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
 }
 
 async function pollBalance() {
-  if(spinning || _pollActive) return;  // не мешаем спину
+  if(spinning || _pollActive) return;
   _pollActive = true;
   try {
     const r = await fetch(
@@ -1034,59 +1034,53 @@ async function pollBalance() {
     const d = await r.json();
     if(!d.ok || typeof d.balance !== 'number') return;
 
-    const serverBal = d.balance;
-    if(serverBal === balance) return;  // нет изменений
-
-    const diff = serverBal - balance;
-    balance  = serverBal;   // БОТ — ГЛАВНЫЙ ИСТОЧНИК
-    INIT_BAL = serverBal;
-    localStorage.setItem('bal_'+USER_ID, String(balance));
-    updateBalUI(); refreshBets();
-
-    if(diff > 0) {
-      // Пополнение — показываем баннер
-      showTopBanner(`🎁 +${diff.toLocaleString('ru-RU')} токенов!`);
-      showToast(`💰 +${diff.toLocaleString('ru-RU')}`, 'gold');
+    // БОТ — ГЛАВНЫЙ. Всегда применяем его баланс.
+    if(d.balance !== balance) {
+      const diff = d.balance - balance;
+      balance  = d.balance;
+      INIT_BAL = d.balance;
+      localStorage.setItem('bal_'+USER_ID, String(balance));
+      updateBalUI(); refreshBets();
+      if(diff > 0) {
+        // Баланс вырос — показываем уведомление
+        showToast('💰 +' + diff.toLocaleString('ru-RU') + ' токенов!', 'gold');
+        _showBanner('🎁 Пополнение: +' + diff.toLocaleString('ru-RU') + ' токенов!');
+      }
     }
-  } catch(e) { /* тихо */ }
+  } catch(e) {}
   finally { _pollActive = false; }
 }
 
-// Баннер вверху страницы при пополнении
-function showTopBanner(msg) {
-  const b = document.createElement('div');
-  b.style.cssText = [
-    'position:fixed','top:60px','left:50%','transform:translateX(-50%) translateY(-10px)',
-    'background:linear-gradient(135deg,rgba(255,215,0,.25),rgba(255,140,0,.15))',
-    'border:1.5px solid var(--gold)','border-radius:14px','padding:10px 20px',
-    'font-family:var(--fd)','font-size:13px','font-weight:700','color:var(--gold)',
-    'z-index:9999','box-shadow:0 0 20px rgba(255,215,0,.35)',
-    'opacity:0','transition:all .3s cubic-bezier(.34,1.56,.64,1)',
-    'white-space:nowrap','pointer-events:none',
-  ].join(';');
-  b.textContent = msg;
-  document.body.appendChild(b);
+function _showBanner(msg) {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-8px);'
+    + 'background:linear-gradient(135deg,rgba(255,215,0,.22),rgba(255,140,0,.14));'
+    + 'border:1.5px solid var(--gold);border-radius:14px;padding:10px 20px;'
+    + 'font-family:var(--fd);font-size:13px;font-weight:700;color:var(--gold);'
+    + 'z-index:9999;box-shadow:0 0 20px rgba(255,215,0,.3);'
+    + 'opacity:0;transition:all .3s ease;white-space:nowrap;pointer-events:none;';
+  el.textContent = msg;
+  document.body.appendChild(el);
   requestAnimationFrame(() => {
-    b.style.opacity = '1';
-    b.style.transform = 'translateX(-50%) translateY(0)';
+    el.style.opacity = '1';
+    el.style.transform = 'translateX(-50%) translateY(0)';
   });
   setTimeout(() => {
-    b.style.opacity = '0';
-    b.style.transform = 'translateX(-50%) translateY(-10px)';
-    setTimeout(() => b.remove(), 350);
-  }, 3000);
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(-50%) translateY(-8px)';
+    setTimeout(() => el.remove(), 300);
+  }, 3500);
 }
 
-// Polling продолжается всегда — не останавливаем в фоне
-// При возврате на вкладку — сразу обновляем
-window.addEventListener('pagehide', stopBalancePolling);
+// При возврате на вкладку — сразу обновляем баланс
 document.addEventListener('visibilitychange', () => {
-  if(document.visibilityState === 'visible' && API_URL) {
-    pollBalance();  // сразу обновляем при возврате
+  if(document.visibilityState === 'visible') {
+    pollBalance();
     if(!_pollTimer) startBalancePolling();
   }
-  // НЕ останавливаем при скрытии — баланс обновляется всегда
+  // НЕ останавливаем при скрытии — polling работает всегда
 });
+window.addEventListener('pagehide', stopBalancePolling);
 
 init();
 </script>
