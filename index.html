@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -606,19 +607,22 @@ function showPage(n) {
 // ══════════════════════════════════════════════════════════
 // БАЛАНС UI
 // ══════════════════════════════════════════════════════════
-function updateBalUI() {
+function updateBalUI(flash) {
   const fmt = balance.toLocaleString('ru-RU');
+  // Обновляем текст синхронно — гарантированно отображается
   document.getElementById('balanceVal').textContent = fmt;
   document.getElementById('pBal').textContent = fmt;
-  // Без void offsetWidth (forced reflow!) — используем data-attr трюк
-  const p = document.getElementById('balancePill');
-  p.style.animation='none';
-  requestAnimationFrame(()=>{
-    p.style.animation='';
-    p.classList.remove('pulse');
-    p.classList.add('pulse');
-  });
   setSave('ok', '✅ ' + fmt);
+  // Анимация пилюли
+  const p = document.getElementById('balancePill');
+  p.classList.remove('pulse');
+  void p.offsetWidth;  // reflow — заставляет анимацию перезапуститься
+  p.classList.add('pulse');
+  // Если flash=true (пополнение) — дополнительная вспышка золотого цвета
+  if(flash) {
+    p.style.boxShadow = '0 0 30px rgba(255,215,0,0.8), 0 0 60px rgba(255,215,0,0.4)';
+    setTimeout(() => { p.style.boxShadow = ''; }, 800);
+  }
 }
 
 function setSave(state, text) {
@@ -1040,9 +1044,9 @@ async function pollBalance() {
       balance  = d.balance;
       INIT_BAL = d.balance;
       localStorage.setItem('bal_'+USER_ID, String(balance));
-      updateBalUI(); refreshBets();
+      updateBalUI(diff > 0);  // flash=true при пополнении
+      refreshBets();
       if(diff > 0) {
-        // Баланс вырос — показываем уведомление
         showToast('💰 +' + diff.toLocaleString('ru-RU') + ' токенов!', 'gold');
         _showBanner('🎁 Пополнение: +' + diff.toLocaleString('ru-RU') + ' токенов!');
       }
@@ -1086,4 +1090,3 @@ init();
 </script>
 </body>
 </html>
-
