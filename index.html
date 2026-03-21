@@ -866,6 +866,8 @@ async function spin() {
     refreshBets();
     updateMiniStats();
     btn.textContent='🎰 КРУТИТЬ';
+    // Мгновенный опрос после спина — не ждём следующего тика polling
+    setTimeout(pollBalance, 300);
     document.getElementById('spinCount').textContent=`×${S.spins}`;
 
     if(currentBet>balance && balance>=MIN_BET){
@@ -1012,7 +1014,7 @@ async function init() {
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { signal: AbortSignal.timeout(5000) }
+      { signal: AbortSignal.timeout(3000) }
     );
     if(r.ok) {
       const d = await r.json();
@@ -1054,7 +1056,7 @@ let _pollActive = false;
 function startBalancePolling() {
   if(!API_URL || !API_SECRET) return;
   stopBalancePolling();
-  _pollTimer = setInterval(pollBalance, 3000);  // каждые 3 сек
+  _pollTimer = setInterval(pollBalance, 1500);  // каждые 1.5 сек
 }
 function stopBalancePolling() {
   if(_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
@@ -1066,7 +1068,7 @@ async function pollBalance() {
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { signal: AbortSignal.timeout(3000) }
+      { signal: AbortSignal.timeout(1500) }
     );
     if(!r.ok) return;
     const d = await r.json();
