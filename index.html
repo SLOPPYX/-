@@ -310,6 +310,13 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="bet-btn" data-bet="50000"  onclick="selectBet(50000)">50K</div>
       <div class="bet-btn" data-bet="100000" onclick="selectBet(100000)">100K</div>
     </div>
+    <!-- Быстрое изменение ставки множителями -->
+    <div class="bet-grid" style="margin-bottom:10px">
+      <div class="bet-btn" style="color:var(--red)"    onclick="multBet(0.5)">×0.5</div>
+      <div class="bet-btn" style="color:var(--cyan)"   onclick="multBet(1.5)">×1.5</div>
+      <div class="bet-btn" style="color:var(--green)"  onclick="multBet(2)">×2</div>
+      <div class="bet-btn" style="color:var(--gold)"   onclick="multBet(5)">×5</div>
+    </div>
     <div class="custom-row">
       <input class="custom-input" id="customInput" type="number" min="10000" placeholder="Своя ставка (мин. 10 000)...">
       <button class="custom-ok" onclick="applyCustom()">Сделать ставку</button>
@@ -406,6 +413,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="pt-row"><span class="pt-syms">⭐⭐⭐</span><span class="pt-mult" style="color:var(--cyan)">× 10</span></div>
       <div class="pt-row"><span class="pt-syms">🔔🔔🔔</span><span class="pt-mult">× 5</span></div>
       <div class="pt-row"><span class="pt-syms">🍋🍋🍋</span><span class="pt-mult" style="color:var(--text)">× 3</span></div>
+      <div class="pt-row"><span class="pt-syms" style="font-size:12px">Любая пара 🍒🍒</span><span class="pt-mult" style="color:var(--muted)">× 1 (возврат)</span></div>
       <div class="pt-row"><span class="pt-syms" style="font-size:13px;color:var(--muted)">Остальное</span><span class="pt-mult zero">проигрыш</span></div>
     </div>
     <div class="pt-card">
@@ -512,26 +520,21 @@ const _ss = loadStats();
 const S = _ss ? {..._ss} : { spins:0,wins:0,losses:0,profit:0,totalWon:0,totalLost:0,bestWin:0,history:[],streak:0,streakType:null };
 
 // ══════════════════════════════════════════════════════════
-// СИМВОЛЫ — только 3 одинаковых = выигрыш
-// ══════════════════════════════════════════════════════════
-// Веса на каждый барабан. Шанс тройки ≈ (w/TW)³
-// TW = 15+22+38+48+55+65+6+5 = 254
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // СИМВОЛЫ
-// Выигрыш ТОЛЬКО когда все 3 барабана одинаковые
-// mult = множитель к ставке
-// w    = вес (чем больше — тем чаще выпадает)
-// ═══════════════════════════════════════════
-// TW = 20+30+50+60+70+80+8+7 = 325
+// m3 = множитель за 3 одинаковых
+// m2 = множитель за 2 одинаковых (×1 = возврат ставки)
+// w  = вес символа на барабане
+// ═══════════════════════════════════════════════════
 const SYMS = [
-  {e:'💎', mult:100, w:20},  // 3 алмаза  = ×100 ставки
-  {e:'7️⃣', mult:50,  w:30},  // 3 семёрки = ×50 ставки
-  {e:'🍒', mult:30,  w:50},  // 3 вишни   = ×30 ставки
-  {e:'⭐',  mult:10,  w:60},  // 3 звезды  = ×10 ставки
-  {e:'🔔', mult:5,   w:70},  // 3 колокол = ×5 ставки
-  {e:'🍋', mult:3,   w:80},  // 3 лимона  = ×3 ставки
-  {e:'🍊', mult:0,   w:8},   // нет выигрыша
-  {e:'🍇', mult:0,   w:7},   // нет выигрыша
+  {e:'💎', m3:100, m2:1, w:20},
+  {e:'7️⃣', m3:50,  m2:1, w:30},
+  {e:'🍒', m3:30,  m2:1, w:50},
+  {e:'⭐',  m3:10,  m2:1, w:60},
+  {e:'🔔', m3:5,   m2:1, w:70},
+  {e:'🍋', m3:3,   m2:1, w:80},
+  {e:'🍊', m3:0,   m2:0, w:8},
+  {e:'🍇', m3:0,   m2:0, w:7},
 ];
 const TW = SYMS.reduce((a,s)=>a+s.w, 0);
 function rnd() {
@@ -540,9 +543,20 @@ function rnd() {
   return SYMS[SYMS.length-1];
 }
 function calcResult(f) {
-  if(f[0].e===f[1].e && f[1].e===f[2].e && f[0].mult>0)
-    return {win:true, mult:f[0].mult, emoji:f[0].e};
-  return {win:false, mult:0, emoji:''};
+  const e0=f[0].e, e1=f[1].e, e2=f[2].e;
+  // 3 одинаковых — главный приз
+  if(e0===e1 && e1===e2) {
+    const s=SYMS.find(x=>x.e===e0);
+    if(s && s.m3>0) return {win:true, mult:s.m3, emoji:e0, type:'triple'};
+  }
+  // 2 одинаковых — возврат ×1
+  let pe=null;
+  if(e0===e1) pe=e0; else if(e0===e2) pe=e0; else if(e1===e2) pe=e1;
+  if(pe) {
+    const s=SYMS.find(x=>x.e===pe);
+    if(s && s.m2>0) return {win:true, mult:s.m2, emoji:pe, type:'pair'};
+  }
+  return {win:false, mult:0, emoji:'', type:'loss'};
 }
 
 // ══════════════════════════════════════════════════════════
@@ -648,6 +662,17 @@ function selectBet(v) {
   document.querySelectorAll('.bet-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.bet)===v));
   document.getElementById('customInput').value='';
 }
+function multBet(factor) {
+  let newBet = Math.round(currentBet * factor / 1000) * 1000; // округляем до 1000
+  newBet = Math.max(MIN_BET, newBet);
+  if(newBet > balance){ newBet = balance - (balance % 1000) || MIN_BET; }
+  if(newBet < MIN_BET){ showToast('Минимальная ставка: '+MIN_BET.toLocaleString('ru-RU'),'error'); return; }
+  if(newBet > balance){ showToast('Недостаточно токенов','error'); return; }
+  currentBet = newBet;
+  document.querySelectorAll('.bet-btn[data-bet]').forEach(b=>b.classList.remove('active'));
+  showToast('Ставка: '+currentBet.toLocaleString('ru-RU'), 'info');
+  refreshBets();
+}
 function applyCustom() {
   const v=parseInt(document.getElementById('customInput').value,10);
   if(!v||v<MIN_BET){ showToast('Минимум: '+MIN_BET.toLocaleString('ru-RU'),'error'); return; }
@@ -731,44 +756,54 @@ async function spin() {
 
     S.spins++;
     if(res.win) {
+      const prize = apiResp ? apiResp.prize : Math.floor(currentBet * res.mult);
       S.wins++; S.profit+=prize-currentBet; S.totalWon+=prize;
       if(prize>S.bestWin) S.bestWin=prize;
       S.history.push('w');
       S.streak=S.streakType==='w'?S.streak+1:1; S.streakType='w';
 
-      const prize = apiResp ? apiResp.prize : currentBet*res.mult;
-      // Уровень победы по множителю
-      const tier = res.mult >= 100 ? 'mega'      // 💎×100
-                 : res.mult >= 50  ? 'big'        // 7️⃣×50
-                 : res.mult >= 30  ? 'great'      // 🍒×30
-                 : 'normal';                       // остальные
+      // ── Анимация по типу и уровню выигрыша ──
+      const isTriple = res.type==='triple';
+      const isPair   = res.type==='pair';
+      const tier = res.mult>=100 ? 3    // 💎 ДЖЕКПОТ
+                 : res.mult>=50  ? 2    // 7️⃣ СУПЕР
+                 : res.mult>=10  ? 1    // 🍒⭐ ХОРОШО
+                 : 0;                   // остальные / пара
 
-      machine.classList.add('winning');
-      reels.forEach(r=>r.classList.add('win-glow'));
+      if(isTriple) {
+        // Добавляем классы через rAF чтобы гарантированно применились
+        requestAnimationFrame(()=>{
+          machine.classList.add('winning');
+          reels.forEach(r=>r.classList.add('win-glow'));
+        });
+        const glowMs = speedMode==='fast' ? 1000
+                     : tier===3 ? 3500 : tier===2 ? 2800 : tier===1 ? 2000 : 1500;
+        setTimeout(()=>{
+          machine.classList.remove('winning');
+          reels.forEach(r=>r.classList.remove('win-glow'));
+        }, glowMs);
 
-      const glowTime = speedMode==='fast' ? 600
-                     : tier==='mega' ? 3000
-                     : tier==='big'  ? 2500
-                     : tier==='great'? 2000
-                     : 1500;
-      setTimeout(()=>{ machine.classList.remove('winning'); reels.forEach(r=>r.classList.remove('win-glow')); }, glowTime);
+        if(speedMode!=='fast') {
+          spawnParticles();
+          if(tier>=2) setTimeout(spawnParticles, 350);
+          if(tier>=3) setTimeout(spawnParticles, 700);
+        }
 
-      if(speedMode!=='fast') {
-        spawnParticles();
-        if(tier==='mega') { spawnParticles(); setTimeout(spawnParticles, 400); } // тройной залп
-        if(tier==='big')  { setTimeout(spawnParticles, 300); }                  // двойной залп
+        const label = tier===3 ? '🏆 ДЖЕКПОТ!'
+                    : tier===2 ? '🎰 СУПЕР!'
+                    : tier===1 ? '🎉 ВЫИГРЫШ!'
+                    : '✨ ВЫИГРЫШ!';
+        result.className='result-strip win';
+        result.textContent=`${label}  ${res.emoji}${res.emoji}${res.emoji}  ×${res.mult}  +${prize.toLocaleString('ru-RU')} токенов`;
+        showToast(`+${prize.toLocaleString('ru-RU')} 💰`, tier>=2 ? 'gold' : 'info');
+
+      } else {
+        // Пара ×1 — возврат ставки, без свечения
+        result.className='result-strip win';
+        result.textContent=`🤝 Пара ${res.emoji}${res.emoji}  ×1  ±0 токенов (ставка возвращена)`;
+        showToast(`Пара ${res.emoji}${res.emoji} — ставка возвращена`, 'info');
       }
 
-      result.className='result-strip win';
-      // Заголовок зависит от уровня
-      const prefix = tier==='mega'  ? '🏆 ДЖЕКПОТ!'
-                   : tier==='big'   ? '🎰 БОЛЬШОЙ ВЫИГРЫШ!'
-                   : tier==='great' ? '🎉 ОТЛИЧНЫЙ ВЫИГРЫШ!'
-                   : '✨ ВЫИГРЫШ!';
-      result.textContent=`${prefix}  ${res.emoji}${res.emoji}${res.emoji}  ×${res.mult}  +${prize.toLocaleString('ru-RU')} токенов`;
-
-      const toastType = tier==='mega' || tier==='big' ? 'gold' : 'info';
-      showToast(`+${prize.toLocaleString('ru-RU')} 💰`,'gold');
     } else {
       S.losses++; S.profit-=currentBet; S.totalLost+=currentBet;
       S.history.push('l');
@@ -960,4 +995,3 @@ init();
 </script>
 </body>
 </html>
-
