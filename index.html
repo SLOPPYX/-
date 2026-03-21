@@ -259,7 +259,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="logo-main">CASINO</div>
       <div class="logo-sub">by SloppyX</div>
     </div>
-    <div id="apiStatus" style="display:none;font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;background:rgba(0,0,0,0.35);margin-bottom:5px;text-align:center;transition:all .3s"></div>
+    <div id="apiStatus" style="display:none;font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;background:rgba(0,0,0,0.35);margin-bottom:3px;text-align:center;transition:all .3s;cursor:default"></div>
+    <div id="apiHint" style="display:none;font-size:10px;color:#aaa;text-align:center;margin-bottom:4px;padding:0 8px">Перезапусти ngrok → переоткрой казино в боте</div>
     <div class="balance-pill" id="balancePill">
       💰 <span id="balanceVal">0</span>
     </div>
@@ -628,22 +629,41 @@ function setSave(state, text) {
   if(t) t.textContent=text;
 }
 // Статус подключения к боту
-let _apiOk = null;  // null=неизвестно, true=ок, false=нет связи
+let _apiOk = null;
+let _apiFailCount = 0;   // счётчик неудач подряд
+let _apiHideTimer = null;
+
 function setApiStatus(ok) {
-  if(_apiOk === ok) return;  // не мигаем без причины
-  _apiOk = ok;
   const el = document.getElementById('apiStatus');
   if(!el) return;
+
   if(ok) {
+    _apiFailCount = 0;
+    if(_apiOk === true) return;  // уже ок, не мигаем
+    _apiOk = true;
     el.textContent = '🟢 Бот подключён';
     el.style.color = 'var(--green)';
     el.style.display = 'block';
-    // Прячем через 3 сек после успешного подключения
-    setTimeout(() => { if(_apiOk) el.style.display = 'none'; }, 3000);
+    clearTimeout(_apiHideTimer);
+    _apiHideTimer = setTimeout(() => {
+      el.style.display = 'none';
+      const hint = document.getElementById('apiHint');
+      if(hint) hint.style.display = 'none';
+    }, 2000);
   } else {
-    el.textContent = '🔴 Нет связи с ботом — ngrok устарел? Перезапусти ngrok и переоткрой казино';
-    el.style.color = 'var(--red)';
+    _apiFailCount++;
+    // Показываем ошибку только после 2 неудач подряд (избегаем ложных срабатываний)
+    if(_apiFailCount < 2) return;
+    if(_apiOk === false) return;  // уже показываем ошибку
+    _apiOk = false;
+    clearTimeout(_apiHideTimer);
     el.style.display = 'block';
+    el.style.color = '#ff4d4d';
+    el.textContent = '🔴 Нет связи с ботом';
+    el.title = 'Возможно ngrok устарел. Перезапусти ngrok и переоткрой казино из бота.';
+    // Подсказка под плашкой
+    const hint = document.getElementById('apiHint');
+    if(hint) hint.style.display = 'block';
   }
 }
 
@@ -1126,3 +1146,4 @@ init();
 </script>
 </body>
 </html>
+
