@@ -306,6 +306,24 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .spo-bal{font-family:var(--fd);font-size:18px;font-weight:900;color:var(--gold);text-shadow:0 0 12px rgba(255,215,0,.5);line-height:1}
 .spo-bal-lbl{font-family:var(--fb);font-size:10px;color:rgba(255,215,0,.5);letter-spacing:1px;margin-left:3px}
 .spo-wins{font-family:var(--fd);font-size:9px;color:rgba(0,255,136,.7);letter-spacing:1px;margin-top:3px}
+
+/* ── ДИАЛОГ ПРЕДУПРЕЖДЕНИЯ (крестик/кнопка назад) ── */
+.warn-overlay{position:fixed;inset:0;z-index:300;background:rgba(5,5,16,0.9);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:20px}
+.warn-overlay.show{display:flex;animation:warnIn .2s ease-out}
+@keyframes warnIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.warn-dialog{background:linear-gradient(180deg,rgba(12,0,30,0.99),rgba(6,0,18,0.99));border:1px solid rgba(255,51,51,0.4);border-radius:22px;padding:30px 24px;max-width:320px;width:100%;text-align:center;box-shadow:0 0 50px rgba(255,51,51,0.15),0 0 100px rgba(191,0,255,0.08),inset 0 1px 0 rgba(255,255,255,0.06)}
+.warn-icon{font-size:48px;margin-bottom:14px;animation:warnShake 0.5s ease .1s both}
+@keyframes warnShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-8deg)}40%{transform:rotate(8deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(5deg)}}
+.warn-title{font-family:var(--fd);font-size:15px;font-weight:900;color:var(--text);letter-spacing:1px;margin-bottom:10px}
+.warn-sub{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:24px}
+.warn-sub b{color:var(--red)}
+.warn-btns{display:flex;flex-direction:column;gap:10px}
+.warn-btn-stay{padding:14px;border-radius:12px;background:linear-gradient(135deg,rgba(0,229,255,0.2),rgba(191,0,255,0.15));border:1.5px solid var(--cyan);color:var(--cyan);font-family:var(--fd);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:all .18s;box-shadow:0 0 14px rgba(0,229,255,0.15)}
+.warn-btn-stay:active{transform:scale(.97)}
+.warn-btn-exit{padding:13px;border-radius:12px;background:rgba(255,51,51,0.08);border:1px solid rgba(255,51,51,0.3);color:var(--red);font-family:var(--fb);font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:all .18s}
+.warn-btn-exit:active{transform:scale(.97)}
+.warn-btn-save{padding:13px;border-radius:12px;background:linear-gradient(135deg,rgba(0,255,136,0.15),rgba(0,229,255,0.1));border:1px solid rgba(0,255,136,0.35);color:var(--green);font-family:var(--fb);font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:all .18s}
+.warn-btn-save:active{transform:scale(.97)}
 </style>
 </head>
 <body>
@@ -539,6 +557,24 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 </div><!-- /app -->
 
 <!-- Диалог подтверждения выхода -->
+
+<!-- Диалог предупреждения при выходе через крестик/кнопку назад -->
+<div class="warn-overlay" id="warnOverlay">
+  <div class="warn-dialog">
+    <div class="warn-icon">⚠️</div>
+    <div class="warn-title">ВЫЙТИ ИЗ КАЗИНО?</div>
+    <div class="warn-sub">
+      <b>Внесённые изменения могут быть потеряны.</b><br>
+      Сохрани баланс перед выходом, чтобы токены не потерялись.
+    </div>
+    <div class="warn-btns">
+      <button class="warn-btn-stay" onclick="hideWarnDialog()">🎰 Остаться в казино</button>
+      <button class="warn-btn-save" onclick="warnSaveAndExit()">💾 Сохранить и выйти</button>
+      <button class="warn-btn-exit" onclick="warnJustExit()">✖ Выйти без сохранения</button>
+    </div>
+  </div>
+</div>
+
 <div class="exit-overlay" id="exitOverlay">
   <div class="exit-dialog">
     <div class="exit-icon">🎰</div>
@@ -969,6 +1005,7 @@ async function spin() {
 // ══════════════════════════════════════════════════════════
 // ВЫХОД — просто tg.close(), баланс уже в боте
 // ══════════════════════════════════════════════════════════
+// ── Старый диалог выхода (кнопки Сохранить / Выйти внизу) ──
 function showExitDialog() {
   if(autoMode) stopAuto();
   document.getElementById('exitBalPreview').textContent = balance.toLocaleString('ru-RU');
@@ -976,6 +1013,26 @@ function showExitDialog() {
 }
 function hideExitDialog() {
   document.getElementById('exitOverlay').classList.remove('show');
+}
+
+// ── Новый диалог предупреждения (крестик / кнопка Назад) ──
+function showWarnDialog() {
+  if(autoMode) try { stopAuto(); } catch(e) {}
+  try { document.getElementById('exitOverlay').classList.remove('show'); } catch(e) {}
+  document.getElementById('warnOverlay').classList.add('show');
+}
+function hideWarnDialog() {
+  document.getElementById('warnOverlay').classList.remove('show');
+}
+function warnSaveAndExit() {
+  hideWarnDialog();
+  confirmExit();
+}
+function warnJustExit() {
+  hideWarnDialog();
+  // Закрываем без сохранения
+  try { tg.close(); } catch(e) { try { window.history.back(); } catch(e2) {} }
+  setTimeout(() => { try { tg.close(); } catch(e) {} }, 200);
 }
 function confirmExit() {
   // Меняем кнопку — визуальная обратная связь
@@ -1468,6 +1525,10 @@ async function init() {
   } finally {
     clearTimeout(emergency);
     closeSplash();
+    // Инициализируем TG кнопки здесь — после объявления всех функций
+    try { tg.BackButton.show(); } catch(e){}
+    try { tg.BackButton.onClick(showWarnDialog); } catch(e){}
+    try { tg.enableClosingConfirmation(); } catch(e){}
     setTimeout(()=>{ try{ initSpaceCanvas(); }catch(e){} }, 700);
     try{ startBalancePolling(); }catch(e){}
   }
@@ -1475,40 +1536,49 @@ async function init() {
 
 // Безопасная загрузка баланса — никогда не зависает
 async function safeLoadBalance() {
-  // Сначала CloudStorage (с жёстким таймаутом 1.5с)
-  await new Promise(resolve => {
+  // Запускаем CloudStorage и API-запрос ПАРАЛЛЕЛЬНО — кто быстрее, тот и обновит баланс
+  // API всегда даёт самый актуальный баланс (включая только что добавленные токены)
+
+  const cloudPromise = new Promise(resolve => {
     const t = setTimeout(resolve, 1500);
     try {
       tg.CloudStorage.getItem('balance_'+USER_ID, (err, val) => {
         clearTimeout(t);
         if(!err && val) {
           const b = parseInt(val, 10);
-          if(!isNaN(b) && b > 0) { try{ applyBalance(b,true); }catch(e){} }
+          if(!isNaN(b) && b > 0) { try{ applyBalance(b, true); }catch(e){} }
         }
         resolve();
       });
     } catch(e) { clearTimeout(t); resolve(); }
   });
 
-  // Потом API (если есть)
-  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
-  try {
-    const ctrl = new AbortController();
-    const t = setTimeout(()=>ctrl.abort(), 3000);
-    try {
-      const r = await fetch(
-        API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-        { signal: ctrl.signal }
-      );
-      if(r && r.ok) {
-        const d = await r.json();
-        if(d && d.ok && typeof d.balance==='number') {
-          applyBalance(d.balance, true);
-          try{ tg.CloudStorage.setItem('balance_'+USER_ID, String(d.balance), ()=>{}); }catch(e){}
-        }
-      }
-    } finally { clearTimeout(t); }
-  } catch(e) {}
+  const apiPromise = (API_URL && API_SECRET && USER_ID && USER_ID !== '0')
+    ? (async () => {
+        try {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 4000);
+          try {
+            const r = await fetch(
+              API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
+              { signal: ctrl.signal }
+            );
+            if(r && r.ok) {
+              const d = await r.json();
+              if(d && d.ok && typeof d.balance === 'number') {
+                // API-баланс всегда актуальнее — применяем поверх CloudStorage
+                applyBalance(d.balance, true);
+                try { tg.CloudStorage.setItem('balance_'+USER_ID, String(d.balance), ()=>{}); } catch(e) {}
+              }
+            }
+          } finally { clearTimeout(t); }
+        } catch(e) {}
+      })()
+    : Promise.resolve();
+
+  // Ждём оба — кто быстрее обновит баланс, тот победит
+  // API-баланс применяется последним (он точнее), если успеет за 4 сек
+  await Promise.all([cloudPromise, apiPromise]);
 }
 
 async function loadBalanceFromBot() { await safeLoadBalance(); }
@@ -1546,6 +1616,8 @@ function applyServerBalance(newBal) {
   const diff = newBal - balance;
   _lastKnownBalance = newBal;
   applyBalance(newBal, true);
+  // Сразу синхронизируем CloudStorage — следующее открытие увидит актуальный баланс
+  try { tg.CloudStorage.setItem('balance_'+USER_ID, String(newBal), ()=>{}); } catch(e){}
   try { refreshBets(); } catch(e) {}
   try {
     const sp = document.getElementById('spoBal');
