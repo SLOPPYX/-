@@ -1028,30 +1028,40 @@ async function init() {
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
 
   // Небольшая задержка чтобы пользователь увидел 100%, потом скрываем
-  await new Promise(r => setTimeout(r, 400));
+  await new Promise(r => setTimeout(r, 300));
   if(splash) { splash.classList.add('hide'); setTimeout(() => splash.remove(), 450); }
 
   startBalancePolling();
 }
 
 async function loadBalanceFromBot() {
-  try {
-    const r = await fetch(
-      API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-      { signal: AbortSignal.timeout(3000) }
-    );
-    if(!r.ok) return;
-    const d = await r.json();
-    if(d.ok && typeof d.balance==='number') {
-      const diff = d.balance - balance;
-      applyBalance(d.balance, true);  // применяем всегда — без проверки ===
-      refreshBets();
-      if(diff > 0) {
-        showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
-        _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
+  // 3 попытки — если ngrok медленный, первый запрос может не успеть
+  for(let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const r = await fetch(
+        API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
+        { signal: AbortSignal.timeout(3000) }
+      );
+      if(!r.ok) {
+        console.warn('loadBalance attempt', attempt, 'status:', r.status);
+        continue;
       }
+      const d = await r.json();
+      if(d.ok && typeof d.balance==='number') {
+        const diff = d.balance - balance;
+        applyBalance(d.balance, true);
+        refreshBets();
+        if(diff > 0) {
+          showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
+          _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
+        }
+        return;  // успех — выходим
+      }
+    } catch(e) {
+      console.warn('loadBalance attempt', attempt, 'error:', e.message);
     }
-  } catch(e) {}
+    if(attempt < 3) await new Promise(r => setTimeout(r, 500)); // пауза между попытками
+  }
 }
 
 // ══════════════════════════════════════════════════════════
