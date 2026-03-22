@@ -612,11 +612,14 @@ function showPage(n) {
 // ══════════════════════════════════════════════════════════
 function updateBalUI() {
   const fmt = balance.toLocaleString('ru-RU');
+  // Обновляем DOM сразу — без блокирующего reflow
   document.getElementById('balanceVal').textContent = fmt;
   document.getElementById('pBal').textContent = fmt;
-  const p = document.getElementById('balancePill');
-  p.classList.remove('pulse'); void p.offsetWidth; p.classList.add('pulse');
   setSave('ok', '✅ ' + fmt);
+  // Анимация пилюли — через rAF чтобы не блокировать отображение
+  const p = document.getElementById('balancePill');
+  p.classList.remove('pulse');
+  requestAnimationFrame(() => p.classList.add('pulse'));
 }
 // Вызывается ТОЛЬКО когда баланс пришёл с сервера бота
 function saveBalToCache() {
@@ -1028,17 +1031,17 @@ async function init() {
       if(d.ok && typeof d.balance==='number') {
         balance  = d.balance;
         INIT_BAL = d.balance;
-        // Сохраняем в кеш ТОЛЬКО актуальный баланс от бота
-        try { localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
-        updateBalUI();
+        saveBalToCache();
+        // Сразу пишем в DOM напрямую — не ждём ничего
+        document.getElementById('balanceVal').textContent = balance.toLocaleString('ru-RU');
+        document.getElementById('pBal').textContent = balance.toLocaleString('ru-RU');
+        setSave('ok', '✅ ' + balance.toLocaleString('ru-RU'));
         setApiStatus(true);
       }
     } else {
-      // API ответил ошибкой — показываем что есть
       setApiStatus(false);
     }
   } catch(e) {
-    // API недоступен — показываем URL_BAL как есть
     setApiStatus(false);
   }
 
@@ -1086,8 +1089,11 @@ async function pollBalance() {
     const diff = d.balance - balance;
     balance  = d.balance;
     INIT_BAL = d.balance;
-    try { localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
-    updateBalUI();
+    saveBalToCache();
+    // Прямая запись в DOM — мгновенно
+    document.getElementById('balanceVal').textContent = balance.toLocaleString('ru-RU');
+    document.getElementById('pBal').textContent = balance.toLocaleString('ru-RU');
+    setSave('ok', '✅ ' + balance.toLocaleString('ru-RU'));
     refreshBets();
     setApiStatus(true);
     if(diff > 0) {
