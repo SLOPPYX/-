@@ -1001,7 +1001,6 @@ async function init() {
 
   startBalancePolling();
   setTimeout(pollBalance, 50);
-  startPushListener();  // мгновенный push от бота
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1016,28 +1015,31 @@ let _pollTimer = null;
 function startBalancePolling() {
   if(!API_URL || !API_SECRET) return;
   stopBalancePolling();
-  _pollTimer = setInterval(pollBalance, 200);  // backup каждые 0.2с
-  waitForBalanceChange();                       // long-poll — мгновенно
+  _pollTimer = setInterval(pollBalance, 500);  // резерв каждые 0.5с
+  longPoll();  // мгновенный push
 }
 function stopBalancePolling() {
   if(_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
   _lpStop = true;
 }
 
+// Long-poll: ждём изменения баланса от бота (макс 5с)
+// Как только /addtokens — бот отвечает мгновенно
 let _lpStop = false;
-async function waitForBalanceChange() {
+async function longPoll() {
   _lpStop = false;
   while(!_lpStop) {
     try {
       const r = await fetch(
-        API_URL+'/casino/wait?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-        { signal: AbortSignal.timeout(3000) }
+        API_URL+'/casino/push?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
+        { signal: AbortSignal.timeout(6000) }
       );
       if(r.ok) {
         const d = await r.json();
         if(d.ok && typeof d.balance==='number' && d.balance !== balance) {
           const diff = d.balance - balance;
-          balance = d.balance; INIT_BAL = d.balance;
+          balance = d.balance;
+          INIT_BAL = d.balance;
           const fmt = d.balance.toLocaleString('ru-RU');
           document.getElementById('balanceVal').textContent = fmt;
           document.getElementById('pBal').textContent = fmt;
@@ -1051,8 +1053,34 @@ async function waitForBalanceChange() {
         }
       }
     } catch(e) {}
-    if(!_lpStop) await new Promise(r=>setTimeout(r,200));
+    // Пауза 100мс между запросами
+    if(!_lpStop) await new Promise(r=>setTimeout(r,100));
   }
+}
+
+// Резервный polling
+async function pollBalance() {
+  if(spinning) return;
+  try {
+    const r = await fetch(
+      API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
+      { signal: AbortSignal.timeout(1000) }
+    );
+    if(!r.ok) return;
+    const d = await r.json();
+    if(!d.ok || typeof d.balance!=='number' || d.balance===balance) return;
+    const diff = d.balance - balance;
+    balance = d.balance; INIT_BAL = d.balance;
+    const fmt = d.balance.toLocaleString('ru-RU');
+    document.getElementById('balanceVal').textContent = fmt;
+    document.getElementById('pBal').textContent = fmt;
+    try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(d.balance)); } catch(e){}
+    setSave('ok','✅ '+fmt); refreshBets();
+    if(diff > 0) {
+      showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
+      _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
+    }
+  } catch(e) {}
 }
 
 async function refreshBalanceNow() {
@@ -1062,55 +1090,6 @@ async function refreshBalanceNow() {
   if(icon) setTimeout(() => icon.classList.remove('spinning'), 500);
 }
 
-// ─── SSE: мгновенный push от бота ───────────────────────────
-function startPushListener() {
-  if(!API_URL || !API_SECRET || !USER_ID) return;
-  const url = API_URL+'/casino/notify?uid='+USER_ID+'&secret='+API_SECRET;
-  const es = new EventSource(url);
-  es.onmessage = function(e) {
-    try {
-      const d = JSON.parse(e.data);
-      if(typeof d.balance !== 'number') return;
-      if(d.balance === balance) return;
-      const diff = d.balance - balance;
-      balance = d.balance; INIT_BAL = d.balance;
-      const fmt = d.balance.toLocaleString('ru-RU');
-      document.getElementById('balanceVal').textContent = fmt;
-      document.getElementById('pBal').textContent = fmt;
-      try { localStorage.setItem('bal_'+USER_ID, String(d.balance)); } catch(e){}
-      setSave('ok','✅ '+fmt); refreshBets();
-      if(diff > 0) {
-        showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
-        _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
-      }
-    } catch(ex) {}
-  };
-  es.onerror = function() { es.close(); };
-}
-
-// ─── Polling: резерв если SSE не работает ────────────────────
-async function pollBalance() {
-  if(spinning) return;
-  try {
-    const url = API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now();
-    const r = await fetch(url, { signal: AbortSignal.timeout(1000) });
-    if(!r.ok) return;
-    const d = await r.json();
-    if(!d.ok || typeof d.balance !== 'number') return;
-    if(d.balance === balance) return;
-    const diff = d.balance - balance;
-    balance = d.balance; INIT_BAL = d.balance;
-    const fmt = d.balance.toLocaleString('ru-RU');
-    document.getElementById('balanceVal').textContent = fmt;
-    document.getElementById('pBal').textContent = fmt;
-    try { localStorage.setItem('bal_'+USER_ID, String(d.balance)); } catch(e){}
-    setSave('ok','✅ '+fmt); refreshBets();
-    if(diff > 0) {
-      showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
-      _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
-    }
-  } catch(e) {}
-}
 
 function _showBanner(msg) {
   const el = document.createElement('div');
