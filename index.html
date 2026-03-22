@@ -293,6 +293,22 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .splash-bar::after{content:'';position:absolute;right:0;top:-1px;width:6px;height:5px;background:white;border-radius:50%;box-shadow:0 0 8px white;opacity:.8}
 .splash-status{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:2px;color:var(--cyan);min-height:14px;text-align:center;animation:statusPulse 1s ease infinite alternate}
 @keyframes statusPulse{from{opacity:.4}to{opacity:1}}
+
+/* ══ ROCKET ANIMATION (Profile) ══ */
+.rocket-scene{position:relative;width:100%;height:140px;overflow:hidden;border-radius:16px;background:linear-gradient(180deg,#01001a 0%,#04012e 50%,#080140 100%);margin-bottom:16px;border:1px solid rgba(191,0,255,0.2)}
+.rocket-stars-bg{position:absolute;inset:0;pointer-events:none}
+.rstar{position:absolute;border-radius:50%;background:white;animation:rstarTwinkle var(--d,2s) ease-in-out infinite var(--dl,0s)}
+@keyframes rstarTwinkle{0%,100%{opacity:.08;transform:scale(1)}50%{opacity:.9;transform:scale(1.6)}}
+.rocket-obj{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);animation:rocketFly 3s ease-in-out infinite;font-size:44px;filter:drop-shadow(0 0 14px rgba(0,229,255,.8)) drop-shadow(0 4px 20px rgba(191,0,255,.5));z-index:3}
+@keyframes rocketFly{0%{bottom:10px;transform:translateX(-50%) rotate(-5deg) scale(0.95)}25%{bottom:38px;transform:translateX(-42%) rotate(3deg) scale(1.05)}50%{bottom:52px;transform:translateX(-50%) rotate(-2deg) scale(1.08)}75%{bottom:38px;transform:translateX(-58%) rotate(4deg) scale(1.04)}100%{bottom:10px;transform:translateX(-50%) rotate(-5deg) scale(0.95)}}
+.rocket-trail{position:absolute;bottom:0;left:50%;transform:translateX(-50%);z-index:2}
+.trail-particle{position:absolute;border-radius:50%;animation:trailFade var(--d,.8s) ease-out infinite var(--dl,0s)}
+@keyframes trailFade{0%{opacity:.9;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(40px) scale(.1)}}
+.orbit-star{position:absolute;font-size:16px;animation:orbitStar var(--od,4s) linear infinite var(--odl,0s)}
+@keyframes orbitStar{0%{transform:rotate(0deg) translateX(var(--r,55px)) rotate(0deg)}100%{transform:rotate(360deg) translateX(var(--r,55px)) rotate(-360deg)}}
+.shooting-star{position:absolute;width:60px;height:1.5px;background:linear-gradient(90deg,transparent,white,transparent);border-radius:1px;animation:shoot var(--sd,3s) linear infinite var(--sdl,0s);opacity:0}
+@keyframes shoot{0%{opacity:0;transform:translateX(0) translateY(0) rotate(-25deg)}10%{opacity:1}50%{opacity:.6}100%{opacity:0;transform:translateX(180px) translateY(60px) rotate(-25deg)}}
+.rocket-label{position:absolute;bottom:8px;right:12px;font-family:var(--fd);font-size:8px;font-weight:700;letter-spacing:2px;color:rgba(0,229,255,.4);z-index:3}
 </style>
 </head>
 <body>
@@ -423,6 +439,28 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
   <!-- ══ PROFILE ══ -->
   <div class="page" id="page-profile">
+
+    <!-- Rocket Animation Scene -->
+    <div class="rocket-scene" id="rocketScene">
+      <div class="rocket-stars-bg" id="rocketStarsBg"></div>
+      <!-- Орбитальные звёздочки вокруг ракеты -->
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2">
+        <span class="orbit-star" style="--od:5s;--odl:0s;--r:62px;top:-8px;left:-8px">⭐</span>
+        <span class="orbit-star" style="--od:7s;--odl:-2s;--r:75px;top:-8px;left:-8px">✨</span>
+        <span class="orbit-star" style="--od:4s;--odl:-1s;--r:50px;top:-8px;left:-8px">💫</span>
+        <span class="orbit-star" style="--od:9s;--odl:-3s;--r:88px;top:-8px;left:-8px">⭐</span>
+      </div>
+      <!-- Хвост ракеты -->
+      <div class="rocket-trail" id="rocketTrail"></div>
+      <!-- Стреляющие звёзды -->
+      <div class="shooting-star" style="--sd:4s;--sdl:0s;top:20%;left:5%"></div>
+      <div class="shooting-star" style="--sd:6s;--sdl:-2s;top:50%;left:10%"></div>
+      <div class="shooting-star" style="--sd:5s;--sdl:-3.5s;top:30%;left:0%"></div>
+      <!-- Ракета -->
+      <div class="rocket-obj">🚀</div>
+      <div class="rocket-label">SLOPPYX CASINO</div>
+    </div>
+
     <div class="profile-top">
       <div class="p-avatar" id="pAvatar">🎲</div>
       <div class="p-name" id="pName">ИГРОК</div>
@@ -1047,6 +1085,37 @@ function sleep(ms){
 async function init() {
   document.getElementById('pName').textContent = (USER_NAME||'Игрок').toUpperCase();
 
+  // Генерируем звёздочку-фон ракеты в профиле
+  const rStarsBg = document.getElementById('rocketStarsBg');
+  if(rStarsBg) {
+    for(let i = 0; i < 55; i++) {
+      const s = document.createElement('div');
+      s.className = 'rstar';
+      const sz = 1 + Math.random() * 2.5;
+      s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;`
+        + `width:${sz}px;height:${sz}px;`
+        + `--d:${1.2+Math.random()*3.5}s;--dl:${Math.random()*3}s`;
+      rStarsBg.appendChild(s);
+    }
+    // Хвост ракеты — огненные частицы
+    const trail = document.getElementById('rocketTrail');
+    if(trail) {
+      const colors = ['#ff6600','#ff9900','#ffcc00','#ff3300','#ff0066'];
+      for(let i = 0; i < 12; i++) {
+        const p = document.createElement('div');
+        p.className = 'trail-particle';
+        const color = colors[Math.floor(Math.random()*colors.length)];
+        const sz = 3 + Math.random() * 6;
+        p.style.cssText = `width:${sz}px;height:${sz}px;`
+          + `background:${color};`
+          + `left:${-6 + Math.random()*12}px;`
+          + `bottom:${Math.random()*8}px;`
+          + `--d:${0.4+Math.random()*0.6}s;--dl:${Math.random()*0.8}s`;
+        trail.appendChild(p);
+      }
+    }
+  }
+
   // Генерируем звёздочки на сплеше
   const starsEl = document.getElementById('splashStars');
   if(starsEl) {
@@ -1202,7 +1271,7 @@ function stopBalancePolling() {
   if(_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
 }
 
-// Long-poll: ждём пока бот не пришлёт изменение
+// Long-poll: ждём пока бот не пришлёт изменение — МГНОВЕННОЕ переподключение
 async function longPoll() {
   while(!_lpStop) {
     try {
@@ -1213,15 +1282,18 @@ async function longPoll() {
       if(r.ok) {
         const d = await r.json();
         if(d.ok && typeof d.balance === 'number') {
-          // Применяем СРАЗУ если изменился
-          if(d.balance !== balance) {
-            applyServerBalance(d.balance);
+          // Применяем НЕМЕДЛЕННО если баланс изменился (сравниваем с _lastKnownBalance)
+          if(d.changed === true || d.balance !== _lastKnownBalance) {
+            _lastKnownBalance = d.balance;
+            if(d.balance !== balance) {
+              applyServerBalance(d.balance);
+            }
           }
-          _lastKnownBalance = d.balance;
         }
       }
-    } catch(e) { /* timeout — нормально, сразу переподключаемся */ }
-    if(!_lpStop) await new Promise(r => setTimeout(r, 50));
+    } catch(e) { /* timeout — нормально, мгновенно переподключаемся */ }
+    // Без задержки — сразу следующий запрос
+    if(_lpStop) break;
   }
 }
 
