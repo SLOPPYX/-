@@ -990,18 +990,9 @@ function sleep(ms){
 async function init() {
   document.getElementById('pName').textContent = (USER_NAME||'Игрок').toUpperCase();
 
-  // Если открыто только что — URL_BAL самый актуальный (бот только что его вычитал)
-  // Если F5 — берём localStorage (обновляется после каждого спина)
+  // Показываем что-то сразу (мгновенно, без задержки)
   const _ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
-  let startBal;
-  if(URL_BAL_FRESH && URL_BAL > 0 && URL_BAL >= _ls) {
-    // Свежий URL И больше или равен кешу — берём из URL (бот знает актуальный)
-    startBal = URL_BAL;
-    try { localStorage.setItem('bal_'+USER_ID, String(URL_BAL)); } catch(e){}
-  } else {
-    // F5, старый URL, или _ls больше URL_BAL (играл и выиграл) — берём кеш
-    startBal = _ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0);
-  }
+  const startBal = _ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0);
   applyBalance(startBal, false);
   updateMiniStats();
 
@@ -1019,24 +1010,19 @@ async function init() {
 
   if(status) status.textContent = 'Подключение...';
 
-  if(API_URL && API_SECRET) {
-    // 40% → 90% пока грузим баланс
-    clearInterval(tick);
-    if(bar) bar.style.width = '40%';
-    const tick2 = setInterval(() => {
-      prog = Math.min(prog + 2, 90);
-      if(bar) bar.style.width = prog + '%';
-    }, 40);
+  // ВСЕГДА грузим из бота — это единственный надёжный источник
+  clearInterval(tick);
+  if(bar) bar.style.width = '40%';
+  const tick2 = setInterval(() => {
+    prog = Math.min(prog + 2, 90);
+    if(bar) bar.style.width = prog + '%';
+  }, 40);
 
-    await loadBalanceFromBot();
+  await loadBalanceFromBot();
 
-    clearInterval(tick2);
-    const fmt = balance.toLocaleString('ru-RU');
-    if(status) status.textContent = '✅ Баланс: '+fmt+' 🪙';
-  } else {
-    clearInterval(tick);
-    if(status) status.textContent = '✅ Готово!';
-  }
+  clearInterval(tick2);
+  const fmt = balance.toLocaleString('ru-RU');
+  if(status) status.textContent = '✅ Баланс: '+fmt+' 🪙';
 
   // 90% → 100% завершение
   if(bar) bar.style.width = '100%';
@@ -1051,8 +1037,14 @@ async function init() {
 }
 
 async function loadBalanceFromBot() {
-  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
-  // Обновляем статус сплэша если он ещё показывается
+  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') {
+    // Нет API — показываем URL_BAL как актуальный (бот передал при открытии)
+    if(URL_BAL > 0 && URL_BAL !== balance) {
+      applyBalance(URL_BAL, true);
+      refreshBets();
+    }
+    return;
+  }
   const splSt = document.getElementById('splashStatus');
   if(splSt) splSt.textContent = '⏳ Загрузка баланса...';
   try {
@@ -1060,19 +1052,25 @@ async function loadBalanceFromBot() {
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
       { signal: AbortSignal.timeout(4000) }
     );
-    if(!r.ok) return;
+    if(!r.ok) {
+      // API не ответил — используем URL_BAL
+      if(URL_BAL > 0) { applyBalance(URL_BAL, true); refreshBets(); }
+      return;
+    }
     const d = await r.json();
     if(d.ok && typeof d.balance==='number') {
       const diff = d.balance - balance;
       applyBalance(d.balance, true);
       refreshBets();
       if(diff > 0 && !document.getElementById('splash')) {
-        // Показываем уведомление только если сплэш уже скрыт
         showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
         _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
       }
     }
-  } catch(e) {}
+  } catch(e) {
+    // Сеть недоступна — URL_BAL как fallback
+    if(URL_BAL > 0) { applyBalance(URL_BAL, true); refreshBets(); }
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1197,4 +1195,3 @@ init();
 </script>
 </body>
 </html>
-
