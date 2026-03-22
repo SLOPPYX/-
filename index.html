@@ -561,12 +561,18 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 <script>
 // ══════════════════════════════════════════════════════════
-// TELEGRAM INIT
+// TELEGRAM INIT — максимально безопасно
 // ══════════════════════════════════════════════════════════
-const tg = window.Telegram.WebApp;
+// tg — никогда не undefined, все методы через try/catch
+const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : {
+  expand:()=>{}, setHeaderColor:()=>{}, setBackgroundColor:()=>{},
+  BackButton:{ show:()=>{}, hide:()=>{}, onClick:()=>{} },
+  enableClosingConfirmation:()=>{}, close:()=>{ window.history.back(); },
+  sendData:()=>{}, ready:()=>{},
+  CloudStorage:{ getItem:(_k,cb)=>{ setTimeout(()=>cb('not_supported',null),0); }, setItem:()=>{} },
+  initDataUnsafe:{}
+};
 try { tg.expand(); } catch(e){}
-try { tg.setHeaderColor('#050510'); tg.setBackgroundColor('#050510'); } catch(e){}
-// BackButton и остальное — после загрузки, внутри init()
 
 // ══════════════════════════════════════════════════════════
 // ПАРАМЕТРЫ из URL
@@ -574,10 +580,9 @@ try { tg.setHeaderColor('#050510'); tg.setBackgroundColor('#050510'); } catch(e)
 const P          = new URLSearchParams(window.location.search);
 const USER_ID    = String(parseInt(P.get('user_id') || tg.initDataUnsafe?.user?.id || '0', 10));
 const URL_BAL    = parseInt(P.get('balance') || '0', 10);
-const URL_TS     = parseInt(P.get('ts') || '0', 10);  // timestamp открытия
+const URL_TS     = parseInt(P.get('ts') || '0', 10);
 const API_URL    = decodeURIComponent(P.get('api_url') || '');
 const API_SECRET = P.get('api_secret') || '';
-// Если казино открыто < 60 сек назад — URL_BAL актуальный (только что из бота)
 const URL_BAL_FRESH = URL_TS > 0 && (Date.now() - URL_TS) < 60000;
 
 // ── Профиль: берём из URL, сохраняем в localStorage навсегда ──
@@ -1374,11 +1379,6 @@ function initSpaceCanvas() {
 // INIT
 // ══════════════════════════════════════════════════════════
 async function init() {
-  // Инициализируем Telegram WebApp здесь — все функции уже объявлены
-  try { tg.BackButton.show(); } catch(e){}
-  try { tg.BackButton.onClick(showExitDialog); } catch(e){}
-  try { tg.enableClosingConfirmation(); } catch(e){}
-
   const bar    = document.getElementById('splashBar');
   const status = document.getElementById('splashStatus');
   const splash = document.getElementById('splash');
