@@ -259,25 +259,64 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   .reel.spinning{animation-duration:.04s;}
 }
 
-/* ── Экран загрузки ── */
-#splash{position:fixed;inset:0;background:#050510;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .4s ease}
+/* ══════════════════════════════════════════
+   EPIC SPLASH SCREEN
+══════════════════════════════════════════ */
+#splash{position:fixed;inset:0;background:#050510;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transition:opacity .5s ease;overflow:hidden}
 #splash.hide{opacity:0;pointer-events:none}
-.splash-logo{font-size:52px;animation:splashPop .5s cubic-bezier(.34,1.56,.64,1)}
-.splash-title{font-family:var(--fd);font-size:22px;font-weight:900;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 20px rgba(0,229,255,.5)}
-.splash-sub{font-family:var(--fb);font-size:12px;color:var(--muted);letter-spacing:2px}
-.splash-bar-wrap{width:200px;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
-.splash-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:2px;transition:width .1s linear}
-@keyframes splashPop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.splash-stars{position:absolute;inset:0;pointer-events:none}
+.splash-star{position:absolute;width:2px;height:2px;background:white;border-radius:50%;animation:starTwinkle var(--d,2s) ease-in-out infinite var(--delay,0s)}
+@keyframes starTwinkle{0%,100%{opacity:0.1;transform:scale(1)}50%{opacity:0.8;transform:scale(1.5)}}
+.splash-rings{position:relative;width:160px;height:160px;margin-bottom:24px;flex-shrink:0}
+.splash-ring{position:absolute;inset:0;border-radius:50%;border:2px solid transparent;animation:ringRotate linear infinite}
+.splash-ring:nth-child(1){border-top-color:var(--cyan);border-right-color:var(--cyan);animation-duration:2s;inset:0}
+.splash-ring:nth-child(2){border-bottom-color:var(--purple);border-left-color:var(--purple);animation-duration:3s;animation-direction:reverse;inset:12px}
+.splash-ring:nth-child(3){border-top-color:var(--pink);animation-duration:4s;inset:24px}
+@keyframes ringRotate{to{transform:rotate(360deg)}}
+.splash-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.splash-icon{font-size:52px;animation:iconFloat 2s ease-in-out infinite;filter:drop-shadow(0 0 16px rgba(0,229,255,.6))}
+@keyframes iconFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-6px) scale(1.06)}}
+.splash-letters{display:flex;gap:1px;margin-bottom:6px}
+.splash-letter{font-family:var(--fd);font-size:30px;font-weight:900;animation:letterDrop .5s cubic-bezier(.34,1.56,.64,1) both}
+.splash-letter:nth-child(1){color:var(--cyan);animation-delay:.06s}
+.splash-letter:nth-child(2){color:#40e0ff;animation-delay:.13s}
+.splash-letter:nth-child(3){color:var(--purple);animation-delay:.20s}
+.splash-letter:nth-child(4){color:#df00ff;animation-delay:.27s}
+.splash-letter:nth-child(5){color:var(--pink);animation-delay:.34s}
+.splash-letter:nth-child(6){color:#ff33bb;animation-delay:.41s}
+.splash-letter:nth-child(7){color:var(--gold);animation-delay:.48s}
+@keyframes letterDrop{from{opacity:0;transform:translateY(-28px) scale(.6)}to{opacity:1;transform:translateY(0) scale(1)}}
+.splash-casino-lbl{font-family:var(--fd);font-size:10px;font-weight:400;letter-spacing:6px;color:var(--muted);margin-bottom:22px;animation:fadeInUp .6s ease .55s both}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.splash-bar-wrap{width:220px;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-bottom:10px}
+.splash-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink));border-radius:2px;transition:width .15s ease;position:relative}
+.splash-bar::after{content:'';position:absolute;right:0;top:-1px;width:6px;height:5px;background:white;border-radius:50%;box-shadow:0 0 8px white;opacity:.8}
+.splash-status{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:2px;color:var(--cyan);min-height:14px;text-align:center;animation:statusPulse 1s ease infinite alternate}
+@keyframes statusPulse{from{opacity:.4}to{opacity:1}}
 </style>
 </head>
 <body>
 
 <div id="splash">
-  <div class="splash-logo">🎰</div>
-  <div class="splash-title">SLOPPYX</div>
-  <div class="splash-sub">CASINO</div>
+  <div class="splash-stars" id="splashStars"></div>
+  <div class="splash-rings">
+    <div class="splash-ring"></div>
+    <div class="splash-ring"></div>
+    <div class="splash-ring"></div>
+    <div class="splash-center"><div class="splash-icon">🎰</div></div>
+  </div>
+  <div class="splash-letters">
+    <span class="splash-letter">S</span>
+    <span class="splash-letter">L</span>
+    <span class="splash-letter">O</span>
+    <span class="splash-letter">P</span>
+    <span class="splash-letter">P</span>
+    <span class="splash-letter">Y</span>
+    <span class="splash-letter">X</span>
+  </div>
+  <div class="splash-casino-lbl">C A S I N O</div>
   <div class="splash-bar-wrap"><div class="splash-bar" id="splashBar"></div></div>
-  <div class="splash-sub" id="splashStatus" style="color:var(--cyan);min-height:16px"></div>
+  <div class="splash-status" id="splashStatus">ИНИЦИАЛИЗАЦИЯ...</div>
 </div>
 
 <div id="tokenAddedBanner">
@@ -753,18 +792,6 @@ async function spin() {
   if(spinning) return;
   if(balance < currentBet){ showToast('Недостаточно токенов!','error'); if(autoMode) stopAuto(); return; }
 
-  // Если есть ожидающий баланс — применяем перед спином
-  if(_pendingBalance !== null && _pendingBalance > balance) {
-    applyBalance(_pendingBalance, true);
-    refreshBets();
-    _pendingBalance = null;
-    const banner = document.getElementById('tokenAddedBanner');
-    if(banner) banner.classList.remove('show');
-    const badge = document.getElementById('newBalanceBadge');
-    if(badge) badge.style.display = 'none';
-    if(balance < currentBet){ showToast('Недостаточно токенов!','error'); if(autoMode) stopAuto(); return; }
-  }
-
   spinning=true;
   const btn=document.getElementById('spinBtn'), bBtn=document.getElementById('bSpinBtn');
   btn.disabled=bBtn.disabled=true;
@@ -1020,48 +1047,62 @@ function sleep(ms){
 async function init() {
   document.getElementById('pName').textContent = (USER_NAME||'Игрок').toUpperCase();
 
-  // Показываем что-то сразу (мгновенно, без задержки)
+  // Генерируем звёздочки на сплеше
+  const starsEl = document.getElementById('splashStars');
+  if(starsEl) {
+    for(let i = 0; i < 60; i++) {
+      const s = document.createElement('div');
+      s.className = 'splash-star';
+      s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;` +
+        `--d:${1.5+Math.random()*3}s;--delay:${Math.random()*2}s;` +
+        `width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;` +
+        `opacity:${0.1+Math.random()*0.5}`;
+      starsEl.appendChild(s);
+    }
+  }
+
+  // Показываем кэшированный баланс мгновенно
   const _ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
   const startBal = _ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0);
   applyBalance(startBal, false);
   updateMiniStats();
 
-  // Анимируем прогресс-бар сплэша
   const bar    = document.getElementById('splashBar');
   const status = document.getElementById('splashStatus');
   const splash = document.getElementById('splash');
 
-  // 0% → 40% пока инициализируемся
+  // Прогресс: 0→35% пока буквы анимируются (~600мс)
   let prog = 0;
   const tick = setInterval(() => {
-    prog = Math.min(prog + 4, 40);
+    prog = Math.min(prog + 3, 35);
     if(bar) bar.style.width = prog + '%';
-  }, 30);
+  }, 20);
 
-  if(status) status.textContent = 'Подключение...';
-
-  // ВСЕГДА грузим из бота — это единственный надёжный источник
+  await new Promise(r => setTimeout(r, 650)); // ждём анимацию букв
   clearInterval(tick);
-  if(bar) bar.style.width = '40%';
-  const tick2 = setInterval(() => {
-    prog = Math.min(prog + 2, 90);
-    if(bar) bar.style.width = prog + '%';
-  }, 40);
 
+  if(status) status.textContent = 'ПОДКЛЮЧЕНИЕ К СЕРВЕРУ...';
+  if(bar) bar.style.width = '40%';
+
+  const tick2 = setInterval(() => {
+    prog = Math.min(prog + 1.5, 85);
+    if(bar) bar.style.width = prog + '%';
+  }, 35);
+
+  // Грузим баланс из бота
   await loadBalanceFromBot();
+  _lastKnownBalance = balance;
 
   clearInterval(tick2);
-  const fmt = balance.toLocaleString('ru-RU');
-  if(status) status.textContent = '✅ Баланс: '+fmt+' 🪙';
-
-  // 90% → 100% завершение
   if(bar) bar.style.width = '100%';
+  const fmt = balance.toLocaleString('ru-RU');
+  if(status) status.textContent = '✅ ' + fmt + ' ТОКЕНОВ';
+
   refreshBets();
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
 
-  // Небольшая задержка чтобы пользователь увидел 100%, потом скрываем
-  await new Promise(r => setTimeout(r, 300));
-  if(splash) { splash.classList.add('hide'); setTimeout(() => splash.remove(), 450); }
+  await new Promise(r => setTimeout(r, 380));
+  if(splash) { splash.classList.add('hide'); setTimeout(() => splash.remove(), 500); }
 
   startBalancePolling();
 }
@@ -1124,99 +1165,78 @@ async function readCloudBalance() {
 }
 
 // ══════════════════════════════════════════════════════════
-// ФОНОВЫЙ ОПРОС БАЛАНСА
-// Каждые 5 секунд проверяем актуальный баланс из бота.
-// Если баланс вырос (пользователь пополнил в боте) — обновляем.
-// Если уменьшился (другое устройство) — тоже обновляем.
-// Во время спина не опрашиваем — не мешаем игре.
+// ФОНОВЫЙ ОПРОС БАЛАНСА — мгновенное обновление
+// Long-poll: бот пушит изменение → сразу отображается
+// Резервный poll каждые 3 сек на случай если long-poll упал
 // ══════════════════════════════════════════════════════════
-// ── Ожидающий баланс (пришёл из бота, но ещё не применён) ──
-let _pendingBalance = null;
-
-function showTokenAddedBanner(newBal) {
-  _pendingBalance = newBal;
-  // Значок "ОБНОВИТЬ" под балансом
-  const badge = document.getElementById('newBalanceBadge');
-  if(badge) badge.style.display = 'block';
-  // Баннер сверху
-  const banner = document.getElementById('tokenAddedBanner');
-  if(banner) banner.classList.add('show');
-}
-
-function applyPendingBalance() {
-  const bal = _pendingBalance !== null ? _pendingBalance : balance;
-  _pendingBalance = null;
-  // Скрываем баннер и значок
-  const banner = document.getElementById('tokenAddedBanner');
-  if(banner) banner.classList.remove('show');
-  const badge = document.getElementById('newBalanceBadge');
-  if(badge) badge.style.display = 'none';
-  // Применяем
-  applyBalance(bal, true);
-  refreshBets();
-  showToast('✅ Баланс обновлён!', 'success');
-}
 
 let _pollTimer = null;
+let _lpStop = false;
+let _lastKnownBalance = 0; // синхронизируем с сервером
+
+// Применить баланс с сервера — всегда мгновенно
+function applyServerBalance(newBal) {
+  if(newBal === balance && newBal === _lastKnownBalance) return;
+  const diff = newBal - balance;
+  _lastKnownBalance = newBal;
+  applyBalance(newBal, true);
+  refreshBets();
+  if(diff > 0) {
+    const fmt = diff.toLocaleString('ru-RU');
+    showToast('💰 +' + fmt + ' токенов!', 'gold');
+    _showBanner('🎁 +' + fmt + ' токенов добавлено!');
+  }
+}
 
 function startBalancePolling() {
   if(!API_URL || !API_SECRET) return;
   stopBalancePolling();
-  _pollTimer = setInterval(pollBalance, 500);  // резерв
-  longPoll();                                   // мгновенный push от бота
-}
-function stopBalancePolling() {
-  if(_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
-  _lpStop = true;
+  _lpStop = false;
+  longPoll();
+  // Резервный poll каждые 3 секунды
+  _pollTimer = setInterval(pollBalance, 3000);
 }
 
-let _lpStop = false;
+function stopBalancePolling() {
+  _lpStop = true;
+  if(_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+}
+
+// Long-poll: ждём пока бот не пришлёт изменение
 async function longPoll() {
-  _lpStop = false;
   while(!_lpStop) {
     try {
       const r = await fetch(
-        API_URL+'/casino/push?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-        { signal: AbortSignal.timeout(6000) }
+        API_URL + '/casino/push?uid=' + USER_ID + '&secret=' + API_SECRET + '&_t=' + Date.now(),
+        { signal: AbortSignal.timeout(6500) }
       );
       if(r.ok) {
         const d = await r.json();
-        if(d.ok && typeof d.balance==='number' && d.balance !== balance) {
-          const diff = d.balance - balance;
-          if(diff > 0) {
-            // Токены добавлены — показываем баннер, не применяем автоматически
-            showTokenAddedBanner(d.balance);
-          } else {
-            // Баланс уменьшился (другое устройство) — применяем сразу
-            applyBalance(d.balance, true);
-            refreshBets();
+        if(d.ok && typeof d.balance === 'number') {
+          // Применяем СРАЗУ если изменился
+          if(d.balance !== balance) {
+            applyServerBalance(d.balance);
           }
+          _lastKnownBalance = d.balance;
         }
       }
-    } catch(e) {}
-    if(!_lpStop) await new Promise(r => setTimeout(r, 100));
+    } catch(e) { /* timeout — нормально, сразу переподключаемся */ }
+    if(!_lpStop) await new Promise(r => setTimeout(r, 50));
   }
 }
 
-
-// Резервный polling
+// Резервный polling — запрашиваем сами
 async function pollBalance() {
-  if(spinning) return;
+  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
   try {
     const r = await fetch(
-      API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-      { signal: AbortSignal.timeout(2000) }
+      API_URL + '/casino/balance?uid=' + USER_ID + '&secret=' + API_SECRET + '&_t=' + Date.now(),
+      { signal: AbortSignal.timeout(2500) }
     );
     if(!r.ok) return;
     const d = await r.json();
-    if(!d.ok || typeof d.balance!=='number' || d.balance===balance) return;
-    const diff = d.balance - balance;
-    if(diff > 0) {
-      // Только показываем баннер — пользователь сам нажмёт обновить
-      showTokenAddedBanner(d.balance);
-    } else {
-      applyBalance(d.balance, true);
-      refreshBets();
+    if(d.ok && typeof d.balance === 'number' && d.balance !== balance) {
+      applyServerBalance(d.balance);
     }
   } catch(e) {}
 }
@@ -1224,15 +1244,13 @@ async function pollBalance() {
 async function refreshBalanceNow() {
   const icon = document.getElementById('refreshIcon');
   if(icon) icon.classList.add('spinning');
-  // Скрываем баннер и значок при ручном обновлении
-  const banner = document.getElementById('tokenAddedBanner');
-  if(banner) banner.classList.remove('show');
-  const badge = document.getElementById('newBalanceBadge');
-  if(badge) badge.style.display = 'none';
-  _pendingBalance = null;
-  await loadBalanceFromBot();  // всегда берём из бота, без проверки на равенство
+  await loadBalanceFromBot();
   if(icon) setTimeout(() => icon.classList.remove('spinning'), 500);
 }
+
+// Совместимость с баннером из старых версий
+function showTokenAddedBanner() {}
+function applyPendingBalance() {}
 
 
 function _showBanner(msg) {
