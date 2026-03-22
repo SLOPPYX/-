@@ -787,8 +787,9 @@ async function spin() {
     } else {
       applyBalance(Math.max(0, balance - currentBet + (res.win ? currentBet*res.mult : 0)), true);
     }
-    // Дублируем в localStorage — на случай если applyBalance не успел
+    // Дублируем в localStorage и CloudStorage
     try { localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
+    saveCloudBalance(balance);
 
     S.spins++;
     if(res.win) {
@@ -1037,6 +1038,10 @@ async function init() {
 }
 
 async function loadBalanceFromBot() {
+  // Шаг 1: читаем CloudStorage — работает БЕЗ ngrok, мгновенно
+  await readCloudBalance();
+
+  // Шаг 2: если есть API — берём из него (точнее)
   if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
   const splSt = document.getElementById('splashStatus');
   if(splSt) splSt.textContent = '⏳ Загрузка баланса...';
@@ -1045,18 +1050,48 @@ async function loadBalanceFromBot() {
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
       { signal: AbortSignal.timeout(4000) }
     );
-    if(!r.ok) return;  // ошибка — не трогаем localStorage, оставляем что есть
+    if(!r.ok) return;
     const d = await r.json();
     if(d.ok && typeof d.balance==='number') {
       const diff = d.balance - balance;
-      applyBalance(d.balance, true);  // только от бота пишем в кеш
+      applyBalance(d.balance, true);
       refreshBets();
+      // Обновляем CloudStorage актуальным балансом
+      saveCloudBalance(d.balance);
       if(diff > 0 && !document.getElementById('splash')) {
         showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
         _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
       }
     }
-  } catch(e) {}  // ошибка сети — не трогаем localStorage
+  } catch(e) {}
+}
+
+// CloudStorage — хранит баланс в Telegram облаке
+// Работает без сервера, без ngrok, без интернета
+const CLOUD_KEY = 'balance_' + USER_ID;
+
+function saveCloudBalance(val) {
+  try {
+    tg.CloudStorage.setItem(CLOUD_KEY, String(val), () => {});
+  } catch(e) {}
+}
+
+async function readCloudBalance() {
+  return new Promise(resolve => {
+    try {
+      tg.CloudStorage.getItem(CLOUD_KEY, (err, val) => {
+        if(!err && val) {
+          const cloudBal = parseInt(val, 10);
+          if(!isNaN(cloudBal) && cloudBal > 0 && cloudBal !== balance) {
+            const diff = cloudBal - balance;
+            applyBalance(cloudBal, true);
+            refreshBets();
+          }
+        }
+        resolve();
+      });
+    } catch(e) { resolve(); }
+  });
 }
 
 // ══════════════════════════════════════════════════════════
