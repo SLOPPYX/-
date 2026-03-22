@@ -664,10 +664,26 @@ function loadStats() {
   return null;
 }
 function saveStats() {
-  try { localStorage.setItem(STATS_KEY, JSON.stringify(S)); } catch(e){}
+  try {
+    // Обрезаем историю до 20 записей перед сохранением
+    if(S.history && S.history.length > 20) S.history = S.history.slice(-20);
+    localStorage.setItem(STATS_KEY, JSON.stringify(S));
+  } catch(e) {}
 }
 const _ss = loadStats();
-const S = _ss ? {..._ss} : { spins:0,wins:0,losses:0,profit:0,totalWon:0,totalLost:0,bestWin:0,history:[],streak:0,streakType:null };
+// Гарантируем все поля — если localStorage был из старой версии без некоторых полей
+const S = {
+  spins:     (_ss && typeof _ss.spins    === 'number') ? _ss.spins    : 0,
+  wins:      (_ss && typeof _ss.wins     === 'number') ? _ss.wins     : 0,
+  losses:    (_ss && typeof _ss.losses   === 'number') ? _ss.losses   : 0,
+  profit:    (_ss && typeof _ss.profit   === 'number') ? _ss.profit   : 0,
+  totalWon:  (_ss && typeof _ss.totalWon === 'number') ? _ss.totalWon : 0,
+  totalLost: (_ss && typeof _ss.totalLost=== 'number') ? _ss.totalLost: 0,
+  bestWin:   (_ss && typeof _ss.bestWin  === 'number') ? _ss.bestWin  : 0,
+  history:   (_ss && Array.isArray(_ss.history))       ? _ss.history  : [],
+  streak:    (_ss && typeof _ss.streak   === 'number') ? _ss.streak   : 0,
+  streakType:(_ss && _ss.streakType)                   ? _ss.streakType: null,
+};
 
 // ══════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════
@@ -749,7 +765,11 @@ function showPage(n) {
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+n).classList.add('active');
   document.getElementById('tab-'+n).classList.add('active');
-  if(n==='profile') renderProfile();
+  if(n==='profile') {
+    // Обновляем баланс перед рендером профиля
+    try { const sb = document.getElementById('spoBal'); if(sb) sb.textContent = balance.toLocaleString('ru-RU'); } catch(e){}
+    renderProfile();
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -760,13 +780,16 @@ function applyBalance(val, save) {
   balance = val;
   INIT_BAL = val;
   const fmt = val.toLocaleString('ru-RU');
-  // Прямой синхронный DOM — гарантированно отображается
-  document.getElementById('balanceVal').textContent = fmt;
-  document.getElementById('pBal').textContent = fmt;
+  // Обновляем ВСЕ элементы баланса синхронно — шапка, профиль, canvas overlay
+  try { document.getElementById('balanceVal').textContent = fmt; } catch(e){}
+  try { document.getElementById('pBal').textContent = fmt; } catch(e){}
+  try { const sb = document.getElementById('spoBal'); if(sb) sb.textContent = fmt; } catch(e){}
   if(save) try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(val)); } catch(e){}
-  const p = document.getElementById('balancePill');
-  if(p) { p.classList.remove('pulse'); p.classList.add('pulse'); }
-  setSave('ok','✅ '+fmt);
+  try {
+    const p = document.getElementById('balancePill');
+    if(p) { p.classList.remove('pulse'); p.classList.add('pulse'); }
+  } catch(e){}
+  try { setSave('ok','✅ '+fmt); } catch(e){}
 }
 // Совместимость
 function updateBalUI() {
@@ -1065,43 +1088,79 @@ function saveAndClose() { showExitDialog(); }
 // ПРОФИЛЬ
 // ══════════════════════════════════════════════════════════
 function renderProfile() {
-  // Обновляем скрытые элементы (совместимость)
-  document.getElementById('pName').textContent    = USER_NAME.toUpperCase();
-  document.getElementById('pBal').textContent     = balance.toLocaleString('ru-RU');
-  document.getElementById('pCustomId').textContent = CUSTOM_ID || USER_ID;
-  document.getElementById('pWins1v1').textContent  = USER_WINS;
-  document.getElementById('pAvatar').textContent   = USER_WINS>50?'👑':USER_WINS>20?'⭐':USER_WINS>10?'🎯':'🎮';
-  // Обновляем canvas overlay
-  const avatar = USER_WINS>50?'👑':USER_WINS>20?'⭐':USER_WINS>10?'🎯':'🎮';
-  const el = (id) => document.getElementById(id);
-  if(el('spoName'))   el('spoName').textContent  = (USER_NAME||'ИГРОК').toUpperCase();
-  if(el('spoId'))     el('spoId').textContent    = CUSTOM_ID || USER_ID;
-  if(el('spoWins'))   el('spoWins').textContent  = USER_WINS + ' побед 1vs1';
-  if(el('spoBal'))    el('spoBal').textContent   = balance.toLocaleString('ru-RU');
-  if(el('spoAvatar')) el('spoAvatar').textContent= avatar;
-  const total=S.spins, wins=S.wins, losses=S.losses;
-  const wPctVal = total>0 ? Math.round(wins/total*100) : 0;
-  if(el('spoWinRate')) el('spoWinRate').textContent = total>0 ? `🎰 ${total} спинов  ·  🏆 ${wPctVal}% побед` : '🚀 Начни играть!';
+  try {
+    // ── Скрытые элементы (совместимость) ──
+    const _g = (id) => document.getElementById(id);
+    if(_g('pName'))     _g('pName').textContent     = (USER_NAME||'ИГРОК').toUpperCase();
+    if(_g('pBal'))      _g('pBal').textContent      = balance.toLocaleString('ru-RU');
+    if(_g('pCustomId')) _g('pCustomId').textContent = CUSTOM_ID || USER_ID;
+    if(_g('pWins1v1'))  _g('pWins1v1').textContent  = USER_WINS;
+    const avatar = USER_WINS>50?'👑':USER_WINS>20?'⭐':USER_WINS>10?'🎯':'🎮';
+    if(_g('pAvatar'))   _g('pAvatar').textContent   = avatar;
 
-  const lPct=total>0?Math.round(losses/total*100):0;
-  const C=251.2;
-  document.getElementById('dWin').setAttribute('stroke-dasharray',`${total>0?(wins/total)*C:0} ${C}`);
-  document.getElementById('dLoss').setAttribute('stroke-dasharray',`${total>0?(losses/total)*C:0} ${C}`);
-  document.getElementById('dLoss').setAttribute('stroke-dashoffset',`${-(total>0?(wins/total)*C:0)}`);
-  document.getElementById('dPct').textContent=wPct+'%';
-  document.getElementById('wlW').innerHTML=`${wins} <span class="wl-pct w">${wPct}%</span>`;
-  document.getElementById('wlL').innerHTML=`${losses} <span class="wl-pct l">${lPct}%</span>`;
-  document.getElementById('pSpins').textContent=total;
-  document.getElementById('pWR').textContent=wPct+'%';
-  document.getElementById('pTW').textContent='+'+S.totalWon.toLocaleString('ru-RU');
-  document.getElementById('pTL').textContent='-'+S.totalLost.toLocaleString('ru-RU');
-  document.getElementById('pBest').textContent=S.bestWin>0?`+${S.bestWin.toLocaleString('ru-RU')} токенов`:'Пока нет';
-  const pp=document.getElementById('pProfit');
-  pp.textContent=(S.profit>=0?'+':'')+S.profit.toLocaleString('ru-RU')+' токенов';
-  pp.className='pstat-v '+(S.profit>=0?'pos':'neg');
-  const sd=document.getElementById('streakDots'); sd.innerHTML='';
-  S.history.slice(-10).forEach(r=>{ const d=document.createElement('div'); d.className='sd '+(r==='w'?'w':'l'); sd.appendChild(d); });
-  document.getElementById('streakV').textContent=S.streak>0?(S.streakType==='w'?'🔥':'❄️')+' '+S.streak:'—';
+    // ── Canvas overlay ──
+    if(_g('spoName'))    _g('spoName').textContent   = (USER_NAME||'ИГРОК').toUpperCase();
+    if(_g('spoId'))      _g('spoId').textContent     = CUSTOM_ID || USER_ID;
+    if(_g('spoWins'))    _g('spoWins').textContent   = USER_WINS + ' побед 1vs1';
+    if(_g('spoBal'))     _g('spoBal').textContent    = balance.toLocaleString('ru-RU');
+    if(_g('spoAvatar'))  _g('spoAvatar').textContent = avatar;
+
+    // ── Вычисляем статистику (одно объявление wPct) ──
+    const total   = S.spins   || 0;
+    const wins    = S.wins    || 0;
+    const losses  = S.losses  || 0;
+    const wPct    = total > 0 ? Math.round(wins   / total * 100) : 0;
+    const lPct    = total > 0 ? Math.round(losses / total * 100) : 0;
+
+    // ── Canvas win-rate строка ──
+    if(_g('spoWinRate')) _g('spoWinRate').textContent =
+      total > 0 ? `🎰 ${total} спинов  ·  🏆 ${wPct}% побед` : '🚀 Начни играть!';
+
+    // ── Donut chart ──
+    const C = 251.2;
+    const winArc  = total > 0 ? (wins   / total) * C : 0;
+    const lossArc = total > 0 ? (losses / total) * C : 0;
+    try {
+      _g('dWin').setAttribute('stroke-dasharray',   `${winArc} ${C}`);
+      _g('dLoss').setAttribute('stroke-dasharray',  `${lossArc} ${C}`);
+      _g('dLoss').setAttribute('stroke-dashoffset', `${-winArc}`);
+      _g('dPct').textContent = wPct + '%';
+    } catch(e) {}
+
+    // ── Легенда побед / поражений ──
+    if(_g('wlW'))  _g('wlW').innerHTML  = `${wins}   <span class="wl-pct w">${wPct}%</span>`;
+    if(_g('wlL'))  _g('wlL').innerHTML  = `${losses} <span class="wl-pct l">${lPct}%</span>`;
+
+    // ── Карточки статистики ──
+    if(_g('pSpins')) _g('pSpins').textContent = total;
+    if(_g('pWR'))    _g('pWR').textContent    = wPct + '%';
+    if(_g('pTW'))    _g('pTW').textContent    = '+' + (S.totalWon  || 0).toLocaleString('ru-RU');
+    if(_g('pTL'))    _g('pTL').textContent    = '-' + (S.totalLost || 0).toLocaleString('ru-RU');
+    if(_g('pBest'))  _g('pBest').textContent  = (S.bestWin || 0) > 0
+      ? `+${S.bestWin.toLocaleString('ru-RU')} токенов` : 'Пока нет';
+
+    // ── Прибыль / убыток ──
+    const pp = _g('pProfit');
+    if(pp) {
+      const profit = S.profit || 0;
+      pp.textContent = (profit >= 0 ? '+' : '') + profit.toLocaleString('ru-RU') + ' токенов';
+      pp.className   = 'pstat-v ' + (profit >= 0 ? 'pos' : 'neg');
+    }
+
+    // ── Серия (последние 10 спинов) ──
+    const sd = _g('streakDots');
+    if(sd) {
+      sd.innerHTML = '';
+      (S.history || []).slice(-10).forEach(r => {
+        const dot = document.createElement('div');
+        dot.className = 'sd ' + (r === 'w' ? 'w' : 'l');
+        sd.appendChild(dot);
+      });
+    }
+    if(_g('streakV')) _g('streakV').textContent =
+      S.streak > 0 ? (S.streakType === 'w' ? '🔥' : '❄️') + ' ' + S.streak : '—';
+
+  } catch(e) { console.warn('renderProfile error:', e); }
 }
 function updateProfile() { renderProfile(); }
 function updateMiniStats() {
@@ -1638,7 +1697,7 @@ function startBalancePolling() {
   stopBalancePolling();
   _lpStop = false;
   longPoll();
-  _notifyTimer = setInterval(notifyBalance, 2000);
+  _notifyTimer = setInterval(notifyBalance, 1500);  // каждые 1.5с для быстрого обновления
 }
 
 function stopBalancePolling() {
@@ -1679,6 +1738,7 @@ async function longPoll() {
 // Резервный опрос каждые 2 сек
 async function notifyBalance() {
   if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
+  if(spinning) return;
   try {
     const ctrl = new AbortController();
     const t = setTimeout(()=>ctrl.abort(), 2000);
@@ -1691,7 +1751,9 @@ async function notifyBalance() {
     } finally { clearTimeout(t); }
     if(r && r.ok) {
       const d = await r.json();
-      if(d && d.ok && d.changed && typeof d.balance==='number') applyServerBalance(d.balance);
+      if(d && d.ok && typeof d.balance==='number' && (d.changed || d.balance !== balance)) {
+        applyServerBalance(d.balance);
+      }
     }
   } catch(e){}
 }
