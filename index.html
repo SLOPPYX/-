@@ -1009,16 +1009,39 @@ let _pollTimer = null;
 function startBalancePolling() {
   if(!API_URL || !API_SECRET) return;
   stopBalancePolling();
-  _pollTimer = setInterval(pollBalance, 500);
+  _pollTimer = setInterval(pollBalance, 500);  // резерв
+  longPoll();                                   // мгновенный push от бота
 }
 function stopBalancePolling() {
   if(_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
   _lpStop = true;
 }
 
-// Long-poll: ждём изменения баланса от бота (макс 5с)
-// Как только /addtokens — бот отвечает мгновенно
 let _lpStop = false;
+async function longPoll() {
+  _lpStop = false;
+  while(!_lpStop) {
+    try {
+      const r = await fetch(
+        API_URL+'/casino/push?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
+        { signal: AbortSignal.timeout(6000) }
+      );
+      if(r.ok) {
+        const d = await r.json();
+        if(d.ok && typeof d.balance==='number' && d.balance !== balance) {
+          const diff = d.balance - balance;
+          applyBalance(d.balance, true);
+          refreshBets();
+          if(diff > 0) {
+            showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
+            _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
+          }
+        }
+      }
+    } catch(e) {}
+    if(!_lpStop) await new Promise(r => setTimeout(r, 100));
+  }
+}
 
 
 // Резервный polling
