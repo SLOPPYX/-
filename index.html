@@ -966,19 +966,29 @@ function sleep(ms){
 async function init() {
   document.getElementById('pName').textContent = (USER_NAME||'Игрок').toUpperCase();
 
-  // _ls приоритет — обновляется после каждого спина и от бота
-  // URL_BAL — только если кеша нет (первое открытие)
+  // Показываем кеш мгновенно пока грузится API
   const _ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
-  const startBal = _ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0);
-  applyBalance(startBal, false);
+  applyBalance(_ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0), false);
   updateMiniStats();
-  for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
   refreshBets();
 
-  if(!API_URL || !API_SECRET) return;
+  if(!API_URL || !API_SECRET) {
+    for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
+    return;
+  }
 
-  // Пробуем получить баланс через API (таймаут 3с — ngrok может быть медленным)
-  loadBalanceFromBot();
+  // Блокируем кнопку — ждём АКТУАЛЬНЫЙ баланс из бота (await!)
+  const spinBtn  = document.getElementById('spinBtn');
+  const bSpinBtn = document.getElementById('bSpinBtn');
+  if(spinBtn)  { spinBtn.disabled=true; spinBtn.textContent='⏳'; }
+  if(bSpinBtn) { bSpinBtn.disabled=true; bSpinBtn.textContent='⏳'; }
+
+  await loadBalanceFromBot();  // ← ЖДЁМ, не фоном
+
+  if(spinBtn)  { spinBtn.disabled=false; spinBtn.textContent='🎰 КРУТИТЬ'; }
+  if(bSpinBtn) { bSpinBtn.disabled=false; bSpinBtn.textContent='🎰 Крутить!'; }
+  for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
+  refreshBets();
   startBalancePolling();
 }
 
