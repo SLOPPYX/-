@@ -31,6 +31,15 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 @keyframes spin360{to{transform:rotate(360deg)}}
 #refreshIcon.spinning{animation:spin360 0.5s linear}
 @keyframes bPulse{0%,100%{box-shadow:0 0 16px rgba(255,215,0,0.13)}50%{box-shadow:0 0 30px rgba(255,215,0,0.55),0 0 60px rgba(255,215,0,0.22)}}
+@keyframes badgePulse{from{opacity:0.6;transform:scale(0.97)}to{opacity:1;transform:scale(1.05)}}
+
+/* ── Баннер новых токенов ── */
+#tokenAddedBanner{position:fixed;top:0;left:0;right:0;z-index:500;background:linear-gradient(135deg,rgba(0,255,136,0.18),rgba(0,229,255,0.12));border-bottom:1.5px solid rgba(0,255,136,0.4);padding:10px 18px;display:none;align-items:center;justify-content:space-between;gap:10px;backdrop-filter:blur(10px)}
+#tokenAddedBanner.show{display:flex;animation:slideDown .3s ease-out}
+@keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.tab-refresh-msg{font-family:var(--fd);font-size:11px;font-weight:700;color:var(--green);letter-spacing:.5px}
+.tab-refresh-btn{padding:7px 14px;background:linear-gradient(135deg,rgba(0,255,136,0.25),rgba(0,229,255,0.15));border:1.5px solid var(--green);border-radius:9px;color:var(--green);font-family:var(--fd);font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;white-space:nowrap;transition:all .15s}
+.tab-refresh-btn:active{transform:scale(0.94)}
 
 /* ── NAV ── */
 .nav{display:flex;gap:4px;padding:14px 18px 0}
@@ -271,6 +280,11 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   <div class="splash-sub" id="splashStatus" style="color:var(--cyan);min-height:16px"></div>
 </div>
 
+<div id="tokenAddedBanner">
+  <div class="tab-refresh-msg">💰 Токены добавлены!</div>
+  <button class="tab-refresh-btn" onclick="applyPendingBalance()">🔄 Обновить</button>
+</div>
+
 <div class="bg-grid"></div>
 <div class="bg-glow"></div>
 <div class="app">
@@ -281,9 +295,12 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="logo-main">CASINO</div>
       <div class="logo-sub">by SloppyX</div>
     </div>
-    <div class="balance-pill" id="balancePill" onclick="refreshBalanceNow()" title="Нажми чтобы обновить баланс" style="cursor:pointer">
-      💰 <span id="balanceVal">0</span>
-      <span id="refreshIcon" style="margin-left:4px;font-size:10px;opacity:0.6">🔄</span>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+      <div class="balance-pill" id="balancePill" onclick="refreshBalanceNow()" title="Нажми чтобы обновить баланс" style="cursor:pointer">
+        💰 <span id="balanceVal">0</span>
+        <span id="refreshIcon" style="margin-left:4px;font-size:10px;opacity:0.6">🔄</span>
+      </div>
+      <div id="newBalanceBadge" style="display:none;font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:1px;color:var(--green);text-shadow:0 0 6px rgba(0,255,136,0.6);animation:badgePulse 1s ease infinite alternate;cursor:pointer" onclick="refreshBalanceNow()">▲ ОБНОВИТЬ</div>
     </div>
   </div>
 
@@ -736,6 +753,18 @@ async function spin() {
   if(spinning) return;
   if(balance < currentBet){ showToast('Недостаточно токенов!','error'); if(autoMode) stopAuto(); return; }
 
+  // Если есть ожидающий баланс — применяем перед спином
+  if(_pendingBalance !== null && _pendingBalance > balance) {
+    applyBalance(_pendingBalance, true);
+    refreshBets();
+    _pendingBalance = null;
+    const banner = document.getElementById('tokenAddedBanner');
+    if(banner) banner.classList.remove('show');
+    const badge = document.getElementById('newBalanceBadge');
+    if(badge) badge.style.display = 'none';
+    if(balance < currentBet){ showToast('Недостаточно токенов!','error'); if(autoMode) stopAuto(); return; }
+  }
+
   spinning=true;
   const btn=document.getElementById('spinBtn'), bBtn=document.getElementById('bSpinBtn');
   btn.disabled=bBtn.disabled=true;
@@ -1101,6 +1130,33 @@ async function readCloudBalance() {
 // Если уменьшился (другое устройство) — тоже обновляем.
 // Во время спина не опрашиваем — не мешаем игре.
 // ══════════════════════════════════════════════════════════
+// ── Ожидающий баланс (пришёл из бота, но ещё не применён) ──
+let _pendingBalance = null;
+
+function showTokenAddedBanner(newBal) {
+  _pendingBalance = newBal;
+  // Значок "ОБНОВИТЬ" под балансом
+  const badge = document.getElementById('newBalanceBadge');
+  if(badge) badge.style.display = 'block';
+  // Баннер сверху
+  const banner = document.getElementById('tokenAddedBanner');
+  if(banner) banner.classList.add('show');
+}
+
+function applyPendingBalance() {
+  const bal = _pendingBalance !== null ? _pendingBalance : balance;
+  _pendingBalance = null;
+  // Скрываем баннер и значок
+  const banner = document.getElementById('tokenAddedBanner');
+  if(banner) banner.classList.remove('show');
+  const badge = document.getElementById('newBalanceBadge');
+  if(badge) badge.style.display = 'none';
+  // Применяем
+  applyBalance(bal, true);
+  refreshBets();
+  showToast('✅ Баланс обновлён!', 'success');
+}
+
 let _pollTimer = null;
 
 function startBalancePolling() {
@@ -1127,11 +1183,13 @@ async function longPoll() {
         const d = await r.json();
         if(d.ok && typeof d.balance==='number' && d.balance !== balance) {
           const diff = d.balance - balance;
-          applyBalance(d.balance, true);
-          refreshBets();
           if(diff > 0) {
-            showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
-            _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
+            // Токены добавлены — показываем баннер, не применяем автоматически
+            showTokenAddedBanner(d.balance);
+          } else {
+            // Баланс уменьшился (другое устройство) — применяем сразу
+            applyBalance(d.balance, true);
+            refreshBets();
           }
         }
       }
@@ -1153,11 +1211,12 @@ async function pollBalance() {
     const d = await r.json();
     if(!d.ok || typeof d.balance!=='number' || d.balance===balance) return;
     const diff = d.balance - balance;
-    applyBalance(d.balance, true);
-    refreshBets();
     if(diff > 0) {
-      showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
-      _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
+      // Только показываем баннер — пользователь сам нажмёт обновить
+      showTokenAddedBanner(d.balance);
+    } else {
+      applyBalance(d.balance, true);
+      refreshBets();
     }
   } catch(e) {}
 }
@@ -1165,6 +1224,12 @@ async function pollBalance() {
 async function refreshBalanceNow() {
   const icon = document.getElementById('refreshIcon');
   if(icon) icon.classList.add('spinning');
+  // Скрываем баннер и значок при ручном обновлении
+  const banner = document.getElementById('tokenAddedBanner');
+  if(banner) banner.classList.remove('show');
+  const badge = document.getElementById('newBalanceBadge');
+  if(badge) badge.style.display = 'none';
+  _pendingBalance = null;
   await loadBalanceFromBot();  // всегда берём из бота, без проверки на равенство
   if(icon) setTimeout(() => icon.classList.remove('spinning'), 500);
 }
