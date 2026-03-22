@@ -1018,7 +1018,8 @@ async function init() {
     await loadBalanceFromBot();
 
     clearInterval(tick2);
-    if(status) status.textContent = '✅ Готово!';
+    const fmt = balance.toLocaleString('ru-RU');
+    if(status) status.textContent = '✅ Баланс: '+fmt+' 🪙';
   } else {
     clearInterval(tick);
     if(status) status.textContent = '✅ Готово!';
@@ -1037,29 +1038,28 @@ async function init() {
 }
 
 async function loadBalanceFromBot() {
-  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') {
-    console.warn('❌ loadBalance: нет API_URL/SECRET/USER_ID', {API_URL, USER_ID, API_SECRET});
-    return;
-  }
-  console.log('📡 loadBalance uid='+USER_ID+' url='+API_URL);
+  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
+  // Обновляем статус сплэша если он ещё показывается
+  const splSt = document.getElementById('splashStatus');
+  if(splSt) splSt.textContent = '⏳ Загрузка баланса...';
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
       { signal: AbortSignal.timeout(4000) }
     );
-    if(!r.ok) { console.warn('❌ loadBalance HTTP', r.status); return; }
+    if(!r.ok) return;
     const d = await r.json();
-    console.log('✅ loadBalance ответ:', d);
     if(d.ok && typeof d.balance==='number') {
       const diff = d.balance - balance;
       applyBalance(d.balance, true);
       refreshBets();
-      if(diff > 0) {
+      if(diff > 0 && !document.getElementById('splash')) {
+        // Показываем уведомление только если сплэш уже скрыт
         showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
         _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
       }
     }
-  } catch(e) { console.warn('❌ loadBalance ошибка:', e.message); }
+  } catch(e) {}
 }
 
 // ══════════════════════════════════════════════════════════
