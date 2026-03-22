@@ -622,7 +622,10 @@ function applyBalance(val, save) {
   // Пишем в кеш ТОЛЬКО когда save=true (данные от бота, не placeholder)
   if(save) try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(val)); } catch(e){}
   const p = document.getElementById('balancePill');
-  if(p) { p.classList.remove('pulse'); void p.offsetWidth; p.classList.add('pulse'); }
+  if(p) {
+    p.classList.remove('pulse');
+    requestAnimationFrame(() => p.classList.add('pulse'));
+  }
   setSave('ok','✅ '+fmt);
 }
 // Совместимость
@@ -1000,6 +1003,8 @@ async function init() {
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
 
   startBalancePolling();
+  // Дополнительный опрос через 300мс после загрузки — страхуемся
+  setTimeout(pollBalance, 300);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1023,16 +1028,19 @@ function stopBalancePolling() {
 async function refreshBalanceNow() {
   const icon = document.getElementById('refreshIcon');
   if(icon) icon.classList.add('spinning');
+  _fetching = false;  // принудительный сброс
   await pollBalance();
   if(icon) setTimeout(() => icon.classList.remove('spinning'), 500);
 }
 
+let _fetching = false;
 async function pollBalance() {
-  if(spinning) return;  // только во время спина не мешаем
+  if(spinning || _fetching) return;
+  _fetching = true;
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { cache:'no-store', signal: AbortSignal.timeout(500) }
+      { cache:'no-store', signal: AbortSignal.timeout(450) }
     );
     if(!r.ok) return;
     const d = await r.json();
@@ -1045,6 +1053,7 @@ async function pollBalance() {
       _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
     }
   } catch(e) {}
+  finally { _fetching = false; }
 }
 
 function _showBanner(msg) {
