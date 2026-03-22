@@ -471,7 +471,7 @@ try { tg.enableClosingConfirmation(); } catch(e){}
 // ПАРАМЕТРЫ из URL
 // ══════════════════════════════════════════════════════════
 const P          = new URLSearchParams(window.location.search);
-const USER_ID    = P.get('user_id')    || String(tg.initDataUnsafe?.user?.id || '');
+const USER_ID    = String(parseInt(P.get('user_id') || tg.initDataUnsafe?.user?.id || '0', 10));
 const URL_BAL    = parseInt(P.get('balance') || '0', 10);
 const API_URL    = decodeURIComponent(P.get('api_url')    || '');
 const API_SECRET = P.get('api_secret') || '';
@@ -610,18 +610,25 @@ function showPage(n) {
 // ══════════════════════════════════════════════════════════
 // БАЛАНС UI
 // ══════════════════════════════════════════════════════════
-function updateBalUI() {
-  const fmt = balance.toLocaleString('ru-RU');
-  // Обновляем DOM сразу — без блокирующего reflow
+// Применить баланс: обновить переменную, DOM, кеш
+function applyBalance(val) {
+  balance = val;
+  INIT_BAL = val;
+  const fmt = val.toLocaleString('ru-RU');
+  // Прямой DOM — без requestAnimationFrame, без задержек
   document.getElementById('balanceVal').textContent = fmt;
   document.getElementById('pBal').textContent = fmt;
-  setSave('ok', '✅ ' + fmt);
-  // Анимация пилюли — через rAF чтобы не блокировать отображение
+  // Кеш — только от реального значения
+  try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(val)); } catch(e){}
+  // Анимация
   const p = document.getElementById('balancePill');
-  p.classList.remove('pulse');
-  requestAnimationFrame(() => p.classList.add('pulse'));
+  if(p) { p.classList.remove('pulse'); void p.offsetWidth; p.classList.add('pulse'); }
+  setSave('ok','✅ '+fmt);
 }
-// Вызывается ТОЛЬКО когда баланс пришёл с сервера бота
+// Совместимость
+function updateBalUI() {
+  applyBalance(balance);
+}
 function saveBalToCache() {
   try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
 }
@@ -790,14 +797,10 @@ async function spin() {
     const apiResp = await apiPromise;
 
     if(apiResp && apiResp.ok) {
-      balance = apiResp.balance;
-      saveBalToCache();
+      applyBalance(apiResp.balance);
     } else {
-      balance -= currentBet;
-      if(res.win) balance += currentBet * res.mult;
-      if(balance < 0) balance = 0;
+      applyBalance(Math.max(0, balance - currentBet + (res.win ? currentBet*res.mult : 0)));
     }
-    updateBalUI();  // сразу обновляем экран
 
     S.spins++;
     if(res.win) {
@@ -1000,50 +1003,33 @@ function sleep(ms){
 async function init() {
   document.getElementById('pName').textContent = (USER_NAME||'Игрок').toUpperCase();
 
-  // При F5 URL_BAL устаревший — берём localStorage как placeholder
-  // При первом открытии localStorage пустой — берём URL_BAL
-  const _lsBal = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
-  balance  = _lsBal > 0 ? _lsBal : (URL_BAL > 0 ? URL_BAL : 0);
-  INIT_BAL = balance;
-  updateBalUI(); updateMiniStats();
+  // Placeholder: localStorage (актуальный) → URL_BAL (от бота при открытии) → 0
+  const _ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10);
+  applyBalance(_ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0));
+  updateMiniStats();
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
 
-  if(!API_URL || !API_SECRET) {
-    refreshBets();
-    setSave('ok','✅ '+balance.toLocaleString('ru-RU'));
-    return;
-  }
+  if(!API_URL || !API_SECRET) { refreshBets(); return; }
 
-  // Блокируем — загружаем реальный баланс из бота
+  // Блокируем кнопку — грузим РЕАЛЬНЫЙ баланс из бота
   const spinBtn  = document.getElementById('spinBtn');
   const bSpinBtn = document.getElementById('bSpinBtn');
   if(spinBtn)  { spinBtn.disabled=true;  spinBtn.textContent='⏳'; }
   if(bSpinBtn) { bSpinBtn.disabled=true; bSpinBtn.textContent='⏳'; }
-  setSave('saving','⏳ Загрузка...');
 
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { signal: AbortSignal.timeout(3000) }
+      { cache:'no-store', signal: AbortSignal.timeout(3000) }
     );
     if(r.ok) {
       const d = await r.json();
       if(d.ok && typeof d.balance==='number') {
-        balance  = d.balance;
-        INIT_BAL = d.balance;
-        saveBalToCache();
-        // Сразу пишем в DOM напрямую — не ждём ничего
-        document.getElementById('balanceVal').textContent = balance.toLocaleString('ru-RU');
-        document.getElementById('pBal').textContent = balance.toLocaleString('ru-RU');
-        setSave('ok', '✅ ' + balance.toLocaleString('ru-RU'));
+        applyBalance(d.balance);  // применяем и пишем в кеш
         setApiStatus(true);
-      }
-    } else {
-      setApiStatus(false);
-    }
-  } catch(e) {
-    setApiStatus(false);
-  }
+      } else { setApiStatus(false); }
+    } else { setApiStatus(false); }
+  } catch(e) { setApiStatus(false); }
 
   if(spinBtn)  { spinBtn.disabled=false;  spinBtn.textContent='🎰 КРУТИТЬ'; }
   if(bSpinBtn) { bSpinBtn.disabled=false; bSpinBtn.textContent='🎰 Крутить!'; }
@@ -1075,35 +1061,26 @@ function stopBalancePolling() {
 async function pollBalance() {
   if(spinning || _pollActive) return;
   _pollActive = true;
-  // Сбрасываем флаг через 2сек в любом случае — если fetch завис
-  const _resetFlag = setTimeout(() => { _pollActive = false; }, 2000);
+  const _rf = setTimeout(() => { _pollActive = false; }, 2000);
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { signal: AbortSignal.timeout(1500) }
+      { cache:'no-store', signal: AbortSignal.timeout(1500) }
     );
     if(!r.ok) return;
     const d = await r.json();
-    if(!d.ok || typeof d.balance !== 'number') return;
-    if(d.balance === balance) return;
+    if(!d.ok || typeof d.balance!=='number') return;
+    // всегда применяем баланс от бота  // без изменений
     const diff = d.balance - balance;
-    balance  = d.balance;
-    INIT_BAL = d.balance;
-    saveBalToCache();
-    // Прямая запись в DOM — мгновенно
-    document.getElementById('balanceVal').textContent = balance.toLocaleString('ru-RU');
-    document.getElementById('pBal').textContent = balance.toLocaleString('ru-RU');
-    setSave('ok', '✅ ' + balance.toLocaleString('ru-RU'));
+    applyBalance(d.balance);  // обновляет balance, DOM, кеш
     refreshBets();
     setApiStatus(true);
     if(diff > 0) {
-      showToast('💰 +' + diff.toLocaleString('ru-RU') + ' токенов!', 'gold');
-      _showBanner('🎁 +' + diff.toLocaleString('ru-RU') + ' токенов!');
+      showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
+      _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
     }
-  } catch(e) {
-    setApiStatus(false);
-  }
-  finally { clearTimeout(_resetFlag); _pollActive = false; }
+  } catch(e) { setApiStatus(false); }
+  finally { clearTimeout(_rf); _pollActive = false; }
 }
 
 function _showBanner(msg) {
