@@ -27,6 +27,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .logo-sub{font-family:var(--fd);font-size:9px;font-weight:400;letter-spacing:3px;color:var(--muted)}
 .balance-pill{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(255,215,0,0.13),rgba(255,159,0,0.08));border:1px solid rgba(255,215,0,0.3);border-radius:24px;padding:8px 16px;font-family:var(--fd);font-size:12px;font-weight:700;color:var(--gold);box-shadow:0 0 16px rgba(255,215,0,0.13);white-space:nowrap;transition:box-shadow .3s}
 .balance-pill.pulse{animation:bPulse .35s ease}
+.balance-pill:active{transform:scale(0.95)}
+@keyframes spin360{to{transform:rotate(360deg)}}
+#refreshIcon.spinning{animation:spin360 0.5s linear}
 @keyframes bPulse{0%,100%{box-shadow:0 0 16px rgba(255,215,0,0.13)}50%{box-shadow:0 0 30px rgba(255,215,0,0.55),0 0 60px rgba(255,215,0,0.22)}}
 
 /* ── NAV ── */
@@ -259,8 +262,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="logo-main">CASINO</div>
       <div class="logo-sub">by SloppyX</div>
     </div>
-    <div class="balance-pill" id="balancePill">
+    <div class="balance-pill" id="balancePill" onclick="refreshBalanceNow()" title="Нажми чтобы обновить баланс" style="cursor:pointer">
       💰 <span id="balanceVal">0</span>
+      <span id="refreshIcon" style="margin-left:4px;font-size:10px;opacity:0.6">🔄</span>
     </div>
   </div>
 
@@ -833,6 +837,7 @@ async function spin() {
     updateMiniStats();
     btn.textContent='🎰 КРУТИТЬ';
     // Мгновенный опрос после спина
+    _pollActive = false;
     setTimeout(pollBalance, 150);
     document.getElementById('spinCount').textContent=`×${S.spins}`;
 
@@ -1018,10 +1023,19 @@ function stopBalancePolling() {
   if(_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
 }
 
+async function refreshBalanceNow() {
+  // Принудительное обновление баланса — мгновенно
+  const icon = document.getElementById('refreshIcon');
+  if(icon) icon.classList.add('spinning');
+  _pollActive = false;  // сбрасываем флаг принудительно
+  await pollBalance();
+  if(icon) setTimeout(() => icon.classList.remove('spinning'), 500);
+}
+
 async function pollBalance() {
   if(spinning || _pollActive) return;
   _pollActive = true;
-  const _rf = setTimeout(() => { _pollActive = false; }, 2000);
+  const _rf = setTimeout(() => { _pollActive = false; }, 1000);
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
