@@ -914,16 +914,14 @@ function confirmExit() {
     }).catch(()=>{});
   }
 
-  // Закрываем через 500мс в любом случае — никогда не зависаем
-  const _closeTimer = setTimeout(() => tg.close(), 500);
-
-  // sendData — бот получит данные и пришлёт главное меню
+  // Пробуем sendData — бот получит данные и пришлёт главное меню
   try {
     tg.sendData(JSON.stringify({ action:'casino_exit', balance, user_id:USER_ID }));
-    clearTimeout(_closeTimer);  // sendData сам закроет WebApp
-  } catch(e) {
-    // sendData недоступен — закрываемся по таймеру выше
-  }
+  } catch(e) {}
+
+  // tg.close() через 300мс В ЛЮБОМ СЛУЧАЕ — не зависаем никогда
+  // sendData может не закрыть WebApp если initData пустой
+  setTimeout(() => tg.close(), 300);
 }
 function saveAndClose() { showExitDialog(); }
 
@@ -1074,6 +1072,8 @@ function stopBalancePolling() {
 async function pollBalance() {
   if(spinning || _pollActive) return;
   _pollActive = true;
+  // Сбрасываем флаг через 2сек в любом случае — если fetch завис
+  const _resetFlag = setTimeout(() => { _pollActive = false; }, 2000);
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
@@ -1097,7 +1097,7 @@ async function pollBalance() {
   } catch(e) {
     setApiStatus(false);
   }
-  finally { _pollActive = false; }
+  finally { clearTimeout(_resetFlag); _pollActive = false; }
 }
 
 function _showBanner(msg) {
@@ -1146,4 +1146,5 @@ init();
 </script>
 </body>
 </html>
+
 
