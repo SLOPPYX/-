@@ -966,41 +966,34 @@ function sleep(ms){
 async function init() {
   document.getElementById('pName').textContent = (USER_NAME||'Игрок').toUpperCase();
 
-  // Placeholder: localStorage (актуальный) → URL_BAL (от бота при открытии) → 0
-  const _ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10);
-  applyBalance(_ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0), false); // placeholder — не пишем в кеш
+  // Сразу показываем URL_BAL — бот передаёт актуальный при каждом открытии
+  const _ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
+  const startBal = URL_BAL > 0 ? URL_BAL : (_ls > 0 ? _ls : 0);
+  applyBalance(startBal, false);
   updateMiniStats();
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
+  refreshBets();
 
-  if(!API_URL || !API_SECRET) { refreshBets(); return; }
+  if(!API_URL || !API_SECRET) return;
 
-  // Блокируем кнопку — грузим РЕАЛЬНЫЙ баланс из бота
-  const spinBtn  = document.getElementById('spinBtn');
-  const bSpinBtn = document.getElementById('bSpinBtn');
-  if(spinBtn)  { spinBtn.disabled=true;  spinBtn.textContent='⏳'; }
-  if(bSpinBtn) { bSpinBtn.disabled=true; bSpinBtn.textContent='⏳'; }
+  // Пробуем получить баланс через API (таймаут 3с — ngrok может быть медленным)
+  loadBalanceFromBot();
+  startBalancePolling();
+}
 
+async function loadBalanceFromBot() {
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-      { signal: AbortSignal.timeout(1000) }
+      { signal: AbortSignal.timeout(3000) }
     );
-    if(r.ok) {
-      const d = await r.json();
-      if(d.ok && typeof d.balance==='number') {
-        applyBalance(d.balance, true);  // от бота — пишем в кеш
-        setApiStatus(true);
-      } else { setApiStatus(false); }
-    } else { setApiStatus(false); }
-  } catch(e) { setApiStatus(false); }
-
-  if(spinBtn)  { spinBtn.disabled=false;  spinBtn.textContent='🎰 КРУТИТЬ'; }
-  if(bSpinBtn) { bSpinBtn.disabled=false; bSpinBtn.textContent='🎰 Крутить!'; }
-  refreshBets();
-  for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
-
-  startBalancePolling();
-  setTimeout(pollBalance, 50);
+    if(!r.ok) return;
+    const d = await r.json();
+    if(d.ok && typeof d.balance==='number') {
+      applyBalance(d.balance, true);
+      refreshBets();
+    }
+  } catch(e) {}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1015,8 +1008,7 @@ let _pollTimer = null;
 function startBalancePolling() {
   if(!API_URL || !API_SECRET) return;
   stopBalancePolling();
-  _pollTimer = setInterval(pollBalance, 500);  // резерв каждые 0.5с
-  longPoll();  // мгновенный push
+  _pollTimer = setInterval(pollBalance, 500);
 }
 function stopBalancePolling() {
   if(_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
@@ -1026,37 +1018,7 @@ function stopBalancePolling() {
 // Long-poll: ждём изменения баланса от бота (макс 5с)
 // Как только /addtokens — бот отвечает мгновенно
 let _lpStop = false;
-async function longPoll() {
-  _lpStop = false;
-  while(!_lpStop) {
-    try {
-      const r = await fetch(
-        API_URL+'/casino/push?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-        { signal: AbortSignal.timeout(6000) }
-      );
-      if(r.ok) {
-        const d = await r.json();
-        if(d.ok && typeof d.balance==='number' && d.balance !== balance) {
-          const diff = d.balance - balance;
-          balance = d.balance;
-          INIT_BAL = d.balance;
-          const fmt = d.balance.toLocaleString('ru-RU');
-          document.getElementById('balanceVal').textContent = fmt;
-          document.getElementById('pBal').textContent = fmt;
-          try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(d.balance)); } catch(e){}
-          setSave('ok','✅ '+fmt);
-          refreshBets();
-          if(diff > 0) {
-            showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
-            _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
-          }
-        }
-      }
-    } catch(e) {}
-    // Пауза 100мс между запросами
-    if(!_lpStop) await new Promise(r=>setTimeout(r,100));
-  }
-}
+
 
 // Резервный polling
 async function pollBalance() {
@@ -1064,18 +1026,14 @@ async function pollBalance() {
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-      { signal: AbortSignal.timeout(1000) }
+      { signal: AbortSignal.timeout(2000) }
     );
     if(!r.ok) return;
     const d = await r.json();
     if(!d.ok || typeof d.balance!=='number' || d.balance===balance) return;
     const diff = d.balance - balance;
-    balance = d.balance; INIT_BAL = d.balance;
-    const fmt = d.balance.toLocaleString('ru-RU');
-    document.getElementById('balanceVal').textContent = fmt;
-    document.getElementById('pBal').textContent = fmt;
-    try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(d.balance)); } catch(e){}
-    setSave('ok','✅ '+fmt); refreshBets();
+    applyBalance(d.balance, true);
+    refreshBets();
     if(diff > 0) {
       showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
       _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
