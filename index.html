@@ -1420,8 +1420,13 @@ async function init() {
     if(bar) bar.style.width = prog + '%';
   }, 35);
 
-  // Грузим баланс из бота
-  await loadBalanceFromBot();
+  // Грузим баланс из бота — с гарантированным таймаутом 5с
+  try {
+    await Promise.race([
+      loadBalanceFromBot(),
+      new Promise(r => setTimeout(r, 5000)) // максимум 5 сек — потом закрываем splash в любом случае
+    ]);
+  } catch(e) {}
   _lastKnownBalance = balance;
 
   clearInterval(tick2);
@@ -1447,17 +1452,21 @@ async function loadBalanceFromBot() {
   const splSt = document.getElementById('splashStatus');
   if(splSt) splSt.textContent = '⏳ Загрузка баланса...';
   try {
-    const r = await fetch(
-      API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-      { signal: AbortSignal.timeout(4000) }
-    );
-    if(!r.ok) return;
+    const ctrl = new AbortController();
+    const fetchTimer = setTimeout(() => ctrl.abort(), 4000);
+    let r;
+    try {
+      r = await fetch(
+        API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
+        { signal: ctrl.signal }
+      );
+    } finally { clearTimeout(fetchTimer); }
+    if(!r || !r.ok) return;
     const d = await r.json();
     if(d.ok && typeof d.balance==='number') {
       const diff = d.balance - balance;
       applyBalance(d.balance, true);
       refreshBets();
-      // Обновляем CloudStorage актуальным балансом
       saveCloudBalance(d.balance);
       if(diff > 0 && !document.getElementById('splash')) {
         showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
@@ -1479,19 +1488,21 @@ function saveCloudBalance(val) {
 
 async function readCloudBalance() {
   return new Promise(resolve => {
+    // Гарантированный таймаут — CloudStorage не должна вешать загрузку
+    const timeout = setTimeout(resolve, 1500);
     try {
       tg.CloudStorage.getItem(CLOUD_KEY, (err, val) => {
+        clearTimeout(timeout);
         if(!err && val) {
           const cloudBal = parseInt(val, 10);
           if(!isNaN(cloudBal) && cloudBal > 0 && cloudBal !== balance) {
-            const diff = cloudBal - balance;
             applyBalance(cloudBal, true);
             refreshBets();
           }
         }
         resolve();
       });
-    } catch(e) { resolve(); }
+    } catch(e) { clearTimeout(timeout); resolve(); }
   });
 }
 
@@ -1545,10 +1556,13 @@ function stopBalancePolling() {
 async function longPoll() {
   while(!_lpStop) {
     try {
-      const r = await fetch(
+      const _lpCtrl = new AbortController();
+      const _lpTimer = setTimeout(() => _lpCtrl.abort(), 6500);
+      let r;
+      try { r = await fetch(
         API_URL + '/casino/push?uid=' + USER_ID + '&secret=' + API_SECRET + '&_t=' + Date.now(),
-        { signal: AbortSignal.timeout(6500) }
-      );
+        { signal: _lpCtrl.signal }
+      ); } finally { clearTimeout(_lpTimer); }
       if(r.ok) {
         const d = await r.json();
         if(d.ok && typeof d.balance === 'number') {
@@ -1574,13 +1588,16 @@ async function longPoll() {
 async function notifyBalance() {
   if(spinning) return; // не мешаем спину
   try {
-    const r = await fetch(
+    const _nCtrl = new AbortController();
+    const _nTimer = setTimeout(() => _nCtrl.abort(), 2000);
+    let r;
+    try { r = await fetch(
       API_URL + '/casino/notify?uid=' + USER_ID +
       '&secret=' + API_SECRET +
       '&client_bal=' + balance +
       '&_t=' + Date.now(),
-      { signal: AbortSignal.timeout(2000) }
-    );
+      { signal: _nCtrl.signal }
+    ); } finally { clearTimeout(_nTimer); }
     if(!r.ok) return;
     const d = await r.json();
     if(d.ok && d.changed && typeof d.balance === 'number') {
@@ -1593,10 +1610,13 @@ async function notifyBalance() {
 async function pollBalance() {
   if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
   try {
-    const r = await fetch(
+    const _pbCtrl = new AbortController();
+    const _pbTimer = setTimeout(() => _pbCtrl.abort(), 3000);
+    let r;
+    try { r = await fetch(
       API_URL + '/casino/balance?uid=' + USER_ID + '&secret=' + API_SECRET + '&_t=' + Date.now(),
-      { signal: AbortSignal.timeout(3000) }
-    );
+      { signal: _pbCtrl.signal }
+    ); } finally { clearTimeout(_pbTimer); }
     if(!r.ok) return;
     const d = await r.json();
     if(d.ok && typeof d.balance === 'number' && d.balance !== balance) {
