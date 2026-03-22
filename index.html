@@ -1510,6 +1510,132 @@ async function readCloudBalance() {
   });
 }
 
+// ══════════════════════════════════════════════════════════
+// ПЕРЕМЕННЫЕ СИНХРОНИЗАЦИИ — объявляем здесь глобально
+// ══════════════════════════════════════════════════════════
+let _lastKnownBalance = 0;
+let _pollTimer        = null;
+let _notifyTimer      = null;
+let _lpStop           = false;
+
+// ══════════════════════════════════════════════════════════
+// ПРИМЕНИТЬ БАЛАНС С СЕРВЕРА — мгновенно, с уведомлением
+// ══════════════════════════════════════════════════════════
+function applyServerBalance(newBal) {
+  if(typeof newBal !== 'number' || newBal < 0) return;
+  const diff = newBal - balance;
+  _lastKnownBalance = newBal;
+  applyBalance(newBal, true);
+  try { refreshBets(); } catch(e) {}
+  try {
+    const sp = document.getElementById('spoBal');
+    if(sp) sp.textContent = newBal.toLocaleString('ru-RU');
+  } catch(e){}
+  if(diff > 0) {
+    const fmt = diff.toLocaleString('ru-RU');
+    try { showToast('💰 +'+fmt+' токенов!', 'gold'); } catch(e){}
+    try { _showBanner('🎁 +'+fmt+' токенов добавлено!'); } catch(e){}
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// ТРОЙНАЯ СИСТЕМА СИНХРОНИЗАЦИИ БАЛАНСА
+// ══════════════════════════════════════════════════════════
+function startBalancePolling() {
+  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
+  stopBalancePolling();
+  _lpStop = false;
+  longPoll();
+  _notifyTimer = setInterval(notifyBalance, 2000);
+}
+
+function stopBalancePolling() {
+  _lpStop = true;
+  if(_pollTimer)   { clearInterval(_pollTimer);   _pollTimer   = null; }
+  if(_notifyTimer) { clearInterval(_notifyTimer); _notifyTimer = null; }
+}
+
+// Long-poll: бот пушит изменение → мгновенно применяем
+async function longPoll() {
+  while(!_lpStop) {
+    try {
+      if(!API_URL || !API_SECRET) break;
+      const ctrl = new AbortController();
+      const t = setTimeout(()=>ctrl.abort(), 6500);
+      let r;
+      try {
+        r = await fetch(
+          API_URL+'/casino/push?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
+          { signal: ctrl.signal }
+        );
+      } finally { clearTimeout(t); }
+      if(r && r.ok) {
+        const d = await r.json();
+        if(d && d.ok && typeof d.balance==='number') {
+          if(d.changed === true || d.balance !== _lastKnownBalance) {
+            _lastKnownBalance = d.balance;
+            if(d.balance !== balance) applyServerBalance(d.balance);
+          }
+        }
+      }
+    } catch(e) { /* timeout — нормально */ }
+    if(_lpStop) break;
+    await new Promise(r=>setTimeout(r,100));
+  }
+}
+
+// Резервный опрос каждые 2 сек
+async function notifyBalance() {
+  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), 2000);
+    let r;
+    try {
+      r = await fetch(
+        API_URL+'/casino/notify?uid='+USER_ID+'&secret='+API_SECRET+'&client_bal='+balance+'&_t='+Date.now(),
+        { signal: ctrl.signal }
+      );
+    } finally { clearTimeout(t); }
+    if(r && r.ok) {
+      const d = await r.json();
+      if(d && d.ok && d.changed && typeof d.balance==='number') applyServerBalance(d.balance);
+    }
+  } catch(e){}
+}
+
+// Прямой запрос баланса
+async function pollBalance() {
+  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), 3000);
+    let r;
+    try {
+      r = await fetch(
+        API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
+        { signal: ctrl.signal }
+      );
+    } finally { clearTimeout(t); }
+    if(r && r.ok) {
+      const d = await r.json();
+      if(d && d.ok && typeof d.balance==='number' && d.balance !== balance) applyServerBalance(d.balance);
+    }
+  } catch(e){}
+}
+
+async function refreshBalanceNow() {
+  const icon = document.getElementById('refreshIcon');
+  if(icon) icon.classList.add('spinning');
+  await safeLoadBalance();
+  if(icon) setTimeout(()=>icon.classList.remove('spinning'), 500);
+}
+
+// Совместимость
+function showTokenAddedBanner() {}
+function applyPendingBalance() {}
+
+
 // При возврате на вкладку — сразу обновляем баланс
 document.addEventListener('visibilitychange', () => {
   if(document.visibilityState === 'visible') {
