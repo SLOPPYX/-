@@ -494,10 +494,11 @@ try { tg.enableClosingConfirmation(); } catch(e){}
 const P          = new URLSearchParams(window.location.search);
 const USER_ID    = String(parseInt(P.get('user_id') || tg.initDataUnsafe?.user?.id || '0', 10));
 const URL_BAL    = parseInt(P.get('balance') || '0', 10);
-const API_URL    = decodeURIComponent(P.get('api_url')    || '');
+const URL_TS     = parseInt(P.get('ts') || '0', 10);  // timestamp открытия
+const API_URL    = decodeURIComponent(P.get('api_url') || '');
 const API_SECRET = P.get('api_secret') || '';
-// Диагностика — видно в DevTools (F12 → Console)
-console.log('🎰 Casino params:', {USER_ID, URL_BAL, API_URL: API_URL||'❌ ПУСТО', HAS_SECRET: !!API_SECRET});
+// Если казино открыто < 60 сек назад — URL_BAL актуальный (только что из бота)
+const URL_BAL_FRESH = URL_TS > 0 && (Date.now() - URL_TS) < 60000;
 
 // ── Профиль: берём из URL, сохраняем в localStorage навсегда ──
 const PROF_KEY = 'profile_' + USER_ID;
@@ -987,9 +988,19 @@ function sleep(ms){
 async function init() {
   document.getElementById('pName').textContent = (USER_NAME||'Игрок').toUpperCase();
 
-  // Показываем кеш
+  // Если открыто только что — URL_BAL самый актуальный (бот только что его вычитал)
+  // Если F5 — берём localStorage (обновляется после каждого спина)
   const _ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
-  applyBalance(_ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0), false);
+  let startBal;
+  if(URL_BAL_FRESH && URL_BAL > 0) {
+    // Свежий URL — бот передал актуальный баланс
+    startBal = URL_BAL;
+    try { localStorage.setItem('bal_'+USER_ID, String(URL_BAL)); } catch(e){}
+  } else {
+    // F5 или старый URL — берём из кеша
+    startBal = _ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0);
+  }
+  applyBalance(startBal, false);
   updateMiniStats();
 
   // Анимируем прогресс-бар сплэша
