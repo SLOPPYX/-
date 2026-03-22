@@ -611,16 +611,14 @@ function showPage(n) {
 // БАЛАНС UI
 // ══════════════════════════════════════════════════════════
 // Применить баланс: обновить переменную, DOM, кеш
-function applyBalance(val) {
+function applyBalance(val, save) {
   balance = val;
   INIT_BAL = val;
   const fmt = val.toLocaleString('ru-RU');
-  // Прямой DOM — без requestAnimationFrame, без задержек
   document.getElementById('balanceVal').textContent = fmt;
   document.getElementById('pBal').textContent = fmt;
-  // Кеш — только от реального значения
-  try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(val)); } catch(e){}
-  // Анимация
+  // Пишем в кеш ТОЛЬКО когда save=true (данные от бота, не placeholder)
+  if(save) try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(val)); } catch(e){}
   const p = document.getElementById('balancePill');
   if(p) { p.classList.remove('pulse'); void p.offsetWidth; p.classList.add('pulse'); }
   setSave('ok','✅ '+fmt);
@@ -797,7 +795,7 @@ async function spin() {
     const apiResp = await apiPromise;
 
     if(apiResp && apiResp.ok) {
-      applyBalance(apiResp.balance);
+      applyBalance(apiResp.balance, true);
     } else {
       applyBalance(Math.max(0, balance - currentBet + (res.win ? currentBet*res.mult : 0)));
     }
@@ -1005,7 +1003,7 @@ async function init() {
 
   // Placeholder: localStorage (актуальный) → URL_BAL (от бота при открытии) → 0
   const _ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10);
-  applyBalance(_ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0));
+  applyBalance(_ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0), false); // placeholder — не пишем в кеш
   updateMiniStats();
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
 
@@ -1025,7 +1023,7 @@ async function init() {
     if(r.ok) {
       const d = await r.json();
       if(d.ok && typeof d.balance==='number') {
-        applyBalance(d.balance);  // применяем и пишем в кеш
+        applyBalance(d.balance, true);  // от бота — пишем в кеш
         setApiStatus(true);
       } else { setApiStatus(false); }
     } else { setApiStatus(false); }
@@ -1072,7 +1070,7 @@ async function pollBalance() {
     if(!d.ok || typeof d.balance!=='number') return;
     // всегда применяем баланс от бота  // без изменений
     const diff = d.balance - balance;
-    applyBalance(d.balance);  // обновляет balance, DOM, кеш
+    applyBalance(d.balance, true);  // от бота — пишет в кеш
     refreshBets();
     setApiStatus(true);
     if(diff > 0) {
@@ -1129,5 +1127,3 @@ init();
 </script>
 </body>
 </html>
-
-
