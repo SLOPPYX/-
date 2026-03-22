@@ -780,16 +780,17 @@ function applyBalance(val, save) {
   balance = val;
   INIT_BAL = val;
   const fmt = val.toLocaleString('ru-RU');
-  // Обновляем ВСЕ элементы баланса синхронно — шапка, профиль, canvas overlay
+  // Обновляем ВСЕ элементы баланса синхронно и надёжно
   try { document.getElementById('balanceVal').textContent = fmt; } catch(e){}
   try { document.getElementById('pBal').textContent = fmt; } catch(e){}
   try { const sb = document.getElementById('spoBal'); if(sb) sb.textContent = fmt; } catch(e){}
+  try { const eb = document.getElementById('exitBalPreview'); if(eb) eb.textContent = fmt; } catch(e){}
   if(save) try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(val)); } catch(e){}
   try {
     const p = document.getElementById('balancePill');
-    if(p) { p.classList.remove('pulse'); p.classList.add('pulse'); }
+    if(p) { p.classList.remove('pulse'); void p.offsetWidth; p.classList.add('pulse'); }
   } catch(e){}
-  try { setSave('ok','✅ '+fmt); } catch(e){}
+  try { setSave('ok', '✅ '+fmt); } catch(e){}
 }
 // Совместимость
 function updateBalUI() {
@@ -1672,20 +1673,30 @@ let _lpStop           = false;
 // ══════════════════════════════════════════════════════════
 function applyServerBalance(newBal) {
   if(typeof newBal !== 'number' || newBal < 0) return;
+  if(newBal === balance && newBal === _lastKnownBalance) return; // ничего не изменилось
   const diff = newBal - balance;
   _lastKnownBalance = newBal;
+  // Обновляем balance и все DOM-элементы сразу
   applyBalance(newBal, true);
-  // Сразу синхронизируем CloudStorage — следующее открытие увидит актуальный баланс
+  // Синхронизируем CloudStorage — следующее открытие увидит актуальный баланс
   try { tg.CloudStorage.setItem('balance_'+USER_ID, String(newBal), ()=>{}); } catch(e){}
-  try { refreshBets(); } catch(e) {}
+  // Обновляем ставки
+  try { refreshBets(); } catch(e){}
+  // Обновляем мини-статистику под барабанами
+  try { updateMiniStats(); } catch(e){}
+  // Если профиль открыт — обновляем сразу
   try {
-    const sp = document.getElementById('spoBal');
-    if(sp) sp.textContent = newBal.toLocaleString('ru-RU');
+    const profilePage = document.getElementById('page-profile');
+    if(profilePage && profilePage.classList.contains('active')) renderProfile();
   } catch(e){}
+  // Уведомление если токены добавлены
   if(diff > 0) {
     const fmt = diff.toLocaleString('ru-RU');
     try { showToast('💰 +'+fmt+' токенов!', 'gold'); } catch(e){}
     try { _showBanner('🎁 +'+fmt+' токенов добавлено!'); } catch(e){}
+  } else if(diff < 0) {
+    const fmt = Math.abs(diff).toLocaleString('ru-RU');
+    try { showToast('💸 -'+fmt+' токенов', 'info'); } catch(e){}
   }
 }
 
@@ -1722,10 +1733,17 @@ async function longPoll() {
       } finally { clearTimeout(t); }
       if(r && r.ok) {
         const d = await r.json();
-        if(d && d.ok && typeof d.balance==='number') {
-          if(d.changed === true || d.balance !== _lastKnownBalance) {
+        if(d && d.ok && typeof d.balance === 'number') {
+          // changed=true — бот явно пушит изменение (addtokens, матч, промокод и т.д.)
+          // balance !== _lastKnownBalance — изменился с прошлого запроса
+          if(d.changed === true) {
+            _lastKnownBalance = d.balance;
+            applyServerBalance(d.balance); // применяем в любом случае
+          } else if(d.balance !== _lastKnownBalance) {
             _lastKnownBalance = d.balance;
             if(d.balance !== balance) applyServerBalance(d.balance);
+          } else {
+            _lastKnownBalance = d.balance; // просто обновляем знание
           }
         }
       }
