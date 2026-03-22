@@ -627,7 +627,7 @@ function applyBalance(val, save) {
 }
 // Совместимость
 function updateBalUI() {
-  applyBalance(balance);
+  applyBalance(balance, true);
 }
 function saveBalToCache() {
   try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
@@ -763,7 +763,7 @@ async function spin() {
     if(apiResp && apiResp.ok) {
       applyBalance(apiResp.balance, true);
     } else {
-      applyBalance(Math.max(0, balance - currentBet + (res.win ? currentBet*res.mult : 0)));
+      applyBalance(Math.max(0, balance - currentBet + (res.win ? currentBet*res.mult : 0)), true);
     }
 
     S.spins++;
@@ -966,9 +966,10 @@ function sleep(ms){
 async function init() {
   document.getElementById('pName').textContent = (USER_NAME||'Игрок').toUpperCase();
 
-  // Сразу показываем URL_BAL — бот передаёт актуальный при каждом открытии
+  // _ls приоритет — обновляется после каждого спина и от бота
+  // URL_BAL — только если кеша нет (первое открытие)
   const _ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
-  const startBal = URL_BAL > 0 ? URL_BAL : (_ls > 0 ? _ls : 0);
+  const startBal = _ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0);
   applyBalance(startBal, false);
   updateMiniStats();
   for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
