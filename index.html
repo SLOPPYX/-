@@ -617,15 +617,12 @@ function applyBalance(val, save) {
   balance = val;
   INIT_BAL = val;
   const fmt = val.toLocaleString('ru-RU');
+  // Прямой синхронный DOM — гарантированно отображается
   document.getElementById('balanceVal').textContent = fmt;
   document.getElementById('pBal').textContent = fmt;
-  // Пишем в кеш ТОЛЬКО когда save=true (данные от бота, не placeholder)
   if(save) try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(val)); } catch(e){}
   const p = document.getElementById('balancePill');
-  if(p) {
-    p.classList.remove('pulse');
-    requestAnimationFrame(() => p.classList.add('pulse'));
-  }
+  if(p) { p.classList.remove('pulse'); p.classList.add('pulse'); }
   setSave('ok','✅ '+fmt);
 }
 // Совместимость
@@ -985,8 +982,8 @@ async function init() {
 
   try {
     const r = await fetch(
-      API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { cache:'no-store', signal: AbortSignal.timeout(1500) }
+      API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
+      { signal: AbortSignal.timeout(1500) }
     );
     if(r.ok) {
       const d = await r.json();
@@ -1038,15 +1035,22 @@ async function pollBalance() {
   if(spinning || _fetching) return;
   _fetching = true;
   try {
-    const r = await fetch(
-      API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { cache:'no-store', signal: AbortSignal.timeout(450) }
-    );
+    // _t= сламывает любой кеш (браузер, ngrok, CDN)
+    const url = API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now();
+    const r = await fetch(url, { signal: AbortSignal.timeout(450) });
     if(!r.ok) return;
     const d = await r.json();
-    if(!d.ok || typeof d.balance!=='number') return;
+    if(!d.ok || typeof d.balance !== 'number') return;
+    if(d.balance === balance) return;  // без изменений — ничего не делаем
     const diff = d.balance - balance;
-    applyBalance(d.balance, true);
+    // Обновляем напрямую в DOM — без requestAnimationFrame
+    balance = d.balance;
+    INIT_BAL = d.balance;
+    const fmt = d.balance.toLocaleString('ru-RU');
+    document.getElementById('balanceVal').textContent = fmt;
+    document.getElementById('pBal').textContent = fmt;
+    try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(d.balance)); } catch(e){}
+    setSave('ok','✅ '+fmt);
     refreshBets();
     if(diff > 0) {
       showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
