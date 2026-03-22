@@ -787,6 +787,8 @@ async function spin() {
     } else {
       applyBalance(Math.max(0, balance - currentBet + (res.win ? currentBet*res.mult : 0)), true);
     }
+    // Дублируем в localStorage — на случай если applyBalance не успел
+    try { localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
 
     S.spins++;
     if(res.win) {
@@ -992,12 +994,12 @@ async function init() {
   // Если F5 — берём localStorage (обновляется после каждого спина)
   const _ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
   let startBal;
-  if(URL_BAL_FRESH && URL_BAL > 0) {
-    // Свежий URL — бот передал актуальный баланс
+  if(URL_BAL_FRESH && URL_BAL > 0 && URL_BAL >= _ls) {
+    // Свежий URL И больше или равен кешу — берём из URL (бот знает актуальный)
     startBal = URL_BAL;
     try { localStorage.setItem('bal_'+USER_ID, String(URL_BAL)); } catch(e){}
   } else {
-    // F5 или старый URL — берём из кеша
+    // F5, старый URL, или _ls больше URL_BAL (играл и выиграл) — берём кеш
     startBal = _ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0);
   }
   applyBalance(startBal, false);
@@ -1195,3 +1197,4 @@ init();
 </script>
 </body>
 </html>
+
