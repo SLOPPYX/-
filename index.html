@@ -496,6 +496,8 @@ const USER_ID    = String(parseInt(P.get('user_id') || tg.initDataUnsafe?.user?.
 const URL_BAL    = parseInt(P.get('balance') || '0', 10);
 const API_URL    = decodeURIComponent(P.get('api_url')    || '');
 const API_SECRET = P.get('api_secret') || '';
+// Диагностика — видно в DevTools (F12 → Console)
+console.log('🎰 Casino params:', {USER_ID, URL_BAL, API_URL: API_URL||'❌ ПУСТО', HAS_SECRET: !!API_SECRET});
 
 // ── Профиль: берём из URL, сохраняем в localStorage навсегда ──
 const PROF_KEY = 'profile_' + USER_ID;
@@ -1035,33 +1037,29 @@ async function init() {
 }
 
 async function loadBalanceFromBot() {
-  // 3 попытки — если ngrok медленный, первый запрос может не успеть
-  for(let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const r = await fetch(
-        API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-        { signal: AbortSignal.timeout(3000) }
-      );
-      if(!r.ok) {
-        console.warn('loadBalance attempt', attempt, 'status:', r.status);
-        continue;
-      }
-      const d = await r.json();
-      if(d.ok && typeof d.balance==='number') {
-        const diff = d.balance - balance;
-        applyBalance(d.balance, true);
-        refreshBets();
-        if(diff > 0) {
-          showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
-          _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
-        }
-        return;  // успех — выходим
-      }
-    } catch(e) {
-      console.warn('loadBalance attempt', attempt, 'error:', e.message);
-    }
-    if(attempt < 3) await new Promise(r => setTimeout(r, 500)); // пауза между попытками
+  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') {
+    console.warn('❌ loadBalance: нет API_URL/SECRET/USER_ID', {API_URL, USER_ID, API_SECRET});
+    return;
   }
+  console.log('📡 loadBalance uid='+USER_ID+' url='+API_URL);
+  try {
+    const r = await fetch(
+      API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
+      { signal: AbortSignal.timeout(4000) }
+    );
+    if(!r.ok) { console.warn('❌ loadBalance HTTP', r.status); return; }
+    const d = await r.json();
+    console.log('✅ loadBalance ответ:', d);
+    if(d.ok && typeof d.balance==='number') {
+      const diff = d.balance - balance;
+      applyBalance(d.balance, true);
+      refreshBets();
+      if(diff > 0) {
+        showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
+        _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
+      }
+    }
+  } catch(e) { console.warn('❌ loadBalance ошибка:', e.message); }
 }
 
 // ══════════════════════════════════════════════════════════
