@@ -1085,18 +1085,21 @@ function sleep(ms){
 // SPACE CANVAS ANIMATION — профиль игрока в космосе
 // ══════════════════════════════════════════════════════════
 function initSpaceCanvas() {
+  try {
   const cv  = document.getElementById('spaceCanvas');
   if(!cv) return;
 
   // Подстраиваем высоту под ширину экрана
-  const W = cv.offsetWidth || 390;
+  const W = Math.max(cv.offsetWidth || 0, cv.parentElement ? cv.parentElement.offsetWidth : 0, 320);
   const H = 220;
-  cv.width  = W * window.devicePixelRatio;
-  cv.height = H * window.devicePixelRatio;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width  = W * dpr;
+  cv.height = H * dpr;
   cv.style.height = H + 'px';
 
   const ctx = cv.getContext('2d');
-  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  if(!ctx) return;
+  ctx.scale(dpr, dpr);
 
   // ── Звёзды ──────────────────────────────────────────────
   const STARS = [];
@@ -1367,80 +1370,103 @@ function initSpaceCanvas() {
   // Спаун первого метеора сразу
   spawnMeteor();
   requestAnimationFrame(draw);
+  } catch(e) { console.warn('SpaceCanvas error:', e); }
 }
 
 // ══════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════
 async function init() {
-  document.getElementById('pName').textContent = (USER_NAME||'Игрок').toUpperCase();
-
-  // Запускаем Canvas-анимацию космоса в профиле
-  initSpaceCanvas();
-
-  // Генерируем звёздочки на сплеше
-  const starsEl = document.getElementById('splashStars');
-  if(starsEl) {
-    for(let i = 0; i < 60; i++) {
-      const s = document.createElement('div');
-      s.className = 'splash-star';
-      s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;` +
-        `--d:${1.5+Math.random()*3}s;--delay:${Math.random()*2}s;` +
-        `width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;` +
-        `opacity:${0.1+Math.random()*0.5}`;
-      starsEl.appendChild(s);
-    }
-  }
-
-  // Показываем кэшированный баланс мгновенно
-  const _ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
-  const startBal = _ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0);
-  applyBalance(startBal, false);
-  updateMiniStats();
-
   const bar    = document.getElementById('splashBar');
   const status = document.getElementById('splashStatus');
   const splash = document.getElementById('splash');
 
-  // Прогресс: 0→35% пока буквы анимируются (~600мс)
-  let prog = 0;
-  const tick = setInterval(() => {
-    prog = Math.min(prog + 3, 35);
-    if(bar) bar.style.width = prog + '%';
-  }, 20);
+  // Функция гарантированного закрытия сплеша — вызывается В ЛЮБОМ СЛУЧАЕ
+  function closeSplash() {
+    try { clearInterval(_t1); clearInterval(_t2); } catch(e) {}
+    if(bar) bar.style.width = '100%';
+    if(splash && splash.parentNode) {
+      splash.classList.add('hide');
+      setTimeout(() => { try { splash.remove(); } catch(e){} }, 500);
+    }
+  }
 
-  await new Promise(r => setTimeout(r, 650)); // ждём анимацию букв
-  clearInterval(tick);
+  // Аварийный таймаут — через 8 сек открываем казино в любом случае
+  const emergencyTimer = setTimeout(() => {
+    console.warn('Emergency splash close triggered');
+    closeSplash();
+    startBalancePolling();
+  }, 8000);
 
-  if(status) status.textContent = 'ПОДКЛЮЧЕНИЕ К СЕРВЕРУ...';
-  if(bar) bar.style.width = '40%';
-
-  const tick2 = setInterval(() => {
-    prog = Math.min(prog + 1.5, 85);
-    if(bar) bar.style.width = prog + '%';
-  }, 35);
-
-  // Грузим баланс из бота — с гарантированным таймаутом 5с
+  let _t1, _t2;
   try {
+    // Показываем кэшированный баланс мгновенно
+    try {
+      const _ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
+      const startBal = _ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0);
+      applyBalance(startBal, false);
+      updateMiniStats();
+    } catch(e) {}
+
+    // Генерируем звёздочки на сплеше
+    try {
+      const starsEl = document.getElementById('splashStars');
+      if(starsEl) {
+        for(let i = 0; i < 60; i++) {
+          const s = document.createElement('div');
+          s.className = 'splash-star';
+          s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;` +
+            `--d:${1.5+Math.random()*3}s;--delay:${Math.random()*2}s;` +
+            `width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;` +
+            `opacity:${0.1+Math.random()*0.5}`;
+          starsEl.appendChild(s);
+        }
+      }
+    } catch(e) {}
+
+    // Прогресс: 0→35%
+    let prog = 0;
+    _t1 = setInterval(() => {
+      prog = Math.min(prog + 3, 35);
+      if(bar) bar.style.width = prog + '%';
+    }, 20);
+
+    await new Promise(r => setTimeout(r, 650));
+    clearInterval(_t1);
+
+    if(status) status.textContent = 'ПОДКЛЮЧЕНИЕ К СЕРВЕРУ...';
+    if(bar) bar.style.width = '40%';
+
+    _t2 = setInterval(() => {
+      prog = Math.min(prog + 1.5, 85);
+      if(bar) bar.style.width = prog + '%';
+    }, 35);
+
+    // Грузим баланс — максимум 5 сек
     await Promise.race([
       loadBalanceFromBot(),
-      new Promise(r => setTimeout(r, 5000)) // максимум 5 сек — потом закрываем splash в любом случае
+      new Promise(r => setTimeout(r, 5000))
     ]);
-  } catch(e) {}
-  _lastKnownBalance = balance;
+    _lastKnownBalance = balance;
 
-  clearInterval(tick2);
-  if(bar) bar.style.width = '100%';
-  const fmt = balance.toLocaleString('ru-RU');
-  if(status) status.textContent = '✅ ' + fmt + ' ТОКЕНОВ';
+    clearInterval(_t2);
+    const fmt = balance.toLocaleString('ru-RU');
+    if(status) status.textContent = '✅ ' + fmt + ' ТОКЕНОВ';
 
-  refreshBets();
-  for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } }
+    try { refreshBets(); } catch(e) {}
+    try { for(const b of [100000,50000,25000,10000]) { if(balance>=b){ selectBet(b); break; } } } catch(e) {}
 
-  await new Promise(r => setTimeout(r, 380));
-  if(splash) { splash.classList.add('hide'); setTimeout(() => splash.remove(), 500); }
+    await new Promise(r => setTimeout(r, 380));
 
-  startBalancePolling();
+  } catch(e) {
+    console.error('Init error:', e);
+  } finally {
+    clearTimeout(emergencyTimer);
+    closeSplash();
+    // Запускаем canvas ПОСЛЕ закрытия сплеша — не блокирует загрузку
+    setTimeout(() => { try { initSpaceCanvas(); } catch(e) {} }, 600);
+    startBalancePolling();
+  }
 }
 
 async function loadBalanceFromBot() {
@@ -1452,21 +1478,20 @@ async function loadBalanceFromBot() {
   const splSt = document.getElementById('splashStatus');
   if(splSt) splSt.textContent = '⏳ Загрузка баланса...';
   try {
-    const ctrl = new AbortController();
-    const fetchTimer = setTimeout(() => ctrl.abort(), 4000);
+    const _ac = new AbortController();
+    const _at = setTimeout(() => _ac.abort(), 4000);
     let r;
-    try {
-      r = await fetch(
-        API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-        { signal: ctrl.signal }
-      );
-    } finally { clearTimeout(fetchTimer); }
-    if(!r || !r.ok) return;
+    try { r = await fetch(
+      API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
+      { signal: _ac.signal }
+    ); } finally { clearTimeout(_at); }
+    if(!r.ok) return;
     const d = await r.json();
     if(d.ok && typeof d.balance==='number') {
       const diff = d.balance - balance;
       applyBalance(d.balance, true);
       refreshBets();
+      // Обновляем CloudStorage актуальным балансом
       saveCloudBalance(d.balance);
       if(diff > 0 && !document.getElementById('splash')) {
         showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
@@ -1488,21 +1513,19 @@ function saveCloudBalance(val) {
 
 async function readCloudBalance() {
   return new Promise(resolve => {
-    // Гарантированный таймаут — CloudStorage не должна вешать загрузку
-    const timeout = setTimeout(resolve, 1500);
     try {
       tg.CloudStorage.getItem(CLOUD_KEY, (err, val) => {
-        clearTimeout(timeout);
         if(!err && val) {
           const cloudBal = parseInt(val, 10);
           if(!isNaN(cloudBal) && cloudBal > 0 && cloudBal !== balance) {
+            const diff = cloudBal - balance;
             applyBalance(cloudBal, true);
             refreshBets();
           }
         }
         resolve();
       });
-    } catch(e) { clearTimeout(timeout); resolve(); }
+    } catch(e) { resolve(); }
   });
 }
 
@@ -1556,13 +1579,10 @@ function stopBalancePolling() {
 async function longPoll() {
   while(!_lpStop) {
     try {
-      const _lpCtrl = new AbortController();
-      const _lpTimer = setTimeout(() => _lpCtrl.abort(), 6500);
-      let r;
-      try { r = await fetch(
+      const r = await fetch(
         API_URL + '/casino/push?uid=' + USER_ID + '&secret=' + API_SECRET + '&_t=' + Date.now(),
-        { signal: _lpCtrl.signal }
-      ); } finally { clearTimeout(_lpTimer); }
+        { signal: AbortSignal.timeout(6500) }
+      );
       if(r.ok) {
         const d = await r.json();
         if(d.ok && typeof d.balance === 'number') {
@@ -1588,16 +1608,13 @@ async function longPoll() {
 async function notifyBalance() {
   if(spinning) return; // не мешаем спину
   try {
-    const _nCtrl = new AbortController();
-    const _nTimer = setTimeout(() => _nCtrl.abort(), 2000);
-    let r;
-    try { r = await fetch(
+    const r = await fetch(
       API_URL + '/casino/notify?uid=' + USER_ID +
       '&secret=' + API_SECRET +
       '&client_bal=' + balance +
       '&_t=' + Date.now(),
-      { signal: _nCtrl.signal }
-    ); } finally { clearTimeout(_nTimer); }
+      { signal: AbortSignal.timeout(2000) }
+    );
     if(!r.ok) return;
     const d = await r.json();
     if(d.ok && d.changed && typeof d.balance === 'number') {
@@ -1610,13 +1627,10 @@ async function notifyBalance() {
 async function pollBalance() {
   if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
   try {
-    const _pbCtrl = new AbortController();
-    const _pbTimer = setTimeout(() => _pbCtrl.abort(), 3000);
-    let r;
-    try { r = await fetch(
+    const r = await fetch(
       API_URL + '/casino/balance?uid=' + USER_ID + '&secret=' + API_SECRET + '&_t=' + Date.now(),
-      { signal: _pbCtrl.signal }
-    ); } finally { clearTimeout(_pbTimer); }
+      { signal: AbortSignal.timeout(3000) }
+    );
     if(!r.ok) return;
     const d = await r.json();
     if(d.ok && typeof d.balance === 'number' && d.balance !== balance) {
