@@ -1037,14 +1037,7 @@ async function init() {
 }
 
 async function loadBalanceFromBot() {
-  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') {
-    // Нет API — показываем URL_BAL как актуальный (бот передал при открытии)
-    if(URL_BAL > 0 && URL_BAL !== balance) {
-      applyBalance(URL_BAL, true);
-      refreshBets();
-    }
-    return;
-  }
+  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
   const splSt = document.getElementById('splashStatus');
   if(splSt) splSt.textContent = '⏳ Загрузка баланса...';
   try {
@@ -1052,25 +1045,18 @@ async function loadBalanceFromBot() {
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
       { signal: AbortSignal.timeout(4000) }
     );
-    if(!r.ok) {
-      // API не ответил — используем URL_BAL
-      if(URL_BAL > 0) { applyBalance(URL_BAL, true); refreshBets(); }
-      return;
-    }
+    if(!r.ok) return;  // ошибка — не трогаем localStorage, оставляем что есть
     const d = await r.json();
     if(d.ok && typeof d.balance==='number') {
       const diff = d.balance - balance;
-      applyBalance(d.balance, true);
+      applyBalance(d.balance, true);  // только от бота пишем в кеш
       refreshBets();
       if(diff > 0 && !document.getElementById('splash')) {
         showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
         _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
       }
     }
-  } catch(e) {
-    // Сеть недоступна — URL_BAL как fallback
-    if(URL_BAL > 0) { applyBalance(URL_BAL, true); refreshBets(); }
-  }
+  } catch(e) {}  // ошибка сети — не трогаем localStorage
 }
 
 // ══════════════════════════════════════════════════════════
