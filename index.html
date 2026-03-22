@@ -831,14 +831,12 @@ async function spin() {
     if(S.history.length>20) S.history=S.history.slice(-20);
     saveStats();
 
-    // Обновляем UI с реальным балансом от бота
-    updateBalUI();
+    // Обновляем UI — applyBalance уже обновил DOM выше
     refreshBets();
     updateMiniStats();
     btn.textContent='🎰 КРУТИТЬ';
     // Мгновенный опрос после спина
-    _pollActive = false;
-    setTimeout(pollBalance, 150);
+    setTimeout(pollBalance, 100);
     document.getElementById('spinCount').textContent=`×${S.spins}`;
 
     if(currentBet>balance && balance>=MIN_BET){
@@ -985,7 +983,7 @@ async function init() {
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { cache:'no-store', signal: AbortSignal.timeout(2000) }
+      { cache:'no-store', signal: AbortSignal.timeout(1500) }
     );
     if(r.ok) {
       const d = await r.json();
@@ -1012,49 +1010,41 @@ async function init() {
 // Во время спина не опрашиваем — не мешаем игре.
 // ══════════════════════════════════════════════════════════
 let _pollTimer = null;
-let _pollActive = false;
 
 function startBalancePolling() {
   if(!API_URL || !API_SECRET) return;
   stopBalancePolling();
-  _pollTimer = setInterval(pollBalance, 800);   // каждые 0.8 сек
+  _pollTimer = setInterval(pollBalance, 500);   // каждые 0.5 сек
 }
 function stopBalancePolling() {
   if(_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
 }
 
 async function refreshBalanceNow() {
-  // Принудительное обновление баланса — мгновенно
   const icon = document.getElementById('refreshIcon');
   if(icon) icon.classList.add('spinning');
-  _pollActive = false;  // сбрасываем флаг принудительно
   await pollBalance();
   if(icon) setTimeout(() => icon.classList.remove('spinning'), 500);
 }
 
 async function pollBalance() {
-  if(spinning || _pollActive) return;
-  _pollActive = true;
-  const _rf = setTimeout(() => { _pollActive = false; }, 1000);
+  if(spinning) return;  // только во время спина не мешаем
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { cache:'no-store', signal: AbortSignal.timeout(800) }
+      { cache:'no-store', signal: AbortSignal.timeout(500) }
     );
     if(!r.ok) return;
     const d = await r.json();
     if(!d.ok || typeof d.balance!=='number') return;
-    // всегда применяем баланс от бота  // без изменений
     const diff = d.balance - balance;
-    applyBalance(d.balance, true);  // от бота — пишет в кеш
+    applyBalance(d.balance, true);
     refreshBets();
-    setApiStatus(true);
     if(diff > 0) {
       showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
       _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
     }
-  } catch(e) { setApiStatus(false); }
-  finally { clearTimeout(_rf); _pollActive = false; }
+  } catch(e) {}
 }
 
 function _showBanner(msg) {
