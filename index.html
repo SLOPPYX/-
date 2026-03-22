@@ -259,8 +259,6 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="logo-main">CASINO</div>
       <div class="logo-sub">by SloppyX</div>
     </div>
-    <div id="apiStatus" style="display:none;font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;background:rgba(0,0,0,0.35);margin-bottom:3px;text-align:center;transition:all .3s;cursor:default"></div>
-    <div id="apiHint" style="display:none;font-size:10px;color:#aaa;text-align:center;margin-bottom:4px;padding:0 8px">Перезапусти ngrok → переоткрой казино в боте</div>
     <div class="balance-pill" id="balancePill">
       💰 <span id="balanceVal">0</span>
     </div>
@@ -637,43 +635,7 @@ function setSave(state, text) {
   if(t) t.textContent=text;
 }
 // Статус подключения к боту
-let _apiOk = null;
-let _apiFailCount = 0;   // счётчик неудач подряд
-let _apiHideTimer = null;
-
-function setApiStatus(ok) {
-  const el = document.getElementById('apiStatus');
-  if(!el) return;
-
-  if(ok) {
-    _apiFailCount = 0;
-    if(_apiOk === true) return;  // уже ок, не мигаем
-    _apiOk = true;
-    el.textContent = '🟢 Бот подключён';
-    el.style.color = 'var(--green)';
-    el.style.display = 'block';
-    clearTimeout(_apiHideTimer);
-    _apiHideTimer = setTimeout(() => {
-      el.style.display = 'none';
-      const hint = document.getElementById('apiHint');
-      if(hint) hint.style.display = 'none';
-    }, 2000);
-  } else {
-    _apiFailCount++;
-    // Показываем ошибку только после 2 неудач подряд (избегаем ложных срабатываний)
-    if(_apiFailCount < 2) return;
-    if(_apiOk === false) return;  // уже показываем ошибку
-    _apiOk = false;
-    clearTimeout(_apiHideTimer);
-    el.style.display = 'block';
-    el.style.color = '#ff4d4d';
-    el.textContent = '🔴 Нет связи с ботом';
-    el.title = 'Возможно ngrok устарел. Перезапусти ngrok и переоткрой казино из бота.';
-    // Подсказка под плашкой
-    const hint = document.getElementById('apiHint');
-    if(hint) hint.style.display = 'block';
-  }
-}
+function setApiStatus(ok) {}  // статус скрыт
 
 // ══════════════════════════════════════════════════════════
 // СКОРОСТЬ / АВТО-СПИН
@@ -871,7 +833,7 @@ async function spin() {
     updateMiniStats();
     btn.textContent='🎰 КРУТИТЬ';
     // Мгновенный опрос после спина
-    setTimeout(pollBalance, 300);
+    setTimeout(pollBalance, 150);
     document.getElementById('spinCount').textContent=`×${S.spins}`;
 
     if(currentBet>balance && balance>=MIN_BET){
@@ -1018,7 +980,7 @@ async function init() {
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { cache:'no-store', signal: AbortSignal.timeout(3000) }
+      { cache:'no-store', signal: AbortSignal.timeout(2000) }
     );
     if(r.ok) {
       const d = await r.json();
@@ -1050,7 +1012,7 @@ let _pollActive = false;
 function startBalancePolling() {
   if(!API_URL || !API_SECRET) return;
   stopBalancePolling();
-  _pollTimer = setInterval(pollBalance, 1500);  // каждые 1.5 сек
+  _pollTimer = setInterval(pollBalance, 800);   // каждые 0.8 сек
 }
 function stopBalancePolling() {
   if(_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
@@ -1063,7 +1025,7 @@ async function pollBalance() {
   try {
     const r = await fetch(
       API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET,
-      { cache:'no-store', signal: AbortSignal.timeout(1500) }
+      { cache:'no-store', signal: AbortSignal.timeout(800) }
     );
     if(!r.ok) return;
     const d = await r.json();
