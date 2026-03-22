@@ -1022,12 +1022,10 @@ function renderProfile() {
   if(el('spoWins'))   el('spoWins').textContent  = USER_WINS + ' побед 1vs1';
   if(el('spoBal'))    el('spoBal').textContent   = balance.toLocaleString('ru-RU');
   if(el('spoAvatar')) el('spoAvatar').textContent= avatar;
-  const total=S.spins, wins=S.wins;
-  const wPct = total>0 ? Math.round(wins/total*100) : 0;
-  if(el('spoWinRate')) el('spoWinRate').textContent = total>0 ? `🎰 ${total} спинов  ·  🏆 ${wPct}% побед` : '🚀 Начни играть!';
-
   const total=S.spins, wins=S.wins, losses=S.losses;
-  const wPct=total>0?Math.round(wins/total*100):0;
+  const wPctVal = total>0 ? Math.round(wins/total*100) : 0;
+  if(el('spoWinRate')) el('spoWinRate').textContent = total>0 ? `🎰 ${total} спинов  ·  🏆 ${wPctVal}% побед` : '🚀 Начни играть!';
+
   const lPct=total>0?Math.round(losses/total*100):0;
   const C=251.2;
   document.getElementById('dWin').setAttribute('stroke-dasharray',`${total>0?(wins/total)*C:0} ${C}`);
@@ -1378,6 +1376,28 @@ function initSpaceCanvas() {
 // ══════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════
+function _showBanner(msg) {
+  try {
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;top:68px;left:50%;transform:translateX(-50%) translateY(-8px);'
+      + 'background:linear-gradient(135deg,rgba(255,215,0,.22),rgba(255,140,0,.14));'
+      + 'border:1.5px solid var(--gold);border-radius:14px;padding:10px 20px;'
+      + 'font-family:var(--fd);font-size:13px;font-weight:700;color:var(--gold);'
+      + 'z-index:9999;box-shadow:0 0 20px rgba(255,215,0,.3);'
+      + 'opacity:0;transition:all .3s ease;white-space:nowrap;pointer-events:none;';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => {
+      el.style.opacity = '1';
+      el.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    setTimeout(() => {
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 300);
+    }, 3500);
+  } catch(e) {}
+}
+
 async function init() {
   const bar    = document.getElementById('splashBar');
   const status = document.getElementById('splashStatus');
