@@ -294,21 +294,18 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .splash-status{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:2px;color:var(--cyan);min-height:14px;text-align:center;animation:statusPulse 1s ease infinite alternate}
 @keyframes statusPulse{from{opacity:.4}to{opacity:1}}
 
-/* ══ ROCKET ANIMATION (Profile) ══ */
-.rocket-scene{position:relative;width:100%;height:140px;overflow:hidden;border-radius:16px;background:linear-gradient(180deg,#01001a 0%,#04012e 50%,#080140 100%);margin-bottom:16px;border:1px solid rgba(191,0,255,0.2)}
-.rocket-stars-bg{position:absolute;inset:0;pointer-events:none}
-.rstar{position:absolute;border-radius:50%;background:white;animation:rstarTwinkle var(--d,2s) ease-in-out infinite var(--dl,0s)}
-@keyframes rstarTwinkle{0%,100%{opacity:.08;transform:scale(1)}50%{opacity:.9;transform:scale(1.6)}}
-.rocket-obj{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);animation:rocketFly 3s ease-in-out infinite;font-size:44px;filter:drop-shadow(0 0 14px rgba(0,229,255,.8)) drop-shadow(0 4px 20px rgba(191,0,255,.5));z-index:3}
-@keyframes rocketFly{0%{bottom:10px;transform:translateX(-50%) rotate(-5deg) scale(0.95)}25%{bottom:38px;transform:translateX(-42%) rotate(3deg) scale(1.05)}50%{bottom:52px;transform:translateX(-50%) rotate(-2deg) scale(1.08)}75%{bottom:38px;transform:translateX(-58%) rotate(4deg) scale(1.04)}100%{bottom:10px;transform:translateX(-50%) rotate(-5deg) scale(0.95)}}
-.rocket-trail{position:absolute;bottom:0;left:50%;transform:translateX(-50%);z-index:2}
-.trail-particle{position:absolute;border-radius:50%;animation:trailFade var(--d,.8s) ease-out infinite var(--dl,0s)}
-@keyframes trailFade{0%{opacity:.9;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(40px) scale(.1)}}
-.orbit-star{position:absolute;font-size:16px;animation:orbitStar var(--od,4s) linear infinite var(--odl,0s)}
-@keyframes orbitStar{0%{transform:rotate(0deg) translateX(var(--r,55px)) rotate(0deg)}100%{transform:rotate(360deg) translateX(var(--r,55px)) rotate(-360deg)}}
-.shooting-star{position:absolute;width:60px;height:1.5px;background:linear-gradient(90deg,transparent,white,transparent);border-radius:1px;animation:shoot var(--sd,3s) linear infinite var(--sdl,0s);opacity:0}
-@keyframes shoot{0%{opacity:0;transform:translateX(0) translateY(0) rotate(-25deg)}10%{opacity:1}50%{opacity:.6}100%{opacity:0;transform:translateX(180px) translateY(60px) rotate(-25deg)}}
-.rocket-label{position:absolute;bottom:8px;right:12px;font-family:var(--fd);font-size:8px;font-weight:700;letter-spacing:2px;color:rgba(0,229,255,.4);z-index:3}
+/* ══ SPACE PROFILE CANVAS ══ */
+.space-canvas-wrap{position:relative;width:100%;border-radius:20px;overflow:hidden;margin-bottom:16px;box-shadow:0 0 40px rgba(0,0,0,.8),0 0 80px rgba(191,0,255,.15),inset 0 1px 0 rgba(255,255,255,.06)}
+#spaceCanvas{display:block;width:100%;border-radius:20px}
+.space-profile-overlay{position:absolute;inset:0;display:flex;align-items:flex-end;padding:16px 18px;background:linear-gradient(0deg,rgba(2,0,18,.85) 0%,rgba(2,0,18,.3) 50%,transparent 100%)}
+.spo-inner{display:flex;align-items:center;gap:14px;width:100%}
+.spo-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,rgba(191,0,255,.35),rgba(0,229,255,.35));border:2px solid rgba(0,229,255,.6);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;box-shadow:0 0 18px rgba(0,229,255,.4),inset 0 0 10px rgba(191,0,255,.2)}
+.spo-info{flex:1;min-width:0}
+.spo-name{font-family:var(--fd);font-size:13px;font-weight:900;letter-spacing:2px;color:#fff;text-shadow:0 0 10px rgba(0,229,255,.8);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spo-id{font-family:var(--fd);font-size:9px;color:rgba(0,229,255,.6);letter-spacing:1.5px;margin-bottom:4px}
+.spo-bal{font-family:var(--fd);font-size:18px;font-weight:900;color:var(--gold);text-shadow:0 0 12px rgba(255,215,0,.5);line-height:1}
+.spo-bal-lbl{font-family:var(--fb);font-size:10px;color:rgba(255,215,0,.5);letter-spacing:1px;margin-left:3px}
+.spo-wins{font-family:var(--fd);font-size:9px;color:rgba(0,255,136,.7);letter-spacing:1px;margin-top:3px}
 </style>
 </head>
 <body>
@@ -440,37 +437,29 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   <!-- ══ PROFILE ══ -->
   <div class="page" id="page-profile">
 
-    <!-- Rocket Animation Scene -->
-    <div class="rocket-scene" id="rocketScene">
-      <div class="rocket-stars-bg" id="rocketStarsBg"></div>
-      <!-- Орбитальные звёздочки вокруг ракеты -->
-      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2">
-        <span class="orbit-star" style="--od:5s;--odl:0s;--r:62px;top:-8px;left:-8px">⭐</span>
-        <span class="orbit-star" style="--od:7s;--odl:-2s;--r:75px;top:-8px;left:-8px">✨</span>
-        <span class="orbit-star" style="--od:4s;--odl:-1s;--r:50px;top:-8px;left:-8px">💫</span>
-        <span class="orbit-star" style="--od:9s;--odl:-3s;--r:88px;top:-8px;left:-8px">⭐</span>
+    <!-- Space Canvas + Profile Overlay -->
+    <div class="space-canvas-wrap">
+      <canvas id="spaceCanvas" height="220"></canvas>
+      <div class="space-profile-overlay">
+        <div class="spo-inner">
+          <div class="spo-avatar" id="spoAvatar">🎮</div>
+          <div class="spo-info">
+            <div class="spo-name" id="spoName">ИГРОК</div>
+            <div class="spo-id">ID: <span id="spoId" style="color:rgba(0,229,255,.9)">—</span> &nbsp;·&nbsp; <span id="spoWins">0</span> побед 1vs1</div>
+            <div><span class="spo-bal" id="spoBal">0</span><span class="spo-bal-lbl">токенов</span></div>
+            <div class="spo-wins" id="spoWinRate">Загрузка...</div>
+          </div>
+        </div>
       </div>
-      <!-- Хвост ракеты -->
-      <div class="rocket-trail" id="rocketTrail"></div>
-      <!-- Стреляющие звёзды -->
-      <div class="shooting-star" style="--sd:4s;--sdl:0s;top:20%;left:5%"></div>
-      <div class="shooting-star" style="--sd:6s;--sdl:-2s;top:50%;left:10%"></div>
-      <div class="shooting-star" style="--sd:5s;--sdl:-3.5s;top:30%;left:0%"></div>
-      <!-- Ракета -->
-      <div class="rocket-obj">🚀</div>
-      <div class="rocket-label">SLOPPYX CASINO</div>
     </div>
 
-    <div class="profile-top">
-      <div class="p-avatar" id="pAvatar">🎲</div>
-      <div class="p-name" id="pName">ИГРОК</div>
-      <div style="font-family:var(--fd);font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:6px">
-        ID: <span id="pCustomId" style="color:var(--cyan)">—</span>
-        &nbsp;·&nbsp;
-        🏆 <span id="pWins1v1">0</span> побед 1vs1
-      </div>
-      <div class="p-bal" id="pBal">0</div>
-      <div class="p-bal-lbl">токенов</div>
+    <!-- Скрытые элементы для совместимости со старым кодом -->
+    <div style="display:none">
+      <div id="pAvatar"></div>
+      <div id="pName"></div>
+      <div id="pCustomId"></div>
+      <div id="pWins1v1"></div>
+      <div id="pBal"></div>
     </div>
 
     <div class="section-head">Статистика</div>
@@ -1017,11 +1006,23 @@ function saveAndClose() { showExitDialog(); }
 // ПРОФИЛЬ
 // ══════════════════════════════════════════════════════════
 function renderProfile() {
+  // Обновляем скрытые элементы (совместимость)
   document.getElementById('pName').textContent    = USER_NAME.toUpperCase();
   document.getElementById('pBal').textContent     = balance.toLocaleString('ru-RU');
   document.getElementById('pCustomId').textContent = CUSTOM_ID || USER_ID;
   document.getElementById('pWins1v1').textContent  = USER_WINS;
   document.getElementById('pAvatar').textContent   = USER_WINS>50?'👑':USER_WINS>20?'⭐':USER_WINS>10?'🎯':'🎮';
+  // Обновляем canvas overlay
+  const avatar = USER_WINS>50?'👑':USER_WINS>20?'⭐':USER_WINS>10?'🎯':'🎮';
+  const el = (id) => document.getElementById(id);
+  if(el('spoName'))   el('spoName').textContent  = (USER_NAME||'ИГРОК').toUpperCase();
+  if(el('spoId'))     el('spoId').textContent    = CUSTOM_ID || USER_ID;
+  if(el('spoWins'))   el('spoWins').textContent  = USER_WINS + ' побед 1vs1';
+  if(el('spoBal'))    el('spoBal').textContent   = balance.toLocaleString('ru-RU');
+  if(el('spoAvatar')) el('spoAvatar').textContent= avatar;
+  const total=S.spins, wins=S.wins;
+  const wPct = total>0 ? Math.round(wins/total*100) : 0;
+  if(el('spoWinRate')) el('spoWinRate').textContent = total>0 ? `🎰 ${total} спинов  ·  🏆 ${wPct}% побед` : '🚀 Начни играть!';
 
   const total=S.spins, wins=S.wins, losses=S.losses;
   const wPct=total>0?Math.round(wins/total*100):0;
@@ -1079,42 +1080,303 @@ function sleep(ms){
   return new Promise(r=>setTimeout(r,ms));
 }
 
+
+// ══════════════════════════════════════════════════════════
+// SPACE CANVAS ANIMATION — профиль игрока в космосе
+// ══════════════════════════════════════════════════════════
+function initSpaceCanvas() {
+  const cv  = document.getElementById('spaceCanvas');
+  if(!cv) return;
+
+  // Подстраиваем высоту под ширину экрана
+  const W = cv.offsetWidth || 390;
+  const H = 220;
+  cv.width  = W * window.devicePixelRatio;
+  cv.height = H * window.devicePixelRatio;
+  cv.style.height = H + 'px';
+
+  const ctx = cv.getContext('2d');
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  // ── Звёзды ──────────────────────────────────────────────
+  const STARS = [];
+  for(let i = 0; i < 180; i++) {
+    STARS.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 0.3 + Math.random() * 1.4,
+      speed: 0.02 + Math.random() * 0.08,
+      phase: Math.random() * Math.PI * 2,
+      color: ['#ffffff','#aaddff','#ffeecc','#ccccff','#aaffee'][Math.floor(Math.random()*5)],
+    });
+  }
+
+  // ── Туманности ─────────────────────────────────────────
+  const NEBULAE = [
+    { x: W*0.15, y: H*0.3,  rx: 90, ry: 55, color: 'rgba(100,0,200,0.09)'  },
+    { x: W*0.82, y: H*0.6,  rx: 70, ry: 45, color: 'rgba(0,150,200,0.08)'  },
+    { x: W*0.5,  y: H*0.15, rx: 110,ry: 40, color: 'rgba(180,0,120,0.07)'  },
+    { x: W*0.35, y: H*0.75, rx: 80, ry: 35, color: 'rgba(0,80,180,0.07)'   },
+  ];
+
+  // ── Падающие звёзды ─────────────────────────────────────
+  const METEORS = [];
+  function spawnMeteor() {
+    METEORS.push({
+      x: Math.random() * W * 1.3 - W * 0.15,
+      y: -8,
+      vx: 1.8 + Math.random() * 2.2,
+      vy: 0.9 + Math.random() * 1.4,
+      len: 55 + Math.random() * 70,
+      life: 0,
+      maxLife: 60 + Math.random() * 60,
+      alpha: 0,
+    });
+  }
+  setInterval(spawnMeteor, 2200 + Math.random() * 1500);
+
+  // ── Планеты ─────────────────────────────────────────────
+  const PLANETS = [
+    { x: W*0.12, y: H*0.22, r: 14, grad:['#1a003a','#4a0080','#7700cc'], ringAngle: -0.3, hasRing: true  },
+    { x: W*0.88, y: H*0.70, r: 10, grad:['#002233','#004466','#0077aa'], ringAngle: 0.25, hasRing: false },
+    { x: W*0.75, y: H*0.18, r:  7, grad:['#221100','#663300','#aa5500'], ringAngle: 0,    hasRing: false },
+  ];
+
+  // ── Ракета ──────────────────────────────────────────────
+  let rTime = 0;
+
+  function drawRocket(t) {
+    const cx = W/2;
+    const baseY = H - 52;
+    const y  = baseY - Math.sin(t * 0.012) * 22 - Math.sin(t * 0.007) * 10;
+    const tilt = Math.sin(t * 0.009) * 0.12 + Math.sin(t * 0.015) * 0.06;
+
+    ctx.save();
+    ctx.translate(cx, y);
+    ctx.rotate(tilt);
+
+    // Хвост — реалистичное пламя
+    const flameCount = 18;
+    for(let i = 0; i < flameCount; i++) {
+      const fi = i / flameCount;
+      const fPhase = t * 0.18 + fi * 2.1;
+      const fLen   = 28 + Math.sin(fPhase) * 12 + Math.random() * 6;
+      const fX     = (Math.random() - 0.5) * 14;
+      const fAlpha = 0.55 - fi * 0.45 + Math.sin(fPhase) * 0.15;
+      const fColors = [
+        `rgba(255,255,200,${fAlpha})`,
+        `rgba(255,200,50,${fAlpha * 0.85})`,
+        `rgba(255,100,0,${fAlpha * 0.7})`,
+        `rgba(200,0,50,${fAlpha * 0.5})`,
+        `rgba(120,0,80,${fAlpha * 0.25})`,
+      ];
+      const fGrad = ctx.createLinearGradient(fX, 14, fX, 14 + fLen);
+      fColors.forEach((c, ci) => fGrad.addColorStop(ci / (fColors.length - 1), c));
+      ctx.beginPath();
+      ctx.moveTo(fX - 3, 14);
+      ctx.quadraticCurveTo(fX + (Math.random()-0.5)*8, 14 + fLen*0.5, fX + (Math.random()-0.5)*5, 14 + fLen);
+      ctx.lineWidth = 4 + Math.random() * 3;
+      ctx.strokeStyle = fGrad;
+      ctx.stroke();
+    }
+
+    // Тело ракеты — градиент металлик
+    const bodyGrad = ctx.createLinearGradient(-12, -32, 12, 12);
+    bodyGrad.addColorStop(0,   '#e8eeff');
+    bodyGrad.addColorStop(0.2, '#b0c4ee');
+    bodyGrad.addColorStop(0.5, '#7090cc');
+    bodyGrad.addColorStop(0.8, '#4060aa');
+    bodyGrad.addColorStop(1,   '#203080');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.moveTo(0, -32);
+    ctx.bezierCurveTo(10, -20, 11, 0, 10, 12);
+    ctx.lineTo(-10, 12);
+    ctx.bezierCurveTo(-11, 0, -10, -20, 0, -32);
+    ctx.fill();
+
+    // Блик
+    const shineGrad = ctx.createLinearGradient(-4, -28, 4, 6);
+    shineGrad.addColorStop(0, 'rgba(255,255,255,0.55)');
+    shineGrad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = shineGrad;
+    ctx.beginPath();
+    ctx.moveTo(-1, -28);
+    ctx.bezierCurveTo(5, -18, 5, 0, 4, 10);
+    ctx.lineTo(0, 10);
+    ctx.bezierCurveTo(0, 0, -1, -18, -1, -28);
+    ctx.fill();
+
+    // Иллюминатор
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(0, -10, 5.5, 0, Math.PI*2);
+    const portGrad = ctx.createRadialGradient(-1.5,-11.5,0.5, 0,-10,5.5);
+    portGrad.addColorStop(0, 'rgba(180,240,255,0.95)');
+    portGrad.addColorStop(0.5,'rgba(80,160,220,0.8)');
+    portGrad.addColorStop(1, 'rgba(0,60,120,0.6)');
+    ctx.fillStyle = portGrad;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+
+    // Крылья
+    [[1,-1],[-1,1]].forEach(([sx, ox]) => {
+      ctx.save();
+      ctx.scale(sx, 1);
+      const wingGrad = ctx.createLinearGradient(10, 0, 20, 14);
+      wingGrad.addColorStop(0, '#7090cc');
+      wingGrad.addColorStop(1, '#203080');
+      ctx.fillStyle = wingGrad;
+      ctx.beginPath();
+      ctx.moveTo(10, 2);
+      ctx.lineTo(20, 14);
+      ctx.lineTo(10, 12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 0.7;
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // Свечение ракеты
+    const glowGrad = ctx.createRadialGradient(0, 0, 5, 0, 0, 35);
+    glowGrad.addColorStop(0, 'rgba(100,160,255,0.18)');
+    glowGrad.addColorStop(1, 'rgba(100,160,255,0)');
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, -10, 35, 35, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawPlanets() {
+    PLANETS.forEach(pl => {
+      // Свечение
+      const gGrad = ctx.createRadialGradient(pl.x, pl.y, pl.r*0.3, pl.x, pl.y, pl.r*2.8);
+      gGrad.addColorStop(0, pl.grad[1].replace(')', ',0.18)').replace('rgb','rgba'));
+      gGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = gGrad;
+      ctx.beginPath();
+      ctx.arc(pl.x, pl.y, pl.r * 2.8, 0, Math.PI*2);
+      ctx.fill();
+
+      // Тело планеты
+      const pGrad = ctx.createRadialGradient(
+        pl.x - pl.r*0.3, pl.y - pl.r*0.3, pl.r*0.1,
+        pl.x, pl.y, pl.r
+      );
+      pl.grad.forEach((c,i) => pGrad.addColorStop(i/(pl.grad.length-1), c));
+      ctx.fillStyle = pGrad;
+      ctx.beginPath();
+      ctx.arc(pl.x, pl.y, pl.r, 0, Math.PI*2);
+      ctx.fill();
+
+      // Кольца у первой планеты
+      if(pl.hasRing) {
+        ctx.save();
+        ctx.translate(pl.x, pl.y);
+        ctx.rotate(pl.ringAngle);
+        ctx.scale(1, 0.28);
+        ctx.beginPath();
+        ctx.arc(0, 0, pl.r * 2.1, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(160,100,220,0.35)';
+        ctx.lineWidth = pl.r * 0.55;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 0, pl.r * 1.65, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(120,60,180,0.2)';
+        ctx.lineWidth = pl.r * 0.3;
+        ctx.stroke();
+        ctx.restore();
+      }
+    });
+  }
+
+  // ── Основной цикл ────────────────────────────────────────
+  function draw() {
+    rTime++;
+
+    // Фон — глубокий космос
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0,   '#000008');
+    bgGrad.addColorStop(0.4, '#030018');
+    bgGrad.addColorStop(0.7, '#050028');
+    bgGrad.addColorStop(1,   '#020010');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Туманности
+    NEBULAE.forEach(n => {
+      const ng = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, Math.max(n.rx, n.ry));
+      ng.addColorStop(0, n.color);
+      ng.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.save();
+      ctx.scale(n.rx / Math.max(n.rx, n.ry), n.ry / Math.max(n.rx, n.ry));
+      const sx = n.x * Math.max(n.rx, n.ry) / n.rx;
+      const sy = n.y * Math.max(n.rx, n.ry) / n.ry;
+      ctx.fillStyle = ng;
+      ctx.beginPath();
+      ctx.arc(sx, sy, Math.max(n.rx, n.ry), 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // Звёзды с мерцанием
+    STARS.forEach(s => {
+      const twinkle = 0.35 + 0.65 * Math.abs(Math.sin(rTime * s.speed + s.phase));
+      ctx.globalAlpha = twinkle;
+      ctx.fillStyle = s.color;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r * (0.8 + twinkle * 0.4), 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    // Планеты
+    drawPlanets();
+
+    // Метеориты
+    for(let i = METEORS.length - 1; i >= 0; i--) {
+      const m = METEORS[i];
+      m.x += m.vx; m.y += m.vy; m.life++;
+      m.alpha = m.life < 10 ? m.life/10 : m.life > m.maxLife - 10 ? (m.maxLife - m.life)/10 : 1;
+      const mg = ctx.createLinearGradient(m.x, m.y, m.x - m.vx*m.len/2, m.y - m.vy*m.len/2);
+      mg.addColorStop(0, `rgba(255,255,255,${m.alpha * 0.95})`);
+      mg.addColorStop(0.4, `rgba(180,220,255,${m.alpha * 0.5})`);
+      mg.addColorStop(1, 'rgba(100,150,255,0)');
+      ctx.strokeStyle = mg;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(m.x, m.y);
+      ctx.lineTo(m.x - m.vx * m.len/2, m.y - m.vy * m.len/2);
+      ctx.stroke();
+      if(m.life >= m.maxLife || m.x > W + 50 || m.y > H + 20) METEORS.splice(i, 1);
+    }
+
+    // Ракета
+    drawRocket(rTime);
+
+    requestAnimationFrame(draw);
+  }
+
+  // Спаун первого метеора сразу
+  spawnMeteor();
+  requestAnimationFrame(draw);
+}
+
 // ══════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════
 async function init() {
   document.getElementById('pName').textContent = (USER_NAME||'Игрок').toUpperCase();
 
-  // Генерируем звёздочку-фон ракеты в профиле
-  const rStarsBg = document.getElementById('rocketStarsBg');
-  if(rStarsBg) {
-    for(let i = 0; i < 55; i++) {
-      const s = document.createElement('div');
-      s.className = 'rstar';
-      const sz = 1 + Math.random() * 2.5;
-      s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;`
-        + `width:${sz}px;height:${sz}px;`
-        + `--d:${1.2+Math.random()*3.5}s;--dl:${Math.random()*3}s`;
-      rStarsBg.appendChild(s);
-    }
-    // Хвост ракеты — огненные частицы
-    const trail = document.getElementById('rocketTrail');
-    if(trail) {
-      const colors = ['#ff6600','#ff9900','#ffcc00','#ff3300','#ff0066'];
-      for(let i = 0; i < 12; i++) {
-        const p = document.createElement('div');
-        p.className = 'trail-particle';
-        const color = colors[Math.floor(Math.random()*colors.length)];
-        const sz = 3 + Math.random() * 6;
-        p.style.cssText = `width:${sz}px;height:${sz}px;`
-          + `background:${color};`
-          + `left:${-6 + Math.random()*12}px;`
-          + `bottom:${Math.random()*8}px;`
-          + `--d:${0.4+Math.random()*0.6}s;--dl:${Math.random()*0.8}s`;
-        trail.appendChild(p);
-      }
-    }
-  }
+  // Запускаем Canvas-анимацию космоса в профиле
+  initSpaceCanvas();
 
   // Генерируем звёздочки на сплеше
   const starsEl = document.getElementById('splashStars');
@@ -1234,22 +1496,28 @@ async function readCloudBalance() {
 }
 
 // ══════════════════════════════════════════════════════════
-// ФОНОВЫЙ ОПРОС БАЛАНСА — мгновенное обновление
-// Long-poll: бот пушит изменение → сразу отображается
-// Резервный poll каждые 3 сек на случай если long-poll упал
+// ТРОЙНАЯ СИСТЕМА СИНХРОНИЗАЦИИ БАЛАНСА
+// 1. Long-poll /casino/push  — бот пушит сразу при addtokens
+// 2. /casino/notify каждые 2с — резерв если push не дошёл
+// 3. /casino/balance при открытии/возврате на вкладку
 // ══════════════════════════════════════════════════════════
 
-let _pollTimer = null;
-let _lpStop = false;
-let _lastKnownBalance = 0; // синхронизируем с сервером
+let _pollTimer   = null;
+let _notifyTimer = null;
+let _lpStop      = false;
+let _lastKnownBalance = 0;
 
-// Применить баланс с сервера — всегда мгновенно
+// Применить новый баланс — всегда мгновенно, с анимацией
 function applyServerBalance(newBal) {
-  if(newBal === balance && newBal === _lastKnownBalance) return;
   const diff = newBal - balance;
+  if(diff === 0 && newBal === _lastKnownBalance) return;
   _lastKnownBalance = newBal;
   applyBalance(newBal, true);
+  saveCloudBalance(newBal);
   refreshBets();
+  // Обновляем overlay профиля если открыт
+  const spoEl = document.getElementById('spoBal');
+  if(spoEl) spoEl.textContent = newBal.toLocaleString('ru-RU');
   if(diff > 0) {
     const fmt = diff.toLocaleString('ru-RU');
     showToast('💰 +' + fmt + ' токенов!', 'gold');
@@ -1258,20 +1526,22 @@ function applyServerBalance(newBal) {
 }
 
 function startBalancePolling() {
-  if(!API_URL || !API_SECRET) return;
+  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
   stopBalancePolling();
   _lpStop = false;
+  // Слой 1: long-poll (мгновенный push от бота)
   longPoll();
-  // Резервный poll каждые 3 секунды
-  _pollTimer = setInterval(pollBalance, 3000);
+  // Слой 2: notify каждые 2 секунды (резерв)
+  _notifyTimer = setInterval(notifyBalance, 2000);
 }
 
 function stopBalancePolling() {
   _lpStop = true;
-  if(_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+  if(_pollTimer)   { clearInterval(_pollTimer);   _pollTimer   = null; }
+  if(_notifyTimer) { clearInterval(_notifyTimer); _notifyTimer = null; }
 }
 
-// Long-poll: ждём пока бот не пришлёт изменение — МГНОВЕННОЕ переподключение
+// СЛОЙ 1: long-poll — ждём push от бота
 async function longPoll() {
   while(!_lpStop) {
     try {
@@ -1282,28 +1552,50 @@ async function longPoll() {
       if(r.ok) {
         const d = await r.json();
         if(d.ok && typeof d.balance === 'number') {
-          // Применяем НЕМЕДЛЕННО если баланс изменился (сравниваем с _lastKnownBalance)
-          if(d.changed === true || d.balance !== _lastKnownBalance) {
+          // changed=true значит бот пришёл с обновлением — применяем немедленно
+          if(d.changed === true) {
+            applyServerBalance(d.balance);
+          } else if(d.balance !== _lastKnownBalance && _lastKnownBalance > 0) {
+            // Баланс отличается от последнего известного — обновляем
+            applyServerBalance(d.balance);
+          } else {
             _lastKnownBalance = d.balance;
-            if(d.balance !== balance) {
-              applyServerBalance(d.balance);
-            }
           }
         }
       }
-    } catch(e) { /* timeout — нормально, мгновенно переподключаемся */ }
-    // Без задержки — сразу следующий запрос
+    } catch(e) { /* timeout или сетевая ошибка — сразу переподключаемся */ }
     if(_lpStop) break;
+    // Пауза 100мс перед следующим запросом чтобы не DoS-ить сервер
+    await new Promise(r => setTimeout(r, 100));
   }
 }
 
-// Резервный polling — запрашиваем сами
+// СЛОЙ 2: /casino/notify — резервный опрос каждые 2 сек
+async function notifyBalance() {
+  if(spinning) return; // не мешаем спину
+  try {
+    const r = await fetch(
+      API_URL + '/casino/notify?uid=' + USER_ID +
+      '&secret=' + API_SECRET +
+      '&client_bal=' + balance +
+      '&_t=' + Date.now(),
+      { signal: AbortSignal.timeout(2000) }
+    );
+    if(!r.ok) return;
+    const d = await r.json();
+    if(d.ok && d.changed && typeof d.balance === 'number') {
+      applyServerBalance(d.balance);
+    }
+  } catch(e) {}
+}
+
+// СЛОЙ 3: прямой запрос баланса
 async function pollBalance() {
   if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
   try {
     const r = await fetch(
       API_URL + '/casino/balance?uid=' + USER_ID + '&secret=' + API_SECRET + '&_t=' + Date.now(),
-      { signal: AbortSignal.timeout(2500) }
+      { signal: AbortSignal.timeout(3000) }
     );
     if(!r.ok) return;
     const d = await r.json();
@@ -1320,7 +1612,7 @@ async function refreshBalanceNow() {
   if(icon) setTimeout(() => icon.classList.remove('spinning'), 500);
 }
 
-// Совместимость с баннером из старых версий
+// Совместимость
 function showTokenAddedBanner() {}
 function applyPendingBalance() {}
 
