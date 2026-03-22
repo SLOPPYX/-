@@ -1001,8 +1001,13 @@ async function loadBalanceFromBot() {
     if(!r.ok) return;
     const d = await r.json();
     if(d.ok && typeof d.balance==='number') {
-      applyBalance(d.balance, true);
+      const diff = d.balance - balance;
+      applyBalance(d.balance, true);  // применяем всегда — без проверки ===
       refreshBets();
+      if(diff > 0) {
+        showToast('💰 +'+diff.toLocaleString('ru-RU')+' токенов!','gold');
+        _showBanner('🎁 +'+diff.toLocaleString('ru-RU')+' токенов!');
+      }
     }
   } catch(e) {}
 }
@@ -1078,7 +1083,7 @@ async function pollBalance() {
 async function refreshBalanceNow() {
   const icon = document.getElementById('refreshIcon');
   if(icon) icon.classList.add('spinning');
-  await pollBalance();
+  await loadBalanceFromBot();  // всегда берём из бота, без проверки на равенство
   if(icon) setTimeout(() => icon.classList.remove('spinning'), 500);
 }
 
