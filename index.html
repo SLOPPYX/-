@@ -564,12 +564,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 // TELEGRAM INIT
 // ══════════════════════════════════════════════════════════
 const tg = window.Telegram.WebApp;
-tg.expand();
+try { tg.expand(); } catch(e){}
 try { tg.setHeaderColor('#050510'); tg.setBackgroundColor('#050510'); } catch(e){}
-tg.BackButton.show();
-tg.BackButton.onClick(showExitDialog);
-// Крестик закрытия — показываем наш диалог
-try { tg.enableClosingConfirmation(); } catch(e){}
+// BackButton и остальное — после загрузки, внутри init()
 
 // ══════════════════════════════════════════════════════════
 // ПАРАМЕТРЫ из URL
@@ -1377,6 +1374,11 @@ function initSpaceCanvas() {
 // INIT
 // ══════════════════════════════════════════════════════════
 async function init() {
+  // Инициализируем Telegram WebApp здесь — все функции уже объявлены
+  try { tg.BackButton.show(); } catch(e){}
+  try { tg.BackButton.onClick(showExitDialog); } catch(e){}
+  try { tg.enableClosingConfirmation(); } catch(e){}
+
   const bar    = document.getElementById('splashBar');
   const status = document.getElementById('splashStatus');
   const splash = document.getElementById('splash');
