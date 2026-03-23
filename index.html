@@ -648,6 +648,9 @@ if(_nameFromUrl || _cidFromUrl || _winsFromUrl >= 0) {
 // ══════════════════════════════════════════════════════════
 // СОСТОЯНИЕ
 // ══════════════════════════════════════════════════════════
+// Баланс: берём из URL (передан ботом при открытии)
+// Это самый актуальный баланс на момент открытия кнопки
+// Если баланс менялся пока казино было открыто — longPoll/notify его обновят
 let balance   = URL_BAL;
 let INIT_BAL  = URL_BAL;
 let currentBet = 10000;
@@ -1535,10 +1538,11 @@ async function init() {
   }, 6000);
 
   try {
-    // Показываем кэш сразу
+    // Показываем URL_BAL мгновенно — это баланс из последнего сообщения бота
+    // URL_BAL актуальнее localStorage (бот обновляет его при каждом открытии)
     try {
-      const _ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10);
-      applyBalance(_ls > 0 ? _ls : (URL_BAL > 0 ? URL_BAL : 0), false);
+      const initBal = URL_BAL > 0 ? URL_BAL : (parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10));
+      applyBalance(initBal, false);
       updateMiniStats();
     } catch(e){}
 
@@ -1558,15 +1562,16 @@ async function init() {
     await new Promise(r=>setTimeout(r,700));
     clearInterval(t1);
 
-    if(status) status.textContent='ЗАГРУЗКА...';
+    if(status) status.textContent='СИНХРОНИЗАЦИЯ БАЛАНСА...';
     if(bar) bar.style.width='40%';
 
     const t2 = setInterval(()=>{ prog=Math.min(prog+1,88); if(bar) bar.style.width=prog+'%'; },40);
 
-    // Загружаем баланс — максимум 3 сек, потом идём дальше
+    // Загружаем актуальный баланс из бота — приоритет API, резерв CloudStorage
+    // Максимум 4 сек — потом открываем с тем что есть
     await Promise.race([
       safeLoadBalance(),
-      new Promise(r=>setTimeout(r,3000))
+      new Promise(r=>setTimeout(r,4000))
     ]);
 
     clearInterval(t2);
@@ -1596,49 +1601,46 @@ async function init() {
 
 // Безопасная загрузка баланса — никогда не зависает
 async function safeLoadBalance() {
-  // Запускаем CloudStorage и API-запрос ПАРАЛЛЕЛЬНО — кто быстрее, тот и обновит баланс
-  // API всегда даёт самый актуальный баланс (включая только что добавленные токены)
+  // ── Шаг 1: API-запрос — самый актуальный баланс из бота ──────────────────
+  // Это приоритет: баланс из бота всегда точнее URL и CloudStorage
+  // Применяем ПЕРВЫМ если API отвечает быстро (обычно <300мс по локальной сети)
+  if(API_URL && API_SECRET && USER_ID && USER_ID !== '0') {
+    try {
+      const ctrl = new AbortController();
+      const t    = setTimeout(() => ctrl.abort(), 3000); // 3с таймаут
+      try {
+        const r = await fetch(
+          API_URL + '/casino/balance?uid=' + USER_ID +
+          '&secret=' + API_SECRET + '&_t=' + Date.now(),
+          { signal: ctrl.signal }
+        );
+        if(r && r.ok) {
+          const d = await r.json();
+          if(d && d.ok && typeof d.balance === 'number') {
+            applyBalance(d.balance, true); // применяем — это ТОЧНЫЙ текущий баланс
+            _lastKnownBalance = d.balance;
+            try { tg.CloudStorage.setItem('balance_' + USER_ID, String(d.balance), () => {}); } catch(e) {}
+            return; // API ответил — CloudStorage не нужен
+          }
+        }
+      } finally { clearTimeout(t); }
+    } catch(e) {}
+  }
 
-  const cloudPromise = new Promise(resolve => {
+  // ── Шаг 2: CloudStorage как резерв (если API недоступен/ngrok не запущен) ──
+  await new Promise(resolve => {
     const t = setTimeout(resolve, 1500);
     try {
-      tg.CloudStorage.getItem('balance_'+USER_ID, (err, val) => {
+      tg.CloudStorage.getItem('balance_' + USER_ID, (err, val) => {
         clearTimeout(t);
         if(!err && val) {
           const b = parseInt(val, 10);
-          if(!isNaN(b) && b > 0) { try{ applyBalance(b, true); }catch(e){} }
+          if(!isNaN(b) && b > 0) { try { applyBalance(b, true); } catch(e) {} }
         }
         resolve();
       });
     } catch(e) { clearTimeout(t); resolve(); }
   });
-
-  const apiPromise = (API_URL && API_SECRET && USER_ID && USER_ID !== '0')
-    ? (async () => {
-        try {
-          const ctrl = new AbortController();
-          const t = setTimeout(() => ctrl.abort(), 4000);
-          try {
-            const r = await fetch(
-              API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-              { signal: ctrl.signal }
-            );
-            if(r && r.ok) {
-              const d = await r.json();
-              if(d && d.ok && typeof d.balance === 'number') {
-                // API-баланс всегда актуальнее — применяем поверх CloudStorage
-                applyBalance(d.balance, true);
-                try { tg.CloudStorage.setItem('balance_'+USER_ID, String(d.balance), ()=>{}); } catch(e) {}
-              }
-            }
-          } finally { clearTimeout(t); }
-        } catch(e) {}
-      })()
-    : Promise.resolve();
-
-  // Ждём оба — кто быстрее обновит баланс, тот победит
-  // API-баланс применяется последним (он точнее), если успеет за 4 сек
-  await Promise.all([cloudPromise, apiPromise]);
 }
 
 async function loadBalanceFromBot() { await safeLoadBalance(); }
@@ -1808,13 +1810,34 @@ function showTokenAddedBanner() {}
 function applyPendingBalance() {}
 
 
-// При возврате на вкладку — сразу обновляем баланс
-document.addEventListener('visibilitychange', () => {
+// При возврате на вкладку — сразу запрашиваем актуальный баланс из бота
+// Пользователь мог получить токены пока казино было свёрнуто
+document.addEventListener('visibilitychange', async () => {
   if(document.visibilityState === 'visible') {
-    pollBalance();
-    if(!_pollTimer) startBalancePolling();
+    // Немедленный прямой запрос к API — самый актуальный баланс
+    if(API_URL && API_SECRET && USER_ID && USER_ID !== '0') {
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 2500);
+        try {
+          const r = await fetch(
+            API_URL + '/casino/balance?uid=' + USER_ID +
+            '&secret=' + API_SECRET + '&_t=' + Date.now(),
+            { signal: ctrl.signal }
+          );
+          if(r && r.ok) {
+            const d = await r.json();
+            if(d && d.ok && typeof d.balance === 'number' && d.balance !== balance) {
+              applyServerBalance(d.balance);
+            }
+          }
+        } finally { clearTimeout(t); }
+      } catch(e) {}
+    }
+    // Также перезапускаем polling если он остановился
+    if(!_notifyTimer && !_lpStop) startBalancePolling();
   }
-  // НЕ останавливаем при скрытии — polling работает всегда
+  // НЕ останавливаем при скрытии — polling должен работать всегда
 });
 window.addEventListener('pagehide', () => {
   stopBalancePolling();
