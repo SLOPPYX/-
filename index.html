@@ -324,6 +324,82 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .warn-btn-exit:active{transform:scale(.97)}
 .warn-btn-save{padding:13px;border-radius:12px;background:linear-gradient(135deg,rgba(0,255,136,0.15),rgba(0,229,255,0.1));border:1px solid rgba(0,255,136,0.35);color:var(--green);font-family:var(--fb);font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:all .18s}
 .warn-btn-save:active{transform:scale(.97)}
+
+/* ── Анимация получения баланса из бота ── */
+.splash-balance-block{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  margin-bottom:18px;opacity:0;
+  animation:balBlockIn .4s ease .6s both;
+}
+@keyframes balBlockIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.splash-bal-label{
+  font-family:var(--fd);font-size:8px;font-weight:700;letter-spacing:3px;
+  color:var(--muted);text-transform:uppercase;
+}
+.splash-bal-wrap{
+  display:flex;align-items:center;gap:10px;
+}
+.splash-bal-icon{font-size:20px;animation:coinSpin 1.2s ease infinite}
+@keyframes coinSpin{0%,100%{transform:rotateY(0deg)}50%{transform:rotateY(180deg)}}
+
+.splash-bal-value{
+  font-family:var(--fd);font-size:26px;font-weight:900;
+  background:linear-gradient(90deg,var(--gold),#ffaa00,var(--gold));
+  background-size:200% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:goldShine 1.5s linear infinite;
+  min-width:120px;text-align:center;
+  transition:all .4s cubic-bezier(.34,1.56,.64,1);
+  filter:drop-shadow(0 0 8px rgba(255,215,0,.4));
+}
+@keyframes goldShine{to{background-position:200% center}}
+
+.splash-bal-value.loading{
+  -webkit-text-fill-color:transparent;
+  background-image:linear-gradient(90deg,var(--muted),rgba(255,255,255,.3),var(--muted));
+  animation:shimmer 1s linear infinite;
+  background-size:200% auto;
+}
+@keyframes shimmer{to{background-position:200% center}}
+
+.splash-bal-value.updated{
+  animation:balPop .5s cubic-bezier(.34,1.56,.64,1),goldShine 1.5s linear infinite .5s;
+}
+@keyframes balPop{0%{transform:scale(.8)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+
+.splash-source{
+  font-family:var(--fd);font-size:8px;letter-spacing:1.5px;
+  color:var(--muted);opacity:0;transition:all .3s;
+}
+.splash-source.show{opacity:1}
+.splash-source.from-bot{color:var(--green);text-shadow:0 0 6px rgba(0,255,136,.4)}
+.splash-source.from-cache{color:var(--cyan)}
+.splash-source.error{color:var(--red)}
+
+/* Шаги загрузки */
+.splash-steps{
+  display:flex;flex-direction:column;gap:4px;margin-bottom:14px;
+  opacity:0;animation:balBlockIn .4s ease .7s both;width:220px;
+}
+.splash-step{
+  display:flex;align-items:center;gap:8px;
+  font-family:var(--fd);font-size:8px;letter-spacing:1px;color:var(--muted);
+  transition:all .3s;
+}
+.splash-step-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--border);
+  flex-shrink:0;transition:all .3s;
+}
+.splash-step.active .splash-step-dot{
+  background:var(--cyan);box-shadow:0 0 6px var(--cyan);
+  animation:stepPulse .6s ease infinite alternate;
+}
+@keyframes stepPulse{from{transform:scale(.8)}to{transform:scale(1.3)}}
+.splash-step.done .splash-step-dot{background:var(--green);box-shadow:0 0 6px var(--green)}
+.splash-step.done{color:rgba(0,255,136,.6)}
+.splash-step.fail .splash-step-dot{background:var(--red)}
+.splash-step.fail{color:rgba(255,51,51,.6)}
 </style>
 </head>
 <body>
@@ -346,6 +422,24 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     <span class="splash-letter">X</span>
   </div>
   <div class="splash-casino-lbl">C A S I N O</div>
+
+  <!-- Блок баланса -->
+  <div class="splash-balance-block" id="splashBalBlock">
+    <div class="splash-bal-label">Баланс</div>
+    <div class="splash-bal-wrap">
+      <div class="splash-bal-icon">💰</div>
+      <div class="splash-bal-value loading" id="splashBalValue">---</div>
+    </div>
+    <div class="splash-source" id="splashSource">СИНХРОНИЗАЦИЯ...</div>
+  </div>
+
+  <!-- Шаги загрузки -->
+  <div class="splash-steps" id="splashSteps">
+    <div class="splash-step" id="step1"><div class="splash-step-dot"></div><span>Подключение к серверу</span></div>
+    <div class="splash-step" id="step2"><div class="splash-step-dot"></div><span>Получение баланса из бота</span></div>
+    <div class="splash-step" id="step3"><div class="splash-step-dot"></div><span>Синхронизация данных</span></div>
+  </div>
+
   <div class="splash-bar-wrap"><div class="splash-bar" id="splashBar"></div></div>
   <div class="splash-status" id="splashStatus">ИНИЦИАЛИЗАЦИЯ...</div>
 </div>
@@ -1518,6 +1612,30 @@ function _showBanner(msg) {
   } catch(e) {}
 }
 
+// ── Хелперы для сплеш-анимации ──────────────────────────────────────────
+function splashStep(id, state) {
+  try {
+    const el = document.getElementById(id);
+    if(el) el.className = 'splash-step ' + state;
+  } catch(e) {}
+}
+function splashBalShow(val, sourceText, sourceClass) {
+  try {
+    const bv = document.getElementById('splashBalValue');
+    const src = document.getElementById('splashSource');
+    if(bv) {
+      bv.classList.remove('loading', 'updated');
+      bv.textContent = typeof val === 'number' ? val.toLocaleString('ru-RU') : val;
+      void bv.offsetWidth; // reflow для анимации
+      bv.classList.add('updated');
+    }
+    if(src && sourceText) {
+      src.textContent = sourceText;
+      src.className = 'splash-source show ' + (sourceClass || '');
+    }
+  } catch(e) {}
+}
+
 async function init() {
   const bar    = document.getElementById('splashBar');
   const status = document.getElementById('splashStatus');
@@ -1531,22 +1649,14 @@ async function init() {
     if(bar) bar.style.width = '100%';
   }
 
-  // Аварийный таймер — 6 сек максимум, потом открываем казино в любом случае
+  // Аварийный таймер — 7 сек максимум
   const emergency = setTimeout(() => {
     closeSplash();
     try { startBalancePolling(); } catch(e) {}
-  }, 6000);
+  }, 7000);
 
   try {
-    // Показываем URL_BAL мгновенно — это баланс из последнего сообщения бота
-    // URL_BAL актуальнее localStorage (бот обновляет его при каждом открытии)
-    try {
-      const initBal = URL_BAL > 0 ? URL_BAL : (parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10));
-      applyBalance(initBal, false);
-      updateMiniStats();
-    } catch(e){}
-
-    // Звёздочки сплеша
+    // ── Звёздочки сплеша ───────────────────────────────────────
     try {
       const st = document.getElementById('splashStars');
       if(st) for(let i=0;i<60;i++){
@@ -1556,41 +1666,80 @@ async function init() {
       }
     } catch(e){}
 
-    // Прогресс-бар 0→40%
+    // ── Мгновенно показываем URL_BAL (из сообщения бота) ──────
+    const urlBal = URL_BAL > 0 ? URL_BAL : (parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10));
+    try { applyBalance(urlBal, false); updateMiniStats(); } catch(e){}
+    // Показываем на сплеше
+    try {
+      const bv = document.getElementById('splashBalValue');
+      if(bv) {
+        bv.classList.remove('loading');
+        bv.textContent = urlBal > 0 ? urlBal.toLocaleString('ru-RU') : '---';
+        if(urlBal > 0) bv.classList.add('updated');
+      }
+      const src = document.getElementById('splashSource');
+      if(src && urlBal > 0) {
+        src.textContent = '← ИЗ БОТА';
+        src.className = 'splash-source show from-cache';
+      }
+    } catch(e){}
+
+    // ── Прогресс-бар: 0 → 30% пока буквы анимируются ──────────
     let prog = 0;
-    const t1 = setInterval(()=>{ prog=Math.min(prog+3,40); if(bar) bar.style.width=prog+'%'; },20);
-    await new Promise(r=>setTimeout(r,700));
+    const t1 = setInterval(()=>{ prog=Math.min(prog+3,30); if(bar) bar.style.width=prog+'%'; },20);
+    await new Promise(r=>setTimeout(r,750));
     clearInterval(t1);
+    if(bar) bar.style.width='30%';
 
-    if(status) status.textContent='СИНХРОНИЗАЦИЯ БАЛАНСА...';
-    if(bar) bar.style.width='40%';
+    // ── Шаг 1: Подключение к серверу ───────────────────────────
+    splashStep('step1', 'active');
+    if(status) status.textContent='ПОДКЛЮЧЕНИЕ...';
 
-    const t2 = setInterval(()=>{ prog=Math.min(prog+1,88); if(bar) bar.style.width=prog+'%'; },40);
+    const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
+    const t2 = setInterval(()=>{ prog=Math.min(prog+1,60); if(bar) bar.style.width=prog+'%'; },40);
 
-    // Загружаем актуальный баланс из бота — приоритет API, резерв CloudStorage
-    // Максимум 4 сек — потом открываем с тем что есть
-    await Promise.race([
-      safeLoadBalance(),
-      new Promise(r=>setTimeout(r,4000))
+    await new Promise(r=>setTimeout(r,300));
+
+    if(hasApi) {
+      splashStep('step1', 'done');
+      splashStep('step2', 'active');
+      if(status) status.textContent='ПОЛУЧЕНИЕ БАЛАНСА...';
+    } else {
+      splashStep('step1', 'fail');
+      splashStep('step2', 'fail');
+      if(status) status.textContent='API НЕДОСТУПЕН — КЭШИРОВАННЫЙ БАЛАНС';
+    }
+
+    // ── Шаг 2+3: Загружаем актуальный баланс из бота ──────────
+    clearInterval(t2);
+    const t3 = setInterval(()=>{ prog=Math.min(prog+1,88); if(bar) bar.style.width=prog+'%'; },35);
+
+    const loadedBal = await Promise.race([
+      safeLoadBalanceAnimated(),
+      new Promise(r=>setTimeout(()=>r(null), 4000))
     ]);
 
-    clearInterval(t2);
-    _lastKnownBalance = balance;
+    clearInterval(t3);
 
-    if(status) status.textContent='✅ '+balance.toLocaleString('ru-RU')+' ТОКЕНОВ';
+    // ── Финал ──────────────────────────────────────────────────
+    _lastKnownBalance = balance;
+    splashStep('step3', 'done');
     if(bar) bar.style.width='100%';
+
+    // Финальный показ баланса на сплеше
+    splashBalShow(balance, '✅ СИНХРОНИЗИРОВАНО С БОТОМ', 'from-bot');
+    if(status) status.textContent='✅ ' + balance.toLocaleString('ru-RU') + ' ТОКЕНОВ';
 
     try{ refreshBets(); }catch(e){}
     try{ for(const b of [100000,50000,25000,10000]){if(balance>=b){selectBet(b);break;}} }catch(e){}
 
-    await new Promise(r=>setTimeout(r,400));
+    await new Promise(r=>setTimeout(r,600));
 
   } catch(e) {
-    console.warn('Init error:',e);
+    console.warn('Init error:', e);
   } finally {
     clearTimeout(emergency);
     closeSplash();
-    // Инициализируем TG кнопки здесь — после объявления всех функций
     try { tg.BackButton.show(); } catch(e){}
     try { tg.BackButton.onClick(showWarnDialog); } catch(e){}
     try { tg.enableClosingConfirmation(); } catch(e){}
@@ -1599,15 +1748,13 @@ async function init() {
   }
 }
 
-// Безопасная загрузка баланса — никогда не зависает
-async function safeLoadBalance() {
-  // ── Шаг 1: API-запрос — самый актуальный баланс из бота ──────────────────
-  // Это приоритет: баланс из бота всегда точнее URL и CloudStorage
-  // Применяем ПЕРВЫМ если API отвечает быстро (обычно <300мс по локальной сети)
+// safeLoadBalance с анимацией шагов — возвращает итоговый баланс
+async function safeLoadBalanceAnimated() {
+  // ── Шаг 2: API-запрос (точный баланс из бота) ────────────────
   if(API_URL && API_SECRET && USER_ID && USER_ID !== '0') {
     try {
       const ctrl = new AbortController();
-      const t    = setTimeout(() => ctrl.abort(), 3000); // 3с таймаут
+      const t    = setTimeout(() => ctrl.abort(), 3500);
       try {
         const r = await fetch(
           API_URL + '/casino/balance?uid=' + USER_ID +
@@ -1617,17 +1764,83 @@ async function safeLoadBalance() {
         if(r && r.ok) {
           const d = await r.json();
           if(d && d.ok && typeof d.balance === 'number') {
-            applyBalance(d.balance, true); // применяем — это ТОЧНЫЙ текущий баланс
+            // Анимируем смену баланса если он изменился
+            const changed = d.balance !== balance;
+            applyBalance(d.balance, true);
             _lastKnownBalance = d.balance;
-            try { tg.CloudStorage.setItem('balance_' + USER_ID, String(d.balance), () => {}); } catch(e) {}
-            return; // API ответил — CloudStorage не нужен
+            try { tg.CloudStorage.setItem('balance_' + USER_ID, String(d.balance), ()=>{}); } catch(e){}
+
+            // Показываем обновлённый баланс на сплеше
+            splashStep('step2', 'done');
+            splashStep('step3', 'active');
+            splashBalShow(
+              d.balance,
+              changed ? '⚡ ОБНОВЛЕНО ИЗ БОТА' : '✓ АКТУАЛЬНЫЙ БАЛАНС',
+              'from-bot'
+            );
+            await new Promise(r=>setTimeout(r, 300));
+            splashStep('step3', 'done');
+            return d.balance;
+          }
+        }
+      } finally { clearTimeout(t); }
+    } catch(e) {}
+    // API не ответил
+    splashStep('step2', 'fail');
+  }
+
+  // ── Резерв: CloudStorage ──────────────────────────────────────
+  splashStep('step3', 'active');
+  const cloudBal = await new Promise(resolve => {
+    const t = setTimeout(() => resolve(null), 1500);
+    try {
+      tg.CloudStorage.getItem('balance_' + USER_ID, (err, val) => {
+        clearTimeout(t);
+        if(!err && val) {
+          const b = parseInt(val, 10);
+          if(!isNaN(b) && b > 0) { try { applyBalance(b, true); } catch(e){} resolve(b); return; }
+        }
+        resolve(null);
+      });
+    } catch(e) { clearTimeout(t); resolve(null); }
+  });
+
+  if(cloudBal) {
+    splashBalShow(cloudBal, '📦 ИЗ КЭША', 'from-cache');
+    splashStep('step3', 'done');
+  } else {
+    splashStep('step3', 'fail');
+    splashBalShow(balance > 0 ? balance : '---', '⚠️ ДАННЫЕ ИЗ URL', 'error');
+  }
+  return cloudBal;
+}
+
+// Безопасная загрузка баланса (используется в polling и refresh)
+async function safeLoadBalance() {
+  // Приоритет: API → CloudStorage
+  if(API_URL && API_SECRET && USER_ID && USER_ID !== '0') {
+    try {
+      const ctrl = new AbortController();
+      const t    = setTimeout(() => ctrl.abort(), 3000);
+      try {
+        const r = await fetch(
+          API_URL + '/casino/balance?uid=' + USER_ID +
+          '&secret=' + API_SECRET + '&_t=' + Date.now(),
+          { signal: ctrl.signal }
+        );
+        if(r && r.ok) {
+          const d = await r.json();
+          if(d && d.ok && typeof d.balance === 'number') {
+            applyBalance(d.balance, true);
+            _lastKnownBalance = d.balance;
+            try { tg.CloudStorage.setItem('balance_' + USER_ID, String(d.balance), ()=>{}); } catch(e){}
+            return;
           }
         }
       } finally { clearTimeout(t); }
     } catch(e) {}
   }
-
-  // ── Шаг 2: CloudStorage как резерв (если API недоступен/ngrok не запущен) ──
+  // Резерв — CloudStorage
   await new Promise(resolve => {
     const t = setTimeout(resolve, 1500);
     try {
@@ -1635,7 +1848,7 @@ async function safeLoadBalance() {
         clearTimeout(t);
         if(!err && val) {
           const b = parseInt(val, 10);
-          if(!isNaN(b) && b > 0) { try { applyBalance(b, true); } catch(e) {} }
+          if(!isNaN(b) && b > 0) { try { applyBalance(b, true); } catch(e){} }
         }
         resolve();
       });
