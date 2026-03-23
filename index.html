@@ -400,6 +400,56 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .splash-step.done{color:rgba(0,255,136,.6)}
 .splash-step.fail .splash-step-dot{background:var(--red)}
 .splash-step.fail{color:rgba(255,51,51,.6)}
+
+/* ══ УРОВНИ И АВАТАРКИ ══════════════════════════════════ */
+.level-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:6px;animation:badgePulse2 2s ease infinite alternate}
+@keyframes badgePulse2{from{filter:brightness(1)}to{filter:brightness(1.25) drop-shadow(0 0 6px currentColor)}}
+.level-badge.lv0{background:rgba(100,100,100,.15);border:1px solid rgba(150,150,150,.3);color:#aaa}
+.level-badge.lv1{background:linear-gradient(135deg,rgba(0,229,255,.15),rgba(0,180,255,.08));border:1px solid rgba(0,229,255,.4);color:var(--cyan)}
+.level-badge.lv2{background:linear-gradient(135deg,rgba(0,255,136,.15),rgba(0,200,100,.08));border:1px solid rgba(0,255,136,.4);color:var(--green)}
+.level-badge.lv3{background:linear-gradient(135deg,rgba(255,215,0,.18),rgba(255,140,0,.10));border:1px solid rgba(255,215,0,.5);color:var(--gold)}
+.level-badge.lv4{background:linear-gradient(135deg,rgba(191,0,255,.18),rgba(255,0,153,.12));border:1px solid rgba(191,0,255,.5);color:var(--purple)}
+.level-badge.lv5{background:linear-gradient(135deg,rgba(255,50,50,.18),rgba(255,0,100,.12));border:1px solid rgba(255,80,80,.5);color:#ff5555;animation:legendaryPulse 1.5s ease infinite alternate}
+@keyframes legendaryPulse{from{box-shadow:0 0 8px rgba(255,80,80,.3)}to{box-shadow:0 0 20px rgba(255,80,80,.7),0 0 40px rgba(255,0,100,.3)}}
+
+/* Прогресс до следующего уровня */
+.level-progress-wrap{margin:8px 0 14px;padding:10px 14px;background:var(--panel);border:1px solid var(--border);border-radius:12px}
+.level-prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.level-prog-label{font-family:var(--fd);font-size:9px;letter-spacing:1.5px;color:var(--muted)}
+.level-prog-pct{font-family:var(--fd);font-size:10px;font-weight:700;color:var(--cyan)}
+.level-prog-bar{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.level-prog-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.34,1.56,.64,1);background:linear-gradient(90deg,var(--cyan),var(--purple))}
+.level-prog-fill.lv1{background:linear-gradient(90deg,var(--cyan),#0088ff)}
+.level-prog-fill.lv2{background:linear-gradient(90deg,var(--green),var(--cyan))}
+.level-prog-fill.lv3{background:linear-gradient(90deg,#ffaa00,var(--gold))}
+.level-prog-fill.lv4{background:linear-gradient(90deg,var(--purple),var(--pink))}
+.level-prog-fill.lv5{background:linear-gradient(90deg,#ff5555,#ff0066,var(--purple))}
+
+/* Аватарки */
+.avatars-section{margin-bottom:16px}
+.avatars-title{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:2px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.avatars-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.07),transparent)}
+.avatars-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.avatar-item{aspect-ratio:1;border-radius:14px;background:var(--panel);border:2px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.avatar-item:active{transform:scale(.95)}
+.avatar-item.selected{border-color:var(--cyan);background:linear-gradient(135deg,rgba(0,229,255,.12),rgba(191,0,255,.08));box-shadow:0 0 14px rgba(0,229,255,.25)}
+.avatar-item.locked{opacity:.35;cursor:not-allowed}
+.avatar-item.locked::after{content:'🔒';position:absolute;top:4px;right:5px;font-size:11px}
+.avatar-emoji{font-size:26px;line-height:1}
+.avatar-name{font-family:var(--fd);font-size:7px;color:var(--muted);letter-spacing:.5px;text-align:center;padding:0 2px}
+.avatar-item.selected .avatar-name{color:var(--cyan)}
+.avatar-unlock-hint{font-family:var(--fd);font-size:8px;color:var(--muted);letter-spacing:1px;text-align:center;padding:3px 0;opacity:.6}
+
+/* Зелёный индикатор подключения к боту */
+.bot-status{display:flex;align-items:center;gap:5px;font-family:var(--fd);font-size:8px;letter-spacing:1.5px;padding:4px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.07);transition:all .4s}
+.bot-status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;transition:all .4s}
+.bot-status.connected{color:var(--green);border-color:rgba(0,255,136,.3);background:rgba(0,255,136,.07)}
+.bot-status.connected .bot-status-dot{background:var(--green);box-shadow:0 0 6px var(--green);animation:connPulse 2s ease infinite}
+@keyframes connPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+.bot-status.loading{color:var(--cyan);border-color:rgba(0,229,255,.2)}
+.bot-status.loading .bot-status-dot{background:var(--cyan);animation:connPulse .8s ease infinite}
+.bot-status.error{color:var(--muted);border-color:rgba(255,255,255,.07)}
+.bot-status.error .bot-status-dot{background:rgba(255,255,255,.2)}
 </style>
 </head>
 <body>
@@ -465,6 +515,10 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
         <span id="refreshIcon" style="margin-left:4px;font-size:10px;opacity:0.6">🔄</span>
       </div>
       <div id="newBalanceBadge" style="display:none;font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:1px;color:var(--green);text-shadow:0 0 6px rgba(0,255,136,0.6);animation:badgePulse 1s ease infinite alternate;cursor:pointer" onclick="refreshBalanceNow()">▲ ОБНОВИТЬ</div>
+      <div class="bot-status loading" id="botStatus">
+        <div class="bot-status-dot"></div>
+        <span id="botStatusText">БОТ...</span>
+      </div>
     </div>
   </div>
 
@@ -572,6 +626,27 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div id="pCustomId"></div>
       <div id="pWins1v1"></div>
       <div id="pBal"></div>
+    </div>
+
+    <!-- ══ УРОВЕНЬ ИГРОКА ══ -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:10px">
+      <div id="levelBadge" class="level-badge lv0">⚪ НЕТ УРОВНЯ</div>
+      <div style="font-family:var(--fd);font-size:8px;color:var(--muted);letter-spacing:1px" id="levelTotalWon">Выиграно: 0 токенов</div>
+    </div>
+    <div class="level-progress-wrap" id="levelProgressWrap">
+      <div class="level-prog-header">
+        <span class="level-prog-label" id="levelProgLabel">ДО УРОВНЯ 1</span>
+        <span class="level-prog-pct" id="levelProgPct">0%</span>
+      </div>
+      <div class="level-prog-bar"><div class="level-prog-fill lv1" id="levelProgFill" style="width:0%"></div></div>
+    </div>
+
+    <!-- ══ АВАТАРКИ ══ -->
+    <div class="avatars-section">
+      <div class="avatars-title">Аватарки</div>
+      <div class="avatars-grid" id="avatarsGrid">
+        <!-- генерируется JS -->
+      </div>
     </div>
 
     <div class="section-head">Статистика</div>
@@ -1185,6 +1260,146 @@ function saveAndClose() { showExitDialog(); }
 // ══════════════════════════════════════════════════════════
 // ПРОФИЛЬ
 // ══════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════
+// СИСТЕМА УРОВНЕЙ
+// ══════════════════════════════════════════════════════════
+const LEVELS = [
+  { lv:0, name:'НЕТ УРОВНЯ',  icon:'⚪', need:0,          cls:'lv0' },
+  { lv:1, name:'УРОВЕНЬ 1',   icon:'🥉', need:1_000_000,   cls:'lv1' },
+  { lv:2, name:'УРОВЕНЬ 2',   icon:'🥈', need:10_000_000,  cls:'lv2' },
+  { lv:3, name:'УРОВЕНЬ 3',   icon:'🥇', need:50_000_000,  cls:'lv3' },
+  { lv:4, name:'УРОВЕНЬ 4',   icon:'💎', need:75_000_000,  cls:'lv4' },
+  { lv:5, name:'ЛЕГЕНДА',     icon:'👑', need:100_000_000, cls:'lv5' },
+];
+
+function getUserLevel(totalWon) {
+  let cur = LEVELS[0];
+  for(const l of LEVELS) { if(totalWon >= l.need) cur = l; else break; }
+  return cur;
+}
+function getNextLevel(totalWon) {
+  for(const l of LEVELS) { if(totalWon < l.need) return l; }
+  return null; // максимальный
+}
+
+// ══════════════════════════════════════════════════════════
+// АВАТАРКИ — разблокируются по уровням
+// ══════════════════════════════════════════════════════════
+const AVATARS = [
+  { id:'default', emoji:'🎮', name:'ИГРОК',    needLv:0 },
+  { id:'dice',    emoji:'🎲', name:'ДАЙС',     needLv:0 },
+  { id:'star',    emoji:'⭐', name:'ЗВЕЗДА',   needLv:1 },
+  { id:'rocket',  emoji:'🚀', name:'РАКЕТА',   needLv:1 },
+  { id:'gem',     emoji:'💎', name:'АЛМАЗ',    needLv:2 },
+  { id:'trophy',  emoji:'🏆', name:'КУБОК',    needLv:2 },
+  { id:'fire',    emoji:'🔥', name:'ОГОНЬ',    needLv:3 },
+  { id:'dragon',  emoji:'🐉', name:'ДРАКОН',   needLv:3 },
+  { id:'crown',   emoji:'👑', name:'КОРОНА',   needLv:4 },
+  { id:'diamond', emoji:'💠', name:'САПФИР',   needLv:4 },
+  { id:'skull',   emoji:'💀', name:'ЛЕГЕНДА',  needLv:5 },
+  { id:'alien',   emoji:'👾', name:'ИНОПЛАНЕТЯНИН', needLv:5 },
+];
+
+// Ключ для хранения выбранной аватарки
+const AVATAR_KEY = 'avatar_' + USER_ID;
+let selectedAvatar = (() => {
+  try { return localStorage.getItem(AVATAR_KEY) || 'default'; } catch(e) { return 'default'; }
+})();
+
+function saveAvatar(id) {
+  selectedAvatar = id;
+  try { localStorage.setItem(AVATAR_KEY, id); } catch(e){}
+  renderAvatars();
+  // Обновляем аватарку в профиле
+  const av = AVATARS.find(a => a.id === id) || AVATARS[0];
+  try { document.getElementById('spoAvatar').textContent = av.emoji; } catch(e){}
+  try { document.getElementById('pAvatar').textContent   = av.emoji; } catch(e){}
+}
+
+function getCurrentAvatarEmoji() {
+  const av = AVATARS.find(a => a.id === selectedAvatar);
+  return av ? av.emoji : '🎮';
+}
+
+function renderAvatars() {
+  const grid = document.getElementById('avatarsGrid');
+  if(!grid) return;
+  const totalWon = S.totalWon || 0;
+  const userLv   = getUserLevel(totalWon).lv;
+  grid.innerHTML = '';
+  AVATARS.forEach(av => {
+    const locked  = av.needLv > userLv;
+    const sel     = av.id === selectedAvatar && !locked;
+    const div = document.createElement('div');
+    div.className = 'avatar-item' + (sel ? ' selected' : '') + (locked ? ' locked' : '');
+    div.innerHTML = `<div class="avatar-emoji">${av.emoji}</div><div class="avatar-name">${av.name}</div>`;
+    if(!locked) {
+      div.onclick = () => saveAvatar(av.id);
+      div.title = av.name;
+    } else {
+      div.title = `Уровень ${av.needLv}`;
+      div.innerHTML += `<div class="avatar-unlock-hint">LV${av.needLv}</div>`;
+    }
+    grid.appendChild(div);
+  });
+}
+
+function renderLevelBlock() {
+  try {
+    const totalWon  = S.totalWon || 0;
+    const curLv     = getUserLevel(totalWon);
+    const nextLv    = getNextLevel(totalWon);
+
+    // Бадж
+    const badge = document.getElementById('levelBadge');
+    if(badge) {
+      badge.textContent = curLv.icon + ' ' + curLv.name;
+      badge.className   = 'level-badge ' + curLv.cls;
+    }
+    // Сумма
+    const tw = document.getElementById('levelTotalWon');
+    if(tw) tw.textContent = 'Выиграно: ' + totalWon.toLocaleString('ru-RU') + ' токенов';
+
+    // Прогресс до следующего уровня
+    const wrap = document.getElementById('levelProgressWrap');
+    const fill = document.getElementById('levelProgFill');
+    const lbl  = document.getElementById('levelProgLabel');
+    const pct  = document.getElementById('levelProgPct');
+
+    if(nextLv) {
+      const prevNeed  = curLv.need;
+      const range     = nextLv.need - prevNeed;
+      const progress  = Math.min(100, Math.round((totalWon - prevNeed) / range * 100));
+      if(wrap) wrap.style.display = '';
+      if(fill) { fill.style.width = progress + '%'; fill.className = 'level-prog-fill ' + nextLv.cls; }
+      if(lbl)  lbl.textContent = 'ДО ' + nextLv.icon + ' ' + nextLv.name;
+      if(pct)  pct.textContent = progress + '%';
+    } else {
+      // Максимальный уровень
+      if(wrap) wrap.style.display = '';
+      if(fill) { fill.style.width = '100%'; fill.className = 'level-prog-fill lv5'; }
+      if(lbl)  lbl.textContent = '✅ МАКСИМАЛЬНЫЙ УРОВЕНЬ';
+      if(pct)  pct.textContent = '100%';
+    }
+
+    renderAvatars();
+  } catch(e) { console.warn('renderLevelBlock:', e); }
+}
+
+// ══════════════════════════════════════════════════════════
+// СТАТУС ПОДКЛЮЧЕНИЯ К БОТУ
+// ══════════════════════════════════════════════════════════
+function setBotStatus(state, text) {
+  try {
+    const el  = document.getElementById('botStatus');
+    const txt = document.getElementById('botStatusText');
+    if(el)  el.className  = 'bot-status ' + state;
+    if(txt) txt.textContent = text;
+  } catch(e){}
+}
+
+
 function renderProfile() {
   try {
     // ── Скрытые элементы (совместимость) ──
@@ -1193,7 +1408,8 @@ function renderProfile() {
     if(_g('pBal'))      _g('pBal').textContent      = balance.toLocaleString('ru-RU');
     if(_g('pCustomId')) _g('pCustomId').textContent = CUSTOM_ID || USER_ID;
     if(_g('pWins1v1'))  _g('pWins1v1').textContent  = USER_WINS;
-    const avatar = USER_WINS>50?'👑':USER_WINS>20?'⭐':USER_WINS>10?'🎯':'🎮';
+    // Аватарка — берём из выбранных пользователем, с учётом уровня
+    const avatar = getCurrentAvatarEmoji();
     if(_g('pAvatar'))   _g('pAvatar').textContent   = avatar;
 
     // ── Canvas overlay ──
@@ -1258,6 +1474,8 @@ function renderProfile() {
     if(_g('streakV')) _g('streakV').textContent =
       S.streak > 0 ? (S.streakType === 'w' ? '🔥' : '❄️') + ' ' + S.streak : '—';
 
+    // Уровни и аватарки
+    try { renderLevelBlock(); } catch(e){}
   } catch(e) { console.warn('renderProfile error:', e); }
 }
 function updateProfile() { renderProfile(); }
@@ -1748,10 +1966,15 @@ async function init() {
   }
 }
 
-// safeLoadBalance с анимацией шагов — возвращает итоговый баланс
+// safeLoadBalance с анимацией шагов
+// ПОРЯДОК: API → CloudStorage (только если API недоступен)
+// API всегда финальный — никогда не перезаписывается кэшем
 async function safeLoadBalanceAnimated() {
-  // ── Шаг 2: API-запрос (точный баланс из бота) ────────────────
-  if(API_URL && API_SECRET && USER_ID && USER_ID !== '0') {
+  const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
+
+  // ── Шаг 2: API-запрос ────────────────────────────────────────
+  if(hasApi) {
+    setBotStatus('loading', 'ЗАПРОС...');
     try {
       const ctrl = new AbortController();
       const t    = setTimeout(() => ctrl.abort(), 3500);
@@ -1764,13 +1987,13 @@ async function safeLoadBalanceAnimated() {
         if(r && r.ok) {
           const d = await r.json();
           if(d && d.ok && typeof d.balance === 'number') {
-            // Анимируем смену баланса если он изменился
             const changed = d.balance !== balance;
+            // ✅ Применяем API-баланс — это ЕДИНСТВЕННЫЙ источник правды
             applyBalance(d.balance, true);
             _lastKnownBalance = d.balance;
+            // Синхронизируем кэш с актуальным балансом из API
             try { tg.CloudStorage.setItem('balance_' + USER_ID, String(d.balance), ()=>{}); } catch(e){}
 
-            // Показываем обновлённый баланс на сплеше
             splashStep('step2', 'done');
             splashStep('step3', 'active');
             splashBalShow(
@@ -1778,7 +2001,8 @@ async function safeLoadBalanceAnimated() {
               changed ? '⚡ ОБНОВЛЕНО ИЗ БОТА' : '✓ АКТУАЛЬНЫЙ БАЛАНС',
               'from-bot'
             );
-            await new Promise(r=>setTimeout(r, 300));
+            setBotStatus('connected', 'ПОДКЛЮЧЁН');
+            await new Promise(r=>setTimeout(r, 350));
             splashStep('step3', 'done');
             return d.balance;
           }
@@ -1787,9 +2011,10 @@ async function safeLoadBalanceAnimated() {
     } catch(e) {}
     // API не ответил
     splashStep('step2', 'fail');
+    setBotStatus('error', 'НЕТ СВЯЗИ');
   }
 
-  // ── Резерв: CloudStorage ──────────────────────────────────────
+  // ── Резерв: CloudStorage (только если API недоступен) ─────────
   splashStep('step3', 'active');
   const cloudBal = await new Promise(resolve => {
     const t = setTimeout(() => resolve(null), 1500);
@@ -1808,9 +2033,11 @@ async function safeLoadBalanceAnimated() {
   if(cloudBal) {
     splashBalShow(cloudBal, '📦 ИЗ КЭША', 'from-cache');
     splashStep('step3', 'done');
+    setBotStatus('error', 'КЭШ');
   } else {
     splashStep('step3', 'fail');
     splashBalShow(balance > 0 ? balance : '---', '⚠️ ДАННЫЕ ИЗ URL', 'error');
+    setBotStatus('error', 'НЕТ ДАННЫХ');
   }
   return cloudBal;
 }
@@ -1834,13 +2061,15 @@ async function safeLoadBalance() {
             applyBalance(d.balance, true);
             _lastKnownBalance = d.balance;
             try { tg.CloudStorage.setItem('balance_' + USER_ID, String(d.balance), ()=>{}); } catch(e){}
-            return;
+            try { setBotStatus('connected', 'ПОДКЛЮЧЁН'); } catch(e){}
+            return; // API ответил — CloudStorage не нужен
           }
         }
       } finally { clearTimeout(t); }
     } catch(e) {}
+    try { setBotStatus('error', 'НЕТ СВЯЗИ'); } catch(e){}
   }
-  // Резерв — CloudStorage
+  // Резерв — CloudStorage (только если API недоступен)
   await new Promise(resolve => {
     const t = setTimeout(resolve, 1500);
     try {
@@ -1905,6 +2134,9 @@ function applyServerBalance(newBal) {
     if(profilePage && profilePage.classList.contains('active')) renderProfile();
   } catch(e){}
   // Уведомление если токены добавлены
+  // Показываем зелёный индикатор при получении данных из бота
+  try { setBotStatus('connected', 'ПОДКЛЮЧЁН'); } catch(e){}
+
   if(diff > 0) {
     const fmt = diff.toLocaleString('ru-RU');
     try { showToast('💰 +'+fmt+' токенов!', 'gold'); } catch(e){}
@@ -1919,11 +2151,15 @@ function applyServerBalance(newBal) {
 // ТРОЙНАЯ СИСТЕМА СИНХРОНИЗАЦИИ БАЛАНСА
 // ══════════════════════════════════════════════════════════
 function startBalancePolling() {
-  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
+  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') {
+    try { setBotStatus('error', 'API ВЫКЛ'); } catch(e){}
+    return;
+  }
+  try { setBotStatus('loading', 'СИНХРОНИЗАЦИЯ'); } catch(e){}
   stopBalancePolling();
   _lpStop = false;
   longPoll();
-  _notifyTimer = setInterval(notifyBalance, 1500);  // каждые 1.5с для быстрого обновления
+  _notifyTimer = setInterval(notifyBalance, 1500);
 }
 
 function stopBalancePolling() {
