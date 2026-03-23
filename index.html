@@ -949,6 +949,8 @@ function showPage(n) {
 // ══════════════════════════════════════════════════════════
 // Применить баланс: обновить переменную, DOM, кеш
 function applyBalance(val, save) {
+  // Если API уже дал актуальный баланс — игнорируем данные из кэша (save=false)
+  if(!save && _apiBalanceLocked) return;
   balance = val;
   INIT_BAL = val;
   const fmt = val.toLocaleString('ru-RU');
@@ -1885,8 +1887,15 @@ async function init() {
     } catch(e){}
 
     // ── Мгновенно показываем URL_BAL (из сообщения бота) ──────
+    // URL_BAL — баланс на момент нажатия кнопки в боте
     const urlBal = URL_BAL > 0 ? URL_BAL : (parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10));
-    try { applyBalance(urlBal, false); updateMiniStats(); } catch(e){}
+    // Применяем как начальный баланс (лок ещё не установлен — API не ответил)
+    try {
+      balance = urlBal; INIT_BAL = urlBal;
+      const fmt = urlBal.toLocaleString('ru-RU');
+      try { document.getElementById('balanceVal').textContent = fmt; } catch(e2){}
+      updateMiniStats();
+    } catch(e){}
     // Показываем на сплеше
     try {
       const bv = document.getElementById('splashBalValue');
@@ -1897,7 +1906,7 @@ async function init() {
       }
       const src = document.getElementById('splashSource');
       if(src && urlBal > 0) {
-        src.textContent = '← ИЗ БОТА';
+        src.textContent = '← ИЗ БОТА (предварительный)';
         src.className = 'splash-source show from-cache';
       }
     } catch(e){}
@@ -1941,11 +1950,8 @@ async function init() {
 
     // ── Финал ──────────────────────────────────────────────────
     _lastKnownBalance = balance;
-    splashStep('step3', 'done');
     if(bar) bar.style.width='100%';
-
-    // Финальный показ баланса на сплеше
-    splashBalShow(balance, '✅ СИНХРОНИЗИРОВАНО С БОТОМ', 'from-bot');
+    // Финал — показываем то что уже применено (safeLoadBalanceAnimated уже всё показала)
     if(status) status.textContent='✅ ' + balance.toLocaleString('ru-RU') + ' ТОКЕНОВ';
 
     try{ refreshBets(); }catch(e){}
@@ -1988,10 +1994,17 @@ async function safeLoadBalanceAnimated() {
           const d = await r.json();
           if(d && d.ok && typeof d.balance === 'number') {
             const changed = d.balance !== balance;
-            // ✅ Применяем API-баланс — это ЕДИНСТВЕННЫЙ источник правды
-            applyBalance(d.balance, true);
+            // ✅ Устанавливаем лок ДО применения — никакой кэш не перезапишет
+            _apiBalanceLocked = true;
             _lastKnownBalance = d.balance;
-            // Синхронизируем кэш с актуальным балансом из API
+            // Применяем напрямую (обходим лок через save=true)
+            balance = d.balance; INIT_BAL = d.balance;
+            const fmt = d.balance.toLocaleString('ru-RU');
+            try { document.getElementById('balanceVal').textContent = fmt; } catch(e){}
+            try { document.getElementById('pBal').textContent = fmt; } catch(e){}
+            try { const sb=document.getElementById('spoBal'); if(sb) sb.textContent=fmt; } catch(e){}
+            try { localStorage.setItem('bal_'+USER_ID, String(d.balance)); } catch(e){}
+            // Синхронизируем кэш (пишем новый правильный баланс)
             try { tg.CloudStorage.setItem('balance_' + USER_ID, String(d.balance), ()=>{}); } catch(e){}
 
             splashStep('step2', 'done');
@@ -2058,8 +2071,9 @@ async function safeLoadBalance() {
         if(r && r.ok) {
           const d = await r.json();
           if(d && d.ok && typeof d.balance === 'number') {
-            applyBalance(d.balance, true);
+            _apiBalanceLocked = true;
             _lastKnownBalance = d.balance;
+            applyBalance(d.balance, true);
             try { tg.CloudStorage.setItem('balance_' + USER_ID, String(d.balance), ()=>{}); } catch(e){}
             try { setBotStatus('connected', 'ПОДКЛЮЧЁН'); } catch(e){}
             return; // API ответил — CloudStorage не нужен
@@ -2092,12 +2106,17 @@ function saveCloudBalance(val) {
   try { tg.CloudStorage.setItem(CLOUD_KEY, String(val), ()=>{}); } catch(e){}
 }
 async function readCloudBalance() {
+  // Если API уже дал актуальный баланс — кэш не нужен
+  if(_apiBalanceLocked) return Promise.resolve();
   return new Promise(resolve => {
     const t = setTimeout(resolve, 1500);
     try {
       tg.CloudStorage.getItem(CLOUD_KEY, (err, val) => {
         clearTimeout(t);
-        if(!err && val){ const b=parseInt(val,10); if(!isNaN(b)&&b>0) try{applyBalance(b,true);}catch(e){} }
+        if(!err && val && !_apiBalanceLocked) {
+          const b=parseInt(val,10);
+          if(!isNaN(b) && b>0) try{applyBalance(b,true);}catch(e){}
+        }
         resolve();
       });
     } catch(e){ clearTimeout(t); resolve(); }
@@ -2111,6 +2130,8 @@ let _lastKnownBalance = 0;
 let _pollTimer        = null;
 let _notifyTimer      = null;
 let _lpStop           = false;
+// Флаг: API вернул баланс → блокируем перезапись из кэша
+let _apiBalanceLocked = false;
 
 // ══════════════════════════════════════════════════════════
 // ПРИМЕНИТЬ БАЛАНС С СЕРВЕРА — мгновенно, с уведомлением
@@ -2156,6 +2177,8 @@ function startBalancePolling() {
     return;
   }
   try { setBotStatus('loading', 'СИНХРОНИЗАЦИЯ'); } catch(e){}
+  // Сбрасываем лок через 5 сек — после этого longPoll/notify могут обновлять баланс
+  setTimeout(() => { _apiBalanceLocked = false; }, 5000);
   stopBalancePolling();
   _lpStop = false;
   longPoll();
