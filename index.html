@@ -533,6 +533,37 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .bot-status.loading .bot-status-dot{background:var(--cyan);animation:connPulse .8s ease infinite}
 .bot-status.error{color:var(--muted);border-color:rgba(255,255,255,.07)}
 .bot-status.error .bot-status-dot{background:rgba(255,255,255,.2)}
+
+/* ══ ТОПЛИДЕРЫ ═════════════════════════════════════════ */
+.leader-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;margin-bottom:8px;transition:all .2s;position:relative;overflow:hidden}
+.leader-card:active{transform:scale(.98)}
+.leader-card.top1{background:linear-gradient(135deg,rgba(255,215,0,.13),rgba(255,140,0,.07));border:1px solid rgba(255,215,0,.4)}
+.leader-card.top2{background:linear-gradient(135deg,rgba(192,192,192,.1),rgba(150,150,150,.06));border:1px solid rgba(192,192,192,.3)}
+.leader-card.top3{background:linear-gradient(135deg,rgba(205,127,50,.1),rgba(160,90,30,.06));border:1px solid rgba(205,127,50,.3)}
+.leader-card.regular{background:var(--panel);border:1px solid var(--border)}
+.leader-card.me{border-color:rgba(0,229,255,.5)!important;background:linear-gradient(135deg,rgba(0,229,255,.1),rgba(191,0,255,.07))!important}
+.leader-card::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.02),transparent);animation:cardShimmer 3s ease infinite;opacity:0}
+.leader-card.top1::before{opacity:1}
+@keyframes cardShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.leader-rank{font-family:var(--fd);font-size:18px;font-weight:900;width:32px;text-align:center;flex-shrink:0}
+.leader-rank.r1{color:var(--gold);text-shadow:0 0 10px rgba(255,215,0,.5)}
+.leader-rank.r2{color:#c0c0c0}
+.leader-rank.r3{color:#cd7f32}
+.leader-rank.rx{color:var(--muted)}
+.leader-avatar{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.leader-info{flex:1;min-width:0}
+.leader-name{font-family:var(--fd);font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.leader-id{font-family:var(--fd);font-size:8px;color:var(--muted);letter-spacing:1px}
+.leader-score{text-align:right;flex-shrink:0}
+.leader-won{font-family:var(--fd);font-size:12px;font-weight:900;line-height:1.1}
+.leader-won.r1{color:var(--gold);text-shadow:0 0 8px rgba(255,215,0,.4)}
+.leader-won.r2{color:#d0d0d0}
+.leader-won.r3{color:#cd7f32}
+.leader-won.rx{color:var(--cyan)}
+.leader-won-lbl{font-family:var(--fd);font-size:7px;color:var(--muted);letter-spacing:1px}
+.leader-crown{position:absolute;top:-2px;right:10px;font-size:14px;animation:crownFloat 2s ease-in-out infinite}
+@keyframes crownFloat{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-3px) rotate(5deg)}}
+.leader-empty{text-align:center;padding:40px 20px;font-family:var(--fd);font-size:10px;color:var(--muted);letter-spacing:2px}
 </style>
 </head>
 <body>
@@ -609,6 +640,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   <div class="nav">
     <div class="nav-tab active" onclick="showPage('game')" id="tab-game">🎰 Игра</div>
     <div class="nav-tab" onclick="showPage('profile')" id="tab-profile">👤 Профиль</div>
+    <div class="nav-tab" onclick="showPage('top')" id="tab-top">🏆 Топ</div>
     <div class="nav-tab" onclick="showPage('pay')" id="tab-pay">📊 Выплаты</div>
   </div>
 
@@ -785,6 +817,38 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     <div class="streak-card">
       <div><div class="streak-v" id="streakV">—</div><div class="streak-l">Серия</div></div>
       <div class="streak-dots" id="streakDots"></div>
+    </div>
+  </div>
+
+  <!-- ══ TOP LEADERS ══ -->
+  <div class="page" id="page-top">
+    <div style="height:4px"></div>
+
+    <!-- Шапка -->
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-family:var(--fd);font-size:18px;font-weight:900;background:linear-gradient(90deg,var(--gold),#ffcc44,var(--gold));background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:goldFlow 2s linear infinite;margin-bottom:4px">ТОП КАЗИНО</div>
+      <div style="font-family:var(--fd);font-size:9px;color:var(--muted);letter-spacing:2px">ПО ВЫИГРЫШУ ТОКЕНОВ</div>
+    </div>
+
+    <!-- Статус загрузки / обновления -->
+    <div id="topStatus" style="text-align:center;font-family:var(--fd);font-size:9px;color:var(--muted);letter-spacing:1.5px;margin-bottom:12px;min-height:14px">
+      ЗАГРУЗКА...
+    </div>
+
+    <!-- Кнопка обновить -->
+    <div style="text-align:center;margin-bottom:16px">
+      <button onclick="loadLeaderboard()" style="padding:8px 20px;background:linear-gradient(135deg,rgba(0,229,255,.15),rgba(191,0,255,.1));border:1px solid rgba(0,229,255,.3);border-radius:10px;color:var(--cyan);font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:1.5px;cursor:pointer;transition:all .2s" id="topRefreshBtn">🔄 ОБНОВИТЬ</button>
+    </div>
+
+    <!-- Список лидеров -->
+    <div id="leaderboardList">
+      <!-- Генерируется JS -->
+    </div>
+
+    <!-- Твоё место -->
+    <div id="myRankCard" style="display:none;margin-top:12px;padding:14px 16px;background:linear-gradient(135deg,rgba(255,215,0,.08),rgba(255,140,0,.05));border:1px solid rgba(255,215,0,.3);border-radius:14px;display:none">
+      <div style="font-family:var(--fd);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:6px">ТВОЁ МЕСТО</div>
+      <div id="myRankText" style="font-family:var(--fd);font-size:13px;font-weight:700;color:var(--gold)">—</div>
     </div>
   </div>
 
@@ -1030,6 +1094,9 @@ function showPage(n) {
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+n).classList.add('active');
   document.getElementById('tab-'+n).classList.add('active');
+  if(n==='top') {
+    try { loadLeaderboard(); } catch(e){}
+  }
   if(n==='profile') {
     // Обновляем баланс перед рендером профиля
     try { const sb = document.getElementById('spoBal'); if(sb) sb.textContent = balance.toLocaleString('ru-RU'); } catch(e){}
@@ -1042,20 +1109,8 @@ function showPage(n) {
 // ══════════════════════════════════════════════════════════
 // Применить баланс: обновить переменную, DOM, кеш
 function applyBalance(val, save) {
-  balance = val;
-  INIT_BAL = val;
-  const fmt = val.toLocaleString('ru-RU');
-  // Обновляем ВСЕ элементы баланса синхронно и надёжно
-  try { document.getElementById('balanceVal').textContent = fmt; } catch(e){}
-  try { document.getElementById('pBal').textContent = fmt; } catch(e){}
-  try { const sb = document.getElementById('spoBal'); if(sb) sb.textContent = fmt; } catch(e){}
-  try { const eb = document.getElementById('exitBalPreview'); if(eb) eb.textContent = fmt; } catch(e){}
-  if(save) try { if(USER_ID) localStorage.setItem('bal_'+USER_ID, String(val)); } catch(e){}
-  try {
-    const p = document.getElementById('balancePill');
-    if(p) { p.classList.remove('pulse'); void p.offsetWidth; p.classList.add('pulse'); }
-  } catch(e){}
-  try { setSave('ok', '✅ '+fmt); } catch(e){}
+  // Унифицируем через setBalance — одна точка обновления
+  setBalance(val);
 }
 // Совместимость
 function updateBalUI() {
@@ -1669,6 +1724,118 @@ function sleep(ms){
 // ══════════════════════════════════════════════════════════
 // SPACE CANVAS ANIMATION — профиль игрока в космосе
 // ══════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════
+// ТОПЛИДЕРЫ КАЗИНО
+// ══════════════════════════════════════════════════════════
+let _leaderboardCache = null;
+let _leaderboardTs    = 0;
+
+async function loadLeaderboard(force = false) {
+  const list   = document.getElementById('leaderboardList');
+  const status = document.getElementById('topStatus');
+  const btn    = document.getElementById('topRefreshBtn');
+  if(!list) return;
+
+  // Кэш на 30 сек
+  if(!force && _leaderboardCache && Date.now() - _leaderboardTs < 30000) {
+    renderLeaderboard(_leaderboardCache);
+    return;
+  }
+
+  if(status) status.textContent = 'ЗАГРУЗКА...';
+  if(btn) btn.disabled = true;
+  list.innerHTML = '<div class="leader-empty">⏳ ЗАГРУЗКА...</div>';
+
+  // Пробуем API
+  if(API_URL && API_SECRET && USER_ID && USER_ID !== '0') {
+    try {
+      const ctrl = new AbortController();
+      const t    = setTimeout(() => ctrl.abort(), 4000);
+      let r;
+      try {
+        r = await fetch(
+          API_URL + '/casino/leaders?uid=' + USER_ID + '&secret=' + API_SECRET + '&_t=' + Date.now(),
+          { signal: ctrl.signal }
+        );
+      } finally { clearTimeout(t); }
+      if(r && r.ok) {
+        const d = await r.json();
+        if(d && d.ok && Array.isArray(d.leaders)) {
+          _leaderboardCache = d.leaders;
+          _leaderboardTs    = Date.now();
+          renderLeaderboard(d.leaders, d.my_rank);
+          if(status) status.textContent = 'ОБНОВЛЕНО: ' + new Date().toLocaleTimeString('ru-RU');
+          if(btn) btn.disabled = false;
+          return;
+        }
+      }
+    } catch(e) {}
+  }
+
+  // Offline — показываем локальную статистику
+  const localEntry = [{
+    rank: 1, name: USER_NAME || 'ТЫ', custom_id: CUSTOM_ID || USER_ID,
+    total_won: S.totalWon || 0, wins: S.wins || 0, avatar: getCurrentAvatarEmoji(), is_me: true
+  }];
+  renderLeaderboard(localEntry, 1);
+  if(status) status.textContent = '⚠️ ТОЛЬКО ЛОКАЛЬНЫЕ ДАННЫЕ (API НЕДОСТУПЕН)';
+  if(btn) btn.disabled = false;
+}
+
+const RANK_ICONS = ['👑','🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
+const RANK_CSS   = ['top1','top2','top3','regular','regular','regular','regular','regular','regular','regular'];
+
+function renderLeaderboard(leaders, myRank) {
+  const list = document.getElementById('leaderboardList');
+  if(!list) return;
+
+  if(!leaders || leaders.length === 0) {
+    list.innerHTML = '<div class="leader-empty">🎰 ПОКА НЕТ ИГРОКОВ<br><br>Стань первым!</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  leaders.forEach((p, i) => {
+    const rank     = p.rank || (i + 1);
+    const isMe     = p.is_me || (String(p.user_id) === String(USER_ID)) || (String(p.custom_id) === String(CUSTOM_ID));
+    const rankIcon = RANK_ICONS[rank - 1] || String(rank);
+    const rankCss  = RANK_CSS[Math.min(rank - 1, RANK_CSS.length - 1)];
+    const rankNum  = rank <= 3 ? '' : '#' + rank;
+    const rankTxt  = rank <= 4 ? RANK_ICONS[rank-1] : '#' + rank;
+
+    const won  = (p.total_won || 0).toLocaleString('ru-RU');
+    const name = (p.name || p.custom_id || 'ИГРОК').toString().toUpperCase().slice(0, 12);
+    const ava  = p.avatar || (rank === 1 ? '👑' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🎮');
+    const rnkColor = rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'rx';
+
+    const card = document.createElement('div');
+    card.className = 'leader-card ' + rankCss + (isMe ? ' me' : '');
+    card.innerHTML = (rank === 1 ? '<div class="leader-crown">👑</div>' : '')
+      + '<div class="leader-rank ' + rnkColor + '">' + rankTxt + '</div>'
+      + '<div class="leader-avatar">' + ava + '</div>'
+      + '<div class="leader-info">'
+      +   '<div class="leader-name">' + name + (isMe ? ' ← ВЫ' : '') + '</div>'
+      +   '<div class="leader-id">ID ' + (p.custom_id || p.user_id || '?') + ' · ' + (p.wins || 0) + ' побед</div>'
+      + '</div>'
+      + '<div class="leader-score">'
+      +   '<div class="leader-won ' + rnkColor + '">' + won + '</div>'
+      +   '<div class="leader-won-lbl">ТОКЕНОВ</div>'
+      + '</div>';
+    list.appendChild(card);
+  });
+
+  // Моё место если не в топ-10
+  const myCard = document.getElementById('myRankCard');
+  const myTxt  = document.getElementById('myRankText');
+  if(myCard && myTxt && myRank && myRank > 10) {
+    myCard.style.display = 'block';
+    myTxt.textContent = '#' + myRank + ' место · ' + (S.totalWon||0).toLocaleString('ru-RU') + ' токенов выиграно';
+  } else if(myCard) {
+    myCard.style.display = 'none';
+  }
+}
+
 function initSpaceCanvas() {
   try {
   const cv  = document.getElementById('spaceCanvas');
@@ -2037,29 +2204,11 @@ async function init() {
       }
     } catch(e){}
 
-    // ── Мгновенно показываем URL_BAL (из сообщения бота) ──────
-    // URL_BAL — баланс на момент нажатия кнопки в боте
-    const urlBal = URL_BAL > 0 ? URL_BAL : (parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10));
-    // Применяем как начальный баланс (лок ещё не установлен — API не ответил)
-    try {
-      balance = urlBal; INIT_BAL = urlBal;
-      const fmt = urlBal.toLocaleString('ru-RU');
-      try { document.getElementById('balanceVal').textContent = fmt; } catch(e2){}
-      updateMiniStats();
-    } catch(e){}
-    // Показываем на сплеше
+    // ── Показываем --- пока ждём API (избегаем показа устаревшего баланса) ──
+    try { updateMiniStats(); } catch(e){}
     try {
       const bv = document.getElementById('splashBalValue');
-      if(bv) {
-        bv.classList.remove('loading');
-        bv.textContent = urlBal > 0 ? urlBal.toLocaleString('ru-RU') : '---';
-        if(urlBal > 0) bv.classList.add('updated');
-      }
-      const src = document.getElementById('splashSource');
-      if(src && urlBal > 0) {
-        src.textContent = '← ИЗ БОТА (предварительный)';
-        src.className = 'splash-source show from-cache';
-      }
+      if(bv) { bv.className = 'splash-bal-value loading'; bv.textContent = '---'; }
     } catch(e){}
 
     // ── Прогресс-бар: 0 → 30% пока буквы анимируются ──────────
@@ -2124,143 +2273,103 @@ try{ initProfileBanner(); }catch(e){}
   }
 }
 
-// Загружает баланс из API с анимацией на сплеше
-// Простая логика: запрашиваем API → применяем. Всё.
-async function safeLoadBalanceAnimated() {
-  const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
-  if(!hasApi) {
-    splashStep('step1', 'fail'); splashStep('step2', 'fail');
-    setBotStatus('error', 'API ВЫКЛ');
-    splashStep('step3', 'active');
-    // Пробуем CloudStorage как резерв
-    await new Promise(resolve => {
-      const t = setTimeout(() => { resolve(); }, 1500);
-      try {
-        tg.CloudStorage.getItem('balance_'+USER_ID, (err, val) => {
-          clearTimeout(t);
-          if(!err && val) { const b=parseInt(val,10); if(!isNaN(b)&&b>0) { balance=b; INIT_BAL=b; } }
-          resolve();
-        });
-      } catch(e) { clearTimeout(t); resolve(); }
-    });
-    splashBalShow(balance > 0 ? balance : '---', '📦 ИЗ КЭША', 'from-cache');
-    splashStep('step3', 'done');
-    setBotStatus('error', 'КЭШ');
-    return balance;
-  }
+// ══════════════════════════════════════════════════════════
+// ЕДИНАЯ СИСТЕМА БАЛАНСА — простая, без race conditions
+// Источник правды: только /casino/balance API
+// ══════════════════════════════════════════════════════════
 
-  splashStep('step1', 'done');
-  splashStep('step2', 'active');
-  setBotStatus('loading', 'ЗАПРОС...');
+// Применяем баланс — устанавливает ВСЕ переменные и DOM сразу
+function setBalance(val) {
+  if(typeof val !== 'number' || isNaN(val) || val < 0) return;
+  balance = val;
+  INIT_BAL = val;
+  _lastKnownBalance = val;
+  const fmt = val.toLocaleString('ru-RU');
+  try { document.getElementById('balanceVal').textContent = fmt; } catch(e){}
+  try { document.getElementById('pBal').textContent = fmt; } catch(e){}
+  try { const sb=document.getElementById('spoBal'); if(sb) sb.textContent=fmt; } catch(e){}
+  try { const eb=document.getElementById('exitBalPreview'); if(eb) eb.textContent=val.toLocaleString('ru-RU'); } catch(e){}
+  try { const bp=document.getElementById('balancePill'); if(bp){bp.classList.remove('pulse');void bp.offsetWidth;bp.classList.add('pulse');} } catch(e){}
+  try { setSave('ok','✅ '+fmt); } catch(e){}
+  try { localStorage.setItem('bal_'+USER_ID, String(val)); } catch(e){}
+}
 
+// Получить баланс из API — возвращает число или null
+async function fetchBalanceFromAPI(timeoutMs) {
+  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return null;
   try {
     const ctrl = new AbortController();
-    const t    = setTimeout(() => ctrl.abort(), 4000);
-    let r;
+    const t    = setTimeout(() => ctrl.abort(), timeoutMs || 4000);
     try {
-      r = await fetch(
-        API_URL + '/casino/balance?uid=' + USER_ID +
-        '&secret=' + API_SECRET + '&_t=' + Date.now(),
+      const r = await fetch(
+        API_URL + '/casino/balance?uid=' + USER_ID + '&secret=' + API_SECRET + '&_t=' + Date.now(),
         { signal: ctrl.signal }
       );
-    } finally { clearTimeout(t); }
-
-    if(r && r.ok) {
-      const d = await r.json();
-      if(d && d.ok && typeof d.balance === 'number') {
-        // Применяем актуальный баланс из бота напрямую
-        const apiBal = d.balance;
-        balance = apiBal; INIT_BAL = apiBal;
-        _lastKnownBalance = apiBal;
-        const fmt = apiBal.toLocaleString('ru-RU');
-        try { document.getElementById('balanceVal').textContent = fmt; } catch(e){}
-        try { localStorage.setItem('bal_'+USER_ID, String(apiBal)); } catch(e){}
-        try { tg.CloudStorage.setItem('balance_'+USER_ID, String(apiBal), ()=>{}); } catch(e){}
-
-        splashStep('step2', 'done');
-        splashStep('step3', 'active');
-        splashBalShow(apiBal, '✅ БАЛАНС ИЗ БОТА', 'from-bot');
-        setBotStatus('connected', 'ПОДКЛЮЧЁН');
-        await new Promise(r=>setTimeout(r, 300));
-        splashStep('step3', 'done');
-        return apiBal;
+      if(r && r.ok) {
+        const d = await r.json();
+        if(d && d.ok && typeof d.balance === 'number') return d.balance;
       }
-    }
-  } catch(e) { console.warn('API balance error:', e); }
-
-  // API не ответил — пробуем CloudStorage
-  splashStep('step2', 'fail');
-  setBotStatus('error', 'НЕТ СВЯЗИ');
-  splashStep('step3', 'active');
-
-  const cloudBal = await new Promise(resolve => {
-    const t = setTimeout(() => resolve(null), 1500);
-    try {
-      tg.CloudStorage.getItem('balance_'+USER_ID, (err, val) => {
-        clearTimeout(t);
-        if(!err && val) { const b=parseInt(val,10); if(!isNaN(b)&&b>0) { resolve(b); return; } }
-        resolve(null);
-      });
-    } catch(e) { clearTimeout(t); resolve(null); }
-  });
-
-  if(cloudBal) {
-    balance = cloudBal; INIT_BAL = cloudBal;
-    splashBalShow(cloudBal, '📦 ИЗ КЭША', 'from-cache');
-    splashStep('step3', 'done');
-    setBotStatus('error', 'КЭШ');
-    return cloudBal;
-  }
-
-  splashStep('step3', 'fail');
-  splashBalShow(balance > 0 ? balance : URL_BAL, '⚠️ ИЗ URL', 'error');
-  return balance;
+    } finally { clearTimeout(t); }
+  } catch(e) {}
+  return null;
 }
 
+// Загрузка баланса на сплеше с анимацией шагов
+async function safeLoadBalanceAnimated() {
+  const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
 
-// Безопасная загрузка баланса (используется в polling и refresh)
+  if(!hasApi) {
+    splashStep('step1','fail'); splashStep('step2','fail');
+    setBotStatus('error','API ВЫКЛ');
+    // Пробуем localStorage как резерв
+    splashStep('step3','active');
+    const ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10);
+    if(ls > 0) { setBalance(ls); splashBalShow(ls,'📦 КЭШ','from-cache'); }
+    splashStep('step3','done');
+    return;
+  }
+
+  splashStep('step1','done');
+  splashStep('step2','active');
+  setBotStatus('loading','ЗАПРОС...');
+
+  const apiBal = await fetchBalanceFromAPI(4000);
+
+  if(apiBal !== null) {
+    // ✅ Успех — применяем и синхронизируем
+    const changed = apiBal !== balance;
+    setBalance(apiBal);
+    try { tg.CloudStorage.setItem('balance_'+USER_ID, String(apiBal), ()=>{}); } catch(e){}
+    splashStep('step2','done');
+    splashStep('step3','active');
+    splashBalShow(apiBal, changed ? '⚡ ОБНОВЛЕНО' : '✅ АКТУАЛЬНЫЙ', 'from-bot');
+    setBotStatus('connected','ПОДКЛЮЧЁН');
+    await new Promise(r=>setTimeout(r,300));
+    splashStep('step3','done');
+  } else {
+    // ❌ API не ответил — берём из localStorage
+    splashStep('step2','fail');
+    setBotStatus('error','НЕТ СВЯЗИ');
+    splashStep('step3','active');
+    const ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10);
+    if(ls > 0) { setBalance(ls); splashBalShow(ls,'📦 КЭШ','from-cache'); }
+    else { splashBalShow(balance > 0 ? balance : 0,'⚠️ ИЗ URL','error'); }
+    splashStep('step3','done');
+  }
+}
+
+// Безопасная загрузка (используется в refresh и polling)
 async function safeLoadBalance() {
-  // Приоритет: API → CloudStorage
-  if(API_URL && API_SECRET && USER_ID && USER_ID !== '0') {
-    try {
-      const ctrl = new AbortController();
-      const t    = setTimeout(() => ctrl.abort(), 3000);
-      try {
-        const r = await fetch(
-          API_URL + '/casino/balance?uid=' + USER_ID +
-          '&secret=' + API_SECRET + '&_t=' + Date.now(),
-          { signal: ctrl.signal }
-        );
-        if(r && r.ok) {
-          const d = await r.json();
-          if(d && d.ok && typeof d.balance === 'number') {
-            _apiBalanceLocked = true;
-            _lastKnownBalance = d.balance;
-            applyBalance(d.balance, true);
-            try { tg.CloudStorage.setItem('balance_' + USER_ID, String(d.balance), ()=>{}); } catch(e){}
-            try { setBotStatus('connected', 'ПОДКЛЮЧЁН'); } catch(e){}
-            return; // API ответил — CloudStorage не нужен
-          }
-        }
-      } finally { clearTimeout(t); }
-    } catch(e) {}
-    try { setBotStatus('error', 'НЕТ СВЯЗИ'); } catch(e){}
+  const apiBal = await fetchBalanceFromAPI(3000);
+  if(apiBal !== null) {
+    setBalance(apiBal);
+    try { setBotStatus('connected','ПОДКЛЮЧЁН'); } catch(e){}
+    try { tg.CloudStorage.setItem('balance_'+USER_ID, String(apiBal), ()=>{}); } catch(e){}
+  } else {
+    try { setBotStatus('error','НЕТ СВЯЗИ'); } catch(e){}
   }
-  // Резерв — CloudStorage (только если API недоступен)
-  await new Promise(resolve => {
-    const t = setTimeout(resolve, 1500);
-    try {
-      tg.CloudStorage.getItem('balance_' + USER_ID, (err, val) => {
-        clearTimeout(t);
-        if(!err && val) {
-          const b = parseInt(val, 10);
-          if(!isNaN(b) && b > 0) { try { applyBalance(b, true); } catch(e){} }
-        }
-        resolve();
-      });
-    } catch(e) { clearTimeout(t); resolve(); }
-  });
 }
+
 
 async function loadBalanceFromBot() { await safeLoadBalance(); }
 
@@ -2301,33 +2410,23 @@ let _apiBalanceLocked = false; // устаревший, оставлен для 
 // ══════════════════════════════════════════════════════════
 function applyServerBalance(newBal) {
   if(typeof newBal !== 'number' || newBal < 0) return;
-  if(newBal === balance && newBal === _lastKnownBalance) return; // ничего не изменилось
+  if(newBal === balance) return;
   const diff = newBal - balance;
-  _lastKnownBalance = newBal;
-  // Обновляем balance и все DOM-элементы сразу
-  applyBalance(newBal, true);
-  // Синхронизируем CloudStorage — следующее открытие увидит актуальный баланс
+  setBalance(newBal);
   try { tg.CloudStorage.setItem('balance_'+USER_ID, String(newBal), ()=>{}); } catch(e){}
-  // Обновляем ставки
   try { refreshBets(); } catch(e){}
-  // Обновляем мини-статистику под барабанами
   try { updateMiniStats(); } catch(e){}
-  // Если профиль открыт — обновляем сразу
+  try { setBotStatus('connected','ПОДКЛЮЧЁН'); } catch(e){}
   try {
-    const profilePage = document.getElementById('page-profile');
-    if(profilePage && profilePage.classList.contains('active')) renderProfile();
+    const pp = document.getElementById('page-profile');
+    if(pp && pp.classList.contains('active')) renderProfile();
   } catch(e){}
-  // Уведомление если токены добавлены
-  // Показываем зелёный индикатор при получении данных из бота
-  try { setBotStatus('connected', 'ПОДКЛЮЧЁН'); } catch(e){}
-
   if(diff > 0) {
     const fmt = diff.toLocaleString('ru-RU');
-    try { showToast('💰 +'+fmt+' токенов!', 'gold'); } catch(e){}
-    try { _showBanner('🎁 +'+fmt+' токенов добавлено!'); } catch(e){}
+    try { showToast('💰 +'+fmt+' токенов!','gold'); } catch(e){}
+    try { _showBanner('🎁 +'+fmt+' токенов!'); } catch(e){}
   } else if(diff < 0) {
-    const fmt = Math.abs(diff).toLocaleString('ru-RU');
-    try { showToast('💸 -'+fmt+' токенов', 'info'); } catch(e){}
+    try { showToast('💸 -'+Math.abs(diff).toLocaleString('ru-RU')+' токенов','info'); } catch(e){}
   }
 }
 
