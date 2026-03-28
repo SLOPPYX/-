@@ -629,7 +629,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
         <span id="refreshIcon" style="margin-left:4px;font-size:10px;opacity:0.6">🔄</span>
       </div>
       <div id="newBalanceBadge" style="display:none;font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:1px;color:var(--green);text-shadow:0 0 6px rgba(0,255,136,0.6);animation:badgePulse 1s ease infinite alternate;cursor:pointer" onclick="refreshBalanceNow()">▲ ОБНОВИТЬ</div>
-      <div class="bot-status loading" id="botStatus">
+      <div class="bot-status loading" id="botStatus" onclick="showApiDiag()" style="cursor:pointer" title="Нажми для диагностики">
         <div class="bot-status-dot"></div>
         <span id="botStatusText">БОТ...</span>
       </div>
@@ -1579,12 +1579,41 @@ function renderLevelBlock() {
 // ══════════════════════════════════════════════════════════
 // СТАТУС ПОДКЛЮЧЕНИЯ К БОТУ
 // ══════════════════════════════════════════════════════════
+
+// Диагностика API — показывает что реально передано
+function showApiDiag() {
+  const lines = [
+    'API_URL: ' + (API_URL || '❌ ПУСТО — бот не передал api_url'),
+    'API_SECRET: ' + (API_SECRET ? '✅ ' + API_SECRET.substring(0,6)+'...' : '❌ ПУСТО'),
+    'USER_ID: ' + (USER_ID && USER_ID!=='0' ? '✅ '+USER_ID : '❌ '+USER_ID),
+    'Balance: ' + balance.toLocaleString('ru-RU'),
+    '',
+    API_URL ? '✅ Ссылка на API передана' : '❌ ССЫЛКА НА API НЕ ПЕРЕДАНА!',
+    API_URL ? '   URL: ' + API_URL.substring(0,50) : '   Проверь что ngrok запущен и бот его передаёт',
+  ];
+  console.log('[ДИАГНОСТИКА]', lines.join('\n'));
+  showToast(API_URL ? '✅ API: ' + API_URL.substring(8,30)+'...' : '❌ API_URL пустой! Открой консоль', API_URL ? 'success' : 'error');
+  // Если есть API — сразу тестируем ping
+  if(API_URL && API_SECRET) {
+    fetch(API_URL + '/casino/ping', {
+      mode: 'cors',
+      headers: {'ngrok-skip-browser-warning':'1'}
+    })
+    .then(r => r.json())
+    .then(d => { showToast('🟢 API онлайн! ' + (d.status||''), 'success'); setBotStatus('connected','ОНЛАЙН'); })
+    .catch(e => { showToast('🔴 API недоступен: ' + e.message, 'error'); console.error('[PING]', e); });
+  }
+}
+
 function setBotStatus(state, text) {
   try {
     const el  = document.getElementById('botStatus');
     const txt = document.getElementById('botStatusText');
     if(el)  el.className  = 'bot-status ' + state;
     if(txt) txt.textContent = text;
+    // Показываем API_URL в title для отладки
+    if(el && API_URL) el.title = 'API: ' + API_URL;
+    else if(el) el.title = 'API_URL не передан ботом';
   } catch(e){}
 }
 
@@ -1756,7 +1785,7 @@ async function loadLeaderboard(force = false) {
       try {
         r = await fetch(
           API_URL + '/casino/leaders?uid=' + USER_ID + '&secret=' + API_SECRET + '&_t=' + Date.now(),
-          { signal: ctrl.signal }
+          { signal: ctrl.signal, mode:'cors', headers:{'ngrok-skip-browser-warning':'1'} }
         );
       } finally { clearTimeout(t); }
       if(r && r.ok) {
@@ -2175,6 +2204,15 @@ function splashBalShow(val, sourceText, sourceClass) {
 }
 
 async function init() {
+  // Диагностика при старте — сразу видим что передано
+  console.log('[Casino INIT] ==========================================');
+  console.log('[Casino INIT] USER_ID:', USER_ID);
+  console.log('[Casino INIT] URL_BAL:', URL_BAL);
+  console.log('[Casino INIT] API_URL:', API_URL || '❌ ПУСТОЙ');
+  console.log('[Casino INIT] API_SECRET:', API_SECRET ? API_SECRET.substring(0,6)+'...' : '❌ ПУСТОЙ');
+  try { console.log('[Casino INIT] Full URL:', window.location.href.substring(0, 200)); } catch(e){}
+  console.log('[Casino INIT] ==========================================');
+
   const bar    = document.getElementById('splashBar');
   const status = document.getElementById('splashStatus');
   const splash = document.getElementById('splash');
@@ -2295,22 +2333,60 @@ function setBalance(val) {
 }
 
 // Получить баланс из API — возвращает число или null
+// Включает полную диагностику для отладки
 async function fetchBalanceFromAPI(timeoutMs) {
-  if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return null;
+  // Диагностика: логируем что у нас есть
+  const _diag = {
+    API_URL: API_URL || '(ПУСТО)',
+    API_SECRET: API_SECRET ? API_SECRET.substring(0,6)+'...' : '(ПУСТО)',
+    USER_ID: USER_ID || '(ПУСТО)',
+    ts: new Date().toISOString()
+  };
+  console.log('[Casino API] fetchBalanceFromAPI вызов:', _diag);
+
+  if(!API_URL) {
+    console.error('[Casino API] ❌ API_URL пустой! Проверь что бот передаёт &api_url= в ссылке казино');
+    setBotStatus('error', 'НЕТ API URL');
+    return null;
+  }
+  if(!API_SECRET) {
+    console.error('[Casino API] ❌ API_SECRET пустой!');
+    setBotStatus('error', 'НЕТ СЕКРЕТА');
+    return null;
+  }
+  if(!USER_ID || USER_ID === '0') {
+    console.error('[Casino API] ❌ USER_ID пустой!');
+    setBotStatus('error', 'НЕТ USER ID');
+    return null;
+  }
+
+  const url = API_URL + '/casino/balance?uid=' + USER_ID + '&secret=' + API_SECRET + '&_t=' + Date.now();
+  console.log('[Casino API] 🌐 Запрос:', url.replace(API_SECRET, '***'));
+
   try {
     const ctrl = new AbortController();
-    const t    = setTimeout(() => ctrl.abort(), timeoutMs || 4000);
+    const t    = setTimeout(() => ctrl.abort(), timeoutMs || 5000);
     try {
-      const r = await fetch(
-        API_URL + '/casino/balance?uid=' + USER_ID + '&secret=' + API_SECRET + '&_t=' + Date.now(),
-        { signal: ctrl.signal }
-      );
+      const r = await fetch(url, {
+        signal: ctrl.signal,
+        mode: 'cors',
+        headers: { 'ngrok-skip-browser-warning': '1' }
+      });
+      console.log('[Casino API] ✅ Ответ статус:', r ? r.status : 'null');
       if(r && r.ok) {
         const d = await r.json();
+        console.log('[Casino API] ✅ Данные:', d);
         if(d && d.ok && typeof d.balance === 'number') return d.balance;
+        console.warn('[Casino API] ⚠️ Неверный формат ответа:', d);
+      } else if(r) {
+        const txt = await r.text().catch(()=>'');
+        console.error('[Casino API] ❌ HTTP ' + r.status + ':', txt.substring(0,200));
       }
     } finally { clearTimeout(t); }
-  } catch(e) {}
+  } catch(e) {
+    console.error('[Casino API] ❌ Ошибка fetch:', e.message || e);
+    if(e.name === 'AbortError') console.error('[Casino API] ⏰ Таймаут', timeoutMs, 'мс');
+  }
   return null;
 }
 
@@ -2464,7 +2540,7 @@ async function longPoll() {
       try {
         r = await fetch(
           API_URL+'/casino/push?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-          { signal: ctrl.signal }
+          { signal: ctrl.signal, mode:'cors', headers:{'ngrok-skip-browser-warning':'1'} }
         );
       } finally { clearTimeout(t); }
       if(r && r.ok) {
@@ -2500,7 +2576,7 @@ async function notifyBalance() {
     try {
       r = await fetch(
         API_URL+'/casino/notify?uid='+USER_ID+'&secret='+API_SECRET+'&client_bal='+balance+'&_t='+Date.now(),
-        { signal: ctrl.signal }
+        { signal: ctrl.signal, mode:'cors', headers:{'ngrok-skip-browser-warning':'1'} }
       );
     } finally { clearTimeout(t); }
     if(r && r.ok) {
@@ -2522,7 +2598,7 @@ async function pollBalance() {
     try {
       r = await fetch(
         API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-        { signal: ctrl.signal }
+        { signal: ctrl.signal, mode:'cors', headers:{'ngrok-skip-browser-warning':'1'} }
       );
     } finally { clearTimeout(t); }
     if(r && r.ok) {
@@ -2557,7 +2633,7 @@ document.addEventListener('visibilitychange', async () => {
           const r = await fetch(
             API_URL + '/casino/balance?uid=' + USER_ID +
             '&secret=' + API_SECRET + '&_t=' + Date.now(),
-            { signal: ctrl.signal }
+            { mode:'cors', headers:{'ngrok-skip-browser-warning':'1'}, signal: ctrl.signal }
           );
           if(r && r.ok) {
             const d = await r.json();
