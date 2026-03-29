@@ -104,7 +104,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .spin-count{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:10px;opacity:.55;font-family:var(--fd)}
 
 /* ── SAVE STATUS ── */
-.save-row{display:flex;align-items:center;justify-content:center;gap:6px;font-size:10px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px;transition:all .3s}
+.save-row{display:none!important}
 .save-dot{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);animation:sdPulse 2s ease infinite}
 .save-dot.saving{background:var(--gold);box-shadow:0 0 5px var(--gold);animation:none}
 .save-dot.error{background:var(--red);box-shadow:0 0 5px var(--red);animation:none}
@@ -696,10 +696,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     </div>
 
     <!-- Save status -->
-    <div class="save-row">
-      <div class="save-dot" id="saveDot"></div>
-      <span id="saveText">СИНХРОНИЗИРОВАНО</span>
-    </div>
+    <!-- save-row убран -->
+    <div style="display:none"><div id="saveDot"></div><span id="saveText"></span></div>
 
     <!-- Spin btn -->
     <button class="spin-btn" id="spinBtn" onclick="spin()">
