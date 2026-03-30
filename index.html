@@ -564,6 +564,66 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .leader-crown{position:absolute;top:-2px;right:10px;font-size:14px;animation:crownFloat 2s ease-in-out infinite}
 @keyframes crownFloat{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-3px) rotate(5deg)}}
 .leader-empty{text-align:center;padding:40px 20px;font-family:var(--fd);font-size:10px;color:var(--muted);letter-spacing:2px}
+/* ══ РАКЕТКА — CRASH GAME ══════════════════════════════ */
+.rocket-page { padding:14px 20px }
+.rocket-canvas-wrap { position:relative; border-radius:var(--r18); overflow:hidden;
+  margin-bottom:14px; background:#0a0a0a; border:1px solid var(--border) }
+#rocketCanvas { display:block; width:100%; height:220px }
+.rocket-multiplier { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  font-family:var(--fd); font-size:52px; font-weight:900; color:#fff;
+  text-shadow:0 0 30px rgba(255,255,255,.5); pointer-events:none;
+  transition:all .15s; line-height:1 }
+.rocket-multiplier.crashed { color:var(--red); text-shadow:0 0 20px rgba(224,92,92,.6) }
+.rocket-multiplier.flying { color:#fff }
+.rocket-label { position:absolute; bottom:10px; left:0; right:0; text-align:center;
+  font-family:var(--fd); font-size:9px; letter-spacing:2px; color:var(--muted) }
+.rocket-controls { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px }
+.rocket-bet-block { background:var(--panel); border:1px solid var(--border);
+  border-radius:var(--r14); padding:14px }
+.rocket-bet-label { font-family:var(--fd); font-size:8px; letter-spacing:2px; color:var(--muted);
+  margin-bottom:8px }
+.rocket-bet-input { width:100%; padding:10px 12px; background:rgba(255,255,255,.06);
+  border:1px solid var(--border); border-radius:var(--r10); color:var(--text);
+  font-family:var(--fd); font-size:14px; font-weight:700; outline:none; text-align:center;
+  transition:border-color .2s }
+.rocket-bet-input:focus { border-color:var(--border2) }
+.rocket-auto-block { background:var(--panel); border:1px solid var(--border);
+  border-radius:var(--r14); padding:14px }
+.rocket-auto-label { font-family:var(--fd); font-size:8px; letter-spacing:2px; color:var(--muted);
+  margin-bottom:8px }
+.rocket-auto-row { display:grid; grid-template-columns:repeat(4,1fr); gap:6px }
+.rocket-auto-btn { padding:8px 4px; background:var(--panel); border:1px solid var(--border);
+  border-radius:var(--r6); color:var(--muted); font-family:var(--fd); font-size:10px;
+  font-weight:700; cursor:pointer; text-align:center; transition:all .15s }
+.rocket-auto-btn.active { background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.3); color:#fff }
+.rocket-auto-btn:active { transform:scale(.93) }
+.rocket-action-btn { width:100%; padding:16px; border:none; border-radius:var(--r14);
+  font-family:var(--fd); font-size:15px; font-weight:900; letter-spacing:2px;
+  cursor:pointer; transition:all .15s; margin-bottom:12px; position:relative; overflow:hidden }
+.rocket-action-btn.bet { background:#fff; color:#0a0a0a }
+.rocket-action-btn.cashout { background:var(--green); color:#0a0a0a; animation:cashoutPulse .8s ease infinite alternate }
+@keyframes cashoutPulse { from{box-shadow:0 0 0 rgba(92,184,122,0)} to{box-shadow:0 0 20px rgba(92,184,122,.4)} }
+.rocket-action-btn.waiting { background:rgba(255,255,255,.12); color:var(--muted); cursor:not-allowed }
+.rocket-action-btn:active:not(.waiting) { transform:scale(.97) }
+.rocket-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-bottom:12px }
+.rocket-stat { background:var(--panel); border:1px solid var(--border); border-radius:var(--r10);
+  padding:10px 7px; text-align:center }
+.rocket-stat-v { font-family:var(--fd); font-size:13px; font-weight:700; color:#fff; display:block; margin-bottom:2px }
+.rocket-stat-l { font-size:9px; color:var(--muted); letter-spacing:.5px }
+.rocket-history { margin-bottom:14px }
+.rocket-history-title { font-family:var(--fd); font-size:8px; letter-spacing:2px; color:var(--muted); margin-bottom:8px }
+.rocket-history-chips { display:flex; gap:5px; flex-wrap:wrap }
+.rh-chip { padding:4px 9px; border-radius:20px; font-family:var(--fd); font-size:10px; font-weight:700 }
+.rh-chip.high { background:rgba(92,184,122,.12); border:1px solid rgba(92,184,122,.3); color:var(--green) }
+.rh-chip.mid { background:rgba(255,255,255,.07); border:1px solid var(--border); color:var(--muted2) }
+.rh-chip.low { background:rgba(224,92,92,.1); border:1px solid rgba(224,92,92,.25); color:var(--red) }
+.rocket-result-strip { height:42px; border-radius:var(--r10); display:flex; align-items:center;
+  justify-content:center; font-family:var(--fb); font-size:14px; font-weight:700;
+  margin-bottom:12px; background:var(--panel); border:1px solid var(--border); color:var(--muted);
+  transition:all .3s }
+.rocket-result-strip.win { background:rgba(92,184,122,.1); border-color:rgba(92,184,122,.35); color:var(--green) }
+.rocket-result-strip.loss { background:rgba(224,92,92,.08); border-color:rgba(224,92,92,.28); color:var(--red) }
+
 </style>
 </head>
 <body>
@@ -638,10 +698,11 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
   <!-- NAV -->
   <div class="nav">
-    <div class="nav-tab active" onclick="showPage('game')" id="tab-game">🎰 Игра</div>
+    <div class="nav-tab active" onclick="showPage('game')" id="tab-game">🎰 Слоты</div>
+    <div class="nav-tab" onclick="showPage('rocket')" id="tab-rocket">🚀 Ракетка</div>
     <div class="nav-tab" onclick="showPage('profile')" id="tab-profile">👤 Профиль</div>
     <div class="nav-tab" onclick="showPage('top')" id="tab-top">🏆 Топ</div>
-    <div class="nav-tab" onclick="showPage('pay')" id="tab-pay">📊 Выплаты</div>
+    <div class="nav-tab" onclick="showPage('pay')" id="tab-pay">📊 Таблица</div>
   </div>
 
   <!-- ══ GAME ══ -->
@@ -818,6 +879,68 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     </div>
   </div>
 
+  <!-- ══ ROCKET GAME ══ -->
+  <div class="page" id="page-rocket">
+    <!-- Canvas для анимации -->
+    <div class="rocket-canvas-wrap">
+      <canvas id="rocketCanvas"></canvas>
+      <div class="rocket-multiplier" id="rocketMult">1.00×</div>
+      <div class="rocket-label" id="rocketLabel">ОЖИДАНИЕ ЗАПУСКА...</div>
+    </div>
+
+    <!-- Результат -->
+    <div class="rocket-result-strip" id="rocketResult">🚀 Сделай ставку и нажми ЗАПУСК</div>
+
+    <!-- История последних коэффициентов -->
+    <div class="rocket-history">
+      <div class="rocket-history-title">ПОСЛЕДНИЕ ИКСЫ</div>
+      <div class="rocket-history-chips" id="rocketHistory"></div>
+    </div>
+
+    <!-- Ставка + авто-вывод -->
+    <div class="rocket-controls">
+      <div class="rocket-bet-block">
+        <div class="rocket-bet-label">СТАВКА (токенов)</div>
+        <input class="rocket-bet-input" id="rocketBetInput" type="number" value="10000" min="1000" step="1000">
+        <div style="display:flex;gap:5px;margin-top:8px">
+          <button onclick="rocketSetBet(10000)" style="flex:1;padding:6px;background:var(--panel);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:var(--fd);font-size:9px;cursor:pointer">10K</button>
+          <button onclick="rocketSetBet(25000)" style="flex:1;padding:6px;background:var(--panel);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:var(--fd);font-size:9px;cursor:pointer">25K</button>
+          <button onclick="rocketSetBet(50000)" style="flex:1;padding:6px;background:var(--panel);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:var(--fd);font-size:9px;cursor:pointer">50K</button>
+          <button onclick="rocketSetBet(100000)" style="flex:1;padding:6px;background:var(--panel);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:var(--fd);font-size:9px;cursor:pointer">100K</button>
+        </div>
+      </div>
+      <div class="rocket-auto-block">
+        <div class="rocket-auto-label">АВТО-ВЫВОД ПРИ ×</div>
+        <div class="rocket-auto-row">
+          <div class="rocket-auto-btn" onclick="rocketSetAuto(1.5)">×1.5</div>
+          <div class="rocket-auto-btn" onclick="rocketSetAuto(2)">×2</div>
+          <div class="rocket-auto-btn" onclick="rocketSetAuto(3)">×3</div>
+          <div class="rocket-auto-btn active" onclick="rocketSetAuto(0)">ВЫКЛ</div>
+        </div>
+        <div style="margin-top:8px;font-family:var(--fd);font-size:9px;color:var(--muted)" id="rocketAutoStatus">Авто-вывод выключен</div>
+      </div>
+    </div>
+
+    <!-- Главная кнопка -->
+    <button class="rocket-action-btn bet" id="rocketActionBtn" onclick="rocketAction()">🚀 ЗАПУСК</button>
+
+    <!-- Мини-статистика -->
+    <div class="rocket-stats-row">
+      <div class="rocket-stat">
+        <span class="rocket-stat-v" id="rStSpins">0</span>
+        <span class="rocket-stat-l">ИГРЫ</span>
+      </div>
+      <div class="rocket-stat">
+        <span class="rocket-stat-v" id="rStBest" style="color:var(--green)">—</span>
+        <span class="rocket-stat-l">ЛУЧШИЙ ИКС</span>
+      </div>
+      <div class="rocket-stat">
+        <span class="rocket-stat-v" id="rStProfit">0</span>
+        <span class="rocket-stat-l">ПРИБЫЛЬ</span>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ TOP LEADERS ══ -->
   <div class="page" id="page-top">
     <div style="height:4px"></div>
@@ -931,7 +1054,7 @@ const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp 
   BackButton:{ show:()=>{}, hide:()=>{}, onClick:()=>{} },
   enableClosingConfirmation:()=>{}, close:()=>{ window.history.back(); },
   sendData:()=>{}, ready:()=>{},
-  CloudStorage:{ getItem:(_k,cb)=>{ setTimeout(()=>cb('not_supported',null),0); }, setItem:()=>{} },
+  CloudStorage:{ getItem:(_k,cb)=>{ setTimeout(()=>cb('not_supported',null),0); }, setItem:()=>{}, getItems:(_ks,cb)=>{ setTimeout(()=>cb('not_supported',{}),0); }, removeItem:()=>{} },
   initDataUnsafe:{}
 };
 try { tg.expand(); } catch(e){}
@@ -1005,8 +1128,11 @@ function saveStats() {
     if(S.history && S.history.length > 20) S.history = S.history.slice(-20);
     const str = JSON.stringify(S);
     localStorage.setItem(STATS_KEY, str);
-    // Синхронизируем в Cloud (асинхронно, не блокируем UI)
-    cloudSet(CS_STATS, str);
+    // Синхронизируем в Cloud — только если есть реальные данные
+    // (не перезаписываем Cloud пустыми данными при первом запуске)
+    if(S.spins > 0 || S.totalWon > 0) {
+      cloudSet(CS_STATS, str);
+    }
   } catch(e) {}
 }
 const _ss = loadStats();
@@ -1104,6 +1230,9 @@ function showPage(n) {
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+n).classList.add('active');
   document.getElementById('tab-'+n).classList.add('active');
+  if(n==='rocket') {
+    try { initRocket(); } catch(e){}
+  }
   if(n==='top') {
     try { loadLeaderboard(true); } catch(e){}
     // Авто-обновление каждые 60 сек пока вкладка открыта
@@ -1556,30 +1685,55 @@ function cloudGet(key, cb) {
 
 // Загрузить всё сразу (несколько ключей параллельно)
 function cloudGetMulti(keys, cb) {
-  try {
-    tg.CloudStorage.getItems(keys, (err, values) => {
-      if(!err && values) {
-        // Обновляем localStorage кэш
-        keys.forEach((k, i) => {
-          if(values[k]) try { localStorage.setItem('cs_' + k, values[k]); } catch(e) {}
-        });
-        cb(null, values);
-      } else {
-        // Fallback — собираем из localStorage
-        const result = {};
-        keys.forEach(k => {
-          result[k] = localStorage.getItem('cs_' + k) || localStorage.getItem(k) || null;
-        });
-        cb(err, result);
-      }
-    });
-  } catch(e) {
-    const result = {};
-    keys.forEach(k => {
-      result[k] = localStorage.getItem('cs_' + k) || localStorage.getItem(k) || null;
-    });
-    cb(e, result);
+  // Используем последовательные getItem — более совместимо
+  const result = {};
+  let remaining = keys.length;
+  if(remaining === 0) { cb(null, result); return; }
+
+  function tryGetItems() {
+    // Сначала пробуем getItems (быстрее)
+    try {
+      tg.CloudStorage.getItems(keys, (err, values) => {
+        if(!err && values && typeof values === 'object') {
+          keys.forEach(k => {
+            if(values[k]) try { localStorage.setItem('cs_' + k, values[k]); } catch(e) {}
+            result[k] = values[k] || localStorage.getItem('cs_' + k) || localStorage.getItem(k) || null;
+          });
+          cb(null, result);
+        } else {
+          // getItems не сработал — делаем по одному
+          loadOneByOne();
+        }
+      });
+    } catch(e) {
+      loadOneByOne();
+    }
   }
+
+  function loadOneByOne() {
+    let idx = 0;
+    function next() {
+      if(idx >= keys.length) { cb(null, result); return; }
+      const k = keys[idx++];
+      try {
+        tg.CloudStorage.getItem(k, (err, val) => {
+          if(!err && val !== null && val !== undefined && val !== '') {
+            try { localStorage.setItem('cs_' + k, val); } catch(e) {}
+            result[k] = val;
+          } else {
+            result[k] = localStorage.getItem('cs_' + k) || localStorage.getItem(k) || null;
+          }
+          next();
+        });
+      } catch(e) {
+        result[k] = localStorage.getItem('cs_' + k) || localStorage.getItem(k) || null;
+        next();
+      }
+    }
+    next();
+  }
+
+  tryGetItems();
 }
 
 // ── Ключи для CloudStorage ──
@@ -2582,23 +2736,37 @@ async function loadAllFromCloud() {
           try {
             const cs = JSON.parse(cloudStats);
             if(cs && typeof cs.spins === 'number') {
-              // Берём максимум по каждому полю — защита от откатов
-              S.spins     = Math.max(S.spins || 0,     cs.spins || 0);
-              S.wins      = Math.max(S.wins || 0,      cs.wins || 0);
-              S.losses    = Math.max(S.losses || 0,    cs.losses || 0);
-              S.totalWon  = Math.max(S.totalWon || 0,  cs.totalWon || 0);
-              S.totalLost = Math.max(S.totalLost || 0, cs.totalLost || 0);
-              S.bestWin   = Math.max(S.bestWin || 0,   cs.bestWin || 0);
-              S.profit    = cs.profit || S.profit || 0;
-              // История — берём более длинную
-              if((cs.history || []).length > (S.history || []).length) {
-                S.history    = cs.history;
-                S.streak     = cs.streak || 0;
-                S.streakType = cs.streakType || null;
+              // Если cloud данные богаче — применяем полностью
+              // Если местные богаче — берём максимум по каждому полю
+              const localRicher = (S.spins > cs.spins) || (S.totalWon > cs.totalWon);
+              if(!localRicher) {
+                // Cloud богаче — берём из Cloud как основу
+                S.spins      = cs.spins     || 0;
+                S.wins       = cs.wins      || 0;
+                S.losses     = cs.losses    || 0;
+                S.totalWon   = cs.totalWon  || 0;
+                S.totalLost  = cs.totalLost || 0;
+                S.bestWin    = cs.bestWin   || 0;
+                S.profit     = cs.profit    || 0;
+                S.history    = cs.history   || [];
+                S.streak     = cs.streak    || 0;
+                S.streakType = cs.streakType|| null;
+              } else {
+                // Местные богаче — берём максимум каждого поля
+                S.spins     = Math.max(S.spins || 0,     cs.spins     || 0);
+                S.wins      = Math.max(S.wins  || 0,     cs.wins      || 0);
+                S.losses    = Math.max(S.losses|| 0,     cs.losses    || 0);
+                S.totalWon  = Math.max(S.totalWon|| 0,   cs.totalWon  || 0);
+                S.totalLost = Math.max(S.totalLost|| 0,  cs.totalLost || 0);
+                S.bestWin   = Math.max(S.bestWin|| 0,    cs.bestWin   || 0);
+                if((cs.history||[]).length > (S.history||[]).length) {
+                  S.history = cs.history; S.streak = cs.streak||0; S.streakType = cs.streakType||null;
+                }
               }
-              // Сохраняем обновлённую статистику обратно в localStorage
+              // Обновляем localStorage и сохраняем мерж обратно в Cloud
               try { localStorage.setItem(STATS_KEY, JSON.stringify(S)); } catch(e) {}
-              console.log('[CloudSync] 📊 Статистика из Cloud: ' + S.spins + ' спинов');
+              cloudSet(CS_STATS, JSON.stringify(S)); // синхронизируем мерж
+              console.log('[CloudSync] 📊 Статистика: ' + S.spins + ' спинов, cloud богаче: ' + !localRicher);
             }
           } catch(e) { console.warn('[CloudSync] stats parse error:', e); }
         }
@@ -2915,6 +3083,376 @@ window.addEventListener('pagehide', () => {
     } catch(e) {}
   }
 });
+
+
+// ══════════════════════════════════════════════════════════
+// 🚀 РАКЕТКА — CRASH GAME ("Бешеные иксы")
+// Логика: ракета взлетает, множитель растёт.
+// Нужно вывести ДО краша. Чем дольше ждёшь — тем выше икс.
+// ══════════════════════════════════════════════════════════
+
+// ── Состояние игры ──
+const RS = {
+  state: 'idle',      // idle | flying | crashed
+  mult:  1.00,
+  bet:   10000,
+  autoCashout: 0,     // 0 = выключен
+  betPlaced: false,
+  cashoutDone: false,
+  crashAt: 1.00,
+  startTime: 0,
+  animFrame: null,
+  history: [],        // последние 12 коэффициентов краша
+  // статистика
+  games: 0, bestMult: 0, profit: 0
+};
+
+// Ключ для сохранения статистики ракетки
+const ROCKET_STATS_KEY = 'rocket_stats_' + USER_ID;
+(function() {
+  try {
+    const raw = localStorage.getItem('cs_'+ROCKET_STATS_KEY) || localStorage.getItem(ROCKET_STATS_KEY);
+    if(raw) { const d = JSON.parse(raw); if(d) { RS.games=d.games||0; RS.bestMult=d.bestMult||0; RS.profit=d.profit||0; RS.history=d.history||[]; } }
+  } catch(e) {}
+})();
+
+function rocketSaveStats() {
+  const d = { games:RS.games, bestMult:RS.bestMult, profit:RS.profit, history:RS.history };
+  try { localStorage.setItem(ROCKET_STATS_KEY, JSON.stringify(d)); } catch(e) {}
+  if(RS.games > 0) cloudSet('cs_'+ROCKET_STATS_KEY, JSON.stringify(d));
+}
+
+// ── Генерация краша (house edge ~5%) ──
+function generateCrash() {
+  // Алгоритм: экспоненциальное распределение с весами
+  // ~45% краш до 2x, ~25% до 3x, ~15% до 5x, ~10% до 10x, ~5% выше
+  const r = Math.random();
+  if(r < 0.01) return +(0.95 + Math.random()*0.1).toFixed(2); // 1% краш почти сразу
+  const h = 0.95 / (1 - Math.random());
+  return Math.min(+(Math.max(1.01, h)).toFixed(2), 250);
+}
+
+// ── Canvas анимация ──
+let rocketCanvas, rocketCtx, rocketW, rocketH;
+function initRocketCanvas() {
+  rocketCanvas = document.getElementById('rocketCanvas');
+  if(!rocketCanvas) return;
+  const wrap = rocketCanvas.parentElement;
+  rocketW = wrap.offsetWidth;
+  rocketH = 220;
+  rocketCanvas.width  = rocketW * (window.devicePixelRatio || 1);
+  rocketCanvas.height = rocketH * (window.devicePixelRatio || 1);
+  rocketCanvas.style.width  = rocketW + 'px';
+  rocketCanvas.style.height = rocketH + 'px';
+  rocketCtx = rocketCanvas.getContext('2d');
+  rocketCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+  drawRocketIdle();
+}
+
+function drawRocketIdle() {
+  if(!rocketCtx) return;
+  const ctx = rocketCtx, w = rocketW, h = rocketH;
+  ctx.clearRect(0, 0, w, h);
+  // Фон — сетка
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for(let x=0; x<w; x+=40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+  for(let y=0; y<h; y+=30) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+  // Ракета в покое
+  drawRocketEmoji(ctx, w*0.15, h*0.75, 1.0, false);
+}
+
+function drawRocketEmoji(ctx, x, y, scale, crashed) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  if(crashed) ctx.rotate(Math.PI / 4);
+  else ctx.rotate(-Math.PI / 6);
+  ctx.font = '32px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(crashed ? '💥' : '🚀', 0, 0);
+  ctx.restore();
+}
+
+function drawRocketFlying(progress) {
+  if(!rocketCtx) return;
+  const ctx = rocketCtx, w = rocketW, h = rocketH;
+  ctx.clearRect(0, 0, w, h);
+
+  // Фон
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for(let x=0; x<w; x+=40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+  for(let y=0; y<h; y+=30) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+
+  // Кривая пути ракеты
+  const pts = Math.max(2, Math.floor(progress * 80));
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]);
+  for(let i=0; i<=pts; i++) {
+    const t = i / 80;
+    const px = w * 0.1 + t * w * 0.8;
+    const py = h * 0.85 - t * t * h * 0.75;
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Ракета
+  const t = progress;
+  const rx = w * 0.1 + t * w * 0.8;
+  const ry = h * 0.85 - t * t * h * 0.75;
+
+  // Хвост огня
+  const grad = ctx.createRadialGradient(rx, ry, 0, rx, ry, 30 * (0.5 + t));
+  grad.addColorStop(0, 'rgba(255,255,255,0.4)');
+  grad.addColorStop(0.4, 'rgba(255,200,50,0.2)');
+  grad.addColorStop(1, 'rgba(255,100,0,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(rx, ry, 30 * (0.5 + t), 0, Math.PI*2);
+  ctx.fill();
+
+  drawRocketEmoji(ctx, rx, ry, 1 + t*0.4, false);
+}
+
+function drawRocketCrashed(x, y) {
+  if(!rocketCtx) return;
+  const ctx = rocketCtx, w = rocketW, h = rocketH;
+  // Взрыв
+  const grad = ctx.createRadialGradient(x, y, 0, x, y, 60);
+  grad.addColorStop(0, 'rgba(255,100,50,0.6)');
+  grad.addColorStop(0.4, 'rgba(224,92,92,0.3)');
+  grad.addColorStop(1, 'rgba(224,92,92,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(x, y, 60, 0, Math.PI*2);
+  ctx.fill();
+  drawRocketEmoji(ctx, x, y, 1.5, true);
+}
+
+// ── Игровой цикл ──
+let _rocketLoop = null;
+const ROCKET_SPEED = 0.00012; // скорость роста progress
+
+function rocketStartFlight() {
+  RS.state    = 'flying';
+  RS.mult     = 1.00;
+  RS.startTime = Date.now();
+  RS.cashoutDone = false;
+
+  // Устанавливаем краш
+  RS.crashAt = generateCrash();
+  console.log('[Rocket] crashAt =', RS.crashAt);
+
+  rocketUpdateUI();
+
+  let progress = 0;
+  function loop() {
+    if(RS.state !== 'flying') return;
+    const elapsed = (Date.now() - RS.startTime) / 1000;
+    // Множитель растёт экспоненциально
+    RS.mult = Math.pow(Math.E, elapsed * 0.08);
+    RS.mult = Math.floor(RS.mult * 100) / 100;
+    progress = Math.min(elapsed * ROCKET_SPEED * 8000, 0.95);
+
+    // Обновляем отображение
+    const multEl = document.getElementById('rocketMult');
+    if(multEl) { multEl.textContent = RS.mult.toFixed(2) + '×'; multEl.className = 'rocket-multiplier flying'; }
+
+    drawRocketFlying(progress);
+
+    // Авто-вывод
+    if(RS.betPlaced && !RS.cashoutDone && RS.autoCashout > 0 && RS.mult >= RS.autoCashout) {
+      rocketCashout();
+      return;
+    }
+
+    // Краш?
+    if(RS.mult >= RS.crashAt) {
+      rocketCrash(progress);
+      return;
+    }
+
+    _rocketLoop = requestAnimationFrame(loop);
+  }
+  _rocketLoop = requestAnimationFrame(loop);
+}
+
+function rocketCrash(progress) {
+  if(_rocketLoop) { cancelAnimationFrame(_rocketLoop); _rocketLoop = null; }
+  RS.state = 'crashed';
+
+  const rx = rocketW * 0.1 + progress * rocketW * 0.8;
+  const ry = rocketH * 0.85 - progress * progress * rocketH * 0.75;
+  drawRocketCrashed(rx, ry);
+
+  const multEl = document.getElementById('rocketMult');
+  if(multEl) { multEl.textContent = RS.crashAt.toFixed(2) + '×'; multEl.className = 'rocket-multiplier crashed'; }
+  const lbl = document.getElementById('rocketLabel');
+  if(lbl) lbl.textContent = '💥 КРАШ НА ' + RS.crashAt.toFixed(2) + '×!';
+
+  // Добавляем в историю
+  RS.history.unshift(RS.crashAt);
+  if(RS.history.length > 12) RS.history = RS.history.slice(0, 12);
+
+  // Если ставка была и не вывели — проигрыш
+  if(RS.betPlaced && !RS.cashoutDone) {
+    RS.profit -= RS.bet;
+    RS.games++;
+    setBalance(balance - RS.bet);
+    // Сообщаем боту об убытке
+    if(API_URL && API_SECRET) {
+      fetch(API_URL + '/casino/spin', {
+        method:'POST', headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'1'},
+        body: JSON.stringify({ uid:parseInt(USER_ID), secret:API_SECRET, bet:RS.bet, result:'loss', mult:0 })
+      }).then(r=>r.json()).then(d=>{ if(d && d.ok) setBalance(d.balance); }).catch(()=>{});
+    }
+    const res = document.getElementById('rocketResult');
+    if(res) { res.textContent = '💥 Краш! −' + RS.bet.toLocaleString('ru-RU') + ' токенов'; res.className='rocket-result-strip loss'; }
+    showToast('💥 Краш на ' + RS.crashAt.toFixed(2) + '× — потеряно ' + RS.bet.toLocaleString('ru-RU'), 'error');
+  }
+
+  rocketSaveStats();
+  rocketUpdateStats();
+  rocketUpdateHistory();
+
+  // Ждём 2 сек → новый раунд
+  setTimeout(() => { rocketReset(); }, 2000);
+}
+
+function rocketCashout() {
+  if(RS.state !== 'flying' || !RS.betPlaced || RS.cashoutDone) return;
+  RS.cashoutDone = true;
+  const mult = RS.mult;
+  const prize = Math.floor(RS.bet * mult);
+  const profit = prize - RS.bet;
+
+  RS.profit += profit;
+  RS.games++;
+  if(mult > RS.bestMult) RS.bestMult = mult;
+
+  // Обновляем баланс через API
+  if(API_URL && API_SECRET) {
+    fetch(API_URL + '/casino/spin', {
+      method:'POST', headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'1'},
+      body: JSON.stringify({ uid:parseInt(USER_ID), secret:API_SECRET, bet:RS.bet, result:'win', mult:Math.round(mult*100)/100 })
+    }).then(r=>r.json()).then(d=>{ if(d && d.ok) setBalance(d.balance); }).catch(()=>{
+      // Офлайн-фолбэк
+      setBalance(balance + profit);
+    });
+  } else { setBalance(balance + profit); }
+
+  const res = document.getElementById('rocketResult');
+  if(res) { res.textContent = '✅ Вывод на ' + mult.toFixed(2) + '× ! +' + profit.toLocaleString('ru-RU') + ' токенов'; res.className='rocket-result-strip win'; }
+  showToast('✅ ×' + mult.toFixed(2) + '  +' + profit.toLocaleString('ru-RU') + ' 💰', 'gold');
+  rocketSaveStats();
+}
+
+function rocketReset() {
+  RS.state = 'idle'; RS.betPlaced = false; RS.cashoutDone = false;
+  drawRocketIdle();
+  const multEl = document.getElementById('rocketMult');
+  if(multEl) { multEl.textContent = '1.00×'; multEl.className = 'rocket-multiplier'; }
+  const lbl = document.getElementById('rocketLabel');
+  if(lbl) lbl.textContent = 'ОЖИДАНИЕ ЗАПУСКА...';
+  rocketUpdateUI();
+}
+
+function rocketAction() {
+  if(RS.state === 'idle') {
+    // Проверяем ставку
+    const betInput = document.getElementById('rocketBetInput');
+    const bet = parseInt(betInput ? betInput.value : RS.bet);
+    if(!bet || bet < 1000) { showToast('Минимальная ставка 1 000 токенов', 'error'); return; }
+    if(bet > balance) { showToast('Недостаточно токенов!', 'error'); return; }
+    RS.bet = bet;
+    RS.betPlaced = true;
+    // Временно списываем локально (API спишет при краше или вернёт при выводе)
+    rocketStartFlight();
+    rocketUpdateUI();
+  } else if(RS.state === 'flying' && RS.betPlaced && !RS.cashoutDone) {
+    rocketCashout();
+  }
+}
+
+function rocketSetBet(val) {
+  const inp = document.getElementById('rocketBetInput');
+  if(inp) { inp.value = val; RS.bet = val; }
+}
+
+function rocketSetAuto(x) {
+  RS.autoCashout = x;
+  document.querySelectorAll('.rocket-auto-btn').forEach(b => b.classList.remove('active'));
+  const status = document.getElementById('rocketAutoStatus');
+  if(x === 0) {
+    document.querySelectorAll('.rocket-auto-btn')[3].classList.add('active');
+    if(status) status.textContent = 'Авто-вывод выключен';
+  } else {
+    const btns = document.querySelectorAll('.rocket-auto-btn');
+    const map = {1.5:0, 2:1, 3:2};
+    if(map[x] !== undefined) btns[map[x]].classList.add('active');
+    if(status) status.textContent = 'Авто-вывод при ×' + x;
+  }
+}
+
+function rocketUpdateUI() {
+  const btn = document.getElementById('rocketActionBtn');
+  const res = document.getElementById('rocketResult');
+  if(!btn) return;
+  if(RS.state === 'idle') {
+    btn.textContent = '🚀 ЗАПУСК';
+    btn.className = 'rocket-action-btn bet';
+    if(res && !res.classList.contains('win') && !res.classList.contains('loss')) {
+      res.textContent = '🚀 Сделай ставку и нажми ЗАПУСК';
+    }
+  } else if(RS.state === 'flying') {
+    if(RS.betPlaced && !RS.cashoutDone) {
+      btn.textContent = '💰 ВЫВЕСТИ';
+      btn.className = 'rocket-action-btn cashout';
+    } else {
+      btn.textContent = '⏳ РАКЕТА ЛЕТИТ...';
+      btn.className = 'rocket-action-btn waiting';
+    }
+  } else {
+    btn.textContent = '🚀 НОВЫЙ РАУНД';
+    btn.className = 'rocket-action-btn waiting';
+  }
+}
+
+function rocketUpdateStats() {
+  const g = document.getElementById('rStSpins'); if(g) g.textContent = RS.games;
+  const b = document.getElementById('rStBest');
+  if(b) { b.textContent = RS.bestMult > 0 ? '×'+RS.bestMult.toFixed(2) : '—'; }
+  const p = document.getElementById('rStProfit');
+  if(p) {
+    p.textContent = (RS.profit >= 0 ? '+' : '') + RS.profit.toLocaleString('ru-RU');
+    p.style.color = RS.profit >= 0 ? 'var(--green)' : 'var(--red)';
+  }
+}
+
+function rocketUpdateHistory() {
+  const container = document.getElementById('rocketHistory');
+  if(!container) return;
+  container.innerHTML = '';
+  RS.history.forEach(mult => {
+    const chip = document.createElement('div');
+    const cls = mult >= 5 ? 'high' : mult >= 2 ? 'mid' : 'low';
+    chip.className = 'rh-chip ' + cls;
+    chip.textContent = '×' + mult.toFixed(2);
+    container.appendChild(chip);
+  });
+}
+
+// Инициализация при открытии вкладки
+function initRocket() {
+  initRocketCanvas();
+  rocketUpdateStats();
+  rocketUpdateHistory();
+}
 
 init();
 </script>
