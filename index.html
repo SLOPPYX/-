@@ -269,8 +269,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 /* ══════════════════════════════════════════
    EPIC SPLASH SCREEN
 ══════════════════════════════════════════ */
-#splash{position:fixed;inset:0;background:#050510;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transition:opacity .5s ease;overflow:hidden}
-#splash.hide{opacity:0;pointer-events:none}
+#splash{position:fixed;inset:0;background:#050510;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transition:opacity .4s ease;overflow:hidden}
+#splash.hide{opacity:0;pointer-events:none;visibility:hidden}
 .splash-stars{position:absolute;inset:0;pointer-events:none}
 .splash-star{position:absolute;width:2px;height:2px;background:white;border-radius:50%;animation:starTwinkle var(--d,2s) ease-in-out infinite var(--delay,0s)}
 @keyframes starTwinkle{0%,100%{opacity:0.1;transform:scale(1)}50%{opacity:0.8;transform:scale(1.5)}}
@@ -2329,11 +2329,12 @@ function renderProfile() {
 }
 function updateProfile() { renderProfile(); }
 function updateMiniStats() {
-  document.getElementById('sSpins').textContent=S.spins;
-  document.getElementById('sWins').textContent=S.wins;
-  const pp=document.getElementById('sProfit');
-  pp.textContent=(S.profit>=0?'+':'')+S.profit.toLocaleString('ru-RU');
-  pp.style.color=S.profit>=0?'var(--green)':'var(--red)';
+  try{
+    const sp=document.getElementById('sSpins'); if(sp) sp.textContent=S.spins;
+    const sw=document.getElementById('sWins');  if(sw) sw.textContent=S.wins;
+    const pp=document.getElementById('sProfit');
+    if(pp){pp.textContent=(S.profit>=0?'+':'')+S.profit.toLocaleString('ru-RU');pp.style.color=S.profit>=0?'var(--green)':'var(--red)';}
+  }catch(e){}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2827,125 +2828,123 @@ function splashBalShow(val, sourceText, sourceClass) {
 }
 
 async function init() {
-  console.log('[Casino INIT] ==========================================');
-  console.log('[Casino INIT] USER_ID:', USER_ID);
-  console.log('[Casino INIT] API_URL:', API_URL || '❌ ПУСТОЙ');
-  console.log('[Casino INIT] API_SECRET:', API_SECRET ? API_SECRET.substring(0,6)+'...' : '❌ ПУСТОЙ');
-  console.log('[Casino INIT] ==========================================');
+  console.log('[Casino] init() start');
 
+  // ── Элементы сплеша ─────────────────────────────────────
   const splash = document.getElementById('splash');
   const bar    = document.getElementById('splashBar');
   const status = document.getElementById('splashStatus');
-  let _closed  = false;
+  let _splashDone = false;
 
   function closeSplash() {
-    if(_closed) return; _closed=true;
-    if(bar) bar.style.width='100%';
+    if(_splashDone) return;
+    _splashDone = true;
+    if(bar) bar.style.width = '100%';
     if(splash) {
       splash.classList.add('hide');
-      setTimeout(()=>{ try{ splash.remove(); }catch(e){} }, 520);
+      setTimeout(() => { try { splash.remove(); } catch(e){} }, 500);
     }
   }
 
-  // ── Аварийный таймер: 5 секунд и точка ──
-  const emergency = setTimeout(()=>{
-    console.warn('[Casino] ⚠️ Emergency close after 5s');
+  // ── Аварийный таймер — 4 секунды, без исключений ────────
+  const EMERGENCY_MS = 4000;
+  const emergencyTimer = setTimeout(() => {
+    console.warn('[Casino] EMERGENCY CLOSE');
     closeSplash();
-    try{ startBalancePolling(); }catch(e){}
-    try{ initProfileBanner(); }catch(e){}
-    try{ refreshBets(); }catch(e){}
-  }, 5000);
+    _afterSplash();
+  }, EMERGENCY_MS);
 
+  function _afterSplash() {
+    try { tg.BackButton.show(); } catch(e){}
+    try { tg.BackButton.onClick(showWarnDialog); } catch(e){}
+    try { tg.enableClosingConfirmation(); } catch(e){}
+    try { initProfileBanner(); } catch(e){}
+    try { startBalancePolling(); } catch(e){}
+    try { refreshBets(); } catch(e){}
+    try { for(const b of [100000,50000,25000,10000]){ if(balance>=b){ selectBet(b); break; } } } catch(e){}
+  }
+
+  // ── Шаг 0: Звёзды на сплеше ─────────────────────────────
   try {
-    // Шаг 1: Рисуем звёзды сплеша
-    try {
-      const st = document.getElementById('splashStars');
-      if(st) for(let i=0;i<50;i++){
-        const s=document.createElement('div'); s.className='splash-star';
-        s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${1.5+Math.random()*3}s;--delay:${Math.random()*2}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;opacity:${0.1+Math.random()*0.5}`;
-        st.appendChild(s);
-      }
-    }catch(e){}
-
-    // Прогресс 0→30%
-    if(bar) bar.style.width='5%';
-    if(status) status.textContent='ЗАГРУЗКА...';
-
-    // Шаг 2: Быстро грузим из localStorage (мгновенно, без ожидания Cloud)
-    try {
-      const ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10);
-      if(ls>0){ setBalance(ls); }
-      const bv=document.getElementById('splashBalValue');
-      if(bv&&ls>0){ bv.className='splash-bal-value from-cache'; bv.textContent=ls.toLocaleString('ru-RU'); }
-    }catch(e){}
-    try{ updateMiniStats(); }catch(e){}
-    if(bar) bar.style.width='25%';
-
-    // Шаг 3: Cloud загрузка — с жёстким таймаутом 1.5с
-    try{
-      await Promise.race([
-        loadAllFromCloud(),
-        new Promise(r=>setTimeout(r,1500))
-      ]);
-    }catch(e){}
-    if(bar) bar.style.width='50%';
-    if(status) status.textContent='ПОДКЛЮЧЕНИЕ...';
-    splashStep('step1','active');
-
-    // Шаг 4: Баланс из API — с жёстким таймаутом 2.5с
-    const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID!=='0');
-    if(hasApi){
-      splashStep('step1','done');
-      splashStep('step2','active');
-      if(status) status.textContent='ПОЛУЧЕНИЕ БАЛАНСА...';
-      if(bar) bar.style.width='65%';
-
-      const apiBal = await Promise.race([
-        fetchBalanceFromAPI(2500),
-        new Promise(r=>setTimeout(()=>r(null),2500))
-      ]);
-
-      if(apiBal!==null){
-        setBalance(apiBal);
-        try{ tg.CloudStorage.setItem('balance_'+USER_ID,String(apiBal),()=>{}); }catch(e){}
-        try{ localStorage.setItem('bal_'+USER_ID,String(apiBal)); }catch(e){}
-        splashStep('step2','done');
-        splashStep('step3','done');
-        setBotStatus('connected','ПОДКЛЮЧЁН');
-        const bv=document.getElementById('splashBalValue');
-        if(bv){ bv.className='splash-bal-value from-bot'; bv.textContent=apiBal.toLocaleString('ru-RU'); }
-        if(status) status.textContent='✅ '+apiBal.toLocaleString('ru-RU')+' ТОКЕНОВ';
-      } else {
-        splashStep('step2','fail');
-        splashStep('step3','fail');
-        setBotStatus('error','НЕТ СВЯЗИ');
-        if(status) status.textContent='⚠️ КЭШИРОВАННЫЙ БАЛАНС';
-      }
-    } else {
-      splashStep('step1','fail'); splashStep('step2','fail'); splashStep('step3','fail');
-      setBotStatus('error','API ВЫКЛ');
-      if(status) status.textContent='⚠️ БЕЗ API';
+    const st = document.getElementById('splashStars');
+    if(st) for(let i=0;i<40;i++){
+      const s = document.createElement('div');
+      s.className = 'splash-star';
+      s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${1.5+Math.random()*3}s;--delay:${Math.random()*2}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;opacity:${0.1+Math.random()*0.5}`;
+      st.appendChild(s);
     }
+  } catch(e){}
 
-    if(bar) bar.style.width='100%';
-    _lastKnownBalance = balance;
-    try{ refreshBets(); }catch(e){}
-    try{ for(const b of [100000,50000,25000,10000]){if(balance>=b){selectBet(b);break;}} }catch(e){}
+  // ── Шаг 1: Баланс из localStorage (моментально) ─────────
+  if(bar) bar.style.width = '20%';
+  if(status) status.textContent = 'ЗАГРУЗКА...';
+  try {
+    const ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0', 10);
+    if(ls > 0) {
+      setBalance(ls);
+      const bv = document.getElementById('splashBalValue');
+      if(bv) { bv.className = 'splash-bal-value from-cache'; bv.textContent = ls.toLocaleString('ru-RU'); }
+    }
+    updateMiniStats();
+  } catch(e){}
 
-    // Небольшая пауза чтобы пользователь увидел баланс
-    await new Promise(r=>setTimeout(r,400));
+  // ── Шаг 2: Cloud Storage (макс 800мс) ───────────────────
+  if(bar) bar.style.width = '40%';
+  if(status) status.textContent = 'СИНХРОНИЗАЦИЯ...';
+  try {
+    await Promise.race([
+      loadAllFromCloud(),
+      new Promise(r => setTimeout(r, 800))
+    ]);
+  } catch(e){}
 
-  } catch(e) {
-    console.warn('[Casino] init error:', e);
-  } finally {
-    clearTimeout(emergency);
-    closeSplash();
-    try{ tg.BackButton.show(); }catch(e){}
-    try{ tg.BackButton.onClick(showWarnDialog); }catch(e){}
-    try{ tg.enableClosingConfirmation(); }catch(e){}
-    try{ initProfileBanner(); }catch(e){}
-    try{ startBalancePolling(); }catch(e){}
+  // ── Шаг 3: API баланс (макс 2000мс) ─────────────────────
+  if(bar) bar.style.width = '60%';
+  if(status) status.textContent = 'ПОДКЛЮЧЕНИЕ...';
+
+  const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
+  if(hasApi) {
+    try {
+      const ctrl = new AbortController();
+      const apiTimer = setTimeout(() => ctrl.abort(), 2000);
+      try {
+        const url = API_URL + '/casino/balance?uid=' + USER_ID + '&secret=' + API_SECRET + '&_t=' + Date.now();
+        const r = await fetch(url, {
+          signal: ctrl.signal,
+          mode: 'cors',
+          headers: { 'ngrok-skip-browser-warning': '1' }
+        });
+        if(r && r.ok) {
+          const d = await r.json();
+          if(d && d.ok && typeof d.balance === 'number') {
+            setBalance(d.balance);
+            try { localStorage.setItem('bal_'+USER_ID, String(d.balance)); } catch(e){}
+            try { tg.CloudStorage.setItem('balance_'+USER_ID, String(d.balance), ()=>{}); } catch(e){}
+            setBotStatus('connected', '');
+            const bv = document.getElementById('splashBalValue');
+            if(bv) { bv.className = 'splash-bal-value from-bot'; bv.textContent = d.balance.toLocaleString('ru-RU'); }
+            if(status) status.textContent = '✅ ' + d.balance.toLocaleString('ru-RU') + ' ТОКЕНОВ';
+          }
+        }
+      } finally { clearTimeout(apiTimer); }
+    } catch(e) {
+      if(e.name !== 'AbortError') console.warn('[Casino] API error:', e.message);
+      setBotStatus('error', '');
+    }
+  } else {
+    setBotStatus('error', '');
   }
+
+  // ── Финал ────────────────────────────────────────────────
+  if(bar) bar.style.width = '100%';
+  _lastKnownBalance = balance;
+
+  // Небольшая пауза чтобы пользователь увидел баланс
+  await new Promise(r => setTimeout(r, 350));
+
+  clearTimeout(emergencyTimer);
+  closeSplash();
+  _afterSplash();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3034,130 +3033,41 @@ async function fetchBalanceFromAPI(timeoutMs) {
 // Синхронизирует аватарку, статистику, профиль между устройствами
 // ══════════════════════════════════════════════════════════
 async function loadAllFromCloud() {
+  // Только читаем Cloud — без API запросов и без await
   return new Promise(resolve => {
+    // Жёсткий таймаут 800мс
+    const tid = setTimeout(resolve, 800);
     const keys = [CS_AVATAR, CS_STATS, CS_PROFILE];
-    const timeout = setTimeout(() => {
-      console.warn('[CloudSync] getItems timeout');
-      resolve();
-    }, 3000);
-
-    cloudGetMulti(keys, (err, values) => {
-      clearTimeout(timeout);
-      try {
-        // ── Аватарка ──
-        const cloudAvatar = values && values[CS_AVATAR];
-        if(cloudAvatar && cloudAvatar !== selectedAvatar) {
-          selectedAvatar = cloudAvatar;
-          try { localStorage.setItem(AVATAR_KEY, cloudAvatar); } catch(e) {}
-          console.log('[CloudSync] 🎭 Аватарка из Cloud:', cloudAvatar);
-        }
-
-        // ── Статистика ──
-        const cloudStats = values && values[CS_STATS];
-        if(cloudStats) {
+    try {
+      tg.CloudStorage.getItems(keys, (err, values) => {
+        clearTimeout(tid);
+        if(!err && values && typeof values === 'object') {
+          // Аватарка
           try {
-            const cs = JSON.parse(cloudStats);
-            if(cs && typeof cs.spins === 'number') {
-              // Если cloud данные богаче — применяем полностью
-              // Если местные богаче — берём максимум по каждому полю
-              const localRicher = (S.spins > cs.spins) || (S.totalWon > cs.totalWon);
-              if(!localRicher) {
-                // Cloud богаче — берём из Cloud как основу
-                S.spins      = cs.spins     || 0;
-                S.wins       = cs.wins      || 0;
-                S.losses     = cs.losses    || 0;
-                S.totalWon   = cs.totalWon  || 0;
-                S.totalLost  = cs.totalLost || 0;
-                S.bestWin    = cs.bestWin   || 0;
-                S.profit     = cs.profit    || 0;
-                S.history    = cs.history   || [];
-                S.streak     = cs.streak    || 0;
-                S.streakType = cs.streakType|| null;
-              } else {
-                // Местные богаче — берём максимум каждого поля
-                S.spins     = Math.max(S.spins || 0,     cs.spins     || 0);
-                S.wins      = Math.max(S.wins  || 0,     cs.wins      || 0);
-                S.losses    = Math.max(S.losses|| 0,     cs.losses    || 0);
-                S.totalWon  = Math.max(S.totalWon|| 0,   cs.totalWon  || 0);
-                S.totalLost = Math.max(S.totalLost|| 0,  cs.totalLost || 0);
-                S.bestWin   = Math.max(S.bestWin|| 0,    cs.bestWin   || 0);
-                if((cs.history||[]).length > (S.history||[]).length) {
-                  S.history = cs.history; S.streak = cs.streak||0; S.streakType = cs.streakType||null;
+            const av = values[CS_AVATAR];
+            if(av && av !== selectedAvatar) {
+              selectedAvatar = av;
+              localStorage.setItem('cs_'+CS_AVATAR, av);
+            }
+          } catch(e){}
+          // Статистика
+          try {
+            const sv = values[CS_STATS];
+            if(sv) {
+              const cs = JSON.parse(sv);
+              if(cs && typeof cs.spins === 'number') {
+                if(cs.spins >= (S.spins||0)) {
+                  Object.assign(S, cs);
+                  localStorage.setItem(STATS_KEY, sv);
                 }
               }
-              // Обновляем localStorage и сохраняем мерж обратно в Cloud
-              try { localStorage.setItem(STATS_KEY, JSON.stringify(S)); } catch(e) {}
-              cloudSet(CS_STATS, JSON.stringify(S)); // синхронизируем мерж
-              console.log('[CloudSync] 📊 Статистика: ' + S.spins + ' спинов, cloud богаче: ' + !localRicher);
             }
-          } catch(e) { console.warn('[CloudSync] stats parse error:', e); }
+          } catch(e){}
         }
-
-        // ── Профиль ──
-        const cloudProfile = values && values[CS_PROFILE];
-        if(cloudProfile) {
-          try {
-            const cp = JSON.parse(cloudProfile);
-            if(cp) {
-              try { localStorage.setItem(PROF_KEY, JSON.stringify(cp)); } catch(e) {}
-              console.log('[CloudSync] 👤 Профиль из Cloud загружен');
-            }
-          } catch(e) {}
-        }
-
-        // Сбрасываем кэш лидерборда — аватарка могла измениться
-        _leaderboardCache = null;
-
-      } catch(e) {
-        console.warn('[CloudSync] loadAllFromCloud error:', e);
-      }
-      resolve();
-    });
+        resolve();
+      });
+    } catch(e) { clearTimeout(tid); resolve(); }
   });
-}
-
-
-async function safeLoadBalanceAnimated() {
-  const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
-
-  if(!hasApi) {
-    splashStep('step1','fail'); splashStep('step2','fail');
-    setBotStatus('error','API ВЫКЛ');
-    // Пробуем localStorage как резерв
-    splashStep('step3','active');
-    const ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10);
-    if(ls > 0) { setBalance(ls); splashBalShow(ls,'📦 КЭШ','from-cache'); }
-    splashStep('step3','done');
-    return;
-  }
-
-  splashStep('step1','done');
-  splashStep('step2','active');
-  setBotStatus('loading','ЗАПРОС...');
-
-  const apiBal = await fetchBalanceFromAPI(4000);
-
-  if(apiBal !== null) {
-    // ✅ Успех — применяем и синхронизируем
-    const changed = apiBal !== balance;
-    setBalance(apiBal);
-    try { tg.CloudStorage.setItem('balance_'+USER_ID, String(apiBal), ()=>{}); } catch(e){}
-    splashStep('step2','done');
-    splashStep('step3','active');
-    splashBalShow(apiBal, changed ? '⚡ ОБНОВЛЕНО' : '✅ АКТУАЛЬНЫЙ', 'from-bot');
-    setBotStatus('connected','ПОДКЛЮЧЁН');
-    await new Promise(r=>setTimeout(r,300));
-    splashStep('step3','done');
-  } else {
-    // ❌ API не ответил — берём из localStorage
-    splashStep('step2','fail');
-    setBotStatus('error','НЕТ СВЯЗИ');
-    splashStep('step3','active');
-    const ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10);
-    if(ls > 0) { setBalance(ls); splashBalShow(ls,'📦 КЭШ','from-cache'); }
-    else { splashBalShow(balance > 0 ? balance : 0,'⚠️ ИЗ URL','error'); }
-    splashStep('step3','done');
-  }
 }
 
 // Безопасная загрузка (используется в refresh и polling)
