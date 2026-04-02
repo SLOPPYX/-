@@ -676,7 +676,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-wrap { padding:0 }
 .rkt-scene {
   position:relative; height:340px; overflow:hidden;
-  background:radial-gradient(ellipse 100% 120% at 50% 110%, #0a0520 0%, #000000 65%);
+  background:#000000;
   border-bottom:1px solid rgba(255,255,255,.05);
   box-shadow:inset 0 -40px 80px rgba(5,0,20,.9);
 }
@@ -3689,8 +3689,8 @@ function rDraw(){
   // Фон — глубокий космос
   const bg=ctx.createLinearGradient(0,0,0,rH);
   bg.addColorStop(0,'#000000');
-  bg.addColorStop(0.4,'#010009');
-  bg.addColorStop(1,'#020110');
+  bg.addColorStop(0.7,'#000000');
+  bg.addColorStop(1,'#010008');
   ctx.fillStyle=bg; ctx.fillRect(0,0,rW,rH);
 
   // Туманности
@@ -4176,54 +4176,59 @@ async function rktAction(){
   if(RKT.phase==='waiting'&&!RKT.betPlaced){rktPlaceBet();}
 }
 
-let _rktBetting=false; // защита от двойного нажатия
+let _rktBetting=false;
 async function rktPlaceBet(){
   if(_rktBetting) return;
+  if(RKT.phase!=='waiting'||RKT.betPlaced) return; // двойная защита
+
   const i=document.getElementById('rktInp');
   const bet=Math.floor(parseInt(i?i.value:RKT.myBet)||0);
   if(bet<1000){showToast('Минимум 1 000 токенов','error');return;}
   if(bet>balance){showToast('Недостаточно токенов!','error');return;}
+
+  // ── МГНОВЕННО — применяем локально без ожидания сервера ──
   _rktBetting=true;
-  _rktOperating=true; // блокируем longPoll от перезаписи баланса
+  _rktOperating=true;
   RKT.myBet=bet;
+  RKT.betPlaced=true;          // ставка активна сразу
+  setBalance(balance-bet);      // списываем сразу
 
-  // Немедленно блокируем кнопку — защита от двойной ставки
-  const btn=document.getElementById('rktBtn');
-  if(btn){ btn.disabled=true; btn.textContent='⏳...'; }
-  rktSetBtn('w');
+  // Обновляем UI немедленно
   const res=document.getElementById('rktRes');
-  if(res){res.textContent='⏳ Ставка...';res.className='rkt-res';}
+  if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' — жди старта!';res.className='rkt-res';}
+  rktSetBtn('w');
+  rktUpdateTable(); rktUpdateTags();
 
-  // ── Запрос к серверу — он списывает и возвращает точный баланс ──
+  // ── Подтверждаем у сервера фоном (не блокируем UI) ──
   if(API_URL&&API_SECRET){
-    try{
-      const r=await rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID})});
+    rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({
+      uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID
+    })}).then(r=>{
       if(r&&r.ok){
-        // Сервер списал — применяем его баланс (единственное изменение!)
-        RKT.betPlaced=true;
+        // Синхронизируем точный баланс с сервером
         setBalance(r.balance);
-        if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!';res.className='rkt-res';}
-        showToast('Ставка принята 🚀','info');
       } else {
+        // Сервер отказал — откатываем
+        const errMsg = r&&r.error==='round_started'?'Раунд уже начался!':'Ошибка ставки';
+        RKT.betPlaced=false;
+        setBalance(balance+bet); // возвращаем
         rktSetBtn('b');
         if(res){res.textContent='Поставь токены и жди старта 🚀';res.className='rkt-res';}
-        showToast(r&&r.error==='round_started'?'Раунд уже идёт!':'Ошибка ставки','error');
+        showToast(errMsg,'error');
+        rktUpdateTable(); rktUpdateTags();
       }
-    }catch(e){
-      // Нет связи
-      rktSetBtn('b');
-      if(res){res.textContent='Нет связи с сервером','error';}
-      showToast('Нет связи с сервером','error');
-    }
+    }).catch(()=>{
+      // Нет связи — ставка остаётся локальной, продолжаем
+      console.warn('[RKT] API недоступен, ставка локальная');
+    }).finally(()=>{
+      _rktBetting=false;
+      setTimeout(()=>{ _rktOperating=false; },1000);
+    });
   } else {
-    // Офлайн — локально
-    RKT.betPlaced=true;
-    setBalance(balance-bet);
-    if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU');res.className='rkt-res';}
+    // Полностью офлайн
+    _rktBetting=false;
+    setTimeout(()=>{ _rktOperating=false; },1000);
   }
-  rktUpdateTable(); rktUpdateTags();
-  _rktBetting=false;
-  setTimeout(()=>{ _rktOperating=false; }, 1500);
 }
 
 async function rktDoCashout(){
