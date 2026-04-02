@@ -928,6 +928,49 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-mult-wrap.shaking { animation:rktShake 0.15s ease-in-out infinite }
 .rkt-mult-wrap.shaking-hard { animation:rktShakeHard 0.07s ease-in-out infinite }
 
+/* ── FREE FIRE декорации ── */
+.ff-corner{position:fixed;pointer-events:none;z-index:0;opacity:0.07}
+.ff-corner.tl{top:0;left:0;width:160px;height:160px;
+  background:radial-gradient(circle at 0% 0%,#ff6600,transparent 70%);}
+.ff-corner.br{bottom:0;right:0;width:160px;height:160px;
+  background:radial-gradient(circle at 100% 100%,#ff4400,transparent 70%);}
+.ff-corner.tr{top:0;right:0;width:120px;height:120px;
+  background:radial-gradient(circle at 100% 0%,#ffaa00,transparent 70%);}
+
+/* FF ромб-декор в хедере */
+.ff-diamond{
+  display:inline-block;width:8px;height:8px;
+  background:linear-gradient(135deg,#ff6600,#ffcc00);
+  transform:rotate(45deg);margin:0 4px;
+  box-shadow:0 0 6px rgba(255,100,0,.6);
+}
+
+/* Огненные линии под навигацией */
+.nav::after{
+  content:''; display:block; position:absolute;
+  bottom:-2px; left:18px; right:18px; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,100,0,.4),rgba(255,200,0,.6),rgba(255,100,0,.4),transparent);
+}
+.nav{position:relative;}
+
+/* Огненный акцент на активном tab */
+.nav-tab.active{
+  border-color:rgba(255,120,0,.4)!important;
+  background:rgba(255,80,0,.1)!important;
+  color:#ffaa44!important;
+}
+
+/* FF-стиль счётчик онлайн */
+.rkt-onl-dot{background:#ff6600!important;}
+.rkt-onl{border-color:rgba(255,100,0,.3)!important;}
+
+/* Огненные иксы в истории */
+.rkt-hc.hi{
+  border-color:rgba(255,150,0,.4)!important;
+  color:#ffaa44!important;
+  text-shadow:0 0 8px rgba(255,100,0,.5)!important;
+}
+
 </style>
 </head>
 <body>
@@ -979,12 +1022,15 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 <div class="bg-grid"></div>
 <div class="bg-glow"></div>
+<div class="ff-corner tl"></div>
+<div class="ff-corner tr"></div>
+<div class="ff-corner br"></div>
 <div class="app">
 
   <!-- HEADER -->
   <div class="header">
     <div class="logo-wrap">
-      <div class="logo-main">CASINO</div>
+      <div class="logo-main"><span class="ff-diamond"></span>CASINO<span class="ff-diamond"></span></div>
       <div class="logo-sub">by SloppyX</div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
@@ -3437,6 +3483,7 @@ const RKT = {
   phase:'waiting', roundId:-1, mult:1.00, crashAt:null,
   waitLeft:6, players:[], history:[], online:1,
   betPlaced:false, cashedOut:false, myBet:10000, auto:0,
+  _betTs:0, // timestamp когда была поставлена ставка
   _ls: Date.now(),
   stats:(function(){
     try{
@@ -3461,7 +3508,7 @@ function rktSave(){
 
 // ── Canvas + рисование ────────────────────────────────────
 let rCvs,rCtx,rW,rH,rTrail=[],rAFid=null,rStars=null;
-let rTime=0, rCrashParticles=[];
+let rTime=0, rCrashParticles=[], rSpeedParts=[];
 // Постоянный полёт — ракета летит всегда
 let rPermanentT=0, rPermanentDir=1;
 
@@ -3497,7 +3544,10 @@ function rPermAF(){
 
 // ── Траектория ───────────────────────────────────────────
 function rPos(t){
-  return[rW*0.07+t*rW*0.86, rH*0.87-Math.pow(t,1.3)*rH*0.80];
+  // Трасса идёт от центра-низа вверх — ракета летит вертикально
+  const x = rW*0.5 + Math.sin(t*1.8)*rW*0.06; // лёгкий синусоидальный изгиб
+  const y = rH*0.85 - t*rH*0.75;
+  return [x, y];
 }
 
 // ── АНИМАЦИОННАЯ 3D-ракета — мультяшный стиль ────────────
@@ -3719,11 +3769,26 @@ function rDraw(){
   });
   ctx.globalAlpha=1;
 
-  // Движущаяся сетка скорости
+  // Движущаяся сетка — оранжевый оттенок для FF стиля
   const gridOff=(rTime*1.2)%44;
-  ctx.strokeStyle='rgba(255,255,255,.018)'; ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(255,80,0,.015)'; ctx.lineWidth=1;
   for(let y=-gridOff;y<rH;y+=44){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(rW,y);ctx.stroke();}
   for(let x=0;x<rW;x+=44){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,rH);ctx.stroke();}
+
+  // FF-стиль угловые декоры на canvas
+  const ffAlpha=0.06+Math.abs(Math.sin(rTime*0.02))*0.04;
+  // Верхний левый — ромб
+  ctx.save(); ctx.globalAlpha=ffAlpha;
+  ctx.fillStyle='rgba(255,120,0,1)';
+  ctx.translate(25,25); ctx.rotate(Math.PI/4);
+  ctx.fillRect(-12,-12,24,24);
+  ctx.restore();
+  // Верхний правый
+  ctx.save(); ctx.globalAlpha=ffAlpha;
+  ctx.fillStyle='rgba(255,200,0,1)';
+  ctx.translate(rW-25,25); ctx.rotate(Math.PI/4);
+  ctx.fillRect(-10,-10,20,20);
+  ctx.restore();
 
 
 
@@ -3770,46 +3835,190 @@ function rDraw(){
 
   // ── РАКЕТА ───────────────────────────────────────────────
   if(RKT.phase==='waiting'){
-    // Ракета описывает плавную восьмёрку/петлю по всему экрану
-    rPermanentT+=0.0025;
-    const loopT=rPermanentT % (Math.PI*2);
-    // Позиция по лемнискате Бернулли (∞ форма)
-    const a=rW*0.35, b=rH*0.32;
-    const denom=1+Math.sin(loopT)*Math.sin(loopT);
-    const px=rW*0.5 + a*Math.cos(loopT)/denom;
-    const py=rH*0.5 - b*Math.sin(loopT)*Math.cos(loopT)/denom;
-    // Угол = направление движения
-    const dT=0.005;
-    const denom2=1+Math.sin(loopT+dT)*Math.sin(loopT+dT);
-    const nx=rW*0.5+a*Math.cos(loopT+dT)/denom2;
-    const ny=rH*0.5-b*Math.sin(loopT+dT)*Math.cos(loopT+dT)/denom2;
-    const flightAng=Math.atan2(ny-py,nx-px)+Math.PI/2;
-    const thrPow=0.6+Math.sin(rTime*0.1)*0.15;
-    rDrawRocket3D(ctx,px,py,0.9,flightAng,thrPow,false);
-    // Трасса
-    if(rTime%2===0) rTrail.push([px,py]);
-    if(rTrail.length>45) rTrail.shift();
-  } else if(RKT.phase==='flying'&&rTrail.length){
-    const[rx,ry]=rTrail[rTrail.length-1];
-    // ang = направление движения в Canvas (0=право, -PI/2=вверх)
-    // Ракета нарисована носом в -Y (вверх при angle=0)
-    // Чтобы нос смотрел по направлению движения: angle = ang + PI/2
-    // ang+PI/2: летим вправо (ang=0) → angle=PI/2 → нос смотрит вниз ❌
-    // Правильно: нос в -Y, летим вправо-вверх (ang≈-0.5 рад)
-    // Нужен угол чтобы -Y повернулся в направление ang
-    // rotate(ang): -Y вектор поворачивается на ang → смотрит в ang-PI/2... нет
-    // Проще: flip ракету — нос в +Y (вниз при angle=0), тогда rotate(ang+PI/2) = нос вперёд
-    // Или: рисуем нос в -Y и делаем rotate(ang - PI/2 + PI) = rotate(ang + PI/2)... нет
-    // ИТОГ: rotate(ang) при носе в -Y → нос смотрит в направлении (ang - PI/2)
-    // Нам нужно направление ang → нос должен быть в ang → rotate(ang + PI/2)
-    const ang=rTrail.length>2?Math.atan2(ry-rTrail[rTrail.length-3][1],rx-rTrail[rTrail.length-3][0]):-Math.PI/4;
-    const t2=Math.min((Date.now()-RKT._ls)/14000,0.93);
-    const sc=0.85+t2*0.25;
-    const thrPow=0.5+Math.min(RKT.mult-1,9)*0.05+Math.sin(rTime*0.1)*0.1;
-    rDrawRocket3D(ctx,rx,ry,sc,ang+Math.PI/2,thrPow,false);
+    // Ракета СТРОГО по центру — эффект гиперпрыжка на месте
+    const cx=rW*0.5, cy=rH*0.50;
+
+    if(!rSpeedParts) rSpeedParts=[];
+
+    // ── Частицы: 3 типа ─────────────────────────────────
+    // 1. Основной след — длинные линии строго вниз (от сопла)
+    for(let k=0;k<6;k++){
+      const spread=(Math.random()-0.5)*0.12; // почти без разброса
+      const spd=14+Math.random()*18;
+      const r=100+Math.floor(Math.random()*80);
+      const g=60+Math.floor(Math.random()*60);
+      rSpeedParts.push({
+        x:cx+(Math.random()-0.5)*16,
+        y:cy+22,
+        vx:Math.sin(spread)*spd,
+        vy:Math.cos(spread)*spd, // строго вниз
+        life:1, type:0,
+        col:`rgba(${r},${g},255,`
+      });
+    }
+    // 2. Боковые искры — разлетаются чуть в стороны
+    if(rTime%3===0){
+      for(let k=0;k<4;k++){
+        const side=(k%2===0?1:-1)*(0.3+Math.random()*0.4);
+        const spd=8+Math.random()*12;
+        rSpeedParts.push({
+          x:cx,y:cy+18,
+          vx:Math.sin(side)*spd, vy:Math.cos(side*0.3)*spd,
+          life:0.8, type:1,
+          col:'rgba(255,150,50,'
+        });
+      }
+    }
+    // 3. Кольцо ударной волны (периодически)
+    if(rTime%40===0){
+      rSpeedParts.push({x:cx,y:cy,vx:0,vy:0,life:1,type:2,r:5});
+    }
+
+    // ── Рисуем частицы ──────────────────────────────────
+    rSpeedParts.forEach(p=>{
+      if(p.type===2){
+        // Кольцо расширяется
+        p.r+=(rH*.25-p.r)*0.12;
+        p.life-=0.035;
+        ctx.save();
+        ctx.globalAlpha=Math.max(0,p.life)*0.25;
+        ctx.strokeStyle='rgba(150,150,255,1)';
+        ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.stroke();
+        ctx.restore();
+        return;
+      }
+      p.x+=p.vx; p.y+=p.vy; p.life-=0.055;
+      if(p.life<=0) return;
+      const a=p.life;
+      const tailLen=p.type===0?5.5:3;
+      ctx.save();
+      ctx.globalAlpha=a*(p.type===0?0.85:0.6);
+      const grad=ctx.createLinearGradient(p.x,p.y,p.x-p.vx*tailLen,p.y-p.vy*tailLen);
+      grad.addColorStop(0,p.col+a+')');
+      grad.addColorStop(1,p.col+'0)');
+      ctx.strokeStyle=grad;
+      ctx.lineWidth=p.type===0?2.5:1.5;
+      ctx.lineCap='round';
+      ctx.beginPath();
+      ctx.moveTo(p.x,p.y);
+      ctx.lineTo(p.x-p.vx*tailLen,p.y-p.vy*tailLen);
+      ctx.stroke();
+      ctx.restore();
+    });
+    rSpeedParts=rSpeedParts.filter(p=>p.life>0&&p.y<rH+30);
+    if(rSpeedParts.length>200) rSpeedParts=rSpeedParts.slice(-150);
+
+    // ── Свечение вокруг сопла ────────────────────────────
+    const glowPulse=0.3+Math.abs(Math.sin(rTime*0.15))*0.4;
+    const sG=ctx.createRadialGradient(cx,cy+20,0,cx,cy+20,40);
+    sG.addColorStop(0,`rgba(100,100,255,${glowPulse*0.5})`);
+    sG.addColorStop(0.5,`rgba(80,50,200,${glowPulse*0.2})`);
+    sG.addColorStop(1,'rgba(50,0,150,0)');
+    ctx.fillStyle=sG; ctx.beginPath(); ctx.arc(cx,cy+20,40,0,Math.PI*2); ctx.fill();
+
+    // ── Ракета строго по центру, только вертикальное покачивание ──
+    const vertBounce=Math.sin(rTime*0.08)*2.5; // только вверх-вниз, без крена
+    const thrPow=0.85+Math.sin(rTime*0.14)*0.15;
+    rDrawRocket3D(ctx, cx, cy+vertBounce, 1.0, 0, thrPow, false);
+    rTrail=[];
+  } else if(RKT.phase==='flying'){
+    // Ракета ВСЕГДА по центру — движение создаётся звёздами и частицами
+    const cx = rW*0.5, cy = rH*0.50;
+    const m = RKT.mult||1;
+
+    // Вибрация от ускорения — растёт с иксами
+    const vibAmp = Math.min(m*0.12, 3.5);
+    const vibX = (Math.random()-0.5)*vibAmp;
+    const vibY = (Math.random()-0.5)*vibAmp*0.5;
+    // Лёгкое покачивание + вибрация
+    const lean = Math.sin(rTime*0.07)*1.8 + vibX;
+    const bounce = Math.sin(rTime*0.11)*1.5 + vibY;
+
+    // Тяга растёт с иксами
+    const thrPow = Math.min(0.6 + m*0.035, 1.0) + Math.sin(rTime*0.13)*0.08;
+    const sc = 0.95 + Math.min(m*0.003, 0.15);
+
+    // ── Частицы скорости из сопла ──────────────────────
+    if(!rSpeedParts) rSpeedParts=[];
+    const pCount = Math.floor(4 + Math.min(m*0.6, 12));
+    for(let k=0;k<pCount;k++){
+      const spread = (Math.random()-0.5)*0.25;
+      const spd = (10 + Math.random()*12) * Math.min(1+m*0.08, 3);
+      const isGreen = m >= 10;
+      const r = isGreen?74:120+Math.floor(Math.random()*80);
+      const g = isGreen?222:80+Math.floor(Math.random()*60);
+      const b = isGreen?128:255;
+      rSpeedParts.push({
+        x: cx+lean+(Math.random()-0.5)*14,
+        y: cy+bounce+28, // снизу сопла
+        vx: Math.sin(spread)*spd,
+        vy: Math.cos(spread)*spd, // строго вниз
+        life: 0.9+Math.random()*0.1,
+        col: `rgba(${r},${g},${b},`
+      });
+    }
+    // Рисуем частицы
+    rSpeedParts.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy; p.vy*=1.06; // ускоряются
+      p.life-=0.05;
+      if(p.life<=0) return;
+      const tailLen = 6 + m*0.15;
+      ctx.save();
+      ctx.globalAlpha = p.life*0.85;
+      const grad=ctx.createLinearGradient(p.x,p.y,p.x-p.vx*tailLen,p.y-p.vy*tailLen);
+      grad.addColorStop(0, p.col+p.life+')');
+      grad.addColorStop(1, p.col+'0)');
+      ctx.strokeStyle=grad; ctx.lineWidth=2.2; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(p.x,p.y);
+      ctx.lineTo(p.x-p.vx*tailLen, p.y-p.vy*tailLen);
+      ctx.stroke(); ctx.restore();
+    });
+    rSpeedParts = rSpeedParts.filter(p=>p.life>0 && p.y<rH+60);
+    if(rSpeedParts.length>300) rSpeedParts=rSpeedParts.slice(-200);
+
+    // ── Свечение сопла — пульсирует с тягой ────────────
+    const glowR = 35 + thrPow*20;
+    const glowA = 0.25 + thrPow*0.25;
+    const gG = ctx.createRadialGradient(cx+lean,cy+bounce+22,0,cx+lean,cy+bounce+22,glowR);
+    gG.addColorStop(0, m>=10?`rgba(74,222,128,${glowA})`:`rgba(120,80,255,${glowA})`);
+    gG.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=gG; ctx.beginPath();
+    ctx.arc(cx+lean,cy+bounce+22,glowR,0,Math.PI*2); ctx.fill();
+
+    // ── Трасса позади ───────────────────────────────────
+    // (рисуется выше в коде через rTrail — оставляем)
+
+    // ── РАКЕТА по центру ────────────────────────────────
+    rDrawRocket3D(ctx, cx+lean, cy+bounce, sc, 0, thrPow, false);
   } else if(RKT.phase==='crashed'&&rTrail.length){
     const[rx,ry]=rTrail[rTrail.length-1];
     rDrawRocket3D(ctx,rx,ry,1.0,0,0,true);
+  }
+
+  // Таймер до раунда — большими цифрами на canvas
+  if(RKT.phase==='waiting' && RKT.waitLeft>0){
+    const left=RKT.waitLeft;
+    const sec=left.toFixed(left<3?1:0);
+    const alpha=Math.min(1, left<3?(0.5+Math.sin(rTime*0.3)*0.3):0.55);
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.font=`900 ${Math.round(rH*0.28)}px 'Orbitron',monospace`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    // Цвет: красный при <3с, оранжевый при <5с, белый иначе
+    const col=left<3?'#f87171':left<5?'#fbbf24':'rgba(255,255,255,0.22)';
+    ctx.fillStyle=col;
+    if(left<3){
+      ctx.shadowColor=left<3?'rgba(248,113,113,.8)':'rgba(251,191,36,.5)';
+      ctx.shadowBlur=30;
+    }
+    ctx.fillText(sec, rW*0.5, rH*0.5);
+    ctx.shadowBlur=0;
+    // Подпись маленькая
+    ctx.font=`700 ${Math.round(rH*0.045)}px 'Orbitron',monospace`;
+    ctx.fillStyle='rgba(255,255,255,0.2)';
+    ctx.fillText('СЛЕДУЮЩИЙ РАУНД', rW*0.5, rH*0.5+rH*0.19);
+    ctx.restore();
   }
 
   // Уведомления о кешауте игроков (всплывающие)
@@ -3978,6 +4187,7 @@ function rktApply(d){
     }
     if(prev!=='flying'){
       rTrail=[];rCrashParticles=[];
+      RKT._betTs=0; // раунд начался — защита больше не нужна
       if(rAFid) cancelAnimationFrame(rAFid);
       rktAF(); rktTickStart();
       if(RKT.betPlaced&&!RKT.cashedOut) rktSetBtn('c');
@@ -4007,8 +4217,10 @@ function rktApply(d){
     } else {
       // Сбрасываем ставку ТОЛЬКО если не идёт процесс ставки
       // и ставка не была только что подтверждена локально
-      if(!_rktBetting || roundChanged){
-        RKT.betPlaced=false;RKT.cashedOut=false;
+      // Защита: не сбрасываем betPlaced если ставка была < 5с назад
+      const betFresh = RKT._betTs>0 && (Date.now()-RKT._betTs)<5000;
+      if(!betFresh && (!_rktBetting || roundChanged)){
+        RKT.betPlaced=false; RKT.cashedOut=false; RKT._betTs=0;
         if(!_rktBetting) rktSetBtn('b');
       }
     }
@@ -4024,8 +4236,7 @@ function rktUI(){
   if(on) on.textContent=RKT.online;
   if(RKT.phase==='waiting'){
     if(me){me.textContent='ЖДЁМ';me.className='rkt-mult sw';}
-    const s=Math.ceil(RKT.waitLeft);
-    if(sb) sb.textContent=s>0?'Раунд через '+s+'с':'🚀 ЗАПУСК!';
+    if(sb) sb.textContent=''; // таймер показывается на canvas
     rktSetBtn(RKT.betPlaced?'w':'b');
   } else if(RKT.phase==='flying'){
     if(me&&!_rktTick){me.textContent=(RKT.mult||1).toFixed(2)+'×';me.className='rkt-mult sf';}
@@ -4177,14 +4388,7 @@ function rktWaitTick(){
     const left=Math.max(0,(_rktWaitEnd-Date.now())/1000);
     RKT.waitLeft=left;
     const sb=document.getElementById('rktSub');
-    if(!sb) return;
-    if(left<=0){
-      sb.textContent='🚀 ЗАПУСК!';
-    } else if(left<=3){
-      sb.textContent='🔴 '+left.toFixed(1)+'с';
-    } else {
-      sb.textContent='Раунд через '+Math.ceil(left)+'с';
-    }
+    // Таймер отображается на canvas (rDraw) — здесь только обновляем RKT.waitLeft
   }
   tick(); // сразу показываем
   _rktWT=setInterval(tick, 80); // 80мс — чёткое обновление
@@ -4211,6 +4415,7 @@ async function rktPlaceBet(){
   _rktOperating=true;
   RKT.myBet=bet;
   RKT.betPlaced=true;          // ставка активна сразу
+  RKT._betTs=Date.now();        // защита от сброса poll'ом
   setBalance(balance-bet);      // списываем сразу
 
   // Обновляем UI немедленно
@@ -4306,9 +4511,21 @@ function rktAuto(x){rktAutoSet(x);}
 
 function rktAF(){
   if(RKT.phase!=='flying'){rAFid=null;return;}
-  const t=Math.min((Date.now()-RKT._ls)/14000,0.93);
+  // Трасса — медленный подъём (только для рисования следа)
+  const elapsed=(Date.now()-RKT._ls)/1000;
+  const t=Math.min(elapsed/25, 0.82);
   const[rx,ry]=rPos(t); rTrail.push([rx,ry]);
-  if(rTrail.length>120) rTrail.shift();
+  if(rTrail.length>80) rTrail.shift();
+
+  // Звёзды скроллятся вниз — иллюзия что ракета летит вверх
+  if(rStars){
+    const spd = Math.min(0.8 + RKT.mult*0.35, 12);
+    rStars.forEach(s=>{
+      const layerMult = s.layer===2?1.5:s.layer===1?1.0:0.55;
+      s.y += spd * layerMult;
+      if(s.y > rH+4){ s.y = -4; s.x = Math.random()*rW; }
+    });
+  }
   rAFid=requestAnimationFrame(rktAF);
 }
 
