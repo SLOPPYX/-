@@ -281,7 +281,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .splash-ring:nth-child(3){border-top-color:rgba(255,200,0,.35);animation-duration:4s;inset:24px}
 @keyframes ringRotate{to{transform:rotate(360deg)}}
 .splash-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
-.splash-icon{font-size:58px;animation:iconFloat 2s ease-in-out infinite;filter:drop-shadow(0 0 20px rgba(255,120,0,.9)) drop-shadow(0 0 40px rgba(255,60,0,.5))}
+.splash-icon{display:none}
 @keyframes iconFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-6px) scale(1.06)}}
 .splash-letters{display:flex;gap:1px;margin-bottom:6px}
 .splash-letter{font-family:var(--fd);font-size:30px;font-weight:900;animation:letterDrop .5s cubic-bezier(.34,1.56,.64,1) both}
@@ -977,11 +977,16 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 <div id="splash">
   <div class="splash-stars" id="splashStars"></div>
-  <div class="splash-rings">
-    <div class="splash-ring"></div>
-    <div class="splash-ring"></div>
-    <div class="splash-ring"></div>
-    <div class="splash-center"><div class="splash-icon">🔥</div></div>
+  <!-- Анимированный слот-автомат -->
+  <div class="splash-slot" id="splashSlot">
+    <div class="splash-slot-frame">
+      <div class="splash-slot-reels">
+        <div class="splash-reel" id="splashReel0"><div class="splash-reel-inner">💎🎰🔥⚡💰🏆💎🎰🔥⚡</div></div>
+        <div class="splash-reel" id="splashReel1"><div class="splash-reel-inner">🎰💰🔥💎⚡🏆🎰💰🔥💎</div></div>
+        <div class="splash-reel" id="splashReel2"><div class="splash-reel-inner">🏆⚡💰🎰💎🔥🏆⚡💰🎰</div></div>
+      </div>
+      <div class="splash-slot-line"></div>
+    </div>
   </div>
   <div class="splash-letters">
     <span class="splash-letter">S</span>
@@ -4200,7 +4205,7 @@ function rktApply(d){
       // Фиксируем финальный mult = crashAt
       if(d.crash_at) RKT.mult=d.crash_at;
       RKT.phase='crashed';
-      if(rTrail.length) rktSpawnCrashParticles(rTrail[rTrail.length-1][0],rTrail[rTrail.length-1][1]);
+      rktSpawnCrashParticles(rTrail.length?rTrail[rTrail.length-1][0]:rW*0.5, rTrail.length?rTrail[rTrail.length-1][1]:rH*0.5);
       // Если не вывели — проигрыш
       if(RKT.betPlaced&&!RKT.cashedOut){
         RKT.stats.g++;RKT.stats.p-=RKT.myBet; rktSave();
@@ -4215,13 +4220,10 @@ function rktApply(d){
         rktUI();
       },2800);
     } else {
-      // Сбрасываем ставку ТОЛЬКО если не идёт процесс ставки
-      // и ставка не была только что подтверждена локально
-      // Защита: не сбрасываем betPlaced если ставка была < 5с назад
-      const betFresh = RKT._betTs>0 && (Date.now()-RKT._betTs)<5000;
-      if(!betFresh && (!_rktBetting || roundChanged)){
-        RKT.betPlaced=false; RKT.cashedOut=false; RKT._betTs=0;
-        if(!_rktBetting) rktSetBtn('b');
+      // waiting→waiting: сбрасываем ставку ТОЛЬКО если ставки не было
+      // Если betPlaced=true — игрок поставил, не трогаем до краша
+      if(!RKT.betPlaced && !_rktBetting){
+        RKT.cashedOut=false; rktSetBtn('b');
       }
     }
   }
@@ -4236,7 +4238,7 @@ function rktUI(){
   if(on) on.textContent=RKT.online;
   if(RKT.phase==='waiting'){
     if(me){me.textContent='ЖДЁМ';me.className='rkt-mult sw';}
-    if(sb) sb.textContent=''; // таймер показывается на canvas
+    // sb обновляется в rktWaitTick
     rktSetBtn(RKT.betPlaced?'w':'b');
   } else if(RKT.phase==='flying'){
     if(me&&!_rktTick){me.textContent=(RKT.mult||1).toFixed(2)+'×';me.className='rkt-mult sf';}
@@ -4388,7 +4390,13 @@ function rktWaitTick(){
     const left=Math.max(0,(_rktWaitEnd-Date.now())/1000);
     RKT.waitLeft=left;
     const sb=document.getElementById('rktSub');
-    // Таймер отображается на canvas (rDraw) — здесь только обновляем RKT.waitLeft
+    // Таймер — обновляем и DOM и canvas
+    const sb2=document.getElementById('rktSub');
+    if(sb2){
+      if(left<=0){sb2.textContent='🚀 ЗАПУСК!';}
+      else if(left<=3){sb2.textContent='🔴 '+left.toFixed(1)+'с';}
+      else{sb2.textContent='Раунд через '+Math.ceil(left)+'с';}
+    }
   }
   tick(); // сразу показываем
   _rktWT=setInterval(tick, 80); // 80мс — чёткое обновление
