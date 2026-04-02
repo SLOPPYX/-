@@ -3624,13 +3624,13 @@ function rDraw(){
 
   // Фон — глубокий космос
   const bg=ctx.createLinearGradient(0,0,0,rH);
-  bg.addColorStop(0,'#000008');
-  bg.addColorStop(0.4,'#04021a');
-  bg.addColorStop(1,'#080320');
+  bg.addColorStop(0,'#000000');
+  bg.addColorStop(0.4,'#010009');
+  bg.addColorStop(1,'#020110');
   ctx.fillStyle=bg; ctx.fillRect(0,0,rW,rH);
 
   // Туманности
-  [{x:rW*.18,y:rH*.25,r:90,c:'rgba(80,0,160,0.09)'},{x:rW*.82,y:rH*.65,r:70,c:'rgba(0,40,160,0.07)'},{x:rW*.5,y:rH*.08,r:110,c:'rgba(160,0,80,0.05)'}].forEach(n=>{
+  [{x:rW*.18,y:rH*.25,r:90,c:'rgba(60,0,120,0.05)'},{x:rW*.82,y:rH*.65,r:70,c:'rgba(0,30,120,0.04)'},{x:rW*.5,y:rH*.08,r:110,c:'rgba(120,0,60,0.03)'}].forEach(n=>{
     const ng=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
     ng.addColorStop(0,n.c); ng.addColorStop(1,'rgba(0,0,0,0)');
     ctx.fillStyle=ng; ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fill();
@@ -3696,17 +3696,28 @@ function rDraw(){
     else if(rPermanentT<=0.05){rPermanentDir=1;}
     const[px,py]=rPos(rPermanentT);
     const thrPow=0.55+Math.sin(rTime*0.08)*0.2;
-    rDrawRocket3D(ctx,px,py,0.85,-Math.PI/4,thrPow,false);
+    rDrawRocket3D(ctx,px,py,0.85,Math.PI*0.25*rPermanentDir,thrPow,false);
     // Пунктирная трасса во время ожидания
     if(rTime%3===0) rTrail.push([px,py]);
     if(rTrail.length>30) rTrail.shift();
   } else if(RKT.phase==='flying'&&rTrail.length){
     const[rx,ry]=rTrail[rTrail.length-1];
-    const ang=rTrail.length>2?Math.atan2(ry-rTrail[rTrail.length-3][1],rx-rTrail[rTrail.length-3][0]):-Math.PI/3;
+    // ang = направление движения в Canvas (0=право, -PI/2=вверх)
+    // Ракета нарисована носом в -Y (вверх при angle=0)
+    // Чтобы нос смотрел по направлению движения: angle = ang + PI/2
+    // ang+PI/2: летим вправо (ang=0) → angle=PI/2 → нос смотрит вниз ❌
+    // Правильно: нос в -Y, летим вправо-вверх (ang≈-0.5 рад)
+    // Нужен угол чтобы -Y повернулся в направление ang
+    // rotate(ang): -Y вектор поворачивается на ang → смотрит в ang-PI/2... нет
+    // Проще: flip ракету — нос в +Y (вниз при angle=0), тогда rotate(ang+PI/2) = нос вперёд
+    // Или: рисуем нос в -Y и делаем rotate(ang - PI/2 + PI) = rotate(ang + PI/2)... нет
+    // ИТОГ: rotate(ang) при носе в -Y → нос смотрит в направлении (ang - PI/2)
+    // Нам нужно направление ang → нос должен быть в ang → rotate(ang + PI/2)
+    const ang=rTrail.length>2?Math.atan2(ry-rTrail[rTrail.length-3][1],rx-rTrail[rTrail.length-3][0]):-Math.PI/4;
     const t2=Math.min((Date.now()-RKT._ls)/14000,0.93);
     const sc=0.85+t2*0.25;
     const thrPow=0.5+Math.min(RKT.mult-1,9)*0.05+Math.sin(rTime*0.1)*0.1;
-    rDrawRocket3D(ctx,rx,ry,sc,ang-Math.PI/2,thrPow,false);
+    rDrawRocket3D(ctx,rx,ry,sc,ang+Math.PI/2,thrPow,false);
   } else if(RKT.phase==='crashed'&&rTrail.length){
     const[rx,ry]=rTrail[rTrail.length-1];
     rDrawRocket3D(ctx,rx,ry,1.0,0,0,true);
@@ -3813,7 +3824,12 @@ function rktApply(d){
 
   RKT.players=d.players||[]; RKT.history=d.history||[]; RKT.online=d.online||1;
   if(d.crash_at!=null) RKT.crashAt=d.crash_at;
-  if(d.wait_left!=null){RKT.waitLeft=d.wait_left;_rktWaitEnd=Date.now()+d.wait_left*1000;}
+  if(d.wait_left!=null){
+    RKT.waitLeft=d.wait_left;
+    _rktWaitEnd=Date.now()+d.wait_left*1000;
+    // Перезапускаем таймер с новыми данными с сервера
+    if(RKT.phase==='waiting') rktWaitTick();
+  }
 
   const rid=document.getElementById('rktRoundId');
   if(rid) rid.textContent='РАУНД #'+RKT.roundId;
@@ -3842,7 +3858,9 @@ function rktApply(d){
       }
       setTimeout(()=>{
         RKT.phase='waiting';RKT.betPlaced=false;RKT.cashedOut=false;
-        rTrail=[]; rktUI();
+        rTrail=[];
+        if(RKT.waitLeft>0) rktWaitTick(); // перезапуск таймера
+        rktUI();
       },2800);
     } else {
       RKT.betPlaced=false;RKT.cashedOut=false;rktSetBtn('b');
@@ -3963,15 +3981,29 @@ function rktUpdateTags(){
 // Обратный отсчёт — точный на Date.now()
 let _rktWT=null, _rktWaitEnd=0;
 function rktWaitTick(){
-  if(_rktWT) return;
-  _rktWaitEnd=Date.now()+RKT.waitLeft*1000;
-  _rktWT=setInterval(()=>{
-    if(RKT.phase!=='waiting'){clearInterval(_rktWT);_rktWT=null;return;}
+  // ВСЕГДА сбрасываем старый таймер и запускаем новый с актуальным временем
+  if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
+  // Синхронизируем точку окончания с текущим waitLeft
+  _rktWaitEnd=Date.now()+Math.max(0.1, RKT.waitLeft)*1000;
+  function tick(){
+    if(RKT.phase!=='waiting'){
+      if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
+      return;
+    }
     const left=Math.max(0,(_rktWaitEnd-Date.now())/1000);
     RKT.waitLeft=left;
     const sb=document.getElementById('rktSub');
-    if(sb) sb.textContent=left<=0?'🚀 ЗАПУСК!':left<=3?'🔴 СТАРТ ЧЕРЕЗ '+left.toFixed(1)+'с':'Раунд через '+Math.ceil(left)+'с';
-  },100);
+    if(!sb) return;
+    if(left<=0){
+      sb.textContent='🚀 ЗАПУСК!';
+    } else if(left<=3){
+      sb.textContent='🔴 '+left.toFixed(1)+'с';
+    } else {
+      sb.textContent='Раунд через '+Math.ceil(left)+'с';
+    }
+  }
+  tick(); // сразу показываем
+  _rktWT=setInterval(tick, 80); // 80мс — чёткое обновление
 }
 
 // ── Действия игрока ──────────────────────────────────────
