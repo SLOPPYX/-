@@ -971,6 +971,62 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   text-shadow:0 0 8px rgba(255,100,0,.5)!important;
 }
 
+/* ── Анимированный слот на сплеше ── */
+.splash-slot { position:relative; margin-bottom:22px; flex-shrink:0; }
+.splash-slot-frame {
+  background:linear-gradient(160deg,#1c1c1c 0%,#2e2e2e 50%,#1a1a1a 100%);
+  border:2px solid rgba(255,160,0,.55);
+  border-radius:18px; padding:12px 14px;
+  box-shadow:0 0 40px rgba(255,100,0,.25), 0 0 80px rgba(255,60,0,.1),
+             inset 0 1px 0 rgba(255,255,255,.12), inset 0 -1px 0 rgba(0,0,0,.4);
+  position:relative; overflow:hidden;
+}
+.splash-slot-frame::before {
+  content:'◆  S L O P P Y X  C A S I N O  ◆';
+  display:block; text-align:center;
+  font-family:var(--fd); font-size:7px; letter-spacing:2px;
+  color:rgba(255,160,0,.5); margin-bottom:10px;
+}
+.splash-slot-frame::after {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,200,0,.7),transparent);
+}
+.splash-slot-reels {
+  display:flex; gap:8px; height:64px; overflow:hidden;
+  background:rgba(0,0,0,.5); border-radius:10px;
+  padding:0 6px; border:1px solid rgba(255,150,0,.2);
+}
+.splash-reel {
+  width:54px; height:64px; overflow:hidden;
+  position:relative; flex-shrink:0;
+}
+.splash-reel::before, .splash-reel::after {
+  content:''; position:absolute; left:0; right:0; height:18px; z-index:2;
+  pointer-events:none;
+}
+.splash-reel::before { top:0; background:linear-gradient(180deg,rgba(0,0,0,.9),transparent); }
+.splash-reel::after  { bottom:0; background:linear-gradient(0deg,rgba(0,0,0,.9),transparent); }
+.splash-reel-inner {
+  display:flex; flex-direction:column; align-items:center;
+  font-size:30px; line-height:1;
+  animation:reelSpin var(--rspd,0.18s) linear infinite;
+}
+.splash-reel-inner span { display:block; height:64px; line-height:64px; text-align:center; width:54px; }
+#splashReel0 .splash-reel-inner { --rspd:0.15s; }
+#splashReel1 .splash-reel-inner { --rspd:0.20s; animation-delay:-0.06s; }
+#splashReel2 .splash-reel-inner { --rspd:0.17s; animation-delay:-0.11s; }
+@keyframes reelSpin {
+  0%   { transform:translateY(0); }
+  100% { transform:translateY(-640px); }
+}
+.splash-slot-line {
+  position:absolute; left:14px; right:14px;
+  top:calc(50% + 8px); transform:translateY(-50%);
+  height:2px;
+  background:linear-gradient(90deg,transparent,rgba(255,200,0,.9),rgba(255,255,100,1),rgba(255,200,0,.9),transparent);
+  box-shadow:0 0 10px rgba(255,200,0,.6), 0 0 20px rgba(255,150,0,.3);
+}
+
 </style>
 </head>
 <body>
@@ -981,9 +1037,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   <div class="splash-slot" id="splashSlot">
     <div class="splash-slot-frame">
       <div class="splash-slot-reels">
-        <div class="splash-reel" id="splashReel0"><div class="splash-reel-inner">💎🎰🔥⚡💰🏆💎🎰🔥⚡</div></div>
-        <div class="splash-reel" id="splashReel1"><div class="splash-reel-inner">🎰💰🔥💎⚡🏆🎰💰🔥💎</div></div>
-        <div class="splash-reel" id="splashReel2"><div class="splash-reel-inner">🏆⚡💰🎰💎🔥🏆⚡💰🎰</div></div>
+        <div class="splash-reel" id="splashReel0"><div class="splash-reel-inner"><span>💎</span><span>🎰</span><span>🔥</span><span>⚡</span><span>💰</span><span>🏆</span><span>💎</span><span>🎰</span><span>🔥</span><span>⚡</span></div></div>
+        <div class="splash-reel" id="splashReel1"><div class="splash-reel-inner"><span>🎰</span><span>💰</span><span>🔥</span><span>💎</span><span>⚡</span><span>🏆</span><span>🎰</span><span>💰</span><span>🔥</span><span>💎</span></div></div>
+        <div class="splash-reel" id="splashReel2"><div class="splash-reel-inner"><span>🏆</span><span>⚡</span><span>💰</span><span>🎰</span><span>💎</span><span>🔥</span><span>🏆</span><span>⚡</span><span>💰</span><span>🎰</span></div></div>
       </div>
       <div class="splash-slot-line"></div>
     </div>
@@ -3839,166 +3895,135 @@ function rDraw(){
   ctx.globalAlpha=1;
 
   // ── РАКЕТА ───────────────────────────────────────────────
-  if(RKT.phase==='waiting'){
-    // Ракета СТРОГО по центру — эффект гиперпрыжка на месте
-    const cx=rW*0.5, cy=rH*0.50;
+  // ── ЗВЁЗДЫ — всегда двигаются, скорость зависит от фазы ──
+  if(rStars){
+    let starSpd=0.3; // базовая скорость при waiting
+    if(RKT.phase==='flying') starSpd=Math.min(1.5+RKT.mult*0.4,14);
+    rStars.forEach(s=>{
+      const lm=s.layer===2?1.6:s.layer===1?1.0:0.5;
+      s.y+=starSpd*lm; s.bri+=0.025;
+      if(s.y>rH+4){s.y=-4;s.x=Math.random()*rW;}
+    });
+  }
 
+  // ── РАКЕТА И ЧАСТИЦЫ ────────────────────────────────────
+  if(RKT.phase==='waiting'){
+    const cx=rW*0.5, cy=rH*0.50;
     if(!rSpeedParts) rSpeedParts=[];
 
-    // ── Частицы: 3 типа ─────────────────────────────────
-    // 1. Основной след — длинные линии строго вниз (от сопла)
+    // Частицы: основной след строго вниз
     for(let k=0;k<6;k++){
-      const spread=(Math.random()-0.5)*0.12; // почти без разброса
-      const spd=14+Math.random()*18;
-      const r=100+Math.floor(Math.random()*80);
-      const g=60+Math.floor(Math.random()*60);
+      const spread=(Math.random()-0.5)*0.1;
+      const spd=15+Math.random()*18;
       rSpeedParts.push({
-        x:cx+(Math.random()-0.5)*16,
-        y:cy+22,
-        vx:Math.sin(spread)*spd,
-        vy:Math.cos(spread)*spd, // строго вниз
+        x:cx+(Math.random()-0.5)*14, y:cy+26,
+        vx:Math.sin(spread)*spd, vy:Math.cos(spread)*spd,
         life:1, type:0,
-        col:`rgba(${r},${g},255,`
+        col:`rgba(${120+Math.floor(Math.random()*100)},${60+Math.floor(Math.random()*60)},255,`
       });
     }
-    // 2. Боковые искры — разлетаются чуть в стороны
+    // Боковые искры
     if(rTime%3===0){
-      for(let k=0;k<4;k++){
-        const side=(k%2===0?1:-1)*(0.3+Math.random()*0.4);
-        const spd=8+Math.random()*12;
+      for(let k=0;k<3;k++){
+        const side=(k%2===0?1:-1)*(0.35+Math.random()*0.3);
         rSpeedParts.push({
-          x:cx,y:cy+18,
-          vx:Math.sin(side)*spd, vy:Math.cos(side*0.3)*spd,
-          life:0.8, type:1,
-          col:'rgba(255,150,50,'
+          x:cx,y:cy+20,vx:Math.sin(side)*9,vy:Math.cos(side*0.3)*9,
+          life:0.7,type:1,col:'rgba(255,140,40,'
         });
       }
     }
-    // 3. Кольцо ударной волны (периодически)
-    if(rTime%40===0){
-      rSpeedParts.push({x:cx,y:cy,vx:0,vy:0,life:1,type:2,r:5});
-    }
+    // Кольцо каждые 50 кадров
+    if(rTime%50===0) rSpeedParts.push({x:cx,y:cy,vx:0,vy:0,life:1,type:2,r:5});
 
-    // ── Рисуем частицы ──────────────────────────────────
+    // Рисуем частицы
     rSpeedParts.forEach(p=>{
       if(p.type===2){
-        // Кольцо расширяется
-        p.r+=(rH*.25-p.r)*0.12;
-        p.life-=0.035;
-        ctx.save();
-        ctx.globalAlpha=Math.max(0,p.life)*0.25;
-        ctx.strokeStyle='rgba(150,150,255,1)';
-        ctx.lineWidth=1.5;
-        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.stroke();
-        ctx.restore();
+        p.r+=(rH*0.22-p.r)*0.12; p.life-=0.03;
+        ctx.save(); ctx.globalAlpha=Math.max(0,p.life)*0.22;
+        ctx.strokeStyle='rgba(150,130,255,1)'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.stroke(); ctx.restore();
         return;
       }
       p.x+=p.vx; p.y+=p.vy; p.life-=0.055;
       if(p.life<=0) return;
-      const a=p.life;
-      const tailLen=p.type===0?5.5:3;
-      ctx.save();
-      ctx.globalAlpha=a*(p.type===0?0.85:0.6);
-      const grad=ctx.createLinearGradient(p.x,p.y,p.x-p.vx*tailLen,p.y-p.vy*tailLen);
-      grad.addColorStop(0,p.col+a+')');
-      grad.addColorStop(1,p.col+'0)');
-      ctx.strokeStyle=grad;
-      ctx.lineWidth=p.type===0?2.5:1.5;
-      ctx.lineCap='round';
-      ctx.beginPath();
-      ctx.moveTo(p.x,p.y);
-      ctx.lineTo(p.x-p.vx*tailLen,p.y-p.vy*tailLen);
-      ctx.stroke();
-      ctx.restore();
+      const tl=p.type===0?5.5:3;
+      const grad=ctx.createLinearGradient(p.x,p.y,p.x-p.vx*tl,p.y-p.vy*tl);
+      grad.addColorStop(0,p.col+p.life+')'); grad.addColorStop(1,p.col+'0)');
+      ctx.save(); ctx.globalAlpha=p.life*0.85;
+      ctx.strokeStyle=grad; ctx.lineWidth=p.type===0?2.5:1.5; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-p.vx*tl,p.y-p.vy*tl);
+      ctx.stroke(); ctx.restore();
     });
     rSpeedParts=rSpeedParts.filter(p=>p.life>0&&p.y<rH+30);
     if(rSpeedParts.length>200) rSpeedParts=rSpeedParts.slice(-150);
 
-    // ── Свечение вокруг сопла ────────────────────────────
-    const glowPulse=0.3+Math.abs(Math.sin(rTime*0.15))*0.4;
-    const sG=ctx.createRadialGradient(cx,cy+20,0,cx,cy+20,40);
-    sG.addColorStop(0,`rgba(100,100,255,${glowPulse*0.5})`);
-    sG.addColorStop(0.5,`rgba(80,50,200,${glowPulse*0.2})`);
+    // Свечение сопла
+    const gp=0.25+Math.abs(Math.sin(rTime*0.15))*0.4;
+    const sG=ctx.createRadialGradient(cx,cy+22,0,cx,cy+22,38);
+    sG.addColorStop(0,`rgba(100,80,255,${gp*0.5})`);
     sG.addColorStop(1,'rgba(50,0,150,0)');
-    ctx.fillStyle=sG; ctx.beginPath(); ctx.arc(cx,cy+20,40,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=sG; ctx.beginPath(); ctx.arc(cx,cy+22,38,0,Math.PI*2); ctx.fill();
 
-    // ── Ракета строго по центру, только вертикальное покачивание ──
-    const vertBounce=Math.sin(rTime*0.08)*2.5; // только вверх-вниз, без крена
-    const thrPow=0.85+Math.sin(rTime*0.14)*0.15;
-    rDrawRocket3D(ctx, cx, cy+vertBounce, 1.0, 0, thrPow, false);
+    // Ракета по центру — только вертикальное покачивание
+    const vb=Math.sin(rTime*0.08)*2.5;
+    const tp=0.85+Math.sin(rTime*0.14)*0.15;
+    rDrawRocket3D(ctx,cx,cy+vb,1.0,0,tp,false);
     rTrail=[];
+
   } else if(RKT.phase==='flying'){
-    // Ракета ВСЕГДА по центру — движение создаётся звёздами и частицами
-    const cx = rW*0.5, cy = rH*0.50;
-    const m = RKT.mult||1;
-
-    // Вибрация от ускорения — растёт с иксами
-    const vibAmp = Math.min(m*0.12, 3.5);
-    const vibX = (Math.random()-0.5)*vibAmp;
-    const vibY = (Math.random()-0.5)*vibAmp*0.5;
-    // Лёгкое покачивание + вибрация
-    const lean = Math.sin(rTime*0.07)*1.8 + vibX;
-    const bounce = Math.sin(rTime*0.11)*1.5 + vibY;
-
-    // Тяга растёт с иксами
-    const thrPow = Math.min(0.6 + m*0.035, 1.0) + Math.sin(rTime*0.13)*0.08;
-    const sc = 0.95 + Math.min(m*0.003, 0.15);
-
-    // ── Частицы скорости из сопла ──────────────────────
+    const cx=rW*0.5, cy=rH*0.50;
+    const m=RKT.mult||1;
     if(!rSpeedParts) rSpeedParts=[];
-    const pCount = Math.floor(4 + Math.min(m*0.6, 12));
-    for(let k=0;k<pCount;k++){
-      const spread = (Math.random()-0.5)*0.25;
-      const spd = (10 + Math.random()*12) * Math.min(1+m*0.08, 3);
-      const isGreen = m >= 10;
-      const r = isGreen?74:120+Math.floor(Math.random()*80);
-      const g = isGreen?222:80+Math.floor(Math.random()*60);
-      const b = isGreen?128:255;
+
+    // Вибрация растёт с иксами
+    const vib=Math.min(m*0.13,3.5);
+    const vx2=(Math.random()-0.5)*vib, vy2=(Math.random()-0.5)*vib*0.5;
+    const lean=Math.sin(rTime*0.07)*1.5+vx2;
+    const bounce=Math.sin(rTime*0.11)*1.2+vy2;
+    const tp=Math.min(0.6+m*0.034,1.0)+Math.sin(rTime*0.13)*0.08;
+    const sc=0.95+Math.min(m*0.003,0.15);
+
+    // Частицы из сопла
+    const pc=Math.floor(4+Math.min(m*0.6,14));
+    for(let k=0;k<pc;k++){
+      const sp2=(Math.random()-0.5)*0.22;
+      const spd=(11+Math.random()*12)*Math.min(1+m*0.07,3);
+      const green=m>=10;
       rSpeedParts.push({
-        x: cx+lean+(Math.random()-0.5)*14,
-        y: cy+bounce+28, // снизу сопла
-        vx: Math.sin(spread)*spd,
-        vy: Math.cos(spread)*spd, // строго вниз
-        life: 0.9+Math.random()*0.1,
-        col: `rgba(${r},${g},${b},`
+        x:cx+lean+(Math.random()-0.5)*13, y:cy+bounce+28,
+        vx:Math.sin(sp2)*spd, vy:Math.cos(sp2)*spd,
+        life:0.9+Math.random()*0.1,
+        col:green?'rgba(74,222,128,':'rgba(140,100,255,'
       });
     }
-    // Рисуем частицы
     rSpeedParts.forEach(p=>{
-      p.x+=p.vx; p.y+=p.vy; p.vy*=1.06; // ускоряются
-      p.life-=0.05;
+      p.x+=p.vx; p.y+=p.vy; p.vy*=1.07; p.life-=0.05;
       if(p.life<=0) return;
-      const tailLen = 6 + m*0.15;
-      ctx.save();
-      ctx.globalAlpha = p.life*0.85;
-      const grad=ctx.createLinearGradient(p.x,p.y,p.x-p.vx*tailLen,p.y-p.vy*tailLen);
-      grad.addColorStop(0, p.col+p.life+')');
-      grad.addColorStop(1, p.col+'0)');
+      const tl=6+m*0.15;
+      const grad=ctx.createLinearGradient(p.x,p.y,p.x-p.vx*tl,p.y-p.vy*tl);
+      grad.addColorStop(0,p.col+p.life+')'); grad.addColorStop(1,p.col+'0)');
+      ctx.save(); ctx.globalAlpha=p.life*0.85;
       ctx.strokeStyle=grad; ctx.lineWidth=2.2; ctx.lineCap='round';
-      ctx.beginPath(); ctx.moveTo(p.x,p.y);
-      ctx.lineTo(p.x-p.vx*tailLen, p.y-p.vy*tailLen);
+      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-p.vx*tl,p.y-p.vy*tl);
       ctx.stroke(); ctx.restore();
     });
-    rSpeedParts = rSpeedParts.filter(p=>p.life>0 && p.y<rH+60);
+    rSpeedParts=rSpeedParts.filter(p=>p.life>0&&p.y<rH+60);
     if(rSpeedParts.length>300) rSpeedParts=rSpeedParts.slice(-200);
 
-    // ── Свечение сопла — пульсирует с тягой ────────────
-    const glowR = 35 + thrPow*20;
-    const glowA = 0.25 + thrPow*0.25;
-    const gG = ctx.createRadialGradient(cx+lean,cy+bounce+22,0,cx+lean,cy+bounce+22,glowR);
-    gG.addColorStop(0, m>=10?`rgba(74,222,128,${glowA})`:`rgba(120,80,255,${glowA})`);
+    // Свечение сопла
+    const gr=35+tp*20, ga=0.22+tp*0.22;
+    const gG=ctx.createRadialGradient(cx+lean,cy+bounce+22,0,cx+lean,cy+bounce+22,gr);
+    gG.addColorStop(0,m>=10?`rgba(74,222,128,${ga})`:`rgba(120,80,255,${ga})`);
     gG.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle=gG; ctx.beginPath();
-    ctx.arc(cx+lean,cy+bounce+22,glowR,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=gG; ctx.beginPath(); ctx.arc(cx+lean,cy+bounce+22,gr,0,Math.PI*2); ctx.fill();
 
-    // ── Трасса позади ───────────────────────────────────
-    // (рисуется выше в коде через rTrail — оставляем)
+    rDrawRocket3D(ctx,cx+lean,cy+bounce,sc,0,tp,false);
 
-    // ── РАКЕТА по центру ────────────────────────────────
-    rDrawRocket3D(ctx, cx+lean, cy+bounce, sc, 0, thrPow, false);
   } else if(RKT.phase==='crashed'&&rTrail.length){
     const[rx,ry]=rTrail[rTrail.length-1];
     rDrawRocket3D(ctx,rx,ry,1.0,0,0,true);
+  } else if(RKT.phase==='crashed'){
+    rDrawRocket3D(ctx,rW*0.5,rH*0.5,1.0,0,0,true);
   }
 
   // Таймер до раунда — большими цифрами на canvas
@@ -4242,7 +4267,6 @@ function rktUI(){
     rktSetBtn(RKT.betPlaced?'w':'b');
   } else if(RKT.phase==='flying'){
     if(me&&!_rktTick){me.textContent=(RKT.mult||1).toFixed(2)+'×';me.className='rkt-mult sf';}
-    if(sb) sb.textContent='';
     rktSetBtn(RKT.betPlaced&&!RKT.cashedOut?'c':'w');
   } else if(RKT.phase==='crashed'){
     if(me){me.textContent=(RKT.crashAt||(RKT.mult||1)).toFixed(2)+'×';me.className='rkt-mult sc';}
