@@ -2827,122 +2827,123 @@ function splashBalShow(val, sourceText, sourceClass) {
 }
 
 async function init() {
-  // Диагностика при старте — сразу видим что передано
   console.log('[Casino INIT] ==========================================');
   console.log('[Casino INIT] USER_ID:', USER_ID);
-  console.log('[Casino INIT] URL_BAL:', URL_BAL);
   console.log('[Casino INIT] API_URL:', API_URL || '❌ ПУСТОЙ');
   console.log('[Casino INIT] API_SECRET:', API_SECRET ? API_SECRET.substring(0,6)+'...' : '❌ ПУСТОЙ');
-  try { console.log('[Casino INIT] Full URL:', window.location.href.substring(0, 200)); } catch(e){}
   console.log('[Casino INIT] ==========================================');
 
+  const splash = document.getElementById('splash');
   const bar    = document.getElementById('splashBar');
   const status = document.getElementById('splashStatus');
-  const splash = document.getElementById('splash');
+  let _closed  = false;
 
   function closeSplash() {
-    if(splash && splash.parentNode) {
+    if(_closed) return; _closed=true;
+    if(bar) bar.style.width='100%';
+    if(splash) {
       splash.classList.add('hide');
-      setTimeout(() => { try { splash.remove(); } catch(e){} }, 500);
+      setTimeout(()=>{ try{ splash.remove(); }catch(e){} }, 520);
     }
-    if(bar) bar.style.width = '100%';
   }
 
-  // Аварийный таймер — 7 сек максимум
-  const emergency = setTimeout(() => {
+  // ── Аварийный таймер: 5 секунд и точка ──
+  const emergency = setTimeout(()=>{
+    console.warn('[Casino] ⚠️ Emergency close after 5s');
     closeSplash();
-    try { startBalancePolling(); } catch(e) {}
-  }, 7000);
+    try{ startBalancePolling(); }catch(e){}
+    try{ initProfileBanner(); }catch(e){}
+    try{ refreshBets(); }catch(e){}
+  }, 5000);
 
   try {
-    // ── Звёздочки сплеша ───────────────────────────────────────
+    // Шаг 1: Рисуем звёзды сплеша
     try {
       const st = document.getElementById('splashStars');
-      if(st) for(let i=0;i<60;i++){
+      if(st) for(let i=0;i<50;i++){
         const s=document.createElement('div'); s.className='splash-star';
         s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${1.5+Math.random()*3}s;--delay:${Math.random()*2}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;opacity:${0.1+Math.random()*0.5}`;
         st.appendChild(s);
       }
-    } catch(e){}
+    }catch(e){}
 
-    // ── Сначала загружаем все данные из CloudStorage (аватарка, статистика) ──
-    // Это быстро и синхронизирует устройства
+    // Прогресс 0→30%
+    if(bar) bar.style.width='5%';
+    if(status) status.textContent='ЗАГРУЗКА...';
+
+    // Шаг 2: Быстро грузим из localStorage (мгновенно, без ожидания Cloud)
     try {
-      await Promise.race([loadAllFromCloud(), new Promise(r => setTimeout(r, 2500))]);
-      // После загрузки из Cloud обновляем UI аватарки
-      try {
-        const av = AVATARS.find(a => a.id === selectedAvatar);
-        const emoji = av ? av.emoji : '🎮';
-        const spoAv = document.getElementById('spoAvatar');
-        if(spoAv) { const span = spoAv.querySelector('span'); if(span) span.textContent = emoji; else spoAv.textContent = emoji; }
-      } catch(e) {}
-    } catch(e) {}
+      const ls = parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10);
+      if(ls>0){ setBalance(ls); }
+      const bv=document.getElementById('splashBalValue');
+      if(bv&&ls>0){ bv.className='splash-bal-value from-cache'; bv.textContent=ls.toLocaleString('ru-RU'); }
+    }catch(e){}
+    try{ updateMiniStats(); }catch(e){}
+    if(bar) bar.style.width='25%';
 
-    // ── Показываем --- пока ждём баланс из API ──
-    try { updateMiniStats(); } catch(e){}
-    try {
-      const bv = document.getElementById('splashBalValue');
-      if(bv) { bv.className = 'splash-bal-value loading'; bv.textContent = '---'; }
-    } catch(e){}
-
-    // ── Прогресс-бар: 0 → 30% пока буквы анимируются ──────────
-    let prog = 0;
-    const t1 = setInterval(()=>{ prog=Math.min(prog+3,30); if(bar) bar.style.width=prog+'%'; },20);
-    await new Promise(r=>setTimeout(r,750));
-    clearInterval(t1);
-    if(bar) bar.style.width='30%';
-
-    // ── Шаг 1: Подключение к серверу ───────────────────────────
-    splashStep('step1', 'active');
+    // Шаг 3: Cloud загрузка — с жёстким таймаутом 1.5с
+    try{
+      await Promise.race([
+        loadAllFromCloud(),
+        new Promise(r=>setTimeout(r,1500))
+      ]);
+    }catch(e){}
+    if(bar) bar.style.width='50%';
     if(status) status.textContent='ПОДКЛЮЧЕНИЕ...';
+    splashStep('step1','active');
 
-    const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
-    const t2 = setInterval(()=>{ prog=Math.min(prog+1,60); if(bar) bar.style.width=prog+'%'; },40);
-
-    await new Promise(r=>setTimeout(r,300));
-
-    if(hasApi) {
-      splashStep('step1', 'done');
-      splashStep('step2', 'active');
+    // Шаг 4: Баланс из API — с жёстким таймаутом 2.5с
+    const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID!=='0');
+    if(hasApi){
+      splashStep('step1','done');
+      splashStep('step2','active');
       if(status) status.textContent='ПОЛУЧЕНИЕ БАЛАНСА...';
+      if(bar) bar.style.width='65%';
+
+      const apiBal = await Promise.race([
+        fetchBalanceFromAPI(2500),
+        new Promise(r=>setTimeout(()=>r(null),2500))
+      ]);
+
+      if(apiBal!==null){
+        setBalance(apiBal);
+        try{ tg.CloudStorage.setItem('balance_'+USER_ID,String(apiBal),()=>{}); }catch(e){}
+        try{ localStorage.setItem('bal_'+USER_ID,String(apiBal)); }catch(e){}
+        splashStep('step2','done');
+        splashStep('step3','done');
+        setBotStatus('connected','ПОДКЛЮЧЁН');
+        const bv=document.getElementById('splashBalValue');
+        if(bv){ bv.className='splash-bal-value from-bot'; bv.textContent=apiBal.toLocaleString('ru-RU'); }
+        if(status) status.textContent='✅ '+apiBal.toLocaleString('ru-RU')+' ТОКЕНОВ';
+      } else {
+        splashStep('step2','fail');
+        splashStep('step3','fail');
+        setBotStatus('error','НЕТ СВЯЗИ');
+        if(status) status.textContent='⚠️ КЭШИРОВАННЫЙ БАЛАНС';
+      }
     } else {
-      splashStep('step1', 'fail');
-      splashStep('step2', 'fail');
-      if(status) status.textContent='API НЕДОСТУПЕН — КЭШИРОВАННЫЙ БАЛАНС';
+      splashStep('step1','fail'); splashStep('step2','fail'); splashStep('step3','fail');
+      setBotStatus('error','API ВЫКЛ');
+      if(status) status.textContent='⚠️ БЕЗ API';
     }
 
-    // ── Шаг 2+3: Загружаем актуальный баланс из бота ──────────
-    clearInterval(t2);
-    const t3 = setInterval(()=>{ prog=Math.min(prog+1,88); if(bar) bar.style.width=prog+'%'; },35);
-
-    const loadedBal = await Promise.race([
-      safeLoadBalanceAnimated(),
-      new Promise(r=>setTimeout(()=>r(null), 4000))
-    ]);
-
-    clearInterval(t3);
-
-    // ── Финал ──────────────────────────────────────────────────
-    _lastKnownBalance = balance;
     if(bar) bar.style.width='100%';
-    // Финал — показываем то что уже применено (safeLoadBalanceAnimated уже всё показала)
-    if(status) status.textContent='✅ ' + balance.toLocaleString('ru-RU') + ' ТОКЕНОВ';
-
+    _lastKnownBalance = balance;
     try{ refreshBets(); }catch(e){}
     try{ for(const b of [100000,50000,25000,10000]){if(balance>=b){selectBet(b);break;}} }catch(e){}
 
-    await new Promise(r=>setTimeout(r,600));
+    // Небольшая пауза чтобы пользователь увидел баланс
+    await new Promise(r=>setTimeout(r,400));
 
   } catch(e) {
-    console.warn('Init error:', e);
+    console.warn('[Casino] init error:', e);
   } finally {
     clearTimeout(emergency);
     closeSplash();
-    try { tg.BackButton.show(); } catch(e){}
-    try { tg.BackButton.onClick(showWarnDialog); } catch(e){}
-    try { tg.enableClosingConfirmation(); } catch(e){}
-    // canvas убран — используется CSS баннер
-try{ initProfileBanner(); }catch(e){}
+    try{ tg.BackButton.show(); }catch(e){}
+    try{ tg.BackButton.onClick(showWarnDialog); }catch(e){}
+    try{ tg.enableClosingConfirmation(); }catch(e){}
+    try{ initProfileBanner(); }catch(e){}
     try{ startBalancePolling(); }catch(e){}
   }
 }
