@@ -682,10 +682,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 #rocketCanvas { position:absolute; inset:0; width:100%; height:100%; display:block }
 
 /* Множитель */
-.rkt-mult-wrap {
-  position:absolute; left:50%; top:36%; transform:translate(-50%,-50%);
-  text-align:center; pointer-events:none;
-}
+/* rkt-mult-wrap defined in shake CSS block */
 .rkt-mult {
   font-family:var(--fd); font-size:68px; font-weight:900; line-height:1;
   letter-spacing:-3px;
@@ -865,6 +862,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 }
 @keyframes rCashPulse { to { box-shadow:0 4px 36px rgba(74,222,128,.6), 0 0 0 2px rgba(74,222,128,.3) } }
 .rkt-btn.bw { background:rgba(255,255,255,.07); color:rgba(255,255,255,.25); cursor:not-allowed }
+.rkt-btn:disabled { opacity:.6; cursor:not-allowed; pointer-events:none }
 .rkt-btn:active:not(.bw) { transform:scale(.97) }
 
 /* Мини-стата */
@@ -877,21 +875,31 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-sl { font-size:9px; color:rgba(255,255,255,.26); letter-spacing:.4px }
 
 
-/* Тряска ракеты при высоких иксах */
+/* Тряска множителя при высоких иксах — строго по центру */
 @keyframes rktShake {
-  0%,100% { transform:translate(0,0) rotate(0deg) }
-  10%      { transform:translate(-2px,-1px) rotate(-1deg) }
-  20%      { transform:translate(2px,1px) rotate(1deg) }
-  30%      { transform:translate(-3px,0) rotate(-0.5deg) }
-  40%      { transform:translate(3px,-1px) rotate(0.5deg) }
-  50%      { transform:translate(-2px,2px) rotate(-1deg) }
-  60%      { transform:translate(2px,-2px) rotate(1deg) }
-  70%      { transform:translate(-1px,1px) rotate(-0.5deg) }
-  80%      { transform:translate(1px,0) rotate(0.5deg) }
-  90%      { transform:translate(-2px,-1px) rotate(-1deg) }
+  0%,100% { transform:translate(-50%,-50%) translate(0,0) }
+  15%     { transform:translate(-50%,-50%) translate(-2px,-1px) }
+  30%     { transform:translate(-50%,-50%) translate(2px,1px) }
+  45%     { transform:translate(-50%,-50%) translate(-3px,0) }
+  60%     { transform:translate(-50%,-50%) translate(2px,-1px) }
+  75%     { transform:translate(-50%,-50%) translate(-1px,2px) }
+  90%     { transform:translate(-50%,-50%) translate(2px,-2px) }
 }
-.rkt-mult-wrap.shaking { animation:rktShake 0.15s ease-in-out infinite }
-.rkt-mult-wrap.shaking-hard { animation:rktShake 0.08s ease-in-out infinite }
+@keyframes rktShakeHard {
+  0%,100% { transform:translate(-50%,-50%) translate(0,0) }
+  10%     { transform:translate(-50%,-50%) translate(-4px,-2px) }
+  20%     { transform:translate(-50%,-50%) translate(4px,2px) }
+  30%     { transform:translate(-50%,-50%) translate(-5px,0) }
+  40%     { transform:translate(-50%,-50%) translate(4px,-2px) }
+  50%     { transform:translate(-50%,-50%) translate(-3px,3px) }
+  60%     { transform:translate(-50%,-50%) translate(4px,-3px) }
+  70%     { transform:translate(-50%,-50%) translate(-3px,1px) }
+  80%     { transform:translate(-50%,-50%) translate(3px,0) }
+  90%     { transform:translate(-50%,-50%) translate(-4px,-2px) }
+}
+.rkt-mult-wrap { position:absolute; left:50%; top:36%; transform:translate(-50%,-50%); text-align:center; pointer-events:none; }
+.rkt-mult-wrap.shaking { animation:rktShake 0.18s ease-in-out infinite }
+.rkt-mult-wrap.shaking-hard { animation:rktShakeHard 0.09s ease-in-out infinite }
 
 </style>
 </head>
@@ -3690,22 +3698,36 @@ function rDraw(){
 
 
 
-  // ── ТРАЕКТОРИЯ ───────────────────────────────────────────
+  // ── ТРАЕКТОРИЯ — зелёная при полёте, красная при краше ──
   if(rTrail.length>1){
-    const m=RKT.phase==='flying'?RKT.mult:1;
-    const lineCol=m>=10?[74,222,128]:m>=5?[150,220,255]:[180,180,255];
+    // Цвет зависит от фазы: летим=зелёный, краш=красный
+    const isCrashed = RKT.phase==='crashed';
+    const lineCol = isCrashed ? [248,113,113] : [74,222,128];
+    const glowAlpha = isCrashed ? 0.15 : 0.18;
+    const lineAlpha = isCrashed ? 0.5 : 0.7;
+
     // Свечение трассы
     ctx.beginPath();
-    ctx.strokeStyle=`rgba(${lineCol.join(',')},0.12)`;
-    ctx.lineWidth=10; ctx.lineCap='round';
+    ctx.strokeStyle=`rgba(${lineCol.join(',')},${glowAlpha})`;
+    ctx.lineWidth=12; ctx.lineCap='round';
     ctx.moveTo(rTrail[0][0],rTrail[0][1]);
     rTrail.forEach(([px,py])=>ctx.lineTo(px,py)); ctx.stroke();
     // Основная линия
     ctx.beginPath();
-    ctx.strokeStyle=`rgba(${lineCol.join(',')},0.55)`;
+    ctx.strokeStyle=`rgba(${lineCol.join(',')},${lineAlpha})`;
     ctx.lineWidth=2.5;
     ctx.moveTo(rTrail[0][0],rTrail[0][1]);
     rTrail.forEach(([px,py])=>ctx.lineTo(px,py)); ctx.stroke();
+    // Яркий кончик трассы
+    if(rTrail.length>2&&!isCrashed){
+      const last3=rTrail.slice(-3);
+      ctx.beginPath();
+      ctx.strokeStyle=`rgba(${lineCol.join(',')},0.95)`;
+      ctx.lineWidth=3.5;
+      ctx.moveTo(last3[0][0],last3[0][1]);
+      last3.forEach(([px,py])=>ctx.lineTo(px,py));
+      ctx.stroke();
+    }
   }
 
   // ── ЧАСТИЦЫ ВЗРЫВА ───────────────────────────────────────
@@ -3848,6 +3870,14 @@ function rktTickStart(){
     }
     // Авто-вывод
     if(RKT.betPlaced&&!RKT.cashedOut&&RKT.auto>0&&m>=RKT.auto){rktDoCashout();}
+    // Жёсткая синхронизация: если множитель превысил серверный crashAt — стопаем
+    if(RKT.crashAt&&m>=RKT.crashAt){
+      // Не ждём сервера — локально фиксируем краш
+      _rktTick=false;
+      RKT.mult=RKT.crashAt;
+      if(el){ el.textContent=RKT.crashAt.toFixed(2)+'×'; el.className='rkt-mult sc'; }
+      return; // rktApply придёт и обработает officially
+    }
     // Таблица игроков — каждые 150мс (не DOM flood)
     const now=Date.now();
     if(now-_rktLastTable>150){_rktLastTable=now;rktUpdateTable();}
@@ -3874,7 +3904,13 @@ function rktApply(d){
   }
 
   RKT.players=d.players||[]; RKT.history=d.history||[]; RKT.online=d.online||1;
-  if(d.crash_at!=null) RKT.crashAt=d.crash_at;
+  if(d.crash_at!=null){
+    RKT.crashAt=d.crash_at;
+    // Если мы летим и превысили crashAt — немедленно применяем краш
+    if(RKT.phase==='flying'&&RKT.mult>d.crash_at){
+      RKT.mult=d.crash_at;
+    }
+  }
   if(d.wait_left!=null){
     RKT.waitLeft=d.wait_left;
     _rktWaitEnd=Date.now()+d.wait_left*1000;
@@ -3896,8 +3932,11 @@ function rktApply(d){
     }
   } else if(d.phase==='waiting'){
     if(prev==='flying'){
-      if(_rktTick){clearInterval(_rktTick);_rktTick=null;}
+      // Немедленно останавливаем все анимации
+      _rktTick=false; // rAF frame проверит и остановится
       if(rAFid){cancelAnimationFrame(rAFid);rAFid=null;}
+      // Фиксируем финальный mult = crashAt
+      if(d.crash_at) RKT.mult=d.crash_at;
       RKT.phase='crashed';
       if(rTrail.length) rktSpawnCrashParticles(rTrail[rTrail.length-1][0],rTrail[rTrail.length-1][1]);
       // Если не вывели — проигрыш
@@ -3948,9 +3987,19 @@ function rktUI(){
 
 function rktSetBtn(m){
   const b=document.getElementById('rktBtn');if(!b) return;
-  if(m==='b'){b.textContent='🚀 ПОСТАВИТЬ';b.className='rkt-btn bb';}
-  else if(m==='c'){b.textContent='💸 '+(RKT.mult||1).toFixed(2)+'× — ЗАБРАТЬ!';b.className='rkt-btn bc';}
-  else{b.textContent=RKT.phase==='flying'?(RKT.cashedOut?'✅ Выведено':'⏳ Летим...'):'⏳ Ждём старта...';b.className='rkt-btn bw';}
+  if(m==='b'){
+    b.textContent='🚀 ПОСТАВИТЬ';
+    b.className='rkt-btn bb';
+    b.disabled=false; // разблокируем
+  } else if(m==='c'){
+    b.textContent='💸 '+(RKT.mult||1).toFixed(2)+'× — ЗАБРАТЬ!';
+    b.className='rkt-btn bc';
+    b.disabled=false;
+  } else {
+    b.textContent=RKT.phase==='flying'?(RKT.cashedOut?'✅ Выведено':'⏳ Летим...'):'⏳ Ждём старта...';
+    b.className='rkt-btn bw';
+    b.disabled=true; // ждём — кнопка заблокирована
+  }
 }
 
 function rktHist(){
@@ -4101,7 +4150,9 @@ async function rktPlaceBet(){
   _rktOperating=true; // блокируем longPoll от перезаписи баланса
   RKT.myBet=bet;
 
-  // Блокируем UI мгновенно (без изменения баланса — только сервер списывает)
+  // Немедленно блокируем кнопку — защита от двойной ставки
+  const btn=document.getElementById('rktBtn');
+  if(btn){ btn.disabled=true; btn.textContent='⏳...'; }
   rktSetBtn('w');
   const res=document.getElementById('rktRes');
   if(res){res.textContent='⏳ Ставка...';res.className='rkt-res';}
