@@ -684,24 +684,28 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 /* Множитель */
 /* rkt-mult-wrap defined in shake CSS block */
 .rkt-mult {
-  font-family:var(--fd); font-size:72px; font-weight:900; line-height:1;
-  letter-spacing:-4px;
-  background:linear-gradient(180deg,#ffffff 0%,rgba(220,220,255,.85) 100%);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  font-family:var(--fd); font-size:76px; font-weight:900; line-height:1;
+  letter-spacing:-5px;
+  color:#ffffff;
   font-variant-numeric:tabular-nums;
   will-change:transform,filter;
-  filter:drop-shadow(0 0 20px rgba(255,255,255,.35));
+  text-shadow:0 0 30px rgba(255,255,255,.4), 0 2px 4px rgba(0,0,0,.8);
+  transition:color .08s, text-shadow .08s;
 }
-.rkt-mult.sf { filter:drop-shadow(0 0 30px rgba(255,255,255,.5)); }
+.rkt-mult.sf {
+  text-shadow:0 0 40px rgba(255,255,255,.6), 0 0 80px rgba(255,255,255,.2), 0 2px 4px rgba(0,0,0,.8);
+}
 .rkt-mult.sg {
-  background:linear-gradient(180deg,#6fff9e 0%,#22c55e 100%);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  filter:drop-shadow(0 0 30px rgba(74,222,128,.6));
+  color:#4ade80;
+  text-shadow:0 0 40px rgba(74,222,128,.8), 0 0 80px rgba(74,222,128,.3), 0 2px 4px rgba(0,0,0,.8);
 }
 .rkt-mult.sg2 {
-  background:linear-gradient(180deg,#fffb6e 0%,#f59e0b 100%);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  filter:drop-shadow(0 0 40px rgba(245,158,11,.7));
+  color:#fbbf24;
+  text-shadow:0 0 40px rgba(251,191,36,.9), 0 0 100px rgba(251,191,36,.4), 0 2px 4px rgba(0,0,0,.8);
+}
+.rkt-mult.sc {
+  color:#f87171;
+  text-shadow:0 0 40px rgba(248,113,113,.8), 0 0 80px rgba(248,113,113,.3), 0 2px 4px rgba(0,0,0,.8);
 }
 .rkt-mult.sw {
   font-size:20px; letter-spacing:3px;
@@ -774,10 +778,11 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-hist-lbl { font-family:var(--fd); font-size:7px; letter-spacing:1.5px; color:rgba(255,255,255,.2); flex-shrink:0 }
 .rkt-hist { display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; flex:1 }
 .rkt-hist::-webkit-scrollbar { display:none }
-.rkt-hc { flex-shrink:0; padding:4px 10px; border-radius:14px; font-family:var(--fd); font-size:10px; font-weight:700; border:1px solid; cursor:default }
-.rkt-hc.hi { background:rgba(74,222,128,.1);  border-color:rgba(74,222,128,.22);  color:#4ade80 }
-.rkt-hc.md { background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.09); color:rgba(255,255,255,.45) }
-.rkt-hc.lo { background:rgba(248,113,113,.08); border-color:rgba(248,113,113,.18); color:#f87171 }
+.rkt-hc { flex-shrink:0; padding:5px 11px; border-radius:10px; font-family:var(--fd); font-size:10px; font-weight:700; border:1px solid; cursor:default; transition:transform .1s }
+.rkt-hc:active { transform:scale(.93) }
+.rkt-hc.hi { background:rgba(74,222,128,.12);  border-color:rgba(74,222,128,.3);  color:#4ade80; text-shadow:0 0 8px rgba(74,222,128,.4) }
+.rkt-hc.md { background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.12); color:rgba(255,255,255,.5) }
+.rkt-hc.lo { background:rgba(248,113,113,.1);  border-color:rgba(248,113,113,.25); color:#f87171; text-shadow:0 0 8px rgba(248,113,113,.3) }
 
 /* Таблица игроков */
 .rkt-players-table {
@@ -861,18 +866,18 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   background:linear-gradient(180deg,rgba(255,255,255,.12) 0%,transparent 100%);
   pointer-events:none;
 }
-.rkt-btn.bb { background:#fff; color:#0a0a0a; box-shadow:0 4px 24px rgba(255,255,255,.18) }
+.rkt-btn.bb { background:#ffffff; color:#0a0a0a; box-shadow:0 4px 24px rgba(255,255,255,.2), inset 0 1px 0 rgba(255,255,255,.9); font-weight:900; letter-spacing:2px }
 .rkt-btn.bc {
-  background:linear-gradient(135deg,#16a34a 0%,#22c55e 50%,#16a34a 100%);
+  background:linear-gradient(135deg,#15803d,#22c55e,#15803d);
   background-size:200% auto;
   color:#fff;
-  font-size:18px; letter-spacing:1px;
-  box-shadow:0 0 0 0 rgba(74,222,128,.5);
-  animation:rCashPulse .5s ease infinite alternate;
+  font-size:19px; letter-spacing:1px; font-weight:900;
+  animation:rCashPulse .45s ease infinite alternate;
+  text-shadow:0 1px 3px rgba(0,0,0,.5);
 }
 @keyframes rCashPulse {
-  from { box-shadow:0 4px 20px rgba(74,222,128,.4); background-position:0% center; }
-  to   { box-shadow:0 4px 40px rgba(74,222,128,.8), 0 0 0 3px rgba(74,222,128,.25); background-position:100% center; }
+  from { box-shadow:0 4px 16px rgba(74,222,128,.4), inset 0 1px 0 rgba(255,255,255,.2); background-position:0% center; transform:scale(1); }
+  to   { box-shadow:0 6px 36px rgba(74,222,128,.75), 0 0 0 3px rgba(74,222,128,.3), inset 0 1px 0 rgba(255,255,255,.2); background-position:100% center; transform:scale(1.01); }
 }
 .rkt-btn.bw { background:rgba(255,255,255,.07); color:rgba(255,255,255,.25); cursor:not-allowed }
 .rkt-btn:disabled { opacity:.6; cursor:not-allowed; pointer-events:none }
@@ -890,29 +895,27 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 /* Тряска множителя при высоких иксах — строго по центру */
 @keyframes rktShake {
-  0%,100% { transform:translate(-50%,-50%) translate(0,0) }
-  15%     { transform:translate(-50%,-50%) translate(-2px,-1px) }
-  30%     { transform:translate(-50%,-50%) translate(2px,1px) }
-  45%     { transform:translate(-50%,-50%) translate(-3px,0) }
-  60%     { transform:translate(-50%,-50%) translate(2px,-1px) }
-  75%     { transform:translate(-50%,-50%) translate(-1px,2px) }
-  90%     { transform:translate(-50%,-50%) translate(2px,-2px) }
+  0%,100%{transform:translate(-50%,-50%) translate(0,0)}
+  20%{transform:translate(-50%,-50%) translate(-2.5px,-1px)}
+  40%{transform:translate(-50%,-50%) translate(2.5px,1.5px)}
+  60%{transform:translate(-50%,-50%) translate(-2px,-1.5px)}
+  80%{transform:translate(-50%,-50%) translate(2px,1px)}
 }
 @keyframes rktShakeHard {
-  0%,100% { transform:translate(-50%,-50%) translate(0,0) }
-  10%     { transform:translate(-50%,-50%) translate(-4px,-2px) }
-  20%     { transform:translate(-50%,-50%) translate(4px,2px) }
-  30%     { transform:translate(-50%,-50%) translate(-5px,0) }
-  40%     { transform:translate(-50%,-50%) translate(4px,-2px) }
-  50%     { transform:translate(-50%,-50%) translate(-3px,3px) }
-  60%     { transform:translate(-50%,-50%) translate(4px,-3px) }
-  70%     { transform:translate(-50%,-50%) translate(-3px,1px) }
-  80%     { transform:translate(-50%,-50%) translate(3px,0) }
-  90%     { transform:translate(-50%,-50%) translate(-4px,-2px) }
+  0%,100%{transform:translate(-50%,-50%) translate(0,0)}
+  10%{transform:translate(-50%,-50%) translate(-5px,-2px)}
+  20%{transform:translate(-50%,-50%) translate(5px,3px)}
+  30%{transform:translate(-50%,-50%) translate(-4px,-3px)}
+  40%{transform:translate(-50%,-50%) translate(4px,2px)}
+  50%{transform:translate(-50%,-50%) translate(-5px,1px)}
+  60%{transform:translate(-50%,-50%) translate(5px,-2px)}
+  70%{transform:translate(-50%,-50%) translate(-3px,3px)}
+  80%{transform:translate(-50%,-50%) translate(3px,-1px)}
+  90%{transform:translate(-50%,-50%) translate(-4px,-2px)}
 }
 .rkt-mult-wrap { position:absolute; left:50%; top:36%; transform:translate(-50%,-50%); text-align:center; pointer-events:none; }
-.rkt-mult-wrap.shaking { animation:rktShake 0.18s ease-in-out infinite }
-.rkt-mult-wrap.shaking-hard { animation:rktShakeHard 0.09s ease-in-out infinite }
+.rkt-mult-wrap.shaking { animation:rktShake 0.16s ease-in-out infinite }
+.rkt-mult-wrap.shaking-hard { animation:rktShakeHard 0.08s ease-in-out infinite }
 
 </style>
 </head>
@@ -3793,43 +3796,45 @@ function rktStartRAF(){
     _rktRAF = requestAnimationFrame(frame);
 
     if(RKT.phase==='flying'){
-      // Множитель считаем по точному серверному времени старта
       const elapsed = (Date.now() - RKT._serverStartTs) / 1000;
-      const m = Math.min(Math.pow(Math.E, elapsed*0.085), RKT.crashAt||999);
-      RKT.mult = Math.floor(m*100)/100;
+      // ЖЁСТКОЕ ограничение: клиент НИКОГДА не показывает больше crashAt
+      const maxMult = RKT.crashAt || 999;
+      const raw = Math.pow(Math.E, elapsed * 0.085);
+      const m   = Math.min(raw, maxMult);
 
-      // Обновляем дисплей
+      RKT.mult = m;
+
       const el = document.getElementById('rktMult');
       if(el){
+        // Показываем точное значение — не округляем вниз (это и создавало расхождение!)
         el.textContent = m.toFixed(2)+'×';
-        const cls = 'rkt-mult sf'+(m>=50?' sg sg2':m>=10?' sg':'');
+        const cls = m >= maxMult ? 'rkt-mult sc'
+                  : 'rkt-mult sf'+(m>=50?' sg sg2':m>=20?' sg':'');
         if(el.className!==cls) el.className=cls;
       }
-      // Кнопка кешаута
+
       const btn = document.getElementById('rktBtn');
       if(btn&&btn.classList.contains('bc'))
         btn.textContent = '💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
-      // Тряска
+
+      // Тряска только когда не у краша
       const mw = document.getElementById('rktMultWrap');
-      if(mw){
-        if(m>=50) mw.className='rkt-mult-wrap shaking-hard';
-        else if(m>=20) mw.className='rkt-mult-wrap shaking';
-        else mw.className='rkt-mult-wrap';
-      }
+      if(mw && m < maxMult){
+        mw.className = m>=50?'rkt-mult-wrap shaking-hard':m>=20?'rkt-mult-wrap shaking':'rkt-mult-wrap';
+      } else if(mw){ mw.className='rkt-mult-wrap'; }
+
       // Авто-вывод
       if(RKT.betPlaced&&!RKT.cashedOut&&RKT.auto>0&&m>=RKT.auto) rktDoCashout();
-      // Краш по crashAt (клиентская копия серверного значения)
-      if(RKT.crashAt && m>=RKT.crashAt){
+
+      // Достигли crashAt — показываем краш локально, ждём подтверждения от сервера
+      if(RKT.crashAt && raw >= RKT.crashAt){
         RKT.mult = RKT.crashAt;
-        if(el){ el.textContent=RKT.crashAt.toFixed(2)+'×'; el.className='rkt-mult sc'; }
-        // Не останавливаем RAF — ждём официального подтверждения от сервера
+        if(el){ el.textContent = RKT.crashAt.toFixed(2)+'×'; el.className='rkt-mult sc'; }
       }
     }
 
-    // Canvas всегда перерисовываем
     rDraw();
 
-    // Таблица 150мс
     const now = Date.now();
     if(now-_rktTableTs>150){ _rktTableTs=now; rktUpdateTable(); }
   }
@@ -3879,14 +3884,17 @@ function rktApply(d){
   if(d.phase==='flying'){
     const isNew = (prev!=='flying');
     RKT.phase = 'flying';
-    RKT.mult  = d.mult||1.00;
-    // Вычисляем серверное время старта из elapsed
+
+    // ВСЕГДА пересинхронизируем время с сервера — убираем накопленный дрейф
     if(d.elapsed!=null && d.elapsed>=0){
+      // elapsed — сколько секунд прошло на сервере с начала раунда
       RKT._serverStartTs = Date.now() - d.elapsed*1000;
-    } else {
-      // Fallback: из mult
-      RKT._serverStartTs = Date.now() - (Math.log(Math.max(RKT.mult,1.001))/0.085)*1000;
+    } else if(d.mult){
+      // Fallback: вычисляем из mult
+      RKT._serverStartTs = Date.now() - (Math.log(Math.max(d.mult,1.001))/0.085)*1000;
     }
+    RKT.mult = d.mult||1.00;
+
     if(isNew){
       rTrail=[]; rCrashParticles=[];
       if(rAFid) cancelAnimationFrame(rAFid);
@@ -4078,7 +4086,6 @@ function rktWaitTick(){
 
 // ── Ставка ───────────────────────────────────────────────
 let _rktBetting=false;
-let _rktOperating=false;
 
 async function rktAction(){
   if(RKT.phase==='flying'&&RKT.betPlaced&&!RKT.cashedOut){ rktDoCashout(); return; }
@@ -4192,4 +4199,28 @@ function initRocket(){
   }
 }
 
-init();
+// ══ ГЛОБАЛЬНЫЙ FALLBACK — закрывает сплеш если init() не справилась ══
+(function(){
+  var _fb=false;
+  function _fbClose(){
+    if(_fb)return; _fb=true;
+    var s=document.getElementById('splash');
+    if(s){s.classList.add('hide');setTimeout(function(){try{s.remove();}catch(e){}},500);}
+    try{startBalancePolling();}catch(e){}
+    try{initProfileBanner();}catch(e){}
+    try{refreshBets();}catch(e){}
+  }
+  setTimeout(_fbClose, 5500);
+  function _run(){
+    try{
+      var p=init();
+      if(p&&p.catch) p.catch(function(e){console.error('[init]',e);_fbClose();});
+    }catch(e){console.error('[init sync]',e);_fbClose();}
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',_run);
+  } else { _run(); }
+})();
+</script>
+</body>
+</html>
