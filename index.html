@@ -675,231 +675,257 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 /* Сцена */
 .rkt-wrap { padding:0 }
 .rkt-scene {
-  position:relative; height:320px; overflow:hidden;
-  background:linear-gradient(180deg,#000005 0%,#05020f 60%,#0a0515 100%);
-  border-bottom:1px solid rgba(255,255,255,.06);
+  position:relative; height:340px; overflow:hidden;
+  background:radial-gradient(ellipse 100% 120% at 50% 110%, #0a0520 0%, #000000 65%);
+  border-bottom:1px solid rgba(255,255,255,.05);
+  box-shadow:inset 0 -40px 80px rgba(5,0,20,.9);
 }
 #rocketCanvas { position:absolute; inset:0; width:100%; height:100%; display:block }
 
 /* Множитель */
-/* rkt-mult-wrap defined in shake CSS block */
+.rkt-mult-wrap {
+  position:absolute; left:50%; top:38%;
+  transform:translate(-50%,-50%);
+  text-align:center; pointer-events:none;
+  z-index:2;
+}
 .rkt-mult {
-  font-family:var(--fd); font-size:68px; font-weight:900; line-height:1;
-  letter-spacing:-3px;
-  background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,.7) 100%);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  /* Плавные цифры */
+  font-family:var(--fd); font-size:80px; font-weight:900; line-height:1;
+  letter-spacing:-5px;
+  color:#fff;
   font-variant-numeric:tabular-nums;
-  will-change:contents;
-  contain:content;
-  /* Плавный переход цвета */
-  transition:background .2s, filter .1s;
+  will-change:transform,filter;
+  text-shadow:0 0 40px rgba(255,255,255,.5), 0 4px 8px rgba(0,0,0,.9);
+  transition:color .1s, text-shadow .1s;
 }
 .rkt-mult.sw {
-  font-size:20px; letter-spacing:3px;
-  background:none; -webkit-text-fill-color:rgba(255,255,255,.22);
+  font-size:22px; letter-spacing:4px; color:rgba(255,255,255,.2);
+  text-shadow:none; font-weight:700;
 }
 .rkt-mult.sc {
-  background:linear-gradient(180deg,#f87171,#ff4444);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  color:#f87171;
+  text-shadow:0 0 50px rgba(248,113,113,.9), 0 0 100px rgba(248,113,113,.4), 0 4px 8px rgba(0,0,0,.9);
+  animation:rCrashPulse .3s ease-out 1;
 }
-.rkt-mult.sf { animation:rMPulse 1s ease-in-out infinite alternate }
+@keyframes rCrashPulse {
+  0%  { transform:scale(1.3); }
+  60% { transform:scale(0.95); }
+  100%{ transform:scale(1); }
+}
+.rkt-mult.sf {
+  text-shadow:0 0 40px rgba(255,255,255,.6), 0 0 80px rgba(255,255,255,.2), 0 4px 8px rgba(0,0,0,.9);
+}
 .rkt-mult.sg {
-  background:linear-gradient(180deg,#4ade80,#22c55e);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  color:#4ade80;
+  text-shadow:0 0 50px rgba(74,222,128,.8), 0 0 100px rgba(74,222,128,.3), 0 4px 8px rgba(0,0,0,.9);
 }
-@keyframes rMPulse {
-  from { filter:drop-shadow(0 0 8px rgba(255,255,255,.2)) }
-  to   { filter:drop-shadow(0 0 28px rgba(255,255,255,.6)) }
+.rkt-mult.sg2 {
+  color:#fbbf24;
+  text-shadow:0 0 60px rgba(251,191,36,1), 0 0 120px rgba(251,191,36,.5), 0 4px 8px rgba(0,0,0,.9);
 }
 .rkt-sub {
-  font-family:var(--fd); font-size:10px; letter-spacing:2px;
-  color:rgba(255,255,255,.25); margin-top:6px;
+  font-family:var(--fd); font-size:11px; letter-spacing:3px;
+  color:rgba(255,255,255,.3); margin-top:8px;
+  text-shadow:0 1px 3px rgba(0,0,0,.8);
 }
 
 /* Онлайн */
 .rkt-onl {
   position:absolute; top:12px; right:14px;
   display:flex; align-items:center; gap:5px;
-  background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.08);
-  border-radius:20px; padding:4px 10px;
-  font-family:var(--fd); font-size:8px; letter-spacing:1px; color:rgba(255,255,255,.4);
-  backdrop-filter:blur(8px);
+  background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.1);
+  border-radius:20px; padding:5px 12px;
+  font-family:var(--fd); font-size:8px; letter-spacing:1px; color:rgba(255,255,255,.45);
+  backdrop-filter:blur(12px);
 }
 .rkt-onl-dot { width:5px; height:5px; border-radius:50%; background:#4ade80; animation:connPulse 2s ease infinite }
 
 /* ID раунда */
 .rkt-round-id {
   position:absolute; top:12px; left:14px;
-  background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.06);
-  border-radius:20px; padding:4px 10px;
-  font-family:var(--fd); font-size:8px; letter-spacing:1px; color:rgba(255,255,255,.25);
-  backdrop-filter:blur(8px);
+  background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.08);
+  border-radius:20px; padding:5px 12px;
+  font-family:var(--fd); font-size:8px; letter-spacing:1px; color:rgba(255,255,255,.3);
+  backdrop-filter:blur(12px);
 }
 
-/* Таблица игроков на canvas */
+/* Теги игроков */
 .rkt-players-overlay {
   position:absolute; bottom:0; left:0; right:0;
-  padding:8px 10px; display:flex; flex-wrap:wrap; gap:4px;
-  pointer-events:none; background:linear-gradient(0deg,rgba(0,0,0,.6) 0%,transparent 100%);
+  padding:10px 12px; display:flex; flex-wrap:wrap; gap:5px;
+  pointer-events:none;
+  background:linear-gradient(0deg,rgba(0,0,10,.75) 0%,transparent 100%);
 }
 .rkt-ptag {
   padding:4px 10px; border-radius:20px; font-family:var(--fd);
   font-size:8px; font-weight:700; letter-spacing:.4px;
-  backdrop-filter:blur(8px); border:1px solid; display:flex; align-items:center; gap:4px;
-  transition:all .3s;
+  backdrop-filter:blur(10px); border:1px solid; display:flex; align-items:center; gap:4px;
+  transition:all .25s;
 }
-.rkt-ptag.s-wait { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.12); color:rgba(255,255,255,.6) }
-.rkt-ptag.s-me   { background:rgba(232,184,75,.14);  border-color:rgba(232,184,75,.4);   color:#e8b84b }
-.rkt-ptag.s-cash { background:rgba(74,222,128,.12);  border-color:rgba(74,222,128,.35);  color:#4ade80 }
-.rkt-ptag.s-boom { background:rgba(248,113,113,.08); border-color:rgba(248,113,113,.25); color:rgba(248,113,113,.6); text-decoration:line-through }
-.rkt-ptag-avatar { font-size:11px; line-height:1 }
+.rkt-ptag.s-wait { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.14); color:rgba(255,255,255,.65) }
+.rkt-ptag.s-me   { background:rgba(232,184,75,.18);  border-color:rgba(232,184,75,.5);   color:#e8b84b; box-shadow:0 0 10px rgba(232,184,75,.2) }
+.rkt-ptag.s-cash { background:rgba(74,222,128,.15);  border-color:rgba(74,222,128,.4);   color:#4ade80; box-shadow:0 0 10px rgba(74,222,128,.2) }
+.rkt-ptag.s-boom { background:rgba(248,113,113,.1);  border-color:rgba(248,113,113,.3);  color:rgba(248,113,113,.65); text-decoration:line-through }
+.rkt-ptag-avatar { font-size:12px; line-height:1 }
 .rkt-ptag-info { display:flex; flex-direction:column; gap:1px }
 .rkt-ptag-name { font-size:8px }
 .rkt-ptag-val { font-size:9px; font-weight:900 }
 
 /* ── Панель управления ── */
-.rkt-panel { padding:12px 14px 14px }
+.rkt-panel { padding:14px 16px 16px; background:rgba(0,0,0,.2) }
 
 /* История */
-.rkt-hist-wrap { display:flex; align-items:center; gap:6px; margin-bottom:10px }
+.rkt-hist-wrap { display:flex; align-items:center; gap:8px; margin-bottom:12px }
 .rkt-hist-lbl { font-family:var(--fd); font-size:7px; letter-spacing:1.5px; color:rgba(255,255,255,.2); flex-shrink:0 }
-.rkt-hist { display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; flex:1 }
+.rkt-hist { display:flex; gap:5px; overflow-x:auto; scrollbar-width:none; flex:1 }
 .rkt-hist::-webkit-scrollbar { display:none }
-.rkt-hc { flex-shrink:0; padding:4px 10px; border-radius:14px; font-family:var(--fd); font-size:10px; font-weight:700; border:1px solid; cursor:default }
-.rkt-hc.hi { background:rgba(74,222,128,.1);  border-color:rgba(74,222,128,.22);  color:#4ade80 }
-.rkt-hc.md { background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.09); color:rgba(255,255,255,.45) }
-.rkt-hc.lo { background:rgba(248,113,113,.08); border-color:rgba(248,113,113,.18); color:#f87171 }
+.rkt-hc {
+  flex-shrink:0; padding:5px 12px; border-radius:12px;
+  font-family:var(--fd); font-size:10px; font-weight:700; border:1px solid; cursor:default;
+  transition:transform .1s;
+}
+.rkt-hc:active { transform:scale(.93) }
+.rkt-hc.hi { background:rgba(74,222,128,.12);  border-color:rgba(74,222,128,.28);  color:#4ade80; text-shadow:0 0 8px rgba(74,222,128,.4) }
+.rkt-hc.md { background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.12); color:rgba(255,255,255,.5) }
+.rkt-hc.lo { background:rgba(248,113,113,.1);  border-color:rgba(248,113,113,.25); color:#f87171; text-shadow:0 0 8px rgba(248,113,113,.3) }
 
 /* Таблица игроков */
 .rkt-players-table {
-  background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07);
-  border-radius:12px; overflow:hidden; margin-bottom:10px;
+  background:rgba(255,255,255,.025); border:1px solid rgba(255,255,255,.08);
+  border-radius:14px; overflow:hidden; margin-bottom:12px;
 }
 .rkt-pt-header {
-  display:grid; grid-template-columns:1fr 80px 80px;
-  padding:7px 12px; border-bottom:1px solid rgba(255,255,255,.06);
+  display:grid; grid-template-columns:1fr 80px 90px;
+  padding:8px 14px; border-bottom:1px solid rgba(255,255,255,.06);
   font-family:var(--fd); font-size:7px; letter-spacing:1.5px; color:rgba(255,255,255,.25);
 }
 .rkt-pt-row {
-  display:grid; grid-template-columns:1fr 80px 80px;
-  padding:8px 12px; border-bottom:1px solid rgba(255,255,255,.04);
-  align-items:center; transition:background .2s;
+  display:grid; grid-template-columns:1fr 80px 90px;
+  padding:9px 14px; border-bottom:1px solid rgba(255,255,255,.04);
+  align-items:center; transition:background .25s;
 }
 .rkt-pt-row:last-child { border-bottom:none }
-.rkt-pt-row.r-me { background:rgba(232,184,75,.06) }
-.rkt-pt-row.r-cash { background:rgba(74,222,128,.04) }
-.rkt-pt-row.r-boom { opacity:.5 }
-.rkt-pt-player { display:flex; align-items:center; gap:7px }
-.rkt-pt-ava { font-size:16px; width:24px; text-align:center }
-.rkt-pt-name { font-family:var(--fd); font-size:10px; font-weight:700; color:#fff }
-.rkt-pt-tag { font-family:var(--fd); font-size:7px; color:rgba(255,255,255,.3); margin-top:1px }
-.rkt-pt-bet { font-family:var(--fd); font-size:11px; font-weight:700; color:rgba(255,255,255,.7); text-align:right }
-.rkt-pt-profit { font-family:var(--fd); font-size:11px; font-weight:900; text-align:right }
-.rkt-pt-profit.pos { color:#4ade80 }
-.rkt-pt-profit.neg { color:#f87171 }
-.rkt-pt-profit.wait { color:rgba(255,255,255,.25) }
+.rkt-pt-row.r-me   { background:rgba(232,184,75,.07) }
+.rkt-pt-row.r-cash { background:rgba(74,222,128,.06) }
+.rkt-pt-row.r-boom { opacity:.45 }
+.rkt-pt-player { display:flex; align-items:center; gap:8px }
+.rkt-pt-ava    { font-size:18px; width:26px; text-align:center }
+.rkt-pt-name   { font-family:var(--fd); font-size:10px; font-weight:700; color:#fff }
+.rkt-pt-tag    { font-family:var(--fd); font-size:7px; color:rgba(255,255,255,.3); margin-top:2px }
+.rkt-pt-bet    { font-family:var(--fd); font-size:11px; font-weight:700; color:rgba(255,255,255,.65); text-align:right }
+.rkt-pt-profit { font-family:var(--fd); font-size:12px; font-weight:900; text-align:right }
+.rkt-pt-profit.pos  { color:#4ade80; text-shadow:0 0 8px rgba(74,222,128,.4) }
+.rkt-pt-profit.neg  { color:#f87171 }
+.rkt-pt-profit.wait { color:rgba(255,255,255,.22); font-size:10px }
 
 /* Результат */
 .rkt-res {
-  height:38px; border-radius:10px; display:flex; align-items:center;
-  justify-content:center; font-family:var(--fb); font-size:13px; font-weight:700;
-  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
-  color:rgba(255,255,255,.28); transition:all .3s; margin-bottom:10px;
+  height:42px; border-radius:12px; display:flex; align-items:center;
+  justify-content:center; font-family:var(--fb); font-size:14px; font-weight:700;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+  color:rgba(255,255,255,.3); transition:all .3s; margin-bottom:12px;
 }
-.rkt-res.win  { background:rgba(74,222,128,.1);  border-color:rgba(74,222,128,.28);  color:#4ade80 }
-.rkt-res.loss { background:rgba(248,113,113,.07); border-color:rgba(248,113,113,.2);  color:#f87171 }
+.rkt-res.win  { background:rgba(74,222,128,.12); border-color:rgba(74,222,128,.35); color:#4ade80; box-shadow:0 0 20px rgba(74,222,128,.15) }
+.rkt-res.loss { background:rgba(248,113,113,.09); border-color:rgba(248,113,113,.28); color:#f87171 }
 
 /* Контролы */
-.rkt-ctrl { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:10px }
+.rkt-ctrl { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px }
 .rkt-box {
-  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
-  border-radius:12px; padding:12px;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+  border-radius:14px; padding:13px;
 }
-.rkt-lbl { font-family:var(--fd); font-size:7px; letter-spacing:2px; color:rgba(255,255,255,.25); margin-bottom:7px }
+.rkt-lbl { font-family:var(--fd); font-size:7px; letter-spacing:2px; color:rgba(255,255,255,.28); margin-bottom:8px }
 .rkt-inp {
-  width:100%; padding:9px 10px; background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.1); border-radius:9px;
-  color:#fff; font-family:var(--fd); font-size:16px; font-weight:700;
-  outline:none; text-align:center;
+  width:100%; padding:10px 12px; background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.12); border-radius:10px;
+  color:#fff; font-family:var(--fd); font-size:17px; font-weight:700;
+  outline:none; text-align:center; transition:border-color .15s;
 }
-.rkt-inp:focus { border-color:rgba(255,255,255,.25) }
-.rkt-presets { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; margin-top:6px }
+.rkt-inp:focus { border-color:rgba(255,255,255,.3) }
+.rkt-presets { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; margin-top:7px }
 .rkt-pr {
-  padding:6px 2px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
-  border-radius:7px; color:rgba(255,255,255,.35); font-family:var(--fd); font-size:9px;
+  padding:6px 2px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+  border-radius:7px; color:rgba(255,255,255,.38); font-family:var(--fd); font-size:8px;
   font-weight:700; cursor:pointer; text-align:center; transition:all .12s;
 }
-.rkt-pr:active { transform:scale(.93) }
-.rkt-pr:hover { background:rgba(255,255,255,.09); color:#fff }
+.rkt-pr:active { transform:scale(.91) }
+.rkt-pr:hover  { background:rgba(255,255,255,.11); color:#fff; border-color:rgba(255,255,255,.2) }
 .rkt-autos { display:grid; grid-template-columns:repeat(4,1fr); gap:4px }
 .rkt-au {
-  padding:9px 2px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
-  border-radius:8px; color:rgba(255,255,255,.33); font-family:var(--fd); font-size:10px;
+  padding:9px 2px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+  border-radius:9px; color:rgba(255,255,255,.35); font-family:var(--fd); font-size:10px;
   font-weight:700; cursor:pointer; text-align:center; transition:all .12s;
 }
-.rkt-au.on { background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.27); color:#fff }
-.rkt-au:active { transform:scale(.93) }
-.rkt-au-lbl { font-family:var(--fd); font-size:8px; color:rgba(255,255,255,.22); letter-spacing:.7px; margin-top:6px }
+.rkt-au.on { background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.3); color:#fff }
+.rkt-au:active { transform:scale(.91) }
+.rkt-au-lbl { font-family:var(--fd); font-size:8px; color:rgba(255,255,255,.22); letter-spacing:.7px; margin-top:7px }
 
 /* Главная кнопка */
 .rkt-btn {
-  width:100%; padding:17px; border:none; border-radius:13px;
+  width:100%; padding:18px; border:none; border-radius:14px;
   font-family:var(--fd); font-size:16px; font-weight:900; letter-spacing:2px;
-  cursor:pointer; transition:all .12s; margin-bottom:10px; position:relative; overflow:hidden;
+  cursor:pointer; transition:transform .1s, box-shadow .1s; margin-bottom:12px;
+  position:relative; overflow:hidden;
 }
 .rkt-btn::after {
   content:''; position:absolute; inset:0;
-  background:linear-gradient(180deg,rgba(255,255,255,.12) 0%,transparent 100%);
+  background:linear-gradient(180deg,rgba(255,255,255,.15) 0%,transparent 60%);
   pointer-events:none;
 }
-.rkt-btn.bb { background:#fff; color:#0a0a0a; box-shadow:0 4px 24px rgba(255,255,255,.18) }
-.rkt-btn.bc {
-  background:linear-gradient(135deg,#22c55e,#16a34a); color:#fff;
-  box-shadow:0 4px 24px rgba(74,222,128,.35);
-  animation:rCashPulse .6s ease infinite alternate;
-  font-size:18px; letter-spacing:1px;
+.rkt-btn.bb {
+  background:#ffffff; color:#0a0a0a;
+  box-shadow:0 4px 28px rgba(255,255,255,.25), inset 0 1px 0 rgba(255,255,255,.5);
 }
-@keyframes rCashPulse { to { box-shadow:0 4px 36px rgba(74,222,128,.6), 0 0 0 2px rgba(74,222,128,.3) } }
-.rkt-btn.bw { background:rgba(255,255,255,.07); color:rgba(255,255,255,.25); cursor:not-allowed }
-.rkt-btn:disabled { opacity:.6; cursor:not-allowed; pointer-events:none }
-.rkt-btn:active:not(.bw) { transform:scale(.97) }
+.rkt-btn.bb:hover { box-shadow:0 6px 36px rgba(255,255,255,.35) }
+.rkt-btn.bc {
+  background:linear-gradient(135deg,#15803d 0%,#22c55e 50%,#15803d 100%);
+  background-size:200% auto;
+  color:#fff; font-size:19px; letter-spacing:1px;
+  text-shadow:0 1px 3px rgba(0,0,0,.4);
+  animation:rCashPulse .5s ease infinite alternate;
+}
+@keyframes rCashPulse {
+  from { box-shadow:0 4px 20px rgba(74,222,128,.4); background-position:0% center; transform:scale(1); }
+  to   { box-shadow:0 6px 40px rgba(74,222,128,.75), 0 0 0 3px rgba(74,222,128,.25); background-position:100% center; transform:scale(1.01); }
+}
+.rkt-btn.bw {
+  background:rgba(255,255,255,.07); color:rgba(255,255,255,.28);
+  cursor:not-allowed; box-shadow:none;
+}
+.rkt-btn:disabled { pointer-events:none }
+.rkt-btn:active:not(.bw):not(:disabled) { transform:scale(.97) }
 
 /* Мини-стата */
-.rkt-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:7px }
+.rkt-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px }
 .rkt-sc {
-  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
-  border-radius:11px; padding:10px 7px; text-align:center;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+  border-radius:12px; padding:12px 8px; text-align:center;
 }
-.rkt-sv { font-family:var(--fd); font-size:13px; font-weight:700; color:#fff; display:block; margin-bottom:2px }
-.rkt-sl { font-size:9px; color:rgba(255,255,255,.26); letter-spacing:.4px }
+.rkt-sv { font-family:var(--fd); font-size:14px; font-weight:700; color:#fff; display:block; margin-bottom:3px }
+.rkt-sl { font-size:9px; color:rgba(255,255,255,.28); letter-spacing:.4px }
 
-
-/* Тряска множителя при высоких иксах — строго по центру */
+/* Тряска — строго по центру */
 @keyframes rktShake {
-  0%,100% { transform:translate(-50%,-50%) translate(0,0) }
-  15%     { transform:translate(-50%,-50%) translate(-2px,-1px) }
-  30%     { transform:translate(-50%,-50%) translate(2px,1px) }
-  45%     { transform:translate(-50%,-50%) translate(-3px,0) }
-  60%     { transform:translate(-50%,-50%) translate(2px,-1px) }
-  75%     { transform:translate(-50%,-50%) translate(-1px,2px) }
-  90%     { transform:translate(-50%,-50%) translate(2px,-2px) }
+  0%,100%{transform:translate(-50%,-50%) translate(0,0)}
+  20%{transform:translate(-50%,-50%) translate(-3px,-1.5px)}
+  40%{transform:translate(-50%,-50%) translate(3px,1.5px)}
+  60%{transform:translate(-50%,-50%) translate(-2px,-2px)}
+  80%{transform:translate(-50%,-50%) translate(2px,1px)}
 }
 @keyframes rktShakeHard {
-  0%,100% { transform:translate(-50%,-50%) translate(0,0) }
-  10%     { transform:translate(-50%,-50%) translate(-4px,-2px) }
-  20%     { transform:translate(-50%,-50%) translate(4px,2px) }
-  30%     { transform:translate(-50%,-50%) translate(-5px,0) }
-  40%     { transform:translate(-50%,-50%) translate(4px,-2px) }
-  50%     { transform:translate(-50%,-50%) translate(-3px,3px) }
-  60%     { transform:translate(-50%,-50%) translate(4px,-3px) }
-  70%     { transform:translate(-50%,-50%) translate(-3px,1px) }
-  80%     { transform:translate(-50%,-50%) translate(3px,0) }
-  90%     { transform:translate(-50%,-50%) translate(-4px,-2px) }
+  0%,100%{transform:translate(-50%,-50%) translate(0,0)}
+  10%{transform:translate(-50%,-50%) translate(-6px,-3px)}
+  20%{transform:translate(-50%,-50%) translate(6px,3px)}
+  30%{transform:translate(-50%,-50%) translate(-5px,-3px)}
+  40%{transform:translate(-50%,-50%) translate(5px,2px)}
+  50%{transform:translate(-50%,-50%) translate(-6px,2px)}
+  60%{transform:translate(-50%,-50%) translate(6px,-2px)}
+  70%{transform:translate(-50%,-50%) translate(-4px,3px)}
+  80%{transform:translate(-50%,-50%) translate(4px,-1px)}
+  90%{transform:translate(-50%,-50%) translate(-5px,-2px)}
 }
-.rkt-mult-wrap { position:absolute; left:50%; top:36%; transform:translate(-50%,-50%); text-align:center; pointer-events:none; }
-.rkt-mult-wrap.shaking { animation:rktShake 0.18s ease-in-out infinite }
-.rkt-mult-wrap.shaking-hard { animation:rktShakeHard 0.09s ease-in-out infinite }
+.rkt-mult-wrap.shaking { animation:rktShake 0.15s ease-in-out infinite }
+.rkt-mult-wrap.shaking-hard { animation:rktShakeHard 0.07s ease-in-out infinite }
 
 </style>
 </head>
@@ -1214,6 +1240,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
             <div class="rkt-pr" onclick="rktPreset(25000)">25K</div>
             <div class="rkt-pr" onclick="rktPreset(50000)">50K</div>
             <div class="rkt-pr" onclick="rktPreset(100000)">100K</div>
+            <div class="rkt-pr" onclick="rktMultBet(2)" style="color:var(--green)">×2</div>
           </div>
           <!-- Множители ставки -->
           <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px">
@@ -3676,17 +3703,16 @@ function rDraw(){
   // Звёзды с мерцанием
   if(rStars) rStars.forEach(s=>{
     s.bri+=s.spd*0.025;
-    const base=s.layer===0?0.15:s.layer===1?0.35:0.6;
-    const a=base+Math.abs(Math.sin(s.bri))*(s.layer===2?0.6:0.35);
+    const a=0.2+Math.abs(Math.sin(s.bri))*0.8;
+    const sz=s.r;
     ctx.globalAlpha=a;
-    const sz=s.r*(s.layer===0?0.7:s.layer===1?1:1.4);
-    // Дальние — просто точки, близкие — с блеском
-    if(s.layer===2&&sz>0.9){
-      const sg=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,sz*2.5);
-      sg.addColorStop(0,'rgba(255,255,255,0.9)'); sg.addColorStop(1,'rgba(255,255,255,0)');
-      ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(s.x,s.y,sz*2.5,0,Math.PI*2); ctx.fill();
+    // Яркие звёзды — с мягким свечением
+    if(sz>1.0){
+      const sg=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,sz*3);
+      sg.addColorStop(0,s.col||'#ffffff'); sg.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(s.x,s.y,sz*3,0,Math.PI*2); ctx.fill();
     }
-    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(s.x,s.y,sz,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=s.col||'#fff'; ctx.beginPath(); ctx.arc(s.x,s.y,sz,0,Math.PI*2); ctx.fill();
   });
   ctx.globalAlpha=1;
 
@@ -3838,47 +3864,53 @@ async function rktPollLoop(){
   }
 }
 
-// 60fps — множитель обновляется каждый кадр через rAF
+// 60fps RAF — единственный источник mult на клиенте
 let _rktTick=false, _rktLastTable=0;
 function rktTickStart(){
   if(_rktTick) return;
   _rktTick=true;
   function frame(){
     if(!_rktTick||RKT.phase!=='flying'){_rktTick=false;return;}
-    const e=(Date.now()-RKT._ls)/1000;
-    const m=Math.pow(Math.E,e*0.085);
-    RKT.mult=Math.floor(m*100)/100;
 
-    // Обновляем цифру каждый кадр — плавно
+    const elapsed=(Date.now()-RKT._ls)/1000;
+    // Жёсткое ограничение: никогда не превышаем crashAt
+    const raw=Math.pow(Math.E, elapsed*0.085);
+    const cap=RKT.crashAt||9999;
+    const m=Math.min(raw, cap);
+
+    RKT.mult=m;
+
     const el=document.getElementById('rktMult');
     if(el){
       el.textContent=m.toFixed(2)+'×';
-      const cls='rkt-mult sf'+(m>=10?' sg':'');
+      // Цвет: белый → зелёный ×5+ → жёлтый ×20+ → красный при краше
+      const cls = (m>=cap && cap<9999) ? 'rkt-mult sc'
+                : m>=20 ? 'rkt-mult sf sg sg2'
+                : m>=5  ? 'rkt-mult sf sg'
+                :         'rkt-mult sf';
       if(el.className!==cls) el.className=cls;
     }
-    // Кнопка кешаута — каждый кадр
     const btn=document.getElementById('rktBtn');
     if(btn&&btn.classList.contains('bc')){
       btn.textContent='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
     }
-    // Тряска при высоких иксах
-    const mw=document.getElementById('rktMultWrap')||document.querySelector('.rkt-mult-wrap');
+    // Тряска
+    const mw=document.getElementById('rktMultWrap');
     if(mw){
-      if(m>=50){ mw.className='rkt-mult-wrap shaking-hard'; }
-      else if(m>=20){ mw.className='rkt-mult-wrap shaking'; }
-      else{ mw.className='rkt-mult-wrap'; }
+      if(m>=50)      mw.className='rkt-mult-wrap shaking-hard';
+      else if(m>=20) mw.className='rkt-mult-wrap shaking';
+      else           mw.className='rkt-mult-wrap';
     }
     // Авто-вывод
-    if(RKT.betPlaced&&!RKT.cashedOut&&RKT.auto>0&&m>=RKT.auto){rktDoCashout();}
-    // Жёсткая синхронизация: если множитель превысил серверный crashAt — стопаем
-    if(RKT.crashAt&&m>=RKT.crashAt){
-      // Не ждём сервера — локально фиксируем краш
+    if(RKT.betPlaced&&!RKT.cashedOut&&RKT.auto>0&&m>=RKT.auto) rktDoCashout();
+    // Достигли crashAt — останавливаемся, ждём официального краша от сервера
+    if(cap<9999 && raw>=cap){
       _rktTick=false;
-      RKT.mult=RKT.crashAt;
-      if(el){ el.textContent=RKT.crashAt.toFixed(2)+'×'; el.className='rkt-mult sc'; }
-      return; // rktApply придёт и обработает officially
+      RKT.mult=cap;
+      if(el){ el.textContent=cap.toFixed(2)+'×'; el.className='rkt-mult sc'; }
+      // Не вызываем return-прерывание RAF — rktApply обработает transition
+      return;
     }
-    // Таблица игроков — каждые 150мс (не DOM flood)
     const now=Date.now();
     if(now-_rktLastTable>150){_rktLastTable=now;rktUpdateTable();}
     requestAnimationFrame(frame);
@@ -3923,8 +3955,13 @@ function rktApply(d){
 
   if(d.phase==='flying'){
     RKT.mult=d.mult||1.00;
-    if(prev!=='flying'){
+    // ВСЕГДА ресинхронизируем _ls — устраняем накопленный дрейф
+    if(d.elapsed!=null && d.elapsed>=0){
+      RKT._ls=Date.now()-d.elapsed*1000;
+    } else {
       RKT._ls=Date.now()-(Math.log(Math.max(RKT.mult,1.001))/0.085)*1000;
+    }
+    if(prev!=='flying'){
       rTrail=[];rCrashParticles=[];
       if(rAFid) cancelAnimationFrame(rAFid);
       rktAF(); rktTickStart();
@@ -3986,19 +4023,19 @@ function rktUI(){
 }
 
 function rktSetBtn(m){
-  const b=document.getElementById('rktBtn');if(!b) return;
+  const b=document.getElementById('rktBtn'); if(!b) return;
   if(m==='b'){
     b.textContent='🚀 ПОСТАВИТЬ';
     b.className='rkt-btn bb';
-    b.disabled=false; // разблокируем
+    b.disabled=false;
   } else if(m==='c'){
     b.textContent='💸 '+(RKT.mult||1).toFixed(2)+'× — ЗАБРАТЬ!';
     b.className='rkt-btn bc';
     b.disabled=false;
   } else {
-    b.textContent=RKT.phase==='flying'?(RKT.cashedOut?'✅ Выведено':'⏳ Летим...'):'⏳ Ждём старта...';
+    b.textContent=RKT.phase==='flying'?(RKT.cashedOut?'✅ Выведено!':'⏳ Летим...'):'⏳ Ждём старта...';
     b.className='rkt-btn bw';
-    b.disabled=true; // ждём — кнопка заблокирована
+    b.disabled=true;
   }
 }
 
