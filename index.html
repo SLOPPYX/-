@@ -877,6 +877,22 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-sl { font-size:9px; color:rgba(255,255,255,.26); letter-spacing:.4px }
 
 
+/* Тряска ракеты при высоких иксах */
+@keyframes rktShake {
+  0%,100% { transform:translate(0,0) rotate(0deg) }
+  10%      { transform:translate(-2px,-1px) rotate(-1deg) }
+  20%      { transform:translate(2px,1px) rotate(1deg) }
+  30%      { transform:translate(-3px,0) rotate(-0.5deg) }
+  40%      { transform:translate(3px,-1px) rotate(0.5deg) }
+  50%      { transform:translate(-2px,2px) rotate(-1deg) }
+  60%      { transform:translate(2px,-2px) rotate(1deg) }
+  70%      { transform:translate(-1px,1px) rotate(-0.5deg) }
+  80%      { transform:translate(1px,0) rotate(0.5deg) }
+  90%      { transform:translate(-2px,-1px) rotate(-1deg) }
+}
+.rkt-mult-wrap.shaking { animation:rktShake 0.15s ease-in-out infinite }
+.rkt-mult-wrap.shaking-hard { animation:rktShake 0.08s ease-in-out infinite }
+
 </style>
 </head>
 <body>
@@ -1140,7 +1156,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <canvas id="rocketCanvas"></canvas>
 
       <!-- Множитель по центру -->
-      <div class="rkt-mult-wrap">
+      <div class="rkt-mult-wrap" id="rktMultWrap">
         <div class="rkt-mult sw" id="rktMult">ЖДЁМ</div>
         <div class="rkt-sub" id="rktSub">Следующий раунд скоро</div>
       </div>
@@ -3264,6 +3280,7 @@ async function longPoll() {
 async function notifyBalance() {
   if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
   if(spinning) return;
+  if(_rktOperating) return; // ракетка управляет балансом
   try {
     const ctrl = new AbortController();
     const t = setTimeout(()=>ctrl.abort(), 2000);
@@ -3286,6 +3303,7 @@ async function notifyBalance() {
 // Прямой запрос баланса
 async function pollBalance() {
   if(!API_URL || !API_SECRET || !USER_ID || USER_ID==='0') return;
+  if(_rktOperating) return;
   try {
     const ctrl = new AbortController();
     const t = setTimeout(()=>ctrl.abort(), 3000);
@@ -3821,6 +3839,13 @@ function rktTickStart(){
     if(btn&&btn.classList.contains('bc')){
       btn.textContent='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
     }
+    // Тряска при высоких иксах
+    const mw=document.getElementById('rktMultWrap')||document.querySelector('.rkt-mult-wrap');
+    if(mw){
+      if(m>=50){ mw.className='rkt-mult-wrap shaking-hard'; }
+      else if(m>=20){ mw.className='rkt-mult-wrap shaking'; }
+      else{ mw.className='rkt-mult-wrap'; }
+    }
     // Авто-вывод
     if(RKT.betPlaced&&!RKT.cashedOut&&RKT.auto>0&&m>=RKT.auto){rktDoCashout();}
     // Таблица игроков — каждые 150мс (не DOM flood)
@@ -3972,11 +3997,38 @@ function rktUpdateTable(){
     const row=document.createElement('div');
     const cls='rkt-pt-row'+(p.isMe?' r-me':p.cashedAt?' r-cash':p.crashed?' r-boom':'');
     row.className=cls;
-    const profitNum=p.cashedAt?Math.floor(p.bet*p.cashedAt)-p.bet:(p.crashed?-p.bet:0);
-    const profitFmt=p.cashedAt?'+'+profitNum.toLocaleString('ru-RU'):(p.crashed?'−'+p.bet.toLocaleString('ru-RU'):'—');
-    const profitCls=p.cashedAt?'pos':p.crashed?'neg':'wait';
-    const statusTxt=p.cashedAt?'×'+p.cashedAt.toFixed(2):(p.crashed?'КРАШ':'В ИГРЕ');
-    row.innerHTML='<div class="rkt-pt-player"><div class="rkt-pt-ava">'+p.avatar+'</div><div><div class="rkt-pt-name">'+p.name+'</div><div class="rkt-pt-tag">'+statusTxt+'</div></div></div><div class="rkt-pt-bet">'+(p.bet/1000).toFixed(0)+'K</div><div class="rkt-pt-profit '+profitCls+'">'+profitFmt+'</div>';
+
+    let profitNum, profitFmt, profitCls, statusTxt;
+    if(p.cashedAt){
+      // Вывел — показываем реальную прибыль
+      profitNum=Math.floor(p.bet*p.cashedAt)-p.bet;
+      profitFmt='+'+(profitNum).toLocaleString('ru-RU');
+      profitCls='pos';
+      statusTxt='×'+p.cashedAt.toFixed(2);
+    } else if(p.crashed){
+      // Краш без вывода — убыток равен ставке
+      profitNum=-p.bet;
+      profitFmt='−'+p.bet.toLocaleString('ru-RU');
+      profitCls='neg';
+      statusTxt='КРАШ';
+    } else {
+      // В игре — показываем потенциальный выигрыш на текущем иксе
+      const curMult=RKT.mult||1;
+      const potential=Math.floor(p.bet*curMult)-p.bet;
+      profitFmt=potential>0?'+'+potential.toLocaleString('ru-RU'):'—';
+      profitCls='wait';
+      statusTxt='×'+curMult.toFixed(2);
+    }
+
+    row.innerHTML='<div class="rkt-pt-player">'
+      +'<div class="rkt-pt-ava">'+p.avatar+'</div>'
+      +'<div>'
+        +'<div class="rkt-pt-name">'+(p.isMe?'👤 '+p.name:p.name)+'</div>'
+        +'<div class="rkt-pt-tag">'+statusTxt+'</div>'
+      +'</div>'
+      +'</div>'
+      +'<div class="rkt-pt-bet">'+(p.bet/1000).toFixed(0)+'K</div>'
+      +'<div class="rkt-pt-profit '+profitCls+'">'+profitFmt+'</div>';
     tbl.appendChild(row);
   });
 }
@@ -4049,37 +4101,41 @@ async function rktPlaceBet(){
   _rktOperating=true; // блокируем longPoll от перезаписи баланса
   RKT.myBet=bet;
 
-  // ── Применяем локально мгновенно ──
-  RKT.betPlaced=true;
-  setBalance(balance-bet);
+  // Блокируем UI мгновенно (без изменения баланса — только сервер списывает)
   rktSetBtn('w');
   const res=document.getElementById('rktRes');
-  if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!';res.className='rkt-res';}
-  rktUpdateTable(); rktUpdateTags();
+  if(res){res.textContent='⏳ Ставка...';res.className='rkt-res';}
 
-  // ── Подтверждаем через API ──
+  // ── Запрос к серверу — он списывает и возвращает точный баланс ──
   if(API_URL&&API_SECRET){
     try{
       const r=await rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID})});
       if(r&&r.ok){
-        // Берём точный баланс с сервера (он уже равен нашему локальному)
+        // Сервер списал — применяем его баланс (единственное изменение!)
+        RKT.betPlaced=true;
         setBalance(r.balance);
+        if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!';res.className='rkt-res';}
+        showToast('Ставка принята 🚀','info');
       } else {
-        // Ошибка — откатываем
-        RKT.betPlaced=false;
-        setBalance(balance+bet);
         rktSetBtn('b');
         if(res){res.textContent='Поставь токены и жди старта 🚀';res.className='rkt-res';}
         showToast(r&&r.error==='round_started'?'Раунд уже идёт!':'Ошибка ставки','error');
-        rktUpdateTable(); rktUpdateTags();
       }
     }catch(e){
-      console.warn('[RKT bet] API недоступен, ставка локальная');
+      // Нет связи
+      rktSetBtn('b');
+      if(res){res.textContent='Нет связи с сервером','error';}
+      showToast('Нет связи с сервером','error');
     }
+  } else {
+    // Офлайн — локально
+    RKT.betPlaced=true;
+    setBalance(balance-bet);
+    if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU');res.className='rkt-res';}
   }
+  rktUpdateTable(); rktUpdateTags();
   _rktBetting=false;
-  // Снимаем блокировку через 300мс — longPoll снова может обновлять
-  setTimeout(()=>{ _rktOperating=false; }, 300);
+  setTimeout(()=>{ _rktOperating=false; }, 1500);
 }
 
 async function rktDoCashout(){
@@ -4114,8 +4170,8 @@ async function rktDoCashout(){
       console.warn('[RKT cashout] API error, local cashout applied');
     }
   }
-  // Снимаем блокировку через 300мс
-  setTimeout(()=>{ _rktOperating=false; }, 300);
+  // Снимаем блокировку через 1500мс
+  setTimeout(()=>{ _rktOperating=false; }, 1500);
 }
 
 function rktPreset(v){RKT.myBet=v;const i=document.getElementById('rktInp');if(i)i.value=v;}
