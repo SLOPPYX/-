@@ -688,9 +688,15 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 }
 .rkt-mult {
   font-family:var(--fd); font-size:68px; font-weight:900; line-height:1;
-  letter-spacing:-3px; transition:color .15s;
+  letter-spacing:-3px;
   background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,.7) 100%);
   -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  /* Плавные цифры */
+  font-variant-numeric:tabular-nums;
+  will-change:contents;
+  contain:content;
+  /* Плавный переход цвета */
+  transition:background .2s, filter .1s;
 }
 .rkt-mult.sw {
   font-size:20px; letter-spacing:3px;
@@ -3787,22 +3793,37 @@ async function rktPollLoop(){
   }
 }
 
-// Локальный тик множителя (80мс — плавность)
-let _rktTick=null;
+// 60fps — множитель обновляется каждый кадр через rAF
+let _rktTick=false, _rktLastTable=0;
 function rktTickStart(){
   if(_rktTick) return;
-  _rktTick=setInterval(()=>{
-    if(RKT.phase!=='flying'){clearInterval(_rktTick);_rktTick=null;return;}
+  _rktTick=true;
+  function frame(){
+    if(!_rktTick||RKT.phase!=='flying'){_rktTick=false;return;}
     const e=(Date.now()-RKT._ls)/1000;
-    const m=Math.floor(Math.pow(Math.E,e*0.085)*100)/100;
-    RKT.mult=m;
+    const m=Math.pow(Math.E,e*0.085);
+    RKT.mult=Math.floor(m*100)/100;
+
+    // Обновляем цифру каждый кадр — плавно
     const el=document.getElementById('rktMult');
-    if(el){el.textContent=m.toFixed(2)+'×';el.className='rkt-mult sf'+(m>=10?' sg':'');}
-    if(RKT.betPlaced&&!RKT.cashedOut&&RKT.auto>0&&m>=RKT.auto) rktDoCashout();
+    if(el){
+      el.textContent=m.toFixed(2)+'×';
+      const cls='rkt-mult sf'+(m>=10?' sg':'');
+      if(el.className!==cls) el.className=cls;
+    }
+    // Кнопка кешаута — каждый кадр
     const btn=document.getElementById('rktBtn');
-    if(btn&&btn.classList.contains('bc')) btn.textContent='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
-    rktUpdateTable();
-  },80);
+    if(btn&&btn.classList.contains('bc')){
+      btn.textContent='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
+    }
+    // Авто-вывод
+    if(RKT.betPlaced&&!RKT.cashedOut&&RKT.auto>0&&m>=RKT.auto){rktDoCashout();}
+    // Таблица игроков — каждые 150мс (не DOM flood)
+    const now=Date.now();
+    if(now-_rktLastTable>150){_rktLastTable=now;rktUpdateTable();}
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
 }
 
 // Применяем состояние с сервера
@@ -4012,58 +4033,82 @@ async function rktAction(){
   if(RKT.phase==='waiting'&&!RKT.betPlaced){rktPlaceBet();}
 }
 
+let _rktBetting=false; // защита от двойного нажатия
 async function rktPlaceBet(){
+  if(_rktBetting) return; // уже в процессе — игнорируем
   const i=document.getElementById('rktInp');
   const bet=Math.floor(parseInt(i?i.value:RKT.myBet)||0);
   if(bet<1000){showToast('Минимум 1 000 токенов','error');return;}
   if(bet>balance){showToast('Недостаточно токенов!','error');return;}
+  _rktBetting=true;
   RKT.myBet=bet;
-  if(API_URL&&API_SECRET){
-    const r=await rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID})});
-    if(r&&r.ok){
-      setBalance(r.balance); RKT.betPlaced=true;
-      const res=document.getElementById('rktRes');
-      if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!';res.className='rkt-res';}
-      rktSetBtn('w'); showToast('Ставка принята 🚀','info');
-    } else {
-      showToast(r&&r.error==='round_started'?'Раунд идёт — жди следующего!':'Ошибка ставки','error');
-    }
-  } else {
-    RKT.betPlaced=true; setBalance(balance-bet); rktSetBtn('w');
-    const res=document.getElementById('rktRes');
-    if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU');res.className='rkt-res';}
-  }
+
+  // ── МГНОВЕННО (до ответа сервера) ──
+  RKT.betPlaced=true;
+  setBalance(balance-bet); // списываем локально сразу
+  rktSetBtn('w');
+  const res=document.getElementById('rktRes');
+  if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!';res.className='rkt-res';}
   rktUpdateTable(); rktUpdateTags();
+
+  // ── Подтверждаем через API (фоном) ──
+  if(API_URL&&API_SECRET){
+    try{
+      const r=await rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID})});
+      if(r&&r.ok){
+        // Синхронизируем баланс с сервером
+        setBalance(r.balance);
+      } else {
+        // Ошибка — откатываем
+        RKT.betPlaced=false;
+        setBalance(balance+bet);
+        rktSetBtn('b');
+        if(res){res.textContent='Поставь токены и жди старта 🚀';res.className='rkt-res';}
+        showToast(r&&r.error==='round_started'?'Раунд уже идёт!':'Ошибка ставки','error');
+        rktUpdateTable(); rktUpdateTags();
+      }
+    }catch(e){
+      // Нет связи — ставка остаётся локальной (продолжаем)
+      console.warn('[RKT bet] API недоступен, ставка локальная');
+    }
+  }
+  _rktBetting=false;
 }
 
 async function rktDoCashout(){
   if(!RKT.betPlaced||RKT.cashedOut) return;
-  RKT.cashedOut=true; const mult=RKT.mult;
+  // ── МГНОВЕННО — применяем до ответа сервера ──
+  RKT.cashedOut=true;
+  const mult=RKT.mult; // фиксируем множитель в момент нажатия
+  const prize=Math.floor(RKT.myBet*mult);
+  const pr=prize-RKT.myBet;
+
+  // Немедленно зачисляем баланс
+  setBalance(balance+prize);
+  // Обновляем статистику
+  RKT.stats.g++;RKT.stats.p+=pr;if(mult>RKT.stats.b)RKT.stats.b=mult;
+  rktSave();
+  // Мгновенный UI
   rktSetBtn('w');
-  if(API_URL&&API_SECRET){
-    const r=await rktFetch('/casino/rocket/cashout',{method:'POST',body:JSON.stringify({uid:parseInt(USER_ID),secret:API_SECRET})});
-    if(r&&r.ok){
-      setBalance(r.balance);
-      const pr=r.prize-RKT.myBet;
-      RKT.stats.g++;RKT.stats.p+=pr;if(mult>RKT.stats.b)RKT.stats.b=mult;
-      rktSave();
-      const res=document.getElementById('rktRes');
-      if(res){res.textContent='✅ Вывод ×'+mult.toFixed(2)+' +'+pr.toLocaleString('ru-RU');res.className='rkt-res win';}
-      showToast('✅ ×'+mult.toFixed(2)+' +'+pr.toLocaleString('ru-RU')+' 💰','gold');
-      try{rAddCashNotif(USER_NAME||'ВЫ',mult,pr);}catch(e){}
-    } else {
-      RKT.cashedOut=false;
-      if(RKT.phase==='flying'&&RKT.betPlaced) rktSetBtn('c');
-    }
-  } else {
-    const pr=Math.floor(RKT.myBet*mult)-RKT.myBet;
-    setBalance(balance+pr+RKT.myBet);
-    RKT.stats.g++;RKT.stats.p+=pr;if(mult>RKT.stats.b)RKT.stats.b=mult;rktSave();
-    const res=document.getElementById('rktRes');
-    if(res){res.textContent='✅ ×'+mult.toFixed(2)+' +'+pr.toLocaleString('ru-RU');res.className='rkt-res win';}
-    try{rAddCashNotif(USER_NAME||'ВЫ',mult,pr);}catch(e){}
-  }
+  const res=document.getElementById('rktRes');
+  if(res){res.textContent='✅ Вывод ×'+mult.toFixed(2)+' +'+pr.toLocaleString('ru-RU');res.className='rkt-res win';}
+  showToast('✅ ×'+mult.toFixed(2)+' +'+pr.toLocaleString('ru-RU')+' 💰','gold');
+  try{rAddCashNotif(USER_NAME||'ВЫ',mult,pr);}catch(e){}
   rktUI(); rktUpdateTable(); rktUpdateTags();
+
+  // ── Подтверждаем через API (фоном) ──
+  if(API_URL&&API_SECRET){
+    try{
+      const r=await rktFetch('/casino/rocket/cashout',{method:'POST',body:JSON.stringify({uid:parseInt(USER_ID),secret:API_SECRET})});
+      if(r&&r.ok){
+        // Синхронизируем точный баланс с сервером
+        setBalance(r.balance);
+      }
+      // Если ошибка — не откатываем, уже показали пользователю
+    }catch(e){
+      console.warn('[RKT cashout] API error, local cashout applied');
+    }
+  }
 }
 
 function rktPreset(v){RKT.myBet=v;const i=document.getElementById('rktInp');if(i)i.value=v;}
