@@ -3172,11 +3172,16 @@ let _apiBalanceLocked = false; // устаревший, оставлен для 
 // ══════════════════════════════════════════════════════════
 // ПРИМЕНИТЬ БАЛАНС С СЕРВЕРА — мгновенно, с уведомлением
 // ══════════════════════════════════════════════════════════
+// Флаг: ракетка управляет балансом сама — блокируем внешние пуши
+let _rktOperating = false;
+
 function applyServerBalance(newBal) {
   if(typeof newBal !== 'number' || newBal < 0) return;
   if(newBal === balance) return;
-  // Не обновляем баланс во время спина — он придёт из apiResp
+  // Не обновляем во время спина слотов
   if(spinning) return;
+  // Не обновляем пока ракетка делает ставку/кешаут — она сама управляет балансом
+  if(_rktOperating) return;
   const diff = newBal - balance;
   setBalance(newBal);
   try { tg.CloudStorage.setItem('balance_'+USER_ID, String(newBal), ()=>{}); } catch(e){}
@@ -4035,28 +4040,29 @@ async function rktAction(){
 
 let _rktBetting=false; // защита от двойного нажатия
 async function rktPlaceBet(){
-  if(_rktBetting) return; // уже в процессе — игнорируем
+  if(_rktBetting) return;
   const i=document.getElementById('rktInp');
   const bet=Math.floor(parseInt(i?i.value:RKT.myBet)||0);
   if(bet<1000){showToast('Минимум 1 000 токенов','error');return;}
   if(bet>balance){showToast('Недостаточно токенов!','error');return;}
   _rktBetting=true;
+  _rktOperating=true; // блокируем longPoll от перезаписи баланса
   RKT.myBet=bet;
 
-  // ── МГНОВЕННО (до ответа сервера) ──
+  // ── Применяем локально мгновенно ──
   RKT.betPlaced=true;
-  setBalance(balance-bet); // списываем локально сразу
+  setBalance(balance-bet);
   rktSetBtn('w');
   const res=document.getElementById('rktRes');
   if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!';res.className='rkt-res';}
   rktUpdateTable(); rktUpdateTags();
 
-  // ── Подтверждаем через API (фоном) ──
+  // ── Подтверждаем через API ──
   if(API_URL&&API_SECRET){
     try{
       const r=await rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID})});
       if(r&&r.ok){
-        // Синхронизируем баланс с сервером
+        // Берём точный баланс с сервера (он уже равен нашему локальному)
         setBalance(r.balance);
       } else {
         // Ошибка — откатываем
@@ -4068,27 +4074,27 @@ async function rktPlaceBet(){
         rktUpdateTable(); rktUpdateTags();
       }
     }catch(e){
-      // Нет связи — ставка остаётся локальной (продолжаем)
       console.warn('[RKT bet] API недоступен, ставка локальная');
     }
   }
   _rktBetting=false;
+  // Снимаем блокировку через 300мс — longPoll снова может обновлять
+  setTimeout(()=>{ _rktOperating=false; }, 300);
 }
 
 async function rktDoCashout(){
   if(!RKT.betPlaced||RKT.cashedOut) return;
-  // ── МГНОВЕННО — применяем до ответа сервера ──
+  _rktOperating=true; // блокируем longPoll от перезаписи во время операции
+
   RKT.cashedOut=true;
-  const mult=RKT.mult; // фиксируем множитель в момент нажатия
+  const mult=RKT.mult; // фиксируем в момент нажатия
   const prize=Math.floor(RKT.myBet*mult);
   const pr=prize-RKT.myBet;
 
-  // Немедленно зачисляем баланс
+  // ── Мгновенно: зачисляем баланс и обновляем UI ──
   setBalance(balance+prize);
-  // Обновляем статистику
   RKT.stats.g++;RKT.stats.p+=pr;if(mult>RKT.stats.b)RKT.stats.b=mult;
   rktSave();
-  // Мгновенный UI
   rktSetBtn('w');
   const res=document.getElementById('rktRes');
   if(res){res.textContent='✅ Вывод ×'+mult.toFixed(2)+' +'+pr.toLocaleString('ru-RU');res.className='rkt-res win';}
@@ -4101,14 +4107,15 @@ async function rktDoCashout(){
     try{
       const r=await rktFetch('/casino/rocket/cashout',{method:'POST',body:JSON.stringify({uid:parseInt(USER_ID),secret:API_SECRET})});
       if(r&&r.ok){
-        // Синхронизируем точный баланс с сервером
+        // Берём точный баланс с сервера
         setBalance(r.balance);
       }
-      // Если ошибка — не откатываем, уже показали пользователю
     }catch(e){
       console.warn('[RKT cashout] API error, local cashout applied');
     }
   }
+  // Снимаем блокировку через 300мс
+  setTimeout(()=>{ _rktOperating=false; }, 300);
 }
 
 function rktPreset(v){RKT.myBet=v;const i=document.getElementById('rktInp');if(i)i.value=v;}
