@@ -4221,6 +4221,7 @@ function rktUI(){
     rktSetBtn(RKT.betPlaced?'w':'b');
   } else if(RKT.phase==='flying'){
     if(me&&!_rktTick){me.textContent=(RKT.mult||1).toFixed(2)+'×';me.className='rkt-mult sf';}
+    if(sb) sb.textContent=''; // во время полёта подпись не нужна
     rktSetBtn(RKT.betPlaced&&!RKT.cashedOut?'c':'w');
   } else if(RKT.phase==='crashed'){
     if(me){me.textContent=(RKT.crashAt||(RKT.mult||1)).toFixed(2)+'×';me.className='rkt-mult sc';}
@@ -4356,106 +4357,99 @@ function rktUpdateTags(){
 // Обратный отсчёт — точный на Date.now()
 let _rktWT=null, _rktWaitEnd=0;
 function rktWaitTick(){
-  // ВСЕГДА сбрасываем старый таймер и запускаем новый с актуальным временем
   if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
-  // Синхронизируем точку окончания с текущим waitLeft
   _rktWaitEnd=Date.now()+Math.max(0.1, RKT.waitLeft)*1000;
   function tick(){
     if(RKT.phase!=='waiting'){
       if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
+      // Очищаем подпись когда раунд начался
+      const sb=document.getElementById('rktSub');
+      if(sb) sb.textContent='';
       return;
     }
     const left=Math.max(0,(_rktWaitEnd-Date.now())/1000);
     RKT.waitLeft=left;
     const sb=document.getElementById('rktSub');
-    // Таймер — обновляем и DOM и canvas
-    const sb2=document.getElementById('rktSub');
-    if(sb2){
-      if(left<=0){sb2.textContent='🚀 ЗАПУСК!';}
-      else if(left<=3){sb2.textContent='🔴 '+left.toFixed(1)+'с';}
-      else{sb2.textContent='Раунд через '+Math.ceil(left)+'с';}
+    if(sb){
+      if(left<=0){sb.textContent='🚀 ЗАПУСК!';}
+      else if(left<=3){sb.textContent='🔴 '+left.toFixed(1)+'с';}
+      else{sb.textContent='Раунд через '+Math.ceil(left)+'с';}
     }
   }
-  tick(); // сразу показываем
-  _rktWT=setInterval(tick, 80); // 80мс — чёткое обновление
+  tick();
+  _rktWT=setInterval(tick, 80);
 }
 
 // ── Действия игрока ──────────────────────────────────────
-async function rktAction(){
-  if(RKT.phase==='flying'&&RKT.betPlaced&&!RKT.cashedOut){rktDoCashout();return;}
-  if(RKT.phase==='waiting'&&!RKT.betPlaced&&!_rktBetting){rktPlaceBet();}
+function rktAction(){
+  const btn=document.getElementById('rktBtn');
+  if(btn&&btn.disabled) return; // уже обрабатывается
+  if(RKT.phase==='flying'&&RKT.betPlaced&&!RKT.cashedOut){ rktDoCashout(); return; }
+  if(RKT.phase==='waiting'&&!RKT.betPlaced){ rktPlaceBet(); }
 }
 
 let _rktBetting=false;
 async function rktPlaceBet(){
-  if(_rktBetting) return;
-  if(RKT.phase!=='waiting'||RKT.betPlaced) return; // двойная защита
+  // ── Шаг 1: мгновенно блокируем кнопку — исключаем любой повторный вызов ──
+  const btn=document.getElementById('rktBtn');
+  if(!btn||btn.disabled) return;
+  btn.disabled=true;
 
-  // Мгновенно блокируем кнопку визуально — до любой проверки
-  const _btn=document.getElementById('rktBtn');
-  if(_btn){ _btn.disabled=true; _btn.textContent='⏳ Ставка...'; }
+  // ── Шаг 2: проверяем состояние игры ──
+  if(RKT.phase!=='waiting'||RKT.betPlaced||_rktBetting){
+    btn.disabled=false; return;
+  }
 
+  // ── Шаг 3: читаем и валидируем ставку ──
   const i=document.getElementById('rktInp');
   const bet=Math.floor(parseInt(i?i.value:RKT.myBet)||0);
   if(bet<1000){
     showToast('Минимум 1 000 токенов','error');
-    if(_btn){ _btn.disabled=false; _btn.textContent='🚀 ПОСТАВИТЬ'; }
-    return;
+    btn.disabled=false; return;
   }
   if(bet>balance){
     showToast('Недостаточно токенов!','error');
-    if(_btn){ _btn.disabled=false; _btn.textContent='🚀 ПОСТАВИТЬ'; }
-    return;
+    btn.disabled=false; return;
   }
 
-  // ── МГНОВЕННО — применяем локально без ожидания сервера ──
+  // ── Шаг 4: применяем локально СРАЗУ ──
   _rktBetting=true;
   _rktOperating=true;
-  // Аварийный сброс через 8 сек — на случай если API завис и finally не отработал
-  const _opSafetyTimer=setTimeout(()=>{ _rktBetting=false; _rktOperating=false; },8000);
   RKT.myBet=bet;
-  RKT.betPlaced=true;          // ставка активна сразу
-  RKT._betTs=Date.now();        // защита от сброса poll'ом
-  setBalance(balance-bet);      // списываем сразу
+  RKT.betPlaced=true;
+  RKT._betTs=Date.now();
+  setBalance(balance-bet);
 
-  // Обновляем UI немедленно
   const res=document.getElementById('rktRes');
   if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' — жди старта!';res.className='rkt-res';}
-  rktSetBtn('w');
+  rktSetBtn('w'); // кнопка уходит в режим "ждём" — disabled через rktSetBtn
   rktUpdateTable(); rktUpdateTags();
 
-  // ── Подтверждаем у сервера фоном (не блокируем UI) ──
+  // ── Шаг 5: отправляем в API НЕМЕДЛЕННО (не ждём ответа для UI) ──
   if(API_URL&&API_SECRET){
-    rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({
-      uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID
-    })}).then(r=>{
+    try{
+      const r=await rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({
+        uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID
+      })});
       if(r&&r.ok){
-        // Синхронизируем точный баланс с сервером
-        setBalance(r.balance);
-      } else {
+        setBalance(r.balance); // точный баланс с сервера
+      } else if(r&&!r.ok){
         // Сервер отказал — откатываем
-        const errMsg = r&&r.error==='round_started'?'Раунд уже начался!':'Ошибка ставки';
+        const errMsg=r.error==='round_started'?'Раунд уже начался!':'Ошибка ставки';
         RKT.betPlaced=false;
-        setBalance(balance+bet); // возвращаем
-        rktSetBtn('b');
+        setBalance(balance+bet);
         if(res){res.textContent='Поставь токены и жди старта 🚀';res.className='rkt-res';}
         showToast(errMsg,'error');
+        rktSetBtn('b');
         rktUpdateTable(); rktUpdateTags();
       }
-    }).catch(()=>{
-      // Нет связи — ставка остаётся локальной, продолжаем
-      console.warn('[RKT] API недоступен, ставка локальная');
-    }).finally(()=>{
-      clearTimeout(_opSafetyTimer);
-      _rktBetting=false;
-      setTimeout(()=>{ _rktOperating=false; },1000);
-    });
-  } else {
-    // Полностью офлайн
-    clearTimeout(_opSafetyTimer);
-    _rktBetting=false;
-    setTimeout(()=>{ _rktOperating=false; },1000);
+    } catch(e){
+      console.warn('[RKT] API bet error, ставка локальная');
+    }
   }
+  _rktBetting=false;
+  // _rktOperating снимается позже — poll не должен перезаписать пока раунд не стартовал
+  setTimeout(()=>{ _rktOperating=false; },3000);
 }
 
 async function rktDoCashout(){
