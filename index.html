@@ -3805,6 +3805,12 @@ function rDraw(){
   // Фон — чистый чёрный
   ctx.fillStyle='#000000'; ctx.fillRect(0,0,rW,rH);
 
+  // Тёмная сетка
+  ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+  const gridSize=40;
+  for(let x=0;x<rW;x+=gridSize){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,rH);ctx.stroke();}
+  for(let y=0;y<rH;y+=gridSize){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(rW,y);ctx.stroke();}
+
   // Звёзды с мерцанием
   if(rStars) rStars.forEach(s=>{
     s.bri+=s.spd*0.025;
@@ -3862,81 +3868,23 @@ function rDraw(){
   rCrashParticles=rCrashParticles.filter(p=>p.life>0);
   ctx.globalAlpha=1;
 
-  // ── РАКЕТА ───────────────────────────────────────────────
-  // ── ЗВЁЗДЫ — всегда двигаются, скорость зависит от фазы ──
+  // ── ЗВЁЗДЫ — двигаются только во время полёта ──
   if(rStars){
-    let starSpd=0.3; // базовая скорость при waiting
+    let starSpd=0;
     if(RKT.phase==='flying') starSpd=Math.min(1.5+RKT.mult*0.4,14);
-    rStars.forEach(s=>{
-      const lm=s.layer===2?1.6:s.layer===1?1.0:0.5;
-      s.y+=starSpd*lm; s.bri+=0.025;
-      if(s.y>rH+4){s.y=-4;s.x=Math.random()*rW;}
-    });
+    if(starSpd>0){
+      rStars.forEach(s=>{
+        const lm=s.layer===2?1.6:s.layer===1?1.0:0.5;
+        s.y+=starSpd*lm; s.bri+=0.025;
+        if(s.y>rH+4){s.y=-4;s.x=Math.random()*rW;}
+      });
+    }
   }
 
   // ── РАКЕТА И ЧАСТИЦЫ ────────────────────────────────────
   if(RKT.phase==='waiting'){
-    const cx=rW*0.5, cy=rH*0.50;
-    if(!rSpeedParts) rSpeedParts=[];
-
-    // Частицы: основной след строго вниз
-    for(let k=0;k<6;k++){
-      const spread=(Math.random()-0.5)*0.1;
-      const spd=15+Math.random()*18;
-      rSpeedParts.push({
-        x:cx+(Math.random()-0.5)*14, y:cy+26,
-        vx:Math.sin(spread)*spd, vy:Math.cos(spread)*spd,
-        life:1, type:0,
-        col:`rgba(${120+Math.floor(Math.random()*100)},${60+Math.floor(Math.random()*60)},255,`
-      });
-    }
-    // Боковые искры
-    if(rTime%3===0){
-      for(let k=0;k<3;k++){
-        const side=(k%2===0?1:-1)*(0.35+Math.random()*0.3);
-        rSpeedParts.push({
-          x:cx,y:cy+20,vx:Math.sin(side)*9,vy:Math.cos(side*0.3)*9,
-          life:0.7,type:1,col:'rgba(255,140,40,'
-        });
-      }
-    }
-    // Кольцо каждые 50 кадров
-    if(rTime%50===0) rSpeedParts.push({x:cx,y:cy,vx:0,vy:0,life:1,type:2,r:5});
-
-    // Рисуем частицы
-    rSpeedParts.forEach(p=>{
-      if(p.type===2){
-        p.r+=(rH*0.22-p.r)*0.12; p.life-=0.03;
-        ctx.save(); ctx.globalAlpha=Math.max(0,p.life)*0.22;
-        ctx.strokeStyle='rgba(150,130,255,1)'; ctx.lineWidth=1.5;
-        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.stroke(); ctx.restore();
-        return;
-      }
-      p.x+=p.vx; p.y+=p.vy; p.life-=0.055;
-      if(p.life<=0) return;
-      const tl=p.type===0?5.5:3;
-      const grad=ctx.createLinearGradient(p.x,p.y,p.x-p.vx*tl,p.y-p.vy*tl);
-      grad.addColorStop(0,p.col+p.life+')'); grad.addColorStop(1,p.col+'0)');
-      ctx.save(); ctx.globalAlpha=p.life*0.85;
-      ctx.strokeStyle=grad; ctx.lineWidth=p.type===0?2.5:1.5; ctx.lineCap='round';
-      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-p.vx*tl,p.y-p.vy*tl);
-      ctx.stroke(); ctx.restore();
-    });
-    rSpeedParts=rSpeedParts.filter(p=>p.life>0&&p.y<rH+30);
-    if(rSpeedParts.length>200) rSpeedParts=rSpeedParts.slice(-150);
-
-    // Свечение сопла
-    const gp=0.25+Math.abs(Math.sin(rTime*0.15))*0.4;
-    const sG=ctx.createRadialGradient(cx,cy+22,0,cx,cy+22,38);
-    sG.addColorStop(0,`rgba(100,80,255,${gp*0.5})`);
-    sG.addColorStop(1,'rgba(50,0,150,0)');
-    ctx.fillStyle=sG; ctx.beginPath(); ctx.arc(cx,cy+22,38,0,Math.PI*2); ctx.fill();
-
-    // Ракета по центру — только вертикальное покачивание
-    const vb=Math.sin(rTime*0.08)*2.5;
-    const tp=0.85+Math.sin(rTime*0.14)*0.15;
-    rDrawRocket3D(ctx,cx,cy+vb,1.0,0,tp,false);
-    rTrail=[];
+    // Во время ожидания — только чистый экран для таймера
+    rSpeedParts=[]; rTrail=[];
 
   } else if(RKT.phase==='flying'){
     const cx=rW*0.5, cy=rH*0.50;
@@ -3992,6 +3940,53 @@ function rDraw(){
     rDrawRocket3D(ctx,rx,ry,1.0,0,0,true);
   } else if(RKT.phase==='crashed'){
     rDrawRocket3D(ctx,rW*0.5,rH*0.5,1.0,0,0,true);
+  }
+
+  // ── БОЛЬШОЙ ТАЙМЕР НА CANVAS (только фаза waiting) ──────
+  if(RKT.phase==='waiting' && RKT.waitLeft>0){
+    const left=RKT.waitLeft;
+    const sec=left<10?left.toFixed(1):Math.ceil(left).toString();
+    const cx=rW*0.5, cy=rH*0.5;
+    ctx.save();
+
+    // Пульсация — замедляется к концу отсчёта
+    const pulseSpeed=left<3?0.45:0.15;
+    const pulse=0.82+Math.sin(rTime*pulseSpeed)*0.18;
+
+    const fontSize=Math.round(rH*0.38);
+
+    // ── Слой 1: широкое мягкое свечение ──
+    ctx.globalAlpha=pulse*0.18;
+    ctx.font=`900 ${fontSize}px 'Orbitron',monospace`;
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.shadowColor='#ffffff';
+    ctx.shadowBlur=120;
+    ctx.fillStyle='#ffffff';
+    ctx.fillText(sec, cx, cy-10);
+
+    // ── Слой 2: среднее свечение ──
+    ctx.globalAlpha=pulse*0.35;
+    ctx.shadowBlur=60;
+    ctx.fillText(sec, cx, cy-10);
+
+    // ── Слой 3: основная цифра — чёткая белая ──
+    ctx.globalAlpha=pulse;
+    ctx.shadowColor='rgba(255,255,255,0.9)';
+    ctx.shadowBlur=30;
+    ctx.fillStyle='#ffffff';
+    ctx.fillText(sec, cx, cy-10);
+
+    // ── Подпись ──
+    ctx.shadowBlur=0;
+    ctx.globalAlpha=pulse*0.4;
+    const subSize=Math.round(rH*0.048);
+    ctx.font=`600 ${subSize}px 'Orbitron',monospace`;
+    ctx.fillStyle='rgba(255,255,255,1)';
+    ctx.letterSpacing='4px';
+    ctx.fillText('СЛЕДУЮЩИЙ РАУНД', cx, cy + fontSize*0.52);
+
+    ctx.restore();
   }
 
   // Уведомления о кешауте игроков (всплывающие)
@@ -4120,11 +4115,17 @@ function rktApply(d){
   // Если раунд сменился — точно сбрасываем ставку (даже если _rktBetting)
   const roundChanged=(d.round_id!=null && d.round_id!==prevRoundId && prevRoundId!==-1);
   if(roundChanged){
-    // Новый раунд — сбрасываем все флаги блокировки
+    // Новый раунд — сбрасываем флаги, НО не трогаем betPlaced пока идёт ставка
     _rktOperating=false;
-    _rktBetting=false;
-    RKT.betPlaced=false;
-    RKT.cashedOut=false;
+    if(!_rktBetting){
+      // Ставка не отправляется — безопасно сбросить
+      _rktBetting=false;
+      RKT.betPlaced=false;
+      RKT.cashedOut=false;
+    } else {
+      // _rktBetting=true — ставка в процессе отправки, не сбрасываем betPlaced
+      RKT.cashedOut=false;
+    }
   }
 
   // Детектируем кешаут других игроков
@@ -4216,7 +4217,7 @@ function rktUI(){
   const on=document.getElementById('rktOnl');
   if(on) on.textContent=RKT.online;
   if(RKT.phase==='waiting'){
-    if(me){me.textContent='ЖДЁМ';me.className='rkt-mult sw';}
+    if(me){me.textContent='';me.className='rkt-mult sw';}  // цифры на canvas — текст скрываем
     // sb обновляется в rktWaitTick
     rktSetBtn(RKT.betPlaced?'w':'b');
   } else if(RKT.phase==='flying'){
@@ -4362,19 +4363,15 @@ function rktWaitTick(){
   function tick(){
     if(RKT.phase!=='waiting'){
       if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
-      // Очищаем подпись когда раунд начался
       const sb=document.getElementById('rktSub');
       if(sb) sb.textContent='';
       return;
     }
     const left=Math.max(0,(_rktWaitEnd-Date.now())/1000);
     RKT.waitLeft=left;
+    // Маленький текстовый таймер убран — используется только большой на canvas
     const sb=document.getElementById('rktSub');
-    if(sb){
-      if(left<=0){sb.textContent='🚀 ЗАПУСК!';}
-      else if(left<=3){sb.textContent='🔴 '+left.toFixed(1)+'с';}
-      else{sb.textContent='Раунд через '+Math.ceil(left)+'с';}
-    }
+    if(sb) sb.textContent='';
   }
   tick();
   _rktWT=setInterval(tick, 80);
@@ -4383,36 +4380,29 @@ function rktWaitTick(){
 // ── Действия игрока ──────────────────────────────────────
 function rktAction(){
   const btn=document.getElementById('rktBtn');
-  if(btn&&btn.disabled) return; // уже обрабатывается
+  if(btn&&btn.disabled) return;
   if(RKT.phase==='flying'&&RKT.betPlaced&&!RKT.cashedOut){ rktDoCashout(); return; }
-  if(RKT.phase==='waiting'&&!RKT.betPlaced){ rktPlaceBet(); }
+  if(RKT.phase==='waiting'&&!RKT.betPlaced&&!_rktBetting){ rktPlaceBet(); }
 }
 
 let _rktBetting=false;
-async function rktPlaceBet(){
-  // ── Шаг 1: мгновенно блокируем кнопку — исключаем любой повторный вызов ──
+function rktPlaceBet(){
+  // Шаг 1: блокируем кнопку атомарно
   const btn=document.getElementById('rktBtn');
   if(!btn||btn.disabled) return;
   btn.disabled=true;
 
-  // ── Шаг 2: проверяем состояние игры ──
-  if(RKT.phase!=='waiting'||RKT.betPlaced||_rktBetting){
-    btn.disabled=false; return;
-  }
+  // Шаг 2: защиты
+  if(_rktBetting||RKT.betPlaced){btn.disabled=false;return;}
+  if(RKT.phase!=='waiting'){btn.disabled=false;return;}
 
-  // ── Шаг 3: читаем и валидируем ставку ──
+  // Шаг 3: читаем ставку
   const i=document.getElementById('rktInp');
   const bet=Math.floor(parseInt(i?i.value:RKT.myBet)||0);
-  if(bet<1000){
-    showToast('Минимум 1 000 токенов','error');
-    btn.disabled=false; return;
-  }
-  if(bet>balance){
-    showToast('Недостаточно токенов!','error');
-    btn.disabled=false; return;
-  }
+  if(bet<1000){showToast('Минимум 1 000 токенов','error');btn.disabled=false;return;}
+  if(bet>balance){showToast('Недостаточно токенов!','error');btn.disabled=false;return;}
 
-  // ── Шаг 4: применяем локально СРАЗУ ──
+  // Шаг 4: применяем мгновенно — всё локально, без ожидания
   _rktBetting=true;
   _rktOperating=true;
   RKT.myBet=bet;
@@ -4422,34 +4412,37 @@ async function rktPlaceBet(){
 
   const res=document.getElementById('rktRes');
   if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' — жди старта!';res.className='rkt-res';}
-  rktSetBtn('w'); // кнопка уходит в режим "ждём" — disabled через rktSetBtn
+  rktSetBtn('w');
   rktUpdateTable(); rktUpdateTags();
 
-  // ── Шаг 5: отправляем в API НЕМЕДЛЕННО (не ждём ответа для UI) ──
+  // Шаг 5: отправляем в API в фоне — НЕ await, не блокируем поток
   if(API_URL&&API_SECRET){
-    try{
-      const r=await rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({
-        uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID
-      })});
+    rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({
+      uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID
+    })}).then(r=>{
       if(r&&r.ok){
-        setBalance(r.balance); // точный баланс с сервера
-      } else if(r&&!r.ok){
-        // Сервер отказал — откатываем
-        const errMsg=r.error==='round_started'?'Раунд уже начался!':'Ошибка ставки';
-        RKT.betPlaced=false;
-        setBalance(balance+bet);
-        if(res){res.textContent='Поставь токены и жди старта 🚀';res.className='rkt-res';}
-        showToast(errMsg,'error');
-        rktSetBtn('b');
-        rktUpdateTable(); rktUpdateTags();
+        setBalance(r.balance);
+      } else if(r&&r.error==='round_started'){
+        // Раунд начался пока летела ставка — деньги вернуть
+        if(!RKT.cashedOut){ // не откатывать если уже идёт полёт с нашей ставкой
+          RKT.betPlaced=false;
+          setBalance(balance+bet);
+          if(res){res.textContent='Поставь токены и жди старта 🚀';res.className='rkt-res';}
+          showToast('Раунд уже начался!','error');
+          rktSetBtn('b');
+          rktUpdateTable(); rktUpdateTags();
+        }
       }
-    } catch(e){
-      console.warn('[RKT] API bet error, ставка локальная');
-    }
+    }).catch(()=>{
+      // Нет связи — ставка локальная, всё ок
+    }).finally(()=>{
+      _rktBetting=false;
+      setTimeout(()=>{ if(!RKT.betPlaced) _rktOperating=false; else setTimeout(()=>{_rktOperating=false;},2000); },500);
+    });
+  } else {
+    _rktBetting=false;
+    setTimeout(()=>{ _rktOperating=false; },1000);
   }
-  _rktBetting=false;
-  // _rktOperating снимается позже — poll не должен перезаписать пока раунд не стартовал
-  setTimeout(()=>{ _rktOperating=false; },3000);
 }
 
 async function rktDoCashout(){
