@@ -4501,31 +4501,18 @@ function rktPlaceBet(){
     rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({
       uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID
     })}).then(r=>{
-      if(!r) return; // нет связи — ставка локальная, всё ок
+      if(!r) return;
       if(r.ok){
-        // Успех — берём точный баланс с сервера (без двойного списания)
         setBalance(r.balance);
-      } else {
-        // Сервер отказал
-        const err=r.error||'';
-        console.warn('[RKT bet] server error:',err);
-        // Откатываем ТОЛЬКО если ещё в ожидании (не началась игра)
-        if(RKT.phase==='waiting'&&!RKT.cashedOut){
-          RKT.betPlaced=false;
-          setBalance(balance+bet);
-          if(res){res.textContent='Поставь токены и жди старта 🚀';res.className='rkt-res';}
-          const msg=err==='round_started'?'Раунд уже начался, жди следующего':
-                    err==='insufficient_funds'?'Недостаточно токенов!':
-                    'Ошибка: '+err;
-          showToast(msg,'error');
-          rktSetBtn('b');
-          rktUpdateTable(); rktUpdateTags();
-        }
-        // Если уже flying — ставка действует локально, не откатываем
+      } else if((r.error||'')==='insufficient_funds'){
+        RKT.betPlaced=false;
+        setBalance(balance+bet);
+        if(res){res.textContent='Поставь токены и жди старта 🚀';res.className='rkt-res';}
+        showToast('Недостаточно токенов!','error');
+        rktSetBtn('b');
+        rktUpdateTable(); rktUpdateTags();
       }
-    }).catch(()=>{
-      // Сеть упала — ставка локальная
-    }).finally(()=>{
+    }).catch(()=>{}).finally(()=>{
       _rktBetting=false;
     });
   } else {
