@@ -3325,14 +3325,25 @@ let _apiBalanceLocked = false; // устаревший, оставлен для 
 // Флаг: ракетка управляет балансом сама — блокируем внешние пуши
 let _rktOperating = false;
 
+// Минимальный баланс после ставки — не даём push поднять баланс выше него
+let _rktMinBalance = -1;
+
 function applyServerBalance(newBal) {
   if(typeof newBal !== 'number' || newBal < 0) return;
   if(newBal === balance) return;
   if(spinning) return;
-  // Блокируем пока идёт ставка ИЛИ пока ставка активна в ожидании
-  // (бот шлёт push сразу после списания — не даём перезаписать)
+  // Пока идёт запрос ставки — блокируем всё
   if(_rktBetting) return;
-  if(RKT.betPlaced && RKT.phase==='waiting') return;
+  // Пока ставка активна и раунд не начался:
+  // блокируем любой баланс ВЫШЕ текущего (это старый push до списания)
+  if(RKT.betPlaced && RKT.phase==='waiting'){
+    if(newBal > balance) return; // старый push с балансом до ставки — игнорируем
+    return; // вообще не обновляем пока ждём старта
+  }
+  // Пока ставка активна и летим — не даём поднять баланс выше зафиксированного
+  if(RKT.betPlaced && !RKT.cashedOut && RKT.phase==='flying'){
+    if(_rktMinBalance >= 0 && newBal > _rktMinBalance) return;
+  }
   const diff = newBal - balance;
   setBalance(newBal);
   try { tg.CloudStorage.setItem('balance_'+USER_ID, String(newBal), ()=>{}); } catch(e){}
@@ -4172,6 +4183,7 @@ function rktTickStart(){
         setTimeout(()=>{
           RKT.betPlaced=false;RKT.cashedOut=false;
           _rktOperating=false;_rktBetting=false;
+          _rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
           if(RKT.waitLeft>0) rktWaitTick();
           rktUI();
@@ -4274,9 +4286,10 @@ function rktApply(d){
         RKT.phase='waiting';RKT.betPlaced=false;RKT.cashedOut=false;
         _rktOperating=false;
         _rktBetting=false;
+        _rktMinBalance=-1;
         rTrail=[];rCrashParticles=[];
         if(RKT.waitLeft>0) rktWaitTick();
-        rktUI(); // rktUI вызовет rktSetBtn('b') — кнопка будет активна
+        rktUI();
       },2800);
     } else {
       // waiting→waiting: кнопка всегда активна если ставки ещё нет
@@ -4327,6 +4340,14 @@ function rktUI(){
 
 function rktSetBtn(m){
   const b=document.getElementById('rktBtn'); if(!b) return;
+  // Если ставка уже поставлена в этом раунде — кнопка ВСЕГДА отключена в waiting
+  if(m==='b' && (RKT.betPlaced||_rktBetting)){
+    // Не разблокируем — ставка уже поставлена
+    b.textContent='⏳ Ждём старта...';
+    b.className='rkt-btn bw';
+    b.disabled=true;
+    return;
+  }
   if(m==='b'){
     b.textContent='🚀 ПОСТАВИТЬ';
     b.className='rkt-btn bb';
@@ -4496,6 +4517,7 @@ function rktPlaceBet(){
   RKT.betPlaced=true;
   RKT._betTs=Date.now();
   setBalance(balance-bet);
+  _rktMinBalance = balance; // фиксируем — не даём push поднять баланс выше
 
   const res=document.getElementById('rktRes');
   if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' — жди старта!';res.className='rkt-res';}
