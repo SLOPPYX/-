@@ -1674,7 +1674,7 @@ function showPage(n) {
   document.getElementById('page-'+n).classList.add('active');
   document.getElementById('tab-'+n).classList.add('active');
   if(n==='rocket') {
-    try { initRocket(); } catch(e){}
+    try { initRocketOnce(); } catch(e){}
   }
   if(n==='top') {
     try { loadLeaderboard(true); } catch(e){}
@@ -3598,9 +3598,12 @@ function initRktCvs(){
 }
 
 // ── Постоянный анимационный цикл (всегда работает) ──────
+let _rPermRunning=false;
 function rPermAF(){
-  rDraw();
-  requestAnimationFrame(rPermAF);
+  if(_rPermRunning) return; // защита от дублей
+  _rPermRunning=true;
+  function _loop(){ rDraw(); requestAnimationFrame(_loop); }
+  requestAnimationFrame(_loop);
 }
 
 // ── Траектория ───────────────────────────────────────────
@@ -4104,7 +4107,7 @@ async function rktFetch(path,opts={}){
 // Long-poll синхронизация с сервером
 let _rktPoll=false;
 async function rktPollLoop(){
-  if(_rktPoll) return; _rktPoll=true;
+  if(_rktPoll) return; _rktPoll=true; // единственный экземпляр навсегда
   while(true){
     try{
       if(!API_URL||!API_SECRET){await new Promise(r=>setTimeout(r,2000));continue;}
@@ -4176,6 +4179,13 @@ function rktApply(d){
   RKT.phase=d.phase||RKT.phase; RKT.roundId=d.round_id??RKT.roundId;
   // Если раунд сменился — точно сбрасываем ставку (даже если _rktBetting)
   const roundChanged=(d.round_id!=null && d.round_id!==prevRoundId && prevRoundId!==-1);
+  if(roundChanged){
+    // Новый раунд — сбрасываем все флаги блокировки
+    _rktOperating=false;
+    _rktBetting=false;
+    RKT.betPlaced=false;
+    RKT.cashedOut=false;
+  }
 
   // Детектируем кешаут других игроков
   if(d.players&&RKT.players){
@@ -4216,7 +4226,7 @@ function rktApply(d){
       RKT._ls=Date.now()-(Math.log(Math.max(RKT.mult,1.001))/0.085)*1000;
     }
     if(prev!=='flying'){
-      rTrail=[];rCrashParticles=[];
+      rTrail=[];rCrashParticles=[];rSpeedParts=[];rCashNotifs=[];
       RKT._betTs=0; // раунд начался — защита больше не нужна
       if(rAFid) cancelAnimationFrame(rAFid);
       rktAF(); rktTickStart();
@@ -4240,7 +4250,9 @@ function rktApply(d){
       }
       setTimeout(()=>{
         RKT.phase='waiting';RKT.betPlaced=false;RKT.cashedOut=false;
-        rTrail=[];
+        _rktOperating=false; // гарантированно снимаем блокировку
+        _rktBetting=false;
+        rTrail=[];rCrashParticles=[];
         if(RKT.waitLeft>0) rktWaitTick(); // перезапуск таймера
         rktUI();
       },2800);
@@ -4248,7 +4260,9 @@ function rktApply(d){
       // waiting→waiting: сбрасываем ставку ТОЛЬКО если ставки не было
       // Если betPlaced=true — игрок поставил, не трогаем до краша
       if(!RKT.betPlaced && !_rktBetting){
-        RKT.cashedOut=false; rktSetBtn('b');
+        RKT.cashedOut=false;
+        _rktOperating=false; // снимаем блокировку — раунд ожидания
+        rktSetBtn('b');
       }
     }
   }
@@ -4445,6 +4459,8 @@ async function rktPlaceBet(){
   // ── МГНОВЕННО — применяем локально без ожидания сервера ──
   _rktBetting=true;
   _rktOperating=true;
+  // Аварийный сброс через 8 сек — на случай если API завис и finally не отработал
+  const _opSafetyTimer=setTimeout(()=>{ _rktBetting=false; _rktOperating=false; },8000);
   RKT.myBet=bet;
   RKT.betPlaced=true;          // ставка активна сразу
   RKT._betTs=Date.now();        // защита от сброса poll'ом
@@ -4478,11 +4494,13 @@ async function rktPlaceBet(){
       // Нет связи — ставка остаётся локальной, продолжаем
       console.warn('[RKT] API недоступен, ставка локальная');
     }).finally(()=>{
+      clearTimeout(_opSafetyTimer);
       _rktBetting=false;
       setTimeout(()=>{ _rktOperating=false; },1000);
     });
   } else {
     // Полностью офлайн
+    clearTimeout(_opSafetyTimer);
     _rktBetting=false;
     setTimeout(()=>{ _rktOperating=false; },1000);
   }
@@ -4559,6 +4577,13 @@ function rktAF(){
     });
   }
   rAFid=requestAnimationFrame(rktAF);
+}
+
+let _rktInited=false;
+function initRocketOnce(){
+  if(_rktInited) return; // уже запущено — не дублируем
+  _rktInited=true;
+  initRocket();
 }
 
 function initRocket(){
