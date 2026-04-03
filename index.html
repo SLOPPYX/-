@@ -1635,10 +1635,13 @@ function saveStats() {
     if(S.history && S.history.length > 20) S.history = S.history.slice(-20);
     const str = JSON.stringify(S);
     localStorage.setItem(STATS_KEY, str);
-    // Синхронизируем в Cloud — только если есть реальные данные
-    // (не перезаписываем Cloud пустыми данными при первом запуске)
+    localStorage.setItem('bk_'+STATS_KEY, str); // резервная копия
     if(S.spins > 0 || S.totalWon > 0) {
       cloudSet(CS_STATS, str);
+    }
+    // Сохраняем баланс вместе со статистикой
+    if(typeof balance === 'number' && balance >= 0){
+      localStorage.setItem('bal_'+USER_ID, String(balance));
     }
   } catch(e) {}
 }
@@ -1669,7 +1672,7 @@ const S = {
 // 💎 тройка: ~1/2800 | 7️⃣ тройка: ~1/780 | 🍒 тройка: ~1/60
 // Пары встречаются часто — хорошие ощущения от игры
 const SYMS = [
-  {e:'💎', m3:100, m2:3, w:30},   // редкий, большой приз
+  {e:'💎', m3:100, m2:3, w:55},   // редкий, большой приз (шанс ~10%)
   {e:'7️⃣', m3:50,  m2:2, w:40},   // редкий, хороший приз
   {e:'🍒', m3:20,  m2:2, w:80},   // часто, хорошая пара
   {e:'⭐',  m3:8,   m2:2, w:100},  // часто, пара даёт ×2
@@ -3679,11 +3682,27 @@ function rktSave(){
   const d=RKT.stats;
   const key='rkt_'+USER_ID;
   try{localStorage.setItem(key,JSON.stringify(d));}catch(e){}
-  try{localStorage.setItem('backup_'+key,JSON.stringify(d));}catch(e){} // резервная копия
-  if(d.g>0){
-    cloudSet('cs_rkt_'+USER_ID,JSON.stringify(d));
-  }
+  try{localStorage.setItem('backup_'+key,JSON.stringify(d));}catch(e){}
+  if(d.g>0){ cloudSet('cs_rkt_'+USER_ID,JSON.stringify(d)); }
+  // Дополнительно сохраняем баланс
+  try{localStorage.setItem('bal_'+USER_ID, String(balance));}catch(e){}
+  cloudSet('balance_'+USER_ID, String(balance));
 }
+
+// Сохранить всё — вызывать при важных событиях
+function saveAllData(){
+  try{ saveStats(); } catch(e){}
+  try{ rktSave(); } catch(e){}
+  try{ localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
+  try{ cloudSet('balance_'+USER_ID, String(balance)); } catch(e){}
+}
+
+// Авто-сохранение каждые 30 секунд
+setInterval(saveAllData, 30000);
+
+// Сохранение при уходе со страницы
+window.addEventListener('beforeunload', saveAllData);
+try{ document.addEventListener('visibilitychange', function(){ if(document.hidden) saveAllData(); }); }catch(e){}
 
 // ── Canvas + рисование ────────────────────────────────────
 let rCvs,rCtx,rW,rH,rTrail=[],rAFid=null,rStars=null;
@@ -4697,27 +4716,35 @@ async function rktDoCashout(){
 
   rktUI();
   const res=document.getElementById('rktRes');
-  if(res){res.textContent='✅ Вывод ×'+mult.toFixed(2)+' +'+localPr.toLocaleString('ru-RU');res.className='rkt-res win';}
-  showToast('✅ ×'+mult.toFixed(2)+' +'+localPr.toLocaleString('ru-RU')+' 💰','gold');
+  if(res){res.textContent='⏳ Фиксируем вывод...';res.className='rkt-res';}
   try{rAddCashNotif(USER_NAME||'ВЫ',mult,localPr);}catch(e){}
   rktUI(); rktUpdateTable(); rktUpdateTags();
 
   if(API_URL&&API_SECRET){
     try{
+      const balanceBefore = balance; // фиксируем баланс ДО ответа сервера
       const r=await rktFetch('/casino/rocket/cashout',{method:'POST',body:JSON.stringify({uid:parseInt(USER_ID),secret:API_SECRET})});
       if(r&&r.ok){
-        // Сервер вернул точный mult и prize — перезаписываем
-        const serverMult=r.mult||mult;
-        const serverPrize=r.prize||localPrize;
-        const serverPr=serverPrize-RKT.myBet;
-        RKT.cashedMult=serverMult;
-        if(res){res.textContent='✅ Вывод ×'+serverMult.toFixed(2)+' +'+serverPr.toLocaleString('ru-RU');res.className='rkt-res win';}
-        RKT.stats.g++;RKT.stats.p+=serverPr;if(serverMult>RKT.stats.b)RKT.stats.b=serverMult;
+        const serverMult = r.mult || mult;
+        RKT.cashedMult = serverMult;
+        // Точная прибыль = то что сервер добавил к балансу
+        const exactPrize  = r.prize || Math.floor(RKT.myBet * serverMult);
+        const exactProfit = exactPrize - RKT.myBet;
+        // Обновляем UI точными цифрами с сервера
+        if(res){
+          res.textContent = '✅ Вывод ×'+serverMult.toFixed(2)+' +'+exactProfit.toLocaleString('ru-RU');
+          res.className = 'rkt-res win';
+        }
+        // Обновляем тост с точной цифрой
+        showToast('✅ ×'+serverMult.toFixed(2)+' +'+exactProfit.toLocaleString('ru-RU')+' 💰','gold');
+        RKT.stats.g++; RKT.stats.p += exactProfit;
+        if(serverMult > RKT.stats.b) RKT.stats.b = serverMult;
         rktSave();
-        setBalance(r.balance);
+        setBalance(r.balance); // точный баланс с сервера
         rktUpdateTable();
       }
     }catch(e){
+      // Офлайн — используем локальный расчёт
       setBalance(balance+localPrize);
       RKT.stats.g++;RKT.stats.p+=localPr;if(mult>RKT.stats.b)RKT.stats.b=mult;
       rktSave();
