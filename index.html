@@ -3561,7 +3561,7 @@ function rktSave(){
 // ── Canvas + рисование ────────────────────────────────────
 let rCvs,rCtx,rW,rH,rTrail=[],rAFid=null,rStars=null;
 let rTime=0, rCrashParticles=[], rSpeedParts=[];
-// Постоянный полёт — ракета летит всегда
+let _crashFlash=0, _crashRings=[];
 let rPermanentT=0, rPermanentDir=1;
 
 // Скин Free Fire удалён
@@ -3819,43 +3819,71 @@ function rDraw(){
   });
   ctx.globalAlpha=1;
 
-  // ── ТРАЕКТОРИЯ — зелёная при полёте, красная при краше ──
-  if(rTrail.length>1){
-    // Цвет зависит от фазы: летим=зелёный, краш=красный
-    const isCrashed = RKT.phase==='crashed';
-    const lineCol = isCrashed ? [248,113,113] : [74,222,128];
-    const glowAlpha = isCrashed ? 0.15 : 0.18;
-    const lineAlpha = isCrashed ? 0.5 : 0.7;
-
-    // Свечение трассы
-    ctx.beginPath();
-    ctx.strokeStyle=`rgba(${lineCol.join(',')},${glowAlpha})`;
-    ctx.lineWidth=12; ctx.lineCap='round';
-    ctx.moveTo(rTrail[0][0],rTrail[0][1]);
-    rTrail.forEach(([px,py])=>ctx.lineTo(px,py)); ctx.stroke();
-    // Основная линия
-    ctx.beginPath();
-    ctx.strokeStyle=`rgba(${lineCol.join(',')},${lineAlpha})`;
-    ctx.lineWidth=2.5;
-    ctx.moveTo(rTrail[0][0],rTrail[0][1]);
-    rTrail.forEach(([px,py])=>ctx.lineTo(px,py)); ctx.stroke();
-    // Яркий кончик трассы
-    if(rTrail.length>2&&!isCrashed){
-      const last3=rTrail.slice(-3);
-      ctx.beginPath();
-      ctx.strokeStyle=`rgba(${lineCol.join(',')},0.95)`;
-      ctx.lineWidth=3.5;
-      ctx.moveTo(last3[0][0],last3[0][1]);
-      last3.forEach(([px,py])=>ctx.lineTo(px,py));
-      ctx.stroke();
-    }
+  // ── ВСПЫШКА ───────────────────────────────────────────────
+  if(_crashFlash>0){
+    _crashFlash-=0.04;
+    ctx.save();
+    ctx.globalAlpha=Math.max(0,_crashFlash)*0.7;
+    ctx.fillStyle='#ffffff';
+    ctx.fillRect(0,0,rW,rH);
+    ctx.restore();
   }
+
+  // ── УДАРНЫЕ ВОЛНЫ (кольца) ────────────────────────────────
+  _crashRings.forEach(ring=>{
+    if(ring.delay>0){ring.delay--;return;}
+    ring.started=true;
+    ring.r+=(ring.maxR-ring.r)*0.09+2;
+    ring.life-=0.025;
+    if(ring.life<=0) return;
+    ctx.save();
+    ctx.globalAlpha=Math.max(0,ring.life)*0.6;
+    const grad=ctx.createRadialGradient(ring.x,ring.y,ring.r*0.85,ring.x,ring.y,ring.r);
+    grad.addColorStop(0,'rgba(255,150,50,0)');
+    grad.addColorStop(0.7,'rgba(255,100,20,0.5)');
+    grad.addColorStop(1,'rgba(255,60,0,0)');
+    ctx.strokeStyle=`rgba(255,${100+Math.floor(ring.life*100)},20,${ring.life*0.8})`;
+    ctx.lineWidth=3+ring.life*4;
+    ctx.beginPath();
+    ctx.arc(ring.x,ring.y,ring.r,0,Math.PI*2);
+    ctx.stroke();
+    ctx.restore();
+  });
+  _crashRings=_crashRings.filter(r=>r.life>0||!r.started);
 
   // ── ЧАСТИЦЫ ВЗРЫВА ───────────────────────────────────────
   rCrashParticles.forEach(p=>{
-    p.x+=p.vx; p.y+=p.vy; p.vy+=0.25; p.life-=0.022; p.r*=0.97;
-    ctx.globalAlpha=Math.max(0,p.life);
-    ctx.fillStyle=p.c; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+    if(p.type==='smoke'){
+      p.x+=p.vx*0.4; p.y+=p.vy*0.4; p.r+=0.5; p.life-=p.decay;
+      if(p.life<=0) return;
+      ctx.save();
+      ctx.globalAlpha=Math.max(0,p.life)*0.25;
+      ctx.fillStyle=p.c+p.life+')';
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    } else if(p.type==='debris'){
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.vx*=0.98; p.life-=p.decay; p.r*=0.98;
+      if(p.life<=0) return;
+      ctx.save();
+      ctx.globalAlpha=Math.max(0,p.life);
+      // Светящиеся осколки
+      ctx.shadowColor=p.c; ctx.shadowBlur=10;
+      ctx.fillStyle=p.c;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    } else {
+      // Искры — тянутся шлейфом
+      const ox=p.x-p.vx*3, oy=p.y-p.vy*3;
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.3; p.life-=p.decay; p.r*=0.97;
+      if(p.life<=0) return;
+      ctx.save();
+      ctx.globalAlpha=Math.max(0,p.life)*0.9;
+      const g=ctx.createLinearGradient(p.x,p.y,ox,oy);
+      g.addColorStop(0,p.c); g.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.strokeStyle=g; ctx.lineWidth=p.r*1.5; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(ox,oy); ctx.stroke();
+      ctx.restore();
+    }
   });
   rCrashParticles=rCrashParticles.filter(p=>p.life>0);
   ctx.globalAlpha=1;
@@ -4009,14 +4037,48 @@ function rDrawCashoutNotifs(ctx){
   rCashNotifs=rCashNotifs.filter(n=>n.life>0);
 }
 
+// ── ЭПИЧНЫЙ ВЗРЫВ ───────────────────────────────────────
 function rktSpawnCrashParticles(x,y){
-  for(let i=0;i<45;i++){
+  rCrashParticles=[];
+  _crashRings=[];
+  _crashFlash=1.0; // белая вспышка
+
+  // 3 ударные волны-кольца с задержкой
+  for(let w=0;w<3;w++){
+    _crashRings.push({x,y,r:0,maxR:rW*0.7*(0.5+w*0.25),life:1,delay:w*8,started:false});
+  }
+
+  // Крупные осколки (медленные, далеко летят)
+  for(let i=0;i<18;i++){
     const a=Math.random()*Math.PI*2;
-    const spd=1.5+Math.random()*7;
+    const spd=3+Math.random()*6;
     rCrashParticles.push({
-      x,y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd-2.5,
-      r:1.5+Math.random()*5, life:1,
-      c:['#f87171','#ff5533','#ff9900','#ffcc00','#ffffff','#ffaaaa'][Math.floor(Math.random()*6)]
+      x,y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd-3,
+      r:3+Math.random()*6, life:1, decay:0.012,
+      c:['#ff4400','#ff7700','#ffaa00','#ffdd00','#ffffff'][Math.floor(Math.random()*5)],
+      type:'debris'
+    });
+  }
+  // Мелкие искры (быстрые, много)
+  for(let i=0;i<60;i++){
+    const a=Math.random()*Math.PI*2;
+    const spd=4+Math.random()*14;
+    rCrashParticles.push({
+      x,y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd-4,
+      r:0.8+Math.random()*2, life:1, decay:0.022,
+      c:['#fff','#ffcc44','#ff8800','#ff4400','#ffaaaa'][Math.floor(Math.random()*5)],
+      type:'spark'
+    });
+  }
+  // Дымовые облака (крупные, медленные, тёмные)
+  for(let i=0;i<12;i++){
+    const a=Math.random()*Math.PI*2;
+    const spd=1+Math.random()*3;
+    rCrashParticles.push({
+      x,y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd-1,
+      r:8+Math.random()*16, life:0.6, decay:0.008,
+      c:'rgba(80,40,20,',
+      type:'smoke'
     });
   }
 }
@@ -4395,72 +4457,55 @@ function rktAction(){
 }
 
 let _rktBetting=false;
-async function rktPlaceBet(){
-  // ── Блокируем кнопку СРАЗУ — первое что делаем ──
+function rktPlaceBet(){
   const btn=document.getElementById('rktBtn');
   if(!btn||btn.disabled||_rktBetting||RKT.betPlaced) return;
   btn.disabled=true;
-  btn.textContent='⏳ ...';
 
-  if(RKT.phase!=='waiting'){ btn.disabled=false; rktSetBtn('b'); return; }
+  if(RKT.phase!=='waiting'){ btn.disabled=false; return; }
 
   const i=document.getElementById('rktInp');
   const bet=Math.floor(parseInt(i?i.value:RKT.myBet)||0);
-  if(bet<1000){ showToast('Минимум 1 000 токенов','error'); btn.disabled=false; rktSetBtn('b'); return; }
-  if(bet>balance){ showToast('Недостаточно токенов!','error'); btn.disabled=false; rktSetBtn('b'); return; }
+  if(bet<1000){ showToast('Минимум 1 000 токенов','error'); btn.disabled=false; return; }
+  if(bet>balance){ showToast('Недостаточно токенов!','error'); btn.disabled=false; return; }
 
+  // ── Применяем МГНОВЕННО — до любого ответа от API ──
   _rktBetting=true;
+  RKT.myBet=bet;
+  RKT.betPlaced=true;
+  RKT._betTs=Date.now();
+  setBalance(balance-bet);
 
   const res=document.getElementById('rktRes');
+  if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' — жди старта!';res.className='rkt-res';}
+  rktSetBtn('w');
+  rktUpdateTable(); rktUpdateTags();
+  showToast('🚀 Ставка принята!','success');
 
-  // ── Если API доступен — ждём подтверждения ──
+  // ── API в фоне (fire-and-forget) ──
   if(API_URL&&API_SECRET){
-    try{
-      const r=await rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({
-        uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID
-      })});
+    rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({
+      uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID
+    })}).then(r=>{
       if(r&&r.ok){
-        // Сервер принял — теперь ставка активна
-        RKT.myBet=bet;
-        RKT.betPlaced=true;
-        RKT._betTs=Date.now();
-        setBalance(r.balance); // баланс ТОЛЬКО с сервера — без двойного списания
-        if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' — жди старта!';res.className='rkt-res';}
-        rktSetBtn('w');
-        rktUpdateTable(); rktUpdateTags();
-        showToast('🚀 Ставка принята!','success');
-      } else {
-        // Отказ
-        const msg=r&&r.error==='round_started'?'Раунд уже начался! Жди следующего.':
-                  r&&r.error==='insufficient_funds'?'Недостаточно токенов!':'Ошибка ставки';
-        showToast(msg,'error');
-        if(res){res.textContent='Поставь токены и жди старта 🚀';res.className='rkt-res';}
-        rktSetBtn('b');
+        setBalance(r.balance);
+      } else if(r&&(r.error==='round_started'||r.error==='insufficient_funds')){
+        // Откат только если раунд ещё не начался на клиенте
+        if(!RKT.cashedOut && RKT.phase==='waiting'){
+          RKT.betPlaced=false;
+          setBalance(balance+bet);
+          if(res){res.textContent='Поставь токены и жди старта 🚀';res.className='rkt-res';}
+          const msg=r.error==='round_started'?'Раунд уже начался!':'Недостаточно токенов!';
+          showToast(msg,'error');
+          rktSetBtn('b');
+          rktUpdateTable(); rktUpdateTags();
+        }
       }
-    }catch(e){
-      // Сеть недоступна — ставка локальная
-      console.warn('[RKT] сеть недоступна, ставка локальная');
-      RKT.myBet=bet;
-      RKT.betPlaced=true;
-      RKT._betTs=Date.now();
-      setBalance(balance-bet);
-      if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' (офлайн)';res.className='rkt-res';}
-      rktSetBtn('w');
-      rktUpdateTable(); rktUpdateTags();
-    }
+    }).catch(()=>{/* нет сети — ставка локальная */})
+    .finally(()=>{ _rktBetting=false; });
   } else {
-    // Полностью офлайн-режим
-    RKT.myBet=bet;
-    RKT.betPlaced=true;
-    RKT._betTs=Date.now();
-    setBalance(balance-bet);
-    if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' — жди старта!';res.className='rkt-res';}
-    rktSetBtn('w');
-    rktUpdateTable(); rktUpdateTags();
+    _rktBetting=false;
   }
-
-  _rktBetting=false;
-  _rktOperating=false;
 }
 
 async function rktDoCashout(){
