@@ -4220,9 +4220,10 @@ function rktApply(d){
   if(roundChanged){
     _rktOperating=false;
     _rktBetting=false;
-    _rktRoundBetDone=false; // новый раунд — разрешаем ставку снова
+    // Новый раунд — разрешаем ставку, но только если betPlaced тоже сброшен
+    // (betPlaced сбрасывается только в setTimeout после краша)
+    if(!RKT.betPlaced) _rktRoundBetDone=false;
     _rktMinBalance=-1;
-    // betPlaced/cashedOut сбрасываются только после краша, не здесь
   }
 
   // Детектируем кешаут других игроков
@@ -4297,16 +4298,14 @@ function rktApply(d){
       }
       setTimeout(()=>{
         RKT.phase='waiting';RKT.betPlaced=false;RKT.cashedOut=false;
-        _rktOperating=false;
-        _rktBetting=false;
-        _rktMinBalance=-1;
+        _rktOperating=false; _rktBetting=false;
+        _rktRoundBetDone=false; _rktMinBalance=-1;
         rTrail=[];rCrashParticles=[];
         if(RKT.waitLeft>0) rktWaitTick();
         rktUI();
       },2800);
     } else {
-      // waiting→waiting: просто обновляем состояние
-      RKT.cashedOut=false;
+      // waiting→waiting
       _rktOperating=false;
     }
   }
@@ -4340,8 +4339,8 @@ function rktUI(){
 function rktUpdateBtn(){
   const b=document.getElementById('rktBtn'); if(!b) return;
 
-  // ПРИОРИТЕТ 1: ставка поставлена в этом раунде — НАВСЕГДА заблокирована
-  if(_rktRoundBetDone){
+  // ПРИОРИТЕТ 1: ставка поставлена — НАВСЕГДА заблокирована до конца раунда
+  if(_rktRoundBetDone || RKT.betPlaced){
     b.textContent='✅ Ставка принята';
     b.className='rkt-btn bw';
     b.disabled=true;
@@ -4500,8 +4499,8 @@ function rktWaitTick(){
     }
     const left=Math.max(0,(_rktWaitEnd-Date.now())/1000);
     RKT.waitLeft=left;
-    // Обновляем кнопку через rktUI — только она управляет кнопкой
-    rktUI();
+    // Обновляем только кнопку (не весь rktUI — он вызывается из rktApply)
+    rktUpdateBtn();
   }
   tick();
   _rktWT=setInterval(tick, 200);
@@ -4548,8 +4547,25 @@ function rktPlaceBet(){
     rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({
       uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID
     })}).then(r=>{
-      if(r&&r.ok&&typeof r.balance==='number'&&r.balance!==balance){
-        // Только если баланс с сервера меньше или равен нашему (исключаем старые пуши)
+      if(!r){ return; }
+      if(r.error==='insufficient_funds'){
+        // Откат — денег не хватило
+        _rktRoundBetDone=false; RKT.betPlaced=false;
+        setBalance(balance+bet);
+        showToast('❌ Недостаточно токенов!','error');
+        rktUI();
+        return;
+      }
+      if(r.error==='round_started'){
+        // Раунд уже начался — ставка НЕ принята, откатываем
+        _rktRoundBetDone=false; RKT.betPlaced=false;
+        setBalance(balance+bet);
+        showToast('⚠️ Раунд уже начался, ставка не принята','error');
+        rktUI();
+        return;
+      }
+      // Ставка принята — синхронизируем баланс если сервер вернул
+      if(r.ok && typeof r.balance==='number' && r.balance!==balance){
         if(r.balance<=balance) setBalance(r.balance);
       }
     }).catch(()=>{})
