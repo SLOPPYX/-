@@ -23,13 +23,12 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 *{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-html{height:100%;height:-webkit-fill-available;overflow:hidden;position:fixed;width:100%}
-body{font-family:var(--fb);background:var(--bg);color:var(--text);height:100%;height:-webkit-fill-available;width:100%;overflow:hidden;overflow-y:auto;user-select:none;position:fixed;top:0;left:0;right:0;bottom:0;-webkit-overflow-scrolling:touch;overscroll-behavior:none;overscroll-behavior-y:none;touch-action:pan-y;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);box-sizing:border-box}
+html{height:100%;}
+body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100svh;overflow-x:hidden;overflow-y:auto;user-select:none;overscroll-behavior-y:none;-webkit-overflow-scrolling:touch;padding-top:env(safe-area-inset-top);box-sizing:border-box}
 /* ПК — центрирование */
 @media (min-width:520px){
-  body{display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;position:static}
-  .app{width:480px;margin:0 auto}
-  .bottom-bar{left:50%;transform:translateX(-50%);width:480px;margin:0}
+  body{display:flex;flex-direction:column;align-items:center;}
+  .app{width:100%;max-width:480px;}
 }
 .bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
   background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
@@ -196,7 +195,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);height:100%;he
 .sd.l{background:var(--red);box-shadow:0 0 5px var(--red)}
 
 /* ── BOTTOM BAR ── */
-.bottom-bar{position:fixed;bottom:0;left:0;right:0;z-index:50;max-width:480px;margin:0 auto;background:rgba(13,13,13,.97);border-top:1px solid var(--border);backdrop-filter:blur(20px);padding:10px 16px calc(18px + env(safe-area-inset-bottom));display:flex;gap:8px}
+.bottom-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:50;width:100%;max-width:480px;background:rgba(13,13,13,.97);border-top:1px solid var(--border);backdrop-filter:blur(20px);padding:10px 16px calc(18px + env(safe-area-inset-bottom));display:flex;gap:8px;box-sizing:border-box}
 .bb-btn{flex:1;padding:11px 6px;border:1px solid var(--border);border-radius:11px;color:var(--muted);font-family:var(--fb);font-size:11px;font-weight:600;letter-spacing:.4px;cursor:pointer;text-align:center;background:rgba(255,255,255,0.03);transition:all .18s}
 .bb-btn:active{transform:scale(0.95)}
 .bb-btn.primary{background:#ffffff;border-color:#ffffff;color:#0d0d0d;font-weight:700}
@@ -4648,18 +4647,7 @@ async function rktDoCashout(){
 }
 function rktPreset(v){RKT.myBet=v;const i=document.getElementById('rktInp');if(i){i.value=v;i.blur();}}
 
-// Блокируем pull-to-refresh и bounce на iOS/Android
-document.addEventListener('touchmove', function(e){
-  let el = e.target;
-  while(el && el !== document.body){
-    if(el.scrollHeight > el.clientHeight &&
-       getComputedStyle(el).overflowY !== 'hidden'){
-      return;
-    }
-    el = el.parentElement;
-  }
-  e.preventDefault();
-}, {passive:false});
+// overscroll управляется через CSS overscroll-behavior-y:none
 
 // Закрываем клавиатуру по Enter и по тапу вне инпута
 (function(){
