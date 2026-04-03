@@ -60,7 +60,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 /* ── NAV ── */
 .nav{display:flex;gap:4px;padding:14px 18px 0}
-.nav-tab{flex:1;padding:9px 6px;background:var(--panel);border:1px solid var(--border);border-radius:11px;color:var(--muted);font-family:var(--fb);font-size:12px;font-weight:600;letter-spacing:.4px;cursor:pointer;text-align:center;transition:all .18s}
+.nav-tab{flex:1;padding:9px 6px;background:var(--panel);border:1px solid var(--border);border-radius:11px;color:var(--muted);font-family:var(--fb);font-size:12px;font-weight:600;letter-spacing:.4px;cursor:pointer;text-align:center;transition:all .18s;display:flex;align-items:center;justify-content:center;}
 .nav-tab.active{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:#fff;font-weight:700}
 
 /* ── PAGES ── */
@@ -389,7 +389,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .spo-id{font-family:var(--fd);font-size:8px;color:rgba(0,229,255,.5);letter-spacing:1.5px;margin-bottom:6px}
 .spo-bal-row{display:flex;align-items:baseline;gap:5px;margin-bottom:3px}
 .spo-bal{
-  font-family:var(--fd);font-size:22px;font-weight:900;line-height:1;
+  font-family:var(--fd);font-size:34px;font-weight:900;line-height:1;margin-top:6px;
   background:linear-gradient(90deg,var(--gold),#ffcc44,var(--gold));
   background-size:200% auto;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
@@ -1394,10 +1394,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
   <!-- ══ TOP LEADERS ══ -->
   <div class="page" id="page-top">
-    <div style="height:4px"></div>
-
     <!-- Шапка -->
-    <div style="text-align:center;margin-bottom:16px">
+    <div style="text-align:center;margin:0 0 16px;padding-top:14px">
       <div style="font-family:var(--fd);font-size:18px;font-weight:900;background:linear-gradient(90deg,var(--gold),#ffcc44,var(--gold));background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:goldFlow 2s linear infinite;margin-bottom:4px">ТОП КАЗИНО</div>
       <div style="font-family:var(--fd);font-size:9px;color:var(--muted);letter-spacing:2px">ПО ВЫИГРЫШУ ТОКЕНОВ</div>
     </div>
@@ -1470,7 +1468,6 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     <div class="warn-btns">
       <button class="warn-btn-stay" onclick="hideWarnDialog()">🎰 Остаться в казино</button>
       <button class="warn-btn-save" onclick="warnSaveAndExit()">💾 Сохранить и выйти</button>
-      <button class="warn-btn-exit" onclick="warnJustExit()">✖ Выйти без сохранения</button>
     </div>
   </div>
 </div>
@@ -1489,8 +1486,56 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 <div class="bottom-bar">
   <button class="bb-btn" onclick="showExitDialog()">💾 Сохранить</button>
-  <button class="bb-btn primary" onclick="spin()" id="bSpinBtn">🎰 Крутить!</button>
+  <button class="bb-btn primary" onclick="showHelp()" id="bHelpBtn">📖 Инструкция</button>
   <button class="bb-btn" onclick="showExitDialog()">✖ Выйти</button>
+</div>
+
+<!-- ══ ИНСТРУКЦИЯ ══ -->
+<div class="warn-overlay" id="helpOverlay" onclick="if(event.target===this)hideHelp()" style="z-index:400">
+  <div class="warn-dialog" style="max-height:82vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
+    <div class="warn-icon">📖</div>
+    <div class="warn-title">ИНСТРУКЦИЯ</div>
+
+    <div style="text-align:left">
+
+      <div style="font-family:var(--fd);font-size:11px;color:var(--cyan);letter-spacing:1.5px;margin:14px 0 6px">🎰 СЛОТЫ</div>
+      <div style="font-family:var(--fb);font-size:12px;color:rgba(255,255,255,.8);line-height:1.65">
+        Выбери размер ставки кнопками или введи своё число. Нажми <b style="color:#fff">КРУТИТЬ</b> — барабаны закрутятся. Три одинаковых символа = выигрыш с множителем. Чем реже символ, тем больше приз. Смотри таблицу выплат во вкладке <b style="color:#fff">Таблица</b>.
+      </div>
+
+      <div style="font-family:var(--fd);font-size:11px;color:var(--cyan);letter-spacing:1.5px;margin:14px 0 6px">🚀 РАКЕТКА</div>
+      <div style="font-family:var(--fb);font-size:12px;color:rgba(255,255,255,.8);line-height:1.65">
+        Дождись последних <b style="color:#fff">5 секунд</b> перед стартом — кнопка <b style="color:#fff">ПОСТАВИТЬ</b> станет активной. Сделай ставку — она заблокируется до старта. После взлёта множитель растёт. Нажми <b style="color:#fff">ЗАБРАТЬ</b> до краша и получи ставку × множитель. Не успел — ставка сгорает.
+      </div>
+
+      <div style="font-family:var(--fd);font-size:11px;color:var(--cyan);letter-spacing:1.5px;margin:14px 0 6px">👤 ПРОФИЛЬ</div>
+      <div style="font-family:var(--fb);font-size:12px;color:rgba(255,255,255,.8);line-height:1.65">
+        Твоя статистика: баланс, побед, уровень и прогресс. Выбери аватарку — она отображается в ракетке и в топе. Уровень растёт с каждым выигрышем.
+      </div>
+
+      <div style="font-family:var(--fd);font-size:11px;color:var(--cyan);letter-spacing:1.5px;margin:14px 0 6px">🏆 ТОП</div>
+      <div style="font-family:var(--fb);font-size:12px;color:rgba(255,255,255,.8);line-height:1.65">
+        Рейтинг игроков по сумме всех выигрышей. Обновляется при каждом заходе. Попади в топ — получи уважение!
+      </div>
+
+      <div style="font-family:var(--fd);font-size:11px;color:var(--cyan);letter-spacing:1.5px;margin:14px 0 6px">📊 ТАБЛИЦА ВЫПЛАТ</div>
+      <div style="font-family:var(--fb);font-size:12px;color:rgba(255,255,255,.8);line-height:1.65">
+        Все комбинации слотов с множителями. Изучи перед игрой, чтобы знать какие символы самые ценные.
+      </div>
+
+      <div style="font-family:var(--fd);font-size:11px;color:var(--gold);letter-spacing:1.5px;margin:14px 0 6px">💡 СОВЕТЫ</div>
+      <div style="font-family:var(--fb);font-size:12px;color:rgba(255,255,255,.8);line-height:1.65">
+        • Жми <b style="color:#fff">Сохранить</b> перед выходом — баланс запишется в бота<br>
+        • В ракетке лучше забрать ×1.5–2 стабильно, чем ждать ×10 и сгореть<br>
+        • История крашей наверху ракетки помогает понять ритм раундов<br>
+        • Баланс синхронизируется с ботом — играй с любого устройства
+      </div>
+    </div>
+
+    <div class="warn-btns" style="margin-top:18px">
+      <button class="warn-btn-stay" onclick="hideHelp()">✕ Закрыть</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1976,6 +2021,15 @@ function hideWarnDialog() {
 function warnSaveAndExit() {
   hideWarnDialog();
   confirmExit();
+}
+
+function showHelp(){
+  var o=document.getElementById('helpOverlay');
+  if(o){o.style.display='flex';requestAnimationFrame(function(){o.classList.add('show');});}
+}
+function hideHelp(){
+  var o=document.getElementById('helpOverlay');
+  if(o){o.classList.remove('show');setTimeout(function(){o.style.display='';},220);}
 }
 function warnJustExit() {
   hideWarnDialog();
