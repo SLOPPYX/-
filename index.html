@@ -679,7 +679,6 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   position:relative; height:340px; overflow:hidden;
   background:#000000;
   border-bottom:1px solid rgba(255,255,255,.05);
-  box-shadow:inset 0 -40px 80px rgba(5,0,20,.9);
 }
 #rocketCanvas { position:absolute; inset:0; width:100%; height:100%; display:block }
 
@@ -3803,19 +3802,8 @@ function rDraw(){
   rTime++;
   const ctx=rCtx;
 
-  // Фон — глубокий космос
-  const bg=ctx.createLinearGradient(0,0,0,rH);
-  bg.addColorStop(0,'#000000');
-  bg.addColorStop(0.7,'#000000');
-  bg.addColorStop(1,'#010008');
-  ctx.fillStyle=bg; ctx.fillRect(0,0,rW,rH);
-
-  // Туманности
-  [{x:rW*.18,y:rH*.25,r:90,c:'rgba(60,0,120,0.05)'},{x:rW*.82,y:rH*.65,r:70,c:'rgba(0,30,120,0.04)'},{x:rW*.5,y:rH*.08,r:110,c:'rgba(120,0,60,0.03)'}].forEach(n=>{
-    const ng=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
-    ng.addColorStop(0,n.c); ng.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle=ng; ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fill();
-  });
+  // Фон — чистый чёрный
+  ctx.fillStyle='#000000'; ctx.fillRect(0,0,rW,rH);
 
   // Звёзды с мерцанием
   if(rStars) rStars.forEach(s=>{
@@ -3832,29 +3820,6 @@ function rDraw(){
     ctx.fillStyle=s.col||'#fff'; ctx.beginPath(); ctx.arc(s.x,s.y,sz,0,Math.PI*2); ctx.fill();
   });
   ctx.globalAlpha=1;
-
-  // Движущаяся сетка — оранжевый оттенок для FF стиля
-  const gridOff=(rTime*1.2)%44;
-  ctx.strokeStyle='rgba(255,80,0,.015)'; ctx.lineWidth=1;
-  for(let y=-gridOff;y<rH;y+=44){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(rW,y);ctx.stroke();}
-  for(let x=0;x<rW;x+=44){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,rH);ctx.stroke();}
-
-  // FF-стиль угловые декоры на canvas
-  const ffAlpha=0.06+Math.abs(Math.sin(rTime*0.02))*0.04;
-  // Верхний левый — ромб
-  ctx.save(); ctx.globalAlpha=ffAlpha;
-  ctx.fillStyle='rgba(255,120,0,1)';
-  ctx.translate(25,25); ctx.rotate(Math.PI/4);
-  ctx.fillRect(-12,-12,24,24);
-  ctx.restore();
-  // Верхний правый
-  ctx.save(); ctx.globalAlpha=ffAlpha;
-  ctx.fillStyle='rgba(255,200,0,1)';
-  ctx.translate(rW-25,25); ctx.rotate(Math.PI/4);
-  ctx.fillRect(-10,-10,20,20);
-  ctx.restore();
-
-
 
   // ── ТРАЕКТОРИЯ — зелёная при полёте, красная при краше ──
   if(rTrail.length>1){
@@ -4027,31 +3992,6 @@ function rDraw(){
     rDrawRocket3D(ctx,rx,ry,1.0,0,0,true);
   } else if(RKT.phase==='crashed'){
     rDrawRocket3D(ctx,rW*0.5,rH*0.5,1.0,0,0,true);
-  }
-
-  // Таймер до раунда — большими цифрами на canvas
-  if(RKT.phase==='waiting' && RKT.waitLeft>0){
-    const left=RKT.waitLeft;
-    const sec=left.toFixed(left<3?1:0);
-    const alpha=Math.min(1, left<3?(0.5+Math.sin(rTime*0.3)*0.3):0.55);
-    ctx.save();
-    ctx.globalAlpha=alpha;
-    ctx.font=`900 ${Math.round(rH*0.28)}px 'Orbitron',monospace`;
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    // Цвет: красный при <3с, оранжевый при <5с, белый иначе
-    const col=left<3?'#f87171':left<5?'#fbbf24':'rgba(255,255,255,0.22)';
-    ctx.fillStyle=col;
-    if(left<3){
-      ctx.shadowColor=left<3?'rgba(248,113,113,.8)':'rgba(251,191,36,.5)';
-      ctx.shadowBlur=30;
-    }
-    ctx.fillText(sec, rW*0.5, rH*0.5);
-    ctx.shadowBlur=0;
-    // Подпись маленькая
-    ctx.font=`700 ${Math.round(rH*0.045)}px 'Orbitron',monospace`;
-    ctx.fillStyle='rgba(255,255,255,0.2)';
-    ctx.fillText('СЛЕДУЮЩИЙ РАУНД', rW*0.5, rH*0.5+rH*0.19);
-    ctx.restore();
   }
 
   // Уведомления о кешауте игроков (всплывающие)
@@ -4443,7 +4383,7 @@ function rktWaitTick(){
 // ── Действия игрока ──────────────────────────────────────
 async function rktAction(){
   if(RKT.phase==='flying'&&RKT.betPlaced&&!RKT.cashedOut){rktDoCashout();return;}
-  if(RKT.phase==='waiting'&&!RKT.betPlaced){rktPlaceBet();}
+  if(RKT.phase==='waiting'&&!RKT.betPlaced&&!_rktBetting){rktPlaceBet();}
 }
 
 let _rktBetting=false;
@@ -4451,10 +4391,22 @@ async function rktPlaceBet(){
   if(_rktBetting) return;
   if(RKT.phase!=='waiting'||RKT.betPlaced) return; // двойная защита
 
+  // Мгновенно блокируем кнопку визуально — до любой проверки
+  const _btn=document.getElementById('rktBtn');
+  if(_btn){ _btn.disabled=true; _btn.textContent='⏳ Ставка...'; }
+
   const i=document.getElementById('rktInp');
   const bet=Math.floor(parseInt(i?i.value:RKT.myBet)||0);
-  if(bet<1000){showToast('Минимум 1 000 токенов','error');return;}
-  if(bet>balance){showToast('Недостаточно токенов!','error');return;}
+  if(bet<1000){
+    showToast('Минимум 1 000 токенов','error');
+    if(_btn){ _btn.disabled=false; _btn.textContent='🚀 ПОСТАВИТЬ'; }
+    return;
+  }
+  if(bet>balance){
+    showToast('Недостаточно токенов!','error');
+    if(_btn){ _btn.disabled=false; _btn.textContent='🚀 ПОСТАВИТЬ'; }
+    return;
+  }
 
   // ── МГНОВЕННО — применяем локально без ожидания сервера ──
   _rktBetting=true;
