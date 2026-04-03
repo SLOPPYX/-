@@ -1697,7 +1697,8 @@ function showPage(n) {
 // ══════════════════════════════════════════════════════════
 // Применить баланс: обновить переменную, DOM, кеш
 function applyBalance(val, save) {
-  // Унифицируем через setBalance — одна точка обновления
+  // Блокируем если ракетка управляет балансом
+  if(_rktBetting || (typeof RKT!=='undefined' && RKT.betPlaced && RKT.phase==='waiting')) return;
   setBalance(val);
 }
 // Совместимость
@@ -2217,29 +2218,30 @@ function saveAvatar(id) {
   
   const av = AVATARS.find(a => a.id === id) || AVATARS[0];
   const emoji = av.emoji;
-  const isImg = av.img && AVATAR_IMAGES[av.id];
-  
-  // Обновляем ВСЕ места аватарки
-  try { document.getElementById('pAvatar').textContent = isImg ? '' : emoji; } catch(e){}
-  try {
-    const spoAv = document.getElementById('spoAvatar');
-    if(spoAv) {
-      if(isImg){
-        spoAv.innerHTML = `<img src="${AVATAR_IMAGES[av.id]}" style="width:44px;height:44px;border-radius:50%;object-fit:cover">`;
-      } else {
-        const span = spoAv.querySelector('span');
-        if(span) span.textContent = emoji; else spoAv.innerHTML = `<span>${emoji}</span>`;
-      }
+  const isImg = av.img && AVATAR_IMAGES && AVATAR_IMAGES[av.id];
+  const imgSrc = isImg ? AVATAR_IMAGES[av.id] : null;
+
+  // Хелпер: обновить один элемент
+  function setAvaEl(el, size){
+    if(!el) return;
+    if(imgSrc){
+      el.innerHTML = `<img src="${imgSrc}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block">`;
+    } else {
+      el.innerHTML = `<span style="font-size:${Math.round(size*0.7)}px">${emoji}</span>`;
     }
-  } catch(e){}
-  
-  // Перерисовываем сетку аватарок
+  }
+
+  // Обновляем ВСЕ места сразу
+  try { setAvaEl(document.getElementById('spoAvatar'), 44); } catch(e){}
+  try { setAvaEl(document.getElementById('pAvatar'), 50); } catch(e){}
+
+  // Перерисовываем сетку — выделяем выбранную
   renderAvatars();
   
-  // Показываем тост подтверждения
-  try { showToast(emoji + ' Аватарка изменена!', 'success'); } catch(e){}
+  // Тост
+  try { showToast((imgSrc?'🖼️':emoji)+' Аватарка изменена!', 'success'); } catch(e){}
   
-  // Сохраняем аватарку в API (бот будет знать)
+  // Сохраняем в API
   if(API_URL && API_SECRET && USER_ID && USER_ID !== '0') {
     fetch(API_URL + '/casino/avatar', {
       method: 'POST',
@@ -2248,11 +2250,11 @@ function saveAvatar(id) {
     }).catch(()=>{});
   }
   
-  // Обновляем топ если он открыт (чтобы аватарка сразу появилась там)
+  // Обновляем топ если открыт
   try {
     const topPage = document.getElementById('page-top');
     if(topPage && topPage.classList.contains('active')) {
-      _leaderboardCache = null; // сбрасываем кэш
+      _leaderboardCache = null;
       loadLeaderboard(true);
     }
   } catch(e){}
@@ -3335,8 +3337,9 @@ function saveCloudBalance(val) {
   try { tg.CloudStorage.setItem(CLOUD_KEY, String(val), ()=>{}); } catch(e){}
 }
 async function readCloudBalance() {
-  // Если API уже дал актуальный баланс — кэш не нужен
   if(_apiBalanceLocked) return Promise.resolve();
+  // Не читаем CloudStorage пока ракетка управляет балансом
+  if(_rktBetting || (RKT.betPlaced && RKT.phase==='waiting')) return Promise.resolve();
   return new Promise(resolve => {
     const t = setTimeout(resolve, 1500);
     try {
@@ -4226,7 +4229,7 @@ function rktTickStart(){
         setTimeout(()=>{
           RKT.betPlaced=false;RKT.cashedOut=false;
           _rktOperating=false;_rktBetting=false;
-          _rktMinBalance=-1;
+          _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
           if(RKT.waitLeft>0) rktWaitTick();
           rktUI();
@@ -4250,8 +4253,10 @@ function rktApply(d){
   const roundChanged=(d.round_id!=null && d.round_id!==prevRoundId && prevRoundId!==-1);
   if(roundChanged){
     _rktOperating=false;
-    _rktBetting=false; // API-запрос завершился (раунд сменился)
-    // betPlaced и cashedOut НЕ сбрасываем — они сбросятся сами после краша
+    _rktBetting=false;
+    _rktRoundBetDone=false; // новый раунд — разрешаем ставку снова
+    _rktMinBalance=-1;
+    // betPlaced/cashedOut сбрасываются только после краша, не здесь
   }
 
   // Детектируем кешаут других игроков
@@ -4383,9 +4388,8 @@ function rktUI(){
 
 function rktSetBtn(m){
   const b=document.getElementById('rktBtn'); if(!b) return;
-  // Если ставка уже поставлена в этом раунде — кнопка ВСЕГДА отключена в waiting
-  if(m==='b' && (RKT.betPlaced||_rktBetting)){
-    // Не разблокируем — ставка уже поставлена
+  // Ставка уже поставлена в этом раунде — кнопка НИКОГДА не активируется обратно
+  if(m==='b' && (_rktRoundBetDone||RKT.betPlaced||_rktBetting)){
     b.textContent='⏳ Ждём старта...';
     b.className='rkt-btn bw';
     b.disabled=true;
@@ -4530,19 +4534,19 @@ function rktWaitTick(){
 }
 
 // ── Действия игрока ──────────────────────────────────────
+// _rktRoundBetDone: ставка поставлена в ЭТОМ раунде — не сбрасывается до смены раунда
+let _rktRoundBetDone = false;
+
 function rktAction(){
   const btn=document.getElementById('rktBtn');
   if(btn&&btn.disabled) return;
   if(RKT.phase==='flying'&&RKT.betPlaced&&!RKT.cashedOut){ rktDoCashout(); return; }
-  if(RKT.phase==='waiting'&&!RKT.betPlaced&&!_rktBetting){ rktPlaceBet(); }
+  if(RKT.phase==='waiting'&&!_rktRoundBetDone&&!_rktBetting){ rktPlaceBet(); }
 }
 
 let _rktBetting=false;
 function rktPlaceBet(){
-  // ── Атомарная блокировка ──
-  if(_rktBetting||RKT.betPlaced) return;
-  const btn=document.getElementById('rktBtn');
-  if(!btn||btn.disabled) return;
+  if(_rktBetting||_rktRoundBetDone||RKT.betPlaced) return;
   if(RKT.phase!=='waiting') return;
 
   const i=document.getElementById('rktInp');
@@ -4550,37 +4554,33 @@ function rktPlaceBet(){
   if(bet<1000){ showToast('Минимум 1 000 токенов','error'); return; }
   if(bet>balance){ showToast('Недостаточно токенов!','error'); return; }
 
-  // ── Шаг 1: блокируем флаг и кнопку ──
+  // Блокируем на уровне раунда — до следующего round_id
   _rktBetting=true;
-  btn.disabled=true;
-  btn.className='rkt-btn bw';
-
-  // ── Шаг 2: списываем локально — ставка активна сразу ──
-  RKT.myBet=bet;
+  _rktRoundBetDone=true;
   RKT.betPlaced=true;
+  RKT.myBet=bet;
   RKT._betTs=Date.now();
   setBalance(balance-bet);
-  _rktMinBalance = balance; // фиксируем — не даём push поднять баланс выше
+  _rktMinBalance=balance;
 
+  // Обновляем UI немедленно
   const res=document.getElementById('rktRes');
   if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' — жди старта!';res.className='rkt-res';}
   rktSetBtn('w');
   rktUpdateTable(); rktUpdateTags();
   showToast('🚀 Ставка принята!','success');
 
-  // ── Шаг 3: подтверждаем у сервера в фоне ──
+  // API в фоне — не ждём
   if(API_URL&&API_SECRET){
     rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({
       uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID
     })}).then(r=>{
-      if(!r){ _rktBetting=false; return; }
-      // Успех — синхронизируем баланс только если сервер списал правильно
-      if(r&&r.ok&&typeof r.balance==='number'&&r.balance<=balance){
-        setBalance(r.balance);
+      if(r&&r.ok&&typeof r.balance==='number'&&r.balance!==balance){
+        // Только если баланс с сервера меньше или равен нашему (исключаем старые пуши)
+        if(r.balance<=balance) setBalance(r.balance);
       }
-      // Любая ошибка — ставка ОСТАЁТСЯ, возврата средств НЕТ никогда
-      _rktBetting=false;
-    }).catch(()=>{ _rktBetting=false; });
+    }).catch(()=>{})
+    .finally(()=>{ _rktBetting=false; });
   } else {
     _rktBetting=false;
   }
