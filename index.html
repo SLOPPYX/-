@@ -4193,11 +4193,9 @@ function rktApply(d){
   // Если раунд сменился — точно сбрасываем ставку (даже если _rktBetting)
   const roundChanged=(d.round_id!=null && d.round_id!==prevRoundId && prevRoundId!==-1);
   if(roundChanged){
-    // Новый раунд — сбрасываем только если не было активной ставки
     _rktOperating=false;
-    _rktBetting=false;
-    // betPlaced сбрасываем только если ставки не было (после краша/ожидания без ставки)
-    if(!RKT.betPlaced){ RKT.cashedOut=false; }
+    _rktBetting=false; // API-запрос завершился (раунд сменился)
+    // betPlaced и cashedOut НЕ сбрасываем — они сбросятся сами после краша
   }
 
   // Детектируем кешаут других игроков
@@ -4240,10 +4238,20 @@ function rktApply(d){
     }
     if(prev!=='flying'){
       rTrail=[];rCrashParticles=[];rSpeedParts=[];rCashNotifs=[];
-      RKT._betTs=0; // раунд начался — защита больше не нужна
+      _rktBetting=false; // гарантированно снимаем блокировку ставки
+      _rktOperating=false;
+      RKT._betTs=0;
       if(rAFid) cancelAnimationFrame(rAFid);
       rktAF(); rktTickStart();
-      if(RKT.betPlaced&&!RKT.cashedOut) rktSetBtn('c');
+      // Если ставка была — принудительно показываем ЗАБРАТЬ
+      if(RKT.betPlaced&&!RKT.cashedOut){
+        rktSetBtn('c');
+        const res=document.getElementById('rktRes');
+        if(res&&res.className!=='rkt-res win'){
+          res.textContent='🚀 Летим! Нажми ЗАБРАТЬ когда захочешь';
+          res.className='rkt-res';
+        }
+      }
     }
   } else if(d.phase==='waiting'){
     if(prev==='flying'){
@@ -4293,8 +4301,13 @@ function rktUI(){
     rktSetBtn(RKT.betPlaced?'w':'b');
   } else if(RKT.phase==='flying'){
     if(me&&!_rktTick){me.textContent=(RKT.mult||1).toFixed(2)+'×';me.className='rkt-mult sf';}
-    if(sb) sb.textContent=''; // во время полёта подпись не нужна
-    rktSetBtn(RKT.betPlaced&&!RKT.cashedOut?'c':'w');
+    if(sb) sb.textContent='';
+    // Если ставка есть и не вывели — ВСЕГДА показываем ЗАБРАТЬ
+    if(RKT.betPlaced&&!RKT.cashedOut){
+      rktSetBtn('c');
+    } else {
+      rktSetBtn('w');
+    }
   } else if(RKT.phase==='crashed'){
     if(me){me.textContent=(RKT.crashAt||(RKT.mult||1)).toFixed(2)+'×';me.className='rkt-mult sc';}
     if(sb) sb.textContent='💥 КРАШ';
@@ -4342,7 +4355,7 @@ function rktUpdateTable(){
   if(RKT.betPlaced){
     allPlayers.push({
       name:'ВЫ', bet:RKT.myBet,
-      cashedAt:RKT.cashedOut?RKT.mult:null,
+      cashedAt:RKT.cashedOut?(RKT.cashedMult||RKT.mult):null,
       avatar:getCurrentAvatarEmoji(), isMe:true,
       crashed:RKT.phase==='crashed'&&!RKT.cashedOut
     });
@@ -4368,26 +4381,22 @@ function rktUpdateTable(){
     const cls='rkt-pt-row'+(p.isMe?' r-me':p.cashedAt?' r-cash':p.crashed?' r-boom':'');
     row.className=cls;
 
-    let profitNum, profitFmt, profitCls, statusTxt;
+    let profitFmt, profitCls, statusTxt;
     if(p.cashedAt){
-      // Вывел — показываем реальную прибыль
-      profitNum=Math.floor(p.bet*p.cashedAt)-p.bet;
+      // Зафиксировал — точная прибыль в момент вывода
+      const profitNum=Math.floor(p.bet*p.cashedAt)-p.bet;
       profitFmt='+'+(profitNum).toLocaleString('ru-RU');
       profitCls='pos';
       statusTxt='×'+p.cashedAt.toFixed(2);
     } else if(p.crashed){
-      // Краш без вывода — убыток равен ставке
-      profitNum=-p.bet;
       profitFmt='−'+p.bet.toLocaleString('ru-RU');
       profitCls='neg';
       statusTxt='КРАШ';
     } else {
-      // В игре — показываем потенциальный выигрыш на текущем иксе
-      const curMult=RKT.mult||1;
-      const potential=Math.floor(p.bet*curMult)-p.bet;
-      profitFmt=potential>0?'+'+potential.toLocaleString('ru-RU'):'—';
+      // Летит — прибыль не показываем (не растёт)
+      profitFmt='—';
       profitCls='wait';
-      statusTxt='×'+curMult.toFixed(2);
+      statusTxt='×'+(RKT.mult||1).toFixed(2);
     }
 
     row.innerHTML='<div class="rkt-pt-player">'
@@ -4515,6 +4524,7 @@ async function rktDoCashout(){
 
   RKT.cashedOut=true;
   const mult=RKT.mult;
+  RKT.cashedMult=mult; // фиксируем навсегда — не меняется после
   const prize=Math.floor(RKT.myBet*mult);
   const pr=prize-RKT.myBet;
 
