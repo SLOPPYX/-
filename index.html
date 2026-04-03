@@ -4087,9 +4087,9 @@ async function rktFetch(path,opts={}){
   if(!API_URL||!API_SECRET) return null;
   try{
     const r=await fetch(API_URL+path,{...opts,headers:{...(opts.headers||{}),'ngrok-skip-browser-warning':'1','Content-Type':'application/json'}});
-    if(r&&r.ok) return await r.json();
-  }catch(e){}
-  return null;
+    // Читаем тело ВСЕГДА — даже при HTTP 4xx/5xx
+    try{ return await r.json(); }catch(e){ return null; }
+  }catch(e){ return null; }
 }
 
 // Long-poll синхронизация с сервером
@@ -4468,22 +4468,23 @@ function rktAction(){
 
 let _rktBetting=false;
 function rktPlaceBet(){
+  // ── Атомарная блокировка ──
+  if(_rktBetting||RKT.betPlaced) return;
   const btn=document.getElementById('rktBtn');
-  if(!btn||btn.disabled||_rktBetting||RKT.betPlaced) return;
-
-  // Блокируем мгновенно
-  btn.disabled=true;
-  btn.className='rkt-btn bw';
-
-  if(RKT.phase!=='waiting'){ rktSetBtn('b'); return; }
+  if(!btn||btn.disabled) return;
+  if(RKT.phase!=='waiting') return;
 
   const i=document.getElementById('rktInp');
   const bet=Math.floor(parseInt(i?i.value:RKT.myBet)||0);
-  if(bet<1000){ showToast('Минимум 1 000 токенов','error'); rktSetBtn('b'); return; }
-  if(bet>balance){ showToast('Недостаточно токенов!','error'); rktSetBtn('b'); return; }
+  if(bet<1000){ showToast('Минимум 1 000 токенов','error'); return; }
+  if(bet>balance){ showToast('Недостаточно токенов!','error'); return; }
 
-  // Применяем МГНОВЕННО — ставка активна сразу
+  // ── Шаг 1: блокируем флаг и кнопку ──
   _rktBetting=true;
+  btn.disabled=true;
+  btn.className='rkt-btn bw';
+
+  // ── Шаг 2: списываем локально — ставка активна сразу ──
   RKT.myBet=bet;
   RKT.betPlaced=true;
   RKT._betTs=Date.now();
@@ -4495,29 +4496,38 @@ function rktPlaceBet(){
   rktUpdateTable(); rktUpdateTags();
   showToast('🚀 Ставка принята!','success');
 
-  // API подтверждает в фоне — не блокируем
+  // ── Шаг 3: подтверждаем у сервера в фоне ──
   if(API_URL&&API_SECRET){
     rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({
       uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID
     })}).then(r=>{
-      if(r&&r.ok){
-        // Синхронизируем точный баланс с сервера
+      if(!r) return; // нет связи — ставка локальная, всё ок
+      if(r.ok){
+        // Успех — берём точный баланс с сервера (без двойного списания)
         setBalance(r.balance);
-      } else if(r&&r.error==='round_started'){
-        // Раунд начался пока летел запрос — если уже летим, ставка всё равно засчитана
-        if(RKT.phase==='waiting'){
-          // Ещё в ожидании — откатываем
+      } else {
+        // Сервер отказал
+        const err=r.error||'';
+        console.warn('[RKT bet] server error:',err);
+        // Откатываем ТОЛЬКО если ещё в ожидании (не началась игра)
+        if(RKT.phase==='waiting'&&!RKT.cashedOut){
           RKT.betPlaced=false;
           setBalance(balance+bet);
           if(res){res.textContent='Поставь токены и жди старта 🚀';res.className='rkt-res';}
-          showToast('Раунд уже начался!','error');
+          const msg=err==='round_started'?'Раунд уже начался, жди следующего':
+                    err==='insufficient_funds'?'Недостаточно токенов!':
+                    'Ошибка: '+err;
+          showToast(msg,'error');
           rktSetBtn('b');
           rktUpdateTable(); rktUpdateTags();
         }
-        // Если phase===flying — ставка уже активна локально, не откатываем
+        // Если уже flying — ставка действует локально, не откатываем
       }
-    }).catch(()=>{/* нет сети — ставка локальная, всё ок */})
-    .finally(()=>{ _rktBetting=false; });
+    }).catch(()=>{
+      // Сеть упала — ставка локальная
+    }).finally(()=>{
+      _rktBetting=false;
+    });
   } else {
     _rktBetting=false;
   }
