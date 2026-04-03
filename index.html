@@ -389,7 +389,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .spo-id{font-family:var(--fd);font-size:8px;color:rgba(0,229,255,.5);letter-spacing:1.5px;margin-bottom:6px}
 .spo-bal-row{display:flex;align-items:baseline;gap:5px;margin-bottom:3px}
 .spo-bal{
-  font-family:var(--fd);font-size:34px;font-weight:900;line-height:1;margin-top:6px;
+  font-family:var(--fd);font-size:24px;font-weight:900;line-height:1;margin-top:6px;
   background:linear-gradient(90deg,var(--gold),#ffcc44,var(--gold));
   background-size:200% auto;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
@@ -532,6 +532,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .avatars-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.07),transparent)}
 .avatars-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .avatar-item{aspect-ratio:1;border-radius:14px;background:var(--panel);border:2px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.avatar-item.upload-slot{border-style:dashed;border-color:rgba(0,229,255,.4);background:rgba(0,229,255,.04)}
+.avatar-item.upload-slot:active{background:rgba(0,229,255,.1)}
+.ava-custom-img{width:38px;height:38px;border-radius:8px;object-fit:cover}
 .avatar-item:active{transform:scale(.95)}
 .avatar-item.selected{border-color:var(--cyan);background:linear-gradient(135deg,rgba(0,229,255,.12),rgba(191,0,255,.08));box-shadow:0 0 14px rgba(0,229,255,.25)}
 .avatar-item.locked{opacity:.35;cursor:not-allowed}
@@ -1255,7 +1258,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     <!-- ══ АВАТАРКИ ══ -->
     <div class="avatars-section">
       <div class="avatars-title">Аватарки</div>
-      <div class="avatars-grid" id="avatarsGrid">
+      <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
+<div class="avatars-grid" id="avatarsGrid">
         <!-- генерируется JS -->
       </div>
     </div>
@@ -1505,7 +1509,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
       <div style="font-family:var(--fd);font-size:11px;color:var(--cyan);letter-spacing:1.5px;margin:14px 0 6px">🚀 РАКЕТКА</div>
       <div style="font-family:var(--fb);font-size:12px;color:rgba(255,255,255,.8);line-height:1.65">
-        Дождись последних <b style="color:#fff">5 секунд</b> перед стартом — кнопка <b style="color:#fff">ПОСТАВИТЬ</b> станет активной. Сделай ставку — она заблокируется до старта. После взлёта множитель растёт. Нажми <b style="color:#fff">ЗАБРАТЬ</b> до краша и получи ставку × множитель. Не успел — ставка сгорает.
+        Дождись последних <b style="color:#fff">5 секунд</b> перед стартом — кнопка <b style="color:#fff">ПОСТАВИТЬ</b> станет активной. Сделай ставку — она заблокируется до старта. После взлёта множитель растёт. Нажми <b style="color:#fff">ЗАБРАТЬ</b> до краша и получи ставку × множитель. Не успел — ставка сгорает.<br><br>
+        <b style="color:var(--gold)">💡 Важно:</b> вам нужно хорошее интернет-соединение. Если вы нажали очень быстро или что-то с интернетом — ставка вернётся! 😊
       </div>
 
       <div style="font-family:var(--fd);font-size:11px;color:var(--cyan);letter-spacing:1.5px;margin:14px 0 6px">👤 ПРОФИЛЬ</div>
@@ -1854,7 +1859,7 @@ async function spin() {
 
   spinning=true;
   const btn=document.getElementById('spinBtn'), bBtn=document.getElementById('bSpinBtn');
-  btn.disabled=bBtn.disabled=true;
+  btn.disabled=true; if(bBtn) bBtn.disabled=true;
 
   try {
     const reels=['r0','r1','r2'].map(id=>document.getElementById(id));
@@ -1991,7 +1996,7 @@ async function spin() {
     // Тихо — не показываем ошибку пользователю
   } finally {
     spinning=false;
-    btn.disabled=bBtn.disabled=false;
+    btn.disabled=false; if(bBtn) bBtn.disabled=false;
     btn.textContent='🎰 КРУТИТЬ';
   }
 }
@@ -2268,6 +2273,22 @@ let selectedAvatar = (() => {
   } catch(e) { return 'default'; }
 })();
 
+function handleAvatarUpload(e) {
+  const file = e.target.files && e.target.files[0];
+  if(!file) return;
+  if(file.size > 2*1024*1024){ showToast('Файл слишком большой (макс 2MB)','error'); return; }
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const src = ev.target.result;
+    localStorage.setItem('custom_avatar_img', src);
+    saveAvatar('custom');
+    showToast('✅ Аватарка загружена!','success');
+  };
+  reader.readAsDataURL(file);
+  // Сбросить input чтобы можно было загрузить снова
+  e.target.value = '';
+}
+
 function saveAvatar(id) {
   selectedAvatar = id;
   try { localStorage.setItem(AVATAR_KEY, id); } catch(e){}
@@ -2305,6 +2326,10 @@ function saveAvatar(id) {
 }
 
 function getCurrentAvatarEmoji() {
+  if(selectedAvatar === 'custom') {
+    const src = localStorage.getItem('custom_avatar_img');
+    if(src) return `<img src="${src}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle">`;
+  }
   const av = AVATARS.find(a => a.id === selectedAvatar);
   return av ? av.emoji : '🎮';
 }
@@ -2312,6 +2337,13 @@ function getCurrentAvatarEmoji() {
 // Обновить один элемент-контейнер аватарки
 function setAvaEl(el, size) {
   if(!el) return;
+  if(selectedAvatar === 'custom') {
+    const src = localStorage.getItem('custom_avatar_img');
+    if(src) {
+      el.innerHTML = `<img src="${src}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block;margin:auto">`;
+      return;
+    }
+  }
   const av = AVATARS.find(a => a.id === selectedAvatar) || AVATARS[0];
   el.innerHTML = '<span style="font-size:' + Math.round(size * 0.65) + 'px;line-height:1">' + av.emoji + '</span>';
 }
