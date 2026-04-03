@@ -1309,24 +1309,11 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="rkt-players-overlay" id="rktTags"></div>
     </div>
 
+    <!-- ГЛАВНАЯ КНОПКА — сразу под игрой -->
+    <button class="rkt-btn bb" id="rktBtn" onclick="rktAction()" style="margin:10px 16px 0;display:block;width:calc(100% - 32px)">🚀 ПОСТАВИТЬ</button>
+
     <!-- Панель управления -->
     <div class="rkt-panel">
-
-      <!-- История крашей -->
-      <div class="rkt-hist-wrap">
-        <div class="rkt-hist-lbl">ИКСЫ</div>
-        <div class="rkt-hist" id="rktHist"></div>
-      </div>
-
-      <!-- Таблица игроков -->
-      <div class="rkt-players-table" id="rktTable">
-        <div class="rkt-pt-header">
-          <div>ИГРОК</div>
-          <div style="text-align:right">СТАВКА</div>
-          <div style="text-align:right">ПРИБЫЛЬ</div>
-        </div>
-        <!-- строки генерируются JS -->
-      </div>
 
       <!-- Результат раунда -->
       <div class="rkt-res" id="rktRes">Поставь токены и жди старта 🚀</div>
@@ -1343,7 +1330,6 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
             <div class="rkt-pr" onclick="rktPreset(100000)">100K</div>
             <div class="rkt-pr" onclick="rktMultBet(2)" style="color:var(--green)">×2</div>
           </div>
-          <!-- Множители ставки -->
           <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px">
             <div class="rkt-pr" style="color:#f87171;font-size:8px" onclick="rktMultBet(0.5)">×0.5</div>
             <div class="rkt-pr" style="color:#fbbf24;font-size:8px" onclick="rktMultBet(1.5)">×1.5</div>
@@ -1364,8 +1350,20 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
         </div>
       </div>
 
-      <!-- ГЛАВНАЯ КНОПКА -->
-      <button class="rkt-btn bb" id="rktBtn" onclick="rktAction()">🚀 ПОСТАВИТЬ</button>
+      <!-- История крашей -->
+      <div class="rkt-hist-wrap">
+        <div class="rkt-hist-lbl">ИКСЫ</div>
+        <div class="rkt-hist" id="rktHist"></div>
+      </div>
+
+      <!-- Таблица игроков -->
+      <div class="rkt-players-table" id="rktTable">
+        <div class="rkt-pt-header">
+          <div>ИГРОК</div>
+          <div style="text-align:right">СТАВКА</div>
+          <div style="text-align:right">ПРИБЫЛЬ</div>
+        </div>
+      </div>
 
       <!-- Мини-статистика -->
       <div class="rkt-stats">
