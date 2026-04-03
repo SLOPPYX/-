@@ -2,8 +2,12 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>SloppyX Casino</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d0d0d">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -19,13 +23,20 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 *{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;user-select:none;position:relative;-webkit-overflow-scrolling:touch;overscroll-behavior:none}
+html{height:100%;height:-webkit-fill-available;overflow:hidden;position:fixed;width:100%}
+body{font-family:var(--fb);background:var(--bg);color:var(--text);height:100%;height:-webkit-fill-available;width:100%;overflow:hidden;overflow-y:auto;user-select:none;position:fixed;top:0;left:0;right:0;bottom:0;-webkit-overflow-scrolling:touch;overscroll-behavior:none;overscroll-behavior-y:none;touch-action:pan-y;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);box-sizing:border-box}
+/* ПК — центрирование */
+@media (min-width:520px){
+  body{display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;position:static}
+  .app{width:480px;margin:0 auto}
+  .bottom-bar{left:50%;transform:translateX(-50%);width:480px;margin:0}
+}
 .bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
   background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
   background-size:44px 44px}
 .bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;
   background:radial-gradient(ellipse 60% 30% at 50% 0%,rgba(255,255,255,.04) 0%,transparent 70%)}
-.app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding-bottom:88px}
+.app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding-bottom:calc(88px + env(safe-area-inset-bottom));min-height:100%}
 
 /* ── HEADER ── */
 .header{padding:16px 18px 0;display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -185,7 +196,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .sd.l{background:var(--red);box-shadow:0 0 5px var(--red)}
 
 /* ── BOTTOM BAR ── */
-.bottom-bar{position:fixed;bottom:0;left:0;right:0;z-index:50;max-width:480px;margin:0 auto;background:rgba(13,13,13,.97);border-top:1px solid var(--border);backdrop-filter:blur(20px);padding:10px 16px 18px;display:flex;gap:8px}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;z-index:50;max-width:480px;margin:0 auto;background:rgba(13,13,13,.97);border-top:1px solid var(--border);backdrop-filter:blur(20px);padding:10px 16px calc(18px + env(safe-area-inset-bottom));display:flex;gap:8px}
 .bb-btn{flex:1;padding:11px 6px;border:1px solid var(--border);border-radius:11px;color:var(--muted);font-family:var(--fb);font-size:11px;font-weight:600;letter-spacing:.4px;cursor:pointer;text-align:center;background:rgba(255,255,255,0.03);transition:all .18s}
 .bb-btn:active{transform:scale(0.95)}
 .bb-btn.primary{background:#ffffff;border-color:#ffffff;color:#0d0d0d;font-weight:700}
@@ -1498,7 +1509,13 @@ const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp 
   CloudStorage:{ getItem:(_k,cb)=>{ setTimeout(()=>cb('not_supported',null),0); }, setItem:()=>{}, getItems:(_ks,cb)=>{ setTimeout(()=>cb('not_supported',{}),0); }, removeItem:()=>{} },
   initDataUnsafe:{}
 };
+// Разворачиваем на весь экран
 try { tg.expand(); } catch(e){}
+try { if(tg.requestFullscreen) tg.requestFullscreen(); } catch(e){}
+try { if(tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch(e){}
+try { tg.setHeaderColor('#0d0d0d'); } catch(e){}
+try { tg.setBackgroundColor('#0d0d0d'); } catch(e){}
+try { tg.ready(); } catch(e){}
 
 // ══════════════════════════════════════════════════════════
 // ПАРАМЕТРЫ из URL
@@ -4630,6 +4647,19 @@ async function rktDoCashout(){
   setTimeout(()=>{ _rktOperating=false; }, 1000);
 }
 function rktPreset(v){RKT.myBet=v;const i=document.getElementById('rktInp');if(i){i.value=v;i.blur();}}
+
+// Блокируем pull-to-refresh и bounce на iOS/Android
+document.addEventListener('touchmove', function(e){
+  let el = e.target;
+  while(el && el !== document.body){
+    if(el.scrollHeight > el.clientHeight &&
+       getComputedStyle(el).overflowY !== 'hidden'){
+      return;
+    }
+    el = el.parentElement;
+  }
+  e.preventDefault();
+}, {passive:false});
 
 // Закрываем клавиатуру по Enter и по тапу вне инпута
 (function(){
