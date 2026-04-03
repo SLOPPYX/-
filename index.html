@@ -4306,11 +4306,11 @@ function rktApply(d){
         rktUI();
       },2800);
     } else {
-      // waiting→waiting: кнопка активна только если ставки нет в этом раунде
+      // waiting→waiting: активируем кнопку только в последние 5 сек
       if(!RKT.betPlaced && !_rktBetting && !_rktRoundBetDone){
         RKT.cashedOut=false;
         _rktOperating=false;
-        rktSetBtn('b');
+        if(RKT.waitLeft<=5){ rktSetBtn('b'); } else { rktSetBtn('w'); }
       }
     }
   }
@@ -4325,11 +4325,13 @@ function rktUI(){
   if(on) on.textContent=RKT.online;
   if(RKT.phase==='waiting'){
     if(me){me.textContent='';me.className='rkt-mult sw';}
-    // Ставка поставлена или уже была в этом раунде — кнопка заблокирована
+    // Ставка уже есть — заблокирована
     if(RKT.betPlaced||_rktBetting||_rktRoundBetDone){
-      rktSetBtn('w');
+      rktSetBtn('x'); // заблокирована — покажет "✅ Ставка принята"
+    } else if(RKT.waitLeft<=5){
+      rktSetBtn('b'); // последние 5 сек — активна
     } else {
-      rktSetBtn('b');
+      rktSetBtn('w'); // ещё рано
     }
   } else if(RKT.phase==='flying'){
     if(me&&!_rktTick){me.textContent=(RKT.mult||1).toFixed(2)+'×';me.className='rkt-mult sf';}
@@ -4353,31 +4355,33 @@ function rktUI(){
 
 function rktSetBtn(m){
   const b=document.getElementById('rktBtn'); if(!b) return;
-  // Ставка уже поставлена в этом раунде — кнопка заблокирована, показываем таймер
-  if(m==='b' && (_rktRoundBetDone||RKT.betPlaced||_rktBetting)){
-    const left=Math.max(0,(_rktWaitEnd-Date.now())/1000);
-    const sec=Math.ceil(left);
-    b.textContent = (sec>0 && RKT.phase==='waiting') ? '⏳ Старт через '+sec+'с...' : '⏳ Ждём старта...';
+
+  // Ставка уже поставлена — просто заблокирована, и всё
+  if(_rktRoundBetDone||RKT.betPlaced||_rktBetting){
+    b.textContent='✅ Ставка принята';
     b.className='rkt-btn bw';
     b.disabled=true;
     return;
   }
-  if(m==='b'){
-    b.textContent='🚀 ПОСТАВИТЬ';
-    b.className='rkt-btn bb';
-    b.disabled=false;
-  } else if(m==='c'){
+
+  if(m==='c'){
     b.textContent='💸 '+(RKT.mult||1).toFixed(2)+'× — ЗАБРАТЬ!';
     b.className='rkt-btn bc';
     b.disabled=false;
+  } else if(m==='b'){
+    // Активна только в последние 5 секунд
+    b.textContent='🚀 ПОСТАВИТЬ';
+    b.className='rkt-btn bb';
+    b.disabled=false;
   } else {
-    // waiting с ставкой — показываем таймер; flying — "летим"; crashed — "ждём"
-    if(RKT.phase==='waiting' && (_rktRoundBetDone||RKT.betPlaced)){
-      const left=Math.max(0,(_rktWaitEnd-Date.now())/1000);
-      const sec=Math.ceil(left);
-      b.textContent = sec>0 ? '⏳ Старт через '+sec+'с...' : '⏳ Ждём старта...';
+    // w — заблокирована
+    if(RKT.phase==='flying'){
+      b.textContent=RKT.cashedOut?'✅ Выведено!':'⏳ Летим...';
+    } else if(RKT.phase==='crashed'){
+      b.textContent='⏳ Ждём...';
     } else {
-      b.textContent=RKT.phase==='flying'?(RKT.cashedOut?'✅ Выведено!':'⏳ Летим...'):'⏳ Ждём старта...';
+      // waiting, но ещё рано ставить (> 5 сек)
+      b.textContent='⏳ Скоро...';
     }
     b.className='rkt-btn bw';
     b.disabled=true;
@@ -4493,24 +4497,26 @@ function rktWaitTick(){
   function tick(){
     if(RKT.phase!=='waiting'){
       if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
-      const sb=document.getElementById('rktSub');
-      if(sb) sb.textContent='';
       return;
     }
     const left=Math.max(0,(_rktWaitEnd-Date.now())/1000);
     RKT.waitLeft=left;
-    // Если ставка поставлена — показываем обратный отсчёт на кнопке
-    if(_rktRoundBetDone||RKT.betPlaced){
-      const b=document.getElementById('rktBtn');
-      if(b){
-        const sec=Math.ceil(left);
-        b.textContent = sec>0 ? '⏳ Старт через '+sec+'с...' : '🚀 Старт!';
-        b.className='rkt-btn bw';
-        b.disabled=true;
-      }
+
+    // Если ставка уже поставлена — кнопка заблокирована, ничего не меняем
+    if(_rktRoundBetDone||RKT.betPlaced||_rktBetting) return;
+
+    // Активируем кнопку только в последние 5 секунд
+    const b=document.getElementById('rktBtn');
+    if(!b) return;
+    if(left<=5){
+      b.textContent='🚀 ПОСТАВИТЬ';
+      b.className='rkt-btn bb';
+      b.disabled=false;
+    } else {
+      b.textContent='⏳ Скоро...';
+      b.className='rkt-btn bw';
+      b.disabled=true;
     }
-    const sb=document.getElementById('rktSub');
-    if(sb) sb.textContent='';
   }
   tick();
   _rktWT=setInterval(tick, 200);
@@ -4548,15 +4554,10 @@ function rktPlaceBet(){
 
   // Обновляем UI немедленно
   const res=document.getElementById('rktRes');
-  if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' — жди старта!';res.className='rkt-res';}
-  // Сразу показываем обратный отсчёт на кнопке
+  if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!';res.className='rkt-res';}
+  // Просто блокируем кнопку
   const b=document.getElementById('rktBtn');
-  if(b){
-    const sec=Math.ceil(Math.max(0,(_rktWaitEnd-Date.now())/1000));
-    b.textContent = sec>0 ? '⏳ Старт через '+sec+'с...' : '⏳ Ждём старта...';
-    b.className='rkt-btn bw';
-    b.disabled=true;
-  }
+  if(b){ b.textContent='✅ Ставка принята'; b.className='rkt-btn bw'; b.disabled=true; }
   rktUpdateTable(); rktUpdateTags();
   showToast('🚀 Ставка принята!','success');
 
