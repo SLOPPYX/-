@@ -3329,8 +3329,10 @@ function applyServerBalance(newBal) {
   if(typeof newBal !== 'number' || newBal < 0) return;
   if(newBal === balance) return;
   if(spinning) return;
-  // Блокируем пока идёт ставка — бот шлёт push сразу после списания
+  // Блокируем пока идёт ставка ИЛИ пока ставка активна в ожидании
+  // (бот шлёт push сразу после списания — не даём перезаписать)
   if(_rktBetting) return;
+  if(RKT.betPlaced && RKT.phase==='waiting') return;
   const diff = newBal - balance;
   setBalance(newBal);
   try { tg.CloudStorage.setItem('balance_'+USER_ID, String(newBal), ()=>{}); } catch(e){}
@@ -4295,9 +4297,14 @@ function rktUI(){
   const on=document.getElementById('rktOnl');
   if(on) on.textContent=RKT.online;
   if(RKT.phase==='waiting'){
-    if(me){me.textContent='';me.className='rkt-mult sw';}  // цифры на canvas — текст скрываем
-    // sb обновляется в rktWaitTick
-    rktSetBtn(RKT.betPlaced?'w':'b');
+    if(me){me.textContent='';me.className='rkt-mult sw';}
+    // Ставка поставлена — всегда "ждём старта" (disabled)
+    // Ставки нет — кнопка активна
+    if(RKT.betPlaced||_rktBetting){
+      rktSetBtn('w');
+    } else {
+      rktSetBtn('b');
+    }
   } else if(RKT.phase==='flying'){
     if(me&&!_rktTick){me.textContent=(RKT.mult||1).toFixed(2)+'×';me.className='rkt-mult sf';}
     if(sb) sb.textContent='';
@@ -4501,9 +4508,12 @@ function rktPlaceBet(){
     rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({
       uid:parseInt(USER_ID),secret:API_SECRET,bet,name:USER_NAME||CUSTOM_ID||USER_ID
     })}).then(r=>{
-      if(!r) return;
+      if(!r){ _rktBetting=false; return; }
       if(r.ok){
-        setBalance(r.balance);
+        // Успех — точный баланс с сервера уже правильный
+        // НЕ вызываем setBalance — локальный баланс уже правильный
+        // Просто снимаем флаг
+        _rktBetting=false;
       } else if((r.error||'')==='insufficient_funds'){
         RKT.betPlaced=false;
         setBalance(balance+bet);
@@ -4511,10 +4521,12 @@ function rktPlaceBet(){
         showToast('Недостаточно токенов!','error');
         rktSetBtn('b');
         rktUpdateTable(); rktUpdateTags();
+        _rktBetting=false;
+      } else {
+        // Любая другая ошибка — ставка локальная, снимаем флаг
+        _rktBetting=false;
       }
-    }).catch(()=>{}).finally(()=>{
-      _rktBetting=false;
-    });
+    }).catch(()=>{ _rktBetting=false; });
   } else {
     _rktBetting=false;
   }
