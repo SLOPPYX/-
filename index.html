@@ -842,6 +842,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   outline:none; text-align:center; transition:border-color .15s;
 }
 .rkt-inp:focus { border-color:rgba(255,255,255,.3) }
+.rkt-inp, .custom-input { font-size:16px!important; }
 .rkt-presets { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; margin-top:7px }
 .rkt-pr {
   padding:6px 2px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
@@ -1168,7 +1169,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="bet-btn" style="color:var(--gold)"   onclick="multBet(5)">×5</div>
     </div>
     <div class="custom-row">
-      <input class="custom-input" id="customInput" type="number" min="10000" placeholder="Своя ставка (мин. 10 000)...">
+      <input class="custom-input" id="customInput" type="text" inputmode="numeric" pattern="[0-9]*" min="10000" placeholder="Своя ставка (мин. 10 000)..." enterkeyhint="done">
       <button class="custom-ok" onclick="applyCustom()">Сделать ставку</button>
     </div>
 
@@ -1328,7 +1329,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="rkt-ctrl">
         <div class="rkt-box">
           <div class="rkt-lbl">СТАВКА</div>
-          <input class="rkt-inp" id="rktInp" type="number" value="10000" min="1000" step="1000">
+          <input class="rkt-inp" id="rktInp" type="text" inputmode="numeric" pattern="[0-9]*" value="10000" min="1000" step="1000" enterkeyhint="done">
           <div class="rkt-presets">
             <div class="rkt-pr" onclick="rktPreset(10000)">10K</div>
             <div class="rkt-pr" onclick="rktPreset(25000)">25K</div>
@@ -4339,29 +4340,25 @@ function rktUI(){
 function rktUpdateBtn(){
   const b=document.getElementById('rktBtn'); if(!b) return;
 
-  // ПРИОРИТЕТ 1: ставка поставлена — НАВСЕГДА заблокирована до конца раунда
-  if(_rktRoundBetDone || RKT.betPlaced){
-    b.textContent='✅ Ставка принята';
-    b.className='rkt-btn bw';
-    b.disabled=true;
-    return;
-  }
-
-  // ПРИОРИТЕТ 2: фаза полёта
+  // ── ФАЗА ПОЛЁТА: показываем ЗАБРАТЬ если ставка активна ──
   if(RKT.phase==='flying'){
-    if(RKT.betPlaced&&!RKT.cashedOut){
+    if(RKT.betPlaced && !RKT.cashedOut){
       b.textContent='💸 '+(RKT.mult||1).toFixed(2)+'× — ЗАБРАТЬ!';
       b.className='rkt-btn bc';
       b.disabled=false;
+    } else if(RKT.cashedOut){
+      b.textContent='✅ Выведено!';
+      b.className='rkt-btn bw';
+      b.disabled=true;
     } else {
-      b.textContent=RKT.cashedOut?'✅ Выведено!':'⏳ Летим...';
+      b.textContent='⏳ Летим...';
       b.className='rkt-btn bw';
       b.disabled=true;
     }
     return;
   }
 
-  // ПРИОРИТЕТ 3: краш
+  // ── КРАШ ──
   if(RKT.phase==='crashed'){
     b.textContent='⏳ Ждём...';
     b.className='rkt-btn bw';
@@ -4369,8 +4366,16 @@ function rktUpdateBtn(){
     return;
   }
 
-  // ПРИОРИТЕТ 4: ожидание — показываем кнопку только в последние 5 сек
+  // ── ОЖИДАНИЕ ──
   if(RKT.phase==='waiting'){
+    // Ставка уже поставлена в этом раунде — заблокирована
+    if(_rktRoundBetDone || RKT.betPlaced){
+      b.textContent='✅ Ставка принята';
+      b.className='rkt-btn bw';
+      b.disabled=true;
+      return;
+    }
+    // Последние 5 секунд — кнопка активна
     if(RKT.waitLeft<=5 && RKT.waitLeft>0){
       b.textContent='🚀 ПОСТАВИТЬ';
       b.className='rkt-btn bb';
@@ -4380,6 +4385,7 @@ function rktUpdateBtn(){
       b.className='rkt-btn bw';
       b.disabled=true;
     }
+    return;
   }
 }
 
@@ -4623,7 +4629,20 @@ async function rktDoCashout(){
   _rktBetting=false;
   setTimeout(()=>{ _rktOperating=false; }, 1000);
 }
-function rktPreset(v){RKT.myBet=v;const i=document.getElementById('rktInp');if(i)i.value=v;}
+function rktPreset(v){RKT.myBet=v;const i=document.getElementById('rktInp');if(i){i.value=v;i.blur();}}
+
+// Закрываем клавиатуру по Enter и по тапу вне инпута
+(function(){
+  function blurOnEnter(e){ if(e.key==='Enter'||e.keyCode===13){ e.target.blur(); } }
+  document.addEventListener('keydown', blurOnEnter);
+  // Тап вне инпута — снять фокус (закрыть клавиатуру)
+  document.addEventListener('touchstart', function(e){
+    const active = document.activeElement;
+    if(active && (active.tagName==='INPUT'||active.tagName==='TEXTAREA')){
+      if(!active.contains(e.target)) active.blur();
+    }
+  }, {passive:true});
+})();
 function rktMultBet(x){
   const inp=document.getElementById('rktInp');
   const cur=Math.floor(parseInt(inp?inp.value:RKT.myBet)||10000);
