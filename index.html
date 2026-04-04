@@ -183,15 +183,23 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .pstat-v.pos{color:var(--green)} .pstat-v.neg{color:var(--red)}
 .pstat-l{font-size:9px;color:var(--muted);letter-spacing:.3px;text-transform:uppercase}
 /* Новая сетка статистики 2x2 */
-.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px}
-.stat-icon{font-size:22px;flex-shrink:0}
-.stat-body{min-width:0}
-.stat-val{font-family:var(--fd);font-size:16px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.stat-val.pos{color:var(--green)} .stat-val.neg{color:var(--red)} .stat-val.gold{color:var(--gold)}
-.stat-lbl{font-size:9px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-top:1px}
-/* Профит — полная ширина */
-.stat-card.full{grid-column:1/-1}
+/* Статистика профиля — строки на всю ширину */
+.stat-list{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.stat-row{display:flex;align-items:center;background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:9px 12px;gap:10px}
+.stat-row.pos{border-color:rgba(0,255,136,.2);background:rgba(0,255,136,.04)}
+.stat-row.neg-c{border-color:rgba(255,51,51,.15);background:rgba(255,51,51,.03)}
+.stat-row.gold-c{border-color:rgba(255,215,0,.2);background:rgba(255,215,0,.04)}
+.stat-row.profit-pos{border-color:rgba(0,255,136,.25);background:rgba(0,255,136,.06)}
+.stat-row.profit-neg{border-color:rgba(255,51,51,.25);background:rgba(255,51,51,.06)}
+.stat-ico{font-size:16px;width:22px;text-align:center;flex-shrink:0}
+.stat-name{font-size:10px;color:var(--muted);letter-spacing:.3px;flex:1;text-transform:uppercase}
+.stat-num{font-family:var(--fd);font-size:14px;font-weight:900;text-align:right;flex-shrink:0;max-width:55%}
+.stat-num.pos{color:var(--green)} .stat-num.neg{color:var(--red)}
+.stat-num.gold{color:var(--gold)} .stat-num.cyan{color:var(--cyan)}
+/* Старые классы оставляем для совместимости */
+.stat-grid{display:none}
+.stat-card{display:none}
+.stat-icon,.stat-body,.stat-val,.stat-lbl{display:contents}
 .best-card{background:linear-gradient(135deg,rgba(255,215,0,0.08),rgba(255,159,0,0.05));border:1px solid rgba(255,215,0,0.22);border-radius:13px;padding:15px;display:flex;align-items:center;gap:14px;margin-bottom:10px}
 .best-ico{font-size:34px;flex-shrink:0}
 .best-v{font-family:var(--fd);font-size:20px;font-weight:900;color:var(--gold);text-shadow:0 0 10px rgba(255,215,0,0.35)}
@@ -1280,86 +1288,85 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
     <div class="section-head">Статистика</div>
 
-    <!-- Донат-диаграмма побед + строка быстрой статистики -->
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:14px">
-      <div class="donut-wrap" style="flex-shrink:0">
-        <svg class="donut-svg" viewBox="0 0 110 110">
+    <!-- Мини-блок: диаграмма + винрейт -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:10px 12px">
+      <div class="donut-wrap" style="flex-shrink:0;width:64px;height:64px">
+        <svg class="donut-svg" style="width:64px;height:64px" viewBox="0 0 110 110">
           <circle class="donut-bg" cx="55" cy="55" r="40"/>
           <circle class="donut-win" cx="55" cy="55" r="40" id="dWin" stroke-dasharray="0 251.2"/>
           <circle class="donut-loss" cx="55" cy="55" r="40" id="dLoss" stroke-dasharray="0 251.2"/>
         </svg>
-        <div class="donut-center"><span class="d-pct" id="dPct">0%</span><span class="d-lbl" style="font-size:8px">побед</span></div>
+        <div class="donut-center">
+          <span class="d-pct" id="dPct" style="font-size:12px">0%</span>
+          <span class="d-lbl" style="font-size:7px">побед</span>
+        </div>
       </div>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-          <div class="wl-dot w"></div>
-          <span style="font-size:11px;color:var(--muted)">Победы</span>
-          <span class="wl-iv w" id="wlW" style="margin-left:auto;font-size:14px">0</span>
-          <span class="wl-pct w" id="wlWP" style="font-size:10px"></span>
+      <div style="flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:4px">
+        <div style="text-align:center;padding:5px 2px;background:rgba(0,255,136,.07);border-radius:7px;border:1px solid rgba(0,255,136,.15)">
+          <div style="font-family:var(--fd);font-size:12px;font-weight:900;color:var(--green)" id="wlW">0</div>
+          <div style="font-size:7px;color:var(--muted)">ПОБ</div>
+          <div id="wlWP" style="font-size:8px;color:rgba(0,255,136,.6)"></div>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-          <div class="wl-dot l"></div>
-          <span style="font-size:11px;color:var(--muted)">Поражения</span>
-          <span class="wl-iv l" id="wlL" style="margin-left:auto;font-size:14px">0</span>
-          <span class="wl-pct l" id="wlLP" style="font-size:10px"></span>
+        <div style="text-align:center;padding:5px 2px;background:rgba(255,51,51,.07);border-radius:7px;border:1px solid rgba(255,51,51,.15)">
+          <div style="font-family:var(--fd);font-size:12px;font-weight:900;color:var(--red)" id="wlL">0</div>
+          <div style="font-size:7px;color:var(--muted)">ПОР</div>
+          <div id="wlLP" style="font-size:8px;color:rgba(255,51,51,.6)"></div>
         </div>
-        <div style="display:flex;gap:8px">
-          <div style="flex:1;text-align:center;background:rgba(255,255,255,.04);border-radius:8px;padding:6px 4px">
-            <div style="font-family:var(--fd);font-size:13px;font-weight:900" id="pSpins">0</div>
-            <div style="font-size:8px;color:var(--muted);letter-spacing:.5px">СПИНОВ</div>
-          </div>
-          <div style="flex:1;text-align:center;background:rgba(255,255,255,.04);border-radius:8px;padding:6px 4px">
-            <div style="font-family:var(--fd);font-size:13px;font-weight:900;color:var(--cyan)" id="pWR">0%</div>
-            <div style="font-size:8px;color:var(--muted);letter-spacing:.5px">ВИНРЕЙТ</div>
-          </div>
+        <div style="text-align:center;padding:5px 2px;background:rgba(255,255,255,.04);border-radius:7px;border:1px solid var(--border)">
+          <div style="font-family:var(--fd);font-size:12px;font-weight:900" id="pSpins">0</div>
+          <div style="font-size:7px;color:var(--muted)">СПИН</div>
+        </div>
+        <div style="text-align:center;padding:5px 2px;background:rgba(0,229,255,.07);border-radius:7px;border:1px solid rgba(0,229,255,.15)">
+          <div style="font-family:var(--fd);font-size:12px;font-weight:900;color:var(--cyan)" id="pWR">0%</div>
+          <div style="font-size:7px;color:var(--muted)">WIN%</div>
         </div>
       </div>
     </div>
 
-    <!-- Карточки статистики 2x2 -->
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-icon">💰</div>
-        <div class="stat-body">
-          <div class="stat-val pos" id="pTW">0</div>
-          <div class="stat-lbl">Выиграно</div>
-        </div>
+    <!-- Список строк статистики -->
+    <div class="stat-list">
+      <div class="stat-row pos">
+        <span class="stat-ico">💰</span>
+        <span class="stat-name">Выиграно всего</span>
+        <span class="stat-num pos" id="pTW">0</span>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">💸</div>
-        <div class="stat-body">
-          <div class="stat-val neg" id="pTL">0</div>
-          <div class="stat-lbl">Проиграно</div>
-        </div>
+      <div class="stat-row neg-c">
+        <span class="stat-ico">💸</span>
+        <span class="stat-name">Проиграно всего</span>
+        <span class="stat-num neg" id="pTL">0</span>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">🏆</div>
-        <div class="stat-body">
-          <div class="stat-val gold" id="pBest">0</div>
-          <div class="stat-lbl">Лучший выигрыш</div>
-        </div>
+      <div class="stat-row gold-c">
+        <span class="stat-ico">🏆</span>
+        <span class="stat-name">Лучший выигрыш</span>
+        <span class="stat-num gold" id="pBest">—</span>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">🔥</div>
-        <div class="stat-body">
-          <div class="stat-val" id="streakV">—</div>
-          <div class="stat-lbl">Серия</div>
-        </div>
+      <div class="stat-row">
+        <span class="stat-ico">🎯</span>
+        <span class="stat-name">Средний выигрыш</span>
+        <span class="stat-num cyan" id="pAvgWin">—</span>
       </div>
-      <div class="stat-card full">
-        <div class="stat-icon" id="pProfitIcon">📊</div>
-        <div class="stat-body" style="flex:1">
-          <div class="stat-val" id="pProfit" style="font-size:18px">0</div>
-          <div class="stat-lbl">Чистая прибыль / убыток</div>
-        </div>
+      <div class="stat-row">
+        <span class="stat-ico">📉</span>
+        <span class="stat-name">Средний проигрыш</span>
+        <span class="stat-num neg" id="pAvgLoss">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-ico">🔥</span>
+        <span class="stat-name">Лучшая серия</span>
+        <span class="stat-num" id="streakV">—</span>
+      </div>
+      <div class="stat-row profit-pos" id="pProfitRow">
+        <span class="stat-ico" id="pProfitIcon">📊</span>
+        <span class="stat-name">Чистая прибыль</span>
+        <span class="stat-num" id="pProfit">0</span>
       </div>
     </div>
 
     <!-- Последние 10 спинов -->
-    <div class="section-head" style="margin-top:4px">Последние 10 спинов</div>
-    <div class="streak-card" style="margin-bottom:14px">
-      <div style="font-size:11px;color:var(--muted)">История</div>
-      <div class="streak-dots" id="streakDots"></div>
+    <div class="section-head" style="margin-top:2px">Последние 10 спинов</div>
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <span style="font-size:9px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;flex-shrink:0">История</span>
+      <div class="streak-dots" id="streakDots" style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end"></div>
     </div>
   </div>
 
@@ -2708,7 +2715,7 @@ function renderProfile() {
     if(pp) {
       const profit = S.profit || 0;
       pp.textContent = (profit >= 0 ? '+' : '') + profit.toLocaleString('ru-RU');
-      pp.className   = 'stat-val ' + (profit >= 0 ? 'pos' : 'neg');
+      pp.className   = 'stat-num ' + (profit >= 0 ? 'pos' : 'neg');
       var pi = document.getElementById('pProfitIcon'); if(pi) pi.textContent = profit >= 0 ? '📈' : '📉';
     }
 
@@ -2722,6 +2729,10 @@ function renderProfile() {
         sd.appendChild(dot);
       });
     }
+    // Средний выигрыш/проигрыш
+    var avgW = _g('pAvgWin'), avgL = _g('pAvgLoss');
+    if(avgW){ avgW.textContent = (S.wins||0)>0 ? Math.floor((S.totalWon||0)/(S.wins||1)).toLocaleString('ru-RU') : '—'; }
+    if(avgL){ avgL.textContent = (S.losses||0)>0 ? Math.floor((S.totalLost||0)/(S.losses||1)).toLocaleString('ru-RU') : '—'; }
     if(_g('streakV')) _g('streakV').textContent =
       S.streak > 0 ? (S.streakType === 'w' ? '🔥' : '❄️') + ' ' + S.streak : '—';
 
