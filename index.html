@@ -102,7 +102,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .bet-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}
 .bet-btn{padding:10px 3px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;color:var(--text);font-family:var(--fb);font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:all .12s;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .bet-btn:active{transform:scale(0.93)}
-.bet-btn.active{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.35);color:#fff}
+.bet-btn.active{background:linear-gradient(135deg,rgba(0,229,255,.22),rgba(191,0,255,.16));border-color:var(--cyan);color:#fff;box-shadow:0 0 12px rgba(0,229,255,.35);transform:scale(1.05)}
 .bet-btn.disabled{opacity:.22;pointer-events:none}
 .custom-row{display:flex;gap:7px;margin-bottom:12px}
 .custom-input{flex:1;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;color:var(--text);font-family:var(--fb);font-size:13px;font-weight:600;outline:none;transition:border-color .2s}
@@ -3335,6 +3335,29 @@ async function loadAllFromCloud() {
         }
 
         // Сбрасываем кэш лидерборда — аватарка могла измениться
+        // ── Статистика ракетки (Cloud sync) ──
+        const cloudRkt = values && values['cs_rkt_' + USER_ID];
+        if(cloudRkt){
+          try{
+            const cr = JSON.parse(cloudRkt);
+            if(cr && typeof cr.g === 'number'){
+              const localRicher = (RKT.stats.g > cr.g) || (RKT.stats.p > cr.p);
+              if(!localRicher){
+                RKT.stats.g = cr.g || 0;
+                RKT.stats.b = cr.b || 0;
+                RKT.stats.p = cr.p || 0;
+              } else {
+                RKT.stats.g = Math.max(RKT.stats.g, cr.g || 0);
+                RKT.stats.b = Math.max(RKT.stats.b, cr.b || 0);
+                if(Math.abs(cr.p) > Math.abs(RKT.stats.p)) RKT.stats.p = cr.p;
+              }
+              try{ localStorage.setItem('rkt_'+USER_ID, JSON.stringify(RKT.stats)); }catch(e){}
+              try{ rktUI(); }catch(e){}
+              console.log('[CloudSync] 🚀 Ракетка из Cloud: ' + cr.g + ' раундов');
+            }
+          }catch(e){}
+        }
+
         _leaderboardCache = null;
 
       } catch(e) {
