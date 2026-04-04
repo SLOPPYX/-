@@ -779,7 +779,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-ptag.s-me   { background:rgba(232,184,75,.18);  border-color:rgba(232,184,75,.5);   color:#e8b84b; box-shadow:0 0 10px rgba(232,184,75,.2) }
 .rkt-ptag.s-cash { background:rgba(74,222,128,.15);  border-color:rgba(74,222,128,.4);   color:#4ade80; box-shadow:0 0 10px rgba(74,222,128,.2) }
 .rkt-ptag.s-boom { background:rgba(248,113,113,.1);  border-color:rgba(248,113,113,.3);  color:rgba(248,113,113,.65); text-decoration:line-through }
-.rkt-ptag-avatar { font-size:12px; line-height:1 }
+.rkt-ptag-avatar { font-size:12px; line-height:1; display:flex;align-items:center }
+.rkt-ptag-avatar img { width:18px;height:18px;border-radius:50%;object-fit:cover }
 .rkt-ptag-info { display:flex; flex-direction:column; gap:1px }
 .rkt-ptag-name { font-size:8px }
 .rkt-ptag-val { font-size:9px; font-weight:900 }
@@ -822,7 +823,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-pt-row.r-cash { background:rgba(74,222,128,.06) }
 .rkt-pt-row.r-boom { opacity:.45 }
 .rkt-pt-player { display:flex; align-items:center; gap:8px }
-.rkt-pt-ava    { font-size:18px; width:26px; text-align:center }
+.rkt-pt-ava    { font-size:18px; width:26px; text-align:center; overflow:hidden; border-radius:50% }
+.rkt-pt-ava img { width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle }
 .rkt-pt-name   { font-family:var(--fd); font-size:10px; font-weight:700; color:#fff }
 .rkt-pt-tag    { font-family:var(--fd); font-size:7px; color:rgba(255,255,255,.3); margin-top:2px }
 .rkt-pt-bet    { font-family:var(--fd); font-size:11px; font-weight:700; color:rgba(255,255,255,.65); text-align:right }
@@ -2380,6 +2382,18 @@ function saveAvatar(id) {
   } catch(e){}
 }
 
+// Рендер аватарки: src может быть emoji, base64 или <img> тегом
+function renderAvatarHtml(src, size) {
+  if(!src) return '🎮';
+  src = String(src);
+  if(src.startsWith('data:image') || src.startsWith('http')) {
+    var s = size ? size + 'px' : '22px';
+    return '<img src="' + src + '" style="width:' + s + ';height:' + s + ';border-radius:50%;object-fit:cover;vertical-align:middle;display:inline-block">';
+  }
+  if(src.startsWith('<img')) return src;
+  return src;
+}
+
 function getCurrentAvatarEmoji() {
   if(selectedAvatar === 'custom') {
     const src = localStorage.getItem('custom_avatar_img');
@@ -2797,7 +2811,8 @@ function renderLeaderboard(leaders, myRank) {
 
     const won  = (p.total_won || 0).toLocaleString('ru-RU');
     const name = (p.name || p.custom_id || 'ИГРОК').toString().toUpperCase().slice(0, 12);
-    const ava  = p.avatar || (rank === 1 ? '👑' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🎮');
+    var _rawAva = p.avatar || (rank === 1 ? '👑' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🎮');
+    const ava = renderAvatarHtml(_rawAva, 36);
     const rnkColor = rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'rx';
 
     const card = document.createElement('div');
@@ -4705,7 +4720,7 @@ function rktUpdateTable(){
     }
 
     row.innerHTML='<div class="rkt-pt-player">'
-      +'<div class="rkt-pt-ava">'+p.avatar+'</div>'
+      +'<div class="rkt-pt-ava">'+renderAvatarHtml(p.avatar||'🎮',22)+'</div>'
       +'<div>'
         +'<div class="rkt-pt-name">'+(p.isMe?'👤 '+p.name:p.name)+'</div>'
         +'<div class="rkt-pt-tag">'+statusTxt+'</div>'
@@ -4735,7 +4750,7 @@ function rktUpdateTags(){
     t.className='rkt-ptag '+cls;
     const val2=p.cashed_at?'×'+p.cashed_at.toFixed(2):(p.bet/1000).toFixed(0)+'K';
     const name=(p.name||'?').slice(0,6);
-    t.innerHTML='<span class="rkt-ptag-avatar">'+(p.avatar||'🎮')+'</span><div class="rkt-ptag-info"><span class="rkt-ptag-name">'+name+'</span><span class="rkt-ptag-val">'+val2+'</span></div>';
+    t.innerHTML='<span class="rkt-ptag-avatar">'+renderAvatarHtml(p.avatar||'🎮',18)+'</span><div class="rkt-ptag-info"><span class="rkt-ptag-name">'+name+'</span><span class="rkt-ptag-val">'+val2+'</span></div>';
     tags.appendChild(t);
   });
 }
