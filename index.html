@@ -2330,9 +2330,9 @@ function saveAvatar(id) {
   // Обновляем аватарку везде сразу
   try { setAvaEl(document.getElementById('spoAvatar'), 44); } catch(e){}
   try { setAvaEl(document.getElementById('pAvatar'), 50); } catch(e){}
-
-  // Перерисовываем сетку
-  renderAvatars();
+  // Перерисовываем профиль и сетку полностью
+  try { renderProfile(); } catch(e){}
+  try { renderAvatars(); } catch(e){}
 
   // Тост
   try { showToast((av.img ? '\uD83D\uDDBC ' : av.emoji + ' ') + av.name + ' — аватарка!', 'success'); } catch(e){}
@@ -2369,21 +2369,34 @@ function getCurrentAvatarEmoji() {
 }
 
 // Обновить один элемент-контейнер аватарки
+// ВАЖНО: всегда обновляем через <span> внутри контейнера
+// чтобы z-index:1 работал поверх ::after псевдоэлемента
 function setAvaEl(el, size) {
   if(!el) return;
+  // Находим или создаём <span> внутри контейнера
+  var span = el.querySelector('span');
+  if(!span){
+    el.innerHTML = '<span></span>';
+    span = el.querySelector('span');
+  }
+  span.style.cssText = 'position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:100%;height:100%';
+
+  var imgStyle = 'width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;display:block';
+
   if(selectedAvatar === 'custom') {
-    const src = localStorage.getItem('custom_avatar_img');
+    var src = null;
+    try { src = localStorage.getItem('custom_avatar_img'); } catch(e){}
     if(src) {
-      el.innerHTML = `<img src="${src}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block;margin:auto">`;
+      span.innerHTML = '<img src="' + src + '" style="' + imgStyle + '">';
       return;
     }
   }
-  const av = AVATARS.find(a => a.id === selectedAvatar) || AVATARS[0];
-  if(av && av.img && AVATAR_IMAGES[av.id]){
-    el.innerHTML = '<img src="' + AVATAR_IMAGES[av.id] + '" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;display:block;margin:auto">';
+  var av = AVATARS.find(function(a){ return a.id === selectedAvatar; }) || AVATARS[0];
+  if(av && av.img && typeof AVATAR_IMAGES !== 'undefined' && AVATAR_IMAGES[av.id]){
+    span.innerHTML = '<img src="' + AVATAR_IMAGES[av.id] + '" style="' + imgStyle + '">';
     return;
   }
-  el.innerHTML = '<span style="font-size:' + Math.round(size * 0.65) + 'px;line-height:1">' + av.emoji + '</span>';
+  span.innerHTML = '<span style="font-size:' + Math.round(size * 0.65) + 'px;line-height:1">' + (av ? av.emoji : '🎮') + '</span>';
 }
 
 function renderAvatars() {
