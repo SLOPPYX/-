@@ -2293,19 +2293,8 @@ function handleAvatarUpload(e) {
   var file = e.target.files && e.target.files[0];
   if(!file){ e.target.value=''; return; }
 
-  // Кулдаун — не чаще 1 раза в сутки
   var COOLDOWN_KEY = 'ava_upload_ts_' + USER_ID;
-  var lastTs = 0;
-  try { lastTs = parseInt(localStorage.getItem(COOLDOWN_KEY)||'0'); } catch(er){}
   var now = Date.now();
-  var msInDay = 24*60*60*1000;
-  // Если есть уже загруженная — первая смена бесплатна (lastTs=0)
-  if(lastTs > 0 && (now - lastTs) < msInDay){
-    var hoursLeft = Math.ceil((msInDay - (now - lastTs)) / 3600000);
-    showToast('Менять аватарку можно раз в сутки. Осталось: ' + hoursLeft + ' ч.', 'error');
-    e.target.value = '';
-    return;
-  }
 
   // Лимит 5KB
   if(file.size > 5 * 1024){
@@ -2363,12 +2352,18 @@ function saveAvatar(id) {
   // Тост
   try { showToast((av.img ? '\uD83D\uDDBC ' : av.emoji + ' ') + av.name + ' — аватарка!', 'success'); } catch(e){}
 
-  // Сохраняем в API
+  // Сохраняем в API — передаём картинку как base64 чтобы другие видели
   if(API_URL && API_SECRET && USER_ID && USER_ID !== '0') {
+    var _avaPayload = av.emoji; // fallback — emoji
+    if(id === 'custom') {
+      try { var _cs = localStorage.getItem('custom_avatar_img'); if(_cs) _avaPayload = _cs; } catch(_e){}
+    } else if(av.img && typeof AVATAR_IMAGES !== 'undefined' && AVATAR_IMAGES[id]) {
+      _avaPayload = AVATAR_IMAGES[id]; // base64 встроенной картинки
+    }
     fetch(API_URL + '/casino/avatar', {
       method: 'POST',
       headers: {'Content-Type':'application/json','ngrok-skip-browser-warning':'1'},
-      body: JSON.stringify({ uid: parseInt(USER_ID), secret: API_SECRET, avatar: av.emoji, avatar_id: id })
+      body: JSON.stringify({ uid: parseInt(USER_ID), secret: API_SECRET, avatar: _avaPayload, avatar_id: id })
     }).catch(()=>{});
   }
 
@@ -2486,12 +2481,29 @@ function renderAvatars() {
       + '<div class="avatar-unlock-hint">LV5</div>';
     upDiv.title = 'Доступно с уровня 5';
   } else if(customSrc) {
-    // Картинка уже загружена — показываем превью + кнопку сменить
+    // Картинка загружена
     upDiv.innerHTML = '<div class="avatar-emoji" style="display:flex;align-items:center;justify-content:center">'
       + '<img src="' + customSrc + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;position:absolute;inset:0">'
-      + '</div><div class="avatar-name" style="font-size:8px">МОЯ ✏</div>'
-    upDiv.onclick = function(){ saveAvatar('custom'); };
-    upDiv.title = 'Моя аватарка (✏️ для смены)';
+      + '</div><div class="avatar-name" style="font-size:8px">' + (isSel ? 'СМЕНИТЬ' : 'МОЯ') + '</div>';
+    upDiv.onclick = function(){
+      if(isSel) {
+        // Уже активна — нажали ещё раз → предлагаем сменить с кулдауном
+        var _ck = 'ava_upload_ts_' + USER_ID;
+        var _lt = 0;
+        try { _lt = parseInt(localStorage.getItem(_ck)||'0'); } catch(er){}
+        var _now = Date.now(), _day = 24*60*60*1000;
+        if(_lt > 0 && (_now - _lt) < _day){
+          var _h = Math.ceil((_day - (_now - _lt)) / 3600000);
+          showToast('Менять аватарку можно раз в сутки. Осталось: ' + _h + ' ч.', 'error');
+          return;
+        }
+        document.getElementById('avatarFileInput').click();
+      } else {
+        // Не активна — просто выбрать
+        saveAvatar('custom');
+      }
+    };
+    upDiv.title = isSel ? 'Нажми ещё раз чтобы сменить (1 раз в сутки)' : 'Выбрать мою аватарку';
   } else {
     // Нет картинки — предлагаем загрузить
     upDiv.innerHTML = '<div class="avatar-emoji" style="font-size:24px;display:flex;align-items:center;justify-content:center">＋</div>'
