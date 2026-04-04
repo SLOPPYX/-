@@ -356,17 +356,17 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 /* Контент баннера */
 .pb-inner{position:relative;z-index:2;display:flex;align-items:center;gap:16px}
 .spo-avatar{
-  width:60px;height:60px;border-radius:16px;flex-shrink:0;
+  width:60px;height:60px;border-radius:50%;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;font-size:28px;
   position:relative;cursor:pointer;transition:transform .2s;
   background:linear-gradient(135deg,rgba(100,0,255,.2),rgba(0,150,255,.15));
-  border:1px solid rgba(255,255,255,.1);
-  box-shadow:0 8px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08);
+  overflow:hidden;
+  box-shadow:0 0 0 3px var(--cyan),0 8px 32px rgba(0,0,0,.5);
 }
 .spo-avatar:active{transform:scale(.95)}
 /* Анимированная рамка аватарки */
 .spo-avatar::before{
-  content:'';position:absolute;inset:-2px;border-radius:18px;
+  content:'';position:absolute;inset:-2px;border-radius:50%;
   background:linear-gradient(135deg,var(--cyan),var(--purple),var(--pink),var(--cyan));
   background-size:300% 300%;
   animation:avatarBorder 3s linear infinite;
@@ -374,10 +374,10 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 }
 @keyframes avatarBorder{to{background-position:300% 300%}}
 .spo-avatar::after{
-  content:'';position:absolute;inset:1px;border-radius:14px;
-  background:linear-gradient(135deg,#0a0015,#08001f);z-index:0;
+  content:'';position:absolute;inset:2px;border-radius:50%;
+  background:#0a0015;z-index:0;
 }
-.spo-avatar span{position:relative;z-index:1}
+.spo-avatar span{position:relative;z-index:1;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
 
 .spo-info{flex:1;min-width:0}
 .spo-name{
@@ -531,10 +531,10 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .avatars-title{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:2px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .avatars-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.07),transparent)}
 .avatars-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.avatar-item{aspect-ratio:1;border-radius:14px;background:var(--panel);border:2px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.avatar-item{aspect-ratio:1;border-radius:50%;background:var(--panel);border:2px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .avatar-item.upload-slot{border-style:dashed;border-color:rgba(0,229,255,.4);background:rgba(0,229,255,.04)}
 .avatar-item.upload-slot:active{background:rgba(0,229,255,.1)}
-.ava-custom-img{width:38px;height:38px;border-radius:8px;object-fit:cover}
+.ava-custom-img{width:100%;height:100%;border-radius:50%;object-fit:cover;position:absolute;inset:0}
 .avatar-item:active{transform:scale(.95)}
 .avatar-item.selected{border-color:var(--cyan);background:linear-gradient(135deg,rgba(0,229,255,.12),rgba(191,0,255,.08));box-shadow:0 0 14px rgba(0,229,255,.25)}
 .avatar-item.locked{opacity:.35;cursor:not-allowed}
@@ -571,7 +571,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .leader-rank.r2{color:#c0c0c0}
 .leader-rank.r3{color:#cd7f32}
 .leader-rank.rx{color:var(--muted)}
-.leader-avatar{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.leader-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:rgba(255,255,255,.05);border:2px solid rgba(0,229,255,.3);overflow:hidden}
 .leader-info{flex:1;min-width:0}
 .leader-name{font-family:var(--fd);font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
 .leader-id{font-family:var(--fd);font-size:8px;color:var(--muted);letter-spacing:1px}
@@ -2157,9 +2157,9 @@ const AVATARS = [
   { id:'diamond', emoji:'💠', name:'САПФИР',   needLv:4 },
   { id:'skull',   emoji:'💀', name:'ЛЕГЕНДА',  needLv:5 },
   { id:'alien',   emoji:'👾', name:'ИНОПЛАНЕТЯНИН', needLv:5 },
-  { id:'ava_sakura', emoji:'👺', name:'САКУРА', needLv:0, img:true },
-  { id:'ava_ff', emoji:'🔥', name:'FREE FIRE', needLv:0, img:true },
-  { id:'ava_clown', emoji:'🤡', name:'КЛОУН', needLv:0, img:true },
+  { id:'ava_sakura', emoji:'👺', name:'САКУРА', needLv:3, img:true },
+  { id:'ava_ff', emoji:'🔥', name:'FREE FIRE', needLv:3, img:true },
+  { id:'ava_clown', emoji:'🤡', name:'КЛОУН', needLv:3, img:true },
 ];
 
 
@@ -2288,31 +2288,55 @@ let selectedAvatar = (() => {
 })();
 
 function handleAvatarUpload(e) {
-  const file = e.target.files && e.target.files[0];
-  if(!file) return;
+  var file = e.target.files && e.target.files[0];
+  if(!file){ e.target.value=''; return; }
+
+  // Кулдаун — не чаще 1 раза в сутки
+  var COOLDOWN_KEY = 'ava_upload_ts_' + USER_ID;
+  var lastTs = 0;
+  try { lastTs = parseInt(localStorage.getItem(COOLDOWN_KEY)||'0'); } catch(er){}
+  var now = Date.now();
+  var msInDay = 24*60*60*1000;
+  // Если есть уже загруженная — первая смена бесплатна (lastTs=0)
+  if(lastTs > 0 && (now - lastTs) < msInDay){
+    var hoursLeft = Math.ceil((msInDay - (now - lastTs)) / 3600000);
+    showToast('Менять аватарку можно раз в сутки. Осталось: ' + hoursLeft + ' ч.', 'error');
+    e.target.value = '';
+    return;
+  }
+
   // Лимит 5KB
   if(file.size > 5 * 1024){
     showToast('Максимум 5KB! Сожми картинку.', 'error');
     e.target.value = '';
     return;
   }
+
   // Только изображения
   if(!file.type.startsWith('image/')){
-    showToast('Только картинки!', 'error');
+    showToast('Только изображения!', 'error');
     e.target.value = '';
     return;
   }
+
   // Предупреждение 18+
   if(!confirm('⚠️ Запрещено загружать контент 18+, оскорбительные или неприемлемые изображения. Продолжить?')){
     e.target.value = '';
     return;
   }
-  const reader = new FileReader();
+
+  var reader = new FileReader();
   reader.onload = function(ev) {
-    const src = ev.target.result;
-    try { localStorage.setItem('custom_avatar_img', src); } catch(err){
-      showToast('Ошибка сохранения — картинка слишком большая', 'error'); return;
+    var src = ev.target.result;
+    try {
+      localStorage.setItem('custom_avatar_img', src);
+    } catch(err){
+      showToast('Ошибка сохранения — картинка слишком большая', 'error');
+      e.target.value = '';
+      return;
     }
+    // Записываем время загрузки
+    try { localStorage.setItem(COOLDOWN_KEY, String(now)); } catch(er){}
     saveAvatar('custom');
     showToast('✅ Аватарка загружена!', 'success');
   };
@@ -2359,11 +2383,11 @@ function saveAvatar(id) {
 function getCurrentAvatarEmoji() {
   if(selectedAvatar === 'custom') {
     const src = localStorage.getItem('custom_avatar_img');
-    if(src) return `<img src="${src}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle">`;
+    if(src) return `<img src="${src}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;vertical-align:middle">`;
   }
   const av = AVATARS.find(a => a.id === selectedAvatar);
   if(av && av.img && AVATAR_IMAGES[av.id]){
-    return '<img src="' + AVATAR_IMAGES[av.id] + '" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle">';
+    return '<img src="' + AVATAR_IMAGES[av.id] + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;vertical-align:middle">';
   }
   return av ? av.emoji : '🎮';
 }
@@ -2381,7 +2405,7 @@ function setAvaEl(el, size) {
   }
   span.style.cssText = 'position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:100%;height:100%';
 
-  var imgStyle = 'width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;display:block';
+  var imgStyle = 'width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;position:absolute;inset:0';
 
   if(selectedAvatar === 'custom') {
     var src = null;
@@ -2413,8 +2437,8 @@ function renderAvatars() {
 
     if(av.img && AVATAR_IMAGES[av.id]){
       var _iStyle = locked
-        ? 'width:38px;height:38px;border-radius:8px;object-fit:cover;filter:grayscale(1) opacity(0.4)'
-        : 'width:38px;height:38px;border-radius:8px;object-fit:cover';
+        ? 'width:100%;height:100%;border-radius:50%;object-fit:cover;position:absolute;inset:0;filter:grayscale(1) opacity(0.4)'
+        : 'width:100%;height:100%;border-radius:50%;object-fit:cover;position:absolute;inset:0';
       div.innerHTML = '<div class="avatar-emoji" style="display:flex;align-items:center;justify-content:center">'
         + '<img src="' + AVATAR_IMAGES[av.id] + '" style="' + _iStyle + '">'
         + '</div><div class="avatar-name">' + av.name + '</div>';
@@ -2432,23 +2456,34 @@ function renderAvatars() {
     grid.appendChild(div);
   });
 
-  // Слот «Своя картинка»
+  // Слот «Своя картинка» — доступен с уровня 5 (ЛЕГЕНДА)
   var upDiv = document.createElement('div');
   var customSrc = null;
   try { customSrc = localStorage.getItem('custom_avatar_img'); } catch(e){}
   var isSel = (selectedAvatar === 'custom');
-  upDiv.className = 'avatar-item upload-slot' + (isSel ? ' selected' : '');
-  if(customSrc) {
+  var customLocked = (userLv < 5);
+
+  upDiv.className = 'avatar-item upload-slot' + (isSel && !customLocked ? ' selected' : '') + (customLocked ? ' locked' : '');
+
+  if(customLocked) {
+    // Заблокировано — нет нужного уровня
+    upDiv.innerHTML = '<div class="avatar-emoji" style="font-size:24px;display:flex;align-items:center;justify-content:center;filter:grayscale(1) opacity(0.4)">🖼</div>'
+      + '<div class="avatar-name" style="opacity:0.4">СВОЯ</div>'
+      + '<div class="avatar-unlock-hint">LV5</div>';
+    upDiv.title = 'Доступно с уровня 5';
+  } else if(customSrc) {
+    // Картинка уже загружена — показываем превью + кнопку сменить
     upDiv.innerHTML = '<div class="avatar-emoji" style="display:flex;align-items:center;justify-content:center">'
-      + '<img src="' + customSrc + '" style="width:38px;height:38px;border-radius:8px;object-fit:cover">'
-      + '</div><div class="avatar-name">МОЯ</div>';
+      + '<img src="' + customSrc + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;position:absolute;inset:0">'
+      + '</div><div class="avatar-name" style="font-size:8px">МОЯ ✏</div>'
     upDiv.onclick = function(){ saveAvatar('custom'); };
-    upDiv.title = 'Моя аватарка (нажми чтобы выбрать)';
+    upDiv.title = 'Моя аватарка (✏️ для смены)';
   } else {
+    // Нет картинки — предлагаем загрузить
     upDiv.innerHTML = '<div class="avatar-emoji" style="font-size:24px;display:flex;align-items:center;justify-content:center">＋</div>'
       + '<div class="avatar-name" style="font-size:8px;color:rgba(0,229,255,.8)">СВОЯ</div>';
     upDiv.onclick = function(){ document.getElementById('avatarFileInput').click(); };
-    upDiv.title = 'Загрузить свою аватарку (макс 5KB)';
+    upDiv.title = 'Загрузить свою аватарку (макс 5KB, 1 раз в сутки)';
   }
   grid.appendChild(upDiv);
 }
