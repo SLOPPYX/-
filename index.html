@@ -1712,7 +1712,7 @@ async function apiSpin(bet, result, mult) {
     const r = await fetch(API_URL + '/casino/spin', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ uid: parseInt(USER_ID), secret: API_SECRET, bet, result, mult }),
+      body: JSON.stringify({ uid: parseInt(USER_ID), secret: API_SECRET, bet, result, mult, name: USER_NAME || '' }),
       signal: AbortSignal.timeout(5000),
     });
     if(r.ok) return await r.json();
