@@ -2418,6 +2418,26 @@ function renderAvatars() {
     }
     grid.appendChild(div);
   });
+
+  // Слот «Своя картинка»
+  var upDiv = document.createElement('div');
+  var customSrc = null;
+  try { customSrc = localStorage.getItem('custom_avatar_img'); } catch(e){}
+  var isSel = (selectedAvatar === 'custom');
+  upDiv.className = 'avatar-item upload-slot' + (isSel ? ' selected' : '');
+  if(customSrc) {
+    upDiv.innerHTML = '<div class="avatar-emoji" style="display:flex;align-items:center;justify-content:center">'
+      + '<img src="' + customSrc + '" style="width:38px;height:38px;border-radius:8px;object-fit:cover">'
+      + '</div><div class="avatar-name">МОЯ</div>';
+    upDiv.onclick = function(){ saveAvatar('custom'); };
+    upDiv.title = 'Моя аватарка (нажми чтобы выбрать)';
+  } else {
+    upDiv.innerHTML = '<div class="avatar-emoji" style="font-size:24px;display:flex;align-items:center;justify-content:center">＋</div>'
+      + '<div class="avatar-name" style="font-size:8px;color:rgba(0,229,255,.8)">СВОЯ</div>';
+    upDiv.onclick = function(){ document.getElementById('avatarFileInput').click(); };
+    upDiv.title = 'Загрузить свою аватарку (макс 5KB)';
+  }
+  grid.appendChild(upDiv);
 }
 
 function renderLevelBlock() {
@@ -2513,18 +2533,15 @@ function renderProfile() {
     if(_g('pCustomId')) _g('pCustomId').textContent = CUSTOM_ID || USER_ID;
     if(_g('pWins1v1'))  _g('pWins1v1').textContent  = USER_WINS;
     // Аватарка — берём из выбранных пользователем, с учётом уровня
-    const avatar = getCurrentAvatarEmoji();
-    if(_g('pAvatar'))   _g('pAvatar').textContent   = avatar;
+    // Аватарка — через setAvaEl чтобы img аватарки тоже работали
+    try { setAvaEl(_g('pAvatar'), 50); } catch(e){}
 
     // ── Canvas overlay ──
     if(_g('spoName'))    _g('spoName').textContent   = (USER_NAME||'ИГРОК').toUpperCase();
     if(_g('spoId'))      _g('spoId').textContent     = CUSTOM_ID || USER_ID;
     if(_g('spoWins'))    _g('spoWins').textContent   = USER_WINS + ' побед 1vs1';
     if(_g('spoBal'))     _g('spoBal').textContent    = balance.toLocaleString('ru-RU');
-    if(_g('spoAvatar')) {
-      const span = _g('spoAvatar').querySelector('span');
-      if(span) span.textContent = avatar; else _g('spoAvatar').textContent = avatar;
-    }
+    try { setAvaEl(_g('spoAvatar'), 44); } catch(e){}
 
     // ── Вычисляем статистику (одно объявление wPct) ──
     const total   = S.spins   || 0;
@@ -3145,10 +3162,8 @@ async function init() {
       await Promise.race([loadAllFromCloud(), new Promise(r => setTimeout(r, 2500))]);
       // После загрузки из Cloud обновляем UI аватарки
       try {
-        const av = AVATARS.find(a => a.id === selectedAvatar);
-        const emoji = av ? av.emoji : '🎮';
-        const spoAv = document.getElementById('spoAvatar');
-        if(spoAv) { const span = spoAv.querySelector('span'); if(span) span.textContent = emoji; else spoAv.textContent = emoji; }
+        try { setAvaEl(document.getElementById('spoAvatar'), 44); } catch(e){}
+        try { setAvaEl(document.getElementById('pAvatar'), 50); } catch(e){}
       } catch(e) {}
     } catch(e) {}
 
@@ -3675,13 +3690,9 @@ document.addEventListener('visibilitychange', async () => {
         try { localStorage.setItem(AVATAR_KEY, val); } catch(e) {}
         // Обновляем UI аватарки
         const av = AVATARS.find(a => a.id === val);
-        if(av) {
-          try {
-            const spoAv = document.getElementById('spoAvatar');
-            if(spoAv) { const span = spoAv.querySelector('span'); if(span) span.textContent = av.emoji; else spoAv.textContent = av.emoji; }
-          } catch(e) {}
-          try { renderAvatars(); } catch(e) {}
-        }
+        try { setAvaEl(document.getElementById('spoAvatar'), 44); } catch(e){}
+        try { setAvaEl(document.getElementById('pAvatar'), 50); } catch(e){}
+        try { renderAvatars(); } catch(e) {}
       }
     });
     // Немедленный прямой запрос к API — самый актуальный баланс
