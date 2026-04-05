@@ -38,16 +38,40 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .app{position:relative;z-index:1;max-width:480px;margin:0 auto;min-height:100%}
 
 /* ── HEADER ── */
-.header{padding:16px 18px 0;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.header{padding:12px 18px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .logo-wrap{display:flex;flex-direction:column;gap:2px}
 .logo-main{font-family:var(--fd);font-size:18px;font-weight:900;letter-spacing:4px;color:#fff}
 .logo-sub{font-family:var(--fd);font-size:9px;font-weight:400;letter-spacing:3px;color:var(--muted)}
-.balance-pill{display:flex;align-items:center;gap:6px;background:rgba(232,184,75,.10);border:1px solid rgba(232,184,75,.28);border-radius:10px;padding:8px 14px;font-family:var(--fd);font-size:12px;font-weight:700;color:var(--gold);white-space:nowrap;cursor:pointer;transition:all .18s}
-.balance-pill.pulse{animation:bPulse .35s ease}
-.balance-pill:active{transform:scale(0.95)}
+/* ── BALANCE BAR ── */
+.balance-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  margin:12px 18px 0;
+  padding:12px 18px;
+  background:linear-gradient(135deg,rgba(22,15,2,.97),rgba(32,22,4,.95));
+  border:1px solid rgba(255,160,30,.3);
+  border-radius:16px;
+  cursor:pointer;
+  transition:all .18s;
+  box-shadow:0 0 0 1px rgba(255,120,0,.08), 0 4px 20px rgba(255,100,0,.1), inset 0 1px 0 rgba(255,200,60,.08);
+  position:relative;overflow:hidden;
+}
+.balance-bar::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,150,0,.04) 50%,transparent 100%);
+  pointer-events:none;
+}
+.balance-bar:active{transform:scale(.98);box-shadow:0 0 20px rgba(255,140,0,.25)}
+.balance-bar:hover{border-color:rgba(255,180,50,.5)}
+.balance-bar.pulse{animation:bPulse .35s ease}
+.balance-bar-left{display:flex;align-items:center;gap:10px}
+.balance-bar-label{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:800;letter-spacing:2.5px;color:rgba(255,180,60,.55);text-transform:uppercase}
+.balance-bar-value{font-family:'Oxanium',var(--fd);font-size:20px;font-weight:800;color:#FFD060;letter-spacing:.5px;text-shadow:0 0 16px rgba(255,180,0,.3)}
+.balance-bar-right{display:flex;align-items:center}
+.balance-bar-refresh{font-size:14px;opacity:.45}
+
 @keyframes spin360{to{transform:rotate(360deg)}}
 #refreshIcon.spinning{animation:spin360 0.5s linear}
-@keyframes bPulse{0%,100%{box-shadow:0 0 16px rgba(255,215,0,0.13)}50%{box-shadow:0 0 30px rgba(255,215,0,0.55),0 0 60px rgba(255,215,0,0.22)}}
+@keyframes bPulse{0%,100%{box-shadow:0 0 0 1px rgba(255,120,0,.08),0 4px 20px rgba(255,100,0,.1)}50%{box-shadow:0 0 0 2px rgba(255,180,0,.3),0 4px 30px rgba(255,150,0,.35),0 0 50px rgba(255,120,0,.15)}}
 @keyframes badgePulse{from{opacity:0.6;transform:scale(0.97)}to{opacity:1;transform:scale(1.05)}}
 
 /* ── Баннер новых токенов ── */
@@ -1113,8 +1137,16 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-btn:disabled { pointer-events:none }
 .rkt-btn:active:not(.bw):not(:disabled) { transform:scale(.97) }
 
-/* Мини-стата */
-.rkt-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px }
+/* Мини-стата — фиксированная внизу */
+.rkt-stats {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+  position:sticky; bottom:0; z-index:10;
+  background:rgba(10,8,4,.96);
+  border-top:1px solid rgba(255,110,0,.2);
+  padding:10px 0 calc(8px + env(safe-area-inset-bottom));
+  backdrop-filter:blur(16px);
+  margin:0 -16px; padding-left:16px; padding-right:16px;
+}
 .rkt-sc {
   background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
   border-radius:12px; padding:12px 8px; text-align:center;
@@ -1320,17 +1352,24 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="logo-sub">by SloppyX</div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-      <div class="balance-pill" id="balancePill" onclick="refreshBalanceNow()" title="Нажми чтобы обновить баланс" style="cursor:pointer">
-        💰 <span id="balanceVal">0</span>
-        <span id="refreshIcon" style="margin-left:4px;font-size:10px;opacity:0.6">🔄</span>
-      </div>
       <div id="newBalanceBadge" style="display:none;font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:1px;color:var(--green);text-shadow:0 0 6px rgba(0,255,136,0.6);animation:badgePulse 1s ease infinite alternate;cursor:pointer" onclick="refreshBalanceNow()">▲ ОБНОВИТЬ</div>
       <div class="bot-status loading" id="botStatus" onclick="showApiDiag()" style="cursor:pointer" title="Нажми для диагностики">
         <div class="bot-status-dot"></div>
         <span id="botStatusText"></span>
       </div>
     </div>
+  </div>
 
+  <!-- БАЛАНС — широкая полоса под хедером -->
+  <div class="balance-bar" onclick="refreshBalanceNow()" id="balancePill" title="Нажми чтобы обновить баланс">
+    <div class="balance-bar-left">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="10" fill="rgba(255,200,50,.12)" stroke="#FFB830" stroke-width="1.2"/><text x="11" y="15" text-anchor="middle" font-size="11" font-weight="900" font-family="Arial" fill="#FFD060">₿</text></svg>
+      <div class="balance-bar-label">БАЛАНС</div>
+    </div>
+    <div class="balance-bar-value"><span id="balanceVal">0</span></div>
+    <div class="balance-bar-right">
+      <span id="refreshIcon" class="balance-bar-refresh">🔄</span>
+    </div>
   </div>
 
   <!-- ══ GAME ══ -->
