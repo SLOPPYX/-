@@ -38,8 +38,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .app{position:relative;z-index:1;max-width:480px;margin:0 auto;min-height:100%}
 
 /* ── HEADER ── */
-.header{padding:12px 18px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-.logo-wrap{display:flex;flex-direction:column;gap:2px}
+.header{padding:12px 18px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;position:relative;min-height:48px}
+.logo-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;position:absolute;left:50%;transform:translateX(-50%);top:12px;pointer-events:none}
 .logo-main{font-family:var(--fd);font-size:18px;font-weight:900;letter-spacing:4px;color:#fff}
 .logo-sub{font-family:var(--fd);font-size:9px;font-weight:400;letter-spacing:3px;color:var(--muted)}
 /* ── BALANCE BAR ── */
@@ -913,7 +913,31 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   background:#000000;
   border-bottom:1px solid rgba(255,255,255,.05);
 }
-#rocketCanvas { position:absolute; inset:0; width:100%; height:100%; display:block }
+/* Координатная сетка поверх canvas — видна на ПК */
+.rkt-scene::before{
+  content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(255,120,0,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,120,0,.06) 1px, transparent 1px);
+  background-size:40px 40px;
+}
+/* Оси координат */
+.rkt-scene::after{
+  content:'';position:absolute;left:40px;bottom:40px;right:0;top:0;z-index:1;pointer-events:none;
+  border-left:1px solid rgba(255,130,0,.25);
+  border-bottom:1px solid rgba(255,130,0,.25);
+}
+/* Метки осей */
+.rkt-axis-x,.rkt-axis-y{
+  position:absolute;z-index:2;pointer-events:none;
+  font-family:var(--fd);font-size:7px;color:rgba(255,130,0,.35);letter-spacing:.5px;
+}
+.rkt-axis-y{left:6px;top:50%;transform:translateY(-50%) rotate(-90deg);letter-spacing:2px;}
+.rkt-axis-x{bottom:14px;right:12px;letter-spacing:2px;}
+@media(min-width:520px){
+  .rkt-scene{height:420px}
+}
+#rocketCanvas { position:absolute; inset:0; width:100%; height:100%; display:block; z-index:2 }
 
 /* Множитель */
 .rkt-mult-wrap {
@@ -1040,6 +1064,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 }
 .rkt-pt-row:last-child { border-bottom:none }
 .rkt-pt-row.r-me   { background:rgba(232,184,75,.07) }
+.rkt-pt-row.r-me.r-watch { background:rgba(255,255,255,.03); border-left:2px solid rgba(232,184,75,.3) }
 .rkt-pt-row.r-cash { background:rgba(74,222,128,.06) }
 .rkt-pt-row.r-boom { opacity:.45 }
 .rkt-pt-player { display:flex; align-items:center; gap:8px }
@@ -1361,7 +1386,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   </div>
 
   <!-- БАЛАНС — широкая полоса под хедером -->
-  <div class="balance-bar" onclick="refreshBalanceNow()" id="balancePill" title="Нажми чтобы обновить баланс">
+  <div class="balance-bar" onclick="refreshBalanceNow()" id="balancePill" title="Нажми чтобы обновить баланс" style="margin-top:16px">
     <div class="balance-bar-left">
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="10" fill="rgba(255,200,50,.12)" stroke="#FFB830" stroke-width="1.2"/><text x="11" y="15" text-anchor="middle" font-size="11" font-weight="900" font-family="Arial" fill="#FFD060">₿</text></svg>
       <div class="balance-bar-label">БАЛАНС</div>
@@ -1808,6 +1833,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     <!-- Игровая сцена с 3D Canvas -->
     <div class="rkt-scene">
       <canvas id="rocketCanvas"></canvas>
+      <div class="rkt-axis-y">МНОЖИТЕЛЬ</div>
+      <div class="rkt-axis-x">ВРЕМЯ →</div>
 
       <!-- Множитель по центру -->
       <div class="rkt-mult-wrap" id="rktMultWrap">
@@ -5220,14 +5247,15 @@ function rktUpdateTable(){
   while(tbl.children.length>1) tbl.removeChild(tbl.lastChild);
 
   const allPlayers=[];
-  if(RKT.betPlaced){
-    allPlayers.push({
-      name:'ВЫ', bet:RKT.myBet,
-      cashedAt:RKT.cashedOut?(RKT.cashedMult||RKT.mult):null,
-      avatar:getCurrentAvatarEmoji(), isMe:true,
-      crashed:RKT.phase==='crashed'&&!RKT.cashedOut
-    });
-  }
+  // ВСЕГДА показываем текущего пользователя первым
+  allPlayers.push({
+    name: USER_NAME || 'ВЫ',
+    bet: RKT.betPlaced ? RKT.myBet : null,
+    cashedAt: RKT.betPlaced && RKT.cashedOut ? (RKT.cashedMult||RKT.mult) : null,
+    avatar: getCurrentAvatarEmoji(), isMe: true,
+    crashed: RKT.betPlaced && RKT.phase==='crashed' && !RKT.cashedOut,
+    watching: !RKT.betPlaced
+  });
   (RKT.players||[]).forEach(p=>{
     if(p.is_me) return;
     allPlayers.push({
@@ -5250,7 +5278,11 @@ function rktUpdateTable(){
     row.className=cls;
 
     let profitFmt, profitCls, statusTxt;
-    if(p.cashedAt){
+    if(p.watching){
+      profitFmt='—';
+      profitCls='wait';
+      statusTxt='👀 НАБЛЮДАЕТ';
+    } else if(p.cashedAt){
       // Зафиксировал — показываем точную итоговую прибыль
       const profitNum=Math.floor(p.bet*p.cashedAt)-p.bet;
       profitFmt=(profitNum>=0?'+':'')+profitNum.toLocaleString('ru-RU');
@@ -5276,7 +5308,7 @@ function rktUpdateTable(){
         +'<div class="rkt-pt-tag">'+statusTxt+'</div>'
       +'</div>'
       +'</div>'
-      +'<div class="rkt-pt-bet">'+(p.bet/1000).toFixed(0)+'K</div>'
+      +'<div class="rkt-pt-bet">'+(p.bet!=null?(p.bet/1000).toFixed(0)+'K':'—')+'</div>'
       +'<div class="rkt-pt-profit '+profitCls+'">'+profitFmt+'</div>';
     tbl.appendChild(row);
   });
