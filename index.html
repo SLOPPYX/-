@@ -2124,11 +2124,13 @@ try { tg.setBackgroundColor('#0d0d0d'); } catch(e){}
 try { tg.ready();
 // Глобальный обработчик кнопки назад Telegram
 try {
-  tg.BackButton.onClick(function(){
+  function _tgBackHandler(){
     const cur = document.querySelector('.page.active');
     if(cur && cur.id !== 'page-home') showPage('home');
     else showExitDialog();
-  });
+  }
+  try { tg.BackButton.offClick(_tgBackHandler); } catch(e){}
+  tg.BackButton.onClick(_tgBackHandler);
 } catch(e){} } catch(e){}
 
 // Кнопка в левом углу хедера
@@ -3921,7 +3923,7 @@ async function init() {
     clearTimeout(emergency);
     closeSplash();
     try { tg.BackButton.show(); } catch(e){}
-    try { tg.BackButton.onClick(showWarnDialog); } catch(e){}
+    // Не перезаписываем onClick — он уже установлен правильно выше
     try { tg.enableClosingConfirmation(); } catch(e){}
     // canvas убран — используется CSS баннер
 try{ initProfileBanner(); }catch(e){}
