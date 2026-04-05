@@ -59,13 +59,52 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .tab-refresh-btn:active{transform:scale(0.94)}
 
 /* ── NAV ── */
-.nav{display:flex;gap:4px;padding:14px 18px 0}
-.nav-tab{flex:1;padding:9px 6px;background:var(--panel);border:1px solid var(--border);border-radius:11px;color:var(--muted);font-family:var(--fb);font-size:12px;font-weight:600;letter-spacing:.4px;cursor:pointer;text-align:center;transition:all .18s;display:flex;align-items:center;justify-content:center;}
-.nav-tab.active{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:#fff;font-weight:700}
+/* ══ ГЛАВНОЕ МЕНЮ ══ */
+.home-menu{display:flex;flex-direction:column;gap:11px;width:100%;max-width:420px;margin:0 auto}
+.home-card{border-radius:20px;display:flex;align-items:center;overflow:hidden;cursor:pointer;position:relative;min-height:86px;border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.1);-webkit-tap-highlight-color:transparent;transition:transform .16s,box-shadow .16s}
+.home-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.07) 0%,transparent 55%);z-index:0;pointer-events:none}
+.home-card:active{transform:scale(.963);box-shadow:0 4px 16px rgba(0,0,0,.5)}
+.home-card-txt{flex:1;padding:18px 20px;position:relative;z-index:1}
+.home-card-tag{display:inline-flex;align-items:center;font-family:var(--fd);font-size:8px;font-weight:700;letter-spacing:1.5px;padding:3px 8px;border-radius:20px;margin-bottom:7px;text-transform:uppercase;border:1px solid}
+.home-card-title{font-family:var(--fd);font-size:21px;font-weight:900;color:#fff;letter-spacing:.5px;line-height:1;text-shadow:0 2px 20px rgba(0,0,0,.8)}
+.home-card-sub{font-size:11px;margin-top:5px;color:rgba(255,255,255,.55);line-height:1.35;font-weight:500}
+.home-card-icon{font-size:52px;padding:8px 20px 8px 0;flex-shrink:0;position:relative;z-index:1;filter:drop-shadow(0 4px 12px rgba(0,0,0,.6));transition:transform .16s}
+.home-card:active .home-card-icon{transform:scale(.88) rotate(-4deg)}
+/* Цвета */
+.home-card.slots{background:linear-gradient(140deg,#18074a 0%,#3b12a0 50%,#100535 100%)}
+.home-card.slots .home-card-tag{background:rgba(167,139,250,.15);color:#a78bfa;border-color:rgba(167,139,250,.3)}
+.home-card.rocket{background:linear-gradient(140deg,#040e28 0%,#0c2d80 50%,#020810 100%)}
+.home-card.rocket .home-card-tag{background:rgba(96,165,250,.15);color:#60a5fa;border-color:rgba(96,165,250,.3)}
+.home-card.profile{background:linear-gradient(140deg,#031a10 0%,#0d4a28 50%,#020e08 100%)}
+.home-card.profile .home-card-tag{background:rgba(74,222,128,.12);color:#4ade80;border-color:rgba(74,222,128,.25)}
+.home-card.top{background:linear-gradient(140deg,#1e0f00 0%,#5c3000 50%,#100700 100%)}
+.home-card.top .home-card-tag{background:rgba(232,184,75,.15);color:#e8b84b;border-color:rgba(232,184,75,.3)}
+.home-card.table{background:linear-gradient(140deg,#14052e 0%,#480f90 50%,#0a021a 100%)}
+.home-card.table .home-card-tag{background:rgba(244,114,182,.12);color:#f472b6;border-color:rgba(244,114,182,.25)}
+/* Маленькие карточки в сетке */
+.home-row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.home-row2 .home-card{min-height:96px;flex-direction:column;align-items:flex-start;justify-content:space-between}
+.home-row2 .home-card-txt{padding:14px 16px 0}
+.home-row2 .home-card-title{font-size:16px}
+.home-row2 .home-card-sub{font-size:9.5px;margin-top:3px}
+.home-row2 .home-card-icon{font-size:36px;padding:0 14px 12px;align-self:flex-end}
 
+/* ── BOTTOM BAR ── */
+.bottom-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:50;width:100%;max-width:480px;background:rgba(10,8,20,.96);border-top:1px solid rgba(255,255,255,.07);backdrop-filter:blur(24px);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;box-sizing:border-box}
+.bb-btn{flex:1;padding:11px 4px;border:1px solid rgba(255,255,255,.1);border-radius:12px;color:rgba(255,255,255,.45);font-family:var(--fb);font-size:11px;font-weight:600;cursor:pointer;text-align:center;background:rgba(255,255,255,.04);transition:all .15s;-webkit-tap-highlight-color:transparent}
+.bb-btn:active{transform:scale(.95)}
+.bb-btn.bb-main{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.2);color:#fff}
 /* ── PAGES ── */
-.page{display:none;padding:14px 18px}
+.page{display:none;padding:14px 18px;padding-bottom:76px}
 .page.active{display:block}
+/* page-home — центрирование по вертикали */
+#page-home{display:none;flex-direction:column;justify-content:center;min-height:calc(100svh - 130px);padding:10px 18px 76px}
+#page-home.active{display:flex}
+/* ── BACK BUTTON ── */
+.pg-back{display:flex;align-items:center;gap:8px;margin-bottom:14px;cursor:pointer;width:fit-content;padding:7px 12px 7px 9px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);transition:all .15s;-webkit-tap-highlight-color:transparent}
+.pg-back:active{background:rgba(255,255,255,.1);transform:scale(.97)}
+.pg-back svg{opacity:.6}
+.pg-back span{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,.55);text-transform:uppercase}
 
 /* ── SLOT MACHINE ── */
 .machine{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden}
@@ -76,6 +115,10 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .reels-frame{background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:14px 10px;margin-bottom:12px;position:relative}
 .reels-row{display:flex;justify-content:center;gap:10px}
 .reel{width:84px;height:84px;background:#111;border:1.5px solid rgba(255,255,255,.10);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:40px;transition:border-color .25s,box-shadow .25s;position:relative;overflow:hidden;will-change:transform;transform:translateZ(0)}
+.reel.idle-glow{animation:reelIdle 2.8s ease-in-out infinite}
+.reel:nth-child(2).idle-glow{animation-delay:.6s}
+.reel:nth-child(3).idle-glow{animation-delay:1.2s}
+@keyframes reelIdle{0%,100%{box-shadow:0 0 5px rgba(0,229,255,.1),inset 0 0 6px rgba(0,229,255,.04)}50%{box-shadow:0 0 18px rgba(0,229,255,.35),inset 0 0 12px rgba(0,229,255,.12);border-color:rgba(0,229,255,.4)}}
 .reel::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0.04) 0%,transparent 40%,transparent 60%,rgba(255,255,255,0.02) 100%);pointer-events:none}
 .reel.spinning{animation:rSpin .08s linear infinite}
 @keyframes rSpin{0%,100%{transform:translate3d(0,0,0) scaleY(1)}25%{transform:translate3d(0,-5px,0) scaleY(0.97)}75%{transform:translate3d(0,5px,0) scaleY(0.97)}}
@@ -213,10 +256,6 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .sd.l{background:var(--red);box-shadow:0 0 5px var(--red)}
 
 /* ── BOTTOM BAR ── */
-.bottom-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:50;width:100%;max-width:480px;background:rgba(13,13,13,.97);border-top:1px solid var(--border);backdrop-filter:blur(20px);padding:10px 16px calc(18px + env(safe-area-inset-bottom));display:flex;gap:8px;box-sizing:border-box}
-.bb-btn{flex:1;padding:11px 6px;border:1px solid var(--border);border-radius:11px;color:var(--muted);font-family:var(--fb);font-size:11px;font-weight:600;letter-spacing:.4px;cursor:pointer;text-align:center;background:rgba(255,255,255,0.03);transition:all .18s}
-.bb-btn:active{transform:scale(0.95)}
-.bb-btn.primary{background:#ffffff;border-color:#ffffff;color:#0d0d0d;font-weight:700}
 
 /* ── ДИАЛОГ ВЫХОДА ── */
 .exit-overlay{
@@ -282,7 +321,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .machine{contain:layout style paint;}
 .pt-card,.scard,.pstat,.best-card,.streak-card,.wl-wrap{contain:layout style;}
 /* Все анимации через transform/opacity — не вызывают reflow */
-.nav-tab,.bet-btn,.bb-btn,.speed-btn{will-change:auto;}
+.bet-btn,.speed-btn{will-change:auto;}
 .reel{will-change:transform;backface-visibility:hidden;}
 /* Отключаем сглаживание фона на мобильных для экономии GPU */
 @media(max-width:430px){
@@ -992,10 +1031,6 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   bottom:-2px; left:18px; right:18px; height:1px;
   background:linear-gradient(90deg,transparent,rgba(255,100,0,.4),rgba(255,200,0,.6),rgba(255,100,0,.4),transparent);
 }
-.nav{position:relative;}
-
-/* Огненный акцент на активном tab */
-.nav-tab.active{
   border-color:rgba(255,120,0,.4)!important;
   background:rgba(255,80,0,.1)!important;
   color:#ffaa44!important;
@@ -1148,17 +1183,67 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     </div>
   </div>
 
-  <!-- NAV -->
-  <div class="nav">
-    <div class="nav-tab active" onclick="showPage('game')" id="tab-game">🎰 Слоты</div>
-    <div class="nav-tab" onclick="showPage('rocket')" id="tab-rocket">🚀 Ракетка</div>
-    <div class="nav-tab" onclick="showPage('profile')" id="tab-profile">👤 Профиль</div>
-    <div class="nav-tab" onclick="showPage('top')" id="tab-top">🏆 Топ</div>
-    <div class="nav-tab" onclick="showPage('pay')" id="tab-pay">📊 Таблица</div>
   </div>
 
   <!-- ══ GAME ══ -->
-  <div class="page active" id="page-game">
+  <!-- ══ ГЛАВНОЕ МЕНЮ ══ -->
+  <div class="page active" id="page-home">
+    <div class="home-menu">
+
+      <div class="home-card slots" onclick="showPage('game')">
+        <div class="home-card-txt">
+          <div class="home-card-tag">🎮 КАЗИНО</div>
+          <div class="home-card-title">СЛОТЫ</div>
+          <div class="home-card-sub">Крути барабаны — забирай призы!</div>
+        </div>
+        <div class="home-card-icon">🎰</div>
+      </div>
+
+      <div class="home-card rocket" onclick="showPage('rocket')">
+        <div class="home-card-txt">
+          <div class="home-card-tag">🚀 МУЛЬТИПЛЕЕР</div>
+          <div class="home-card-title">РАКЕТКА</div>
+          <div class="home-card-sub">Взлетай и успей забрать выигрыш!</div>
+        </div>
+        <div class="home-card-icon">🛸</div>
+      </div>
+
+      <div class="home-card profile" onclick="showPage('profile')">
+        <div class="home-card-txt">
+          <div class="home-card-tag">👤 ЛИЧНЫЙ КАБИНЕТ</div>
+          <div class="home-card-title">ПРОФИЛЬ</div>
+          <div class="home-card-sub">Статистика · Уровень · Аватарки</div>
+        </div>
+        <div class="home-card-icon">📊</div>
+      </div>
+
+      <div class="home-row2">
+        <div class="home-card top" onclick="showPage('top')">
+          <div class="home-card-txt">
+            <div class="home-card-tag">👑 РЕЙТИНГ</div>
+            <div class="home-card-title">ТОП</div>
+            <div class="home-card-sub">Лучшие игроки</div>
+          </div>
+          <div class="home-card-icon">🏆</div>
+        </div>
+        <div class="home-card table" onclick="showPage('pay')">
+          <div class="home-card-txt">
+            <div class="home-card-tag">💎 СЛОТЫ</div>
+            <div class="home-card-title">ТАБЛИЦА</div>
+            <div class="home-card-sub">Все выплаты</div>
+          </div>
+          <div class="home-card-icon">📋</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="page" id="page-game">
+  <div class="pg-back" onclick="showPage('home')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <span>Назад</span>
+  </div>
 
     <div class="machine" id="machineShell">
       <div class="win-scanline"></div>
@@ -1204,7 +1289,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="bet-btn" style="color:var(--gold)"   onclick="multBet(5)">×5</div>
     </div>
     <div class="custom-row">
-      <input class="custom-input" id="customInput" type="text" inputmode="numeric" pattern="[0-9]*" min="10000" placeholder="Своя ставка (мин. 10 000)..." enterkeyhint="done">
+      <input class="custom-input" id="customInput" type="text" inputmode="numeric" pattern="[0-9]*" min="10000" placeholder="Ставка: 10000 / 1к / 1кк / 1ккк" enterkeyhint="done">
       <button class="custom-ok" onclick="applyCustom()">Сделать ставку</button>
     </div>
 
@@ -1228,6 +1313,10 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
   <!-- ══ PROFILE ══ -->
   <div class="page" id="page-profile">
+  <div class="pg-back" onclick="showPage('home')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <span>Назад</span>
+  </div>
 
     <!-- Тёмный переливающийся баннер профиля -->
     <div class="profile-banner" id="profileBanner">
@@ -1403,11 +1492,11 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="rkt-ctrl">
         <div class="rkt-box">
           <div class="rkt-lbl">СТАВКА</div>
-          <input class="rkt-inp" id="rktInp" type="text" inputmode="numeric" pattern="[0-9]*" value="10000" min="1000" step="1000" enterkeyhint="done">
+          <input class="rkt-inp" id="rktInp" type="text" inputmode="numeric" pattern="[0-9]*" value="10000" placeholder="10000 / 1к / 1кк / 1ккк" min="1000" step="1000" enterkeyhint="done">
           <div class="rkt-presets">
             <div class="rkt-pr" onclick="rktPreset(10000)">10K</div>
-            <div class="rkt-pr" onclick="rktPreset(25000)">25K</div>
-            <div class="rkt-pr" onclick="rktPreset(50000)">50K</div>
+            <div class="rkt-pr" onclick="rktPreset(100000000)">100М</div>
+            <div class="rkt-pr" onclick="rktPreset(1000000)">1КК</div>
             <div class="rkt-pr" onclick="rktPreset(100000)">100K</div>
             <div class="rkt-pr" onclick="rktMultBet(2)" style="color:var(--green)">×2</div>
           </div>
@@ -1458,6 +1547,10 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
   <!-- ══ TOP LEADERS ══ -->
   <div class="page" id="page-top">
+  <div class="pg-back" onclick="showPage('home')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <span>Назад</span>
+  </div>
     <!-- Шапка -->
     <div style="text-align:center;margin:0 0 16px;padding-top:14px">
       <div style="font-family:var(--fd);font-size:18px;font-weight:900;background:linear-gradient(90deg,var(--gold),#ffcc44,var(--gold));background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:goldFlow 2s linear infinite;margin-bottom:4px">ТОП КАЗИНО</div>
@@ -1488,6 +1581,10 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
   <!-- ══ PAYTABLE ══ -->
   <div class="page" id="page-pay">
+  <div class="pg-back" onclick="showPage('home')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <span>Назад</span>
+  </div>
     <div style="height:6px"></div>
     <div class="pt-card">
       <div class="pt-title">Таблица выплат</div>
@@ -1548,9 +1645,11 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   </div>
 </div>
 
+
+
 <div class="bottom-bar">
   <button class="bb-btn" onclick="showExitDialog()">💾 Сохранить</button>
-  <button class="bb-btn primary" onclick="showHelp()" id="bHelpBtn">📖 Инструкция</button>
+  <button class="bb-btn bb-main" onclick="showHelp()" id="bHelpBtn">📖 Инструкция</button>
   <button class="bb-btn" onclick="showExitDialog()">✖ Выйти</button>
 </div>
 
@@ -1680,6 +1779,17 @@ let autoMode  = false;
 let speedMode = 'normal';
 let autoTimer = null;
 const MIN_BET = 10000;
+const MAX_BET_RKT = 1_000_000_000;
+// Удобный ввод: 1к=1000, 1кк=1000000, 1ккк=1000000000
+function parseBetStr(s) {
+  if(s===null||s===undefined) return NaN;
+  s = String(s).trim().toLowerCase().replace(/[\s,]/g,'').replace('.','.').replace('к','k').replace('кк','kk').replace('ккк','kkk');
+  var m;
+  if((m=/^([\d.]+)kkk$/.exec(s))) return Math.floor(parseFloat(m[1])*1e9);
+  if((m=/^([\d.]+)kk$/.exec(s)))  return Math.floor(parseFloat(m[1])*1e6);
+  if((m=/^([\d.]+)k$/.exec(s)))   return Math.floor(parseFloat(m[1])*1e3);
+  return Math.floor(parseFloat(s));
+}
 
 // Статистика — накопительная из localStorage
 const STATS_KEY = `stats_${USER_ID}`;
@@ -1798,9 +1908,18 @@ async function apiExit() {
 // ══════════════════════════════════════════════════════════
 function showPage(n) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  if(n==='game'){ try{['r0','r1','r2'].forEach(id=>{var r=document.getElementById(id);if(r&&!r.classList.contains('spinning'))r.classList.add('idle-glow');});}catch(e){} }
   document.getElementById('page-'+n).classList.add('active');
-  document.getElementById('tab-'+n).classList.add('active');
+  // Telegram BackButton: показываем на всех страницах кроме home
+  try {
+    if(n === 'home') {
+      tg.BackButton.hide();
+    } else {
+      tg.BackButton.show();
+      tg.BackButton.offClick(); // снимаем старый обработчик
+      tg.BackButton.onClick(function(){ showPage('home'); });
+    }
+  } catch(e){}
   if(n==='rocket') {
     try { initRocketOnce(); } catch(e){}
   }
@@ -1899,7 +2018,7 @@ function multBet(factor) {
   refreshBets();
 }
 function applyCustom() {
-  const v=parseInt(document.getElementById('customInput').value,10);
+  const v=parseBetStr(document.getElementById('customInput').value);
   if(!v||v<MIN_BET){ showToast('Минимум: '+MIN_BET.toLocaleString('ru-RU'),'error'); return; }
   if(v>balance){ showToast('Недостаточно токенов','error'); return; }
   currentBet=v;
@@ -1931,6 +2050,7 @@ async function spin() {
     const machine=document.getElementById('machineShell');
     machine.classList.remove('winning');
     reels.forEach(r=>r.classList.remove('win-glow'));
+    reels.forEach(r=>r.classList.remove('idle-glow'));
 
     // Считаем результат заранее
     const final=[rnd(),rnd(),rnd()];
@@ -1997,6 +2117,7 @@ async function spin() {
         requestAnimationFrame(()=>{
           machine.classList.add('winning');
           reels.forEach(r=>r.classList.add('win-glow'));
+          setTimeout(()=>{reels.forEach(r=>{r.classList.remove('win-glow');r.classList.add('idle-glow');});},2200);
         });
         const glowMs = speedMode==='fast' ? 1000
                      : tier===3 ? 3500 : tier===2 ? 2800 : tier===1 ? 2000 : 1500;
@@ -2037,6 +2158,7 @@ async function spin() {
       S.streak=S.streakType==='l'?S.streak+1:1; S.streakType='l';
       result.className='result-strip loss';
       result.textContent=`😔 Не повезло  −${currentBet.toLocaleString('ru-RU')} токенов`;
+      reels.forEach(r=>r.classList.add('idle-glow'));
     }
     if(S.history.length>20) S.history=S.history.slice(-20);
     saveStats();
@@ -4868,7 +4990,7 @@ function rktPlaceBet(){
   if(RKT.phase!=='waiting') return;
 
   const i=document.getElementById('rktInp');
-  const bet=Math.floor(parseInt(i?i.value:RKT.myBet)||0);
+  const bet=Math.min(parseBetStr(i?i.value:String(RKT.myBet))||0, MAX_BET_RKT);
   if(bet<1000){ showToast('Минимум 1 000 токенов','error'); return; }
   if(bet>balance){ showToast('Недостаточно токенов!','error'); return; }
 
