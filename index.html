@@ -1091,8 +1091,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-pt-row.r-cash { background:rgba(74,222,128,.06) }
 .rkt-pt-row.r-boom { opacity:.45 }
 .rkt-pt-player { display:flex; align-items:center; gap:8px }
-.rkt-pt-ava    { font-size:18px; width:26px; text-align:center; overflow:hidden; border-radius:50% }
-.rkt-pt-ava img { width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle }
+.rkt-pt-ava    { width:32px; height:32px; flex-shrink:0; border-radius:50%; overflow:hidden; background:rgba(255,255,255,.06); border:1.5px solid rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; }
+.rkt-pt-ava img { width:100%;height:100%;border-radius:50%;object-fit:cover;display:block }
+.rkt-pt-ava svg { width:100%;height:100%;display:block }
 .rkt-pt-name   { font-family:var(--fd); font-size:10px; font-weight:700; color:#fff }
 .rkt-pt-tag    { font-family:var(--fd); font-size:7px; color:rgba(255,255,255,.3); margin-top:2px }
 .rkt-pt-bet    { font-family:var(--fd); font-size:11px; font-weight:700; color:rgba(255,255,255,.65); text-align:right }
@@ -3055,21 +3056,25 @@ function saveAvatar(id) {
 
 // Рендер аватарки: src может быть avatar_id, emoji, base64 или <img> тегом
 function renderAvatarHtml(src, size) {
-  if(!src) return '🎮';
+  if(!src) src = 'ghost';
   src = String(src);
+  const full = (size === 'full');
   // Сначала ищем по ID среди SVG-аватарок
   const avById = AVATARS.find(a => a.id === src);
   if(avById && avById.svg) {
+    if(full) return avById.svg; // SVG заполняет контейнер напрямую
     var s = size ? size + 'px' : '22px';
     return `<div style="width:${s};height:${s};border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;flex-shrink:0">${avById.svg}</div>`;
   }
   // base64 или URL — картинка
   if(src.startsWith('data:image') || src.startsWith('http')) {
+    if(full) return `<img src="${src}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">`;
     var s = size ? size + 'px' : '22px';
     return '<img src="' + src + '" style="width:' + s + ';height:' + s + ';border-radius:50%;object-fit:cover;vertical-align:middle;display:inline-block">';
   }
   if(src.startsWith('<img')) return src;
-  // emoji или дефолт
+  // emoji
+  if(full) return `<span style="font-size:18px;line-height:1">${src}</span>`;
   return src;
 }
 
@@ -4957,6 +4962,44 @@ function rDraw(){
 
     rDrawRocket3D(ctx,cx+lean,cy+bounce,sc,0,tp,false);
 
+    // ── ЗЕЛЁНЫЙ СЛЕД ─ записываем реальную позицию ракеты ──
+    rTrail.push([cx+lean, cy+bounce]);
+    if(rTrail.length > 120) rTrail.shift();
+
+    if(rTrail.length > 2){
+      ctx.save();
+      // Мягкое широкое свечение
+      ctx.beginPath();
+      ctx.moveTo(rTrail[0][0], rTrail[0][1]);
+      for(let i=1;i<rTrail.length;i++) ctx.lineTo(rTrail[i][0], rTrail[i][1]);
+      ctx.lineWidth = 10;
+      ctx.strokeStyle = 'rgba(74,222,128,0.08)';
+      ctx.shadowColor = '#4ade80';
+      ctx.shadowBlur = 14;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      // Яркая тонкая линия
+      ctx.beginPath();
+      ctx.moveTo(rTrail[0][0], rTrail[0][1]);
+      for(let i=1;i<rTrail.length;i++){
+        const prog = i / (rTrail.length - 1);
+        ctx.lineTo(rTrail[i][0], rTrail[i][1]);
+      }
+      const tg = ctx.createLinearGradient(
+        rTrail[0][0], rTrail[0][1],
+        rTrail[rTrail.length-1][0], rTrail[rTrail.length-1][1]
+      );
+      tg.addColorStop(0, 'rgba(74,222,128,0)');
+      tg.addColorStop(0.4, 'rgba(74,222,128,0.3)');
+      tg.addColorStop(1, 'rgba(180,255,200,0.9)');
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = tg;
+      ctx.shadowBlur = 8;
+      ctx.stroke();
+      ctx.restore();
+    }
+
   } else if(RKT.phase==='crashed'&&rTrail.length){
     const[rx,ry]=rTrail[rTrail.length-1];
     rDrawRocket3D(ctx,rx,ry,1.0,0,0,true);
@@ -5470,7 +5513,7 @@ function rktUpdateTable(){
     }
 
     row.innerHTML='<div class="rkt-pt-player">'
-      +'<div class="rkt-pt-ava">'+renderAvatarHtml(p.avatar||'🎮',22)+'</div>'
+      +'<div class="rkt-pt-ava">'+renderAvatarHtml(p.avatar||'ghost','full')+'</div>'
       +'<div>'
         +'<div class="rkt-pt-name">'+(p.isMe?'👤 '+p.name:p.name)+'</div>'
         +'<div class="rkt-pt-tag">'+statusTxt+'</div>'
@@ -5683,12 +5726,6 @@ function rktAuto(x){rktAutoSet(x);}
 
 function rktAF(){
   if(RKT.phase!=='flying'){rAFid=null;return;}
-  // Трасса — медленный подъём (только для рисования следа)
-  const elapsed=(Date.now()-RKT._ls)/1000;
-  const t=Math.min(elapsed/25, 0.82);
-  const[rx,ry]=rPos(t); rTrail.push([rx,ry]);
-  if(rTrail.length>80) rTrail.shift();
-
   // Звёзды скроллятся вниз — иллюзия что ракета летит вверх
   if(rStars){
     const spd = Math.min(0.8 + RKT.mult*0.35, 12);
@@ -5718,7 +5755,13 @@ function initRocket(){
     RKT.waitLeft=5; _rktWaitEnd=Date.now()+5000; rktWaitTick();
     setTimeout(()=>{
       RKT.phase='flying';RKT._ls=Date.now();
-      RKT.crashAt=Math.random()<0.05?1.00+Math.random()*0.15:1.5+Math.random()*8;
+      // Больше выигрышей: 70% шанс что краш выше 2x, 25% выше 5x, 8% выше 10x
+      const r = Math.random();
+      RKT.crashAt = r < 0.08 ? 10 + Math.random()*40      // 8%  — большой выигрыш
+                 : r < 0.25 ? 5  + Math.random()*5         // 17% — хороший
+                 : r < 0.55 ? 2  + Math.random()*3         // 30% — нормальный
+                 : r < 0.80 ? 1.3+ Math.random()*0.7       // 25% — маленький
+                 :             1.0+ Math.random()*0.25;     // 20% — почти краш
       rTrail=[];rktAF();rktTickStart();rktUI();
     },5000);
   }
