@@ -955,10 +955,11 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 /* Множитель */
 .rkt-mult-wrap {
-  position:absolute; left:50%; top:38%;
+  position:absolute; left:50%; top:30%;
   transform:translate(-50%,-50%);
   text-align:center; pointer-events:none;
   z-index:2;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
 }
 .rkt-mult {
   font-family:var(--fd); font-size:80px; font-weight:900; line-height:1;
@@ -1211,20 +1212,45 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   60%{transform:translate(-50%,-50%) translate(-2px,-2px)}
   80%{transform:translate(-50%,-50%) translate(2px,1px)}
 }
-@keyframes rktShakeHard {
-  0%,100%{transform:translate(-50%,-50%) translate(0,0)}
-  10%{transform:translate(-50%,-50%) translate(-6px,-3px)}
-  20%{transform:translate(-50%,-50%) translate(6px,3px)}
-  30%{transform:translate(-50%,-50%) translate(-5px,-3px)}
-  40%{transform:translate(-50%,-50%) translate(5px,2px)}
-  50%{transform:translate(-50%,-50%) translate(-6px,2px)}
-  60%{transform:translate(-50%,-50%) translate(6px,-2px)}
-  70%{transform:translate(-50%,-50%) translate(-4px,3px)}
-  80%{transform:translate(-50%,-50%) translate(4px,-1px)}
-  90%{transform:translate(-50%,-50%) translate(-5px,-2px)}
+@keyframes rktShakeMed {
+  0%,100%{transform:translate(-50%,-50%) translate(0,0) scale(1)}
+  15%{transform:translate(-50%,-50%) translate(-5px,-3px) scale(1.02)}
+  30%{transform:translate(-50%,-50%) translate(5px,3px) scale(0.98)}
+  45%{transform:translate(-50%,-50%) translate(-4px,-2px) scale(1.02)}
+  60%{transform:translate(-50%,-50%) translate(4px,2px) scale(0.99)}
+  75%{transform:translate(-50%,-50%) translate(-3px,-3px) scale(1.01)}
+  90%{transform:translate(-50%,-50%) translate(3px,1px) scale(1)}
 }
-.rkt-mult-wrap.shaking { animation:rktShake 0.15s ease-in-out infinite }
+@keyframes rktShakeHard {
+  0%,100%{transform:translate(-50%,-50%) translate(0,0) scale(1)}
+  10%{transform:translate(-50%,-50%) translate(-7px,-4px) scale(1.04)}
+  20%{transform:translate(-50%,-50%) translate(7px,4px) scale(0.96)}
+  30%{transform:translate(-50%,-50%) translate(-6px,-3px) scale(1.05)}
+  40%{transform:translate(-50%,-50%) translate(6px,3px) scale(0.97)}
+  50%{transform:translate(-50%,-50%) translate(-7px,3px) scale(1.04)}
+  60%{transform:translate(-50%,-50%) translate(7px,-3px) scale(0.96)}
+  70%{transform:translate(-50%,-50%) translate(-5px,4px) scale(1.03)}
+  80%{transform:translate(-50%,-50%) translate(5px,-2px) scale(0.98)}
+  90%{transform:translate(-50%,-50%) translate(-6px,-3px) scale(1.02)}
+}
+@keyframes rktShakeCrazy {
+  0%,100%{transform:translate(-50%,-50%) translate(0,0) scale(1) rotate(0deg)}
+  8%{transform:translate(-50%,-50%) translate(-10px,-5px) scale(1.06) rotate(-1deg)}
+  16%{transform:translate(-50%,-50%) translate(10px,5px) scale(0.94) rotate(1deg)}
+  24%{transform:translate(-50%,-50%) translate(-9px,-4px) scale(1.07) rotate(-0.5deg)}
+  32%{transform:translate(-50%,-50%) translate(9px,4px) scale(0.95) rotate(1deg)}
+  40%{transform:translate(-50%,-50%) translate(-10px,4px) scale(1.06) rotate(-1deg)}
+  48%{transform:translate(-50%,-50%) translate(10px,-4px) scale(0.95) rotate(0.5deg)}
+  56%{transform:translate(-50%,-50%) translate(-8px,5px) scale(1.05) rotate(-1deg)}
+  64%{transform:translate(-50%,-50%) translate(8px,-3px) scale(0.96) rotate(1deg)}
+  72%{transform:translate(-50%,-50%) translate(-9px,-5px) scale(1.04) rotate(-0.5deg)}
+  80%{transform:translate(-50%,-50%) translate(9px,4px) scale(0.97) rotate(0.5deg)}
+  90%{transform:translate(-50%,-50%) translate(-7px,-4px) scale(1.03) rotate(-0.5deg)}
+}
+.rkt-mult-wrap.shaking      { animation:rktShake     0.14s ease-in-out infinite }
+.rkt-mult-wrap.shaking-med  { animation:rktShakeMed  0.10s ease-in-out infinite }
 .rkt-mult-wrap.shaking-hard { animation:rktShakeHard 0.07s ease-in-out infinite }
+.rkt-mult-wrap.shaking-crazy{ animation:rktShakeCrazy 0.05s linear infinite }
 
 /* ── FREE FIRE декорации ── */
 .ff-corner{position:fixed;pointer-events:none;z-index:0;opacity:0.07}
@@ -4589,10 +4615,26 @@ function initRktCvs(){
     r:0.2+Math.random()*1.5,
     bri:Math.random()*Math.PI*2,
     spd:0.15+Math.random()*0.7,
-    layer:Math.floor(Math.random()*3) // 0=далёкие,1=средние,2=близкие
+    layer:Math.floor(Math.random()*3)
   });
   // Сразу запускаем постоянную анимацию
   rPermAF();
+
+  // Реинициализация при изменении размера контейнера
+  if(rCvs._resizeObs) rCvs._resizeObs.disconnect();
+  try {
+    rCvs._resizeObs = new ResizeObserver(()=>{
+      const newW=wrap.offsetWidth||360, newH=wrap.offsetHeight||320;
+      if(Math.abs(newW-rW)>2 || Math.abs(newH-rH)>2){
+        rW=newW; rH=newH;
+        const dpr2=window.devicePixelRatio||1;
+        rCvs.width=rW*dpr2; rCvs.height=rH*dpr2;
+        rCvs.style.width=rW+'px'; rCvs.style.height=rH+'px';
+        rCtx=rCvs.getContext('2d'); rCtx.scale(dpr2,dpr2);
+      }
+    });
+    rCvs._resizeObs.observe(wrap);
+  } catch(e){}
 }
 
 // ── Постоянный анимационный цикл (всегда работает) ──────
@@ -4612,205 +4654,196 @@ function rPos(t){
   return [x, y];
 }
 
-// ── АНИМАЦИОННАЯ ракета — красивый SVG стиль ────────────
+// ── FREE FIRE РАКЕТА — большая, брендированная ────────────
 function rDrawRocket3D(ctx, x, y, scale, angle, thrustPow, crashed){
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(angle);
-  const s=scale, t=rTime;
+  const s = scale * 1.1; // Размер ракеты
+  const t = rTime;
 
   if(crashed){
-    // ── КРАСИВЫЙ SVG ВЗРЫВ ──────────────────────────────
     const et = Math.min(((t % 60) / 60), 1);
     const ef = 1 - et;
-
-    // Внешнее большое облако взрыва
-    for(let ring=0; ring<5; ring++){
-      const rr = (ring+1) * 22 * et * s;
-      const alpha = Math.max(0, ef * 0.5 * (1 - ring*0.15));
-      const col1 = ring<2 ? `rgba(255,220,60,${alpha})` : `rgba(255,80,0,${alpha*0.7})`;
-      const col2 = 'rgba(0,0,0,0)';
+    for(let ring=0; ring<6; ring++){
+      const rr = (ring+1) * 28 * et * s;
+      const alpha = Math.max(0, ef * 0.55 * (1 - ring*0.12));
+      const col1 = ring<2 ? `rgba(255,200,50,${alpha})` : ring<4 ? `rgba(255,80,0,${alpha*0.8})` : `rgba(200,0,0,${alpha*0.5})`;
       const g = ctx.createRadialGradient(0,0,rr*0.1,0,0,rr);
-      g.addColorStop(0, col1); g.addColorStop(1, col2);
+      g.addColorStop(0, col1); g.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,rr,0,Math.PI*2); ctx.fill();
     }
-    // Огненные лепестки
-    for(let i=0; i<12; i++){
-      const a = (i/12)*Math.PI*2 + et*2;
-      const r2 = (30+i*2)*et*s;
+    for(let i=0; i<16; i++){
+      const a = (i/16)*Math.PI*2 + et*2.5;
+      const r2 = (35+i*2.5)*et*s;
       const w = (4+i%3)*s*(1-et*0.5);
-      ctx.save();
-      ctx.translate(Math.cos(a)*r2, Math.sin(a)*r2);
-      ctx.rotate(a);
+      ctx.save(); ctx.translate(Math.cos(a)*r2, Math.sin(a)*r2); ctx.rotate(a);
       const lg = ctx.createLinearGradient(0,-w,0,w*3);
-      lg.addColorStop(0,`rgba(255,255,180,${ef*0.9})`);
-      lg.addColorStop(0.3,`rgba(255,140,0,${ef*0.8})`);
+      lg.addColorStop(0,`rgba(255,240,100,${ef*0.95})`);
+      lg.addColorStop(0.3,`rgba(255,120,0,${ef*0.85})`);
       lg.addColorStop(1,'rgba(200,0,0,0)');
       ctx.fillStyle=lg;
-      ctx.beginPath();
-      ctx.moveTo(-w*0.5,0); ctx.quadraticCurveTo(0,-w*0.3,w*0.5,0);
-      ctx.quadraticCurveTo(0,w*3,-w*0.5,0);
-      ctx.fill();
-      ctx.restore();
+      ctx.beginPath(); ctx.moveTo(-w*0.5,0); ctx.quadraticCurveTo(w*0.3,-w*0.3,w*0.5,0); ctx.quadraticCurveTo(w*0.3,w*2.5,-w*0.5,0);
+      ctx.fill(); ctx.restore();
     }
-    // Белая вспышка в центре
-    const flashR = 16*s*(1-et);
+    const flashR = 22*s*(1-et);
     const fg=ctx.createRadialGradient(0,0,0,0,0,flashR);
-    fg.addColorStop(0,`rgba(255,255,255,${ef*0.95})`);
-    fg.addColorStop(0.5,`rgba(255,200,60,${ef*0.6})`);
+    fg.addColorStop(0,`rgba(255,255,255,${ef})`);
+    fg.addColorStop(0.5,`rgba(255,180,50,${ef*0.7})`);
     fg.addColorStop(1,'rgba(255,80,0,0)');
     ctx.fillStyle=fg; ctx.beginPath(); ctx.arc(0,0,flashR,0,Math.PI*2); ctx.fill();
-    // Дебрис — летящие осколки
-    for(let i=0;i<14;i++){
-      const a2 = i/14*Math.PI*2 + 0.3;
-      const spd = (20+i*2)*et*s;
-      const px = Math.cos(a2)*spd, py = Math.sin(a2)*spd;
-      ctx.save(); ctx.translate(px,py); ctx.rotate(a2+et*6);
-      const dCol = i%3===0?`rgba(255,220,80,${ef*0.9})`:i%3===1?`rgba(255,100,0,${ef*0.8})`:`rgba(200,200,255,${ef*0.7})`;
-      ctx.fillStyle=dCol;
-      ctx.beginPath();
-      if(i%2===0) ctx.rect(-2*s,-1*s,4*s,2*s);
-      else { ctx.moveTo(0,-2.5*s); ctx.lineTo(2*s,2*s); ctx.lineTo(-2*s,2*s); ctx.closePath(); }
-      ctx.fill();
-      ctx.restore();
-    }
     ctx.restore(); return;
   }
 
-  const h=48*s, w=13*s;
-  const flicker=0.85+Math.sin(t*0.9)*0.15;
-  const bob=Math.sin(t*0.12)*1.5*s;
+  const h = 70*s;
+  const w = 16*s;
+  const bob = Math.sin(t*0.1)*2*s;
   ctx.translate(0, bob);
 
-  // ── ПЛАМЯ ДВИГАТЕЛЯ ──────────────────────────────────
-  const thrLen=30*s*(0.5+thrustPow*0.9);
-  const thrW=9*s*(0.4+thrustPow*0.6);
+  // ── ПЛАМЯ ДВИГАТЕЛЯ (большое) ────────────────────────────
+  const thrLen = 50*s*(0.4 + thrustPow*1.1);
+  const thrW   = 14*s*(0.4 + thrustPow*0.6);
+  const flicker = 0.82 + Math.sin(t*0.9)*0.18;
   const flames=[
-    {w:.28,l:.55,c1:'rgba(255,255,230,1)',  c2:'rgba(255,220,80,.9)', c3:'rgba(255,120,0,0)'},
-    {w:.52,l:.78,c1:'rgba(255,200,80,.9)',  c2:'rgba(255,100,0,.7)',  c3:'rgba(255,40,0,0)'},
-    {w:.8, l:1.0, c1:'rgba(255,140,20,.7)', c2:'rgba(255,60,0,.4)',   c3:'rgba(180,0,0,0)'},
-    {w:1.1,l:1.2, c1:'rgba(255,80,0,.35)',  c2:'rgba(200,20,0,.1)',   c3:'rgba(0,0,0,0)'},
+    {w:.25,l:.5,  c1:'rgba(255,255,220,1)',   c2:'rgba(255,230,80,.95)',c3:'rgba(255,140,0,0)'},
+    {w:.5, l:.75, c1:'rgba(255,210,70,.95)',  c2:'rgba(255,100,0,.8)', c3:'rgba(255,40,0,0)'},
+    {w:.78,l:1.0, c1:'rgba(255,150,20,.75)',  c2:'rgba(255,60,0,.45)', c3:'rgba(200,0,0,0)'},
+    {w:1.1,l:1.2, c1:'rgba(255,90,0,.4)',     c2:'rgba(200,20,0,.12)', c3:'rgba(0,0,0,0)'},
   ];
   flames.forEach((fl,fi)=>{
-    const jx=(Math.random()-.5)*3.5*s*flicker;
-    const jl=fl.l*(0.9+Math.sin(t*0.45+fi*1.3)*0.1);
-    const fg=ctx.createLinearGradient(0,h*.22,jx,h*.22+thrLen*jl);
+    const jx=(Math.random()-.5)*5*s*flicker;
+    const jl=fl.l*(0.88+Math.sin(t*0.42+fi*1.4)*0.12);
+    const fg=ctx.createLinearGradient(0,h*.24,jx,h*.24+thrLen*jl);
     fg.addColorStop(0,fl.c1); fg.addColorStop(.4,fl.c2); fg.addColorStop(1,fl.c3);
     ctx.fillStyle=fg;
     ctx.beginPath();
-    ctx.moveTo(-thrW*fl.w*.5,h*.22);
-    ctx.quadraticCurveTo(jx*.6+(Math.random()-.5)*2*s, h*.22+thrLen*jl*.5, jx, h*.22+thrLen*jl);
-    ctx.quadraticCurveTo(jx*.6+(Math.random()-.5)*2*s, h*.22+thrLen*jl*.5, thrW*fl.w*.5, h*.22);
+    ctx.moveTo(-thrW*fl.w*.5,h*.24);
+    ctx.quadraticCurveTo(jx*.6+(Math.random()-.5)*3*s,h*.24+thrLen*jl*.5,jx,h*.24+thrLen*jl);
+    ctx.quadraticCurveTo(jx*.6+(Math.random()-.5)*3*s,h*.24+thrLen*jl*.5,thrW*fl.w*.5,h*.24);
     ctx.closePath(); ctx.fill();
   });
-  // Искры из сопла
-  for(let k=0;k<6;k++){
-    const sa=(Math.random()-.5)*Math.PI*.5;
-    const sl=thrLen*(.35+Math.random()*.7);
-    ctx.fillStyle=`rgba(255,${220+Math.floor(Math.random()*35)},${Math.floor(Math.random()*60)},.95)`;
-    ctx.beginPath(); ctx.arc(Math.sin(sa)*thrW*.3, h*.22+sl, (.7+Math.random()*1.8)*s,0,Math.PI*2); ctx.fill();
-  }
+  // Ядро пламени
+  const coreG=ctx.createRadialGradient(0,h*.26,0,0,h*.26,thrW*.7);
+  coreG.addColorStop(0,'rgba(255,255,240,1)'); coreG.addColorStop(.4,'rgba(255,190,50,.9)'); coreG.addColorStop(1,'rgba(255,80,0,0)');
+  ctx.fillStyle=coreG; ctx.beginPath(); ctx.arc(0,h*.26,thrW*.7*flicker,0,Math.PI*2); ctx.fill();
 
-  // ── КОРПУС РАКЕТЫ (красивый SVG-стиль) ───────────────
-  // Свечение вокруг корпуса
-  const glow=ctx.createRadialGradient(0,0,w*0.5,0,0,w*3.5);
-  glow.addColorStop(0,'rgba(100,160,255,0.22)');
-  glow.addColorStop(1,'rgba(100,160,255,0)');
-  ctx.fillStyle=glow; ctx.beginPath(); ctx.ellipse(0,-h*.3,w*3.5,h*.7,0,0,Math.PI*2); ctx.fill();
+  // ── КОРПУС (чёрный с оранжевыми деталями FF-стиль) ───────
+  // Свечение
+  const glowG=ctx.createRadialGradient(0,0,w*.5,0,0,w*4);
+  glowG.addColorStop(0,'rgba(255,100,0,0.15)'); glowG.addColorStop(1,'rgba(255,60,0,0)');
+  ctx.fillStyle=glowG; ctx.beginPath(); ctx.ellipse(0,-h*.3,w*4,h*.65,0,0,Math.PI*2); ctx.fill();
 
-  // Основной корпус — металлик с синим оттенком
+  // Основной корпус — чёрный с текстурой
   const bodyG=ctx.createLinearGradient(-w,0,w,0);
-  bodyG.addColorStop(0,'#1a2a5a');
-  bodyG.addColorStop(0.15,'#3a5a9a');
-  bodyG.addColorStop(0.4,'#c0d4ff');
-  bodyG.addColorStop(0.6,'#8ab0ee');
-  bodyG.addColorStop(0.85,'#2a4a8a');
-  bodyG.addColorStop(1,'#0e1a3a');
-  ctx.shadowColor='rgba(80,130,255,.6)'; ctx.shadowBlur=10*s;
+  bodyG.addColorStop(0,'#0a0a0a');
+  bodyG.addColorStop(0.15,'#1a1a1a');
+  bodyG.addColorStop(0.4,'#2a2a2a');
+  bodyG.addColorStop(0.6,'#1e1e1e');
+  bodyG.addColorStop(0.85,'#111');
+  bodyG.addColorStop(1,'#050505');
+  ctx.shadowColor='rgba(255,100,0,.5)'; ctx.shadowBlur=12*s;
   ctx.fillStyle=bodyG;
   ctx.beginPath();
-  ctx.moveTo(0,-h*.72);
-  ctx.bezierCurveTo(w*.6,-h*.55, w*.9,-h*.1, w,h*.12);
-  ctx.lineTo(-w,h*.12);
-  ctx.bezierCurveTo(-w*.9,-h*.1, -w*.6,-h*.55, 0,-h*.72);
-  ctx.fill();
+  ctx.moveTo(0,-h*.78);
+  ctx.bezierCurveTo(w*.65,-h*.6, w*1.0,-h*.15, w,h*.14);
+  ctx.lineTo(-w,h*.14);
+  ctx.bezierCurveTo(-w*1.0,-h*.15, -w*.65,-h*.6, 0,-h*.78);
+  ctx.fill(); ctx.shadowBlur=0;
+
+  // Контур оранжевый
+  const outG=ctx.createLinearGradient(-w,0,w,0);
+  outG.addColorStop(0,'rgba(255,80,0,0)');
+  outG.addColorStop(0.5,'rgba(255,140,0,0.8)');
+  outG.addColorStop(1,'rgba(255,80,0,0)');
+  ctx.strokeStyle=outG; ctx.lineWidth=1.5*s;
+  ctx.beginPath();
+  ctx.moveTo(0,-h*.78);
+  ctx.bezierCurveTo(w*.65,-h*.6,w*1.0,-h*.15,w,h*.14);
+  ctx.lineTo(-w,h*.14);
+  ctx.bezierCurveTo(-w*1.0,-h*.15,-w*.65,-h*.6,0,-h*.78);
+  ctx.stroke();
+
+  // Полоса FREE FIRE — оранжевая полоска
+  const strG=ctx.createLinearGradient(-w*.9,-h*.02,w*.9,-h*.02);
+  strG.addColorStop(0,'rgba(255,100,0,0)');
+  strG.addColorStop(0.2,'rgba(255,150,0,1)');
+  strG.addColorStop(0.8,'rgba(255,150,0,1)');
+  strG.addColorStop(1,'rgba(255,100,0,0)');
+  ctx.fillStyle=strG;
+  ctx.beginPath(); ctx.ellipse(0,-h*.02,w*.88,2.8*s,0,0,Math.PI*2); ctx.fill();
+  // Вторая полоска
+  const str2G=ctx.createLinearGradient(-w*.75,-h*.18,w*.75,-h*.18);
+  str2G.addColorStop(0,'rgba(255,80,0,0)');
+  str2G.addColorStop(0.3,'rgba(255,120,0,.6)');
+  str2G.addColorStop(0.7,'rgba(255,120,0,.6)');
+  str2G.addColorStop(1,'rgba(255,80,0,0)');
+  ctx.fillStyle=str2G;
+  ctx.beginPath(); ctx.ellipse(0,-h*.18,w*.72,1.8*s,0,0,Math.PI*2); ctx.fill();
+
+  // Иллюминатор
+  const portR=7*s;
+  const portG=ctx.createRadialGradient(-portR*.2,-h*.38,portR*.1,0,-h*.38,portR);
+  portG.addColorStop(0,'rgba(255,200,100,1)');
+  portG.addColorStop(0.4,'rgba(255,120,0,.9)');
+  portG.addColorStop(1,'rgba(180,60,0,.4)');
+  ctx.shadowColor='rgba(255,150,0,.9)'; ctx.shadowBlur=10*s;
+  ctx.fillStyle=portG; ctx.beginPath(); ctx.arc(0,-h*.38,portR,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(255,180,0,.7)'; ctx.lineWidth=1.2*s; ctx.stroke();
   ctx.shadowBlur=0;
+  // FF в иллюминаторе
+  ctx.fillStyle='rgba(255,240,150,.9)';
+  ctx.font=`bold ${5*s}px Arial`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('FF',0,-h*.38);
 
-  // Декоративная полоса — оранжевая
-  const stripeG=ctx.createLinearGradient(-w*0.8,-h*.05,w*0.8,-h*.05);
-  stripeG.addColorStop(0,'rgba(255,140,0,0)');
-  stripeG.addColorStop(0.5,'rgba(255,160,30,0.9)');
-  stripeG.addColorStop(1,'rgba(255,140,0,0)');
-  ctx.fillStyle=stripeG;
-  ctx.beginPath();
-  ctx.ellipse(0,-h*.05,w*0.82,2.5*s,0,0,Math.PI*2);
-  ctx.fill();
-
-  // Вторая полоса
-  const stripe2G=ctx.createLinearGradient(-w*0.7,-h*.2,w*0.7,-h*.2);
-  stripe2G.addColorStop(0,'rgba(255,200,0,0)');
-  stripe2G.addColorStop(0.5,'rgba(255,220,50,0.6)');
-  stripe2G.addColorStop(1,'rgba(255,200,0,0)');
-  ctx.fillStyle=stripe2G;
-  ctx.beginPath();
-  ctx.ellipse(0,-h*.2,w*0.68,1.8*s,0,0,Math.PI*2);
-  ctx.fill();
-
-  // Иллюминатор — светящийся
-  const portR=6*s;
-  const portG=ctx.createRadialGradient(-portR*.2,-h*.36-portR*.2,portR*.1,0,-h*.36,portR);
-  portG.addColorStop(0,'rgba(200,240,255,1)');
-  portG.addColorStop(0.4,'rgba(100,200,255,0.9)');
-  portG.addColorStop(1,'rgba(0,80,160,0.5)');
-  ctx.shadowColor='rgba(100,220,255,.8)'; ctx.shadowBlur=8*s;
-  ctx.fillStyle=portG;
-  ctx.beginPath(); ctx.arc(0,-h*.36,portR,0,Math.PI*2); ctx.fill();
-  ctx.strokeStyle='rgba(200,240,255,0.8)'; ctx.lineWidth=1.2*s; ctx.stroke();
-  ctx.shadowBlur=0;
-  // Блик иллюминатора
-  ctx.fillStyle='rgba(255,255,255,0.55)';
-  ctx.beginPath(); ctx.ellipse(-portR*.3,-h*.36-portR*.2,portR*.35,portR*.2,-0.5,0,Math.PI*2); ctx.fill();
-
-  // Нос ракеты — глянцевый
-  const noseG=ctx.createLinearGradient(-w*.35,-h*.72,w*.35,-h*.55);
-  noseG.addColorStop(0,'rgba(255,255,255,0.5)');
-  noseG.addColorStop(1,'rgba(180,210,255,0.1)');
-  ctx.fillStyle=noseG;
-  ctx.beginPath();
-  ctx.moveTo(0,-h*.72);
-  ctx.bezierCurveTo(w*.25,-h*.65,w*.35,-h*.6,w*.3,-h*.55);
-  ctx.lineTo(-w*.3,-h*.55);
-  ctx.bezierCurveTo(-w*.35,-h*.6,-w*.25,-h*.65,0,-h*.72);
-  ctx.fill();
-
-  // Крылья — острые, с градиентом
-  [[1],[-1]].forEach(([sx])=>{
+  // Крылья — острые, чёрные с оранжевым кантом
+  [1,-1].forEach(sx=>{
     ctx.save(); ctx.scale(sx,1);
-    const wingG=ctx.createLinearGradient(w*.8,0,w*2.2,h*.22);
-    wingG.addColorStop(0,'#3a5a9a');
-    wingG.addColorStop(0.5,'#1a3a6a');
-    wingG.addColorStop(1,'#0a1a3a');
-    ctx.fillStyle=wingG;
+    const wgG=ctx.createLinearGradient(w*.9,0,w*2.4,h*.2);
+    wgG.addColorStop(0,'#1a1a1a'); wgG.addColorStop(0.5,'#111'); wgG.addColorStop(1,'#050505');
+    ctx.fillStyle=wgG;
     ctx.beginPath();
-    ctx.moveTo(w*.85,h*.05);
-    ctx.lineTo(w*2.2,h*.22);
-    ctx.lineTo(w*.9,h*.12);
-    ctx.closePath(); ctx.fill();
-    // Кант крыла
-    ctx.strokeStyle='rgba(100,160,255,0.4)'; ctx.lineWidth=0.8*s;
-    ctx.beginPath();
-    ctx.moveTo(w*.85,h*.05); ctx.lineTo(w*2.2,h*.22);
-    ctx.stroke();
+    ctx.moveTo(w*.9,h*.04); ctx.lineTo(w*2.6,h*.24); ctx.lineTo(w*.95,h*.14); ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle='rgba(255,120,0,.5)'; ctx.lineWidth=1*s;
+    ctx.beginPath(); ctx.moveTo(w*.9,h*.04); ctx.lineTo(w*2.6,h*.24); ctx.stroke();
     ctx.restore();
   });
 
-  // Хвостовые двигатели — два маленьких сопла
+  // ── НАДПИСЬ FREE FIRE ────────────────────────────────────
+  ctx.save();
+  // Фон таблички
+  const tagW=36*s, tagH=10*s;
+  const tagG=ctx.createLinearGradient(-tagW*.5,-h*.08,tagW*.5,-h*.08);
+  tagG.addColorStop(0,'rgba(255,80,0,0)');
+  tagG.addColorStop(0.2,'rgba(255,100,0,.9)');
+  tagG.addColorStop(0.8,'rgba(255,80,0,.9)');
+  tagG.addColorStop(1,'rgba(255,80,0,0)');
+  ctx.fillStyle=tagG;
+  ctx.beginPath(); ctx.roundRect(-tagW*.5,-h*.08-tagH*.5,tagW,tagH,2); ctx.fill();
+  // Текст FREE FIRE
+  ctx.shadowColor='rgba(255,200,0,.8)'; ctx.shadowBlur=6*s;
+  ctx.fillStyle='rgba(255,255,200,1)';
+  ctx.font=`bold ${5.5*s}px Arial Black, Arial`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('FREE FIRE',0,-h*.08);
+  ctx.shadowBlur=0;
+  ctx.restore();
+
+  // Носовой конус — глянцевый
+  const noseG=ctx.createLinearGradient(-w*.3,-h*.78,w*.3,-h*.6);
+  noseG.addColorStop(0,'rgba(255,180,80,0.6)'); noseG.addColorStop(1,'rgba(255,80,0,0)');
+  ctx.fillStyle=noseG;
+  ctx.beginPath();
+  ctx.moveTo(0,-h*.78); ctx.bezierCurveTo(w*.2,-h*.72,w*.25,-h*.66,w*.22,-h*.62);
+  ctx.lineTo(-w*.22,-h*.62); ctx.bezierCurveTo(-w*.25,-h*.66,-w*.2,-h*.72,0,-h*.78);
+  ctx.fill();
+
+  // Хвостовые сопла — два
   [-w*.55, w*.55].forEach(ox=>{
-    const nozG=ctx.createLinearGradient(ox-4*s,h*.1,ox+4*s,h*.1);
-    nozG.addColorStop(0,'#0e1a3a'); nozG.addColorStop(0.5,'#3a5a9a'); nozG.addColorStop(1,'#0e1a3a');
-    ctx.fillStyle=nozG;
-    ctx.beginPath(); ctx.ellipse(ox,h*.12,4*s,3*s,0,0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle='rgba(100,150,255,0.4)'; ctx.lineWidth=0.8*s; ctx.stroke();
+    ctx.fillStyle='#1a1a1a';
+    ctx.beginPath(); ctx.ellipse(ox,h*.16,5*s,3.5*s,0,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(255,120,0,.5)'; ctx.lineWidth=.8*s; ctx.stroke();
   });
 
   ctx.restore();
@@ -4924,11 +4957,9 @@ function rDraw(){
     if(starSpd>0){
       rStars.forEach(s=>{
         const lm=s.layer===2?1.6:s.layer===1?1.0:0.5;
-        // Звёзды летят вправо-вниз — иллюзия движения влево-вверх
-        s.x -= starSpd*lm*0.7;
-        s.y += starSpd*lm*0.4;
+        // Звёзды летят вниз — иллюзия что ракета летит вверх
+        s.y += starSpd*lm;
         s.bri+=0.025;
-        if(s.x < -4){ s.x=rW+4; s.y=Math.random()*rH; }
         if(s.y > rH+4){ s.y=-4; s.x=Math.random()*rW; }
       });
     }
@@ -4940,118 +4971,110 @@ function rDraw(){
     rSpeedParts=[]; rTrail=[];
 
   } else if(RKT.phase==='flying'){
-    const m=RKT.mult||1;
-    if(!rSpeedParts) rSpeedParts=[];
+    const m = RKT.mult||1;
 
-    // Траектория: снизу-слева вверх-вправо
-    // Прогресс полёта на основе иксов (растёт со временем)
-    const elapsed = (Date.now() - (RKT._ls||Date.now())) / 1000;
-    const tProgress = Math.min(elapsed / 30, 0.85); // 0 → 0.85 за ~30 сек
+    // ── РАКЕТА ЛЕТИТ СВЕРХУ ВНИЗ ПО ЦЕНТРУ ──────────────────
+    const elapsed = (Date.now() - (RKT._ls || Date.now())) / 1000;
 
-    // Кривая — начало внизу-слева, уходит вверх-вправо
-    const startX = rW * 0.08;
-    const startY = rH * 0.88;
-    const endX   = rW * 0.92;
-    const endY   = rH * 0.08;
-    // Квадратичная кривая — выгиб вверх
-    const ctrlX  = rW * 0.15;
-    const ctrlY  = rH * 0.15;
+    // Замедляется к центру при высоких иксах
+    const maxProg = Math.min(0.50 + Math.max(0, m - 10) * 0.018, 0.90);
+    const rawProg = Math.min(elapsed / 20, 1.0);
+    const easedProg = rawProg < 0.5
+      ? rawProg * 2 * 0.68
+      : 0.68 + (rawProg - 0.5) * 2 * 0.32;
+    const flyProg = Math.min(easedProg, maxProg);
 
-    const t2 = tProgress;
-    const rx = (1-t2)*(1-t2)*startX + 2*(1-t2)*t2*ctrlX + t2*t2*endX;
-    const ry = (1-t2)*(1-t2)*startY + 2*(1-t2)*t2*ctrlY + t2*t2*endY;
+    // Сверху вниз по центру X — ракета летит вертикально
+    const startX = rW * 0.50; // центр
+    const startY = rH * 0.98; // самый низ
+    const endX   = rW * 0.50; // остаётся по центру
+    const endY   = rH * 0.28; // останавливается в верхней трети
 
-    // Угол ракеты по касательной к кривой
-    const dt = 0.01;
-    const t2n = Math.min(t2+dt,0.85);
-    const rxn = (1-t2n)*(1-t2n)*startX + 2*(1-t2n)*t2n*ctrlX + t2n*t2n*endX;
-    const ryn = (1-t2n)*(1-t2n)*startY + 2*(1-t2n)*t2n*ctrlY + t2n*t2n*endY;
-    const rktAngle = Math.atan2(ryn - ry, rxn - rx) + Math.PI/2;
+    const baseX = startX + (endX - startX) * flyProg;
+    const baseY = startY + (endY - startY) * flyProg;
 
-    // Вибрация с ростом иксов
-    const vib = Math.min(m*0.1, 3);
-    const vx2 = (Math.random()-0.5)*vib;
-    const vy2 = (Math.random()-0.5)*vib;
-    const cx = rx + vx2;
-    const cy = ry + vy2;
+    // ── ТРЯСКА с иксами (горизонтальная, ракета дрожит) ─────
+    const shakeAmp = Math.min((m - 1) * 1.0, 22);
+    const shake1 = shakeAmp > 0.5 ? (Math.random()-0.5)*shakeAmp : 0;
+    const shake2 = shakeAmp > 0.5 ? (Math.random()-0.5)*shakeAmp*0.4 : 0;
+    const cx = baseX + shake1;
+    const cy = baseY + shake2;
 
-    const tp = Math.min(0.6+m*0.034, 1.0);
-    const sc = 0.95 + Math.min(m*0.003, 0.2);
+    const sc = 1.0 + Math.min(m * 0.004, 0.28);
+    const tp = Math.min(0.5 + m * 0.04, 1.0);
 
-    // ── ПОЛОСКА СЛЕДА от старта до текущей позиции ──────────
+    // Ракета летит вверх — нос смотрит вверх
+    // angle=0 = нос вверх — правильно для полёта вверх
+    const rktAngle = 0;
+
+    // Угол линий скорости — вертикально вверх
+    const moveAngle = -Math.PI / 2; // вверх
+
+    // Сохраняем позицию для взрыва
     rTrail.push([cx, cy]);
-    if(rTrail.length > 150) rTrail.shift();
-    if(rTrail.length > 2){
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(rTrail[0][0], rTrail[0][1]);
-      for(let i=1;i<rTrail.length;i++) ctx.lineTo(rTrail[i][0], rTrail[i][1]);
-      ctx.lineWidth=10; ctx.strokeStyle='rgba(74,222,128,0.07)';
-      ctx.shadowColor='#4ade80'; ctx.shadowBlur=14;
-      ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(rTrail[0][0], rTrail[0][1]);
-      for(let i=1;i<rTrail.length;i++) ctx.lineTo(rTrail[i][0], rTrail[i][1]);
-      const tg2=ctx.createLinearGradient(rTrail[0][0],rTrail[0][1],cx,cy);
-      tg2.addColorStop(0,'rgba(74,222,128,0)');
-      tg2.addColorStop(0.5,'rgba(74,222,128,0.35)');
-      tg2.addColorStop(1,'rgba(180,255,200,0.95)');
-      ctx.lineWidth=2.5; ctx.strokeStyle=tg2; ctx.shadowBlur=8; ctx.stroke();
+    if(rTrail.length > 5) rTrail.shift();
+    // ── ВЕРТИКАЛЬНЫЙ ЭФФЕКТ СКОРОСТИ — линии сверху вниз ────
+    const speedMult = Math.min(1 + m * 0.06, 5);
+    const lineCount = Math.floor(12 + Math.min(m * 1.2, 50));
+    const lineAngle = moveAngle; // PI/2 = вниз
+
+    for(let k=0; k<lineCount; k++){
+      // Распределяем линии по ширине экрана
+      const spread = (k / lineCount - 0.5) * rW * 1.8;
+      const sx = rW*0.5 + spread + (Math.random()-0.5)*20;
+      // Начало линии — ниже текущей позиции ракеты (летят вверх)
+      const offsetBack = (60 + Math.random() * rH * 0.5) * speedMult;
+      const sy = cy + offsetBack + (Math.random()-0.5)*20;
+
+      const baseLen = (50 + Math.random() * 120) * speedMult;
+      const ex2 = sx; // вертикально
+      const ey2 = sy - baseLen; // вверх
+
+      const alpha = Math.max(0.04, Math.min(0.70, m * 0.04 + Math.random()*0.08));
+      const lineW = 0.5 + Math.random() * (1.5 + m*0.05);
+
+      let r,g,b;
+      if(m >= 25)      { r=255; g=240; b=50;  }
+      else if(m >= 15) { r=255; g=180; b=30;  }
+      else if(m >= 8)  { r=255; g=130; b=20;  }
+      else if(m >= 3)  { r=200; g=210; b=255; }
+      else             { r=160; g=170; b=210; }
+
+      const sg = ctx.createLinearGradient(sx, sy, ex2, ey2);
+      sg.addColorStop(0,    `rgba(${r},${g},${b},0)`);
+      sg.addColorStop(0.2, `rgba(${r},${g},${b},${alpha})`);
+      sg.addColorStop(0.8,  `rgba(${r},${g},${b},${alpha*0.7})`);
+      sg.addColorStop(1,    `rgba(${r},${g},${b},0)`);
+      ctx.save(); ctx.strokeStyle=sg; ctx.lineWidth=lineW;
+      ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(ex2,ey2); ctx.stroke();
       ctx.restore();
     }
 
-    // ── ЭФФЕКТ СКОРОСТИ — горизонтальные линии слева ────────
-    const speedCount = Math.floor(4 + Math.min(m*0.5, 16));
-    for(let k=0;k<speedCount;k++){
-      const sy = cy + (Math.random()-0.5)*80;
-      const sLen = (20+Math.random()*60)*Math.min(1+m*0.05,3);
-      const sa = Math.max(0.15, Math.min(0.6, m*0.04));
-      const sg = ctx.createLinearGradient(cx-sLen,sy,cx,sy);
-      sg.addColorStop(0,'rgba(255,255,255,0)');
-      sg.addColorStop(1, m>=10?`rgba(74,222,128,${sa})`:`rgba(200,220,255,${sa})`);
-      ctx.save(); ctx.strokeStyle=sg; ctx.lineWidth=0.8+Math.random()*1.2;
-      ctx.beginPath(); ctx.moveTo(cx-sLen, sy); ctx.lineTo(cx, sy); ctx.stroke();
-      ctx.restore();
+    // Яркие вспышки вертикальные — снизу вверх
+    const flashCount = Math.floor(m * 0.5);
+    for(let k=0; k<flashCount; k++){
+      const fx = Math.random() * rW;
+      const fy = Math.random() * rH;
+      const fl = (12 + Math.random()*35) * speedMult;
+      const fa = 0.18 + Math.random()*0.35;
+      const fG = ctx.createLinearGradient(fx,fy,fx,fy-fl);
+      const fc = m>=15?`rgba(255,255,150,${fa})`:`rgba(255,200,100,${fa})`;
+      fG.addColorStop(0,'rgba(255,255,255,0)'); fG.addColorStop(0.5,fc); fG.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.save(); ctx.strokeStyle=fG; ctx.lineWidth=1+Math.random()*2;
+      ctx.beginPath(); ctx.moveTo(fx,fy); ctx.lineTo(fx,fy-fl); ctx.stroke(); ctx.restore();
     }
 
-    // ── ЧАСТИЦЫ ИЗ СОПЛА ──────────────────────────────────
-    const pc=Math.floor(4+Math.min(m*0.5,12));
-    const soxDir = Math.cos(rktAngle+Math.PI/2);
-    const soyDir = Math.sin(rktAngle+Math.PI/2);
-    for(let k=0;k<pc;k++){
-      const sp=(Math.random()-0.5)*0.4;
-      const spd=(8+Math.random()*10)*Math.min(1+m*0.06,2.5);
-      const green=m>=10;
-      rSpeedParts.push({
-        x:cx+soxDir*26+(Math.random()-0.5)*8,
-        y:cy+soyDir*26+(Math.random()-0.5)*8,
-        vx:(soxDir+Math.sin(sp))*spd*0.6,
-        vy:(soyDir+Math.cos(sp))*spd*0.6,
-        life:0.9+Math.random()*0.1,
-        col:green?'rgba(74,222,128,':'rgba(255,160,60,'
-      });
-    }
-    rSpeedParts.forEach(p=>{
-      p.x+=p.vx*0.7; p.y+=p.vy*0.7; p.life-=0.055;
-      if(p.life<=0) return;
-      const tl=5+m*0.12;
-      const grad=ctx.createLinearGradient(p.x,p.y,p.x-p.vx*tl,p.y-p.vy*tl);
-      grad.addColorStop(0,p.col+p.life+')'); grad.addColorStop(1,p.col+'0)');
-      ctx.save(); ctx.globalAlpha=p.life*0.8;
-      ctx.strokeStyle=grad; ctx.lineWidth=2; ctx.lineCap='round';
-      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-p.vx*tl,p.y-p.vy*tl);
-      ctx.stroke(); ctx.restore();
-    });
-    rSpeedParts=rSpeedParts.filter(p=>p.life>0);
-    if(rSpeedParts.length>250) rSpeedParts=rSpeedParts.slice(-180);
+    // ── СВЕЧЕНИЕ СОПЛА (снизу ракеты) ────────────────────────
+    const glowR = 40 + tp * 25;
+    const glowA = 0.18 + tp * 0.18;
+    const glowCol = m >= 10 ? `rgba(255,200,50,${glowA})` : `rgba(255,120,30,${glowA})`;
+    const gG = ctx.createRadialGradient(cx, cy + 60*sc, 0, cx, cy + 60*sc, glowR*1.5);
+    gG.addColorStop(0, glowCol);
+    gG.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = gG;
+    ctx.beginPath(); ctx.arc(cx, cy + 60*sc, glowR*1.5, 0, Math.PI*2); ctx.fill();
 
-    // Свечение сопла
-    const gr=30+tp*18, ga=0.2+tp*0.2;
-    const gG=ctx.createRadialGradient(cx+soxDir*28,cy+soyDir*28,0,cx+soxDir*28,cy+soyDir*28,gr);
-    gG.addColorStop(0,m>=10?`rgba(74,222,128,${ga})`:`rgba(255,150,50,${ga})`);
-    gG.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle=gG; ctx.beginPath(); ctx.arc(cx+soxDir*28,cy+soyDir*28,gr,0,Math.PI*2); ctx.fill();
-
+    // Рисуем ракету вертикально по центру
     rDrawRocket3D(ctx, cx, cy, sc, rktAngle, tp, false);
 
   } else if(RKT.phase==='crashed'&&rTrail.length){
@@ -5232,16 +5255,38 @@ function rktTickStart(){
                 :         'rkt-mult sf';
       if(el.className!==cls) el.className=cls;
     }
+    // Обновляем цвет SVG рамки по иксам
+    try{
+      const mfG = document.getElementById('mfG');
+      if(mfG){
+        let c1,c2,c3;
+        if(m>=20){ c1='#ffd700'; c2='#fff700'; c3='#ff8800'; } // золото
+        else if(m>=10){ c1='#ff8800'; c2='#ffdd00'; c3='#ff4400'; } // оранжево-золотой
+        else if(m>=5){ c1='#00ff88'; c2='#44ffaa'; c3='#00cc66'; } // зелёный
+        else{ c1='#ff6600'; c2='#ffcc00'; c3='#ff3300'; } // дефолт оранж
+        mfG.children[0].setAttribute('stop-color',c1);
+        mfG.children[1].setAttribute('stop-color',c2);
+        mfG.children[2].setAttribute('stop-color',c3);
+      }
+    }catch(e){}
     const btn=document.getElementById('rktBtn');
     if(btn&&btn.classList.contains('bc')){
       btn.textContent='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
     }
-    // Тряска
+    // Тряска цифр — 4 уровня по иксам
     const mw=document.getElementById('rktMultWrap');
     if(mw){
-      if(m>=50)      mw.className='rkt-mult-wrap shaking-hard';
-      else if(m>=20) mw.className='rkt-mult-wrap shaking';
+      if(m>=50)      mw.className='rkt-mult-wrap shaking-crazy';
+      else if(m>=20) mw.className='rkt-mult-wrap shaking-hard';
+      else if(m>=10) mw.className='rkt-mult-wrap shaking-med';
+      else if(m>=3)  mw.className='rkt-mult-wrap shaking';
       else           mw.className='rkt-mult-wrap';
+    }
+    // Размер цифр растёт с иксами — до 120px на ×50+
+    const el2=document.getElementById('rktMult');
+    if(el2&&RKT.phase==='flying'){
+      const fs = Math.min(80 + (m-1)*0.7, 120);
+      el2.style.fontSize = fs + 'px';
     }
     // Авто-вывод
     if(RKT.betPlaced&&!RKT.cashedOut&&RKT.auto>0&&m>=RKT.auto) rktDoCashout();
@@ -5414,53 +5459,51 @@ function rktUI(){
 function rktUpdateBtn(){
   const b=document.getElementById('rktBtn'); if(!b) return;
 
-  // ── ФАЗА ПОЛЁТА: показываем ЗАБРАТЬ если ставка активна ──
+  // ── ФАЗА ПОЛЁТА ──
   if(RKT.phase==='flying'){
     if(RKT.betPlaced && !RKT.cashedOut){
       b.textContent='💸 '+(RKT.mult||1).toFixed(2)+'× — ЗАБРАТЬ!';
       b.className='rkt-btn bc';
       b.disabled=false;
     } else if(RKT.cashedOut){
-      b.textContent='✅ Выведено!';
+      b.textContent='✅ Выведено ×'+(RKT.cashedMult||RKT.mult||1).toFixed(2);
       b.className='rkt-btn bw';
       b.disabled=true;
     } else {
-      b.textContent='⏳ Летим...';
+      // Ставки нет — показываем кнопку поставить для следующего раунда (неактивна)
+      b.textContent='🚀 ПОСТАВИТЬ В СЛЕДУЮЩЕМ';
       b.className='rkt-btn bw';
       b.disabled=true;
     }
     return;
   }
 
-  // ── КРАШ ──
+  // ── КРАШ — короткая пауза ──
   if(RKT.phase==='crashed'){
-    b.textContent='⏳ Ждём...';
+    b.textContent='⏳ Новый раунд...';
     b.className='rkt-btn bw';
     b.disabled=true;
     return;
   }
 
-  // ── ОЖИДАНИЕ ──
-  if(RKT.phase==='waiting'){
-    // Ставка уже поставлена в этом раунде — заблокирована
-    if(_rktRoundBetDone || RKT.betPlaced){
-      b.textContent='✅ Ставка принята';
-      b.className='rkt-btn bw';
-      b.disabled=true;
-      return;
-    }
-    // Кнопка активна всё время ожидания
-    if(RKT.waitLeft>0){
-      b.textContent='🚀 ПОСТАВИТЬ';
-      b.className='rkt-btn bb';
-      b.disabled=false;
-    } else {
-      b.textContent='⏳ Скоро...';
-      b.className='rkt-btn bw';
-      b.disabled=true;
-    }
+  // ── ОЖИДАНИЕ — КНОПКА ВСЕГДА АКТИВНА ──
+  if(_rktRoundBetDone || RKT.betPlaced){
+    const betFmt = RKT.myBet ? RKT.myBet.toLocaleString('ru-RU') : '';
+    b.textContent='✅ Ставка ' + betFmt + ' принята!';
+    b.className='rkt-btn bw';
+    b.disabled=true;
     return;
   }
+  // Показываем сумму ставки прямо на кнопке
+  const inp=document.getElementById('rktInp');
+  let betPreview='';
+  try{
+    const v=parseBetStr(inp?inp.value:'0')||0;
+    if(v>=1000) betPreview=' — '+v.toLocaleString('ru-RU');
+  }catch(e){}
+  b.textContent='🚀 ПОСТАВИТЬ'+betPreview;
+  b.className='rkt-btn bb';
+  b.disabled=false;
 }
 
 // Оставляем для совместимости — просто вызывает rktUI
@@ -5631,7 +5674,8 @@ function rktAction(){
   const btn=document.getElementById('rktBtn');
   if(btn&&btn.disabled) return;
   if(RKT.phase==='flying'&&RKT.betPlaced&&!RKT.cashedOut){ rktDoCashout(); return; }
-  if(RKT.phase==='waiting'&&!_rktRoundBetDone&&!_rktBetting){ rktPlaceBet(); }
+  // Ставку принимаем в любой фазе кроме активного полёта с ставкой
+  if(!_rktRoundBetDone&&!_rktBetting){ rktPlaceBet(); }
 }
 
 let _rktBetting=false;
@@ -5646,7 +5690,8 @@ function _rktSetBetting(val){
 }
 function rktPlaceBet(){
   if(_rktBetting||_rktRoundBetDone||RKT.betPlaced) return;
-  if(RKT.phase!=='waiting') return;
+  // Принимаем ставку в фазе ожидания ИЛИ краша (заранее на следующий раунд)
+  if(RKT.phase==='flying') return; // нельзя ставить во время полёта
 
   const i=document.getElementById('rktInp');
   const bet=Math.min(parseBetStr(i?i.value:String(RKT.myBet))||0, MAX_BET_RKT);
