@@ -289,7 +289,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 @keyframes scan{from{top:0;opacity:1}to{top:100%;opacity:0}}
 .reels-frame{background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:14px 10px;margin-bottom:12px;position:relative}
 .reels-row{display:flex;justify-content:center;gap:10px}
-.reel{width:84px;height:84px;background:#111;border:1.5px solid rgba(255,255,255,.10);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:40px;transition:border-color .25s,box-shadow .25s;position:relative;overflow:hidden;will-change:transform;transform:translateZ(0)}
+.reel{width:84px;height:84px;background:#111;border:1.5px solid rgba(255,255,255,.10);border-radius:13px;display:flex;align-items:center;justify-content:center;transition:border-color .25s,box-shadow .25s;position:relative;overflow:hidden;will-change:transform;transform:translateZ(0);padding:6px}
 .reel.idle-glow{animation:reelIdle 2.8s ease-in-out infinite}
 .reel:nth-child(2).idle-glow{animation-delay:.6s}
 .reel:nth-child(3).idle-glow{animation-delay:1.2s}
@@ -1644,9 +1644,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="win-scanline"></div>
       <div class="reels-frame">
         <div class="reels-row">
-          <div class="reel" id="r0">❓</div>
-          <div class="reel" id="r1">❓</div>
-          <div class="reel" id="r2">❓</div>
+          <div class="reel" id="r0"></div>
+          <div class="reel" id="r1"></div>
+          <div class="reel" id="r2"></div>
         </div>
       </div>
       <div class="result-strip idle" id="resultStrip">НАЖМИ КРУТИТЬ</div>
@@ -2272,19 +2272,33 @@ const S = {
 // m2 = множитель за 2 одинаковых (×1 = возврат ставки)
 // w  = вес символа на барабане
 // ═══════════════════════════════════════════════════
+// ── SVG символы слотов ──
+const SLOT_SVGS = {
+  ram: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="ramG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e8d5b0"/><stop offset="100%" stop-color="#c4a86a"/></linearGradient><filter id="ramF"><feGaussianBlur stdDeviation="1" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><!-- рога --><path d="M14 22 Q6 14 10 8 Q14 4 20 10 Q16 14 18 20" fill="none" stroke="#8B7355" stroke-width="2.5" stroke-linecap="round"/><path d="M46 22 Q54 14 50 8 Q46 4 40 10 Q44 14 42 20" fill="none" stroke="#8B7355" stroke-width="2.5" stroke-linecap="round"/><!-- тело --><ellipse cx="30" cy="36" rx="16" ry="14" fill="url(#ramG)"/><!-- голова --><ellipse cx="30" cy="24" rx="11" ry="10" fill="url(#ramG)" stroke="#c4a86a" stroke-width=".5"/><!-- морда --><ellipse cx="30" cy="29" rx="7" ry="5" fill="#d4b882"/><!-- ноздри --><circle cx="27.5" cy="30" r="1.2" fill="#8B7355" opacity=".7"/><circle cx="32.5" cy="30" r="1.2" fill="#8B7355" opacity=".7"/><!-- глаза --><circle cx="24" cy="22" r="3" fill="#1a0a00"/><circle cx="36" cy="22" r="3" fill="#1a0a00"/><circle cx="24.8" cy="21.2" r="1.2" fill="#fff" opacity=".8"/><circle cx="36.8" cy="21.2" r="1.2" fill="#fff" opacity=".8"/><!-- уши --><path d="M20 20 Q17 16 19 13 Q22 15 21 20" fill="#d4b882" stroke="#c4a86a" stroke-width=".5"/><!-- ноги --><rect x="20" y="48" width="5" height="8" rx="2" fill="#c4a86a"/><rect x="35" y="48" width="5" height="8" rx="2" fill="#c4a86a"/></svg>`,
+  diamond: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dmG" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#a8f0ff"/><stop offset="50%" stop-color="#40b0ff"/><stop offset="100%" stop-color="#0050cc"/></linearGradient><filter id="dmF"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><polygon points="30,8 46,20 30,52 14,20" fill="url(#dmG)" filter="url(#dmF)"/><polygon points="30,8 46,20 30,24 14,20" fill="#c8f0ff" opacity=".7"/><polygon points="14,20 30,24 30,52" fill="#0070dd"/><polygon points="46,20 30,24 30,52" fill="#0040aa"/><line x1="14" y1="20" x2="46" y2="20" stroke="#fff" stroke-width=".5" opacity=".4"/><polygon points="18,16 22,20 26,16 22,14" fill="#fff" opacity=".5"/></svg>`,
+  seven: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="svG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff4400"/><stop offset="100%" stop-color="#cc0000"/></linearGradient><filter id="svF"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect x="8" y="8" width="44" height="44" rx="8" fill="url(#svG)" stroke="#ff6600" stroke-width="1.5"/><rect x="8" y="8" width="44" height="20" rx="8" fill="rgba(255,255,255,.1)"/><text x="30" y="40" text-anchor="middle" font-family="Arial Black,sans-serif" font-size="30" font-weight="900" fill="#fff" filter="url(#svF)">7</text><text x="14" y="20" text-anchor="middle" font-family="Arial" font-size="10" font-weight="900" fill="#ffaa00">7</text><text x="46" y="52" text-anchor="middle" font-family="Arial" font-size="10" font-weight="900" fill="#ffaa00">7</text></svg>`,
+  cherry: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="chG" cx="40%" cy="35%" r="55%"><stop offset="0%" stop-color="#ff6677"/><stop offset="100%" stop-color="#cc0022"/></radialGradient><radialGradient id="chG2" cx="40%" cy="35%" r="55%"><stop offset="0%" stop-color="#ff6677"/><stop offset="100%" stop-color="#cc0022"/></radialGradient></defs><!-- стебли --><path d="M30 28 Q26 18 20 14" stroke="#228800" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M30 26 Q36 16 40 12" stroke="#228800" stroke-width="1.8" fill="none" stroke-linecap="round"/><!-- листик --><path d="M32 20 Q36 16 38 20 Q36 24 32 20" fill="#33aa00"/><!-- вишни --><circle cx="19" cy="38" r="9" fill="url(#chG)" stroke="#aa0011" stroke-width=".8"/><circle cx="38" cy="34" r="9" fill="url(#chG2)" stroke="#aa0011" stroke-width=".8"/><!-- блики --><circle cx="16" cy="35" r="3" fill="#fff" opacity=".4"/><circle cx="35" cy="31" r="3" fill="#fff" opacity=".4"/></svg>`,
+  star: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="stG" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffffa0"/><stop offset="60%" stop-color="#ffcc00"/><stop offset="100%" stop-color="#ff8800"/></radialGradient><filter id="stF"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path d="M30 6 L35 22 L52 22 L38 33 L43 50 L30 40 L17 50 L22 33 L8 22 L25 22 Z" fill="url(#stG)" filter="url(#stF)" stroke="#ffaa00" stroke-width=".5"/><path d="M30 10 L34 22 L46 22 L36 30 L40 44 L30 37 L20 44 L24 30 L14 22 L26 22 Z" fill="#fff" opacity=".2"/></svg>`,
+  bell: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="blG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe060"/><stop offset="100%" stop-color="#cc8800"/></linearGradient></defs><path d="M30 8 Q30 4 30 4" stroke="#cc8800" stroke-width="2" stroke-linecap="round"/><!-- ушко --><path d="M26 8 Q30 4 34 8" fill="none" stroke="#cc8800" stroke-width="2"/><!-- колокол --><path d="M16 42 Q14 28 30 22 Q46 28 44 42 Z" fill="url(#blG)" stroke="#cc8800" stroke-width="1"/><rect x="14" y="40" width="32" height="5" rx="2.5" fill="#cc8800"/><!-- язычок --><ellipse cx="30" cy="48" rx="4" ry="3" fill="#cc8800"/><!-- блик --><path d="M20 30 Q22 26 26 28" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".6"/></svg>`,
+  clover: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="clG" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#66ee44"/><stop offset="100%" stop-color="#228800"/></radialGradient></defs><!-- 4 листа --><circle cx="30" cy="22" r="10" fill="url(#clG)"/><circle cx="30" cy="38" r="10" fill="url(#clG)"/><circle cx="22" cy="30" r="10" fill="url(#clG)"/><circle cx="38" cy="30" r="10" fill="url(#clG)"/><!-- стебель --><path d="M30 46 Q28 52 26 56" stroke="#228800" stroke-width="2" fill="none" stroke-linecap="round"/><!-- блики --><circle cx="27" cy="20" r="3" fill="#fff" opacity=".35"/><circle cx="20" cy="27" r="3" fill="#fff" opacity=".35"/></svg>`,
+};
+
 // Шансы улучшены: ~62% выигрыш (пары+тройки), ~38% проигрыш
 // TW = 30+40+80+100+110+100+40 = 500
-// 💎 тройка: ~1/2800 | 7️⃣ тройка: ~1/780 | 🍒 тройка: ~1/60
+// 💎 тройка: ~1/2800 | 7 тройка: ~1/780 | вишня тройка: ~1/60
 // Пары встречаются часто — хорошие ощущения от игры
 const SYMS = [
-  {e:'💎', m3:100, m2:3, w:55},   // редкий, большой приз (шанс ~10%)
-  {e:'7️⃣', m3:50,  m2:2, w:40},   // редкий, хороший приз
-  {e:'🍒', m3:20,  m2:2, w:80},   // часто, хорошая пара
-  {e:'⭐',  m3:8,   m2:2, w:100},  // часто, пара даёт ×2
-  {e:'🔔', m3:5,   m2:1, w:110},  // очень часто, возврат ставки
-  {e:'🍋', m3:3,   m2:1, w:100},  // очень часто, возврат ставки
-  {e:'🍀', m3:15,  m2:2, w:40},   // клевер — редкий, хороший
+  {e:'diamond', m3:100, m2:3, w:55},
+  {e:'seven',   m3:50,  m2:2, w:40},
+  {e:'cherry',  m3:20,  m2:2, w:80},
+  {e:'star',    m3:8,   m2:2, w:100},
+  {e:'bell',    m3:5,   m2:1, w:110},
+  {e:'ram',     m3:30,  m2:2, w:60},
+  {e:'clover',  m3:15,  m2:2, w:55},
 ];
+function getSymHtml(id) {
+  return SLOT_SVGS[id] || id;
+}
 const TW = SYMS.reduce((a,s)=>a+s.w, 0);
 function rnd() {
   let r = Math.random()*TW;
@@ -2342,7 +2356,17 @@ async function apiExit() {
 // ══════════════════════════════════════════════════════════
 function showPage(n) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  if(n==='game'){ try{['r0','r1','r2'].forEach(id=>{var r=document.getElementById(id);if(r&&!r.classList.contains('spinning'))r.classList.add('idle-glow');});}catch(e){} }
+  if(n==='game'){
+    try{
+      ['r0','r1','r2'].forEach((id,i)=>{
+        var r=document.getElementById(id);
+        if(r){
+          if(!r.innerHTML.includes('svg')) r.innerHTML=getSymHtml(SYMS[i%SYMS.length].e);
+          if(!r.classList.contains('spinning')) r.classList.add('idle-glow');
+        }
+      });
+    }catch(e){}
+  }
   document.getElementById('page-'+n).classList.add('active');
   // Обновляем кнопку в хедере
   try { _updateHeaderBack(n); } catch(e){}
@@ -2498,11 +2522,11 @@ async function spin() {
     result.className='result-strip idle';
     result.textContent='КРУТИМ...';
     btn.textContent='⏳';
-    reels.forEach(r=>{ r.classList.add('spinning'); r.textContent='🎲'; });
+    reels.forEach(r=>{ r.classList.add('spinning'); r.innerHTML=getSymHtml('ram'); });
 
     // rAF-based ticker для 60fps
     let tickRunning=true;
-    const tickFn=()=>{ if(tickRunning){ reels.forEach(r=>{ r.textContent=rnd().e; }); requestAnimationFrame(tickFn); } };
+    const tickFn=()=>{ if(tickRunning){ reels.forEach(r=>{ r.innerHTML=getSymHtml(rnd().e); }); requestAnimationFrame(tickFn); } };
     requestAnimationFrame(tickFn);
 
     await sleep(spinMs);
@@ -2512,7 +2536,7 @@ async function spin() {
       await sleep(gapMs);
       reels[i].classList.remove('spinning');
       reels[i].classList.add('stopping');
-      reels[i].textContent=final[i].e;
+      reels[i].innerHTML=getSymHtml(final[i].e);
       setTimeout(()=>reels[i].classList.remove('stopping'),160);
     }
     await sleep(100);
@@ -2566,23 +2590,25 @@ async function spin() {
           if(tier>=3) setTimeout(spawnParticles, 700);
         }
 
+        const symHtml = getSymHtml(res.emoji);
         const label = tier===3 ? '🏆 ДЖЕКПОТ!'
                     : tier===2 ? '🎰 СУПЕР!'
                     : tier===1 ? '🎉 ВЫИГРЫШ!'
                     : '✨ ВЫИГРЫШ!';
         result.className='result-strip win';
-        result.textContent=`${label}  ${res.emoji}${res.emoji}${res.emoji}  ×${res.mult}  +${prize.toLocaleString('ru-RU')} токенов`;
+        result.innerHTML=`<span style="display:flex;align-items:center;gap:6px;justify-content:center">${label} <span style="display:inline-flex;gap:3px">${symHtml}${symHtml}${symHtml}</span> ×${res.mult} &nbsp;+${prize.toLocaleString('ru-RU')} токенов</span>`;
         showToast(`+${prize.toLocaleString('ru-RU')} 💰`, tier>=2 ? 'gold' : 'info');
 
       } else {
         // Пара — ×2 или ×1 в зависимости от символа
+        const symHtml = getSymHtml(res.emoji);
         result.className='result-strip win';
         if(res.mult >= 2) {
-          result.textContent=`✨ Пара ${res.emoji}${res.emoji}  ×${res.mult}  +${prize.toLocaleString('ru-RU')} токенов`;
+          result.innerHTML=`<span style="display:flex;align-items:center;gap:6px;justify-content:center">✨ Пара <span style="display:inline-flex;gap:3px">${symHtml}${symHtml}</span> ×${res.mult} &nbsp;+${prize.toLocaleString('ru-RU')} токенов</span>`;
           showToast(`+${prize.toLocaleString('ru-RU')} ✨`, 'gold');
         } else {
-          result.textContent=`🤝 Пара ${res.emoji}${res.emoji}  ×1  ±0 (ставка возвращена)`;
-          showToast(`Пара ${res.emoji}${res.emoji} — возврат`, 'info');
+          result.innerHTML=`<span style="display:flex;align-items:center;gap:6px;justify-content:center">🤝 Пара <span style="display:inline-flex;gap:3px">${symHtml}${symHtml}</span> ×1 &nbsp;±0 (возврат)</span>`;
+          showToast(`Пара — возврат`, 'info');
         }
       }
 
@@ -3002,15 +3028,13 @@ function saveAvatar(id) {
   try { renderAvatars(); } catch(e){}
 
   // Тост
-  try { showToast((av.img ? '\uD83D\uDDBC ' : av.emoji + ' ') + av.name + ' — аватарка!', 'success'); } catch(e){}
+  try { showToast('✅ ' + (av ? av.name : id) + ' — аватарка выбрана!', 'success'); } catch(e){}
 
-  // Сохраняем в API — передаём картинку как base64 чтобы другие видели
+  // Сохраняем в API — передаём только avatar_id (строку), SVG на клиенте
   if(API_URL && API_SECRET && USER_ID && USER_ID !== '0') {
-    var _avaPayload = av.emoji; // fallback — emoji
+    var _avaPayload = (id === 'custom') ? '🎮' : id; // для кастомной — дефолт
     if(id === 'custom') {
       try { var _cs = localStorage.getItem('custom_avatar_img'); if(_cs) _avaPayload = _cs; } catch(_e){}
-    } else if(av.img && typeof AVATAR_IMAGES !== 'undefined' && AVATAR_IMAGES[id]) {
-      _avaPayload = AVATAR_IMAGES[id]; // base64 встроенной картинки
     }
     fetch(API_URL + '/casino/avatar', {
       method: 'POST',
@@ -3029,15 +3053,23 @@ function saveAvatar(id) {
   } catch(e){}
 }
 
-// Рендер аватарки: src может быть emoji, base64 или <img> тегом
+// Рендер аватарки: src может быть avatar_id, emoji, base64 или <img> тегом
 function renderAvatarHtml(src, size) {
   if(!src) return '🎮';
   src = String(src);
+  // Сначала ищем по ID среди SVG-аватарок
+  const avById = AVATARS.find(a => a.id === src);
+  if(avById && avById.svg) {
+    var s = size ? size + 'px' : '22px';
+    return `<div style="width:${s};height:${s};border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;flex-shrink:0">${avById.svg}</div>`;
+  }
+  // base64 или URL — картинка
   if(src.startsWith('data:image') || src.startsWith('http')) {
     var s = size ? size + 'px' : '22px';
     return '<img src="' + src + '" style="width:' + s + ';height:' + s + ';border-radius:50%;object-fit:cover;vertical-align:middle;display:inline-block">';
   }
   if(src.startsWith('<img')) return src;
+  // emoji или дефолт
   return src;
 }
 
