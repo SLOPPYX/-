@@ -4920,12 +4920,16 @@ function rDraw(){
   // ── ЗВЁЗДЫ — двигаются только во время полёта ──
   if(rStars){
     let starSpd=0;
-    if(RKT.phase==='flying') starSpd=Math.min(1.5+RKT.mult*0.4,14);
+    if(RKT.phase==='flying') starSpd=Math.min(1.5+RKT.mult*0.35,12);
     if(starSpd>0){
       rStars.forEach(s=>{
         const lm=s.layer===2?1.6:s.layer===1?1.0:0.5;
-        s.y+=starSpd*lm; s.bri+=0.025;
-        if(s.y>rH+4){s.y=-4;s.x=Math.random()*rW;}
+        // Звёзды летят вправо-вниз — иллюзия движения влево-вверх
+        s.x -= starSpd*lm*0.7;
+        s.y += starSpd*lm*0.4;
+        s.bri+=0.025;
+        if(s.x < -4){ s.x=rW+4; s.y=Math.random()*rH; }
+        if(s.y > rH+4){ s.y=-4; s.x=Math.random()*rW; }
       });
     }
   }
@@ -4936,91 +4940,119 @@ function rDraw(){
     rSpeedParts=[]; rTrail=[];
 
   } else if(RKT.phase==='flying'){
-    const cx=rW*0.5, cy=rH*0.50;
     const m=RKT.mult||1;
     if(!rSpeedParts) rSpeedParts=[];
 
-    // Вибрация растёт с иксами
-    const vib=Math.min(m*0.13,3.5);
-    const vx2=(Math.random()-0.5)*vib, vy2=(Math.random()-0.5)*vib*0.5;
-    const lean=Math.sin(rTime*0.07)*1.5+vx2;
-    const bounce=Math.sin(rTime*0.11)*1.2+vy2;
-    const tp=Math.min(0.6+m*0.034,1.0)+Math.sin(rTime*0.13)*0.08;
-    const sc=0.95+Math.min(m*0.003,0.15);
+    // Траектория: снизу-слева вверх-вправо
+    // Прогресс полёта на основе иксов (растёт со временем)
+    const elapsed = (Date.now() - (RKT._ls||Date.now())) / 1000;
+    const tProgress = Math.min(elapsed / 30, 0.85); // 0 → 0.85 за ~30 сек
 
-    // Частицы из сопла
-    const pc=Math.floor(4+Math.min(m*0.6,14));
-    for(let k=0;k<pc;k++){
-      const sp2=(Math.random()-0.5)*0.22;
-      const spd=(11+Math.random()*12)*Math.min(1+m*0.07,3);
-      const green=m>=10;
-      rSpeedParts.push({
-        x:cx+lean+(Math.random()-0.5)*13, y:cy+bounce+28,
-        vx:Math.sin(sp2)*spd, vy:Math.cos(sp2)*spd,
-        life:0.9+Math.random()*0.1,
-        col:green?'rgba(74,222,128,':'rgba(140,100,255,'
-      });
-    }
-    rSpeedParts.forEach(p=>{
-      p.x+=p.vx; p.y+=p.vy; p.vy*=1.07; p.life-=0.05;
-      if(p.life<=0) return;
-      const tl=6+m*0.15;
-      const grad=ctx.createLinearGradient(p.x,p.y,p.x-p.vx*tl,p.y-p.vy*tl);
-      grad.addColorStop(0,p.col+p.life+')'); grad.addColorStop(1,p.col+'0)');
-      ctx.save(); ctx.globalAlpha=p.life*0.85;
-      ctx.strokeStyle=grad; ctx.lineWidth=2.2; ctx.lineCap='round';
-      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-p.vx*tl,p.y-p.vy*tl);
-      ctx.stroke(); ctx.restore();
-    });
-    rSpeedParts=rSpeedParts.filter(p=>p.life>0&&p.y<rH+60);
-    if(rSpeedParts.length>300) rSpeedParts=rSpeedParts.slice(-200);
+    // Кривая — начало внизу-слева, уходит вверх-вправо
+    const startX = rW * 0.08;
+    const startY = rH * 0.88;
+    const endX   = rW * 0.92;
+    const endY   = rH * 0.08;
+    // Квадратичная кривая — выгиб вверх
+    const ctrlX  = rW * 0.15;
+    const ctrlY  = rH * 0.15;
 
-    // Свечение сопла
-    const gr=35+tp*20, ga=0.22+tp*0.22;
-    const gG=ctx.createRadialGradient(cx+lean,cy+bounce+22,0,cx+lean,cy+bounce+22,gr);
-    gG.addColorStop(0,m>=10?`rgba(74,222,128,${ga})`:`rgba(120,80,255,${ga})`);
-    gG.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle=gG; ctx.beginPath(); ctx.arc(cx+lean,cy+bounce+22,gr,0,Math.PI*2); ctx.fill();
+    const t2 = tProgress;
+    const rx = (1-t2)*(1-t2)*startX + 2*(1-t2)*t2*ctrlX + t2*t2*endX;
+    const ry = (1-t2)*(1-t2)*startY + 2*(1-t2)*t2*ctrlY + t2*t2*endY;
 
-    rDrawRocket3D(ctx,cx+lean,cy+bounce,sc,0,tp,false);
+    // Угол ракеты по касательной к кривой
+    const dt = 0.01;
+    const t2n = Math.min(t2+dt,0.85);
+    const rxn = (1-t2n)*(1-t2n)*startX + 2*(1-t2n)*t2n*ctrlX + t2n*t2n*endX;
+    const ryn = (1-t2n)*(1-t2n)*startY + 2*(1-t2n)*t2n*ctrlY + t2n*t2n*endY;
+    const rktAngle = Math.atan2(ryn - ry, rxn - rx) + Math.PI/2;
 
-    // ── ЗЕЛЁНЫЙ СЛЕД ─ записываем реальную позицию ракеты ──
-    rTrail.push([cx+lean, cy+bounce]);
-    if(rTrail.length > 120) rTrail.shift();
+    // Вибрация с ростом иксов
+    const vib = Math.min(m*0.1, 3);
+    const vx2 = (Math.random()-0.5)*vib;
+    const vy2 = (Math.random()-0.5)*vib;
+    const cx = rx + vx2;
+    const cy = ry + vy2;
 
+    const tp = Math.min(0.6+m*0.034, 1.0);
+    const sc = 0.95 + Math.min(m*0.003, 0.2);
+
+    // ── ПОЛОСКА СЛЕДА от старта до текущей позиции ──────────
+    rTrail.push([cx, cy]);
+    if(rTrail.length > 150) rTrail.shift();
     if(rTrail.length > 2){
       ctx.save();
-      // Мягкое широкое свечение
       ctx.beginPath();
       ctx.moveTo(rTrail[0][0], rTrail[0][1]);
       for(let i=1;i<rTrail.length;i++) ctx.lineTo(rTrail[i][0], rTrail[i][1]);
-      ctx.lineWidth = 10;
-      ctx.strokeStyle = 'rgba(74,222,128,0.08)';
-      ctx.shadowColor = '#4ade80';
-      ctx.shadowBlur = 14;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.stroke();
-      // Яркая тонкая линия
+      ctx.lineWidth=10; ctx.strokeStyle='rgba(74,222,128,0.07)';
+      ctx.shadowColor='#4ade80'; ctx.shadowBlur=14;
+      ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke();
       ctx.beginPath();
       ctx.moveTo(rTrail[0][0], rTrail[0][1]);
-      for(let i=1;i<rTrail.length;i++){
-        const prog = i / (rTrail.length - 1);
-        ctx.lineTo(rTrail[i][0], rTrail[i][1]);
-      }
-      const tg = ctx.createLinearGradient(
-        rTrail[0][0], rTrail[0][1],
-        rTrail[rTrail.length-1][0], rTrail[rTrail.length-1][1]
-      );
-      tg.addColorStop(0, 'rgba(74,222,128,0)');
-      tg.addColorStop(0.4, 'rgba(74,222,128,0.3)');
-      tg.addColorStop(1, 'rgba(180,255,200,0.9)');
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = tg;
-      ctx.shadowBlur = 8;
-      ctx.stroke();
+      for(let i=1;i<rTrail.length;i++) ctx.lineTo(rTrail[i][0], rTrail[i][1]);
+      const tg2=ctx.createLinearGradient(rTrail[0][0],rTrail[0][1],cx,cy);
+      tg2.addColorStop(0,'rgba(74,222,128,0)');
+      tg2.addColorStop(0.5,'rgba(74,222,128,0.35)');
+      tg2.addColorStop(1,'rgba(180,255,200,0.95)');
+      ctx.lineWidth=2.5; ctx.strokeStyle=tg2; ctx.shadowBlur=8; ctx.stroke();
       ctx.restore();
     }
+
+    // ── ЭФФЕКТ СКОРОСТИ — горизонтальные линии слева ────────
+    const speedCount = Math.floor(4 + Math.min(m*0.5, 16));
+    for(let k=0;k<speedCount;k++){
+      const sy = cy + (Math.random()-0.5)*80;
+      const sLen = (20+Math.random()*60)*Math.min(1+m*0.05,3);
+      const sa = Math.max(0.15, Math.min(0.6, m*0.04));
+      const sg = ctx.createLinearGradient(cx-sLen,sy,cx,sy);
+      sg.addColorStop(0,'rgba(255,255,255,0)');
+      sg.addColorStop(1, m>=10?`rgba(74,222,128,${sa})`:`rgba(200,220,255,${sa})`);
+      ctx.save(); ctx.strokeStyle=sg; ctx.lineWidth=0.8+Math.random()*1.2;
+      ctx.beginPath(); ctx.moveTo(cx-sLen, sy); ctx.lineTo(cx, sy); ctx.stroke();
+      ctx.restore();
+    }
+
+    // ── ЧАСТИЦЫ ИЗ СОПЛА ──────────────────────────────────
+    const pc=Math.floor(4+Math.min(m*0.5,12));
+    const soxDir = Math.cos(rktAngle+Math.PI/2);
+    const soyDir = Math.sin(rktAngle+Math.PI/2);
+    for(let k=0;k<pc;k++){
+      const sp=(Math.random()-0.5)*0.4;
+      const spd=(8+Math.random()*10)*Math.min(1+m*0.06,2.5);
+      const green=m>=10;
+      rSpeedParts.push({
+        x:cx+soxDir*26+(Math.random()-0.5)*8,
+        y:cy+soyDir*26+(Math.random()-0.5)*8,
+        vx:(soxDir+Math.sin(sp))*spd*0.6,
+        vy:(soyDir+Math.cos(sp))*spd*0.6,
+        life:0.9+Math.random()*0.1,
+        col:green?'rgba(74,222,128,':'rgba(255,160,60,'
+      });
+    }
+    rSpeedParts.forEach(p=>{
+      p.x+=p.vx*0.7; p.y+=p.vy*0.7; p.life-=0.055;
+      if(p.life<=0) return;
+      const tl=5+m*0.12;
+      const grad=ctx.createLinearGradient(p.x,p.y,p.x-p.vx*tl,p.y-p.vy*tl);
+      grad.addColorStop(0,p.col+p.life+')'); grad.addColorStop(1,p.col+'0)');
+      ctx.save(); ctx.globalAlpha=p.life*0.8;
+      ctx.strokeStyle=grad; ctx.lineWidth=2; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-p.vx*tl,p.y-p.vy*tl);
+      ctx.stroke(); ctx.restore();
+    });
+    rSpeedParts=rSpeedParts.filter(p=>p.life>0);
+    if(rSpeedParts.length>250) rSpeedParts=rSpeedParts.slice(-180);
+
+    // Свечение сопла
+    const gr=30+tp*18, ga=0.2+tp*0.2;
+    const gG=ctx.createRadialGradient(cx+soxDir*28,cy+soyDir*28,0,cx+soxDir*28,cy+soyDir*28,gr);
+    gG.addColorStop(0,m>=10?`rgba(74,222,128,${ga})`:`rgba(255,150,50,${ga})`);
+    gG.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=gG; ctx.beginPath(); ctx.arc(cx+soxDir*28,cy+soyDir*28,gr,0,Math.PI*2); ctx.fill();
+
+    rDrawRocket3D(ctx, cx, cy, sc, rktAngle, tp, false);
 
   } else if(RKT.phase==='crashed'&&rTrail.length){
     const[rx,ry]=rTrail[rTrail.length-1];
@@ -5237,7 +5269,7 @@ function rktTickStart(){
         // Через 2.8с переходим в waiting
         setTimeout(()=>{
           RKT.betPlaced=false;RKT.cashedOut=false;
-          _rktOperating=false;_rktBetting=false;
+          _rktOperating=false;_rktSetBetting(false);
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
           if(RKT.waitLeft>0) rktWaitTick();
@@ -5262,7 +5294,7 @@ function rktApply(d){
   const roundChanged=(d.round_id!=null && d.round_id!==prevRoundId && prevRoundId!==-1);
   if(roundChanged){
     _rktOperating=false;
-    _rktBetting=false;
+    _rktSetBetting(false);
     // Новый раунд — разрешаем ставку, но только если betPlaced тоже сброшен
     // (betPlaced сбрасывается только в setTimeout после краша)
     if(!RKT.betPlaced) _rktRoundBetDone=false;
@@ -5309,7 +5341,7 @@ function rktApply(d){
     }
     if(prev!=='flying'){
       rTrail=[];rCrashParticles=[];rSpeedParts=[];rCashNotifs=[];
-      _rktBetting=false; // гарантированно снимаем блокировку ставки
+      _rktSetBetting(false); // гарантированно снимаем блокировку ставки
       _rktOperating=false;
       RKT._betTs=0;
       if(rAFid) cancelAnimationFrame(rAFid);
@@ -5341,7 +5373,7 @@ function rktApply(d){
       }
       setTimeout(()=>{
         RKT.phase='waiting';RKT.betPlaced=false;RKT.cashedOut=false;
-        _rktOperating=false; _rktBetting=false;
+        _rktOperating=false; _rktSetBetting(false);
         _rktRoundBetDone=false; _rktMinBalance=-1;
         rTrail=[];rCrashParticles=[];
         if(RKT.waitLeft>0) rktWaitTick();
@@ -5417,8 +5449,8 @@ function rktUpdateBtn(){
       b.disabled=true;
       return;
     }
-    // Последние 5 секунд — кнопка активна
-    if(RKT.waitLeft<=5 && RKT.waitLeft>0){
+    // Кнопка активна всё время ожидания
+    if(RKT.waitLeft>0){
       b.textContent='🚀 ПОСТАВИТЬ';
       b.className='rkt-btn bb';
       b.disabled=false;
@@ -5603,6 +5635,15 @@ function rktAction(){
 }
 
 let _rktBetting=false;
+let _rktBettingTimer=null;
+function _rktSetBetting(val){
+  _rktBetting=val;
+  if(_rktBettingTimer){ clearTimeout(_rktBettingTimer); _rktBettingTimer=null; }
+  if(val){
+    // Гарантированно снимаем блокировку через 3 сек — защита от зависания
+    _rktBettingTimer=setTimeout(()=>{ _rktBetting=false; _rktBettingTimer=null; rktUI(); }, 3000);
+  }
+}
 function rktPlaceBet(){
   if(_rktBetting||_rktRoundBetDone||RKT.betPlaced) return;
   if(RKT.phase!=='waiting') return;
@@ -5613,7 +5654,7 @@ function rktPlaceBet(){
   if(bet>balance){ showToast('Недостаточно токенов!','error'); return; }
 
   // Блокируем на уровне раунда — до следующего round_id
-  _rktBetting=true;
+  _rktSetBetting(true);
   _rktRoundBetDone=true;
   RKT.betPlaced=true;
   RKT.myBet=bet;
@@ -5654,9 +5695,9 @@ function rktPlaceBet(){
         if(r.balance<=balance) setBalance(r.balance);
       }
     }).catch(()=>{})
-    .finally(()=>{ _rktBetting=false; });
+    .finally(()=>{ _rktSetBetting(false); });
   } else {
-    _rktBetting=false;
+    _rktSetBetting(false);
   }
 }
 
