@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -4675,7 +4676,7 @@ function rDrawRocket3D(ctx, x, y, scale, angle, thrustPow, crashed){
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(angle);
-  const s = scale * 1.1; // Размер ракеты
+  const s = scale * 1.4; // Размер ракеты
   const t = rTime;
 
   if(crashed){
@@ -5737,6 +5738,14 @@ function rktPlaceBet(){
   if(bet>balance){ showToast('Недостаточно токенов!','error'); return; }
 
   const res=document.getElementById('rktRes');
+  const btnEl=document.getElementById('rktBtn');
+
+  // МГНОВЕННАЯ заморозка кнопки — прямо в DOM, до всего остального
+  if(btnEl){
+    btnEl.disabled=true;
+    btnEl.innerHTML='<span class="rkt-btn-spin">⟳</span> Отправляем...';
+    btnEl.className='rkt-btn bl';
+  }
 
   // Жёсткая блокировка кнопки сразу
   _rktSetBetting(true);
@@ -5812,9 +5821,9 @@ async function rktDoCashout(){
   _rktFrozenMult = mult; // держим замороженным
   _rktOperating  = true;
 
-  // Локальный расчёт без округления
-  const localPrize  = myBet * mult;           // точно, без Math.floor
-  const localProfit = localPrize - myBet;
+  // Точный расчёт: токены целые, prize округляем
+  const localPrize  = Math.round(myBet * mult); // 10000 * 1.33 = 13300
+  const localProfit = localPrize - myBet;        // 13300 - 10000 = 3300
 
   // Зачисляем мгновенно
   setBalance(balance + localPrize);
@@ -5827,7 +5836,7 @@ async function rktDoCashout(){
   const btn = document.getElementById('rktBtn');
   if(btn){ btn.disabled=true; btn.className='rkt-btn bw'; btn.textContent='Забрано'; }
   _showCashoutResult(res, mult, localProfit, localPrize);
-  showToast('×'+mult.toFixed(2)+'  +'+Math.round(localProfit).toLocaleString('ru-RU')+' 💰','gold');
+  showToast('×'+mult.toFixed(2)+'  +'+localProfit.toLocaleString('ru-RU')+' 💰','gold');
   try{ rAddCashNotif(USER_NAME||'ВЫ', mult, localProfit); }catch(e){}
   rktUpdateTable(); rktUpdateTags();
 
@@ -5843,25 +5852,18 @@ async function rktDoCashout(){
         })
       });
       if(r && r.ok){
-        // Клиентский mult — то что видел пользователь на экране (истина для отображения)
-        // Серверный mult — для верификации (не должен сильно отличаться)
-        const sMult   = r.mult   != null ? r.mult   : mult;
         const sPrize  = r.prize  != null ? r.prize  : localPrize;
         const sProfit = sPrize - myBet;
         const sBal    = typeof r.balance === 'number' ? r.balance : balance;
 
-        // Отображаем клиентский mult (то что пользователь видел)
-        // Используем серверный баланс (финансовая истина)
-        RKT.cashedMult = mult; // клиентский — то что показывали
-        setBalance(sBal);      // точный баланс с сервера
+        RKT.cashedMult = mult;
+        setBalance(sBal);
         RKT.stats.p = RKT.stats.p - localProfit + sProfit;
         if(mult > RKT.stats.b) RKT.stats.b = mult;
         rktSave();
 
-        // Показываем КЛИЕНТСКИЙ mult (×1.44, не ×1.5)
-        // но прибыль от серверного расчёта
         _showCashoutResult(res, mult, sProfit, sPrize);
-        showToast('×'+mult.toFixed(2)+'  +'+Math.round(sProfit).toLocaleString('ru-RU')+' токенов 💰','gold');
+        showToast('×'+mult.toFixed(2)+'  +'+sProfit.toLocaleString('ru-RU')+' токенов 💰','gold');
         if(btn){ btn.innerHTML='Забрано ×'+mult.toFixed(2); }
         rktUpdateTable(); rktUpdateTags();
       }
@@ -5872,10 +5874,8 @@ async function rktDoCashout(){
 
 function _showCashoutResult(res, mult, profit, prize){
   if(!res) return;
-  // Прибыль и приз округляем до целых токенов (токены целые числа)
-  const profitFmt = Math.round(profit).toLocaleString('ru-RU');
-  const prizeFmt  = Math.round(prize).toLocaleString('ru-RU');
-  // Mult показываем точно — без округления вверх
+  const profitFmt = profit.toLocaleString('ru-RU');
+  const prizeFmt  = prize.toLocaleString('ru-RU');
   res.innerHTML = '<span style="color:#fbbf24">×'+mult.toFixed(2)+'</span>'
     + ' &nbsp;<strong style="color:#4ade80">+'+ profitFmt +'</strong>'
     + ' &nbsp;<span style="color:rgba(255,255,255,.5)">= '+ prizeFmt +'</span>';
