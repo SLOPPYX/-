@@ -5261,16 +5261,13 @@ function rktTickStart(){
     const cap=RKT.crashAt||9999;
     const m=Math.min(raw, cap);
 
-    // Если mult заморожен (пользователь нажал ЗАБРАТЬ) — не обновляем
-    if(_rktFrozenMult === null){
-      RKT.mult=m;
-    }
+    // RKT.mult всегда обновляется — ракетка продолжает лететь и после кэшаута
+    RKT.mult=m;
 
     const el=document.getElementById('rktMult');
     if(el){
-      // После нажатия ЗАБРАТЬ — показываем замороженный mult
-      const displayMult = _rktFrozenMult !== null ? _rktFrozenMult : m;
-      el.textContent=displayMult.toFixed(2)+'×';
+      // Дисплей всегда показывает текущий mult — ракетка летит дальше
+      el.textContent=m.toFixed(2)+'×';
       // Цвет: белый → зелёный ×5+ → жёлтый ×20+ → красный при краше
       const cls = (m>=cap && cap<9999) ? 'rkt-mult sc'
                 : m>=20 ? 'rkt-mult sf sg sg2'
@@ -5294,9 +5291,7 @@ function rktTickStart(){
     }catch(e){}
     const btn=document.getElementById('rktBtn');
     if(btn&&btn.classList.contains('bc')){
-      // Показываем текущий mult (или замороженный если нажали)
-      const dispM = _rktFrozenMult !== null ? _rktFrozenMult : m;
-      btn.innerHTML='💸 '+dispM.toFixed(2)+'× — ЗАБРАТЬ!';
+      btn.innerHTML='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
     }
     // Тряска цифр — 4 уровня по иксам
     const mw=document.getElementById('rktMultWrap');
