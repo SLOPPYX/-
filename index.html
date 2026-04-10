@@ -923,7 +923,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 /* Сцена */
 .rkt-wrap { padding:0 }
 .rkt-scene {
-  position:relative; height:400px; overflow:hidden;
+  position:relative; height:340px; overflow:hidden;
   background:#000000;
   border-bottom:1px solid rgba(255,255,255,.05);
 }
@@ -949,7 +949,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-axis-y{left:6px;top:50%;transform:translateY(-50%) rotate(-90deg);letter-spacing:2px;}
 .rkt-axis-x{bottom:14px;right:12px;letter-spacing:2px;}
 @media(min-width:520px){
-  .rkt-scene{height:480px}
+  .rkt-scene{height:420px}
 }
 #rocketCanvas { position:absolute; inset:0; width:100%; height:100%; display:block; z-index:2 }
 
@@ -1220,13 +1220,11 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   -webkit-backdrop-filter:blur(8px);
 }
 
-/* Кнопка действия — внутри сцены, прилипает к низу */
+/* Кнопка — блок прямо под игровой сценой */
 .rkt-action-bar {
-  position:absolute;
-  bottom:0; left:0; right:0;
-  z-index:15;
-  padding:10px 14px 12px;
-  background:linear-gradient(to top, rgba(0,0,0,.92) 0%, rgba(0,0,0,.7) 70%, transparent 100%);
+  padding:10px 14px 10px;
+  background:rgba(0,0,0,.95);
+  border-bottom:1px solid rgba(255,100,0,.12);
 }
 .rkt-action-status {
   font-family:var(--fd); font-size:9px; font-weight:700;
@@ -1955,12 +1953,12 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
       <!-- Теги игроков поверх сцены -->
       <div class="rkt-players-overlay" id="rktTags"></div>
+    </div>
 
-      <!-- КНОПКА — внутри сцены, прилипает к низу canvas -->
-      <div class="rkt-action-bar" id="rktActionBar">
-        <div class="rkt-action-status" id="rktActionStatus">ОЖИДАНИЕ СТАРТА</div>
-        <button class="rkt-btn bb" id="rktBtn" onclick="rktAction()">🚀 ПОСТАВИТЬ</button>
-      </div>
+    <!-- КНОПКА — сразу под игрой, всегда видна -->
+    <div class="rkt-action-bar" id="rktActionBar">
+      <div class="rkt-action-status" id="rktActionStatus">ОЖИДАНИЕ СТАРТА</div>
+      <button class="rkt-btn bb" id="rktBtn" onclick="rktAction()">🚀 ПОСТАВИТЬ</button>
     </div>
 
     <!-- Панель управления -->
@@ -5467,7 +5465,8 @@ function rktApply(d){
     }
     if(prev!=='flying'){
       rTrail=[];rCrashParticles=[];rSpeedParts=[];rCashNotifs=[];
-      _rktSetBetting(false); // гарантированно снимаем блокировку ставки
+      // Снимаем блокировку ставки ТОЛЬКО если ставка ещё не принята
+      if(!_rktBetAccepted && !RKT.betPlaced) _rktSetBetting(false);
       _rktOperating=false;
       RKT._betTs=0;
       if(rAFid) cancelAnimationFrame(rAFid);
