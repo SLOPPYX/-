@@ -5706,8 +5706,10 @@ function rktAction(){
   const btn=document.getElementById('rktBtn');
   if(btn&&btn.disabled) return;
   if(RKT.phase==='flying'&&RKT.betPlaced&&!RKT.cashedOut){
-    // ЗАМОРАЖИВАЕМ mult ПРЯМО СЕЙЧАС — до любых async операций
-    _rktFrozenMult = RKT.mult;
+    // Захватываем ОТОБРАЖАЕМЫЙ mult (то что видит пользователь на экране)
+    // parseFloat(toFixed(2)) гарантирует что расчёт = то что показано
+    const displayedMult = parseFloat(RKT.mult.toFixed(2));
+    _rktFrozenMult = displayedMult;
     rktDoCashout();
     return;
   }
@@ -5829,27 +5831,23 @@ async function rktDoCashout(){
   _rktFrozenMult = mult; // держим замороженным
   _rktOperating  = true;
 
-  // Локальный расчёт — только для мгновенного показа ДО ответа сервера
-  // prize = round(bet * mult) — токены целые числа
-  const localPrize  = Math.round(myBet * mult);
+  // prize = bet * displayedMult (то что видел пользователь)
+  // Math.floor — токены не округляются вверх
+  const localPrize  = Math.floor(myBet * mult);
   const localProfit = localPrize - myBet;
 
-  // Зачисляем мгновенно (предварительно, скорректируем после ответа сервера)
-  setBalance(balance + localPrize);
-  RKT.stats.g++;
-  RKT.stats.p += localProfit;
-  if(mult > RKT.stats.b) RKT.stats.b = mult;
-  rktSave();
-
+  // Показываем "забираем..." пока ждём сервер
   const res = document.getElementById('rktRes');
   const btn = document.getElementById('rktBtn');
-  if(btn){ btn.disabled=true; btn.className='rkt-btn bw'; btn.textContent='Забрано'; }
-  _showCashoutResult(res, mult, localProfit, localPrize);
-  showToast('×'+mult.toFixed(2)+'  +'+localProfit.toLocaleString('ru-RU')+' 💰','gold');
-  try{ rAddCashNotif(USER_NAME||'ВЫ', mult, localProfit); }catch(e){}
+  if(btn){ btn.disabled=true; btn.className='rkt-btn bw'; btn.textContent='Забрано ×'+mult.toFixed(2); }
+  if(res){
+    res.innerHTML = '<span style="color:#fbbf24">×'+mult.toFixed(2)+'</span>'
+      + ' &nbsp;<span style="color:rgba(255,255,255,.4)">⏳ считаем...</span>';
+    res.className = 'rkt-res win';
+  }
   rktUpdateTable(); rktUpdateTags();
 
-  // Запрос на сервер — получаем ТОЧНЫЕ данные
+  // Запрос на сервер — ЕДИНСТВЕННЫЙ источник финальных данных
   if(API_URL && API_SECRET){
     try{
       const r = await rktFetch('/casino/rocket/cashout',{
@@ -5857,30 +5855,44 @@ async function rktDoCashout(){
         body:JSON.stringify({
           uid:parseInt(USER_ID),
           secret:API_SECRET,
-          client_mult: mult  // передаём клиентский mult для верификации
+          client_mult: mult
         })
       });
       if(r && r.ok){
-        // ── СЕРВЕР — единственная финансовая истина ──────────
+        // Сервер — финансовая истина
         const sPrize  = r.prize  != null ? r.prize  : localPrize;
-        const sProfit = sPrize - myBet;   // точная прибыль = prize - ставка
-        const sBal    = typeof r.balance === 'number' ? r.balance : balance;
+        const sProfit = sPrize - myBet;
+        const sBal    = typeof r.balance === 'number' ? r.balance : (balance - localPrize + sPrize);
 
         RKT.cashedMult = mult;
-        // Корректируем баланс до точного серверного значения
+        // Корректируем баланс: сначала убираем предварительно начисленное, добавляем серверное
         setBalance(sBal);
+        RKT.stats.g++;
         RKT.stats.p = RKT.stats.p - localProfit + sProfit;
         if(mult > RKT.stats.b) RKT.stats.b = mult;
         rktSave();
 
-        // Показываем точные данные с сервера
         _showCashoutResult(res, mult, sProfit, sPrize);
-        showToast('×'+mult.toFixed(2)+'  +'+sProfit.toLocaleString('ru-RU')+' токенов 💰','gold');
+        showToast('×'+mult.toFixed(2)+'  +'+sProfit.toLocaleString('ru-RU')+' 💰','gold');
+        try{ rAddCashNotif(USER_NAME||'ВЫ', mult, sProfit); }catch(e){}
         if(btn){ btn.innerHTML='Забрано ×'+mult.toFixed(2); }
         rktUpdateTable(); rktUpdateTags();
+        _rktOperating = false;
+        return; // выходим — сервер дал данные
       }
-    }catch(e){ /* оставляем локальный результат */ }
+    }catch(e){ /* fallback ниже */ }
   }
+
+  // Офлайн fallback — используем локальный расчёт
+  setBalance(balance + localPrize);
+  RKT.stats.g++;
+  RKT.stats.p += localProfit;
+  if(mult > RKT.stats.b) RKT.stats.b = mult;
+  rktSave();
+  _showCashoutResult(res, mult, localProfit, localPrize);
+  showToast('×'+mult.toFixed(2)+'  +'+localProfit.toLocaleString('ru-RU')+' 💰','gold');
+  try{ rAddCashNotif(USER_NAME||'ВЫ', mult, localProfit); }catch(e){}
+  rktUpdateTable(); rktUpdateTags();
   _rktOperating = false;
 }
 
