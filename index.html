@@ -3987,17 +3987,13 @@ async function init() {
     if(bar) bar.style.width = '100%';
   }
 
-  // Аварийный таймер — 3 сек максимум
+  // Гарантированное закрытие — максимум 1.5 сек в любом случае
+  const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
+  const emergencyMs = hasApi ? 2500 : 800;
   const emergency = setTimeout(() => {
     closeSplash();
     try { startBalancePolling(); } catch(e) {}
-  }, 3000);
-
-  // Быстрый путь: нет API — закрываем сплаш через 800мс (нечего ждать)
-  const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
-  if(!hasApi){
-    setTimeout(()=>{ clearTimeout(emergency); closeSplash(); }, 800);
-  }
+  }, emergencyMs);
 
   try {
     // ── Звёздочки сплеша ───────────────────────────────────────
@@ -4378,7 +4374,8 @@ let _apiBalanceLocked = false; // устаревший, оставлен для 
 // ПРИМЕНИТЬ БАЛАНС С СЕРВЕРА — мгновенно, с уведомлением
 // ══════════════════════════════════════════════════════════
 // Флаг: ракетка управляет балансом сама — блокируем внешние пуши
-let _rktOperating = false; _rktCashingOut = false;
+let _rktOperating = false;
+let _rktCashingOut = false; // блокирует повторное нажатие ЗАБРАТЬ
 
 // Минимальный баланс после ставки — не даём push поднять баланс выше него
 let _rktMinBalance = -1;
@@ -5399,7 +5396,7 @@ function rktApply(d){
   if(roundChanged){
     _rktOperating=false;
     _rktSetBetting(false);
-    _rktBetAccepted=false; _rktCashingOut=false; // сбрасываем только при смене раунда
+    _rktBetAccepted=false; _rktCashingOut=false;
     if(!RKT.betPlaced) _rktRoundBetDone=false;
     _rktMinBalance=-1;
   }
@@ -5477,7 +5474,7 @@ function rktApply(d){
       setTimeout(()=>{
         RKT.phase='waiting';RKT.betPlaced=false;RKT.cashedOut=false;
         _rktOperating=false; _rktSetBetting(false);
-        _rktBetAccepted=false; _rktCashingOut=false; // сбрасываем для нового раунда
+        _rktBetAccepted=false; _rktCashingOut=false;
         _rktRoundBetDone=false; _rktMinBalance=-1;
         _rktFrozenMult=null;
         rTrail=[];rCrashParticles=[];
@@ -5758,7 +5755,6 @@ function rktAction(){
 let _rktBetting=false;
 let _rktBettingTimer=null;
 let _rktBetAccepted=false; _rktCashingOut=false;
-let _rktCashingOut=false; // блокирует повторное нажатие ЗАБРАТЬ
 
 function _rktSetBetting(val){
   _rktBetting=val;
