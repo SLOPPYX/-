@@ -3987,11 +3987,17 @@ async function init() {
     if(bar) bar.style.width = '100%';
   }
 
-  // Аварийный таймер — 5 сек максимум (было 7)
+  // Аварийный таймер — 3 сек максимум
   const emergency = setTimeout(() => {
     closeSplash();
     try { startBalancePolling(); } catch(e) {}
-  }, 5000);
+  }, 3000);
+
+  // Быстрый путь: нет API — закрываем сплаш через 800мс (нечего ждать)
+  const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
+  if(!hasApi){
+    setTimeout(()=>{ clearTimeout(emergency); closeSplash(); }, 800);
+  }
 
   try {
     // ── Звёздочки сплеша ───────────────────────────────────────
@@ -4007,7 +4013,7 @@ async function init() {
     // ── Сначала загружаем все данные из CloudStorage (аватарка, статистика) ──
     // Это быстро и синхронизирует устройства
     try {
-      await Promise.race([loadAllFromCloud(), new Promise(r => setTimeout(r, 1500))]);
+      await Promise.race([loadAllFromCloud(), new Promise(r => setTimeout(r, 800))]);
       // После загрузки из Cloud обновляем UI аватарки
       try {
         try { setAvaEl(document.getElementById('spoAvatar'), 44); } catch(e){}
@@ -4054,7 +4060,7 @@ async function init() {
 
     const loadedBal = await Promise.race([
       safeLoadBalanceAnimated(),
-      new Promise(r=>setTimeout(()=>r(null), 3000))
+      new Promise(r=>setTimeout(()=>r(null), 2000))
     ]);
 
     clearInterval(t3);
@@ -4138,7 +4144,7 @@ async function fetchBalanceFromAPI(timeoutMs) {
 
   try {
     const ctrl = new AbortController();
-    const t    = setTimeout(() => ctrl.abort(), timeoutMs || 5000);
+    const t    = setTimeout(() => ctrl.abort(), timeoutMs || 2500);
     try {
       const r = await fetch(url, {
         signal: ctrl.signal,
@@ -4176,7 +4182,7 @@ async function loadAllFromCloud() {
     const timeout = setTimeout(() => {
       console.warn('[CloudSync] getItems timeout');
       resolve();
-    }, 3000);
+    }, 1500);
 
     cloudGetMulti(keys, (err, values) => {
       clearTimeout(timeout);
@@ -4295,7 +4301,7 @@ async function safeLoadBalanceAnimated() {
   splashStep('step2','active');
   setBotStatus('loading','ЗАПРОС...');
 
-  const apiBal = await fetchBalanceFromAPI(4000);
+  const apiBal = await fetchBalanceFromAPI(2000);
 
   if(apiBal !== null) {
     // ✅ Успех — применяем и синхронизируем
