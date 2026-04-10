@@ -1960,9 +1960,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="rkt-players-overlay" id="rktTags"></div>
     </div>
 
-    <!-- КНОПКА ДЕЙСТВИЯ — sticky под сценой, всегда видна -->
-    <div class="rkt-action-bar">
-      <div class="rkt-action-status" id="rktActionStatus"></div>
+    <!-- НАТИВНАЯ КНОПКА через Telegram MainButton — HTML только fallback для ПК -->
+    <div class="rkt-action-bar" id="rktActionBar">
+      <div class="rkt-action-status" id="rktActionStatus">ОЖИДАНИЕ СТАРТА</div>
       <button class="rkt-btn bb" id="rktBtn" onclick="rktAction()">🚀 ПОСТАВИТЬ</button>
     </div>
 
@@ -2470,11 +2470,12 @@ function showPage(n) {
   } catch(e){}
   if(n==='rocket') {
     try { initRocketOnce(); } catch(e){}
-    // Показываем нативную кнопку
-    setTimeout(()=>{ try{ rktSyncMainBtn(); }catch(e){} }, 100);
+    // Инициализируем и запускаем нативную кнопку
+    try{ _mbInit(); _mbStartRAF(); }catch(e){}
+    setTimeout(()=>{ try{ _mbSync(); }catch(e){} }, 200);
   } else {
-    // Скрываем нативную кнопку на других вкладках
-    try{ _mbHide(); }catch(e){}
+    // Останавливаем нативную кнопку на других вкладках
+    try{ _mbStopRAF(); }catch(e){}
   }
   if(n==='top') {
     try { loadLeaderboard(true); } catch(e){}
@@ -4015,9 +4016,9 @@ async function init() {
     if(bar) bar.style.width = '100%';
   }
 
-  // Гарантированное закрытие — максимум 1.5 сек в любом случае
+  // Таймер: с API — ждём до 5 сек, без API — 1.5 сек
   const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
-  const emergencyMs = hasApi ? 2500 : 800;
+  const emergencyMs = hasApi ? 5000 : 1500;
   const emergency = setTimeout(() => {
     closeSplash();
     try { startBalancePolling(); } catch(e) {}
@@ -4052,21 +4053,21 @@ async function init() {
       if(bv) { bv.className = 'splash-bal-value loading'; bv.textContent = '---'; }
     } catch(e){}
 
-    // ── Прогресс-бар: 0 → 30% пока буквы анимируются ──────────
+    // ── Прогресс-бар: 0 → 35% пока буквы анимируются ──────────
     let prog = 0;
-    const t1 = setInterval(()=>{ prog=Math.min(prog+3,30); if(bar) bar.style.width=prog+'%'; },20);
-    await new Promise(r=>setTimeout(r,750));
+    const t1 = setInterval(()=>{ prog=Math.min(prog+2,35); if(bar) bar.style.width=prog+'%'; },30);
+    await new Promise(r=>setTimeout(r,1200));
     clearInterval(t1);
-    if(bar) bar.style.width='30%';
+    if(bar) bar.style.width='35%';
 
     // ── Шаг 1: Подключение к серверу ───────────────────────────
     splashStep('step1', 'active');
     if(status) status.textContent='ПОДКЛЮЧЕНИЕ...';
 
     const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
-    const t2 = setInterval(()=>{ prog=Math.min(prog+1,60); if(bar) bar.style.width=prog+'%'; },40);
+    const t2 = setInterval(()=>{ prog=Math.min(prog+1,65); if(bar) bar.style.width=prog+'%'; },50);
 
-    await new Promise(r=>setTimeout(r,300));
+    await new Promise(r=>setTimeout(r,600));
 
     if(hasApi) {
       splashStep('step1', 'done');
@@ -4080,11 +4081,11 @@ async function init() {
 
     // ── Шаг 2+3: Загружаем актуальный баланс из бота ──────────
     clearInterval(t2);
-    const t3 = setInterval(()=>{ prog=Math.min(prog+1,88); if(bar) bar.style.width=prog+'%'; },35);
+    const t3 = setInterval(()=>{ prog=Math.min(prog+1,90); if(bar) bar.style.width=prog+'%'; },40);
 
     const loadedBal = await Promise.race([
       safeLoadBalanceAnimated(),
-      new Promise(r=>setTimeout(()=>r(null), 2000))
+      new Promise(r=>setTimeout(()=>r(null), hasApi ? 4000 : 1000))
     ]);
 
     clearInterval(t3);
@@ -4092,13 +4093,12 @@ async function init() {
     // ── Финал ──────────────────────────────────────────────────
     _lastKnownBalance = balance;
     if(bar) bar.style.width='100%';
-    // Финал — показываем то что уже применено (safeLoadBalanceAnimated уже всё показала)
     if(status) status.textContent='✅ ' + balance.toLocaleString('ru-RU') + ' ТОКЕНОВ';
 
     try{ refreshBets(); }catch(e){}
     try{ for(const b of [100000,50000,25000,10000]){if(balance>=b){selectBet(b);break;}} }catch(e){}
 
-    await new Promise(r=>setTimeout(r,600));
+    await new Promise(r=>setTimeout(r,900));
 
   } catch(e) {
     console.warn('Init error:', e);
@@ -6035,100 +6035,134 @@ let _rktInited=false;
 // ══════════════════════════════════════════════════════════
 // TELEGRAM MAINBUTTON — нативная кнопка для ракетки
 // ══════════════════════════════════════════════════════════
-let _mbActive = false;
+// ══════════════════════════════════════════════════════════
+// TELEGRAM MAINBUTTON — нативная кнопка, обновляется каждый кадр
+// ══════════════════════════════════════════════════════════
+let _mb = null;           // кэш tg.MainButton
+let _mbHandler = null;    // текущий обработчик клика
+let _mbLastText = '';     // кэш текста — не перерисовываем если не изменился
+let _mbLastColor = '';
+let _mbLastEnabled = null;
+let _mbRAF = false;       // запущен ли RAF цикл
 
-function _mbShow(text, color, textColor){
+function _mbInit(){
+  try { _mb = tg.MainButton; } catch(e){ _mb = null; }
+}
+
+function _mbSet(text, color, textColor, enabled, onClick){
+  if(!_mb) return;
   try {
-    const mb = tg.MainButton;
-    mb.setText(text||'🚀 ПОСТАВИТЬ');
-    mb.color = color || '#ffffff';
-    mb.textColor = textColor || '#000000';
-    mb.enable();
-    mb.show();
-    _mbActive = true;
+    // Обновляем только если изменилось — избегаем мерцания
+    if(_mbLastText !== text){
+      _mb.setText(text);
+      _mbLastText = text;
+    }
+    if(_mbLastColor !== color){
+      _mb.color = color || '#ffffff';
+      _mb.textColor = textColor || '#000000';
+      _mbLastColor = color;
+    }
+    if(_mbLastEnabled !== enabled){
+      if(enabled) _mb.enable(); else _mb.disable();
+      _mbLastEnabled = enabled;
+    }
+    // Перевешиваем обработчик только если изменился
+    if(onClick && _mbHandler !== onClick){
+      if(_mbHandler) _mb.offClick(_mbHandler);
+      _mb.onClick(onClick);
+      _mbHandler = onClick;
+    }
+    _mb.show();
   } catch(e){}
 }
-function _mbDisable(text, color){
-  try {
-    const mb = tg.MainButton;
-    mb.setText(text||'⏳...');
-    mb.color = color || '#333333';
-    mb.textColor = '#888888';
-    mb.disable();
-    mb.show();
-    _mbActive = true;
-  } catch(e){}
-}
+
 function _mbHide(){
-  try { tg.MainButton.hide(); } catch(e){}
-  _mbActive = false;
-}
-function _mbOnClick(fn){
+  if(!_mb) return;
   try {
-    tg.MainButton.offClick(_mbHandler);
-    _mbHandler = fn;
-    tg.MainButton.onClick(_mbHandler);
+    if(_mbHandler){ _mb.offClick(_mbHandler); _mbHandler=null; }
+    _mb.hide();
+    _mbLastText=''; _mbLastColor=''; _mbLastEnabled=null;
   } catch(e){}
 }
-let _mbHandler = null;
 
-// Синхронизируем MainButton с состоянием ракетки
-function rktSyncMainBtn(){
+// RAF цикл — обновляет кнопку 60fps пока страница ракеты активна
+function _mbStartRAF(){
+  if(_mbRAF) return;
+  _mbRAF = true;
+  function loop(){
+    if(!_mbRAF){ _mbHide(); return; }
+    try{ _mbSync(); }catch(e){}
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+function _mbStopRAF(){ _mbRAF = false; }
+
+// Статические ссылки на функции-обработчики (не создаём новые каждый кадр)
+function _mbHandleCashout(){
+  _rktFrozenMult = parseFloat(RKT.mult.toFixed(2));
+  try{ tg.HapticFeedback.impactOccurred('heavy'); }catch(e){}
+  rktDoCashout();
+}
+function _mbHandleBet(){
+  try{ tg.HapticFeedback.impactOccurred('medium'); }catch(e){}
+  rktPlaceBet();
+}
+
+// Синхронизируем состояние кнопки — вызывается каждый кадр
+function _mbSync(){
+  if(!_mb) return;
   const rocketPage = document.getElementById('page-rocket');
-  const isRocketActive = rocketPage && rocketPage.classList.contains('active');
-  if(!isRocketActive){ _mbHide(); return; }
+  if(!rocketPage || !rocketPage.classList.contains('active')){ _mbHide(); return; }
 
   if(RKT.phase==='flying'){
-    if(RKT.betPlaced && !RKT.cashedOut){
-      const mult = (RKT.mult||1).toFixed(2);
-      _mbShow('💸 ЗАБРАТЬ ×'+mult+'!', '#22c55e', '#ffffff');
-      _mbOnClick(()=>{
-        const displayedMult = parseFloat(RKT.mult.toFixed(2));
-        _rktFrozenMult = displayedMult;
-        try{ tg.HapticFeedback.impactOccurred('heavy'); }catch(e){}
-        rktDoCashout();
-      });
-    } else if(RKT.cashedOut){
-      _mbDisable('✅ Забрано ×'+(RKT.cashedMult||1).toFixed(2), '#1a3a1a');
-    } else {
-      _mbDisable('🚀 Поставить в следующем', '#1a1a2a');
+    if(RKT.betPlaced && !RKT.cashedOut && !_rktCashingOut){
+      const m = RKT.mult||1;
+      const pot = RKT.myBet ? Math.floor(RKT.myBet*m)-RKT.myBet : 0;
+      const potStr = pot>0 ? ' +'+pot.toLocaleString('ru-RU') : '';
+      _mbSet('💸 ЗАБРАТЬ ×'+m.toFixed(2)+potStr, '#15803d', '#ffffff', true, _mbHandleCashout);
+      return;
     }
+    if(RKT.cashedOut){
+      _mbSet('✅ Забрано ×'+(RKT.cashedMult||1).toFixed(2), '#1a3a1a', '#4ade80', false, null);
+      return;
+    }
+    _mbSet('🚀 Следующий раунд', '#111111', '#555555', false, null);
     return;
   }
 
   if(RKT.phase==='crashed'){
-    _mbDisable('⏳ Новый раунд...', '#2a1a1a');
+    _mbSet('💥 Новый раунд...', '#1a0a0a', '#555555', false, null);
     return;
   }
 
   // Ожидание
   if(_rktBetAccepted || _rktRoundBetDone || RKT.betPlaced){
-    const betFmt = RKT.myBet ? RKT.myBet.toLocaleString('ru-RU') : '';
-    _mbDisable('✅ Ставка '+betFmt+' принята', '#1a2a1a');
+    const betFmt = RKT.myBet ? ' '+RKT.myBet.toLocaleString('ru-RU') : '';
+    _mbSet('✅ Ставка'+betFmt+' принята', '#0a2a0a', '#4ade80', false, null);
     return;
   }
   if(_rktBetting){
-    _mbDisable('⟳ Отправляем...', '#2a2a00');
+    _mbSet('⟳ Отправляем...', '#2a2000', '#fbbf24', false, null);
     return;
   }
   if(RKT.waitLeft > 0 && RKT.waitLeft <= 1.5){
-    _mbDisable('🔒 Скоро старт...', '#2a1a00');
+    _mbSet('🔒 Скоро старт', '#1a0a00', '#664400', false, null);
     return;
   }
-
   // Активна — можно ставить
   const inp = document.getElementById('rktInp');
   let betStr = '';
   try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betStr=' '+v.toLocaleString('ru-RU'); }catch(e){}
-  _mbShow('🚀 ПОСТАВИТЬ'+betStr, '#ffffff', '#000000');
-  _mbOnClick(()=>{
-    try{ tg.HapticFeedback.impactOccurred('medium'); }catch(e){}
-    rktPlaceBet();
-  });
+  const waitStr = RKT.waitLeft>1.5 ? ' ('+Math.ceil(RKT.waitLeft)+'с)' : '';
+  _mbSet('🚀 ПОСТАВИТЬ'+betStr+waitStr, '#ffffff', '#000000', true, _mbHandleBet);
 }
 
+// Совместимость с rktUpdateBtn
+function rktSyncMainBtn(){ try{ _mbSync(); }catch(e){} }
+
 function initRocketOnce(){
-  if(_rktInited) return; // уже запущено — не дублируем
+  if(_rktInited) return;
   _rktInited=true;
   initRocket();
 }
@@ -6136,11 +6170,15 @@ function initRocketOnce(){
 function initRocket(){
   initRktCvs(); rktUI(); rktHist(); rktUpdateTable();
 
-  // Если работаем в Telegram — скрываем HTML кнопку, используем нативную MainButton
+  // Если Telegram — скрываем всю HTML action-bar, используем только нативную MainButton
+  // Если ПК — оставляем HTML кнопку
   try{
-    if(window.Telegram && window.Telegram.WebApp && tg.MainButton){
-      const htmlBtn = document.getElementById('rktBtn');
-      if(htmlBtn) htmlBtn.style.display='none';
+    const inTelegram = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData;
+    const actionBar = document.getElementById('rktActionBar');
+    if(inTelegram && actionBar){
+      actionBar.style.display = 'none'; // скрываем HTML
+    } else if(actionBar){
+      actionBar.style.display = ''; // показываем на ПК
     }
   }catch(e){}
   if(API_URL&&API_SECRET){
