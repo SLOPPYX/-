@@ -5719,9 +5719,10 @@ let _rktBettingTimer=null;
 function _rktSetBetting(val){
   _rktBetting=val;
   if(_rktBettingTimer){ clearTimeout(_rktBettingTimer); _rktBettingTimer=null; }
-  if(val){
-    // Гарантированно снимаем блокировку через 3 сек — защита от зависания
-    _rktBettingTimer=setTimeout(()=>{ _rktBetting=false; _rktBettingTimer=null; rktUI(); }, 3000);
+  // Таймер только при val=true И нет активной ставки — защита от вечного зависания
+  // Если ставка принята (_rktRoundBetDone=true) — таймер не нужен
+  if(val && !_rktRoundBetDone){
+    _rktBettingTimer=setTimeout(()=>{ _rktBetting=false; _rktBettingTimer=null; rktUpdateBtn(); }, 4000);
   }
 }
 function rktPlaceBet(){
@@ -5792,17 +5793,17 @@ function rktPlaceBet(){
       if(r && r.error){
         refund('Ошибка: '+r.error); return;
       }
-      // Успех
+      // ── УСПЕХ: ставка принята — кнопка остаётся заблокированной ──
       if(r && typeof r.balance==='number') setBalance(r.balance);
       if(res){ res.textContent='Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
       showToast('Ставка '+bet.toLocaleString('ru-RU')+'!','success');
-      _rktSetBetting(false);
-      rktUI(); rktUpdateTable();
+      // НЕ вызываем _rktSetBetting(false) — кнопка остаётся locked до конца раунда
+      // Обновляем таблицу без пересчёта кнопки
+      rktUpdateTable(); rktHist();
     }).catch(()=>{
-      // Сеть — принята офлайн
+      // Сеть — принята офлайн, кнопка остаётся заблокированной
       if(res){ res.textContent='Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
-      _rktSetBetting(false);
-      rktUI();
+      // Не разблокируем
     });
   };
   doSend();
@@ -5821,11 +5822,12 @@ async function rktDoCashout(){
   _rktFrozenMult = mult; // держим замороженным
   _rktOperating  = true;
 
-  // Точный расчёт: токены целые, prize округляем
-  const localPrize  = Math.round(myBet * mult); // 10000 * 1.33 = 13300
-  const localProfit = localPrize - myBet;        // 13300 - 10000 = 3300
+  // Локальный расчёт — только для мгновенного показа ДО ответа сервера
+  // prize = round(bet * mult) — токены целые числа
+  const localPrize  = Math.round(myBet * mult);
+  const localProfit = localPrize - myBet;
 
-  // Зачисляем мгновенно
+  // Зачисляем мгновенно (предварительно, скорректируем после ответа сервера)
   setBalance(balance + localPrize);
   RKT.stats.g++;
   RKT.stats.p += localProfit;
@@ -5852,16 +5854,19 @@ async function rktDoCashout(){
         })
       });
       if(r && r.ok){
+        // ── СЕРВЕР — единственная финансовая истина ──────────
         const sPrize  = r.prize  != null ? r.prize  : localPrize;
-        const sProfit = sPrize - myBet;
+        const sProfit = sPrize - myBet;   // точная прибыль = prize - ставка
         const sBal    = typeof r.balance === 'number' ? r.balance : balance;
 
         RKT.cashedMult = mult;
+        // Корректируем баланс до точного серверного значения
         setBalance(sBal);
         RKT.stats.p = RKT.stats.p - localProfit + sProfit;
         if(mult > RKT.stats.b) RKT.stats.b = mult;
         rktSave();
 
+        // Показываем точные данные с сервера
         _showCashoutResult(res, mult, sProfit, sPrize);
         showToast('×'+mult.toFixed(2)+'  +'+sProfit.toLocaleString('ru-RU')+' токенов 💰','gold');
         if(btn){ btn.innerHTML='Забрано ×'+mult.toFixed(2); }
