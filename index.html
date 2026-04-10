@@ -1223,36 +1223,145 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 }
 
 /* Кнопка — sticky снизу, прямо над статистикой */
-.rkt-action-bar {
-  display:none; /* скрыта по умолчанию — показывается только на вкладке ракеты */
-  position:fixed;
-  left:50%; transform:translateX(-50%);
-  width:100%; max-width:480px;
-  /* прямо над rkt-stats который тоже sticky bottom:0 */
-  bottom:calc(78px + env(safe-area-inset-bottom));
-  z-index:12;
-  padding:8px 16px 6px;
-  background:rgba(5,3,0,.98);
-  border-top:1px solid rgba(255,100,0,.2);
-  backdrop-filter:blur(16px);
-  -webkit-backdrop-filter:blur(16px);
-  box-sizing:border-box;
+/* убираем старую fixed кнопку */
+.rkt-action-bar { display:none !important; }
+#page-rocket.active { padding-bottom:10px; }
+
+/* ══ НОВАЯ ПАНЕЛЬ УПРАВЛЕНИЯ ══ */
+.rcp-wrap {
+  background:rgba(8,5,2,.98);
+  border-bottom:1px solid rgba(255,100,0,.12);
+  padding:10px 12px 12px;
 }
-.rkt-action-bar.visible { display:block; }
-.rkt-action-status {
-  font-family:var(--fd); font-size:9px; font-weight:700;
-  letter-spacing:1.5px; text-align:center;
-  min-height:14px; margin-bottom:5px;
-  color:rgba(255,255,255,.3);
-  transition:color .2s;
+.rcp-top-row {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:8px; margin-bottom:10px; min-height:22px;
 }
-.rkt-action-status.ok  { color:#4ade80; }
-.rkt-action-status.err { color:#f87171; }
-.rkt-action-status.act { color:#fbbf24; }
-.rkt-action-bar .rkt-btn {
-  width:100%; margin:0;
-  padding:15px 20px;
-  font-size:17px;
+.rcp-top-row .rkt-res { flex:1; margin:0; padding:0; background:none; border:none; font-size:11px; }
+.rcp-top-row .rkt-hist { flex:1; min-width:0; }
+
+/* ОСНОВНАЯ СЕТКА */
+.rcp-main { display:flex; gap:10px; align-items:stretch; }
+.rcp-left { flex:1; display:flex; flex-direction:column; gap:7px; min-width:0; }
+.rcp-right { width:108px; flex-shrink:0; }
+
+/* ПОЛЕ СТАВКИ */
+.rcp-field-row {
+  display:flex; height:44px;
+  background:rgba(255,255,255,.06);
+  border:1.5px solid rgba(255,255,255,.1);
+  border-radius:12px; overflow:hidden;
+}
+.rcp-half, .rcp-dbl {
+  background:rgba(255,255,255,.07); border:none;
+  color:rgba(255,255,255,.55); font-family:var(--fd);
+  font-size:13px; font-weight:800; padding:0 13px;
+  cursor:pointer; transition:background .12s;
+  -webkit-tap-highlight-color:transparent; flex-shrink:0;
+}
+.rcp-half:active, .rcp-dbl:active { background:rgba(255,140,0,.25); color:#fff; }
+.rcp-inp {
+  flex:1; background:none; border:none; outline:none;
+  font-family:var(--fd); font-size:17px; font-weight:800;
+  color:#fff; text-align:center; padding:0 2px;
+}
+
+/* ПРЕСЕТЫ */
+.rcp-presets {
+  display:grid; grid-template-columns:repeat(5,1fr); gap:4px;
+}
+.rcp-presets button {
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09);
+  border-radius:8px; color:rgba(255,255,255,.5);
+  font-family:var(--fd); font-size:9px; font-weight:700; letter-spacing:.3px;
+  padding:6px 2px; cursor:pointer; text-align:center;
+  -webkit-tap-highlight-color:transparent; transition:all .12s;
+}
+.rcp-presets button:active { background:rgba(255,140,0,.2); color:#fff; border-color:rgba(255,140,0,.4); }
+.rcp-pr-max { color:#fbbf24 !important; border-color:rgba(251,191,36,.25) !important; }
+
+/* АВТО-ВЫВОД */
+.rcp-auto {
+  display:flex; align-items:center; gap:4px;
+}
+.rcp-auto span {
+  font-family:var(--fd); font-size:7px; font-weight:700;
+  letter-spacing:1.5px; color:rgba(255,255,255,.2);
+  white-space:nowrap; flex-shrink:0;
+}
+.rcp-au {
+  flex:1; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+  border-radius:7px; color:rgba(255,255,255,.35);
+  font-family:var(--fd); font-size:8px; font-weight:700;
+  padding:5px 2px; cursor:pointer; text-align:center;
+  -webkit-tap-highlight-color:transparent; transition:all .12s;
+}
+.rcp-au.on, .rcp-au-active {
+  background:rgba(255,140,0,.15); border-color:rgba(255,140,0,.4); color:#fbbf24;
+}
+.rcp-au-off { color:rgba(255,255,255,.2); }
+.rcp-au:active { background:rgba(255,140,0,.2); }
+
+/* ══ БОЛЬШАЯ КНОПКА ══ */
+.rcp-btn {
+  width:100%; height:100%; min-height:118px;
+  border:none; border-radius:16px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; padding:10px 6px;
+  font-family:var(--fd);
+  transition:transform .08s; position:relative; overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+.rcp-btn::after {
+  content:''; position:absolute; top:0; left:0; right:0; height:45%;
+  background:linear-gradient(180deg,rgba(255,255,255,.18) 0%,transparent 100%);
+  pointer-events:none; border-radius:16px 16px 0 0;
+}
+.rcp-btn:active:not(:disabled) { transform:scale(.95); }
+.rcp-btn:disabled { cursor:not-allowed; }
+.rcp-btn-label {
+  font-size:9px; font-weight:900; letter-spacing:2px; opacity:.75;
+}
+.rcp-btn-val {
+  font-size:16px; font-weight:900; letter-spacing:0;
+  line-height:1.15; text-align:center; white-space:pre-line;
+}
+
+/* ПОСТАВИТЬ — белая, пульсирует */
+.rcp-bet {
+  background:linear-gradient(160deg,#ffffff 0%,#d4d4d4 100%);
+  box-shadow:0 4px 28px rgba(255,255,255,.3), 0 0 0 1px rgba(255,255,255,.15);
+  animation:rcpBetPulse 2s ease infinite alternate;
+  color:#0a0a0a;
+}
+@keyframes rcpBetPulse {
+  from { box-shadow:0 4px 20px rgba(255,255,255,.2); }
+  to   { box-shadow:0 6px 40px rgba(255,255,255,.5), 0 0 0 2px rgba(255,255,255,.12); }
+}
+/* ОТПРАВЛЯЕМ — оранжевая, мигает */
+.rcp-send {
+  background:linear-gradient(160deg,#f97316 0%,#c2410c 100%);
+  box-shadow:0 4px 20px rgba(249,115,22,.5);
+  animation:rcpSendPulse .5s ease infinite alternate;
+  color:#fff;
+}
+@keyframes rcpSendPulse { from{opacity:.75} to{opacity:1} }
+/* ЖДЁМ — серая, неактивна */
+.rcp-wait {
+  background:rgba(255,255,255,.06);
+  box-shadow:none; animation:none;
+  color:rgba(255,255,255,.2);
+}
+/* ЗАБРАТЬ — зелёная, пульсирует */
+.rcp-cash {
+  background:linear-gradient(160deg,#22c55e 0%,#15803d 100%);
+  box-shadow:0 4px 28px rgba(34,197,94,.6), 0 0 0 2px rgba(34,197,94,.2);
+  animation:rcpCashPulse .55s ease infinite alternate;
+  color:#fff;
+}
+@keyframes rcpCashPulse {
+  from { box-shadow:0 4px 20px rgba(34,197,94,.4); transform:scale(1); }
+  to   { box-shadow:0 8px 40px rgba(34,197,94,.8), 0 0 0 4px rgba(34,197,94,.2); transform:scale(1.03); }
 }
 
 /* Мини-стата — фиксированная внизу */
@@ -1954,81 +2063,82 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   <!-- ══ ROCKET GAME ══ -->
   <div class="page rkt-wrap" id="page-rocket" style="padding:0">
 
-    <!-- Игровая сцена с 3D Canvas -->
+    <!-- Игровая сцена -->
     <div class="rkt-scene">
       <canvas id="rocketCanvas"></canvas>
-
-      <!-- Множитель по центру -->
       <div class="rkt-mult-wrap" id="rktMultWrap">
         <div class="rkt-mult sw" id="rktMult">ЖДЁМ</div>
         <div class="rkt-sub" id="rktSub">Следующий раунд скоро</div>
       </div>
-
-      <!-- Теги игроков поверх сцены -->
       <div class="rkt-players-overlay" id="rktTags"></div>
     </div>
 
-    <!-- Панель управления -->
-    <div class="rkt-panel">
+    <!-- ══ НОВАЯ ПАНЕЛЬ — прямо под canvas ══ -->
+    <div class="rcp-wrap">
 
-      <!-- Результат раунда -->
-      <div class="rkt-res" id="rktRes">Поставь токены и жди старта 🚀</div>
-
-      <!-- Ставка + Авто-вывод -->
-      <div class="rkt-ctrl">
-        <div class="rkt-box">
-          <div class="rkt-lbl">СТАВКА</div>
-          <input class="rkt-inp" id="rktInp" type="text" inputmode="numeric" pattern="[0-9]*" value="10000" placeholder="10000 / 1к / 1кк / 1ккк" min="1000" step="1000" enterkeyhint="done">
-          <div class="rkt-presets">
-            <div class="rkt-pr" onclick="rktPreset(10000)">10K</div>
-            <div class="rkt-pr" onclick="rktPreset(100000000)">100М</div>
-            <div class="rkt-pr" onclick="rktPreset(1000000)">1КК</div>
-            <div class="rkt-pr" onclick="rktPreset(100000)">100K</div>
-            <div class="rkt-pr" onclick="rktMultBet(2)" style="color:var(--green)">×2</div>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px">
-            <div class="rkt-pr" style="color:#f87171;font-size:8px" onclick="rktMultBet(0.5)">×0.5</div>
-            <div class="rkt-pr" style="color:#fbbf24;font-size:8px" onclick="rktMultBet(1.5)">×1.5</div>
-            <div class="rkt-pr" style="color:#60a5fa;font-size:8px" onclick="rktMultBet(2)">×2</div>
-            <div class="rkt-pr" style="color:#c084fc;font-size:8px" onclick="rktMultBet(3)">×3</div>
-            <div class="rkt-pr" style="color:#4ade80;font-size:8px" onclick="rktMultBet(5)">×5</div>
-          </div>
-        </div>
-        <div class="rkt-box">
-          <div class="rkt-lbl">АВТО-ВЫВОД ×</div>
-          <div class="rkt-autos">
-            <div class="rkt-au" onclick="rktAutoSet(1.5)">1.5</div>
-            <div class="rkt-au" onclick="rktAutoSet(2)">2</div>
-            <div class="rkt-au" onclick="rktAutoSet(5)">5</div>
-            <div class="rkt-au on" onclick="rktAutoSet(0)">ВЫКЛ</div>
-          </div>
-          <div class="rkt-au-lbl" id="rktAuLbl">Авто выключен</div>
-        </div>
-      </div>
-
-      <!-- История крашей -->
-      <div class="rkt-hist-wrap">
-        <div class="rkt-hist-lbl">ИКСЫ</div>
+      <!-- Строка результата + история -->
+      <div class="rcp-top-row">
+        <div class="rkt-res" id="rktRes"></div>
         <div class="rkt-hist" id="rktHist"></div>
       </div>
 
-      <!-- Таблица игроков — пустой контейнер, будет переделан -->
-      <div id="rktTable" style="display:none"></div>
+      <!-- Основная панель: ставка + кнопка -->
+      <div class="rcp-main">
 
-      <!-- КНОПКА — sticky над статистикой, всегда видна при скролле -->
-      <div class="rkt-action-bar" id="rktActionBar">
-        <div class="rkt-action-status" id="rktActionStatus">ОЖИДАНИЕ СТАРТА</div>
-        <button class="rkt-btn bb" id="rktBtn" onclick="_rktFrozenMult=(RKT&&RKT.mult)?parseFloat(RKT.mult.toFixed(2)):null;rktAction()">🚀 ПОСТАВИТЬ</button>
-      </div>
+        <!-- ЛЕВАЯ: поле ставки, пресеты, авто-вывод -->
+        <div class="rcp-left">
+          <div class="rcp-field-row">
+            <button class="rcp-half" onclick="rktMultBet(0.5)">½</button>
+            <input class="rcp-inp" id="rktInp" type="text" inputmode="numeric"
+              pattern="[0-9]*" value="10000" enterkeyhint="done">
+            <button class="rcp-dbl" onclick="rktMultBet(2)">×2</button>
+          </div>
+          <div class="rcp-presets">
+            <button onclick="rktPreset(1000)">1К</button>
+            <button onclick="rktPreset(10000)">10К</button>
+            <button onclick="rktPreset(100000)">100К</button>
+            <button onclick="rktPreset(1000000)">1КК</button>
+            <button class="rcp-pr-max" onclick="rktPreset(balance||0)">MAX</button>
+          </div>
+          <div class="rcp-auto">
+            <span>АВТО</span>
+            <button class="rcp-au" onclick="rktAutoSet(1.5)">×1.5</button>
+            <button class="rcp-au" onclick="rktAutoSet(2)">×2</button>
+            <button class="rcp-au" onclick="rktAutoSet(5)">×5</button>
+            <button class="rcp-au rcp-au-off" id="rktAuLbl" onclick="rktAutoSet(0)">ВЫКЛ</button>
+          </div>
+        </div>
 
-      <!-- Мини-статистика -->
-      <div class="rkt-stats">
-        <div class="rkt-sc"><span class="rkt-sv" id="rStG">0</span><span class="rkt-sl">ИГРЫ</span></div>
-        <div class="rkt-sc"><span class="rkt-sv" id="rStB" style="color:#4ade80">—</span><span class="rkt-sl">ЛУЧШИЙ</span></div>
-        <div class="rkt-sc"><span class="rkt-sv" id="rStP">0</span><span class="rkt-sl">ПРИБЫЛЬ</span></div>
+        <!-- ПРАВАЯ: большая кнопка действия -->
+        <div class="rcp-right">
+          <button class="rcp-btn rcp-bet" id="rktBtn"
+            onclick="_rktFrozenMult=(RKT&&RKT.mult)?parseFloat(RKT.mult.toFixed(2)):null;rktAction()">
+            <span class="rcp-btn-label" id="rktBtnLabel">ПОСТАВИТЬ</span>
+            <span class="rcp-btn-val" id="rktBtnVal">—</span>
+          </button>
+        </div>
+
       </div>
 
     </div>
+
+    <!-- Таблица игроков (скрыта) -->
+    <div id="rktTable" style="display:none"></div>
+
+    <!-- Статистика + история -->
+    <div class="rkt-panel" style="padding:10px 14px 0">
+      <div class="rkt-hist-wrap" style="margin-bottom:10px">
+        <div class="rkt-hist-lbl">ИКСЫ</div>
+      </div>
+    </div>
+
+    <!-- Мини-статистика -->
+    <div class="rkt-stats">
+      <div class="rkt-sc"><span class="rkt-sv" id="rStG">0</span><span class="rkt-sl">ИГРЫ</span></div>
+      <div class="rkt-sc"><span class="rkt-sv" id="rStB" style="color:#4ade80">—</span><span class="rkt-sl">ЛУЧШИЙ</span></div>
+      <div class="rkt-sc"><span class="rkt-sv" id="rStP">0</span><span class="rkt-sl">ПРИБЫЛЬ</span></div>
+    </div>
+
   </div>
 
   <!-- ══ TOP LEADERS ══ -->
@@ -5322,21 +5432,12 @@ function rktTickStart(){
     // RKT.mult всегда обновляется — ракетка продолжает лететь и после кэшаута
     RKT.mult=m;
 
-    // Обновляем кнопку каждый кадр — иксы и прибыль в реальном времени
+    // Обновляем кнопку ЗАБРАТЬ каждый кадр — иксы и сумма в реальном времени
     if(RKT.betPlaced && !RKT.cashedOut && !_rktCashingOut){
-      const btnLive=document.getElementById('rktBtn');
-      if(btnLive && btnLive.classList.contains('bc')){
-        const pot = RKT.myBet ? Math.floor(RKT.myBet * m) - RKT.myBet : 0;
-        const potStr = pot > 0 ? ' +'+pot.toLocaleString('ru-RU') : '';
-        btnLive.textContent='💸 ЗАБРАТЬ ×'+m.toFixed(2)+potStr;
-      }
-      // Обновляем статус-строку
-      const st=document.getElementById('rktActionStatus');
-      if(st){
-        const prize=Math.floor((RKT.myBet||0)*m);
-        st.textContent='СТАВКА: '+(RKT.myBet||0).toLocaleString('ru-RU')+' · СЕЙЧАС: '+prize.toLocaleString('ru-RU');
-        st.className='rkt-action-status act';
-      }
+      const bl=document.getElementById('rktBtnLabel');
+      const bv=document.getElementById('rktBtnVal');
+      if(bv){ bv.textContent='×'+m.toFixed(2)+'\n'+Math.floor((RKT.myBet||0)*m).toLocaleString('ru-RU'); }
+      if(bl){ bl.textContent='ЗАБРАТЬ'; }
     }
 
     const el=document.getElementById('rktMult');
@@ -5554,73 +5655,58 @@ function rktUI(){
 
 // Единственная функция управления кнопкой — вызывать только через rktUI()
 function rktUpdateBtn(){
-  const b=document.getElementById('rktBtn');
-  const st=document.getElementById('rktActionStatus');
+  const b  = document.getElementById('rktBtn');
+  const bl = document.getElementById('rktBtnLabel');
+  const bv = document.getElementById('rktBtnVal');
   try{ rktSyncMainBtn(); }catch(e){}
   if(!b) return;
 
-  // Хелпер для статус-строки
-  const setStatus=(txt,cls)=>{ if(st){ st.textContent=txt; st.className='rkt-action-status '+(cls||''); } };
+  function setState(cls, label, val, disabled){
+    b.className = 'rcp-btn ' + cls;
+    b.disabled  = !!disabled;
+    if(bl) bl.textContent = label;
+    if(bv) bv.textContent = val;
+  }
 
-  // ── ПОЛЁТ ───────────────────────────────────────────────
+  // ── ПОЛЁТ ──────────────────────────────────────────────
   if(RKT.phase==='flying'){
-    if(RKT.betPlaced && !RKT.cashedOut){
-      const m = RKT.mult||1;
-      const pot = RKT.myBet ? Math.floor(RKT.myBet * m) - RKT.myBet : 0;
-      const potStr = pot > 0 ? ' +'+pot.toLocaleString('ru-RU') : '';
-      b.innerHTML='💸 ЗАБРАТЬ ×'+m.toFixed(2)+potStr;
-      b.className='rkt-btn bc';
-      b.disabled = !!_rktCashingOut;
-      setStatus('СТАВКА: '+RKT.myBet.toLocaleString('ru-RU')+' · ПОТЕНЦИАЛ: '+(RKT.myBet*m).toFixed(0)+'', 'act');
+    if(RKT.betPlaced && !RKT.cashedOut && !_rktCashingOut){
+      const m   = RKT.mult||1;
+      const out = RKT.myBet ? Math.floor(RKT.myBet*m) : 0;
+      setState('rcp-cash','ЗАБРАТЬ','×'+m.toFixed(2)+'\n'+out.toLocaleString('ru-RU'), false);
       return;
     }
     if(RKT.cashedOut){
-      b.innerHTML='✅ ×'+(RKT.cashedMult||1).toFixed(2)+' забрано';
-      b.className='rkt-btn bw'; b.disabled=true;
-      setStatus('ЗАБРАНО · ЖДЁМ КОНЦА РАУНДА','ok');
+      setState('rcp-wait','ЗАБРАНО','×'+(RKT.cashedMult||1).toFixed(2), true);
       return;
     }
-    b.innerHTML='—'; b.className='rkt-btn bw'; b.disabled=true;
-    setStatus('РАКЕТКА ЛЕТИТ','');
+    setState('rcp-wait','ЛЕТИМ','—', true);
     return;
   }
-
-  // ── КРАШ ────────────────────────────────────────────────
+  // ── КРАШ ───────────────────────────────────────────────
   if(RKT.phase==='crashed'){
-    b.innerHTML='💥 Новый раунд скоро...';
-    b.className='rkt-btn bw'; b.disabled=true;
-    setStatus('','');
+    setState('rcp-wait','КРАШ','💥', true);
     return;
   }
-
-  // ── ОЖИДАНИЕ ─────────────────────────────────────────────
+  // ── ОЖИДАНИЕ ───────────────────────────────────────────
   if(_rktBetAccepted || _rktRoundBetDone || RKT.betPlaced){
-    const betFmt = RKT.myBet ? RKT.myBet.toLocaleString('ru-RU') : '';
-    b.innerHTML='✅ Ставка '+ betFmt +' принята';
-    b.className='rkt-btn bw'; b.disabled=true;
-    setStatus('СТАВКА ПРИНЯТА · ЖДЁМ СТАРТА 🚀','ok');
+    setState('rcp-wait','ПРИНЯТО',(RKT.myBet||0).toLocaleString('ru-RU'), true);
     return;
   }
   if(_rktBetting){
-    b.innerHTML='<span class="rkt-btn-spin">⟳</span> Отправляем...';
-    b.className='rkt-btn bl'; b.disabled=true;
-    setStatus('ОТПРАВЛЯЕМ СТАВКУ...','act');
+    setState('rcp-send','⟳','ОТПРАВКА', true);
     return;
   }
-  if(RKT.waitLeft > 0 && RKT.waitLeft <= 1.5){
-    b.innerHTML='🔒 Скоро старт';
-    b.className='rkt-btn bw'; b.disabled=true;
-    setStatus('ПРИЁМ СТАВОК ЗАКРЫТ','err');
+  if(RKT.waitLeft>0 && RKT.waitLeft<=1.5){
+    setState('rcp-wait','СКОРО','СТАРТ', true);
     return;
   }
-  // Активна
-  const waitSec = RKT.waitLeft > 0 ? ' · СТАРТ ЧЕРЕЗ '+Math.ceil(RKT.waitLeft)+'с' : '';
-  const inp=document.getElementById('rktInp');
-  let betPreview='';
-  try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betPreview=' '+v.toLocaleString('ru-RU'); }catch(e){}
-  b.innerHTML='🚀 ПОСТАВИТЬ'+betPreview;
-  b.className='rkt-btn bb'; b.disabled=false;
-  setStatus('ОЖИДАНИЕ СТАРТА'+waitSec,'');
+  // Активна — можно ставить
+  const inp = document.getElementById('rktInp');
+  let betAmt = 0;
+  try{ betAmt = parseBetStr(inp?inp.value:'0')||0; }catch(e){}
+  const waitStr = RKT.waitLeft>1.5 ? Math.ceil(RKT.waitLeft)+'с' : '🚀';
+  setState('rcp-bet', 'ПОСТАВИТЬ', betAmt>=1000 ? betAmt.toLocaleString('ru-RU') : waitStr, false);
 }
 
 // Оставляем для совместимости — просто вызывает rktUI
