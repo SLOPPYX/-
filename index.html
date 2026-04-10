@@ -1220,11 +1220,17 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   -webkit-backdrop-filter:blur(8px);
 }
 
-/* Кнопка — блок прямо под игровой сценой */
+/* Кнопка — sticky снизу, прямо над статистикой */
 .rkt-action-bar {
-  padding:10px 14px 10px;
-  background:rgba(0,0,0,.95);
-  border-bottom:1px solid rgba(255,100,0,.12);
+  position:sticky;
+  bottom:calc(56px + env(safe-area-inset-bottom)); /* высота rkt-stats */
+  z-index:11;
+  padding:10px 0 8px;
+  background:rgba(5,3,0,.98);
+  border-top:1px solid rgba(255,100,0,.15);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  margin:8px 0 0;
 }
 .rkt-action-status {
   font-family:var(--fd); font-size:9px; font-weight:700;
@@ -1955,12 +1961,6 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="rkt-players-overlay" id="rktTags"></div>
     </div>
 
-    <!-- КНОПКА — сразу под игрой, всегда видна -->
-    <div class="rkt-action-bar" id="rktActionBar">
-      <div class="rkt-action-status" id="rktActionStatus">ОЖИДАНИЕ СТАРТА</div>
-      <button class="rkt-btn bb" id="rktBtn" onclick="rktAction()">🚀 ПОСТАВИТЬ</button>
-    </div>
-
     <!-- Панель управления -->
     <div class="rkt-panel">
 
@@ -2007,6 +2007,12 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
       <!-- Таблица игроков — пустой контейнер, будет переделан -->
       <div id="rktTable" style="display:none"></div>
+
+      <!-- КНОПКА — sticky над статистикой, всегда видна при скролле -->
+      <div class="rkt-action-bar" id="rktActionBar">
+        <div class="rkt-action-status" id="rktActionStatus">ОЖИДАНИЕ СТАРТА</div>
+        <button class="rkt-btn bb" id="rktBtn" onclick="_rktFrozenMult=(RKT&&RKT.mult)?parseFloat(RKT.mult.toFixed(2)):null;rktAction()">🚀 ПОСТАВИТЬ</button>
+      </div>
 
       <!-- Мини-статистика -->
       <div class="rkt-stats">
