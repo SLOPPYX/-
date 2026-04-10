@@ -5247,6 +5247,9 @@ async function rktPollLoop(){
 
 // 60fps RAF — единственный источник mult на клиенте
 let _rktTick=false, _rktLastTable=0;
+// Замороженный mult в момент нажатия ЗАБРАТЬ — RAF больше не обновляет его
+let _rktFrozenMult = null;
+
 function rktTickStart(){
   if(_rktTick) return;
   _rktTick=true;
@@ -5254,12 +5257,14 @@ function rktTickStart(){
     if(!_rktTick||RKT.phase!=='flying'){_rktTick=false;return;}
 
     const elapsed=(Date.now()-RKT._ls)/1000;
-    // Жёсткое ограничение: никогда не превышаем crashAt
     const raw=Math.pow(Math.E, elapsed*0.085);
     const cap=RKT.crashAt||9999;
     const m=Math.min(raw, cap);
 
-    RKT.mult=m;
+    // Если mult заморожен (пользователь нажал ЗАБРАТЬ) — не обновляем
+    if(_rktFrozenMult === null){
+      RKT.mult=m;
+    }
 
     const el=document.getElementById('rktMult');
     if(el){
@@ -5436,6 +5441,7 @@ function rktApply(d){
         RKT.phase='waiting';RKT.betPlaced=false;RKT.cashedOut=false;
         _rktOperating=false; _rktSetBetting(false);
         _rktRoundBetDone=false; _rktMinBalance=-1;
+        _rktFrozenMult=null; // разморозить для следующего раунда
         rTrail=[];rCrashParticles=[];
         if(RKT.waitLeft>0) rktWaitTick();
         rktUI();
@@ -5595,7 +5601,7 @@ function rktUpdateTable(){
     allPlayers.push({
       name:(p.name||'?').slice(0,10), bet:p.bet,
       cashedAt:p.cashed_at,
-      prize: p.prize || null,  // точная сумма с сервера
+      prize: p.prize != null ? p.prize : null, // точная сумма с сервера
       avatar:p.avatar||'ghost',
       isMe:false, crashed:RKT.phase==='crashed'&&!p.cashed_at
     });
@@ -5699,8 +5705,12 @@ let _rktRoundBetDone = false;
 function rktAction(){
   const btn=document.getElementById('rktBtn');
   if(btn&&btn.disabled) return;
-  if(RKT.phase==='flying'&&RKT.betPlaced&&!RKT.cashedOut){ rktDoCashout(); return; }
-  // Ставку принимаем в любой фазе кроме активного полёта с ставкой
+  if(RKT.phase==='flying'&&RKT.betPlaced&&!RKT.cashedOut){
+    // ЗАМОРАЖИВАЕМ mult ПРЯМО СЕЙЧАС — до любых async операций
+    _rktFrozenMult = RKT.mult;
+    rktDoCashout();
+    return;
+  }
   if(!_rktRoundBetDone&&!_rktBetting){ rktPlaceBet(); }
 }
 
@@ -5729,11 +5739,11 @@ function rktPlaceBet(){
 
   const res=document.getElementById('rktRes');
 
-  // ── ШАГ 1: ЖЁСТКАЯ БЛОКИРОВКА КНОПКИ — сразу при нажатии ──
+  // Жёсткая блокировка кнопки сразу
   _rktSetBetting(true);
-  rktUpdateBtn(); // покажет спиннер и disabled=true немедленно
+  rktUpdateBtn();
 
-  // ── ШАГ 2: Списываем баланс ─────────────────────────────
+  // Списываем баланс
   RKT.betPlaced=true;
   RKT.myBet=bet;
   RKT._betTs=Date.now();
@@ -5743,7 +5753,16 @@ function rktPlaceBet(){
   rktUpdateTable(); rktUpdateTags();
   if(res){ res.textContent='⏳ Отправляем...'; res.className='rkt-res'; }
 
-  // ── ШАГ 3: Отправка на сервер (без задержки) ────────────
+  // Функция отката — возвращает ставку и разблокирует
+  const refund = (msg)=>{
+    _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
+    setBalance(balance+bet);
+    _rktSetBetting(false);
+    if(res){ res.textContent=msg||'Ставка не принята, токены возвращены'; res.className='rkt-res'; }
+    showToast('↩️ Ставка отменена, '+bet.toLocaleString('ru-RU')+' возвращено','info');
+    rktUI();
+  };
+
   const doSend = ()=>{
     if(!API_URL||!API_SECRET){
       _rktSetBetting(false);
@@ -5757,31 +5776,22 @@ function rktPlaceBet(){
       avatar_id:selectedAvatar||'ghost'
     })}).then(r=>{
       if(r && r.error==='insufficient_funds'){
-        // ── ОТКАТ: деньги вернулись, кнопка разблокирована ──
-        _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
-        setBalance(balance+bet);
-        _rktSetBetting(false);
-        if(res){ res.textContent='Недостаточно токенов!'; res.className='rkt-res loss'; }
-        showToast('Недостаточно токенов!','error');
-        rktUI(); return;
+        refund('Недостаточно токенов!'); return;
       }
       if(r && r.error==='round_started'){
-        // ── ОТКАТ: раунд начался ─────────────────────────────
-        _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
-        setBalance(balance+bet);
-        _rktSetBetting(false);
-        if(res){ res.textContent='Раунд начался, попробуй снова'; res.className='rkt-res'; }
-        showToast('Раунд уже начался','error');
-        rktUI(); return;
+        refund('Раунд начался — ставка возвращена'); return;
       }
-      // ── УСПЕХ ───────────────────────────────────────────────
+      if(r && r.error){
+        refund('Ошибка: '+r.error); return;
+      }
+      // Успех
       if(r && typeof r.balance==='number') setBalance(r.balance);
       if(res){ res.textContent='Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
       showToast('Ставка '+bet.toLocaleString('ru-RU')+'!','success');
       _rktSetBetting(false);
       rktUI(); rktUpdateTable();
     }).catch(()=>{
-      // Сеть — принята офлайн, кнопка заблокирована до конца раунда
+      // Сеть — принята офлайн
       if(res){ res.textContent='Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
       _rktSetBetting(false);
       rktUI();
@@ -5793,11 +5803,14 @@ function rktPlaceBet(){
 async function rktDoCashout(){
   if(!RKT.betPlaced||RKT.cashedOut) return;
 
-  // МГНОВЕННО фиксируем точный mult и блокируем
-  const mult  = RKT.mult;   // точный mult без округления
+  // Берём ЗАМОРОЖЕННЫЙ mult (зафиксирован в момент нажатия кнопки)
+  // Если по какой-то причине не заморожен — берём текущий
+  const mult  = _rktFrozenMult !== null ? _rktFrozenMult : RKT.mult;
   const myBet = RKT.myBet;
+
   RKT.cashedMult = mult;
   RKT.cashedOut  = true;
+  _rktFrozenMult = mult; // держим замороженным
   _rktOperating  = true;
 
   // Локальный расчёт без округления
