@@ -5361,8 +5361,7 @@ function rktApply(d){
   if(roundChanged){
     _rktOperating=false;
     _rktSetBetting(false);
-    // Новый раунд — разрешаем ставку, но только если betPlaced тоже сброшен
-    // (betPlaced сбрасывается только в setTimeout после краша)
+    _rktBetAccepted=false; // сбрасываем только при смене раунда
     if(!RKT.betPlaced) _rktRoundBetDone=false;
     _rktMinBalance=-1;
   }
@@ -5440,8 +5439,9 @@ function rktApply(d){
       setTimeout(()=>{
         RKT.phase='waiting';RKT.betPlaced=false;RKT.cashedOut=false;
         _rktOperating=false; _rktSetBetting(false);
+        _rktBetAccepted=false; // сбрасываем для нового раунда
         _rktRoundBetDone=false; _rktMinBalance=-1;
-        _rktFrozenMult=null; // разморозить для следующего раунда
+        _rktFrozenMult=null;
         rTrail=[];rCrashParticles=[];
         if(RKT.waitLeft>0) rktWaitTick();
         rktUI();
@@ -5504,7 +5504,7 @@ function rktUpdateBtn(){
   }
 
   // Ожидание — ставка уже сделана в этом раунде
-  if(_rktRoundBetDone || RKT.betPlaced){
+  if(_rktBetAccepted || _rktRoundBetDone || RKT.betPlaced){
     const betFmt = RKT.myBet ? RKT.myBet.toLocaleString('ru-RU') : '';
     b.innerHTML='✅ Ставка '+ betFmt +' принята';
     b.className='rkt-btn bw'; b.disabled=true;
@@ -5716,13 +5716,18 @@ function rktAction(){
 
 let _rktBetting=false;
 let _rktBettingTimer=null;
+// Флаг "ставка принята сервером" — кнопка заблокирована до конца раунда
+let _rktBetAccepted=false;
+
 function _rktSetBetting(val){
   _rktBetting=val;
   if(_rktBettingTimer){ clearTimeout(_rktBettingTimer); _rktBettingTimer=null; }
-  // Таймер только при val=true И нет активной ставки — защита от вечного зависания
-  // Если ставка принята (_rktRoundBetDone=true) — таймер не нужен
-  if(val && !_rktRoundBetDone){
-    _rktBettingTimer=setTimeout(()=>{ _rktBetting=false; _rktBettingTimer=null; rktUpdateBtn(); }, 4000);
+  // Таймер только при val=true — защита от вечного зависания при сетевой ошибке
+  if(val && !_rktBetAccepted){
+    _rktBettingTimer=setTimeout(()=>{
+      // Сбрасываем только если ставка так и не была принята
+      if(!_rktBetAccepted){ _rktBetting=false; _rktBettingTimer=null; rktUpdateBtn(); }
+    }, 4000);
   }
 }
 function rktPlaceBet(){
@@ -5765,6 +5770,7 @@ function rktPlaceBet(){
   // Функция отката — возвращает ставку и разблокирует
   const refund = (msg)=>{
     _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
+    _rktBetAccepted=false;
     setBalance(balance+bet);
     _rktSetBetting(false);
     if(res){ res.textContent=msg||'Ставка не принята, токены возвращены'; res.className='rkt-res'; }
@@ -5797,7 +5803,8 @@ function rktPlaceBet(){
       if(r && typeof r.balance==='number') setBalance(r.balance);
       if(res){ res.textContent='Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
       showToast('Ставка '+bet.toLocaleString('ru-RU')+'!','success');
-      // НЕ вызываем _rktSetBetting(false) — кнопка остаётся locked до конца раунда
+      // Устанавливаем постоянную блокировку до конца раунда
+      _rktBetAccepted = true;
       // Обновляем таблицу без пересчёта кнопки
       rktUpdateTable(); rktHist();
     }).catch(()=>{
