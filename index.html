@@ -5268,7 +5268,9 @@ function rktTickStart(){
 
     const el=document.getElementById('rktMult');
     if(el){
-      el.textContent=m.toFixed(2)+'×';
+      // После нажатия ЗАБРАТЬ — показываем замороженный mult
+      const displayMult = _rktFrozenMult !== null ? _rktFrozenMult : m;
+      el.textContent=displayMult.toFixed(2)+'×';
       // Цвет: белый → зелёный ×5+ → жёлтый ×20+ → красный при краше
       const cls = (m>=cap && cap<9999) ? 'rkt-mult sc'
                 : m>=20 ? 'rkt-mult sf sg sg2'
@@ -5292,7 +5294,9 @@ function rktTickStart(){
     }catch(e){}
     const btn=document.getElementById('rktBtn');
     if(btn&&btn.classList.contains('bc')){
-      btn.textContent='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
+      // Показываем текущий mult (или замороженный если нажали)
+      const dispM = _rktFrozenMult !== null ? _rktFrozenMult : m;
+      btn.innerHTML='💸 '+dispM.toFixed(2)+'× — ЗАБРАТЬ!';
     }
     // Тряска цифр — 4 уровня по иксам
     const mw=document.getElementById('rktMultWrap');
@@ -5837,24 +5841,33 @@ async function rktDoCashout(){
     try{
       const r = await rktFetch('/casino/rocket/cashout',{
         method:'POST',
-        body:JSON.stringify({uid:parseInt(USER_ID), secret:API_SECRET})
+        body:JSON.stringify({
+          uid:parseInt(USER_ID),
+          secret:API_SECRET,
+          client_mult: mult  // передаём клиентский mult для верификации
+        })
       });
       if(r && r.ok){
-        // Используем данные сервера — они приоритетны
+        // Клиентский mult — то что видел пользователь на экране (истина для отображения)
+        // Серверный mult — для верификации (не должен сильно отличаться)
         const sMult   = r.mult   != null ? r.mult   : mult;
         const sPrize  = r.prize  != null ? r.prize  : localPrize;
         const sProfit = sPrize - myBet;
         const sBal    = typeof r.balance === 'number' ? r.balance : balance;
 
-        RKT.cashedMult = sMult;
-        // Точный баланс с сервера — единственная истина
-        setBalance(sBal);
+        // Отображаем клиентский mult (то что пользователь видел)
+        // Используем серверный баланс (финансовая истина)
+        RKT.cashedMult = mult; // клиентский — то что показывали
+        setBalance(sBal);      // точный баланс с сервера
         RKT.stats.p = RKT.stats.p - localProfit + sProfit;
-        if(sMult > RKT.stats.b) RKT.stats.b = sMult;
+        if(mult > RKT.stats.b) RKT.stats.b = mult;
         rktSave();
-        _showCashoutResult(res, sMult, sProfit, sPrize);
-        showToast('×'+sMult.toFixed(2)+'  +'+Math.round(sProfit).toLocaleString('ru-RU')+' токенов 💰','gold');
-        if(btn){ btn.textContent='Забрано ×'+sMult.toFixed(2); }
+
+        // Показываем КЛИЕНТСКИЙ mult (×1.44, не ×1.5)
+        // но прибыль от серверного расчёта
+        _showCashoutResult(res, mult, sProfit, sPrize);
+        showToast('×'+mult.toFixed(2)+'  +'+Math.round(sProfit).toLocaleString('ru-RU')+' токенов 💰','gold');
+        if(btn){ btn.innerHTML='Забрано ×'+mult.toFixed(2); }
         rktUpdateTable(); rktUpdateTags();
       }
     }catch(e){ /* оставляем локальный результат */ }
@@ -5864,8 +5877,10 @@ async function rktDoCashout(){
 
 function _showCashoutResult(res, mult, profit, prize){
   if(!res) return;
+  // Прибыль и приз округляем до целых токенов (токены целые числа)
   const profitFmt = Math.round(profit).toLocaleString('ru-RU');
   const prizeFmt  = Math.round(prize).toLocaleString('ru-RU');
+  // Mult показываем точно — без округления вверх
   res.innerHTML = '<span style="color:#fbbf24">×'+mult.toFixed(2)+'</span>'
     + ' &nbsp;<strong style="color:#4ade80">+'+ profitFmt +'</strong>'
     + ' &nbsp;<span style="color:rgba(255,255,255,.5)">= '+ prizeFmt +'</span>';
