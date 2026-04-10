@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -2425,6 +2424,11 @@ function showPage(n) {
   } catch(e){}
   if(n==='rocket') {
     try { initRocketOnce(); } catch(e){}
+    // Показываем нативную кнопку
+    setTimeout(()=>{ try{ rktSyncMainBtn(); }catch(e){} }, 100);
+  } else {
+    // Скрываем нативную кнопку на других вкладках
+    try{ _mbHide(); }catch(e){}
   }
   if(n==='top') {
     try { loadLeaderboard(true); } catch(e){}
@@ -5479,7 +5483,12 @@ function rktUI(){
 
 // Единственная функция управления кнопкой — вызывать только через rktUI()
 function rktUpdateBtn(){
-  const b=document.getElementById('rktBtn'); if(!b) return;
+  const b=document.getElementById('rktBtn');
+
+  // Синхронизируем нативную Telegram MainButton
+  try{ rktSyncMainBtn(); }catch(e){}
+
+  if(!b) return;
 
   // Полёт — ставка активна: ЗАБРАТЬ
   if(RKT.phase==='flying'){
@@ -5952,6 +5961,101 @@ function rktAF(){
 }
 
 let _rktInited=false;
+// ══════════════════════════════════════════════════════════
+// TELEGRAM MAINBUTTON — нативная кнопка для ракетки
+// ══════════════════════════════════════════════════════════
+let _mbActive = false;
+
+function _mbShow(text, color, textColor){
+  try {
+    const mb = tg.MainButton;
+    mb.setText(text||'🚀 ПОСТАВИТЬ');
+    mb.color = color || '#ffffff';
+    mb.textColor = textColor || '#000000';
+    mb.enable();
+    mb.show();
+    _mbActive = true;
+  } catch(e){}
+}
+function _mbDisable(text, color){
+  try {
+    const mb = tg.MainButton;
+    mb.setText(text||'⏳...');
+    mb.color = color || '#333333';
+    mb.textColor = '#888888';
+    mb.disable();
+    mb.show();
+    _mbActive = true;
+  } catch(e){}
+}
+function _mbHide(){
+  try { tg.MainButton.hide(); } catch(e){}
+  _mbActive = false;
+}
+function _mbOnClick(fn){
+  try {
+    tg.MainButton.offClick(_mbHandler);
+    _mbHandler = fn;
+    tg.MainButton.onClick(_mbHandler);
+  } catch(e){}
+}
+let _mbHandler = null;
+
+// Синхронизируем MainButton с состоянием ракетки
+function rktSyncMainBtn(){
+  const rocketPage = document.getElementById('page-rocket');
+  const isRocketActive = rocketPage && rocketPage.classList.contains('active');
+  if(!isRocketActive){ _mbHide(); return; }
+
+  if(RKT.phase==='flying'){
+    if(RKT.betPlaced && !RKT.cashedOut){
+      const mult = (RKT.mult||1).toFixed(2);
+      _mbShow('💸 ЗАБРАТЬ ×'+mult+'!', '#22c55e', '#ffffff');
+      _mbOnClick(()=>{
+        const displayedMult = parseFloat(RKT.mult.toFixed(2));
+        _rktFrozenMult = displayedMult;
+        try{ tg.HapticFeedback.impactOccurred('heavy'); }catch(e){}
+        rktDoCashout();
+      });
+    } else if(RKT.cashedOut){
+      _mbDisable('✅ Забрано ×'+(RKT.cashedMult||1).toFixed(2), '#1a3a1a');
+    } else {
+      _mbDisable('🚀 Поставить в следующем', '#1a1a2a');
+    }
+    return;
+  }
+
+  if(RKT.phase==='crashed'){
+    _mbDisable('⏳ Новый раунд...', '#2a1a1a');
+    return;
+  }
+
+  // Ожидание
+  if(_rktBetAccepted || _rktRoundBetDone || RKT.betPlaced){
+    const betFmt = RKT.myBet ? RKT.myBet.toLocaleString('ru-RU') : '';
+    _mbDisable('✅ Ставка '+betFmt+' принята', '#1a2a1a');
+    return;
+  }
+  if(_rktBetting){
+    _mbDisable('⟳ Отправляем...', '#2a2a00');
+    return;
+  }
+  if(RKT.waitLeft > 0 && RKT.waitLeft <= 1.5){
+    _mbDisable('🔒 Скоро старт...', '#2a1a00');
+    return;
+  }
+
+  // Активна — можно ставить
+  const inp = document.getElementById('rktInp');
+  let betStr = '';
+  try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betStr=' '+v.toLocaleString('ru-RU'); }catch(e){}
+  _mbShow('🚀 ПОСТАВИТЬ'+betStr, '#ffffff', '#000000');
+  _mbOnClick(()=>{
+    try{ tg.HapticFeedback.impactOccurred('medium'); }catch(e){}
+    rktPlaceBet();
+  });
+}
+
 function initRocketOnce(){
   if(_rktInited) return; // уже запущено — не дублируем
   _rktInited=true;
@@ -5960,6 +6064,14 @@ function initRocketOnce(){
 
 function initRocket(){
   initRktCvs(); rktUI(); rktHist(); rktUpdateTable();
+
+  // Если работаем в Telegram — скрываем HTML кнопку, используем нативную MainButton
+  try{
+    if(window.Telegram && window.Telegram.WebApp && tg.MainButton){
+      const htmlBtn = document.getElementById('rktBtn');
+      if(htmlBtn) htmlBtn.style.display='none';
+    }
+  }catch(e){}
   if(API_URL&&API_SECRET){
     rktFetch('/casino/rocket/state?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now())
       .then(d=>{if(d&&d.ok){rktApply(d);rktWaitTick();}});
