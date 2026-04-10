@@ -1220,6 +1220,33 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   -webkit-backdrop-filter:blur(8px);
 }
 
+/* Кнопка действия — прилипает под сценой */
+.rkt-action-bar {
+  position:sticky;
+  top:0;
+  z-index:20;
+  padding:8px 14px 8px;
+  background:rgba(5,3,0,.97);
+  border-bottom:1px solid rgba(255,100,0,.15);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.rkt-action-status {
+  font-family:var(--fd); font-size:10px; font-weight:700;
+  letter-spacing:1.5px; text-align:center;
+  min-height:16px; margin-bottom:6px;
+  color:rgba(255,255,255,.35);
+  transition:color .2s, opacity .2s;
+}
+.rkt-action-status.ok  { color:#4ade80; }
+.rkt-action-status.err { color:#f87171; }
+.rkt-action-status.act { color:#fbbf24; }
+.rkt-action-bar .rkt-btn {
+  width:100%; margin:0;
+  padding:17px 20px;
+  font-size:17px;
+}
+
 /* Мини-стата — фиксированная внизу */
 .rkt-stats {
   display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
@@ -1931,11 +1958,12 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
       <!-- Теги игроков поверх сцены -->
       <div class="rkt-players-overlay" id="rktTags"></div>
+    </div>
 
-      <!-- КНОПКА — фиксирована внизу сцены поверх canvas -->
-      <div class="rkt-btn-overlay">
-        <button class="rkt-btn bb" id="rktBtn" onclick="rktAction()">🚀 ПОСТАВИТЬ</button>
-      </div>
+    <!-- КНОПКА ДЕЙСТВИЯ — sticky под сценой, всегда видна -->
+    <div class="rkt-action-bar">
+      <div class="rkt-action-status" id="rktActionStatus"></div>
+      <button class="rkt-btn bb" id="rktBtn" onclick="rktAction()">🚀 ПОСТАВИТЬ</button>
     </div>
 
     <!-- Панель управления -->
@@ -5298,6 +5326,13 @@ function rktTickStart(){
         const potStr = pot > 0 ? ' +'+pot.toLocaleString('ru-RU') : '';
         btnLive.textContent='💸 ЗАБРАТЬ ×'+m.toFixed(2)+potStr;
       }
+      // Обновляем статус-строку
+      const st=document.getElementById('rktActionStatus');
+      if(st){
+        const prize=Math.floor((RKT.myBet||0)*m);
+        st.textContent='СТАВКА: '+(RKT.myBet||0).toLocaleString('ru-RU')+' · СЕЙЧАС: '+prize.toLocaleString('ru-RU');
+        st.className='rkt-action-status act';
+      }
     }
 
     const el=document.getElementById('rktMult');
@@ -5515,59 +5550,72 @@ function rktUI(){
 // Единственная функция управления кнопкой — вызывать только через rktUI()
 function rktUpdateBtn(){
   const b=document.getElementById('rktBtn');
+  const st=document.getElementById('rktActionStatus');
   try{ rktSyncMainBtn(); }catch(e){}
   if(!b) return;
+
+  // Хелпер для статус-строки
+  const setStatus=(txt,cls)=>{ if(st){ st.textContent=txt; st.className='rkt-action-status '+(cls||''); } };
 
   // ── ПОЛЁТ ───────────────────────────────────────────────
   if(RKT.phase==='flying'){
     if(RKT.betPlaced && !RKT.cashedOut){
-      // Обновляем икс каждый кадр — показываем текущий множитель и потенциальную прибыль
       const m = RKT.mult||1;
       const pot = RKT.myBet ? Math.floor(RKT.myBet * m) - RKT.myBet : 0;
       const potStr = pot > 0 ? ' +'+pot.toLocaleString('ru-RU') : '';
       b.innerHTML='💸 ЗАБРАТЬ ×'+m.toFixed(2)+potStr;
       b.className='rkt-btn bc';
-      // Кнопка активна только если НЕ идёт кэшаут
       b.disabled = !!_rktCashingOut;
+      setStatus('СТАВКА: '+RKT.myBet.toLocaleString('ru-RU')+' · ПОТЕНЦИАЛ: '+(RKT.myBet*m).toFixed(0)+'', 'act');
       return;
     }
     if(RKT.cashedOut){
       b.innerHTML='✅ ×'+(RKT.cashedMult||1).toFixed(2)+' забрано';
-      b.className='rkt-btn bw'; b.disabled=true; return;
+      b.className='rkt-btn bw'; b.disabled=true;
+      setStatus('ЗАБРАНО · ЖДЁМ КОНЦА РАУНДА','ok');
+      return;
     }
-    b.innerHTML='—';
-    b.className='rkt-btn bw'; b.disabled=true; return;
+    b.innerHTML='—'; b.className='rkt-btn bw'; b.disabled=true;
+    setStatus('РАКЕТКА ЛЕТИТ','');
+    return;
   }
 
   // ── КРАШ ────────────────────────────────────────────────
   if(RKT.phase==='crashed'){
     b.innerHTML='💥 Новый раунд скоро...';
-    b.className='rkt-btn bw'; b.disabled=true; return;
+    b.className='rkt-btn bw'; b.disabled=true;
+    setStatus('','');
+    return;
   }
 
   // ── ОЖИДАНИЕ ─────────────────────────────────────────────
-  // Жёсткая блокировка: ставка уже принята сервером
   if(_rktBetAccepted || _rktRoundBetDone || RKT.betPlaced){
     const betFmt = RKT.myBet ? RKT.myBet.toLocaleString('ru-RU') : '';
     b.innerHTML='✅ Ставка '+ betFmt +' принята';
-    b.className='rkt-btn bw'; b.disabled=true; return;
+    b.className='rkt-btn bw'; b.disabled=true;
+    setStatus('СТАВКА ПРИНЯТА · ЖДЁМ СТАРТА 🚀','ok');
+    return;
   }
-  // Идёт отправка
   if(_rktBetting){
     b.innerHTML='<span class="rkt-btn-spin">⟳</span> Отправляем...';
-    b.className='rkt-btn bl'; b.disabled=true; return;
+    b.className='rkt-btn bl'; b.disabled=true;
+    setStatus('ОТПРАВЛЯЕМ СТАВКУ...','act');
+    return;
   }
-  // Последние 1.5 сек
   if(RKT.waitLeft > 0 && RKT.waitLeft <= 1.5){
     b.innerHTML='🔒 Скоро старт';
-    b.className='rkt-btn bw'; b.disabled=true; return;
+    b.className='rkt-btn bw'; b.disabled=true;
+    setStatus('ПРИЁМ СТАВОК ЗАКРЫТ','err');
+    return;
   }
-  // Свободна
+  // Активна
+  const waitSec = RKT.waitLeft > 0 ? ' · СТАРТ ЧЕРЕЗ '+Math.ceil(RKT.waitLeft)+'с' : '';
   const inp=document.getElementById('rktInp');
   let betPreview='';
   try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betPreview=' '+v.toLocaleString('ru-RU'); }catch(e){}
   b.innerHTML='🚀 ПОСТАВИТЬ'+betPreview;
   b.className='rkt-btn bb'; b.disabled=false;
+  setStatus('ОЖИДАНИЕ СТАРТА'+waitSec,'');
 }
 
 // Оставляем для совместимости — просто вызывает rktUI
@@ -5754,7 +5802,7 @@ function rktAction(){
 
 let _rktBetting=false;
 let _rktBettingTimer=null;
-let _rktBetAccepted=false; _rktCashingOut=false;
+let _rktBetAccepted=false;
 
 function _rktSetBetting(val){
   _rktBetting=val;
