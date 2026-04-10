@@ -922,6 +922,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 /* Сцена */
 .rkt-wrap { padding:0 }
+/* Отступ снизу для fixed кнопки + статистики */
+#page-rocket.active { padding-bottom:calc(150px + env(safe-area-inset-bottom)); }
 .rkt-scene {
   position:relative; height:340px; overflow:hidden;
   background:#000000;
@@ -1222,20 +1224,25 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 /* Кнопка — sticky снизу, прямо над статистикой */
 .rkt-action-bar {
-  position:sticky;
-  bottom:calc(56px + env(safe-area-inset-bottom)); /* высота rkt-stats */
-  z-index:11;
-  padding:10px 0 8px;
+  display:none; /* скрыта по умолчанию — показывается только на вкладке ракеты */
+  position:fixed;
+  left:50%; transform:translateX(-50%);
+  width:100%; max-width:480px;
+  /* прямо над rkt-stats который тоже sticky bottom:0 */
+  bottom:calc(78px + env(safe-area-inset-bottom));
+  z-index:12;
+  padding:8px 16px 6px;
   background:rgba(5,3,0,.98);
-  border-top:1px solid rgba(255,100,0,.15);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  margin:8px 0 0;
+  border-top:1px solid rgba(255,100,0,.2);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  box-sizing:border-box;
 }
+.rkt-action-bar.visible { display:block; }
 .rkt-action-status {
   font-family:var(--fd); font-size:9px; font-weight:700;
   letter-spacing:1.5px; text-align:center;
-  min-height:14px; margin-bottom:6px;
+  min-height:14px; margin-bottom:5px;
   color:rgba(255,255,255,.3);
   transition:color .2s;
 }
@@ -1244,7 +1251,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-action-status.act { color:#fbbf24; }
 .rkt-action-bar .rkt-btn {
   width:100%; margin:0;
-  padding:16px 20px;
+  padding:15px 20px;
   font-size:17px;
 }
 
@@ -2465,12 +2472,14 @@ function showPage(n) {
   } catch(e){}
   if(n==='rocket') {
     try { initRocketOnce(); } catch(e){}
-    // Инициализируем и запускаем нативную кнопку
     try{ _mbInit(); _mbStartRAF(); }catch(e){}
+    const ab=document.getElementById('rktActionBar');
+    if(ab) ab.classList.add('visible');
     setTimeout(()=>{ try{ _mbSync(); }catch(e){} }, 200);
   } else {
-    // Останавливаем нативную кнопку на других вкладках
     try{ _mbStopRAF(); }catch(e){}
+    const ab=document.getElementById('rktActionBar');
+    if(ab) ab.classList.remove('visible');
   }
   if(n==='top') {
     try { loadLeaderboard(true); } catch(e){}
