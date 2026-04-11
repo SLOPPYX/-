@@ -2396,8 +2396,7 @@ display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
 
       <div style="font-family:var(--fd);font-size:11px;color:var(--cyan);letter-spacing:1.5px;margin:14px 0 6px">🚀 РАКЕТКА</div>
       <div style="font-family:var(--fb);font-size:12px;color:rgba(255,255,255,.8);line-height:1.65">
-        Дождись последних <b style="color:#fff">5 секунд</b> перед стартом — кнопка <b style="color:#fff">ПОСТАВИТЬ</b> станет активной. Сделай ставку — она заблокируется до старта. После взлёта множитель растёт. Нажми <b style="color:#fff">ЗАБРАТЬ</b> до краша и получи ставку × множитель. Не успел — ставка сгорает.<br><br>
-        <b style="color:var(--gold)">💡 Важно:</b> вам нужно хорошее интернет-соединение. Если вы нажали очень быстро или что-то с интернетом — ставка вернётся! 😊
+        Дождись последних <b style="color:#fff">5 секунд</b> перед стартом — кнопка <b style="color:#fff">ПОСТАВИТЬ</b> станет активной. Введи сумму, сделай ставку. После взлёта множитель растёт у всех в таблице в реальном времени. Нажми <b style="color:#fff">ЗАБРАТЬ</b> до краша — получишь ставку × множитель. Не успел — ставка сгорает.<br><br>        <b style="color:var(--gold)">💰 Лимиты:</b> минимальная ставка <b style="color:#fff">1 000</b> токенов, максимальная — <b style="color:#fff">1 000 000 000</b> (1 млрд). Больше поставить нельзя.<br><br>        <b style="color:var(--gold)">👥 Мультиплеер:</b> в таблице видны все игроки раунда, их ставки и прибыль в реальном времени. Когда кто-то забирает — таблица обновляется мгновенно.<br><br>        <b style="color:var(--gold)">💡 Важно:</b> нужно хорошее интернет-соединение. Если ставка не прошла — она вернётся автоматически.
       </div>
 
       <div style="font-family:var(--fd);font-size:11px;color:var(--cyan);letter-spacing:1.5px;margin:14px 0 6px">👤 ПРОФИЛЬ</div>
@@ -2543,7 +2542,7 @@ let autoMode  = false;
 let speedMode = 'normal';
 let autoTimer = null;
 const MIN_BET = 10000;
-const MAX_BET_RKT = 1_000_000_000;
+const MAX_BET_RKT = 1_000_000_000; // максимальная ставка 1 млрд
 // Удобный ввод: 1к=1000, 1кк=1000000, 1ккк=1000000000
 function parseBetStr(s) {
   if(s===null||s===undefined) return NaN;
@@ -5746,8 +5745,21 @@ function rktApply(d){
     });
   }
 
-  // Обновляем только если сервер реально прислал данные (не timeout)
-  if(d.players != null) RKT.players=d.players;
+  // Мержим players — сохраняем prize/profit если уже были
+  if(d.players != null){
+    d.players.forEach(np => {
+      // Сохраняем prize/profit из предыдущего состояния если сервер не прислал
+      const old = (RKT.players||[]).find(op =>
+        (op.uid != null && op.uid === np.uid) ||
+        (op.name && op.name === np.name)
+      );
+      if(old){
+        if(np.prize  == null && old.prize  != null) np.prize  = old.prize;
+        if(np.profit == null && old.profit != null) np.profit = old.profit;
+      }
+    });
+    RKT.players = d.players;
+  }
   if(d.history != null) RKT.history=d.history;
   if(d.online  != null) RKT.online=d.online;
   // Если в players есть мы — синхронизируем betPlaced
@@ -6583,4 +6595,3 @@ init();
 </script>
 </body>
 </html>
-
