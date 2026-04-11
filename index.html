@@ -4005,6 +4005,29 @@ function initSpaceCanvas() {
     ctx.fill();
 
     ctx.restore();
+
+    // ── Цифры множителя над ракетой ──
+    if(RKT.phase==='flying' || RKT.phase==='crashed'){
+      const m = (RKT.phase==='crashed') ? (RKT.crashAt||RKT.mult||1) : (RKT.mult||1);
+      const multTxt = m.toFixed(2)+'×';
+      const fontSize = Math.min(18 + (m-1)*0.5, 30);
+      ctx.save();
+      ctx.font = 'bold '+fontSize+'px Orbitron, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      let color;
+      if(RKT.phase==='crashed')    color='rgba(248,113,113,0.97)';
+      else if(m>=20) color='rgba(255,215,0,0.97)';
+      else if(m>=5)  color='rgba(74,222,128,0.97)';
+      else if(m>=2)  color='rgba(251,191,36,0.97)';
+      else           color='rgba(255,255,255,0.92)';
+      ctx.shadowColor = 'rgba(0,0,0,0.95)';
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = color;
+      ctx.fillText(multTxt, cx, y - 44);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
   }
 
   function drawPlanets() {
@@ -5803,17 +5826,11 @@ function rktUpdateBtn(){
     setStatus('ОТПРАВЛЯЕМ СТАВКУ...', '#fbbf24');
     return;
   }
-  if(RKT.waitLeft>0 && RKT.waitLeft<=1.5){
-    b.textContent='🔒 Скоро старт';
-    b.className='rkt-btn bw'; b.disabled=true;
-    setStatus('СКОРО СТАРТ — СТАВКА ПРИНЯТА', '#f87171');
-    return;
-  }
-  // Активна
+  // Активна — можно ставить пока идёт ожидание
   const inp=document.getElementById('rktInp');
   let betPreview='';
   try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betPreview=' — '+v.toLocaleString('ru-RU'); }catch(e){}
-  const waitStr = RKT.waitLeft>1.5 ? ' · СТАРТ: '+Math.ceil(RKT.waitLeft)+'с' : '';
+  const waitStr = RKT.waitLeft>0 ? ' · СТАРТ: '+Math.ceil(RKT.waitLeft)+'с' : '';
   b.textContent='🚀 ПОСТАВИТЬ'+betPreview;
   b.className='rkt-btn bb'; b.disabled=false;
   setStatus('ОЖИДАНИЕ СТАРТА'+waitStr, 'rgba(255,255,255,.25)');
@@ -6359,15 +6376,11 @@ function _mbSync(){
     _mbSet('⟳ Отправляем...', '#2a2000', '#fbbf24', false, null);
     return;
   }
-  if(RKT.waitLeft > 0 && RKT.waitLeft <= 1.5){
-    _mbSet('🔒 Скоро старт', '#1a0a00', '#664400', false, null);
-    return;
-  }
-  // Активна — можно ставить
+  // Активна — можно ставить до самого старта
   const inp = document.getElementById('rktInp');
   let betStr = '';
   try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betStr=' '+v.toLocaleString('ru-RU'); }catch(e){}
-  const waitStr = RKT.waitLeft>1.5 ? ' ('+Math.ceil(RKT.waitLeft)+'с)' : '';
+  const waitStr = RKT.waitLeft>0 ? ' ('+Math.ceil(RKT.waitLeft)+'с)' : '';
   _mbSet('🚀 ПОСТАВИТЬ'+betStr+waitStr, '#ffffff', '#000000', true, _mbHandleBet);
 }
 
