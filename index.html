@@ -5613,8 +5613,14 @@ function rktTickStart(){
         if(mw) mw.className='rkt-mult-wrap';
         // Через 2.8с переходим в waiting
         setTimeout(()=>{
+          // Если ставка была в процессе отправки — вернуть баланс
+          if(_rktBetState==='sending' && RKT.myBet>0){
+            setBalance(balance+RKT.myBet);
+            showToast('↩️ '+RKT.myBet.toLocaleString('ru-RU')+' возвращено','info');
+          }
           RKT.betPlaced=false;RKT.cashedOut=false;
           _rktOperating=false;_rktSetBetting(false);
+          _rktBetUnlock();
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
           if(RKT.waitLeft>0) rktWaitTick();
@@ -5640,11 +5646,16 @@ function rktApply(d){
   const roundChanged=(d.round_id!=null && d.round_id!==prevRoundId && prevRoundId!==-1);
   if(roundChanged){
     _rktOperating=false;
-    _rktSetBetting(false);
-    _rktBetUnlock(); _rktCashingOut=false;
-    _rktRoundBetDone=false;  // всегда сбрасываем при смене раунда
-    _rktBetAccepted=false;   // иначе кнопка остаётся заблокированной
-    _rktMinBalance=-1;
+    _rktCashingOut=false;
+    // Если ставка ещё отправляется (sending) — НЕ трогаем, ответ сервера сам разберётся
+    // Только если accepted или idle — сбрасываем
+    if(_rktBetState !== 'sending'){
+      _rktBetUnlock();
+      _rktSetBetting(false);
+      _rktRoundBetDone=false;
+      _rktBetAccepted=false;
+      if(!RKT.betPlaced) _rktMinBalance=-1;
+    }
   }
 
   // Детектируем кешаут других игроков
@@ -5720,6 +5731,10 @@ function rktApply(d){
         showToast('💥 Краш ×'+(RKT.crashAt||RKT.mult).toFixed(2),'error');
       }
       setTimeout(()=>{
+        if(_rktBetState==='sending' && RKT.myBet>0){
+          setBalance(balance+RKT.myBet);
+          showToast('\u21a9\ufe0f '+RKT.myBet.toLocaleString('ru-RU')+' \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0435\u043d\u043e','info');
+        }
         RKT.phase='waiting';RKT.betPlaced=false;RKT.cashedOut=false;
         _rktOperating=false; _rktSetBetting(false);
         _rktBetUnlock(); _rktCashingOut=false;
@@ -6001,10 +6016,11 @@ function rktUpdateTags(){
 let _rktWT=null, _rktWaitEnd=0;
 function rktWaitTick(){
   if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
-  // Если нет активной ставки — сбрасываем все блокировки кнопки
-  if(!RKT.betPlaced){
+  // Если нет активной ставки И не в процессе отправки — сбрасываем блокировки
+  if(!RKT.betPlaced && _rktBetState !== 'sending'){
     _rktBetAccepted=false;
     if(_rktBetState==='accepted') _rktBetState='idle';
+    _rktRoundBetDone=false;
   }
   _rktWaitEnd=Date.now()+Math.max(0.1, RKT.waitLeft)*1000;
   const totalWait = Math.max(RKT.waitLeft, 0.1);
@@ -6041,14 +6057,21 @@ function _rktBetLock(state){
   _rktBetting     = (state === 'sending');
   _rktBetAccepted = (state === 'accepted');
   if(_rktBettingTimer){ clearTimeout(_rktBettingTimer); _rktBettingTimer=null; }
-  // Watchdog: если через 5 сек всё ещё sending — сбрасываем
+  // Watchdog: если через 8 сек нет ответа — делаем полный refund
   if(state === 'sending'){
     _rktBettingTimer = setTimeout(()=>{
       if(_rktBetState === 'sending'){
-        _rktBetState = 'idle'; _rktBetting=false;
-        _rktBettingTimer=null; rktUI();
+        // Полный откат — возвращаем баланс и разблокируем
+        const refundBet = RKT.myBet || 0;
+        _rktBetState='idle'; _rktBetting=false; _rktBettingTimer=null;
+        _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
+        if(refundBet > 0) setBalance(balance + refundBet);
+        const res=document.getElementById('rktRes');
+        if(res){ res.textContent='↩️ Нет ответа от сервера — ставка возвращена'; res.className='rkt-res'; }
+        showToast('↩️ '+refundBet.toLocaleString('ru-RU')+' возвращено (таймаут)','info');
+        rktUI();
       }
-    }, 5000);
+    }, 8000);
   }
 }
 
@@ -6101,9 +6124,12 @@ function _rktSetBetting(val){
   else if(_rktBetState==='sending'){ _rktBetLock('idle'); }
 }
 function rktPlaceBet(){
-  // Атомарная защита — только из idle
-  if(_rktBetState !== 'idle' || _rktRoundBetDone || RKT.betPlaced) return;
-  if(RKT.phase==='flying') return;
+  // Тройная атомарная защита
+  if(_rktBetState !== 'idle') return;  // уже отправляем или принято
+  if(_rktRoundBetDone) return;         // уже ставили в этом раунде
+  if(RKT.betPlaced) return;            // ставка уже зачтена
+  if(RKT.phase==='flying') return;     // раунд уже идёт
+  if(RKT.phase==='crashed') return;    // раунд закончился
 
   const i   = document.getElementById('rktInp');
   const bet = Math.min(parseBetStr(i?i.value:String(RKT.myBet))||0, MAX_BET_RKT);
