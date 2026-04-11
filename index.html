@@ -1215,7 +1215,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-btn {
   width:100%; padding:20px; border:none; border-radius:16px;
   font-family:var(--fd); font-size:17px; font-weight:900; letter-spacing:2px;
-  cursor:pointer; transition:transform .1s, box-shadow .1s; margin-bottom:12px;
+  cursor:pointer; transition:transform .15s, box-shadow .35s ease, background .35s ease, color .25s ease, opacity .25s ease; margin-bottom:12px;
   position:relative; overflow:hidden;
 }
 .rkt-btn::after {
@@ -1226,12 +1226,13 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-btn.bb {
   background:linear-gradient(135deg,#ffffff 0%,#e8e8e8 100%);
   color:#0a0a0a; font-size:18px; letter-spacing:3px;
-  box-shadow:0 6px 40px rgba(255,255,255,.35), 0 0 0 1px rgba(255,255,255,.2), inset 0 1px 0 rgba(255,255,255,.8);
-  animation:rBetPulse 1.8s ease infinite alternate;
+  box-shadow:0 6px 30px rgba(255,255,255,.25), 0 0 0 1px rgba(255,255,255,.2), inset 0 1px 0 rgba(255,255,255,.8);
+  transition:box-shadow .4s ease, background .3s ease, color .3s ease;
+  animation:rBetPulse 2.5s ease 0.5s infinite alternate;
 }
 @keyframes rBetPulse {
   from { box-shadow:0 6px 30px rgba(255,255,255,.25), 0 0 0 1px rgba(255,255,255,.2); }
-  to   { box-shadow:0 8px 50px rgba(255,255,255,.5), 0 0 0 3px rgba(255,255,255,.15); }
+  to   { box-shadow:0 8px 45px rgba(255,255,255,.42), 0 0 0 2px rgba(255,255,255,.12); }
 }
 .rkt-btn.bb:hover { transform:scale(1.01); }
 .rkt-btn.bl {
@@ -1256,11 +1257,12 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   background-size:200% auto;
   color:#fff; font-size:19px; letter-spacing:1px;
   text-shadow:0 1px 3px rgba(0,0,0,.4);
-  animation:rCashPulse .5s ease infinite alternate;
+  box-shadow:0 4px 20px rgba(74,222,128,.4);
+  animation:rCashPulse .6s ease 0.3s infinite alternate;
 }
 @keyframes rCashPulse {
   from { box-shadow:0 4px 20px rgba(74,222,128,.4); background-position:0% center; transform:scale(1); }
-  to   { box-shadow:0 6px 40px rgba(74,222,128,.75), 0 0 0 3px rgba(74,222,128,.25); background-position:100% center; transform:scale(1.01); }
+  to   { box-shadow:0 6px 38px rgba(74,222,128,.7), 0 0 0 2px rgba(74,222,128,.2); background-position:100% center; transform:scale(1.01); }
 }
 .rkt-btn.bw {
   background:rgba(255,255,255,.07); color:rgba(255,255,255,.28);
@@ -5921,7 +5923,13 @@ function rktUpdateBtn(){
   try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betPreview=' — '+v.toLocaleString('ru-RU'); }catch(e){}
   const waitStr = RKT.waitLeft>0 ? ' · СТАРТ: '+Math.ceil(RKT.waitLeft)+'с' : '';
   b.textContent='🚀 ПОСТАВИТЬ'+betPreview;
-  b.className='rkt-btn bb'; b.disabled=false;
+  // Плавный переход к активной кнопке — без вспышки
+  if(b.className !== 'rkt-btn bb'){
+    b.className='rkt-btn bw';
+    requestAnimationFrame(()=>{ b.className='rkt-btn bb'; b.disabled=false; });
+  } else {
+    b.disabled=false;
+  }
   setStatus('ОЖИДАНИЕ СТАРТА'+waitStr, 'rgba(255,255,255,.25)');
 }
 
