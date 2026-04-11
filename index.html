@@ -957,46 +957,76 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 /* Множитель */
 .rkt-mult-wrap {
-  position:absolute; left:50%; top:30%;
+  position:absolute; left:50%; top:38%;
   transform:translate(-50%,-50%);
   text-align:center; pointer-events:none;
   z-index:2;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
 }
 .rkt-mult {
-  font-family:var(--fd); font-size:80px; font-weight:900; line-height:1;
-  letter-spacing:-5px;
+  font-family:var(--fd); font-size:88px; font-weight:900; line-height:1;
+  letter-spacing:-3px;
   color:#fff;
   font-variant-numeric:tabular-nums;
   will-change:transform,filter;
-  text-shadow:0 0 40px rgba(255,255,255,.5), 0 4px 8px rgba(0,0,0,.9);
-  transition:color .1s, text-shadow .1s;
+  text-shadow:
+    0 0 30px rgba(255,255,255,.9),
+    0 0 60px rgba(255,255,255,.4),
+    0 2px 0 rgba(0,0,0,.8);
+  transition:color .15s, text-shadow .15s, transform 80ms ease-out;
+  display:block;
 }
+/* Состояние ожидания */
 .rkt-mult.sw {
-  font-size:22px; letter-spacing:4px; color:rgba(255,255,255,.2);
-  text-shadow:none; font-weight:700;
+  font-size:20px; letter-spacing:5px; color:rgba(255,255,255,.18);
+  text-shadow:none; font-weight:700; letter-spacing:4px;
 }
+/* Краш — красный с большой вспышкой */
 .rkt-mult.sc {
-  color:#f87171;
-  text-shadow:0 0 50px rgba(248,113,113,.9), 0 0 100px rgba(248,113,113,.4), 0 4px 8px rgba(0,0,0,.9);
-  animation:rCrashPulse .3s ease-out 1;
+  color:#ff3333;
+  text-shadow:
+    0 0 40px rgba(255,50,50,1),
+    0 0 80px rgba(255,30,30,.7),
+    0 0 120px rgba(255,0,0,.4),
+    0 2px 0 rgba(0,0,0,.8);
+  animation:rCrashSlam .25s cubic-bezier(.3,1.6,.5,1) 1;
 }
-@keyframes rCrashPulse {
-  0%  { transform:scale(1.3); }
-  60% { transform:scale(0.95); }
-  100%{ transform:scale(1); }
+@keyframes rCrashSlam {
+  0%  { transform:scale(1.5); opacity:.6; }
+  50% { transform:scale(.92); }
+  100%{ transform:scale(1); opacity:1; }
 }
+/* Полёт — белый */
 .rkt-mult.sf {
-  text-shadow:0 0 40px rgba(255,255,255,.6), 0 0 80px rgba(255,255,255,.2), 0 4px 8px rgba(0,0,0,.9);
+  text-shadow:
+    0 0 30px rgba(255,255,255,.9),
+    0 0 60px rgba(255,255,255,.35),
+    0 2px 0 rgba(0,0,0,.8);
 }
+/* Зелёный (×5+) */
 .rkt-mult.sg {
-  color:#4ade80;
-  text-shadow:0 0 50px rgba(74,222,128,.8), 0 0 100px rgba(74,222,128,.3), 0 4px 8px rgba(0,0,0,.9);
+  color:#00ff88;
+  text-shadow:
+    0 0 40px rgba(0,255,136,.9),
+    0 0 80px rgba(0,255,136,.4),
+    0 2px 0 rgba(0,0,0,.8);
 }
+/* Золотой (×20+) */
 .rkt-mult.sg2 {
-  color:#fbbf24;
-  text-shadow:0 0 60px rgba(251,191,36,1), 0 0 120px rgba(251,191,36,.5), 0 4px 8px rgba(0,0,0,.9);
+  color:#ffd700;
+  text-shadow:
+    0 0 40px rgba(255,215,0,1),
+    0 0 80px rgba(255,215,0,.6),
+    0 0 120px rgba(255,140,0,.4),
+    0 2px 0 rgba(0,0,0,.8);
 }
+/* Анимация прыжка при обновлении */
+@keyframes rktMultJump {
+  0%  { transform:translate(-50%,-50%) scale(1.0); }
+  40% { transform:translate(-50%,-50%) scale(1.12); }
+  100%{ transform:translate(-50%,-50%) scale(1.0); }
+}
+.rkt-mult-wrap.jumping { animation:rktMultJump 90ms ease-out; }
 .rkt-sub {
   font-family:var(--fd); font-size:11px; letter-spacing:3px;
   color:rgba(255,255,255,.3); margin-top:8px;
@@ -5492,9 +5522,9 @@ function rktTickStart(){
         const disp = m >= cap ? m : Math.floor(m / step) * step;
         el.textContent = disp.toFixed(2)+'×';
         el.setAttribute('data-disp', disp);
-        // Анимация прыжка
-        el.style.transform = 'translate(-50%,-50%) scale(1.08)';
-        setTimeout(()=>{ el.style.transform=''; }, 80);
+        // Анимация прыжка через wrapper
+        const mw2=document.getElementById('rktMultWrap');
+        if(mw2){ mw2.classList.add('jumping'); setTimeout(()=>mw2.classList.remove('jumping'),100); }
       }
       const cls = (m>=cap && cap<9999) ? 'rkt-mult sc'
                 : m>=20 ? 'rkt-mult sf sg sg2'
@@ -5632,13 +5662,12 @@ function rktApply(d){
     }
     if(prev!=='flying'){
       rTrail=[];rCrashParticles=[];rSpeedParts=[];rCashNotifs=[];
-      // Снимаем блокировку ставки ТОЛЬКО если ставка ещё не принята
-      if(!_rktBetAccepted && !RKT.betPlaced) _rktSetBetting(false);
+      // Всегда сбрасываем _rktBetting при старте — чтобы кнопка ЗАБРАТЬ показалась
+      _rktSetBetting(false);
       _rktOperating=false;
       RKT._betTs=0;
       if(rAFid) cancelAnimationFrame(rAFid);
       rktAF(); rktTickStart();
-      // Кнопка обновится через rktUI() в конце rktApply
       if(RKT.betPlaced&&!RKT.cashedOut){
         const res=document.getElementById('rktRes');
         if(res&&res.className!=='rkt-res win'){
@@ -5728,11 +5757,10 @@ function rktUpdateBtn(){
     if(st){ st.textContent=txt; st.style.color=color||'rgba(255,255,255,.25)'; }
   };
 
-  // ── ПОЛЁТ ──────────────────────────────────────────────
+  // ── ПОЛЁТ — проверяется ПЕРВЫМ, всегда ──────────────────
   if(RKT.phase==='flying'){
     if(RKT.betPlaced && !RKT.cashedOut && !_rktCashingOut){
       const m = RKT.mult||1;
-      // Точный расчёт прибыли для статуса
       const multCents = Math.round(m * 100);
       const prize = Math.round((RKT.myBet||0) * multCents / 100);
       const profit = prize - (RKT.myBet||0);
@@ -5747,7 +5775,7 @@ function rktUpdateBtn(){
       setStatus('ЗАБРАНО — РАУНД ЗАВЕРШЁН', '#4ade80');
       return;
     }
-    b.textContent='🚀 Поставить в следующем';
+    b.textContent='—';
     b.className='rkt-btn bw'; b.disabled=true;
     setStatus('', '');
     return;
