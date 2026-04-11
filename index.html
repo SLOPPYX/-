@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -5926,89 +5925,85 @@ function _rktSetBetting(val){
   }
 }
 function rktPlaceBet(){
-  if(_rktBetting||_rktRoundBetDone||RKT.betPlaced) return;
+  // Защиты от двойного нажатия
+  if(_rktBetting || _rktRoundBetDone || RKT.betPlaced) return;
   if(RKT.phase==='flying') return;
-  // Не принимаем ставки в последние 1.5 сек
   if(RKT.phase==='waiting' && RKT.waitLeft > 0 && RKT.waitLeft <= 1.5){
-    showToast('Слишком поздно! Жди следующего раунда','error'); return;
+    showToast('Слишком поздно — жди следующего раунда','error'); return;
   }
 
-  const i=document.getElementById('rktInp');
-  const bet=Math.min(parseBetStr(i?i.value:String(RKT.myBet))||0, MAX_BET_RKT);
-  if(bet<1000){ showToast('Минимум 1 000 токенов','error'); return; }
-  if(bet>balance){ showToast('Недостаточно токенов!','error'); return; }
+  const i   = document.getElementById('rktInp');
+  const bet = Math.min(parseBetStr(i?i.value:String(RKT.myBet))||0, MAX_BET_RKT);
+  if(bet < 1000){ showToast('Минимум 1 000 токенов','error'); return; }
+  if(bet > balance){ showToast('Недостаточно токенов!','error'); return; }
 
-  const res=document.getElementById('rktRes');
-  const btnEl=document.getElementById('rktBtn');
+  const res   = document.getElementById('rktRes');
+  const btnEl = document.getElementById('rktBtn');
+  const stEl  = document.getElementById('rktActionStatus');
 
-  // МГНОВЕННАЯ заморозка кнопки — прямо в DOM, до всего остального
-  if(btnEl){
-    btnEl.disabled=true;
-    btnEl.innerHTML='<span class="rkt-btn-spin">⟳</span> Отправляем...';
-    btnEl.className='rkt-btn bl';
-  }
+  // ── ШАГ 1: МГНОВЕННАЯ блокировка кнопки в DOM ──────────
+  _rktBetting       = true;
+  _rktRoundBetDone  = true;
+  RKT.betPlaced     = true;
+  RKT.myBet         = bet;
 
-  // Жёсткая блокировка кнопки сразу
-  _rktSetBetting(true);
-  rktUpdateBtn();
+  if(btnEl){ btnEl.disabled=true; btnEl.innerHTML='<span class="rkt-btn-spin">⟳</span> Отправляем...'; btnEl.className='rkt-btn bl'; }
+  if(stEl)  stEl.textContent = 'ОТПРАВЛЯЕМ СТАВКУ...';
+  if(res)  { res.textContent='⏳ Отправляем ставку...'; res.className='rkt-res'; }
 
-  // Списываем баланс
-  RKT.betPlaced=true;
-  RKT.myBet=bet;
-  RKT._betTs=Date.now();
-  setBalance(balance-bet);
-  _rktMinBalance=balance;
-  _rktRoundBetDone=true;
+  // ── ШАГ 2: Списываем баланс оптимистично ───────────────
+  setBalance(balance - bet);
+  _rktMinBalance = balance;
   rktUpdateTable(); rktUpdateTags();
-  if(res){ res.textContent='⏳ Отправляем...'; res.className='rkt-res'; }
 
-  // Функция отката — возвращает ставку и разблокирует
-  const refund = (msg)=>{
-    _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
-    _rktBetAccepted=false; _rktCashingOut=false;
-    setBalance(balance+bet);
-    _rktSetBetting(false);
-    if(res){ res.textContent=msg||'Ставка не принята, токены возвращены'; res.className='rkt-res'; }
-    showToast('↩️ Ставка отменена, '+bet.toLocaleString('ru-RU')+' возвращено','info');
+  // ── Откат: возвращаем ставку и разблокируем ──────────────
+  const refund = (msg) => {
+    _rktBetting=false; _rktRoundBetDone=false; RKT.betPlaced=false;
+    _rktBetAccepted=false; _rktMinBalance=-1;
+    setBalance(balance + bet);
+    if(res){ res.textContent = msg; res.className='rkt-res'; }
+    showToast('↩️ '+bet.toLocaleString('ru-RU')+' возвращено','info');
     rktUI();
   };
 
-  const doSend = ()=>{
-    if(!API_URL||!API_SECRET){
-      _rktSetBetting(false);
-      if(res){ res.textContent='Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
-      showToast('Ставка '+bet.toLocaleString('ru-RU')+'!','success');
-      rktUI(); return;
-    }
-    rktFetch('/casino/rocket/bet',{method:'POST',body:JSON.stringify({
-      uid:parseInt(USER_ID),secret:API_SECRET,bet,
+  // ── ШАГ 3: Отправляем на API ────────────────────────────
+  if(!API_URL || !API_SECRET){
+    // Без API — сразу принято
+    _rktBetting=false; _rktBetAccepted=true;
+    if(res){ res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
+    showToast('🚀 Ставка '+bet.toLocaleString('ru-RU')+'!','success');
+    rktUI(); return;
+  }
+
+  rktFetch('/casino/rocket/bet', {
+    method:'POST',
+    body:JSON.stringify({
+      uid:parseInt(USER_ID), secret:API_SECRET, bet,
       name:USER_NAME||CUSTOM_ID||USER_ID,
       avatar_id:selectedAvatar||'ghost'
-    })}).then(r=>{
-      if(r && r.error==='insufficient_funds'){
-        refund('Недостаточно токенов!'); return;
-      }
-      if(r && r.error==='round_started'){
-        refund('Раунд начался — ставка возвращена'); return;
-      }
-      if(r && r.error){
-        refund('Ошибка: '+r.error); return;
-      }
-      // ── УСПЕХ: ставка принята — кнопка остаётся заблокированной ──
-      if(r && typeof r.balance==='number') setBalance(r.balance);
-      if(res){ res.textContent='Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
-      showToast('Ставка '+bet.toLocaleString('ru-RU')+'!','success');
-      // Устанавливаем постоянную блокировку до конца раунда
-      _rktBetAccepted = true;
-      // Обновляем таблицу без пересчёта кнопки
-      rktUpdateTable(); rktHist();
-    }).catch(()=>{
-      // Сеть — принята офлайн, кнопка остаётся заблокированной
-      if(res){ res.textContent='Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
-      // Не разблокируем
-    });
-  };
-  doSend();
+    })
+  }).then(r => {
+    if(!r){ // нет ответа — принято офлайн
+      _rktBetting=false; _rktBetAccepted=true;
+      if(res){ res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
+      rktUI(); return;
+    }
+    if(r.error==='insufficient_funds'){ refund('Недостаточно токенов'); return; }
+    if(r.error==='round_started')      { refund('Раунд начался — попробуй снова'); return; }
+    if(r.error)                        { refund('Ошибка сервера: '+r.error); return; }
+
+    // Успех
+    if(typeof r.balance==='number') setBalance(r.balance);
+    _rktBetting=false; _rktBetAccepted=true;
+    if(res){ res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
+    showToast('🚀 Ставка '+bet.toLocaleString('ru-RU')+'!','success');
+    rktUI(); rktUpdateTable();
+  }).catch(() => {
+    // Сеть упала — считаем принятой
+    _rktBetting=false; _rktBetAccepted=true;
+    if(res){ res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
+    rktUI();
+  });
 }
 
 async function rktDoCashout(){
@@ -6043,7 +6038,7 @@ async function rktDoCashout(){
   }
   rktUpdateTable(); rktUpdateTags();
 
-  // API — единственная финансовая истина
+  // API — получаем точный баланс с сервера
   if(API_URL && API_SECRET){
     try{
       const r = await rktFetch('/casino/rocket/cashout',{
@@ -6051,25 +6046,25 @@ async function rktDoCashout(){
         body:JSON.stringify({
           uid:parseInt(USER_ID),
           secret:API_SECRET,
-          client_mult:mult          // сервер знает какой икс зафиксировал клиент
+          client_mult:mult
         })
       });
       if(r && r.ok){
-        // Берём данные сервера
-        const sPrize  = (r.prize  != null) ? r.prize  : localPrize;
-        const sProfit = sPrize - myBet;
-        const sBal    = (typeof r.balance === 'number') ? r.balance : (balance + sPrize);
+        // prize считаем ТОЛЬКО по клиентскому mult — то что видел пользователь
+        // Баланс берём с сервера как финансовую истину
+        const sBal = (typeof r.balance === 'number') ? r.balance : (balance + localPrize);
 
         RKT.cashedMult = mult;
         setBalance(sBal);
         RKT.stats.g++;
-        RKT.stats.p += sProfit;
+        RKT.stats.p += localProfit;
         if(mult > RKT.stats.b) RKT.stats.b = mult;
         rktSave();
 
-        _showCashoutResult(res, mult, sProfit, sPrize);
-        showToast('×'+mult.toFixed(2)+'  +'+sProfit.toLocaleString('ru-RU')+' 💰','gold');
-        try{ rAddCashNotif(USER_NAME||'ВЫ', mult, sProfit); }catch(e){}
+        // Показываем КЛИЕНТСКИЕ данные — mult и prize которые видел пользователь
+        _showCashoutResult(res, mult, localProfit, localPrize);
+        showToast('×'+mult.toFixed(2)+'  +'+localProfit.toLocaleString('ru-RU')+' 💰','gold');
+        try{ rAddCashNotif(USER_NAME||'ВЫ', mult, localProfit); }catch(e){}
         if(btn){ btn.textContent='✅ Забрано ×'+mult.toFixed(2); }
         rktUpdateTable(); rktUpdateTags();
         _rktOperating=false; _rktCashingOut=false;
