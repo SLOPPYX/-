@@ -1024,6 +1024,39 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 }
 
 /* Теги игроков */
+/* Красный оверлей краша — как в видео */
+.rkt-crash-overlay {
+  position:absolute; inset:0; z-index:9; pointer-events:none;
+  opacity:0; background:rgba(220,20,20,.0);
+  transition:opacity 0.1s;
+}
+.rkt-crash-overlay.active {
+  opacity:1; background:rgba(200,0,0,.22);
+  animation:rktCrashFlash 0.3s ease-out;
+}
+@keyframes rktCrashFlash {
+  0%  { background:rgba(255,30,30,.7); }
+  40% { background:rgba(200,0,0,.35); }
+  100%{ background:rgba(200,0,0,.22); }
+}
+.rkt-mult { transition:transform 80ms ease-out; }
+
+/* Прогресс-бар снизу сцены */
+.rkt-progress-bar {
+  position:absolute; bottom:0; left:0; right:0; height:4px; z-index:8;
+  background:rgba(255,255,255,.08);
+}
+.rkt-pb-inner {
+  height:100%; width:0%;
+  background:linear-gradient(90deg,#22c55e,#4ade80);
+  transition:width 0.15s linear;
+  box-shadow:0 0 8px rgba(74,222,128,.5);
+}
+.rkt-pb-inner.red {
+  background:linear-gradient(90deg,#ef4444,#f87171);
+  box-shadow:0 0 8px rgba(239,68,68,.5);
+}
+
 .rkt-players-overlay {
   position:absolute; bottom:0; left:0; right:0;
   padding:10px 12px; display:flex; flex-wrap:wrap; gap:5px;
@@ -2061,7 +2094,6 @@ display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
   <!-- ══ ROCKET GAME ══ -->
   <div class="page rkt-wrap" id="page-rocket" style="padding:0">
 
-    <!-- Игровая сцена с 3D Canvas -->
     <div class="rkt-scene">
       <canvas id="rocketCanvas"></canvas>
 
@@ -2069,6 +2101,14 @@ display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
       <div class="rkt-mult-wrap" id="rktMultWrap">
         <div class="rkt-mult sw" id="rktMult">ЖДЁМ</div>
         <div class="rkt-sub" id="rktSub">Следующий раунд скоро</div>
+      </div>
+
+      <!-- Красный оверлей при краше — как в видео -->
+      <div class="rkt-crash-overlay" id="rktCrashOverlay"></div>
+
+      <!-- Прогресс-бар снизу сцены -->
+      <div class="rkt-progress-bar">
+        <div class="rkt-pb-inner" id="rktProgressBar"></div>
       </div>
 
       <!-- Теги игроков поверх сцены -->
@@ -5423,10 +5463,9 @@ function rktTickStart(){
     const cap=RKT.crashAt||9999;
     const m=Math.min(raw, cap);
 
-    // RKT.mult всегда обновляется — ракетка продолжает лететь и после кэшаута
     RKT.mult=m;
 
-    // Обновляем кнопку ЗАБРАТЬ каждый кадр — иксы в реальном времени
+    // Обновляем кнопку ЗАБРАТЬ каждый кадр
     if(RKT.betPlaced && !RKT.cashedOut && !_rktCashingOut){
       const btnLive=document.getElementById('rktBtn');
       const stLive=document.getElementById('rktActionStatus');
@@ -5444,9 +5483,19 @@ function rktTickStart(){
 
     const el=document.getElementById('rktMult');
     if(el){
-      // Дисплей всегда показывает текущий mult — ракетка летит дальше
-      el.textContent=m.toFixed(2)+'×';
-      // Цвет: белый → зелёный ×5+ → жёлтый ×20+ → красный при краше
+      // ПРЫГАЮЩИЕ ИКСЫ — обновляем не каждый кадр, а рывками
+      // Шаг зависит от скорости: медленно до 2x, быстрее после
+      const prevDisp = parseFloat(el.getAttribute('data-disp')||'1');
+      let step = m < 2 ? 0.01 : m < 5 ? 0.02 : m < 10 ? 0.05 : m < 20 ? 0.1 : 0.25;
+      // Обновляем только если разница >= шага
+      if(m - prevDisp >= step || m >= cap){
+        const disp = m >= cap ? m : Math.floor(m / step) * step;
+        el.textContent = disp.toFixed(2)+'×';
+        el.setAttribute('data-disp', disp);
+        // Анимация прыжка
+        el.style.transform = 'translate(-50%,-50%) scale(1.08)';
+        setTimeout(()=>{ el.style.transform=''; }, 80);
+      }
       const cls = (m>=cap && cap<9999) ? 'rkt-mult sc'
                 : m>=20 ? 'rkt-mult sf sg sg2'
                 : m>=5  ? 'rkt-mult sf sg'
@@ -5637,17 +5686,31 @@ function rktUI(){
   const me=document.getElementById('rktMult');
   const sb=document.getElementById('rktSub');
   const on=document.getElementById('rktOnl');
+  const overlay=document.getElementById('rktCrashOverlay');
+  const pb=document.getElementById('rktProgressBar');
   if(on) on.textContent=RKT.online;
+
   if(RKT.phase==='waiting'){
     if(me){me.textContent='';me.className='rkt-mult sw';}
+    if(overlay) overlay.classList.remove('active');
+    // Прогресс ожидания — заполняется по таймеру
+    if(pb){
+      const total=6; const left=RKT.waitLeft||0;
+      const pct = total>0 ? Math.max(0,Math.min(100,(1-left/total)*100)) : 100;
+      pb.style.width=pct+'%'; pb.className='rkt-pb-inner';
+    }
   } else if(RKT.phase==='flying'){
     if(me&&!_rktTick){me.textContent=(RKT.mult||1).toFixed(2)+'×';me.className='rkt-mult sf';}
     if(sb) sb.textContent='';
+    if(overlay) overlay.classList.remove('active');
+    if(pb){ pb.style.width='100%'; pb.className='rkt-pb-inner'; }
   } else if(RKT.phase==='crashed'){
     if(me){me.textContent=(RKT.crashAt||(RKT.mult||1)).toFixed(2)+'×';me.className='rkt-mult sc';}
     if(sb) sb.textContent='💥 КРАШ';
+    // Красный оверлей + красный прогресс-бар
+    if(overlay) overlay.classList.add('active');
+    if(pb){ pb.style.width='100%'; pb.className='rkt-pb-inner red'; }
   }
-  // Кнопка — только здесь, больше нигде
   rktUpdateBtn();
   const g=document.getElementById('rStG');if(g)g.textContent=RKT.stats.g;
   const b=document.getElementById('rStB');if(b)b.textContent=RKT.stats.b>0?'×'+RKT.stats.b.toFixed(2):'—';
@@ -5713,7 +5776,7 @@ function rktUpdateBtn(){
   if(RKT.waitLeft>0 && RKT.waitLeft<=1.5){
     b.textContent='🔒 Скоро старт';
     b.className='rkt-btn bw'; b.disabled=true;
-    setStatus('ПРИЁМ СТАВОК ЗАКРЫТ', '#f87171');
+    setStatus('СКОРО СТАРТ — СТАВКА ПРИНЯТА', '#f87171');
     return;
   }
   // Активна
@@ -5877,6 +5940,7 @@ let _rktWT=null, _rktWaitEnd=0;
 function rktWaitTick(){
   if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
   _rktWaitEnd=Date.now()+Math.max(0.1, RKT.waitLeft)*1000;
+  const totalWait = Math.max(RKT.waitLeft, 0.1);
   function tick(){
     if(RKT.phase!=='waiting'){
       if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
@@ -5884,11 +5948,16 @@ function rktWaitTick(){
     }
     const left=Math.max(0,(_rktWaitEnd-Date.now())/1000);
     RKT.waitLeft=left;
-    // Обновляем только кнопку (не весь rktUI — он вызывается из rktApply)
     rktUpdateBtn();
+    // Обновляем прогресс-бар
+    const pb=document.getElementById('rktProgressBar');
+    if(pb){
+      const pct=Math.max(0,Math.min(100,(1-left/totalWait)*100));
+      pb.style.width=pct+'%';
+    }
   }
   tick();
-  _rktWT=setInterval(tick, 200);
+  _rktWT=setInterval(tick, 100);
 }
 
 // ── Действия игрока ──────────────────────────────────────
@@ -5928,9 +5997,6 @@ function rktPlaceBet(){
   // Защиты от двойного нажатия
   if(_rktBetting || _rktRoundBetDone || RKT.betPlaced) return;
   if(RKT.phase==='flying') return;
-  if(RKT.phase==='waiting' && RKT.waitLeft > 0 && RKT.waitLeft <= 1.5){
-    showToast('Слишком поздно — жди следующего раунда','error'); return;
-  }
 
   const i   = document.getElementById('rktInp');
   const bet = Math.min(parseBetStr(i?i.value:String(RKT.myBet))||0, MAX_BET_RKT);
@@ -5942,7 +6008,7 @@ function rktPlaceBet(){
   const stEl  = document.getElementById('rktActionStatus');
 
   // ── ШАГ 1: МГНОВЕННАЯ блокировка кнопки в DOM ──────────
-  _rktBetting       = true;
+  _rktSetBetting(true);
   _rktRoundBetDone  = true;
   RKT.betPlaced     = true;
   RKT.myBet         = bet;
@@ -5994,13 +6060,13 @@ function rktPlaceBet(){
 
     // Успех
     if(typeof r.balance==='number') setBalance(r.balance);
-    _rktBetting=false; _rktBetAccepted=true;
+    _rktSetBetting(false); _rktBetAccepted=true;
     if(res){ res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
     showToast('🚀 Ставка '+bet.toLocaleString('ru-RU')+'!','success');
     rktUI(); rktUpdateTable();
   }).catch(() => {
     // Сеть упала — считаем принятой
-    _rktBetting=false; _rktBetAccepted=true;
+    _rktSetBetting(false); _rktBetAccepted=true;
     if(res){ res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
     rktUI();
   });
