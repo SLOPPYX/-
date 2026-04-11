@@ -5647,9 +5647,27 @@ function rktApply(d){
   if(roundChanged){
     _rktOperating=false;
     _rktCashingOut=false;
-    // Если ставка ещё отправляется (sending) — НЕ трогаем, ответ сервера сам разберётся
-    // Только если accepted или idle — сбрасываем
-    if(_rktBetState !== 'sending'){
+    // Если ставка была в процессе отправки — проверяем есть ли мы в players
+    if(_rktBetState === 'sending'){
+      const meInPlayers = (d.players||[]).find(p =>
+        p.is_me ||
+        (USER_ID && (String(p.uid)===String(USER_ID)||String(p.user_id)===String(USER_ID)))
+      );
+      if(meInPlayers && meInPlayers.bet > 0){
+        // Сервер подтвердил ставку — принимаем
+        RKT.betPlaced = true;
+        RKT.myBet = meInPlayers.bet;
+        _rktBetLock('accepted');
+        _rktRoundBetDone = true;
+      } else {
+        // Ставка не попала в этот раунд — делаем refund
+        const refundAmt = RKT.myBet||0;
+        _rktBetUnlock();
+        _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
+        if(refundAmt>0){ setBalance(balance+refundAmt); showToast('\u21a9\ufe0f '+refundAmt.toLocaleString('ru-RU')+' \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0435\u043d\u043e','info'); }
+      }
+    } else {
+      // Не в процессе отправки — стандартный сброс
       _rktBetUnlock();
       _rktSetBetting(false);
       _rktRoundBetDone=false;
@@ -5696,9 +5714,37 @@ function rktApply(d){
     } else {
       RKT._ls=Date.now()-(Math.log(Math.max(RKT.mult,1.001))/0.085)*1000;
     }
+
+    // ── ГЛАВНЫЙ ФИX: синхронизируем betPlaced с сервера ──
+    // Ищем себя в списке игроков который прислал сервер
+    const meOnServer = (d.players||[]).find(p =>
+      p.is_me ||
+      (USER_ID && String(p.uid) === String(USER_ID)) ||
+      (USER_ID && String(p.user_id) === String(USER_ID))
+    );
+    if(meOnServer && meOnServer.bet > 0){
+      // Сервер подтверждает: наша ставка в этом раунде принята
+      if(!RKT.betPlaced){
+        // Баланс уже был списан при отправке (setBalance(balance-bet))
+        // Если betPlaced=false — значит что-то сбросилось, восстанавливаем
+        RKT.betPlaced = true;
+        RKT.myBet = meOnServer.bet;
+      }
+      // Разблокируем кнопку ЗАБРАТЬ
+      if(_rktBetState === 'sending'){
+        _rktBetLock('accepted');
+        _rktRoundBetDone = true;
+      }
+      const res=document.getElementById('rktRes');
+      if(res && res.className!=='rkt-res win'){
+        res.textContent='🚀 Летим! Нажми ЗАБРАТЬ когда захочешь';
+        res.className='rkt-res';
+      }
+    }
+
     if(prev!=='flying'){
       rTrail=[];rCrashParticles=[];rSpeedParts=[];rCashNotifs=[];
-      _rktSetBetting(false);
+      if(_rktBetState==='sending') _rktSetBetting(false); // сервер стартовал — запрос уже не нужен
       _rktOperating=false;
       RKT._betTs=0;
       // Сбрасываем data-disp чтобы иксы показались сразу
