@@ -5617,7 +5617,7 @@ function rktApply(d){
   if(roundChanged){
     _rktOperating=false;
     _rktSetBetting(false);
-    _rktBetAccepted=false; _rktCashingOut=false;
+    _rktBetUnlock(); _rktCashingOut=false;
     if(!RKT.betPlaced) _rktRoundBetDone=false;
     _rktMinBalance=-1;
   }
@@ -5662,10 +5662,12 @@ function rktApply(d){
     }
     if(prev!=='flying'){
       rTrail=[];rCrashParticles=[];rSpeedParts=[];rCashNotifs=[];
-      // Всегда сбрасываем _rktBetting при старте — чтобы кнопка ЗАБРАТЬ показалась
       _rktSetBetting(false);
       _rktOperating=false;
       RKT._betTs=0;
+      // Сбрасываем data-disp чтобы иксы показались сразу
+      const multEl=document.getElementById('rktMult');
+      if(multEl){ multEl.removeAttribute('data-disp'); }
       if(rAFid) cancelAnimationFrame(rAFid);
       rktAF(); rktTickStart();
       if(RKT.betPlaced&&!RKT.cashedOut){
@@ -5695,7 +5697,7 @@ function rktApply(d){
       setTimeout(()=>{
         RKT.phase='waiting';RKT.betPlaced=false;RKT.cashedOut=false;
         _rktOperating=false; _rktSetBetting(false);
-        _rktBetAccepted=false; _rktCashingOut=false;
+        _rktBetUnlock(); _rktCashingOut=false;
         _rktRoundBetDone=false; _rktMinBalance=-1;
         _rktFrozenMult=null;
         rTrail=[];rCrashParticles=[];
@@ -5992,18 +5994,43 @@ function rktWaitTick(){
 // _rktRoundBetDone: ставка поставлена в ЭТОМ раунде — не сбрасывается до смены раунда
 let _rktRoundBetDone = false;
 
+// АТОМАРНЫЙ ЛОК — единственный источник истины о состоянии кнопки
+// 'idle' | 'sending' | 'accepted' | 'cashing'
+let _rktBetState = 'idle';
+
+function _rktBetLock(state){
+  _rktBetState = state;
+  // Также обновляем legacy флаги для совместимости
+  _rktBetting     = (state === 'sending');
+  _rktBetAccepted = (state === 'accepted');
+  if(_rktBettingTimer){ clearTimeout(_rktBettingTimer); _rktBettingTimer=null; }
+  // Watchdog: если через 5 сек всё ещё sending — сбрасываем
+  if(state === 'sending'){
+    _rktBettingTimer = setTimeout(()=>{
+      if(_rktBetState === 'sending'){
+        _rktBetState = 'idle'; _rktBetting=false;
+        _rktBettingTimer=null; rktUI();
+      }
+    }, 5000);
+  }
+}
+
+function _rktBetUnlock(){
+  if(_rktBettingTimer){ clearTimeout(_rktBettingTimer); _rktBettingTimer=null; }
+  _rktBetState='idle'; _rktBetting=false; _rktBetAccepted=false;
+}
+
 function rktAction(){
   const btn=document.getElementById('rktBtn');
   if(btn&&btn.disabled) return;
   if(RKT.phase==='flying'&&RKT.betPlaced&&!RKT.cashedOut&&!_rktCashingOut){
-    // Захватываем ТОЧНЫЙ отображаемый mult — то что видит пользователь
-    // Захватываем отображаемый mult (toFixed(2) = то что видит пользователь)
     _rktFrozenMult = parseFloat(RKT.mult.toFixed(2));
     try{ tg.HapticFeedback.impactOccurred('heavy'); }catch(e){}
     rktDoCashout();
     return;
   }
-  if(!_rktRoundBetDone&&!_rktBetting){ rktPlaceBet(); }
+  // Принимаем ставку только в idle
+  if(_rktBetState==='idle' && !_rktRoundBetDone && !RKT.betPlaced){ rktPlaceBet(); }
 }
 
 let _rktBetting=false;
@@ -6011,19 +6038,12 @@ let _rktBettingTimer=null;
 let _rktBetAccepted=false;
 
 function _rktSetBetting(val){
-  _rktBetting=val;
-  if(_rktBettingTimer){ clearTimeout(_rktBettingTimer); _rktBettingTimer=null; }
-  // Таймер только при val=true — защита от вечного зависания при сетевой ошибке
-  if(val && !_rktBetAccepted){
-    _rktBettingTimer=setTimeout(()=>{
-      // Сбрасываем только если ставка так и не была принята
-      if(!_rktBetAccepted){ _rktBetting=false; _rktBettingTimer=null; rktUpdateBtn(); }
-    }, 4000);
-  }
+  if(val){ _rktBetLock('sending'); }
+  else if(_rktBetState==='sending'){ _rktBetLock('idle'); }
 }
 function rktPlaceBet(){
-  // Защиты от двойного нажатия
-  if(_rktBetting || _rktRoundBetDone || RKT.betPlaced) return;
+  // Атомарная защита — только из idle
+  if(_rktBetState !== 'idle' || _rktRoundBetDone || RKT.betPlaced) return;
   if(RKT.phase==='flying') return;
 
   const i   = document.getElementById('rktInp');
@@ -6035,35 +6055,31 @@ function rktPlaceBet(){
   const btnEl = document.getElementById('rktBtn');
   const stEl  = document.getElementById('rktActionStatus');
 
-  // ── ШАГ 1: МГНОВЕННАЯ блокировка кнопки в DOM ──────────
-  _rktSetBetting(true);
-  _rktRoundBetDone  = true;
-  RKT.betPlaced     = true;
-  RKT.myBet         = bet;
+  // АТОМАРНО блокируем — первой строкой
+  _rktBetLock('sending');
+  _rktRoundBetDone = true;
+  RKT.betPlaced    = true;
+  RKT.myBet        = bet;
 
   if(btnEl){ btnEl.disabled=true; btnEl.innerHTML='<span class="rkt-btn-spin">⟳</span> Отправляем...'; btnEl.className='rkt-btn bl'; }
-  if(stEl)  stEl.textContent = 'ОТПРАВЛЯЕМ СТАВКУ...';
+  if(stEl)  stEl.textContent = 'ОТПРАВЛЯЕМ...';
   if(res)  { res.textContent='⏳ Отправляем ставку...'; res.className='rkt-res'; }
 
-  // ── ШАГ 2: Списываем баланс оптимистично ───────────────
   setBalance(balance - bet);
   _rktMinBalance = balance;
   rktUpdateTable(); rktUpdateTags();
 
-  // ── Откат: возвращаем ставку и разблокируем ──────────────
   const refund = (msg) => {
-    _rktBetting=false; _rktRoundBetDone=false; RKT.betPlaced=false;
-    _rktBetAccepted=false; _rktMinBalance=-1;
+    _rktBetUnlock();
+    _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
     setBalance(balance + bet);
     if(res){ res.textContent = msg; res.className='rkt-res'; }
     showToast('↩️ '+bet.toLocaleString('ru-RU')+' возвращено','info');
     rktUI();
   };
 
-  // ── ШАГ 3: Отправляем на API ────────────────────────────
   if(!API_URL || !API_SECRET){
-    // Без API — сразу принято
-    _rktBetting=false; _rktBetAccepted=true;
+    _rktBetLock('accepted');
     if(res){ res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
     showToast('🚀 Ставка '+bet.toLocaleString('ru-RU')+'!','success');
     rktUI(); return;
@@ -6071,30 +6087,22 @@ function rktPlaceBet(){
 
   rktFetch('/casino/rocket/bet', {
     method:'POST',
-    body:JSON.stringify({
-      uid:parseInt(USER_ID), secret:API_SECRET, bet,
-      name:USER_NAME||CUSTOM_ID||USER_ID,
-      avatar_id:selectedAvatar||'ghost'
-    })
+    body:JSON.stringify({ uid:parseInt(USER_ID), secret:API_SECRET, bet,
+      name:USER_NAME||CUSTOM_ID||USER_ID, avatar_id:selectedAvatar||'ghost' })
   }).then(r => {
-    if(!r){ // нет ответа — принято офлайн
-      _rktBetting=false; _rktBetAccepted=true;
+    if(!r){ _rktBetLock('accepted');
       if(res){ res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
-      rktUI(); return;
-    }
+      rktUI(); return; }
     if(r.error==='insufficient_funds'){ refund('Недостаточно токенов'); return; }
-    if(r.error==='round_started')      { refund('Раунд начался — попробуй снова'); return; }
-    if(r.error)                        { refund('Ошибка сервера: '+r.error); return; }
-
-    // Успех
+    if(r.error==='round_started')     { refund('Раунд начался — попробуй снова'); return; }
+    if(r.error)                       { refund('Ошибка: '+r.error); return; }
     if(typeof r.balance==='number') setBalance(r.balance);
-    _rktSetBetting(false); _rktBetAccepted=true;
+    _rktBetLock('accepted');
     if(res){ res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
     showToast('🚀 Ставка '+bet.toLocaleString('ru-RU')+'!','success');
     rktUI(); rktUpdateTable();
   }).catch(() => {
-    // Сеть упала — считаем принятой
-    _rktSetBetting(false); _rktBetAccepted=true;
+    _rktBetLock('accepted');
     if(res){ res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
     rktUI();
   });
