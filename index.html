@@ -1137,6 +1137,60 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-hc.lo svg .chip-text { fill:#f87171 }
 
 /* Таблица игроков */
+/* ── ЖИВАЯ ТАБЛИЦА ИГРОКОВ ── */
+.rkt-live-table-wrap {
+  margin:10px 0 6px;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.02);
+}
+.rkt-live-table-header {
+  display:grid; grid-template-columns:1fr 70px 90px;
+  padding:7px 12px;
+  background:rgba(255,255,255,.04);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  font-family:var(--fd); font-size:8px; font-weight:700;
+  letter-spacing:1.5px; color:rgba(255,255,255,.3);
+  text-transform:uppercase;
+}
+.rkt-live-row {
+  display:grid; grid-template-columns:1fr 70px 90px;
+  align-items:center;
+  padding:7px 12px;
+  border-bottom:1px solid rgba(255,255,255,.04);
+  transition:background .3s ease;
+  position:relative; overflow:hidden;
+}
+.rkt-live-row:last-child { border-bottom:none; }
+.rkt-live-row.me   { background:rgba(232,184,75,.06); border-left:2px solid rgba(232,184,75,.5); }
+.rkt-live-row.cashed { background:rgba(74,222,128,.06); }
+.rkt-live-row.crashed { opacity:.4; }
+/* Flash анимация когда забирают */
+@keyframes cashFlash {
+  0%  { background:rgba(74,222,128,.35); }
+  100%{ background:rgba(74,222,128,.06); }
+}
+.rkt-live-row.flash-cash { animation:cashFlash .7s ease forwards; }
+.rkt-live-player { display:flex; align-items:center; gap:7px; min-width:0; }
+.rkt-live-ava {
+  width:26px; height:26px; flex-shrink:0; border-radius:50%;
+  background:rgba(255,255,255,.07); border:1.5px solid rgba(255,255,255,.12);
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+  font-size:13px;
+}
+.rkt-live-name { font-family:var(--fd); font-size:10px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:90px; }
+.rkt-live-status { font-size:8px; color:rgba(255,255,255,.3); margin-top:1px; letter-spacing:.3px; }
+.rkt-live-status.flying { color:#fbbf24; }
+.rkt-live-status.cashed { color:#4ade80; font-weight:700; }
+.rkt-live-status.crashed { color:#f87171; }
+.rkt-live-bet { font-family:var(--fd); font-size:10px; font-weight:700; color:rgba(255,255,255,.55); text-align:right; }
+.rkt-live-profit { font-family:var(--fd); font-size:12px; font-weight:900; text-align:right; }
+.rkt-live-profit.pos  { color:#4ade80; }
+.rkt-live-profit.neg  { color:#f87171; }
+.rkt-live-profit.grow { color:#86efac; }
+.rkt-live-profit.wait { color:rgba(255,255,255,.2); font-size:10px; }
+
 .rkt-players-table {
   background:rgba(255,255,255,.025); border:1px solid rgba(255,255,255,.08);
   border-radius:14px; overflow:hidden; margin-bottom:12px;
@@ -2195,8 +2249,15 @@ display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
         <div class="rkt-hist" id="rktHist"></div>
       </div>
 
-      <!-- Таблица игроков (скрыта — будет переделана) -->
-      <div id="rktTable" style="display:none"></div>
+      <!-- Живая таблица игроков -->
+      <div class="rkt-live-table-wrap">
+        <div class="rkt-live-table-header">
+          <span>ИГРОК</span>
+          <span>СТАВКА</span>
+          <span>ПРИБЫЛЬ</span>
+        </div>
+        <div id="rktTable"></div>
+      </div>
 
       <!-- Мини-статистика -->
       <div class="rkt-stats">
@@ -5999,83 +6060,123 @@ function rktHist(){
 
 // Таблица игроков — видно ставки, статус и прибыль каждого
 function rktUpdateTable(){
-  const tbl=document.getElementById('rktTable');if(!tbl)return;
-  while(tbl.children.length>1) tbl.removeChild(tbl.lastChild);
+  const tbl = document.getElementById('rktTable');
+  if(!tbl) return;
 
-  const allPlayers=[];
-  // ВСЕГДА показываем текущего пользователя первым
-  // avatar передаём как ID строку — renderAvatarHtml найдёт SVG по нему
-  const myAvatarId = selectedAvatar || 'ghost';
-  // Для себя используем serverMult если есть
-  const myCashedAt = RKT.betPlaced && RKT.cashedOut ? (RKT.cashedMult||RKT.mult) : null;
-  allPlayers.push({
-    name: USER_NAME || 'ВЫ',
-    bet: RKT.betPlaced ? RKT.myBet : null,
-    cashedAt: myCashedAt,
-    prize: myCashedAt ? Math.floor(RKT.myBet * myCashedAt) : null,
-    avatar: myAvatarId, isMe: true,
-    crashed: RKT.betPlaced && RKT.phase==='crashed' && !RKT.cashedOut,
-    watching: !RKT.betPlaced
-  });
-  (RKT.players||[]).forEach(p=>{
-    if(p.is_me) return;
+  // Собираем список игроков — max 10, сначала мы, потом остальные
+  const allPlayers = [];
+
+  // Всегда добавляем себя если есть ставка
+  if(RKT.betPlaced || (RKT.phase==='waiting' && (_rktBetRoundId===RKT.roundId))){
+    const myCashedAt = RKT.cashedOut ? (RKT.cashedMult||RKT.mult) : null;
     allPlayers.push({
-      name:(p.name||'?').slice(0,10), bet:p.bet,
-      cashedAt:p.cashed_at,
-      prize: p.prize != null ? p.prize : null, // точная сумма с сервера
-      avatar:p.avatar||'ghost',
-      isMe:false, crashed:RKT.phase==='crashed'&&!p.cashed_at
+      uid: 'me',
+      name: USER_NAME || 'ВЫ',
+      bet: RKT.myBet||0,
+      cashedAt: myCashedAt,
+      avatar: selectedAvatar||'ghost',
+      isMe: true,
+      crashed: RKT.betPlaced && RKT.phase==='crashed' && !RKT.cashedOut,
+    });
+  }
+
+  // Добавляем других игроков
+  (RKT.players||[]).forEach(p => {
+    if(p.is_me) return;
+    if(allPlayers.length >= 10) return;
+    allPlayers.push({
+      uid: p.uid,
+      name: (p.name||'?').slice(0,12),
+      bet: p.bet||0,
+      cashedAt: p.cashed_at||null,
+      avatar: p.avatar||'ghost',
+      isMe: false,
+      crashed: (RKT.phase==='crashed') && !p.cashed_at,
     });
   });
 
-  if(allPlayers.length===0){
-    const empty=document.createElement('div');
-    empty.style.cssText='padding:14px;text-align:center;font-family:var(--fd);font-size:9px;color:rgba(255,255,255,.2);letter-spacing:1.5px';
-    empty.textContent='НЕТ ИГРОКОВ В ЭТОМ РАУНДЕ';
-    tbl.appendChild(empty); return;
+  // Обновляем DOM — переиспользуем строки чтобы не мигало
+  const m = RKT.mult||1.00;
+
+  // Убираем лишние строки
+  while(tbl.children.length > allPlayers.length) tbl.removeChild(tbl.lastChild);
+  // Добавляем нужные
+  while(tbl.children.length < allPlayers.length){
+    const row = document.createElement('div');
+    row.className = 'rkt-live-row';
+    tbl.appendChild(row);
   }
 
-  allPlayers.forEach(p=>{
-    const row=document.createElement('div');
-    const cls='rkt-pt-row'+(p.isMe?' r-me':p.cashedAt?' r-cash':p.crashed?' r-boom':'');
-    row.className=cls;
+  allPlayers.forEach((p, i) => {
+    const row = tbl.children[i];
 
-    let profitFmt, profitCls, statusTxt;
-    if(p.watching){
-      profitFmt='—';
-      profitCls='wait';
-      statusTxt='👀 НАБЛЮДАЕТ';
+    // Определяем класс строки
+    let rowCls = 'rkt-live-row';
+    if(p.isMe) rowCls += ' me';
+    else if(p.cashedAt) rowCls += ' cashed';
+    else if(p.crashed) rowCls += ' crashed';
+
+    // Flash при кешауте — сравниваем с предыдущим состоянием
+    const wasCashed = row.dataset.cashed === '1';
+    const nowCashed = !!p.cashedAt;
+    if(nowCashed && !wasCashed && !p.isMe){
+      rowCls += ' flash-cash';
+      setTimeout(()=>{ if(row.parentNode) row.classList.remove('flash-cash'); }, 700);
+    }
+    row.dataset.cashed = nowCashed ? '1' : '0';
+
+    if(row.className !== rowCls) row.className = rowCls;
+
+    // Прибыль
+    let profitHTML, statusHTML;
+    if(!p.bet){
+      profitHTML = '<span class="rkt-live-profit wait">—</span>';
+      statusHTML = '<div class="rkt-live-status">👀 наблюдает</div>';
     } else if(p.cashedAt){
-      // Приоритет: точная сумма с сервера (p.prize), иначе считаем из mult
-      const exactPrize  = p.prize != null ? p.prize : (p.bet * p.cashedAt);
-      const profitNum   = exactPrize - p.bet;
-      profitFmt = (profitNum>=0?'+':'') + Math.round(profitNum).toLocaleString('ru-RU');
-      profitCls='pos';
-      statusTxt='×'+(+p.cashedAt).toFixed(2);
+      const prize = p.isMe
+        ? Math.round(p.bet * p.cashedAt)
+        : Math.round(p.bet * p.cashedAt);
+      const profit = prize - p.bet;
+      profitHTML = '<span class="rkt-live-profit pos">+'+profit.toLocaleString('ru-RU')+'</span>';
+      statusHTML = '<div class="rkt-live-status cashed">✅ ×'+parseFloat(p.cashedAt).toFixed(2)+'</div>';
     } else if(p.crashed){
-      profitFmt='-'+p.bet.toLocaleString('ru-RU');
-      profitCls='neg';
-      statusTxt='КРАШ';
+      profitHTML = '<span class="rkt-live-profit neg">-'+p.bet.toLocaleString('ru-RU')+'</span>';
+      statusHTML = '<div class="rkt-live-status crashed">💥 краш</div>';
+    } else if(RKT.phase==='flying'){
+      // Растущая прибыль в реальном времени
+      const growing = Math.round(p.bet * m) - p.bet;
+      const sign = growing >= 0 ? '+' : '';
+      profitHTML = '<span class="rkt-live-profit grow">'+sign+growing.toLocaleString('ru-RU')+'</span>';
+      statusHTML = '<div class="rkt-live-status flying">🚀 ×'+m.toFixed(2)+'</div>';
     } else {
-      const curMult=RKT.mult||1.00;
-      const growing=p.bet*curMult-p.bet;
-      profitFmt=(growing>=0?'+':'')+Math.round(growing).toLocaleString('ru-RU');
-      profitCls='wait';
-      statusTxt='×'+curMult.toFixed(2);
+      profitHTML = '<span class="rkt-live-profit wait">+0</span>';
+      statusHTML = '<div class="rkt-live-status">⏳ ждёт</div>';
     }
 
-    row.innerHTML='<div class="rkt-pt-player">'
-      +'<div class="rkt-pt-ava">'+renderAvatarHtml(p.avatar||'ghost','full')+'</div>'
-      +'<div>'
-        +'<div class="rkt-pt-name">'+(p.isMe?'👤 '+p.name:p.name)+'</div>'
-        +'<div class="rkt-pt-tag">'+statusTxt+'</div>'
+    const betK = p.bet >= 1000000 ? (p.bet/1000000).toFixed(1)+'М'
+               : p.bet >= 1000 ? Math.round(p.bet/1000)+'K' : String(p.bet);
+
+    const nameLabel = p.isMe ? ('👤 '+(p.name||'ВЫ')) : (p.name||'?');
+    const avaHtml = renderAvatarHtml(p.avatar||'ghost', 26);
+
+    row.innerHTML =
+      '<div class="rkt-live-player">'
+        +'<div class="rkt-live-ava">'+avaHtml+'</div>'
+        +'<div>'
+          +'<div class="rkt-live-name">'+nameLabel+'</div>'
+          +statusHTML
+        +'</div>'
       +'</div>'
-      +'</div>'
-      +'<div class="rkt-pt-bet">'+(p.bet!=null?(p.bet/1000).toFixed(0)+'K':'—')+'</div>'
-      +'<div class="rkt-pt-profit '+profitCls+'">'+profitFmt+'</div>';
-    tbl.appendChild(row);
+      +'<div class="rkt-live-bet">'+betK+'</div>'
+      +profitHTML;
   });
+
+  // Если никого нет
+  if(allPlayers.length === 0){
+    tbl.innerHTML = '<div style="padding:14px;text-align:center;font-family:var(--fd);font-size:9px;color:rgba(255,255,255,.2);letter-spacing:1.5px">ЖДЁМ ИГРОКОВ...</div>';
+  }
 }
+
 
 function rktUpdateTags(){
   const tags=document.getElementById('rktTags');if(!tags)return;
