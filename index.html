@@ -5646,39 +5646,31 @@ function rktApply(d){
   // Если раунд сменился — точно сбрасываем ставку (даже если _rktBetting)
   const roundChanged=(d.round_id!=null && d.round_id!==prevRoundId && prevRoundId!==-1);
   if(roundChanged){
-    // Новый раунд — сбрасываем ID ставки, разрешаем ставить снова
-    _rktBetRoundId = -99;
     _rktOperating=false;
     _rktCashingOut=false;
-    // Если ставка была в процессе отправки — проверяем есть ли мы в players
     if(_rktBetState === 'sending'){
+      // Ставка в процессе — проверяем подтвердил ли сервер
       const meInPlayers = (d.players||[]).find(p =>
         p.is_me ||
         (USER_ID && (String(p.uid)===String(USER_ID)||String(p.user_id)===String(USER_ID)))
       );
       if(meInPlayers && meInPlayers.bet > 0){
-        // Сервер подтвердил ставку — принимаем
-        RKT.betPlaced = true;
-        RKT.myBet = meInPlayers.bet;
-        _rktBetLock('accepted');
-        _rktRoundBetDone = true;
+        RKT.betPlaced = true; RKT.myBet = meInPlayers.bet;
+        _rktBetLock('accepted'); _rktRoundBetDone = true;
+        // НЕ сбрасываем _rktBetRoundId — ставка в этом раунде
       } else {
-        // Ставка не попала в этот раунд — делаем refund
         const refundAmt = RKT.myBet||0;
-        _rktBetUnlock();
-        _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
+        _rktBetUnlock(); _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
+        _rktBetRoundId = -99; // ставка не прошла — разрешаем снова
         if(refundAmt>0){ setBalance(balance+refundAmt); showToast('\u21a9\ufe0f '+refundAmt.toLocaleString('ru-RU')+' \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0435\u043d\u043e','info'); }
       }
-    } else {
-      // Не в процессе отправки — стандартный сброс только если нет активной ставки
-      if(!RKT.betPlaced){
-        _rktBetUnlock();
-        _rktSetBetting(false);
-        _rktRoundBetDone=false;
-        _rktBetAccepted=false;
-        _rktMinBalance=-1;
-      }
+    } else if(!RKT.betPlaced){
+      // Нет ставки — сбрасываем всё и разрешаем ставить
+      _rktBetUnlock(); _rktSetBetting(false);
+      _rktRoundBetDone=false; _rktBetAccepted=false;
+      _rktBetRoundId = -99; _rktMinBalance=-1;
     }
+    // Если betPlaced=true — ничего не трогаем, ставка активна
   }
 
   // Детектируем кешаут других игроков
@@ -5790,7 +5782,7 @@ function rktApply(d){
         RKT.phase='waiting';RKT.betPlaced=false;RKT.cashedOut=false;
         _rktOperating=false; _rktSetBetting(false);
         _rktBetUnlock(); _rktCashingOut=false;
-        _rktRoundBetDone=false; _rktMinBalance=-1;
+        _rktRoundBetDone=false; _rktBetRoundId=-99; _rktMinBalance=-1;
         _rktFrozenMult=null;
         rTrail=[];rCrashParticles=[];
         if(RKT.waitLeft>0) rktWaitTick();
@@ -6093,11 +6085,7 @@ function rktUpdateTags(){
 let _rktWT=null, _rktWaitEnd=0;
 function rktWaitTick(){
   if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
-  // Сбрасываем блокировки только если точно нет ставки в этом раунде
-  if(!RKT.betPlaced && _rktBetState !== 'sending' && _rktBetState !== 'accepted'){
-    _rktBetAccepted=false;
-    _rktRoundBetDone=false;
-  }
+  // НЕ трогаем флаги ставки здесь — только roundId change их сбрасывает
   _rktWaitEnd=Date.now()+Math.max(0.1, RKT.waitLeft)*1000;
   const totalWait = Math.max(RKT.waitLeft, 0.1);
   function tick(){
