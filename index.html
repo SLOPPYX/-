@@ -6136,32 +6136,43 @@ function rktUpdateTable(){
     if(!p.bet){
       profitHTML = '<span class="rkt-live-profit wait">—</span>';
       statusHTML = '<div class="rkt-live-status">👀 наблюдает</div>';
-    } else if(p.cashedAt && p.isMe && RKT.cashedPrize){
-      // Для себя — используем точные сохранённые значения
-      const profitStr = (RKT.cashedProfit>=0?'+':'')+RKT.cashedProfit.toLocaleString('ru-RU');
-      const prizeStr  = RKT.cashedPrize.toLocaleString('ru-RU');
-      profitHTML = '<span class="rkt-live-profit pos">'+profitStr+'</span>';
-      statusHTML = '<div class="rkt-live-status cashed">✅ ×'+parseFloat(p.cashedAt).toFixed(2)+' = '+prizeStr+'</div>';
     } else if(p.cashedAt){
-      // Точный расчёт через целые числа (без float погрешности)
-      const multCents = Math.round(parseFloat(p.cashedAt) * 100);
-      const prize = Math.round(p.bet * multCents / 100);
-      const profit = prize - p.bet;
-      const profitStr = (profit>=0?'+':'')+profit.toLocaleString('ru-RU');
-      const prizeStr = prize.toLocaleString('ru-RU');
-      profitHTML = '<span class="rkt-live-profit pos" title="Забрал '+prizeStr+'">'+profitStr+'</span>';
-      statusHTML = '<div class="rkt-live-status cashed">✅ ×'+parseFloat(p.cashedAt).toFixed(2)+' = '+prizeStr+'</div>';
+      // Точный расчёт
+      let prize, profit;
+      if(p.isMe && RKT.cashedPrize){
+        prize  = RKT.cashedPrize;
+        profit = RKT.cashedProfit;
+      } else {
+        const mc = Math.round(parseFloat(p.cashedAt)*100);
+        prize  = Math.round(p.bet * mc / 100);
+        profit = prize - p.bet;
+      }
+      const profitSign = profit>=0?'+':'';
+      // Большая прибыль + под ней итого
+      profitHTML = '<div style="text-align:right">'
+        +'<div class="rkt-live-profit pos">'+profitSign+profit.toLocaleString('ru-RU')+'</div>'
+        +'<div style="font-size:8px;color:rgba(74,222,128,.6);font-family:var(--fd)">'
+        +'='+prize.toLocaleString('ru-RU')+'</div>'
+        +'</div>';
+      statusHTML = '<div class="rkt-live-status cashed">✅ ×'+parseFloat(p.cashedAt).toFixed(2)+'</div>';
     } else if(p.crashed){
-      profitHTML = '<span class="rkt-live-profit neg">-'+p.bet.toLocaleString('ru-RU')+'</span>';
+      profitHTML = '<div style="text-align:right">'
+        +'<div class="rkt-live-profit neg">-'+p.bet.toLocaleString('ru-RU')+'</div>'
+        +'<div style="font-size:8px;color:rgba(248,113,113,.5);font-family:var(--fd)">сгорело</div>'
+        +'</div>';
       statusHTML = '<div class="rkt-live-status crashed">💥 краш</div>';
     } else if(RKT.phase==='flying'){
-      // Растущая прибыль в реальном времени
       const growing = Math.round(p.bet * m) - p.bet;
-      const sign = growing >= 0 ? '+' : '';
-      profitHTML = '<span class="rkt-live-profit grow">'+sign+growing.toLocaleString('ru-RU')+'</span>';
+      const prize2  = Math.round(p.bet * m);
+      const sign = growing>=0?'+':'';
+      profitHTML = '<div style="text-align:right">'
+        +'<div class="rkt-live-profit grow">'+sign+growing.toLocaleString('ru-RU')+'</div>'
+        +'<div style="font-size:8px;color:rgba(134,239,172,.5);font-family:var(--fd)">'
+        +'='+prize2.toLocaleString('ru-RU')+'</div>'
+        +'</div>';
       statusHTML = '<div class="rkt-live-status flying">🚀 ×'+m.toFixed(2)+'</div>';
     } else {
-      profitHTML = '<span class="rkt-live-profit wait">+0</span>';
+      profitHTML = '<span class="rkt-live-profit wait">—</span>';
       statusHTML = '<div class="rkt-live-status">⏳ ждёт</div>';
     }
 
@@ -6398,20 +6409,19 @@ async function rktDoCashout(){
   const myBet = RKT.myBet;
 
   _rktCashingOut = true;   // мгновенно блокируем повторное нажатие
-  RKT.cashedMult   = mult;
-  RKT.cashedOut   = true;
-  RKT.cashedPrize  = localPrize;   // точная сумма выплаты
-  RKT.cashedProfit = localProfit;  // точная прибыль
   _rktFrozenMult = mult;
   _rktOperating  = true;
 
-  // Точный расчёт без float погрешности:
-  // mult уже toFixed(2), например 1.66
-  // Умножаем через целые числа: round(bet * mult * 100) / 100
-  // 10000 * 1.66 → 10000 * 166 / 100 = 1660000 / 100 = 16600 ✓
-  const multCents = Math.round(mult * 100);         // 1.66 → 166
-  const localPrize  = Math.round(myBet * multCents / 100); // точно 16600
+  // Точный расчёт — СНАЧАЛА считаем, ПОТОМ сохраняем
+  const multCents   = Math.round(mult * 100);
+  const localPrize  = Math.round(myBet * multCents / 100);
   const localProfit = localPrize - myBet;
+
+  // Теперь сохраняем в RKT — localPrize уже определён
+  RKT.cashedMult   = mult;
+  RKT.cashedOut    = true;
+  RKT.cashedPrize  = localPrize;
+  RKT.cashedProfit = localProfit;
 
   // Показываем мгновенно
   const res = document.getElementById('rktRes');
