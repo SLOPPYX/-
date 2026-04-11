@@ -2131,12 +2131,24 @@ display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
       <div class="rkt-players-overlay" id="rktTags"></div>
     </div>
 
-    <!-- ГЛАВНАЯ КНОПКА — sticky под игрой, всегда видна -->
+    <!-- КНОПКИ — sticky под игрой -->
     <div id="rktBtnWrap" style="position:sticky;top:0;z-index:20;padding:8px 14px 6px;background:rgba(4,2,0,.98);border-bottom:1px solid rgba(255,90,0,.15);backdrop-filter:blur(10px);">
       <div id="rktActionStatus" style="font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:1.5px;text-align:center;color:rgba(255,255,255,.25);margin-bottom:5px;min-height:12px;"></div>
-      <button class="rkt-btn bw" id="rktBtn" disabled
-        onclick="_rktFrozenMult=(RKT&&RKT.mult)?parseFloat(RKT.mult.toFixed(2)):null;rktAction()"
-        style="display:block;width:100%;margin:0">⏳ Загрузка...</button>
+      <!-- Кнопка ПОСТАВИТЬ — скрывается после ставки -->
+      <button id="rktBtnBet" onclick="rktAction()"
+        style="display:none;width:100%;margin:0;padding:20px;border:none;border-radius:16px;font-family:var(--fd);font-size:18px;font-weight:900;letter-spacing:3px;cursor:pointer;background:#ffffff;color:#0a0a0a;box-shadow:0 4px 20px rgba(255,255,255,.2);">
+        🚀 ПОСТАВИТЬ
+      </button>
+      <!-- Кнопка ЗАБРАТЬ — появляется только во время полёта со ставкой -->
+      <button id="rktBtnCash" onclick="_rktFrozenMult=(RKT&&RKT.mult)?parseFloat(RKT.mult.toFixed(2)):null;rktDoCashout()"
+        style="display:none;width:100%;margin:0;padding:20px;border:none;border-radius:16px;font-family:var(--fd);font-size:19px;font-weight:900;letter-spacing:1px;cursor:pointer;background:#16a34a;color:#fff;box-shadow:0 4px 18px rgba(74,222,128,.4);">
+        💸 ЗАБРАТЬ
+      </button>
+      <!-- Статусная кнопка — серая, недоступная (ожидание/отправка) -->
+      <button id="rktBtnStatus" disabled
+        style="display:none;width:100%;margin:0;padding:20px;border:none;border-radius:16px;font-family:var(--fd);font-size:16px;font-weight:900;letter-spacing:2px;cursor:not-allowed;background:rgba(255,255,255,.07);color:rgba(255,255,255,.3);">
+        ⏳ Загрузка...
+      </button>
     </div>
 
     <!-- Панель управления -->
@@ -5507,10 +5519,10 @@ function rktTickStart(){
 
     // Обновляем кнопку ЗАБРАТЬ каждый кадр
     if(RKT.betPlaced && !RKT.cashedOut && !_rktCashingOut){
-      const btnLive=document.getElementById('rktBtn');
+      const btnCashLive=document.getElementById('rktBtnCash');
       const stLive=document.getElementById('rktActionStatus');
-      if(btnLive && btnLive.classList.contains('bc')){
-        btnLive.textContent='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
+      if(btnCashLive && btnCashLive.style.display!=='none'){
+        btnCashLive.textContent='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
         if(stLive && RKT.myBet){
           const mc=Math.round(m*100);
           const prize=Math.round(RKT.myBet*mc/100);
@@ -5556,9 +5568,9 @@ function rktTickStart(){
         mfG.children[2].setAttribute('stop-color',c3);
       }
     }catch(e){}
-    const btn=document.getElementById('rktBtn');
-    if(btn&&btn.classList.contains('bc')){
-      btn.innerHTML='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
+    const btnCash2=document.getElementById('rktBtnCash');
+    if(btnCash2&&btnCash2.style.display!=='none'){
+      btnCash2.textContent='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
     }
     // Тряска цифр — 4 уровня по иксам
     const mw=document.getElementById('rktMultWrap');
@@ -5832,92 +5844,105 @@ function rktUI(){
 
 // Единственная функция управления кнопкой — вызывать только через rktUI()
 function rktUpdateBtn(){
-  const b  = document.getElementById('rktBtn');
-  const st = document.getElementById('rktActionStatus');
-  if(!b) return;
+  const btnBet    = document.getElementById('rktBtnBet');
+  const btnCash   = document.getElementById('rktBtnCash');
+  const btnStatus = document.getElementById('rktBtnStatus');
+  const st        = document.getElementById('rktActionStatus');
+  if(!btnBet || !btnCash || !btnStatus) return;
 
   const setStatus = (txt, color) => {
     if(st){ st.textContent=txt; st.style.color=color||'rgba(255,255,255,.25)'; }
   };
 
-  // ── ПОЛЁТ — проверяется ПЕРВЫМ, всегда ──────────────────
+  // Скрываем все три
+  btnBet.style.display    = 'none';
+  btnCash.style.display   = 'none';
+  btnStatus.style.display = 'none';
+
+  // ── ПОЛЁТ ──────────────────────────────────────────────
   if(RKT.phase==='flying'){
     if(RKT.betPlaced && !RKT.cashedOut && !_rktCashingOut){
+      // Показываем ЗАБРАТЬ с текущим множителем
       const m = RKT.mult||1;
-      const multCents = Math.round(m * 100);
-      const prize = Math.round((RKT.myBet||0) * multCents / 100);
+      const prize = Math.round((RKT.myBet||0) * m);
       const profit = prize - (RKT.myBet||0);
-      b.textContent='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
-      b.className='rkt-btn bc'; b.disabled=false;
-      setStatus('СТАВКА: '+(RKT.myBet||0).toLocaleString('ru-RU')+'  →  СЕЙЧАС: '+prize.toLocaleString('ru-RU')+'  (+'+profit.toLocaleString('ru-RU')+')', '#fbbf24');
+      btnCash.textContent = '💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
+      btnCash.style.display = 'block';
+      setStatus('СТАВКА: '+(RKT.myBet||0).toLocaleString('ru-RU')+'  →  '+prize.toLocaleString('ru-RU')+'  (+'+profit.toLocaleString('ru-RU')+')', '#fbbf24');
       return;
     }
     if(RKT.cashedOut){
-      b.textContent='✅ Забрано ×'+(RKT.cashedMult||RKT.mult||1).toFixed(2);
-      b.className='rkt-btn bw'; b.disabled=true;
+      btnStatus.textContent = '✅ Забрано ×'+(RKT.cashedMult||RKT.mult||1).toFixed(2);
+      btnStatus.style.display = 'block';
       setStatus('ЗАБРАНО — РАУНД ЗАВЕРШЁН', '#4ade80');
       return;
     }
-    // Если betState не idle — значит ставка отправлялась, ждём подтверждения от сервера
+    // Летим без ставки — серая
     if(_rktBetState !== 'idle'){
-      b.textContent='⏳ Ожидаем подтверждения...';
-      b.className='rkt-btn bl'; b.disabled=true;
-      setStatus('ОЖИДАЕМ ПОДТВЕРЖДЕНИЯ С СЕРВЕРА...', '#fbbf24');
+      btnStatus.textContent = '⏳ Ожидаем подтверждения...';
+      btnStatus.style.background = 'rgba(255,140,0,.15)';
+      btnStatus.style.color = 'rgba(255,180,0,.7)';
     } else {
-      b.textContent='—';
-      b.className='rkt-btn bw'; b.disabled=true;
-      setStatus('', '');
+      btnStatus.textContent = '— раунд идёт';
+      btnStatus.style.background = 'rgba(255,255,255,.07)';
+      btnStatus.style.color = 'rgba(255,255,255,.25)';
     }
-    return;
-  }
-  // ── КРАШ ───────────────────────────────────────────────
-  if(RKT.phase==='crashed'){
-    b.textContent='⏳ Новый раунд...';
-    b.className='rkt-btn bw'; b.disabled=true;
+    btnStatus.style.display = 'block';
     setStatus('', '');
     return;
   }
+
+  // ── КРАШ ───────────────────────────────────────────────
+  if(RKT.phase==='crashed'){
+    btnStatus.textContent = '⏳ Новый раунд...';
+    btnStatus.style.background = 'rgba(255,255,255,.07)';
+    btnStatus.style.color = 'rgba(255,255,255,.25)';
+    btnStatus.style.display = 'block';
+    setStatus('', '');
+    return;
+  }
+
   // ── ОЖИДАНИЕ ───────────────────────────────────────────
-  // Ставка уже в этом раунде (по roundId или флагам)
+  // Ставка уже есть в этом раунде
   const _betThisRound = _rktBetAccepted || _rktRoundBetDone || RKT.betPlaced
                      || (_rktBetRoundId !== -99 && _rktBetRoundId === RKT.roundId);
   if(_betThisRound){
     const betFmt = RKT.myBet ? RKT.myBet.toLocaleString('ru-RU') : '';
-    b.textContent='✅ Ставка '+ betFmt +' принята';
-    b.className='rkt-btn bw'; b.disabled=true;
+    btnStatus.textContent = '✅ Ставка '+ betFmt +' принята';
+    btnStatus.style.background = 'rgba(22,163,74,.15)';
+    btnStatus.style.color = '#4ade80';
+    btnStatus.style.display = 'block';
     setStatus('ЖДЁМ СТАРТА 🚀', '#4ade80');
     return;
   }
-  if(_rktBetting){
-    b.innerHTML='<span class="rkt-btn-spin">⟳</span> Отправляем...';
-    b.className='rkt-btn bl'; b.disabled=true;
+  // Отправляем
+  if(_rktBetState === 'sending' || _rktBetting){
+    btnStatus.textContent = '⟳ Отправляем...';
+    btnStatus.style.background = 'rgba(255,140,0,.15)';
+    btnStatus.style.color = 'rgba(255,180,0,.8)';
+    btnStatus.style.display = 'block';
     setStatus('ОТПРАВЛЯЕМ СТАВКУ...', '#fbbf24');
     return;
   }
-  // Активна — только если точно idle и ставки нет
-  if(_rktBetState !== 'idle' || _rktRoundBetDone || RKT.betPlaced){
-    // Что-то ещё в процессе — показываем серую
-    b.textContent='⏳ ...';
-    b.className='rkt-btn bw'; b.disabled=true;
-    setStatus('', '');
-    return;
-  }
-  // Не показываем активную кнопку в течение 4 сек после отправки ставки
+  // Таймер после отправки
   if(_rktLastSentAt > 0 && Date.now() - _rktLastSentAt < 4000){
-    b.textContent='⏳ Отправляем...';
-    b.className='rkt-btn bl'; b.disabled=true;
+    btnStatus.textContent = '⏳ Отправляем...';
+    btnStatus.style.background = 'rgba(255,140,0,.15)';
+    btnStatus.style.color = 'rgba(255,180,0,.8)';
+    btnStatus.style.display = 'block';
     setStatus('ОЖИДАЕМ ОТВЕТА...', '#fbbf24');
     return;
   }
-  const inp=document.getElementById('rktInp');
-  let betPreview='';
-  try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betPreview=' — '+v.toLocaleString('ru-RU'); }catch(e){}
-  const waitStr = RKT.waitLeft>0 ? ' · СТАРТ: '+Math.ceil(RKT.waitLeft)+'с' : '';
-  b.textContent='🚀 ПОСТАВИТЬ'+betPreview;
-  b.className='rkt-btn bb'; b.disabled=false;
-  setStatus('ОЖИДАНИЕ СТАРТА'+waitStr, 'rgba(255,255,255,.25)');
-}
 
+  // Показываем ПОСТАВИТЬ
+  const inp = document.getElementById('rktInp');
+  let betPreview = '';
+  try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betPreview=' — '+v.toLocaleString('ru-RU'); }catch(e){}
+  const waitStr = RKT.waitLeft>0 ? ' · '+Math.ceil(RKT.waitLeft)+'с' : '';
+  btnBet.textContent = '🚀 ПОСТАВИТЬ'+betPreview+waitStr;
+  btnBet.style.display = 'block';
+  setStatus('ОЖИДАНИЕ СТАРТА', 'rgba(255,255,255,.25)');
+}
 // Оставляем для совместимости — просто вызывает rktUI
 function rktSetBtn(m){ rktUI(); }
 
@@ -6135,8 +6160,9 @@ function _rktBetUnlock(){
 }
 
 function rktAction(){
-  const btn=document.getElementById('rktBtn');
-  if(btn&&btn.disabled) return;
+  // Используем новые кнопки — проверяем видимость ПОСТАВИТЬ
+  const btnBetCheck=document.getElementById('rktBtnBet');
+  if(!btnBetCheck || btnBetCheck.style.display==='none') return;
   if(RKT.phase==='flying'&&RKT.betPlaced&&!RKT.cashedOut&&!_rktCashingOut){
     _rktFrozenMult = parseFloat(RKT.mult.toFixed(2));
     try{ tg.HapticFeedback.impactOccurred('heavy'); }catch(e){}
@@ -6193,18 +6219,17 @@ function rktPlaceBet(){
   if(bet > balance){ showToast('Недостаточно токенов!','error'); return; }
 
   const res   = document.getElementById('rktRes');
-  const btnEl = document.getElementById('rktBtn');
   const stEl  = document.getElementById('rktActionStatus');
 
   // АТОМАРНО блокируем — первой строкой
-  _rktLastSentAt = Date.now(); // запоминаем момент отправки
-  _rktBetRoundId = RKT.roundId; // запоминаем ID раунда — главная защита от двойной ставки
+  _rktLastSentAt = Date.now();
+  _rktBetRoundId = RKT.roundId;
   _rktBetLock('sending');
   _rktRoundBetDone = true;
   RKT.betPlaced    = true;
   RKT.myBet        = bet;
 
-  if(btnEl){ btnEl.disabled=true; btnEl.innerHTML='<span class="rkt-btn-spin">⟳</span> Отправляем...'; btnEl.className='rkt-btn bl'; }
+  rktUI(); // сразу обновляем кнопки — ПОСТАВИТЬ скрывается
   if(stEl)  stEl.textContent = 'ОТПРАВЛЯЕМ...';
   if(res)  { res.textContent='⏳ Отправляем ставку...'; res.className='rkt-res'; }
 
@@ -6286,8 +6311,10 @@ async function rktDoCashout(){
 
   // Показываем мгновенно
   const res = document.getElementById('rktRes');
-  const btn = document.getElementById('rktBtn');
-  if(btn){ btn.disabled=true; btn.className='rkt-btn bw'; btn.textContent='⏳ Забрано ×'+mult.toFixed(2); }
+  const btnCashOut=document.getElementById('rktBtnCash');
+  if(btnCashOut){ btnCashOut.style.display='none'; }
+  const btnStatusOut=document.getElementById('rktBtnStatus');
+  if(btnStatusOut){ btnStatusOut.textContent='⏳ Забрано ×'+mult.toFixed(2); btnStatusOut.style.display='block'; btnStatusOut.style.background='rgba(22,163,74,.15)'; btnStatusOut.style.color='#4ade80'; }
   if(res){
     res.innerHTML='<span style="color:#fbbf24">×'+mult.toFixed(2)+'</span>'
       +' <span style="color:rgba(255,255,255,.4)">⏳ считаем...</span>';
