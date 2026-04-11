@@ -5526,6 +5526,57 @@ function rDrawCashoutNotifs(ctx){
 }
 
 // ── ЭПИЧНЫЙ ВЗРЫВ ───────────────────────────────────────
+// ── АНИМАЦИЯ КРАША — независимая, не зависит от rktUI ──────
+let _rktCrashShown = false; // флаг чтобы не показывать дважды
+
+function _rktShowCrash(crashMult){
+  if(_rktCrashShown) return;
+  _rktCrashShown = true;
+
+  // 1. Большая надпись поверх canvas
+  const lbl  = document.getElementById('rktCrashLabel');
+  const lblX = document.getElementById('rktCrashLabelX');
+  if(lbl && lblX){
+    lblX.textContent = '×' + parseFloat(crashMult).toFixed(2);
+    lbl.classList.remove('active');
+    // Force reflow to restart animation
+    void lbl.offsetWidth;
+    lbl.classList.add('active');
+    // Убираем после 2.8с
+    setTimeout(()=>{ lbl.classList.remove('active'); }, 2800);
+  }
+
+  // 2. Красный оверлей
+  const overlay = document.getElementById('rktCrashOverlay');
+  if(overlay){
+    overlay.classList.remove('active');
+    void overlay.offsetWidth;
+    overlay.classList.add('active');
+  }
+
+  // 3. Фиксируем снапшот игроков — чтобы таблица показала правильные данные при краше
+  // Отмечаем всех кто не забрал как crashed с указанием crashMult
+  if(RKT.players) {
+    RKT.players.forEach(p => {
+      if(!p.cashed_at) {
+        p._crashed = true;
+        p._crashMult = crashMult;
+      }
+    });
+  }
+  // И для себя
+  if(RKT.betPlaced && !RKT.cashedOut){
+    RKT._myCrashMult = crashMult;
+  }
+
+  // 4. Сбрасываем через 2.8с
+  setTimeout(()=>{
+    _rktCrashShown = false;
+    RKT._myCrashMult = null;
+    if(RKT.players) RKT.players.forEach(p=>{ delete p._crashed; delete p._crashMult; });
+  }, 3200);
+}
+
 function rktSpawnCrashParticles(x,y){
   rCrashParticles=[];
   _crashRings=[];
@@ -5693,6 +5744,7 @@ function rktTickStart(){
       // Немедленный взрыв прямо здесь
       if(RKT.phase==='flying'){
         RKT.phase='crashed';
+        _rktShowCrash(cap); // запускаем анимацию краша
         rktSpawnCrashParticles(
           rTrail.length?rTrail[rTrail.length-1][0]:rW*0.5,
           rTrail.length?rTrail[rTrail.length-1][1]:rH*0.5
@@ -5886,6 +5938,7 @@ function rktApply(d){
       // Фиксируем финальный mult = crashAt
       if(d.crash_at) RKT.mult=d.crash_at;
       RKT.phase='crashed';
+      _rktShowCrash(RKT.crashAt||RKT.mult||1); // запускаем анимацию краша
       rktSpawnCrashParticles(rTrail.length?rTrail[rTrail.length-1][0]:rW*0.5, rTrail.length?rTrail[rTrail.length-1][1]:rH*0.5);
       // Если не вывели — проигрыш
       if(RKT.betPlaced&&!RKT.cashedOut){
@@ -5946,15 +5999,6 @@ function rktUI(){
     if(sb) sb.textContent='';
     if(overlay) overlay.classList.add('active');
     if(pb){ pb.style.width='100%'; pb.className='rkt-pb-inner red'; }
-    // Показываем большую надпись КРАШ (только один раз)
-    const lbl  = document.getElementById('rktCrashLabel');
-    const lblX = document.getElementById('rktCrashLabelX');
-    if(lbl && !lbl.classList.contains('active') && !lbl.dataset.shown){
-      lbl.dataset.shown = '1';
-      if(lblX) lblX.textContent = '×'+crashMult.toFixed(2);
-      lbl.classList.add('active');
-      setTimeout(()=>{ lbl.classList.remove('active'); delete lbl.dataset.shown; }, 2800);
-    }
   }
   rktUpdateBtn();
   const g=document.getElementById('rStG');if(g)g.textContent=RKT.stats.g;
@@ -6126,18 +6170,24 @@ function rktUpdateTable(){
   const allPlayers = [];
 
   // Всегда добавляем себя если есть ставка
-  if(RKT.betPlaced || RKT.cashedOut || (RKT.phase==='waiting' && (_rktBetRoundId===RKT.roundId))){
-    const myCashedAt = RKT.cashedOut ? (RKT.cashedMult||RKT.mult) : null;
+  // Показываем себя если: есть ставка, забрал, или только что крашнулся
+  const _myBet = RKT.myBet||0;
+  const _showMe = RKT.betPlaced || RKT.cashedOut || RKT._myCrashMult ||
+                  (RKT.phase==='waiting' && _rktBetRoundId===RKT.roundId);
+  if(_myBet > 0 && _showMe){
+    const myCashedAt  = RKT.cashedOut ? (RKT.cashedMult||RKT.mult) : null;
+    const myCrashed   = !!RKT._myCrashMult && !RKT.cashedOut;
     allPlayers.push({
       uid: 'me',
       name: USER_NAME || 'ВЫ',
-      bet: RKT.myBet||0,
+      bet: _myBet,
       cashedAt: myCashedAt,
-      prize: RKT.cashedPrize||null,    // точная сумма
-      profit: RKT.cashedProfit||null,  // точная прибыль
+      prize:  RKT.cashedPrize||null,
+      profit: RKT.cashedProfit||null,
       avatar: selectedAvatar||'ghost',
       isMe: true,
-      crashed: RKT.betPlaced && RKT.phase==='crashed' && !RKT.cashedOut,
+      crashed: myCrashed,
+      crashMult: RKT._myCrashMult||null,
     });
   }
 
@@ -6145,16 +6195,18 @@ function rktUpdateTable(){
   (RKT.players||[]).forEach(p => {
     if(p.is_me) return;
     if(allPlayers.length >= 10) return;
+    const pCrashed = p._crashed || ((RKT.phase==='crashed') && !p.cashed_at);
     allPlayers.push({
-      uid:      p.uid,
-      name:     (p.name||'?').slice(0,12),
-      bet:      p.bet||0,
-      cashedAt: p.cashed_at||null,
-      prize:    p.prize||null,    // точная сумма с сервера
-      profit:   p.profit||null,   // точная прибыль с сервера
-      avatar:   p.avatar||'ghost',
-      isMe:     false,
-      crashed:  (RKT.phase==='crashed') && !p.cashed_at,
+      uid:       p.uid,
+      name:      (p.name||'?').slice(0,12),
+      bet:       p.bet||0,
+      cashedAt:  p.cashed_at||null,
+      prize:     p.prize||null,
+      profit:    p.profit||null,
+      avatar:    p.avatar||'ghost',
+      isMe:      false,
+      crashed:   pCrashed,
+      crashMult: p._crashMult || RKT.crashAt || RKT.mult || null,
     });
   });
 
@@ -6221,8 +6273,8 @@ function rktUpdateTable(){
         +'</div>';
       statusHTML = '<div class="rkt-live-status cashed">✅ ×'+parseFloat(p.cashedAt).toFixed(2)+'</div>';
     } else if(p.crashed){
-      // Показываем что они могли забрать на crashAt
-      const crashM   = RKT.crashAt || RKT.mult || 1;
+      // Показываем что могли забрать на множителе краша
+      const crashM   = p.crashMult || RKT.crashAt || RKT.mult || 1;
       const couldHave = Math.round(p.bet * crashM) - p.bet;
       profitHTML = '<div style="text-align:right">'
         +'<div class="rkt-live-profit neg">-'+p.bet.toLocaleString('ru-RU')+'</div>'
