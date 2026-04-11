@@ -5657,7 +5657,7 @@ function rktApply(d){
       if(meInPlayers && meInPlayers.bet > 0){
         RKT.betPlaced = true; RKT.myBet = meInPlayers.bet;
         _rktBetLock('accepted'); _rktRoundBetDone = true;
-        // НЕ сбрасываем _rktBetRoundId — ставка в этом раунде
+        _rktBetRoundId = RKT.roundId; // синхронизируем
       } else {
         const refundAmt = RKT.myBet||0;
         _rktBetUnlock(); _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
@@ -5722,15 +5722,14 @@ function rktApply(d){
     if(meOnServer && meOnServer.bet > 0){
       // Сервер подтверждает: наша ставка в этом раунде принята
       if(!RKT.betPlaced){
-        // Баланс уже был списан при отправке (setBalance(balance-bet))
-        // Если betPlaced=false — значит что-то сбросилось, восстанавливаем
         RKT.betPlaced = true;
         RKT.myBet = meOnServer.bet;
       }
-      // Разблокируем кнопку ЗАБРАТЬ
+      // Всегда синхронизируем betRoundId с текущим раундом
+      _rktBetRoundId = RKT.roundId;
+      _rktRoundBetDone = true;
       if(_rktBetState === 'sending'){
         _rktBetLock('accepted');
-        _rktRoundBetDone = true;
       }
       const res=document.getElementById('rktRes');
       if(res && res.className!=='rkt-res win'){
@@ -5895,9 +5894,9 @@ function rktUpdateBtn(){
   }
 
   // ── ОЖИДАНИЕ ───────────────────────────────────────────
-  // Ставка уже есть в этом раунде
-  const _betThisRound = _rktBetAccepted || _rktRoundBetDone || RKT.betPlaced
-                     || (_rktBetRoundId !== -99 && _rktBetRoundId === RKT.roundId);
+  // Ставка уже есть если betRoundId совпадает с текущим раундом ИЛИ betPlaced
+  const _betThisRound = RKT.betPlaced || _rktRoundBetDone || _rktBetAccepted
+                     || (_rktBetRoundId === RKT.roundId && RKT.roundId !== -1);
   if(_betThisRound){
     const betFmt = RKT.myBet ? RKT.myBet.toLocaleString('ru-RU') : '';
     btnStatus.textContent = '✅ Ставка '+ betFmt +' принята';
@@ -6120,9 +6119,13 @@ let _rktLastSentAt = 0;
 
 function _rktBetLock(state){
   _rktBetState = state;
-  // Также обновляем legacy флаги для совместимости
   _rktBetting     = (state === 'sending');
   _rktBetAccepted = (state === 'accepted');
+  // При подтверждении — всегда фиксируем roundId чтобы кнопка не мигала
+  if(state === 'accepted' && RKT.roundId !== -1){
+    _rktBetRoundId = RKT.roundId;
+    _rktRoundBetDone = true;
+  }
   if(_rktBettingTimer){ clearTimeout(_rktBettingTimer); _rktBettingTimer=null; }
   // Watchdog: если через 8 сек нет ответа — делаем полный refund
   if(state === 'sending'){
@@ -6525,8 +6528,8 @@ function _mbSync(){
   }
 
   // Ожидание
-  const _betThisRoundMb = _rktBetAccepted || _rktRoundBetDone || RKT.betPlaced
-                       || (_rktBetRoundId !== -99 && _rktBetRoundId === RKT.roundId);
+  const _betThisRoundMb = RKT.betPlaced || _rktRoundBetDone || _rktBetAccepted
+                       || (_rktBetRoundId === RKT.roundId && RKT.roundId !== -1);
   if(_betThisRoundMb){
     const betFmt = RKT.myBet ? ' '+RKT.myBet.toLocaleString('ru-RU') : '';
     _mbSet('✅ Ставка'+betFmt+' принята', '#0a2a0a', '#4ade80', false, null);
