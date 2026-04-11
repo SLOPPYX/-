@@ -922,8 +922,26 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 /* Сцена */
 .rkt-wrap { padding:0 }
+/* Страница ракеты — fullscreen flex, панель всегда под canvas */
+#page-rocket {
+  display:none; flex-direction:column;
+  height:calc(100svh - 60px);
+  overflow:hidden; padding:0 !important;
+}
+#page-rocket.active { display:flex !important; }
+#page-rocket .rkt-scene { flex:1; min-height:120px; height:auto !important; }
+#page-rocket .rcp-wrap {
+  flex-shrink:0; padding:10px 12px 8px;
+  background:rgba(6,4,1,.98);
+  border-top:1px solid rgba(255,100,0,.15);
+}
+#page-rocket .rkt-stats {
+  flex-shrink:0; position:static !important;
+  padding-bottom:calc(8px + env(safe-area-inset-bottom));
+  border-top:1px solid rgba(255,110,0,.2);
+}
+.rkt-action-bar { display:none !important; }
 /* Отступ снизу для fixed кнопки + статистики */
-#page-rocket.active { padding-bottom:calc(150px + env(safe-area-inset-bottom)); }
 .rkt-scene {
   position:relative; height:340px; overflow:hidden;
   background:#000000;
@@ -1224,8 +1242,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 /* Кнопка — sticky снизу, прямо над статистикой */
 /* убираем старую fixed кнопку */
-.rkt-action-bar { display:none !important; }
-#page-rocket.active { padding-bottom:10px; }
+
 
 /* ══ НОВАЯ ПАНЕЛЬ УПРАВЛЕНИЯ ══ */
 .rcp-wrap {
@@ -1364,8 +1381,16 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   to   { box-shadow:0 8px 40px rgba(34,197,94,.8), 0 0 0 4px rgba(34,197,94,.2); transform:scale(1.03); }
 }
 
-/* Мини-стата — фиксированная внизу */
-.rkt-stats {
+/* История иксов поверх сцены — вверху */
+.rkt-hist-overlay {
+  position:absolute; top:8px; left:8px; right:8px;
+  z-index:8; pointer-events:none;
+  display:flex; gap:4px; overflow:hidden;
+}
+.rkt-hist-overlay .rkt-hist {
+  pointer-events:all;
+  background:none;
+}
   display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
   position:sticky; bottom:0; z-index:10;
   background:rgba(10,8,4,.96);
@@ -2061,9 +2086,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   </div>
 
   <!-- ══ ROCKET GAME ══ -->
-  <div class="page rkt-wrap" id="page-rocket" style="padding:0">
+  <div class="page rkt-wrap" id="page-rocket">
 
-    <!-- Игровая сцена -->
+    <!-- Сцена — занимает всё свободное пространство -->
     <div class="rkt-scene">
       <canvas id="rocketCanvas"></canvas>
       <div class="rkt-mult-wrap" id="rktMultWrap">
@@ -2071,21 +2096,18 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
         <div class="rkt-sub" id="rktSub">Следующий раунд скоро</div>
       </div>
       <div class="rkt-players-overlay" id="rktTags"></div>
-    </div>
-
-    <!-- ══ НОВАЯ ПАНЕЛЬ — прямо под canvas ══ -->
-    <div class="rcp-wrap">
-
-      <!-- Строка результата + история -->
-      <div class="rcp-top-row">
-        <div class="rkt-res" id="rktRes"></div>
+      <!-- История иксов поверх сцены -->
+      <div class="rkt-hist-overlay">
         <div class="rkt-hist" id="rktHist"></div>
       </div>
+    </div>
 
-      <!-- Основная панель: ставка + кнопка -->
+    <!-- Панель управления — прямо под сценой, не скроллится -->
+    <div class="rcp-wrap">
+      <!-- Результат раунда -->
+      <div class="rkt-res" id="rktRes"></div>
+      <!-- Ставка + кнопка -->
       <div class="rcp-main">
-
-        <!-- ЛЕВАЯ: поле ставки, пресеты, авто-вывод -->
         <div class="rcp-left">
           <div class="rcp-field-row">
             <button class="rcp-half" onclick="rktMultBet(0.5)">½</button>
@@ -2108,8 +2130,6 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
             <button class="rcp-au rcp-au-off" id="rktAuLbl" onclick="rktAutoSet(0)">ВЫКЛ</button>
           </div>
         </div>
-
-        <!-- ПРАВАЯ: большая кнопка действия -->
         <div class="rcp-right">
           <button class="rcp-btn rcp-bet" id="rktBtn"
             onclick="_rktFrozenMult=(RKT&&RKT.mult)?parseFloat(RKT.mult.toFixed(2)):null;rktAction()">
@@ -2117,18 +2137,6 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
             <span class="rcp-btn-val" id="rktBtnVal">—</span>
           </button>
         </div>
-
-      </div>
-
-    </div>
-
-    <!-- Таблица игроков (скрыта) -->
-    <div id="rktTable" style="display:none"></div>
-
-    <!-- Статистика + история -->
-    <div class="rkt-panel" style="padding:10px 14px 0">
-      <div class="rkt-hist-wrap" style="margin-bottom:10px">
-        <div class="rkt-hist-lbl">ИКСЫ</div>
       </div>
     </div>
 
@@ -2138,6 +2146,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="rkt-sc"><span class="rkt-sv" id="rStB" style="color:#4ade80">—</span><span class="rkt-sl">ЛУЧШИЙ</span></div>
       <div class="rkt-sc"><span class="rkt-sv" id="rStP">0</span><span class="rkt-sl">ПРИБЫЛЬ</span></div>
     </div>
+
+    <!-- Скрытые контейнеры -->
+    <div id="rktTable" style="display:none"></div>
 
   </div>
 
@@ -5994,31 +6005,38 @@ function rktPlaceBet(){
 
 async function rktDoCashout(){
   if(!RKT.betPlaced||RKT.cashedOut||_rktCashingOut) return;
-  _rktCashingOut = true; // мгновенно блокируем повторное нажатие
 
+  // Захватываем mult синхронно — то что видел пользователь на экране
   const mult  = _rktFrozenMult !== null ? _rktFrozenMult : parseFloat(RKT.mult.toFixed(2));
   const myBet = RKT.myBet;
 
+  _rktCashingOut = true;   // мгновенно блокируем повторное нажатие
   RKT.cashedMult = mult;
   RKT.cashedOut  = true;
   _rktFrozenMult = mult;
   _rktOperating  = true;
 
-  const localPrize  = Math.floor(myBet * mult);
-  const localProfit = localPrize - myBet;
+  // Локальный расчёт: prize = floor(bet × mult), profit = prize - bet
+  // floor потому что токены целые
+  const localPrize  = Math.floor(myBet * mult);  // 10000 × 1.27 = 12700
+  const localProfit = localPrize - myBet;         // 12700 - 10000 = 2700
 
-  // Показываем "забираем..." пока ждём сервер
-  const res = document.getElementById('rktRes');
+  // Показываем мгновенно (предварительно)
+  const res = document.getElementById('rktBtn') ? document.getElementById('rktRes') : null;
+  const bl  = document.getElementById('rktBtnLabel');
+  const bv  = document.getElementById('rktBtnVal');
   const btn = document.getElementById('rktBtn');
-  if(btn){ btn.disabled=true; btn.className='rkt-btn bw'; btn.textContent='Забрано ×'+mult.toFixed(2); }
+  if(btn){ btn.disabled=true; btn.className='rcp-btn rcp-wait'; }
+  if(bl)  bl.textContent='ЗАБРАНО';
+  if(bv)  bv.textContent='×'+mult.toFixed(2);
   if(res){
-    res.innerHTML = '<span style="color:#fbbf24">×'+mult.toFixed(2)+'</span>'
-      + ' &nbsp;<span style="color:rgba(255,255,255,.4)">⏳ считаем...</span>';
-    res.className = 'rkt-res win';
+    res.innerHTML='<span style="color:#fbbf24">×'+mult.toFixed(2)+'</span>'
+      +' <span style="color:rgba(255,255,255,.4)">⏳</span>';
+    res.className='rkt-res win';
   }
   rktUpdateTable(); rktUpdateTags();
 
-  // Запрос на сервер — ЕДИНСТВЕННЫЙ источник финальных данных
+  // API — единственная финансовая истина
   if(API_URL && API_SECRET){
     try{
       const r = await rktFetch('/casino/rocket/cashout',{
@@ -6026,35 +6044,34 @@ async function rktDoCashout(){
         body:JSON.stringify({
           uid:parseInt(USER_ID),
           secret:API_SECRET,
-          client_mult: mult
+          client_mult:mult          // сервер знает какой икс зафиксировал клиент
         })
       });
       if(r && r.ok){
-        // Сервер — финансовая истина
-        const sPrize  = r.prize  != null ? r.prize  : localPrize;
+        // Берём данные сервера
+        const sPrize  = (r.prize  != null) ? r.prize  : localPrize;
         const sProfit = sPrize - myBet;
-        const sBal    = typeof r.balance === 'number' ? r.balance : (balance - localPrize + sPrize);
+        const sBal    = (typeof r.balance === 'number') ? r.balance : (balance + sPrize);
 
         RKT.cashedMult = mult;
-        // Корректируем баланс: сначала убираем предварительно начисленное, добавляем серверное
         setBalance(sBal);
         RKT.stats.g++;
-        RKT.stats.p = RKT.stats.p - localProfit + sProfit;
+        RKT.stats.p += sProfit;
         if(mult > RKT.stats.b) RKT.stats.b = mult;
         rktSave();
 
         _showCashoutResult(res, mult, sProfit, sPrize);
         showToast('×'+mult.toFixed(2)+'  +'+sProfit.toLocaleString('ru-RU')+' 💰','gold');
         try{ rAddCashNotif(USER_NAME||'ВЫ', mult, sProfit); }catch(e){}
-        if(btn){ btn.innerHTML='Забрано ×'+mult.toFixed(2); }
+        if(bv) bv.textContent='×'+mult.toFixed(2)+'\n+'+sProfit.toLocaleString('ru-RU');
         rktUpdateTable(); rktUpdateTags();
-        _rktOperating = false; _rktCashingOut = false;
-        return; // выходим — сервер дал данные
+        _rktOperating=false; _rktCashingOut=false;
+        return;
       }
-    }catch(e){ /* fallback ниже */ }
+    }catch(e){}
   }
 
-  // Офлайн fallback — используем локальный расчёт
+  // Офлайн fallback
   setBalance(balance + localPrize);
   RKT.stats.g++;
   RKT.stats.p += localProfit;
@@ -6063,8 +6080,9 @@ async function rktDoCashout(){
   _showCashoutResult(res, mult, localProfit, localPrize);
   showToast('×'+mult.toFixed(2)+'  +'+localProfit.toLocaleString('ru-RU')+' 💰','gold');
   try{ rAddCashNotif(USER_NAME||'ВЫ', mult, localProfit); }catch(e){}
+  if(bv) bv.textContent='×'+mult.toFixed(2)+'\n+'+localProfit.toLocaleString('ru-RU');
   rktUpdateTable(); rktUpdateTags();
-  _rktOperating = false; _rktCashingOut = false;
+  _rktOperating=false; _rktCashingOut=false;
 }
 
 function _showCashoutResult(res, mult, profit, prize){
