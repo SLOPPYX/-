@@ -4023,7 +4023,7 @@ function initSpaceCanvas() {
       ctx.shadowColor = 'rgba(0,0,0,0.95)';
       ctx.shadowBlur = 10;
       ctx.fillStyle = color;
-      ctx.fillText(multTxt, cx, y - 44);
+      ctx.fillText(multTxt, cx, y - 80);
       ctx.shadowBlur = 0;
       ctx.restore();
     }
@@ -5538,10 +5538,10 @@ function rktTickStart(){
       // ПРЫГАЮЩИЕ ИКСЫ — обновляем не каждый кадр, а рывками
       // Шаг зависит от скорости: медленно до 2x, быстрее после
       const prevDisp = parseFloat(el.getAttribute('data-disp')||'1');
-      let step = m < 2 ? 0.01 : m < 5 ? 0.02 : m < 10 ? 0.05 : m < 20 ? 0.1 : 0.25;
+      let step = m < 2 ? 0.01 : m < 5 ? 0.01 : m < 10 ? 0.02 : m < 20 ? 0.03 : 0.05;
       // Обновляем только если разница >= шага
       if(m - prevDisp >= step || m >= cap){
-        const disp = m >= cap ? m : Math.floor(m / step) * step;
+        const disp = m >= cap ? m : Math.round(m * 100) / 100; // без округления до кратных
         el.textContent = disp.toFixed(2)+'×';
         el.setAttribute('data-disp', disp);
         // Анимация прыжка через wrapper
@@ -5625,7 +5625,6 @@ function rktTickStart(){
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
           if(RKT.waitLeft>0) rktWaitTick();
-          _rktFlushRetry();
           rktUI();
         },2800);
       }
@@ -5797,7 +5796,6 @@ function rktApply(d){
         _rktFrozenMult=null;
         rTrail=[];rCrashParticles=[];
         if(RKT.waitLeft>0) rktWaitTick();
-        _rktFlushRetry();
         rktUI();
       },2800);
     } else {
@@ -6186,27 +6184,6 @@ function rktAction(){
   if(_rktBetState==='idle' && !_rktRoundBetDone && !RKT.betPlaced){ rktPlaceBet(); }
 }
 
-// Авто-повтор ставки при смене раунда (если предыдущая попала на round_started)
-let _rktNextRoundBet = 0;
-function _rktScheduleRetry(bet){
-  _rktNextRoundBet = bet;
-}
-function _rktFlushRetry(){
-  if(_rktNextRoundBet <= 0) return;
-  if(RKT.phase !== 'waiting') return;
-  if(_rktRoundBetDone || RKT.betPlaced || _rktBetState !== 'idle') return;
-  const amt = _rktNextRoundBet;
-  _rktNextRoundBet = 0;
-  const inp = document.getElementById('rktInp');
-  if(inp) inp.value = String(amt);
-  RKT.myBet = amt;
-  // Небольшая задержка чтобы фаза waiting точно стабилизировалась
-  setTimeout(()=>{
-    if(RKT.phase==='waiting' && !_rktRoundBetDone && !RKT.betPlaced){
-      rktPlaceBet();
-    }
-  }, 200);
-}
 
 let _rktBetting=false;
 let _rktBettingTimer=null;
@@ -6282,7 +6259,6 @@ function rktPlaceBet(){
       _rktBetUnlock();
       _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
       setBalance(balance + bet);
-      _rktScheduleRetry(bet); // авто-повтор в следующем раунде
       if(res){ res.textContent='⏳ Ставка '+bet.toLocaleString('ru-RU')+' — авто в след. раунде'; res.className='rkt-res'; }
       showToast('⏳ Авто-ставка в следующем раунде','info');
       rktUI(); return;
@@ -6442,140 +6418,6 @@ function rktAF(){
 let _rktInited=false;
 // ══════════════════════════════════════════════════════════
 // TELEGRAM MAINBUTTON — нативная кнопка для ракетки
-// ══════════════════════════════════════════════════════════
-// ══════════════════════════════════════════════════════════
-// TELEGRAM MAINBUTTON — нативная кнопка, обновляется каждый кадр
-// ══════════════════════════════════════════════════════════
-let _mb = null;           // кэш tg.MainButton
-let _mbHandler = null;    // текущий обработчик клика
-let _mbLastText = '';     // кэш текста — не перерисовываем если не изменился
-let _mbLastColor = '';
-let _mbLastEnabled = null;
-let _mbRAF = false;       // запущен ли RAF цикл
-
-function _mbInit(){
-  try { _mb = tg.MainButton; } catch(e){ _mb = null; }
-}
-
-function _mbSet(text, color, textColor, enabled, onClick){
-  if(!_mb) return;
-  try {
-    // Обновляем только если изменилось — избегаем мерцания
-    if(_mbLastText !== text){
-      _mb.setText(text);
-      _mbLastText = text;
-    }
-    if(_mbLastColor !== color){
-      _mb.color = color || '#ffffff';
-      _mb.textColor = textColor || '#000000';
-      _mbLastColor = color;
-    }
-    if(_mbLastEnabled !== enabled){
-      if(enabled) _mb.enable(); else _mb.disable();
-      _mbLastEnabled = enabled;
-    }
-    // Перевешиваем обработчик только если изменился
-    if(onClick && _mbHandler !== onClick){
-      if(_mbHandler) _mb.offClick(_mbHandler);
-      _mb.onClick(onClick);
-      _mbHandler = onClick;
-    }
-    _mb.show();
-  } catch(e){}
-}
-
-function _mbHide(){
-  if(!_mb) return;
-  try {
-    if(_mbHandler){ _mb.offClick(_mbHandler); _mbHandler=null; }
-    _mb.hide();
-    _mbLastText=''; _mbLastColor=''; _mbLastEnabled=null;
-  } catch(e){}
-}
-
-// RAF цикл — обновляет кнопку 60fps пока страница ракеты активна
-function _mbStartRAF(){
-  if(_mbRAF) return;
-  _mbRAF = true;
-  function loop(){
-    if(!_mbRAF){ _mbHide(); return; }
-    try{ _mbSync(); }catch(e){}
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
-}
-function _mbStopRAF(){ _mbRAF = false; }
-
-// Статические ссылки на функции-обработчики (не создаём новые каждый кадр)
-function _mbHandleCashout(){
-  _rktFrozenMult = parseFloat(RKT.mult.toFixed(2));
-  try{ tg.HapticFeedback.impactOccurred('heavy'); }catch(e){}
-  rktDoCashout();
-}
-function _mbHandleBet(){
-  try{ tg.HapticFeedback.impactOccurred('medium'); }catch(e){}
-  rktPlaceBet();
-}
-
-// Синхронизируем состояние кнопки — вызывается каждый кадр
-function _mbSync(){
-  if(!_mb) return;
-  const rocketPage = document.getElementById('page-rocket');
-  if(!rocketPage || !rocketPage.classList.contains('active')){ _mbHide(); return; }
-
-  if(RKT.phase==='flying'){
-    if(RKT.betPlaced && !RKT.cashedOut && !_rktCashingOut){
-      const m = RKT.mult||1;
-      const pot = RKT.myBet ? Math.floor(RKT.myBet*m)-RKT.myBet : 0;
-      const potStr = pot>0 ? ' +'+pot.toLocaleString('ru-RU') : '';
-      _mbSet('💸 ЗАБРАТЬ ×'+m.toFixed(2)+potStr, '#15803d', '#ffffff', true, _mbHandleCashout);
-      return;
-    }
-    if(RKT.cashedOut){
-      _mbSet('✅ Забрано ×'+(RKT.cashedMult||1).toFixed(2), '#1a3a1a', '#4ade80', false, null);
-      return;
-    }
-    // Если отправляли ставку — ждём подтверждения
-    if(_rktBetState !== 'idle'){
-      _mbSet('⏳ Ожидаем подтверждения...', '#2a2000', '#fbbf24', false, null);
-    } else {
-      _mbSet('🚀 Следующий раунд', '#111111', '#555555', false, null);
-    }
-    return;
-  }
-
-  if(RKT.phase==='crashed'){
-    _mbSet('💥 Новый раунд...', '#1a0a0a', '#555555', false, null);
-    return;
-  }
-
-  // Ожидание
-  const _betThisRoundMb = RKT.betPlaced || _rktRoundBetDone || _rktBetAccepted
-                       || (_rktBetRoundId === RKT.roundId && RKT.roundId !== -1);
-  if(_betThisRoundMb){
-    const betFmt = RKT.myBet ? ' '+RKT.myBet.toLocaleString('ru-RU') : '';
-    _mbSet('✅ Ставка'+betFmt+' принята', '#0a2a0a', '#4ade80', false, null);
-    return;
-  }
-  if(_rktBetting){
-    _mbSet('⟳ Отправляем...', '#2a2000', '#fbbf24', false, null);
-    return;
-  }
-  // Активна — можно ставить до самого старта
-  const inp = document.getElementById('rktInp');
-  let betStr = '';
-  try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betStr=' '+v.toLocaleString('ru-RU'); }catch(e){}
-  // Telegram кнопка — тоже только если <= 5 секунд
-  if(RKT.waitLeft > 5){
-    _mbSet('⏳ '+Math.ceil(RKT.waitLeft)+'с...', '#1a1a1a', '#555555', false, null);
-    return;
-  }
-  const waitStr = RKT.waitLeft>0 ? ' ('+Math.ceil(RKT.waitLeft)+'с)' : '';
-  _mbSet('🚀 ПОСТАВИТЬ'+betStr+waitStr, '#ffffff', '#000000', true, _mbHandleBet);
-}
-
-// Совместимость с rktUpdateBtn
-function rktSyncMainBtn(){ try{ _mbSync(); }catch(e){} }
 
 function initRocketOnce(){
   if(_rktInited) return;
@@ -6585,7 +6427,6 @@ function initRocketOnce(){
 
 function initRocket(){
   initRktCvs(); rktUI(); rktHist(); rktUpdateTable();
-  try{ _mbStartRAF(); }catch(e){} // запускаем нативную кнопку Telegram
   if(API_URL&&API_SECRET){
     rktFetch('/casino/rocket/state?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now())
       .then(d=>{if(d&&d.ok){rktApply(d);rktWaitTick();}});
