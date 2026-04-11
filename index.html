@@ -5667,12 +5667,14 @@ function rktApply(d){
         if(refundAmt>0){ setBalance(balance+refundAmt); showToast('\u21a9\ufe0f '+refundAmt.toLocaleString('ru-RU')+' \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0435\u043d\u043e','info'); }
       }
     } else {
-      // Не в процессе отправки — стандартный сброс
-      _rktBetUnlock();
-      _rktSetBetting(false);
-      _rktRoundBetDone=false;
-      _rktBetAccepted=false;
-      if(!RKT.betPlaced) _rktMinBalance=-1;
+      // Не в процессе отправки — стандартный сброс только если нет активной ставки
+      if(!RKT.betPlaced){
+        _rktBetUnlock();
+        _rktSetBetting(false);
+        _rktRoundBetDone=false;
+        _rktBetAccepted=false;
+        _rktMinBalance=-1;
+      }
     }
   }
 
@@ -5744,7 +5746,8 @@ function rktApply(d){
 
     if(prev!=='flying'){
       rTrail=[];rCrashParticles=[];rSpeedParts=[];rCashNotifs=[];
-      if(_rktBetState==='sending') _rktSetBetting(false); // сервер стартовал — запрос уже не нужен
+      // НЕ сбрасываем _rktBetState здесь — ответ сервера сам придёт
+      // Если сбросить здесь, кнопка мигает активной пока летим
       _rktOperating=false;
       RKT._betTs=0;
       // Сбрасываем data-disp чтобы иксы показались сразу
@@ -5897,7 +5900,14 @@ function rktUpdateBtn(){
     setStatus('ОТПРАВЛЯЕМ СТАВКУ...', '#fbbf24');
     return;
   }
-  // Активна — можно ставить пока идёт ожидание
+  // Активна — только если точно idle и ставки нет
+  if(_rktBetState !== 'idle' || _rktRoundBetDone || RKT.betPlaced){
+    // Что-то ещё в процессе — показываем серую
+    b.textContent='⏳ ...';
+    b.className='rkt-btn bw'; b.disabled=true;
+    setStatus('', '');
+    return;
+  }
   const inp=document.getElementById('rktInp');
   let betPreview='';
   try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betPreview=' — '+v.toLocaleString('ru-RU'); }catch(e){}
@@ -6057,10 +6067,9 @@ function rktUpdateTags(){
 let _rktWT=null, _rktWaitEnd=0;
 function rktWaitTick(){
   if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
-  // Если нет активной ставки И не в процессе отправки — сбрасываем блокировки
-  if(!RKT.betPlaced && _rktBetState !== 'sending'){
+  // Сбрасываем блокировки только если точно нет ставки в этом раунде
+  if(!RKT.betPlaced && _rktBetState !== 'sending' && _rktBetState !== 'accepted'){
     _rktBetAccepted=false;
-    if(_rktBetState==='accepted') _rktBetState='idle';
     _rktRoundBetDone=false;
   }
   _rktWaitEnd=Date.now()+Math.max(0.1, RKT.waitLeft)*1000;
