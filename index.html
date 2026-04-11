@@ -2077,7 +2077,8 @@ display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
     </div>
 
     <!-- ГЛАВНАЯ КНОПКА — sticky под игрой, всегда видна -->
-    <div style="position:sticky;top:0;z-index:20;padding:8px 16px 4px;background:rgba(6,4,1,.97);border-bottom:1px solid rgba(255,100,0,.12);">
+    <div id="rktBtnWrap" style="position:sticky;top:0;z-index:20;padding:8px 14px 6px;background:rgba(4,2,0,.98);border-bottom:1px solid rgba(255,90,0,.15);backdrop-filter:blur(10px);">
+      <div id="rktActionStatus" style="font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:1.5px;text-align:center;color:rgba(255,255,255,.25);margin-bottom:5px;min-height:12px;"></div>
       <button class="rkt-btn bb" id="rktBtn"
         onclick="_rktFrozenMult=(RKT&&RKT.mult)?parseFloat(RKT.mult.toFixed(2)):null;rktAction()"
         style="display:block;width:100%;margin:0">🚀 ПОСТАВИТЬ</button>
@@ -2581,14 +2582,9 @@ function showPage(n) {
   } catch(e){}
   if(n==='rocket') {
     try { initRocketOnce(); } catch(e){}
-    try{ _mbInit(); _mbStartRAF(); }catch(e){}
-    const ab=document.getElementById('rktActionBar');
-    if(ab) ab.classList.add('visible');
-    setTimeout(()=>{ try{ _mbSync(); }catch(e){} }, 200);
   } else {
-    try{ _mbStopRAF(); }catch(e){}
-    const ab=document.getElementById('rktActionBar');
-    if(ab) ab.classList.remove('visible');
+    // Скрываем нативную кнопку если была включена
+    try{ tg.MainButton.hide(); }catch(e){}
   }
   if(n==='top') {
     try { loadLeaderboard(true); } catch(e){}
@@ -5434,8 +5430,16 @@ function rktTickStart(){
     // Обновляем кнопку ЗАБРАТЬ каждый кадр — иксы в реальном времени
     if(RKT.betPlaced && !RKT.cashedOut && !_rktCashingOut){
       const btnLive=document.getElementById('rktBtn');
+      const stLive=document.getElementById('rktActionStatus');
       if(btnLive && btnLive.classList.contains('bc')){
         btnLive.textContent='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
+        if(stLive && RKT.myBet){
+          const mc=Math.round(m*100);
+          const prize=Math.round(RKT.myBet*mc/100);
+          const profit=prize-RKT.myBet;
+          stLive.textContent='СТАВКА: '+RKT.myBet.toLocaleString('ru-RU')+'  →  '+prize.toLocaleString('ru-RU')+'  (+'+profit.toLocaleString('ru-RU')+')';
+          stLive.style.color='#fbbf24';
+        }
       }
     }
 
@@ -5654,31 +5658,43 @@ function rktUI(){
 
 // Единственная функция управления кнопкой — вызывать только через rktUI()
 function rktUpdateBtn(){
-  const b = document.getElementById('rktBtn');
-  try{ rktSyncMainBtn(); }catch(e){}
+  const b  = document.getElementById('rktBtn');
+  const st = document.getElementById('rktActionStatus');
   if(!b) return;
+
+  const setStatus = (txt, color) => {
+    if(st){ st.textContent=txt; st.style.color=color||'rgba(255,255,255,.25)'; }
+  };
 
   // ── ПОЛЁТ ──────────────────────────────────────────────
   if(RKT.phase==='flying'){
     if(RKT.betPlaced && !RKT.cashedOut && !_rktCashingOut){
       const m = RKT.mult||1;
+      // Точный расчёт прибыли для статуса
+      const multCents = Math.round(m * 100);
+      const prize = Math.round((RKT.myBet||0) * multCents / 100);
+      const profit = prize - (RKT.myBet||0);
       b.textContent='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
       b.className='rkt-btn bc'; b.disabled=false;
+      setStatus('СТАВКА: '+(RKT.myBet||0).toLocaleString('ru-RU')+'  →  СЕЙЧАС: '+prize.toLocaleString('ru-RU')+'  (+'+profit.toLocaleString('ru-RU')+')', '#fbbf24');
       return;
     }
     if(RKT.cashedOut){
       b.textContent='✅ Забрано ×'+(RKT.cashedMult||RKT.mult||1).toFixed(2);
       b.className='rkt-btn bw'; b.disabled=true;
+      setStatus('ЗАБРАНО — РАУНД ЗАВЕРШЁН', '#4ade80');
       return;
     }
     b.textContent='🚀 Поставить в следующем';
     b.className='rkt-btn bw'; b.disabled=true;
+    setStatus('', '');
     return;
   }
   // ── КРАШ ───────────────────────────────────────────────
   if(RKT.phase==='crashed'){
     b.textContent='⏳ Новый раунд...';
     b.className='rkt-btn bw'; b.disabled=true;
+    setStatus('', '');
     return;
   }
   // ── ОЖИДАНИЕ ───────────────────────────────────────────
@@ -5686,24 +5702,29 @@ function rktUpdateBtn(){
     const betFmt = RKT.myBet ? RKT.myBet.toLocaleString('ru-RU') : '';
     b.textContent='✅ Ставка '+ betFmt +' принята';
     b.className='rkt-btn bw'; b.disabled=true;
+    setStatus('ЖДЁМ СТАРТА 🚀', '#4ade80');
     return;
   }
   if(_rktBetting){
     b.innerHTML='<span class="rkt-btn-spin">⟳</span> Отправляем...';
     b.className='rkt-btn bl'; b.disabled=true;
+    setStatus('ОТПРАВЛЯЕМ СТАВКУ...', '#fbbf24');
     return;
   }
   if(RKT.waitLeft>0 && RKT.waitLeft<=1.5){
     b.textContent='🔒 Скоро старт';
     b.className='rkt-btn bw'; b.disabled=true;
+    setStatus('ПРИЁМ СТАВОК ЗАКРЫТ', '#f87171');
     return;
   }
   // Активна
   const inp=document.getElementById('rktInp');
   let betPreview='';
   try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betPreview=' — '+v.toLocaleString('ru-RU'); }catch(e){}
+  const waitStr = RKT.waitLeft>1.5 ? ' · СТАРТ: '+Math.ceil(RKT.waitLeft)+'с' : '';
   b.textContent='🚀 ПОСТАВИТЬ'+betPreview;
   b.className='rkt-btn bb'; b.disabled=false;
+  setStatus('ОЖИДАНИЕ СТАРТА'+waitStr, 'rgba(255,255,255,.25)');
 }
 
 // Оставляем для совместимости — просто вызывает rktUI
@@ -5880,6 +5901,7 @@ function rktAction(){
   if(btn&&btn.disabled) return;
   if(RKT.phase==='flying'&&RKT.betPlaced&&!RKT.cashedOut&&!_rktCashingOut){
     // Захватываем ТОЧНЫЙ отображаемый mult — то что видит пользователь
+    // Захватываем отображаемый mult (toFixed(2) = то что видит пользователь)
     _rktFrozenMult = parseFloat(RKT.mult.toFixed(2));
     try{ tg.HapticFeedback.impactOccurred('heavy'); }catch(e){}
     rktDoCashout();
@@ -6002,10 +6024,12 @@ async function rktDoCashout(){
   _rktFrozenMult = mult;
   _rktOperating  = true;
 
-  // Точный расчёт: Math.round избегает проблем с float
-  // 10000 * 1.66 = 16599.999... → floor=16599 НЕВЕРНО
-  // 10000 * 1.66 = 16599.999... → round=16600 ВЕРНО
-  const localPrize  = Math.round(myBet * mult);
+  // Точный расчёт без float погрешности:
+  // mult уже toFixed(2), например 1.66
+  // Умножаем через целые числа: round(bet * mult * 100) / 100
+  // 10000 * 1.66 → 10000 * 166 / 100 = 1660000 / 100 = 16600 ✓
+  const multCents = Math.round(mult * 100);         // 1.66 → 166
+  const localPrize  = Math.round(myBet * multCents / 100); // точно 16600
   const localProfit = localPrize - myBet;
 
   // Показываем мгновенно
@@ -6261,16 +6285,6 @@ function initRocketOnce(){
 
 function initRocket(){
   initRktCvs(); rktUI(); rktHist(); rktUpdateTable();
-
-  // Если Telegram — скрываем HTML кнопку, нативная MainButton снизу экрана
-  // HTML action-bar остаётся для статуса
-  try{
-    const inTelegram = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData;
-    const htmlBtn = document.getElementById('rktBtn');
-    if(inTelegram && htmlBtn){
-      htmlBtn.style.display = 'none';
-    }
-  }catch(e){}
   if(API_URL&&API_SECRET){
     rktFetch('/casino/rocket/state?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now())
       .then(d=>{if(d&&d.ok){rktApply(d);rktWaitTick();}});
