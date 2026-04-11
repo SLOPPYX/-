@@ -6089,13 +6089,15 @@ function rktUpdateTable(){
     if(p.is_me) return;
     if(allPlayers.length >= 10) return;
     allPlayers.push({
-      uid: p.uid,
-      name: (p.name||'?').slice(0,12),
-      bet: p.bet||0,
+      uid:      p.uid,
+      name:     (p.name||'?').slice(0,12),
+      bet:      p.bet||0,
       cashedAt: p.cashed_at||null,
-      avatar: p.avatar||'ghost',
-      isMe: false,
-      crashed: (RKT.phase==='crashed') && !p.cashed_at,
+      prize:    p.prize||null,    // точная сумма с сервера
+      profit:   p.profit||null,   // точная прибыль с сервера
+      avatar:   p.avatar||'ghost',
+      isMe:     false,
+      crashed:  (RKT.phase==='crashed') && !p.cashed_at,
     });
   });
 
@@ -6137,12 +6139,18 @@ function rktUpdateTable(){
       profitHTML = '<span class="rkt-live-profit wait">—</span>';
       statusHTML = '<div class="rkt-live-status">👀 наблюдает</div>';
     } else if(p.cashedAt){
-      // Точный расчёт
+      // Используем точные данные с сервера (prize/profit)
+      // Для себя — из локального кеша, для других — с сервера
       let prize, profit;
       if(p.isMe && RKT.cashedPrize){
         prize  = RKT.cashedPrize;
         profit = RKT.cashedProfit;
+      } else if(p.prize != null && p.profit != null){
+        // Сервер прислал точные значения
+        prize  = p.prize;
+        profit = p.profit;
       } else {
+        // Fallback: считаем на клиенте
         const mc = Math.round(parseFloat(p.cashedAt)*100);
         prize  = Math.round(p.bet * mc / 100);
         profit = prize - p.bet;
@@ -6575,3 +6583,4 @@ init();
 </script>
 </body>
 </html>
+
