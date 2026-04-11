@@ -5685,7 +5685,19 @@ function rktApply(d){
     });
   }
 
-  RKT.players=d.players||[]; RKT.history=d.history||[]; RKT.online=d.online||1;
+  // Обновляем только если сервер реально прислал данные (не timeout)
+  if(d.players != null) RKT.players=d.players;
+  if(d.history != null) RKT.history=d.history;
+  if(d.online  != null) RKT.online=d.online;
+  // Если в players есть мы — синхронизируем betPlaced
+  if(d.players != null && RKT.phase==='waiting'){
+    const meInPoll=(d.players||[]).find(p=>p.is_me||(USER_ID&&String(p.uid)===String(USER_ID)));
+    if(meInPoll && meInPoll.bet>0 && !RKT.betPlaced){
+      RKT.betPlaced=true; RKT.myBet=meInPoll.bet;
+      _rktBetRoundId=RKT.roundId; _rktRoundBetDone=true;
+      _rktBetLock('accepted');
+    }
+  }
   if(d.crash_at!=null){
     RKT.crashAt=d.crash_at;
     // Если мы летим и превысили crashAt — немедленно применяем краш
