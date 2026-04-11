@@ -5937,7 +5937,17 @@ function rktUpdateBtn(){
     return;
   }
 
-  // Показываем ПОСТАВИТЬ
+  // Показываем ПОСТАВИТЬ только если осталось <= 5 секунд
+  if(RKT.waitLeft > 5){
+    // Ещё рано — ждём
+    const secsLeft = Math.ceil(RKT.waitLeft);
+    btnStatus.textContent = '⏳ Ставки через ' + secsLeft + 'с...';
+    btnStatus.style.background = 'rgba(255,255,255,.05)';
+    btnStatus.style.color = 'rgba(255,255,255,.3)';
+    btnStatus.style.display = 'block';
+    setStatus('ОЖИДАНИЕ СТАРТА', 'rgba(255,255,255,.2)');
+    return;
+  }
   const inp = document.getElementById('rktInp');
   let betPreview = '';
   try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betPreview=' — '+v.toLocaleString('ru-RU'); }catch(e){}
@@ -6207,14 +6217,14 @@ function _rktSetBetting(val){
   else if(_rktBetState==='sending'){ _rktBetLock('idle'); }
 }
 function rktPlaceBet(){
-  // Тройная атомарная защита + проверка roundId
   if(_rktBetState !== 'idle') return;
   if(_rktRoundBetDone) return;
   if(RKT.betPlaced) return;
   if(RKT.phase==='flying') return;
   if(RKT.phase==='crashed') return;
-  // Главная защита: уже ставили в этом раунде
   if(_rktBetRoundId !== -99 && _rktBetRoundId === RKT.roundId) return;
+  // Принимаем ставки только когда осталось <= 5 секунд
+  if(RKT.phase==='waiting' && RKT.waitLeft > 5) return;
 
   const i   = document.getElementById('rktInp');
   const bet = Math.min(parseBetStr(i?i.value:String(RKT.myBet))||0, MAX_BET_RKT);
@@ -6555,6 +6565,11 @@ function _mbSync(){
   const inp = document.getElementById('rktInp');
   let betStr = '';
   try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betStr=' '+v.toLocaleString('ru-RU'); }catch(e){}
+  // Telegram кнопка — тоже только если <= 5 секунд
+  if(RKT.waitLeft > 5){
+    _mbSet('⏳ '+Math.ceil(RKT.waitLeft)+'с...', '#1a1a1a', '#555555', false, null);
+    return;
+  }
   const waitStr = RKT.waitLeft>0 ? ' ('+Math.ceil(RKT.waitLeft)+'с)' : '';
   _mbSet('🚀 ПОСТАВИТЬ'+betStr+waitStr, '#ffffff', '#000000', true, _mbHandleBet);
 }
