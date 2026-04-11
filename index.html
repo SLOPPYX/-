@@ -5621,6 +5621,8 @@ function rktTickStart(){
             setBalance(balance+RKT.myBet);
             showToast('↩️ '+RKT.myBet.toLocaleString('ru-RU')+' возвращено','info');
           }
+          RKT.roundId = (RKT.roundId||0) + 1; // новый раунд — новый ID
+          _rktBetRoundId = -99; // разрешаем ставку в новом раунде
           RKT.betPlaced=false;RKT.cashedOut=false;
           _rktOperating=false;_rktSetBetting(false);
           _rktBetUnlock();
@@ -5648,6 +5650,8 @@ function rktApply(d){
   // Если раунд сменился — точно сбрасываем ставку (даже если _rktBetting)
   const roundChanged=(d.round_id!=null && d.round_id!==prevRoundId && prevRoundId!==-1);
   if(roundChanged){
+    // Новый раунд — сбрасываем ID ставки, разрешаем ставить снова
+    _rktBetRoundId = -99;
     _rktOperating=false;
     _rktCashingOut=false;
     // Если ставка была в процессе отправки — проверяем есть ли мы в players
@@ -5890,7 +5894,10 @@ function rktUpdateBtn(){
     return;
   }
   // ── ОЖИДАНИЕ ───────────────────────────────────────────
-  if(_rktBetAccepted || _rktRoundBetDone || RKT.betPlaced){
+  // Ставка уже в этом раунде (по roundId или флагам)
+  const _betThisRound = _rktBetAccepted || _rktRoundBetDone || RKT.betPlaced
+                     || (_rktBetRoundId !== -99 && _rktBetRoundId === RKT.roundId);
+  if(_betThisRound){
     const betFmt = RKT.myBet ? RKT.myBet.toLocaleString('ru-RU') : '';
     b.textContent='✅ Ставка '+ betFmt +' принята';
     b.className='rkt-btn bw'; b.disabled=true;
@@ -6112,6 +6119,7 @@ function rktWaitTick(){
 // ── Действия игрока ──────────────────────────────────────
 // _rktRoundBetDone: ставка поставлена в ЭТОМ раунде — не сбрасывается до смены раунда
 let _rktRoundBetDone = false;
+let _rktBetRoundId = -99; // ID раунда в котором поставили — надёжнее булева флага
 
 // АТОМАРНЫЙ ЛОК — единственный источник истины о состоянии кнопки
 // 'idle' | 'sending' | 'accepted' | 'cashing'
@@ -6192,12 +6200,14 @@ function _rktSetBetting(val){
   else if(_rktBetState==='sending'){ _rktBetLock('idle'); }
 }
 function rktPlaceBet(){
-  // Тройная атомарная защита
-  if(_rktBetState !== 'idle') return;  // уже отправляем или принято
-  if(_rktRoundBetDone) return;         // уже ставили в этом раунде
-  if(RKT.betPlaced) return;            // ставка уже зачтена
-  if(RKT.phase==='flying') return;     // раунд уже идёт
-  if(RKT.phase==='crashed') return;    // раунд закончился
+  // Тройная атомарная защита + проверка roundId
+  if(_rktBetState !== 'idle') return;
+  if(_rktRoundBetDone) return;
+  if(RKT.betPlaced) return;
+  if(RKT.phase==='flying') return;
+  if(RKT.phase==='crashed') return;
+  // Главная защита: уже ставили в этом раунде
+  if(_rktBetRoundId !== -99 && _rktBetRoundId === RKT.roundId) return;
 
   const i   = document.getElementById('rktInp');
   const bet = Math.min(parseBetStr(i?i.value:String(RKT.myBet))||0, MAX_BET_RKT);
@@ -6210,6 +6220,7 @@ function rktPlaceBet(){
 
   // АТОМАРНО блокируем — первой строкой
   _rktLastSentAt = Date.now(); // запоминаем момент отправки
+  _rktBetRoundId = RKT.roundId; // запоминаем ID раунда — главная защита от двойной ставки
   _rktBetLock('sending');
   _rktRoundBetDone = true;
   RKT.betPlaced    = true;
@@ -6521,7 +6532,9 @@ function _mbSync(){
   }
 
   // Ожидание
-  if(_rktBetAccepted || _rktRoundBetDone || RKT.betPlaced){
+  const _betThisRoundMb = _rktBetAccepted || _rktRoundBetDone || RKT.betPlaced
+                       || (_rktBetRoundId !== -99 && _rktBetRoundId === RKT.roundId);
+  if(_betThisRoundMb){
     const betFmt = RKT.myBet ? ' '+RKT.myBet.toLocaleString('ru-RU') : '';
     _mbSet('✅ Ставка'+betFmt+' принята', '#0a2a0a', '#4ade80', false, null);
     return;
@@ -6555,16 +6568,15 @@ function initRocket(){
       .then(d=>{if(d&&d.ok){rktApply(d);rktWaitTick();}});
     rktPollLoop();
   } else {
-    RKT.waitLeft=5; _rktWaitEnd=Date.now()+5000; rktWaitTick();
+    RKT.roundId = 1; RKT.waitLeft=5; _rktWaitEnd=Date.now()+5000; rktWaitTick();
     setTimeout(()=>{
       RKT.phase='flying';RKT._ls=Date.now();
-      // Больше выигрышей: 70% шанс что краш выше 2x, 25% выше 5x, 8% выше 10x
       const r = Math.random();
-      RKT.crashAt = r < 0.08 ? 10 + Math.random()*40      // 8%  — большой выигрыш
-                 : r < 0.25 ? 5  + Math.random()*5         // 17% — хороший
-                 : r < 0.55 ? 2  + Math.random()*3         // 30% — нормальный
-                 : r < 0.80 ? 1.3+ Math.random()*0.7       // 25% — маленький
-                 :             1.0+ Math.random()*0.25;     // 20% — почти краш
+      RKT.crashAt = r < 0.08 ? 10 + Math.random()*40
+                 : r < 0.25 ? 5  + Math.random()*5
+                 : r < 0.55 ? 2  + Math.random()*3
+                 : r < 0.80 ? 1.3+ Math.random()*0.7
+                 :             1.0+ Math.random()*0.25;
       rTrail=[];rktAF();rktTickStart();rktUI();
     },5000);
   }
