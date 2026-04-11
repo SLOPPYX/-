@@ -4864,6 +4864,7 @@ try{ document.addEventListener('visibilitychange', function(){ if(document.hidde
 
 // ── Canvas + рисование ────────────────────────────────────
 let rCvs,rCtx,rW,rH,rTrail=[],rAFid=null,rStars=null;
+let _rktLaunchFlash=0; // анимация СТАРТ! при начале полёта
 let rTime=0, rCrashParticles=[], rSpeedParts=[];
 let _crashFlash=0, _crashRings=[];
 let rPermanentT=0, rPermanentDir=1;
@@ -5402,6 +5403,52 @@ function rDraw(){
     ctx.restore();
   }
 
+  // ── АНИМАЦИЯ "СТАРТ!" при переходе flying ──────────────
+  if(RKT.phase==='flying' && _rktLaunchFlash > 0){
+    _rktLaunchFlash -= 0.035;
+    const a = Math.max(0, _rktLaunchFlash);
+    const cx2=rW*0.5, cy2=rH*0.5;
+    const scl = 1.0 + (1-a)*0.6; // zoom-out effect
+    ctx.save();
+    ctx.globalAlpha = a * 0.95;
+    ctx.font = `900 ${Math.round(rH*0.22*scl)}px 'Orbitron',monospace`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor='#ffdd00'; ctx.shadowBlur=60;
+    ctx.fillStyle='#ffee44';
+    ctx.fillText('СТАРТ!', cx2, cy2 - rH*0.12);
+    ctx.shadowBlur=0;
+    ctx.restore();
+  }
+
+  // ── PENDING BET BADGE — метка отложенной ставки ─────────
+  if(_rktPendingBet > 0 && (RKT.phase==='flying'||RKT.phase==='crashed'||RKT.phase==='waiting')){
+    ctx.save();
+    const bx=rW*0.5, by=18;
+    const txt='⏳ Ставка '+_rktPendingBet.toLocaleString('ru-RU')+' → след. раунд';
+    ctx.font='bold 11px Orbitron,monospace';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    const tw=ctx.measureText(txt).width;
+    // Фон
+    ctx.globalAlpha=0.82;
+    ctx.fillStyle='rgba(30,20,0,0.85)';
+    const pad=8;
+    ctx.beginPath();
+    ctx.roundRect(bx-tw/2-pad, by-4, tw+pad*2, 22, 7);
+    ctx.fill();
+    // Граница
+    ctx.globalAlpha=0.9;
+    ctx.strokeStyle='rgba(251,191,36,0.7)';
+    ctx.lineWidth=1.2;
+    ctx.stroke();
+    // Текст
+    ctx.globalAlpha=1;
+    ctx.shadowColor='rgba(251,191,36,0.5)'; ctx.shadowBlur=8;
+    ctx.fillStyle='#fbbf24';
+    ctx.fillText(txt, bx, by);
+    ctx.shadowBlur=0;
+    ctx.restore();
+  }
+
   // Уведомления о кешауте игроков (всплывающие)
   rDrawCashoutNotifs(ctx);
 }
@@ -5618,6 +5665,7 @@ function rktTickStart(){
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
           if(RKT.waitLeft>0) rktWaitTick();
+          _rktTryFlushPending();
           rktUI();
         },2800);
       }
@@ -5688,6 +5736,7 @@ function rktApply(d){
       _rktSetBetting(false);
       _rktOperating=false;
       RKT._betTs=0;
+      _rktLaunchFlash=1.0; // запускаем анимацию СТАРТ!
       // Сбрасываем data-disp чтобы иксы показались сразу
       const multEl=document.getElementById('rktMult');
       if(multEl){ multEl.removeAttribute('data-disp'); }
@@ -5725,6 +5774,7 @@ function rktApply(d){
         _rktFrozenMult=null;
         rTrail=[];rCrashParticles=[];
         if(RKT.waitLeft>0) rktWaitTick();
+        _rktTryFlushPending();
         rktUI();
       },2800);
     } else {
@@ -5800,16 +5850,33 @@ function rktUpdateBtn(){
       setStatus('ЗАБРАНО — РАУНД ЗАВЕРШЁН', '#4ade80');
       return;
     }
-    b.textContent='—';
-    b.className='rkt-btn bw'; b.disabled=true;
-    setStatus('', '');
+    // Нет своей ставки — можно поставить на следующий раунд
+    if(_rktPendingBet > 0){
+      b.textContent='❌ Отменить ставку '+_rktPendingBet.toLocaleString('ru-RU');
+      b.className='rkt-btn'; b.style.background='rgba(248,113,113,0.15)'; b.style.borderColor='rgba(248,113,113,0.4)'; b.style.color='#f87171';
+      b.disabled=false;
+      setStatus('СТАВКА НА СЛЕД. РАУНД ЗАПЛАНИРОВАНА ✓', '#fbbf24');
+    } else {
+      b.textContent='💰 Поставить на след. раунд';
+      b.className='rkt-btn bb'; b.style.background=''; b.style.borderColor=''; b.style.color='';
+      b.disabled=false;
+      setStatus('РАУНД ЛЕТИТ — СТАВКА НА СЛЕДУЮЩИЙ', 'rgba(255,255,255,.3)');
+    }
     return;
   }
   // ── КРАШ ───────────────────────────────────────────────
   if(RKT.phase==='crashed'){
-    b.textContent='⏳ Новый раунд...';
-    b.className='rkt-btn bw'; b.disabled=true;
-    setStatus('', '');
+    if(_rktPendingBet > 0){
+      b.textContent='❌ Отменить ставку '+_rktPendingBet.toLocaleString('ru-RU');
+      b.className='rkt-btn'; b.style.background='rgba(248,113,113,0.15)'; b.style.borderColor='rgba(248,113,113,0.4)'; b.style.color='#f87171';
+      b.disabled=false;
+      setStatus('СТАВКА НА СЛЕД. РАУНД ЗАПЛАНИРОВАНА ✓', '#fbbf24');
+    } else {
+      b.textContent='💰 Поставить на след. раунд';
+      b.className='rkt-btn bb'; b.style.background=''; b.style.borderColor=''; b.style.color='';
+      b.disabled=false;
+      setStatus('НОВЫЙ РАУНД СКОРО...', 'rgba(255,255,255,.3)');
+    }
     return;
   }
   // ── ОЖИДАНИЕ ───────────────────────────────────────────
@@ -6011,6 +6078,30 @@ function rktWaitTick(){
 // _rktRoundBetDone: ставка поставлена в ЭТОМ раунде — не сбрасывается до смены раунда
 let _rktRoundBetDone = false;
 
+// ── ОТЛОЖЕННАЯ СТАВКА — если нажали во время полёта/краша ──
+let _rktPendingBet = 0;
+
+function _rktSetPending(amount){
+  _rktPendingBet = amount;
+  const res = document.getElementById('rktRes');
+  if(res && amount > 0){
+    res.textContent = '\u23f3 \u0421\u0442\u0430\u0432\u043a\u0430 ' + amount.toLocaleString('ru-RU') + ' \u0431\u0443\u0434\u0435\u0442 \u043f\u043e\u0441\u0442\u0430\u0432\u043b\u0435\u043d\u0430 \u0432 \u0441\u043b\u0435\u0434\u0443\u044e\u0449\u0435\u043c \u0440\u0430\u0443\u043d\u0434\u0435';
+    res.className = 'rkt-res';
+  }
+}
+
+function _rktTryFlushPending(){
+  if(_rktPendingBet <= 0) return;
+  if(RKT.phase !== 'waiting') return;
+  if(_rktRoundBetDone || RKT.betPlaced || _rktBetState !== 'idle') return;
+  const amt = _rktPendingBet;
+  _rktPendingBet = 0;
+  const inp = document.getElementById('rktInp');
+  if(inp) inp.value = String(amt);
+  RKT.myBet = amt;
+  setTimeout(rktPlaceBet, 80);
+}
+
 // АТОМАРНЫЙ ЛОК — единственный источник истины о состоянии кнопки
 // 'idle' | 'sending' | 'accepted' | 'cashing'
 let _rktBetState = 'idle';
@@ -6040,13 +6131,34 @@ function _rktBetUnlock(){
 function rktAction(){
   const btn=document.getElementById('rktBtn');
   if(btn&&btn.disabled) return;
+
+  // Кешаут во время полёта
   if(RKT.phase==='flying'&&RKT.betPlaced&&!RKT.cashedOut&&!_rktCashingOut){
     _rktFrozenMult = parseFloat(RKT.mult.toFixed(2));
     try{ tg.HapticFeedback.impactOccurred('heavy'); }catch(e){}
     rktDoCashout();
     return;
   }
-  // Принимаем ставку только в idle
+
+  // Нажали ПОСТАВИТЬ во время полёта (без своей ставки) или краша — отложенная ставка
+  if((RKT.phase==='flying'&&!RKT.betPlaced) || RKT.phase==='crashed'){
+    const inp = document.getElementById('rktInp');
+    const bet = Math.min(parseBetStr(inp?inp.value:String(RKT.myBet))||0, MAX_BET_RKT);
+    if(bet < 1000){ showToast('\u041c\u0438\u043d\u0438\u043c\u0443\u043c 1 000 \u0442\u043e\u043a\u0435\u043d\u043e\u0432','error'); return; }
+    if(bet > balance){ showToast('\u041d\u0435\u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e \u0442\u043e\u043a\u0435\u043d\u043e\u0432!','error'); return; }
+    if(_rktPendingBet === bet){
+      // Отменяем pending если нажали повторно
+      _rktPendingBet = 0;
+      const res = document.getElementById('rktRes');
+      if(res){ res.textContent = '\u041e\u0442\u043b\u043e\u0436\u0435\u043d\u043d\u0430\u044f \u0441\u0442\u0430\u0432\u043a\u0430 \u043e\u0442\u043c\u0435\u043d\u0435\u043d\u0430'; res.className = 'rkt-res'; }
+      rktUI(); return;
+    }
+    _rktSetPending(bet);
+    try{ tg.HapticFeedback.impactOccurred('medium'); }catch(e){}
+    rktUI(); return;
+  }
+
+  // Принимаем ставку в ожидании
   if(_rktBetState==='idle' && !_rktRoundBetDone && !RKT.betPlaced){ rktPlaceBet(); }
 }
 
@@ -6077,6 +6189,7 @@ function rktPlaceBet(){
   _rktRoundBetDone = true;
   RKT.betPlaced    = true;
   RKT.myBet        = bet;
+  _rktPendingBet   = 0; // сбрасываем отложенную ставку
 
   if(btnEl){ btnEl.disabled=true; btnEl.innerHTML='<span class="rkt-btn-spin">⟳</span> Отправляем...'; btnEl.className='rkt-btn bl'; }
   if(stEl)  stEl.textContent = 'ОТПРАВЛЯЕМ...';
@@ -6357,12 +6470,20 @@ function _mbSync(){
       _mbSet('✅ Забрано ×'+(RKT.cashedMult||1).toFixed(2), '#1a3a1a', '#4ade80', false, null);
       return;
     }
-    _mbSet('🚀 Следующий раунд', '#111111', '#555555', false, null);
+    if(_rktPendingBet > 0){
+      _mbSet('❌ Отменить ставку '+_rktPendingBet.toLocaleString('ru-RU'), '#3a0a0a', '#f87171', true, rktAction);
+      return;
+    }
+    _mbSet('💰 Ставка на след. раунд', '#0a0a2a', '#818cf8', true, rktAction);
     return;
   }
 
   if(RKT.phase==='crashed'){
-    _mbSet('💥 Новый раунд...', '#1a0a0a', '#555555', false, null);
+    if(_rktPendingBet > 0){
+      _mbSet('❌ Отменить ставку '+_rktPendingBet.toLocaleString('ru-RU'), '#3a0a0a', '#f87171', true, rktAction);
+      return;
+    }
+    _mbSet('💰 Ставка на след. раунд', '#0a0a2a', '#818cf8', true, rktAction);
     return;
   }
 
@@ -6410,6 +6531,7 @@ function initRocket(){
                  : r < 0.55 ? 2  + Math.random()*3         // 30% — нормальный
                  : r < 0.80 ? 1.3+ Math.random()*0.7       // 25% — маленький
                  :             1.0+ Math.random()*0.25;     // 20% — почти краш
+      _rktLaunchFlash=1.0;
       rTrail=[];rktAF();rktTickStart();rktUI();
     },5000);
   }
