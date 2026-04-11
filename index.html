@@ -1146,7 +1146,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   background:rgba(255,255,255,.02);
 }
 .rkt-live-table-header {
-  display:grid; grid-template-columns:1fr 70px 90px;
+  display:grid; grid-template-columns:1fr 60px 100px;
   padding:7px 12px;
   background:rgba(255,255,255,.04);
   border-bottom:1px solid rgba(255,255,255,.07);
@@ -1155,7 +1155,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   text-transform:uppercase;
 }
 .rkt-live-row {
-  display:grid; grid-template-columns:1fr 70px 90px;
+  display:grid; grid-template-columns:1fr 60px 100px;
   align-items:center;
   padding:7px 12px;
   border-bottom:1px solid rgba(255,255,255,.04);
@@ -1181,9 +1181,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 }
 .rkt-live-name { font-family:var(--fd); font-size:10px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:90px; }
 .rkt-live-status { font-size:8px; color:rgba(255,255,255,.3); margin-top:1px; letter-spacing:.3px; }
-.rkt-live-status.flying { color:#fbbf24; }
-.rkt-live-status.cashed { color:#4ade80; font-weight:700; }
-.rkt-live-status.crashed { color:#f87171; }
+.rkt-live-status.flying { color:#fbbf24; font-weight:700; }
+.rkt-live-status.cashed { color:#4ade80; font-weight:900; font-size:9px; }
+.rkt-live-status.crashed { color:#f87171; font-weight:700; }
 .rkt-live-bet { font-family:var(--fd); font-size:10px; font-weight:700; color:rgba(255,255,255,.55); text-align:right; }
 .rkt-live-profit { font-family:var(--fd); font-size:12px; font-weight:900; text-align:right; }
 .rkt-live-profit.pos  { color:#4ade80; }
@@ -5556,7 +5556,7 @@ async function rktPollLoop(){
       const d=await rktFetch('/casino/rocket/poll?uid='+USER_ID+'&secret='+API_SECRET+'&phase='+RKT.phase+'&round_id='+RKT.roundId+'&_t='+Date.now());
       if(d&&d.ok&&d.changed) rktApply(d);
     }catch(e){}
-    await new Promise(r=>setTimeout(r,200));
+    await new Promise(r=>setTimeout(r,80));
   }
 }
 
@@ -5678,9 +5678,10 @@ function rktTickStart(){
             setBalance(balance+RKT.myBet);
             showToast('↩️ '+RKT.myBet.toLocaleString('ru-RU')+' возвращено','info');
           }
-          RKT.roundId = (RKT.roundId||0) + 1; // новый раунд — новый ID
-          _rktBetRoundId = -99; // разрешаем ставку в новом раунде
+          RKT.roundId = (RKT.roundId||0) + 1;
+          _rktBetRoundId = -99;
           RKT.betPlaced=false;RKT.cashedOut=false;
+          RKT.cashedPrize=null;RKT.cashedProfit=null;RKT.cashedMult=null;
           _rktOperating=false;_rktSetBetting(false);
           _rktBetUnlock();
           _rktRoundBetDone=false;_rktMinBalance=-1;
@@ -5692,7 +5693,7 @@ function rktTickStart(){
       return;
     }
     const now=Date.now();
-    if(now-_rktLastTable>100){_rktLastTable=now;rktUpdateTable();}
+    if(now-_rktLastTable>50){_rktLastTable=now;rktUpdateTable();}
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -5851,6 +5852,7 @@ function rktApply(d){
           showToast('\u21a9\ufe0f '+RKT.myBet.toLocaleString('ru-RU')+' \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0435\u043d\u043e','info');
         }
         RKT.phase='waiting';RKT.betPlaced=false;RKT.cashedOut=false;
+        RKT.cashedPrize=null;RKT.cashedProfit=null;RKT.cashedMult=null;
         _rktOperating=false; _rktSetBetting(false);
         _rktBetUnlock(); _rktCashingOut=false;
         _rktRoundBetDone=false; _rktBetRoundId=-99; _rktMinBalance=-1;
@@ -6067,13 +6069,15 @@ function rktUpdateTable(){
   const allPlayers = [];
 
   // Всегда добавляем себя если есть ставка
-  if(RKT.betPlaced || (RKT.phase==='waiting' && (_rktBetRoundId===RKT.roundId))){
+  if(RKT.betPlaced || RKT.cashedOut || (RKT.phase==='waiting' && (_rktBetRoundId===RKT.roundId))){
     const myCashedAt = RKT.cashedOut ? (RKT.cashedMult||RKT.mult) : null;
     allPlayers.push({
       uid: 'me',
       name: USER_NAME || 'ВЫ',
       bet: RKT.myBet||0,
       cashedAt: myCashedAt,
+      prize: RKT.cashedPrize||null,    // точная сумма
+      profit: RKT.cashedProfit||null,  // точная прибыль
       avatar: selectedAvatar||'ghost',
       isMe: true,
       crashed: RKT.betPlaced && RKT.phase==='crashed' && !RKT.cashedOut,
@@ -6132,13 +6136,21 @@ function rktUpdateTable(){
     if(!p.bet){
       profitHTML = '<span class="rkt-live-profit wait">—</span>';
       statusHTML = '<div class="rkt-live-status">👀 наблюдает</div>';
+    } else if(p.cashedAt && p.isMe && RKT.cashedPrize){
+      // Для себя — используем точные сохранённые значения
+      const profitStr = (RKT.cashedProfit>=0?'+':'')+RKT.cashedProfit.toLocaleString('ru-RU');
+      const prizeStr  = RKT.cashedPrize.toLocaleString('ru-RU');
+      profitHTML = '<span class="rkt-live-profit pos">'+profitStr+'</span>';
+      statusHTML = '<div class="rkt-live-status cashed">✅ ×'+parseFloat(p.cashedAt).toFixed(2)+' = '+prizeStr+'</div>';
     } else if(p.cashedAt){
-      const prize = p.isMe
-        ? Math.round(p.bet * p.cashedAt)
-        : Math.round(p.bet * p.cashedAt);
+      // Точный расчёт через целые числа (без float погрешности)
+      const multCents = Math.round(parseFloat(p.cashedAt) * 100);
+      const prize = Math.round(p.bet * multCents / 100);
       const profit = prize - p.bet;
-      profitHTML = '<span class="rkt-live-profit pos">+'+profit.toLocaleString('ru-RU')+'</span>';
-      statusHTML = '<div class="rkt-live-status cashed">✅ ×'+parseFloat(p.cashedAt).toFixed(2)+'</div>';
+      const profitStr = (profit>=0?'+':'')+profit.toLocaleString('ru-RU');
+      const prizeStr = prize.toLocaleString('ru-RU');
+      profitHTML = '<span class="rkt-live-profit pos" title="Забрал '+prizeStr+'">'+profitStr+'</span>';
+      statusHTML = '<div class="rkt-live-status cashed">✅ ×'+parseFloat(p.cashedAt).toFixed(2)+' = '+prizeStr+'</div>';
     } else if(p.crashed){
       profitHTML = '<span class="rkt-live-profit neg">-'+p.bet.toLocaleString('ru-RU')+'</span>';
       statusHTML = '<div class="rkt-live-status crashed">💥 краш</div>';
@@ -6386,8 +6398,10 @@ async function rktDoCashout(){
   const myBet = RKT.myBet;
 
   _rktCashingOut = true;   // мгновенно блокируем повторное нажатие
-  RKT.cashedMult = mult;
-  RKT.cashedOut  = true;
+  RKT.cashedMult   = mult;
+  RKT.cashedOut   = true;
+  RKT.cashedPrize  = localPrize;   // точная сумма выплаты
+  RKT.cashedProfit = localProfit;  // точная прибыль
   _rktFrozenMult = mult;
   _rktOperating  = true;
 
