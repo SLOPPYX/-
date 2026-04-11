@@ -1215,57 +1215,41 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-btn {
   width:100%; padding:20px; border:none; border-radius:16px;
   font-family:var(--fd); font-size:17px; font-weight:900; letter-spacing:2px;
-  cursor:pointer; transition:transform .15s, box-shadow .35s ease, background .35s ease, color .25s ease, opacity .25s ease; margin-bottom:12px;
-  position:relative; overflow:hidden;
+  cursor:pointer; margin-bottom:12px; position:relative; overflow:hidden;
+  transition:background .5s ease, color .5s ease, box-shadow .5s ease, opacity .4s ease;
 }
 .rkt-btn::after {
   content:''; position:absolute; inset:0;
-  background:linear-gradient(180deg,rgba(255,255,255,.15) 0%,transparent 60%);
+  background:linear-gradient(180deg,rgba(255,255,255,.12) 0%,transparent 60%);
   pointer-events:none;
 }
+/* ПОСТАВИТЬ — белая, статичная, без пульсации */
 .rkt-btn.bb {
-  background:linear-gradient(135deg,#ffffff 0%,#e8e8e8 100%);
+  background:#ffffff;
   color:#0a0a0a; font-size:18px; letter-spacing:3px;
-  box-shadow:0 6px 30px rgba(255,255,255,.25), 0 0 0 1px rgba(255,255,255,.2), inset 0 1px 0 rgba(255,255,255,.8);
-  transition:box-shadow .4s ease, background .3s ease, color .3s ease;
-  animation:rBetPulse 2.5s ease 0.5s infinite alternate;
+  box-shadow:0 4px 20px rgba(255,255,255,.2);
 }
-@keyframes rBetPulse {
-  from { box-shadow:0 6px 30px rgba(255,255,255,.25), 0 0 0 1px rgba(255,255,255,.2); }
-  to   { box-shadow:0 8px 45px rgba(255,255,255,.42), 0 0 0 2px rgba(255,255,255,.12); }
-}
-.rkt-btn.bb:hover { transform:scale(1.01); }
+.rkt-btn.bb:hover { box-shadow:0 6px 28px rgba(255,255,255,.32); }
+/* ОТПРАВЛЯЕМ — оранжевая */
 .rkt-btn.bl {
-  background:linear-gradient(135deg,#ff8c00 0%,#ffa500 50%,#ff8c00 100%);
-  background-size:200% auto;
+  background:#e08000;
   color:#fff; font-size:16px; letter-spacing:2px;
-  box-shadow:0 4px 25px rgba(255,140,0,.4);
-  animation:rLoadingPulse .7s ease infinite alternate;
+  box-shadow:0 4px 18px rgba(255,140,0,.35);
   cursor:wait;
 }
-@keyframes rLoadingPulse {
-  from { box-shadow:0 4px 20px rgba(255,140,0,.3); background-position:0% center; }
-  to   { box-shadow:0 6px 35px rgba(255,140,0,.6); background-position:100% center; }
-}
-@keyframes rSpinIcon {
-  from { transform:rotate(0deg); }
-  to   { transform:rotate(360deg); }
-}
+@keyframes rSpinIcon { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 .rkt-btn-spin { display:inline-block; animation:rSpinIcon .6s linear infinite; }
+/* ЗАБРАТЬ — зелёная */
 .rkt-btn.bc {
-  background:linear-gradient(135deg,#15803d 0%,#22c55e 50%,#15803d 100%);
-  background-size:200% auto;
+  background:#16a34a;
   color:#fff; font-size:19px; letter-spacing:1px;
-  text-shadow:0 1px 3px rgba(0,0,0,.4);
-  box-shadow:0 4px 20px rgba(74,222,128,.4);
-  animation:rCashPulse .6s ease 0.3s infinite alternate;
+  text-shadow:0 1px 3px rgba(0,0,0,.3);
+  box-shadow:0 4px 18px rgba(74,222,128,.4);
 }
-@keyframes rCashPulse {
-  from { box-shadow:0 4px 20px rgba(74,222,128,.4); background-position:0% center; transform:scale(1); }
-  to   { box-shadow:0 6px 38px rgba(74,222,128,.7), 0 0 0 2px rgba(74,222,128,.2); background-position:100% center; transform:scale(1.01); }
-}
+.rkt-btn.bc:hover { box-shadow:0 6px 28px rgba(74,222,128,.55); }
+/* СЕРАЯ — неактивна */
 .rkt-btn.bw {
-  background:rgba(255,255,255,.07); color:rgba(255,255,255,.28);
+  background:rgba(255,255,255,.07); color:rgba(255,255,255,.25);
   cursor:not-allowed; box-shadow:none;
 }
 .rkt-btn:disabled { pointer-events:none }
@@ -5930,13 +5914,7 @@ function rktUpdateBtn(){
   try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betPreview=' — '+v.toLocaleString('ru-RU'); }catch(e){}
   const waitStr = RKT.waitLeft>0 ? ' · СТАРТ: '+Math.ceil(RKT.waitLeft)+'с' : '';
   b.textContent='🚀 ПОСТАВИТЬ'+betPreview;
-  // Плавный переход к активной кнопке — без вспышки
-  if(b.className !== 'rkt-btn bb'){
-    b.className='rkt-btn bw';
-    requestAnimationFrame(()=>{ b.className='rkt-btn bb'; b.disabled=false; });
-  } else {
-    b.disabled=false;
-  }
+  b.className='rkt-btn bb'; b.disabled=false;
   setStatus('ОЖИДАНИЕ СТАРТА'+waitStr, 'rgba(255,255,255,.25)');
 }
 
