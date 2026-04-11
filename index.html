@@ -5864,10 +5864,11 @@ function rktUpdateBtn(){
       setStatus('ЗАБРАНО — РАУНД ЗАВЕРШЁН', '#4ade80');
       return;
     }
-    if(_rktNextRoundBet > 0){
-      b.textContent='⏳ Авто-ставка '+_rktNextRoundBet.toLocaleString('ru-RU')+' в след. раунде';
+    // Если betState не idle — значит ставка отправлялась, ждём подтверждения от сервера
+    if(_rktBetState !== 'idle'){
+      b.textContent='⏳ Ожидаем подтверждения...';
       b.className='rkt-btn bl'; b.disabled=true;
-      setStatus('СТАВКА БУДЕТ ПОСТАВЛЕНА АВТОМАТИЧЕСКИ', '#fbbf24');
+      setStatus('ОЖИДАЕМ ПОДТВЕРЖДЕНИЯ С СЕРВЕРА...', '#fbbf24');
     } else {
       b.textContent='—';
       b.className='rkt-btn bw'; b.disabled=true;
@@ -5877,15 +5878,9 @@ function rktUpdateBtn(){
   }
   // ── КРАШ ───────────────────────────────────────────────
   if(RKT.phase==='crashed'){
-    if(_rktNextRoundBet > 0){
-      b.textContent='⏳ Авто-ставка '+_rktNextRoundBet.toLocaleString('ru-RU')+' в след. раунде';
-      b.className='rkt-btn bl'; b.disabled=true;
-      setStatus('СТАВКА БУДЕТ ПОСТАВЛЕНА АВТОМАТИЧЕСКИ', '#fbbf24');
-    } else {
-      b.textContent='⏳ Новый раунд...';
-      b.className='rkt-btn bw'; b.disabled=true;
-      setStatus('', '');
-    }
+    b.textContent='⏳ Новый раунд...';
+    b.className='rkt-btn bw'; b.disabled=true;
+    setStatus('', '');
     return;
   }
   // ── ОЖИДАНИЕ ───────────────────────────────────────────
@@ -6480,7 +6475,12 @@ function _mbSync(){
       _mbSet('✅ Забрано ×'+(RKT.cashedMult||1).toFixed(2), '#1a3a1a', '#4ade80', false, null);
       return;
     }
-    _mbSet('🚀 Следующий раунд', '#111111', '#555555', false, null);
+    // Если отправляли ставку — ждём подтверждения
+    if(_rktBetState !== 'idle'){
+      _mbSet('⏳ Ожидаем подтверждения...', '#2a2000', '#fbbf24', false, null);
+    } else {
+      _mbSet('🚀 Следующий раунд', '#111111', '#555555', false, null);
+    }
     return;
   }
 
