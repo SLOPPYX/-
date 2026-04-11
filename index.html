@@ -5642,7 +5642,8 @@ function rktApply(d){
     _rktOperating=false;
     _rktSetBetting(false);
     _rktBetUnlock(); _rktCashingOut=false;
-    if(!RKT.betPlaced) _rktRoundBetDone=false;
+    _rktRoundBetDone=false;  // всегда сбрасываем при смене раунда
+    _rktBetAccepted=false;   // иначе кнопка остаётся заблокированной
     _rktMinBalance=-1;
   }
 
@@ -6000,6 +6001,11 @@ function rktUpdateTags(){
 let _rktWT=null, _rktWaitEnd=0;
 function rktWaitTick(){
   if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
+  // Если нет активной ставки — сбрасываем все блокировки кнопки
+  if(!RKT.betPlaced){
+    _rktBetAccepted=false;
+    if(_rktBetState==='accepted') _rktBetState='idle';
+  }
   _rktWaitEnd=Date.now()+Math.max(0.1, RKT.waitLeft)*1000;
   const totalWait = Math.max(RKT.waitLeft, 0.1);
   function tick(){
@@ -6440,6 +6446,7 @@ function initRocketOnce(){
 
 function initRocket(){
   initRktCvs(); rktUI(); rktHist(); rktUpdateTable();
+  try{ _mbStartRAF(); }catch(e){} // запускаем нативную кнопку Telegram
   if(API_URL&&API_SECRET){
     rktFetch('/casino/rocket/state?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now())
       .then(d=>{if(d&&d.ok){rktApply(d);rktWaitTick();}});
