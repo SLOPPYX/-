@@ -1084,21 +1084,26 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 }
 .rkt-crash-label.active {
   opacity:1; transform:scale(1);
-  animation:rktCrashLabelIn .25s cubic-bezier(.2,1.4,.4,1) forwards,
-             rktCrashLabelOut 1.2s ease 1.6s forwards;
+  animation:rktCrashLabelIn .2s cubic-bezier(.15,1.5,.4,1) forwards,
+             rktCrashLabelOut .6s ease 2.2s forwards;
 }
-@keyframes rktCrashLabelIn  { 0%{transform:scale(1.5);opacity:0} 100%{transform:scale(1);opacity:1} }
-@keyframes rktCrashLabelOut { 0%{opacity:1} 100%{opacity:0} }
+@keyframes rktCrashLabelIn  {
+  0%  { transform:scale(2.2); opacity:0; }
+  60% { transform:scale(0.95); opacity:1; }
+  100%{ transform:scale(1); opacity:1; }
+}
+@keyframes rktCrashLabelOut { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(0.85)} }
 .rkt-crash-label-x {
   font-family:'Orbitron',monospace; font-weight:900;
-  font-size:52px; color:#ff3333; letter-spacing:2px;
-  text-shadow: 0 0 40px rgba(255,50,50,1), 0 0 80px rgba(255,30,30,.8), 0 0 120px rgba(255,0,0,.5);
+  font-size:68px; color:#ff2222; letter-spacing:2px;
+  text-shadow: 0 0 20px rgba(255,80,80,1), 0 0 60px rgba(255,40,40,.9),
+               0 0 100px rgba(255,0,0,.7), 0 0 160px rgba(200,0,0,.4);
   line-height:1;
 }
 .rkt-crash-label-word {
   font-family:'Orbitron',monospace; font-weight:900;
-  font-size:18px; color:rgba(255,100,100,.9); letter-spacing:6px;
-  margin-top:6px; text-shadow:0 0 20px rgba(255,50,50,.6);
+  font-size:22px; color:rgba(255,120,120,.95); letter-spacing:8px;
+  margin-top:8px; text-shadow:0 0 30px rgba(255,60,60,.8);
 }
 .rkt-mult { transition:transform 80ms ease-out; }
 
@@ -5450,8 +5455,8 @@ function rDraw(){
     rDrawRocket3D(ctx,rW*0.5,rH*0.5,1.0,0,0,true);
   }
 
-  // ── БОЛЬШОЙ ТАЙМЕР НА CANVAS (только фаза waiting) ──────
-  if(RKT.phase==='waiting' && RKT.waitLeft>0){
+  // ── БОЛЬШОЙ ТАЙМЕР НА CANVAS (только фаза waiting И нет краша) ──────
+  if(RKT.phase==='waiting' && RKT.waitLeft>0 && !_rktCrashShown){
     const left=RKT.waitLeft;
     const sec=left<10?left.toFixed(1):Math.ceil(left).toString();
     const cx=rW*0.5, cy=rH*0.5;
@@ -5569,12 +5574,13 @@ function _rktShowCrash(crashMult){
     RKT._myCrashMult = crashMult;
   }
 
-  // 4. Сбрасываем через 2.8с
+  // 4. Сбрасываем через 3с — показываем таблицу краша всё это время
   setTimeout(()=>{
     _rktCrashShown = false;
     RKT._myCrashMult = null;
     if(RKT.players) RKT.players.forEach(p=>{ delete p._crashed; delete p._crashMult; });
-  }, 3200);
+    rktUpdateTable(); // обновляем таблицу — убираем строки краша
+  }, 3000);
 }
 
 function rktSpawnCrashParticles(x,y){
@@ -5773,9 +5779,9 @@ function rktTickStart(){
           _rktBetUnlock();
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
-          if(RKT.waitLeft>0) rktWaitTick();
-          rktUI();
-        },2800);
+          // Ждём 2.5с после перехода в waiting чтобы таймер не показался во время анимации краша
+          setTimeout(()=>{ if(RKT.waitLeft>0) rktWaitTick(); rktUI(); }, 2500);
+        },300); // быстро переходим в waiting чтобы таблица обновилась
       }
       return;
     }
@@ -5959,9 +5965,9 @@ function rktApply(d){
         _rktRoundBetDone=false; _rktBetRoundId=-99; _rktMinBalance=-1;
         _rktFrozenMult=null;
         rTrail=[];rCrashParticles=[];
-        if(RKT.waitLeft>0) rktWaitTick();
-        rktUI();
-      },2800);
+        // Таймер показываем с задержкой — после анимации краша
+        setTimeout(()=>{ if(RKT.waitLeft>0) rktWaitTick(); rktUI(); }, 2500);
+      },300); // быстро в waiting чтобы таблица обновилась
     } else {
       // waiting→waiting
       _rktOperating=false;
