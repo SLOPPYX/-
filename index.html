@@ -5804,18 +5804,22 @@ function rktTickStart(){
           _rktBetUnlock();
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
-          // Запускаем новый раунд — 7 секунд ожидания потом старт
-          const _waitSec = 7;
-          RKT.waitLeft = _waitSec;
+          // Анимация краша длится 3800мс от краша, мы уже внутри через 300мс
+          // Значит краш закончится ещё через 3500мс от сейчас
+          const _crashRemain = 3500; // мс до конца анимации краша
+          const _waitSec = 7;        // секунд ожидания ПОСЛЕ краша
+          const _totalDelay = _crashRemain + _waitSec * 1000; // полное время до старта
           RKT.phase = 'waiting';
-          _rktWaitTotal = _waitSec; // сбрасываем total для прогресс-бара
+          // _rktWaitEnd — момент старта ракеты (от сейчас)
+          _rktWaitEnd = Date.now() + _totalDelay;
+          _rktWaitTotal = _waitSec;
+          RKT.waitLeft = _totalDelay / 1000;
           if(_rktWT){ clearTimeout(_rktWT); clearInterval(_rktWT); _rktWT=null; }
-          _rktWaitEnd = Date.now() + _waitSec * 1000; // устанавливаем сразу
-          rktSetWaitTime(_waitSec);
+          rktWaitTick(); // запустит таймер когда _rktCrashShown станет false
           rktUI();
-          // Запускаем полёт через 7 секунд
+          // Запускаем полёт через полное время
           setTimeout(()=>{
-            if(RKT.phase!=='waiting') return; // отменили
+            if(RKT.phase!=='waiting') return;
             RKT.phase='flying'; RKT._ls=Date.now();
             const r=Math.random();
             RKT.crashAt = r<0.08 ? 10+Math.random()*40
@@ -5824,7 +5828,7 @@ function rktTickStart(){
                         : r<0.80 ? 1.3+Math.random()*0.7
                         :           1.0+Math.random()*0.25;
             rTrail=[];rktAF();rktTickStart();rktUI();
-          }, _waitSec*1000);
+          }, _totalDelay);
         },300);
       }
       return;
