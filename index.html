@@ -4933,7 +4933,7 @@ window.addEventListener('pagehide', () => {
 // ══════════════════════════════════════════════════════════
 const RKT = {
   phase:'waiting', roundId:-1, mult:1.00, crashAt:null,
-  waitLeft:6, players:[], history:[], online:1,
+  waitLeft:10, players:[], history:[], online:1,
   betPlaced:false, cashedOut:false, myBet:10000, auto:0,
   _betTs:0, // timestamp когда была поставлена ставка
   _ls: Date.now(),
@@ -5775,6 +5775,7 @@ function rktTickStart(){
       // Немедленный взрыв прямо здесь
       if(RKT.phase==='flying'){
         RKT.phase='crashed';
+        console.log('💥 КРАШ ×'+cap.toFixed(2)+' раунд #'+RKT.roundId+' в', new Date().toLocaleTimeString());
         _rktShowCrash(cap); // запускаем анимацию краша
         rktSpawnCrashParticles(
           rTrail.length?rTrail[rTrail.length-1][0]:rW*0.5,
@@ -5805,7 +5806,7 @@ function rktTickStart(){
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
           RKT.phase = 'waiting';
-          RKT.waitLeft = 7;
+          RKT.waitLeft = 10;
           _rktLaunchAt = 0; // сбрасываем — таймер запустится после краша
           if(_rktWT){ clearInterval(_rktWT); clearTimeout(_rktWT); _rktWT=null; }
           rktUI();
@@ -5813,10 +5814,12 @@ function rktTickStart(){
           // Потом запускаем 7-секундный таймер и сразу старт ракеты через 7с
           setTimeout(()=>{
             if(RKT.phase!=='waiting') return;
-            rktStartCountdown(7000, 7); // ровно 7с с этого момента
+            console.log('⏱️ РАУНД #'+RKT.roundId+' — таймер 7с запущен в', new Date().toLocaleTimeString());
+          rktStartCountdown(10000, 10); // 10с для ставок
             rktUI();
             setTimeout(()=>{
               if(RKT.phase!=='waiting') return;
+              console.log('🚀 РАКЕТА ЛЕТИТ раунд #'+RKT.roundId+' в', new Date().toLocaleTimeString());
               RKT.phase='flying'; RKT._ls=Date.now();
               const r=Math.random();
               RKT.crashAt = r<0.08 ? 10+Math.random()*40
@@ -5825,7 +5828,7 @@ function rktTickStart(){
                           : r<0.80 ? 1.3+Math.random()*0.7
                           :           1.0+Math.random()*0.25;
               rTrail=[];rktAF();rktTickStart();rktUI();
-            }, 7000); // ровно через 7с
+            }, 10000); // старт через 10с
           }, 3500); // ждём конца краша
         },300);
       }
@@ -6172,12 +6175,12 @@ function rktUpdateBtn(){
     setStatus('', '');
     return;
   }
-  // Кнопка ПОСТАВИТЬ доступна в последние 5 секунд
-  if(RKT.waitLeft > 5){
-    const secsLeft = Math.ceil(RKT.waitLeft);
-    btnStatus.textContent = '⏳ Старт через ' + secsLeft + 'с';
-    btnStatus.style.background = 'rgba(255,255,255,.04)';
-    btnStatus.style.color = 'rgba(255,255,255,.25)';
+  // Блокируем только за 1.5с до старта — остальное время кнопка активна
+  if(RKT.waitLeft < 1.5 && RKT.waitLeft > 0){
+    const secsLeft = RKT.waitLeft.toFixed(1);
+    btnStatus.textContent = '🚀 Старт через ' + secsLeft + 'с';
+    btnStatus.style.background = 'rgba(255,100,0,.08)';
+    btnStatus.style.color = 'rgba(255,180,0,.7)';
     btnStatus.style.display = 'block';
     setStatus('', '');
     return;
@@ -6574,7 +6577,7 @@ function rktPlaceBet(){
   if(RKT.phase==='crashed') return;
   if(_rktBetRoundId !== -99 && _rktBetRoundId === RKT.roundId) return;
   // Принимаем ставки только когда осталось <= 5 секунд
-  if(RKT.phase==='waiting' && RKT.waitLeft > 5) return; // кнопка показывается только при waitLeft <= 5
+  if(RKT.phase==='waiting' && RKT.waitLeft < 1.5) return; // блокируем за 1.5с до старта
 
   const i   = document.getElementById('rktInp');
   const bet = Math.min(parseBetStr(i?i.value:String(RKT.myBet))||0, MAX_BET_RKT);
@@ -6585,6 +6588,7 @@ function rktPlaceBet(){
   const stEl  = document.getElementById('rktActionStatus');
 
   // АТОМАРНО блокируем — первой строкой
+  console.log('💰 СТАВКА поставлена, раунд #'+RKT.roundId+', waitLeft='+RKT.waitLeft.toFixed(1)+'с, в', new Date().toLocaleTimeString());
   _rktLastSentAt = Date.now();
   _rktBetRoundId = RKT.roundId;
   _rktBetLock('sending');
@@ -6809,8 +6813,8 @@ function initRocket(){
       .then(d=>{if(d&&d.ok){rktApply(d);}});
     rktPollLoop();
   } else {
-    RKT.roundId = 1; RKT.waitLeft=7;
-    rktStartCountdown(7000, 7); // 7с с момента открытия страницы
+    RKT.roundId = 1; RKT.waitLeft=10;
+    rktStartCountdown(10000, 10); // 10с с момента открытия страницы
     setTimeout(()=>{
       if(RKT.phase!=='waiting') return;
       RKT.phase='flying';RKT._ls=Date.now();
@@ -6821,7 +6825,7 @@ function initRocket(){
                  : r < 0.80 ? 1.3+ Math.random()*0.7
                  :             1.0+ Math.random()*0.25;
       rTrail=[];rktAF();rktTickStart();rktUI();
-    },7000);
+    },10000);
   }
 }
 
