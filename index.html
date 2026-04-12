@@ -5808,7 +5808,9 @@ function rktTickStart(){
           const _waitSec = 7;
           RKT.waitLeft = _waitSec;
           RKT.phase = 'waiting';
+          _rktWaitTotal = _waitSec; // сбрасываем total для прогресс-бара
           if(_rktWT){ clearTimeout(_rktWT); clearInterval(_rktWT); _rktWT=null; }
+          _rktWaitEnd = Date.now() + _waitSec * 1000; // устанавливаем сразу
           rktSetWaitTime(_waitSec);
           rktUI();
           // Запускаем полёт через 7 секунд
@@ -6093,17 +6095,16 @@ function rktUpdateBtn(){
       setStatus('ЗАБРАНО — РАУНД ЗАВЕРШЁН', '#4ade80');
       return;
     }
-    // Летим — ставка была отправлена но ещё не подтверждена
-    // Считаем её принятой и показываем ЗАБРАТЬ
+    // Летим — ставка отправлена но ещё не подтверждена
     if(_rktBetState !== 'idle' && RKT.myBet > 0){
+      // Сразу помечаем betPlaced чтобы ЗАБРАТЬ работало
+      if(!RKT.betPlaced){ RKT.betPlaced = true; _rktBetLock('accepted'); }
       const m2 = RKT.mult||1;
       const prize2 = Math.round(RKT.myBet * m2);
       const profit2 = prize2 - RKT.myBet;
       btnCash.textContent = '💸 '+m2.toFixed(2)+'× — ЗАБРАТЬ!';
       btnCash.style.display = 'block';
       setStatus('СТАВКА: '+RKT.myBet.toLocaleString('ru-RU')+'  →  '+prize2.toLocaleString('ru-RU')+'  (+'+profit2.toLocaleString('ru-RU')+')', '#fbbf24');
-      // Помечаем как betPlaced чтобы ЗАБРАТЬ работало
-      RKT.betPlaced = true;
     } else {
       btnStatus.textContent = '— раунд идёт';
       btnStatus.style.background = 'rgba(255,255,255,.07)';
@@ -6650,7 +6651,10 @@ function rktPlaceBet(){
 }
 
 async function rktDoCashout(){
-  if(!RKT.betPlaced||RKT.cashedOut||_rktCashingOut) return;
+  // Принимаем кешаут если: есть ставка ИЛИ отправляли ставку (betState != idle)
+  const _canCashout = (RKT.betPlaced || (_rktBetState !== 'idle' && RKT.myBet > 0)) && !RKT.cashedOut && !_rktCashingOut;
+  if(!_canCashout) return;
+  if(!RKT.betPlaced && RKT.myBet > 0){ RKT.betPlaced = true; }
 
   // Захватываем mult синхронно — то что видел пользователь на экране
   const mult  = _rktFrozenMult !== null ? _rktFrozenMult : parseFloat(RKT.mult.toFixed(2));
