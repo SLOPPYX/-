@@ -4124,7 +4124,7 @@ function initSpaceCanvas() {
       ctx.shadowColor = 'rgba(0,0,0,0.95)';
       ctx.shadowBlur = 10;
       ctx.fillStyle = color;
-      ctx.fillText(multTxt, cx, y - 80);
+      ctx.fillText(multTxt, cx, y - 140);
       ctx.shadowBlur = 0;
       ctx.restore();
     }
@@ -5538,26 +5538,26 @@ function _rktShowCrash(crashMult){
   if(_rktCrashShown) return;
   _rktCrashShown = true;
 
-  // 1. Большая надпись поверх canvas
-  const lbl  = document.getElementById('rktCrashLabel');
-  const lblX = document.getElementById('rktCrashLabelX');
-  if(lbl && lblX){
-    lblX.textContent = '×' + parseFloat(crashMult).toFixed(2);
-    lbl.classList.remove('active');
-    // Force reflow to restart animation
-    void lbl.offsetWidth;
-    lbl.classList.add('active');
-    // Убираем после 2.8с
-    setTimeout(()=>{ lbl.classList.remove('active'); }, 2800);
-  }
-
-  // 2. Красный оверлей
+  // 1. Красный оверлей — сразу
   const overlay = document.getElementById('rktCrashOverlay');
   if(overlay){
     overlay.classList.remove('active');
     void overlay.offsetWidth;
     overlay.classList.add('active');
   }
+
+  // 2. Большая надпись — через 1 секунду
+  setTimeout(()=>{
+    const lbl  = document.getElementById('rktCrashLabel');
+    const lblX = document.getElementById('rktCrashLabelX');
+    if(lbl && lblX){
+      lblX.textContent = '×' + parseFloat(crashMult).toFixed(2);
+      lbl.classList.remove('active');
+      void lbl.offsetWidth;
+      lbl.classList.add('active');
+      setTimeout(()=>{ lbl.classList.remove('active'); }, 2000);
+    }
+  }, 1000);
 
   // 3. Фиксируем снапшот игроков — чтобы таблица показала правильные данные при краше
   // Отмечаем всех кто не забрал как crashed с указанием crashMult
