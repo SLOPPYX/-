@@ -5801,8 +5801,9 @@ function rktTickStart(){
           _rktBetUnlock();
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
-          // Запускаем таймер ПОСЛЕ того как иксы полностью исчезли (3800мс от краша - 300мс = 3500мс)
-          setTimeout(()=>{ if(RKT.waitLeft>0) rktWaitTick(); rktUI(); }, 3500);
+          // rktWaitTick сам ждёт пока _rktCrashShown=false
+          if(RKT.waitLeft>0) rktWaitTick();
+          rktUI();
         },300);
       }
       return;
@@ -5898,7 +5899,7 @@ function rktApply(d){
     RKT.waitLeft=d.wait_left;
     _rktWaitEnd=Date.now()+d.wait_left*1000;
     // Перезапускаем таймер с новыми данными с сервера
-    if(RKT.phase==='waiting') rktWaitTick();
+    if(RKT.phase==='waiting' && !_rktCrashShown) rktWaitTick();
   }
 
   const rid=document.getElementById('rktRoundId');
@@ -5988,8 +5989,9 @@ function rktApply(d){
         _rktRoundBetDone=false; _rktBetRoundId=-99; _rktMinBalance=-1;
         _rktFrozenMult=null;
         rTrail=[];rCrashParticles=[];
-        // Запускаем таймер ПОСЛЕ того как иксы полностью исчезли
-        setTimeout(()=>{ if(RKT.waitLeft>0) rktWaitTick(); rktUI(); }, 3500);
+        // rktWaitTick сам ждёт пока _rktCrashShown=false
+        if(RKT.waitLeft>0) rktWaitTick();
+        rktUI();
       },300);
     } else {
       // waiting→waiting
@@ -6135,6 +6137,15 @@ function rktUpdateBtn(){
   }
 
   // Показываем ПОСТАВИТЬ только если осталось <= 5 секунд
+  // Пока краш — вообще не показываем таймер на кнопке
+  if(_rktCrashShown){
+    btnStatus.textContent = '💥 Краш...';
+    btnStatus.style.background = 'rgba(255,30,30,.08)';
+    btnStatus.style.color = 'rgba(248,113,113,.5)';
+    btnStatus.style.display = 'block';
+    setStatus('', '');
+    return;
+  }
   if(RKT.waitLeft > 5){
     // Ещё рано — ждём
     const secsLeft = Math.ceil(RKT.waitLeft);
@@ -6422,6 +6433,12 @@ function rktUpdateTags(){
 let _rktWT=null, _rktWaitEnd=0;
 function rktWaitTick(){
   if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
+  // Пока показывается анимация краша — не запускаем таймер
+  if(_rktCrashShown){
+    // Перепланируем через 200мс — проверим снова
+    _rktWT = setTimeout(()=>{ _rktWT=null; rktWaitTick(); }, 200);
+    return;
+  }
   // НЕ трогаем флаги ставки здесь — только roundId change их сбрасывает
   _rktWaitEnd=Date.now()+Math.max(0.1, RKT.waitLeft)*1000;
   const totalWait = Math.max(RKT.waitLeft, 0.1);
@@ -6430,6 +6447,8 @@ function rktWaitTick(){
       if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
       return;
     }
+    // Пока краш — не обновляем кнопку и прогресс
+    if(_rktCrashShown) return;
     const left=Math.max(0,(_rktWaitEnd-Date.now())/1000);
     RKT.waitLeft=left;
     rktUpdateBtn();
