@@ -5801,7 +5801,8 @@ function rktTickStart(){
           _rktBetUnlock();
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
-          // rktWaitTick сам ждёт пока _rktCrashShown=false
+          // Сбрасываем _rktWT чтобы interval стартовал заново
+          if(_rktWT){ clearTimeout(_rktWT); clearInterval(_rktWT); _rktWT=null; }
           if(RKT.waitLeft>0) rktWaitTick();
           rktUI();
         },300);
@@ -5897,9 +5898,10 @@ function rktApply(d){
   }
   if(d.wait_left!=null){
     RKT.waitLeft=d.wait_left;
-    // Всегда обновляем _rktWaitEnd — даже во время краша, чтобы когда краш закончится время было точным
-    if(!_rktCrashShown) _rktWaitEnd=Date.now()+d.wait_left*1000;
-    if(RKT.phase==='waiting' && !_rktCrashShown) rktWaitTick();
+    if(RKT.phase==='waiting' && !_rktCrashShown){
+      // rktSetWaitTime обновляет _rktWaitEnd и запускает interval
+      rktSetWaitTime(d.wait_left);
+    }
   }
 
   const rid=document.getElementById('rktRoundId');
@@ -5989,7 +5991,7 @@ function rktApply(d){
         _rktRoundBetDone=false; _rktBetRoundId=-99; _rktMinBalance=-1;
         _rktFrozenMult=null;
         rTrail=[];rCrashParticles=[];
-        // rktWaitTick сам ждёт пока _rktCrashShown=false
+        if(_rktWT){ clearTimeout(_rktWT); clearInterval(_rktWT); _rktWT=null; }
         if(RKT.waitLeft>0) rktWaitTick();
         rktUI();
       },300);
@@ -6430,33 +6432,37 @@ function rktUpdateTags(){
 }
 
 // Обратный отсчёт — точный на Date.now()
-let _rktWT=null, _rktWaitEnd=0;
-function rktWaitTick(){
-  // Очищаем предыдущий таймер — clearTimeout работает и для setTimeout и для setInterval
-  if(_rktWT){ clearTimeout(_rktWT); clearInterval(_rktWT); _rktWT=null; }
+let _rktWT=null, _rktWaitEnd=0, _rktWaitTotal=7;
 
-  // Пока краш — ждём и перепроверяем каждые 100мс
+// Единственная функция которая УСТАНАВЛИВАЕТ _rktWaitEnd — вызывается из poll
+function rktSetWaitTime(secondsLeft){
+  _rktWaitEnd   = Date.now() + secondsLeft * 1000;
+  _rktWaitTotal = Math.max(secondsLeft, _rktWaitTotal);
+  rktWaitTick(); // запускаем interval если не запущен
+}
+
+// Запускает interval для отображения таймера — НЕ сбрасывает _rktWaitEnd
+function rktWaitTick(){
+  if(_rktWT) return; // уже запущен — не перезапускаем
+
+  // Пока краш — ждём
   if(_rktCrashShown){
-    _rktWT = setTimeout(()=>{ _rktWT=null; if(RKT.phase==='waiting') rktWaitTick(); }, 100);
+    _rktWT = setTimeout(()=>{ _rktWT=null; if(RKT.phase==='waiting') rktWaitTick(); }, 150);
     return;
   }
 
-  // Синхронизируем _rktWaitEnd с актуальным waitLeft от сервера
-  _rktWaitEnd = Date.now() + Math.max(0.1, RKT.waitLeft) * 1000;
-  const totalWait = Math.max(RKT.waitLeft, 0.1);
-
   function tick(){
     if(RKT.phase !== 'waiting'){
-      if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
+      clearInterval(_rktWT); _rktWT=null;
       return;
     }
-    if(_rktCrashShown) return; // пауза пока краш
+    if(_rktCrashShown) return;
     const left = Math.max(0, (_rktWaitEnd - Date.now()) / 1000);
     RKT.waitLeft = left;
     rktUpdateBtn();
     const pb = document.getElementById('rktProgressBar');
     if(pb){
-      const pct = Math.max(0, Math.min(100, (1 - left/totalWait) * 100));
+      const pct = Math.max(0, Math.min(100, (1 - left/_rktWaitTotal) * 100));
       pb.style.width = pct + '%';
     }
   }
@@ -6768,10 +6774,10 @@ function initRocket(){
   initRktCvs(); rktUI(); rktHist(); rktUpdateTable();
   if(API_URL&&API_SECRET){
     rktFetch('/casino/rocket/state?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now())
-      .then(d=>{if(d&&d.ok){rktApply(d);rktWaitTick();}});
+      .then(d=>{if(d&&d.ok){rktApply(d);}});
     rktPollLoop();
   } else {
-    RKT.roundId = 1; RKT.waitLeft=5; _rktWaitEnd=Date.now()+5000; rktWaitTick();
+    RKT.roundId = 1; RKT.waitLeft=5; _rktWaitTotal=5; rktSetWaitTime(5);
     setTimeout(()=>{
       RKT.phase='flying';RKT._ls=Date.now();
       const r = Math.random();
