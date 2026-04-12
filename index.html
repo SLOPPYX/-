@@ -5596,13 +5596,13 @@ function _rktShowCrash(crashMult){
   // Обновляем таблицу сразу
   rktUpdateTable();
 
-  // 4. Сбрасываем снапшот через 3.1с (после анимации)
+  // 4. Сбрасываем снапшот когда таймер уже запустился (через 3.8с от краша = 3800мс)
   setTimeout(()=>{
     _rktCrashShown = false;
     _rktCrashedSnapshot = [];
     RKT._myCrashMult = null;
     rktUpdateTable();
-  }, 3100);
+  }, 3800);
 }
 
 function rktSpawnCrashParticles(x,y){
@@ -5801,9 +5801,8 @@ function rktTickStart(){
           _rktBetUnlock();
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
-          // Запускаем таймер ровно когда заканчивается анимация иксов (1000мс + 2000мс = 3000мс от краша)
-          // Мы уже прождали 300мс, значит ещё 2700мс
-          setTimeout(()=>{ if(RKT.waitLeft>0) rktWaitTick(); rktUI(); }, 2700);
+          // Запускаем таймер ПОСЛЕ того как иксы полностью исчезли (3800мс от краша - 300мс = 3500мс)
+          setTimeout(()=>{ if(RKT.waitLeft>0) rktWaitTick(); rktUI(); }, 3500);
         },300);
       }
       return;
@@ -5926,6 +5925,7 @@ function rktApply(d){
       if(!RKT.betPlaced){
         RKT.betPlaced = true;
         RKT.myBet = meOnServer.bet;
+        rktUpdateTable(); // мгновенно обновляем таблицу
       }
       // Всегда синхронизируем betRoundId с текущим раундом
       _rktBetRoundId = RKT.roundId;
@@ -5988,8 +5988,8 @@ function rktApply(d){
         _rktRoundBetDone=false; _rktBetRoundId=-99; _rktMinBalance=-1;
         _rktFrozenMult=null;
         rTrail=[];rCrashParticles=[];
-        // Запускаем таймер ровно когда заканчивается анимация иксов
-        setTimeout(()=>{ if(RKT.waitLeft>0) rktWaitTick(); rktUI(); }, 2700);
+        // Запускаем таймер ПОСЛЕ того как иксы полностью исчезли
+        setTimeout(()=>{ if(RKT.waitLeft>0) rktWaitTick(); rktUI(); }, 3500);
       },300);
     } else {
       // waiting→waiting
@@ -6071,18 +6071,24 @@ function rktUpdateBtn(){
       setStatus('ЗАБРАНО — РАУНД ЗАВЕРШЁН', '#4ade80');
       return;
     }
-    // Летим без ставки — серая
-    if(_rktBetState !== 'idle'){
-      btnStatus.textContent = '⏳ Ожидаем подтверждения...';
-      btnStatus.style.background = 'rgba(255,140,0,.15)';
-      btnStatus.style.color = 'rgba(255,180,0,.7)';
+    // Летим — ставка была отправлена но ещё не подтверждена
+    // Считаем её принятой и показываем ЗАБРАТЬ
+    if(_rktBetState !== 'idle' && RKT.myBet > 0){
+      const m2 = RKT.mult||1;
+      const prize2 = Math.round(RKT.myBet * m2);
+      const profit2 = prize2 - RKT.myBet;
+      btnCash.textContent = '💸 '+m2.toFixed(2)+'× — ЗАБРАТЬ!';
+      btnCash.style.display = 'block';
+      setStatus('СТАВКА: '+RKT.myBet.toLocaleString('ru-RU')+'  →  '+prize2.toLocaleString('ru-RU')+'  (+'+profit2.toLocaleString('ru-RU')+')', '#fbbf24');
+      // Помечаем как betPlaced чтобы ЗАБРАТЬ работало
+      RKT.betPlaced = true;
     } else {
       btnStatus.textContent = '— раунд идёт';
       btnStatus.style.background = 'rgba(255,255,255,.07)';
       btnStatus.style.color = 'rgba(255,255,255,.25)';
+      btnStatus.style.display = 'block';
+      setStatus('', '');
     }
-    btnStatus.style.display = 'block';
-    setStatus('', '');
     return;
   }
 
