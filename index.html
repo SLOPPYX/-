@@ -5544,7 +5544,8 @@ function rDrawCashoutNotifs(ctx){
 
 // ── ЭПИЧНЫЙ ВЗРЫВ ───────────────────────────────────────
 // ── АНИМАЦИЯ КРАША — независимая, не зависит от rktUI ──────
-let _rktCrashShown = false; // флаг чтобы не показывать дважды
+let _rktCrashShown = false;       // флаг чтобы не показывать дважды
+let _rktCrashedSnapshot = [];     // снапшот проигравших игроков при краше
 
 function _rktShowCrash(crashMult){
   if(_rktCrashShown) return;
@@ -5571,28 +5572,37 @@ function _rktShowCrash(crashMult){
     }
   }, 1000);
 
-  // 3. Фиксируем снапшот игроков — чтобы таблица показала правильные данные при краше
-  // Отмечаем всех кто не забрал как crashed с указанием crashMult
-  if(RKT.players) {
-    RKT.players.forEach(p => {
-      if(!p.cashed_at) {
-        p._crashed = true;
-        p._crashMult = crashMult;
-      }
-    });
-  }
-  // И для себя
+  // 3. Сохраняем полный снапшот всех проигравших игроков
+  _rktCrashedSnapshot = [];
+  // Другие игроки
+  (RKT.players||[]).forEach(p => {
+    if(!p.cashed_at && !p.is_me){
+      _rktCrashedSnapshot.push({
+        uid:      p.uid,
+        name:     (p.name||'?').slice(0,12),
+        bet:      p.bet||0,
+        avatar:   p.avatar||'ghost',
+        crashed:  true,
+        crashMult: crashMult,
+        cashedAt: null,
+        isMe:     false,
+      });
+    }
+  });
+  // Я сам
   if(RKT.betPlaced && !RKT.cashedOut){
     RKT._myCrashMult = crashMult;
   }
+  // Обновляем таблицу сразу
+  rktUpdateTable();
 
-  // 4. Сбрасываем через 3с — показываем таблицу краша всё это время
+  // 4. Сбрасываем снапшот через 3.1с (после анимации)
   setTimeout(()=>{
     _rktCrashShown = false;
+    _rktCrashedSnapshot = [];
     RKT._myCrashMult = null;
-    if(RKT.players) RKT.players.forEach(p=>{ delete p._crashed; delete p._crashMult; });
-    rktUpdateTable(); // обновляем таблицу — убираем строки краша
-  }, 3000);
+    rktUpdateTable();
+  }, 3100);
 }
 
 function rktSpawnCrashParticles(x,y){
@@ -5791,9 +5801,10 @@ function rktTickStart(){
           _rktBetUnlock();
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
-          // Ждём 2.5с после перехода в waiting чтобы таймер не показался во время анимации краша
-          setTimeout(()=>{ if(RKT.waitLeft>0) rktWaitTick(); rktUI(); }, 2500);
-        },300); // быстро переходим в waiting чтобы таблица обновилась
+          // Запускаем таймер ровно когда заканчивается анимация иксов (1000мс + 2000мс = 3000мс от краша)
+          // Мы уже прождали 300мс, значит ещё 2700мс
+          setTimeout(()=>{ if(RKT.waitLeft>0) rktWaitTick(); rktUI(); }, 2700);
+        },300);
       }
       return;
     }
@@ -5977,9 +5988,9 @@ function rktApply(d){
         _rktRoundBetDone=false; _rktBetRoundId=-99; _rktMinBalance=-1;
         _rktFrozenMult=null;
         rTrail=[];rCrashParticles=[];
-        // Таймер показываем с задержкой — после анимации краша
-        setTimeout(()=>{ if(RKT.waitLeft>0) rktWaitTick(); rktUI(); }, 2500);
-      },300); // быстро в waiting чтобы таблица обновилась
+        // Запускаем таймер ровно когда заканчивается анимация иксов
+        setTimeout(()=>{ if(RKT.waitLeft>0) rktWaitTick(); rktUI(); }, 2700);
+      },300);
     } else {
       // waiting→waiting
       _rktOperating=false;
@@ -6216,11 +6227,14 @@ function rktUpdateTable(){
     });
   }
 
-  // Добавляем других игроков
+  // Добавляем других игроков из live-списка
   (RKT.players||[]).forEach(p => {
     if(p.is_me) return;
     if(allPlayers.length >= 10) return;
-    const pCrashed = p._crashed || ((RKT.phase==='crashed') && !p.cashed_at);
+    // Не добавляем если уже есть в снапшоте краша
+    const inSnapshot = _rktCrashedSnapshot.some(s => s.uid === p.uid);
+    if(inSnapshot) return;
+    const pCrashed = (RKT.phase==='crashed') && !p.cashed_at;
     allPlayers.push({
       uid:       p.uid,
       name:      (p.name||'?').slice(0,12),
@@ -6231,8 +6245,15 @@ function rktUpdateTable(){
       avatar:    p.avatar||'ghost',
       isMe:      false,
       crashed:   pCrashed,
-      crashMult: p._crashMult || RKT.crashAt || RKT.mult || null,
+      crashMult: RKT.crashAt || RKT.mult || null,
     });
+  });
+
+  // Добавляем проигравших из снапшота краша (они сохраняются даже после сброса players)
+  _rktCrashedSnapshot.forEach(p => {
+    if(allPlayers.length >= 10) return;
+    if(allPlayers.some(a => a.uid === p.uid)) return; // не дублируем
+    allPlayers.push(p);
   });
 
   // Обновляем DOM — переиспользуем строки чтобы не мигало
