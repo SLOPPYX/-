@@ -953,7 +953,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 @media(min-width:520px){
   .rkt-scene{height:420px}
 }
-#rocketCanvas { position:absolute; inset:0; width:100%; height:100%; display:block; z-index:2 }
+#rocketCanvas { position:absolute; inset:0; width:100%; height:100%; display:block; z-index:2; will-change:transform; transform:translateZ(0); }
 
 /* Множитель */
 .rkt-mult-wrap {
@@ -969,6 +969,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   color:#fff;
   font-variant-numeric:tabular-nums;
   will-change:transform,filter;
+  transform:translateZ(0);
+  backface-visibility:hidden;
   text-shadow:
     0 0 30px rgba(255,255,255,.9),
     0 0 60px rgba(255,255,255,.4),
@@ -1197,6 +1199,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   border-bottom:1px solid rgba(255,255,255,.04);
   transition:background .3s ease;
   position:relative; overflow:hidden;
+  contain:layout style;
+  will-change:contents;
 }
 .rkt-live-row:last-child { border-bottom:none; }
 .rkt-live-row.me   { background:rgba(232,184,75,.06); border-left:2px solid rgba(232,184,75,.5); }
@@ -1208,6 +1212,11 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   100%{ background:rgba(74,222,128,.06); }
 }
 .rkt-live-row.flash-cash { animation:cashFlash .7s ease forwards; }
+@keyframes crashFlash {
+  0%  { background:rgba(248,113,113,.35); }
+  100%{ background:rgba(248,113,113,.04); }
+}
+.rkt-live-row.flash-crash { animation:crashFlash .8s ease forwards; }
 .rkt-live-player { display:flex; align-items:center; gap:7px; min-width:0; }
 .rkt-live-ava {
   width:26px; height:26px; flex-shrink:0; border-radius:50%;
@@ -1221,7 +1230,10 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-live-status.cashed { color:#4ade80; font-weight:900; font-size:9px; }
 .rkt-live-status.crashed { color:#f87171; font-weight:700; }
 .rkt-live-bet { font-family:var(--fd); font-size:10px; font-weight:700; color:rgba(255,255,255,.55); text-align:right; }
-.rkt-live-profit { font-family:var(--fd); font-size:12px; font-weight:900; text-align:right; }
+.rkt-live-profit { font-family:var(--fd); font-size:12px; font-weight:900; text-align:right;
+  transition:color .3s ease; }
+.rkt-live-status-wrap { transition:color .3s ease; }
+.rkt-live-profit-wrap { transition:color .3s ease; }
 .rkt-live-profit.pos  { color:#4ade80; }
 .rkt-live-profit.neg  { color:#f87171; }
 .rkt-live-profit.grow { color:#86efac; }
@@ -4124,7 +4136,7 @@ function initSpaceCanvas() {
       ctx.shadowColor = 'rgba(0,0,0,0.95)';
       ctx.shadowBlur = 10;
       ctx.fillStyle = color;
-      ctx.fillText(multTxt, cx, y - 200);
+      ctx.fillText(multTxt, cx, y - 115);
       ctx.shadowBlur = 0;
       ctx.restore();
     }
@@ -5973,7 +5985,7 @@ function rktApply(d){
       _rktOperating=false;
     }
   }
-  rktUI(); rktHist(); rktUpdateTable(); rktUpdateTags();
+  rktHist(); rktRedraw();
 }
 
 // ── UI обновления ────────────────────────────────────────
@@ -6127,6 +6139,13 @@ function rktUpdateBtn(){
 // Оставляем для совместимости — просто вызывает rktUI
 function rktSetBtn(m){ rktUI(); }
 
+// Батч-обновление всего UI ракеты — вызывай вместо трёх функций
+function rktRedraw(){
+  rktUI();
+  rktUpdateTable();
+  rktUpdateTags();
+}
+
 function rktHist(){
   const h=document.getElementById('rktHist');if(!h)return;
   h.innerHTML='';
@@ -6237,14 +6256,21 @@ function rktUpdateTable(){
     else if(p.cashedAt) rowCls += ' cashed';
     else if(p.crashed) rowCls += ' crashed';
 
-    // Flash при кешауте — сравниваем с предыдущим состоянием
-    const wasCashed = row.dataset.cashed === '1';
-    const nowCashed = !!p.cashedAt;
+    // Flash при кешауте и краше
+    const wasCashed  = row.dataset.cashed === '1';
+    const wasCrashed = row.dataset.crashed === '1';
+    const nowCashed  = !!p.cashedAt;
+    const nowCrashed = !!p.crashed;
     if(nowCashed && !wasCashed && !p.isMe){
       rowCls += ' flash-cash';
       setTimeout(()=>{ if(row.parentNode) row.classList.remove('flash-cash'); }, 700);
     }
-    row.dataset.cashed = nowCashed ? '1' : '0';
+    if(nowCrashed && !wasCrashed){
+      rowCls += ' flash-crash';
+      setTimeout(()=>{ if(row.parentNode) row.classList.remove('flash-crash'); }, 800);
+    }
+    row.dataset.cashed  = nowCashed ? '1' : '0';
+    row.dataset.crashed = nowCrashed ? '1' : '0';
 
     if(row.className !== rowCls) row.className = rowCls;
 
@@ -6309,16 +6335,30 @@ function rktUpdateTable(){
     const nameLabel = p.isMe ? ('👤 '+(p.name||'ВЫ')) : (p.name||'?');
     const avaHtml = renderAvatarHtml(p.avatar||'ghost', 26);
 
-    row.innerHTML =
-      '<div class="rkt-live-player">'
-        +'<div class="rkt-live-ava">'+avaHtml+'</div>'
-        +'<div>'
-          +'<div class="rkt-live-name">'+nameLabel+'</div>'
-          +statusHTML
+    // Статическая часть: аватар + имя (не меняется)
+    const staticKey = p.uid+'|'+nameLabel+'|'+betK;
+    if(row.dataset.staticKey !== staticKey){
+      row.dataset.staticKey = staticKey;
+      row.innerHTML =
+        '<div class="rkt-live-player">'
+          +'<div class="rkt-live-ava">'+avaHtml+'</div>'
+          +'<div>'
+            +'<div class="rkt-live-name">'+nameLabel+'</div>'
+            +'<div class="rkt-live-status-wrap"></div>'
+          +'</div>'
         +'</div>'
-      +'</div>'
-      +'<div class="rkt-live-bet">'+betK+'</div>'
-      +profitHTML;
+        +'<div class="rkt-live-bet">'+betK+'</div>'
+        +'<div class="rkt-live-profit-wrap"></div>';
+    }
+    // Динамическая часть: статус и прибыль (обновляем отдельно)
+    const dynKey = statusHTML+'|'+profitHTML;
+    if(row.dataset.dynKey !== dynKey){
+      row.dataset.dynKey = dynKey;
+      const sw = row.querySelector('.rkt-live-status-wrap');
+      const pw = row.querySelector('.rkt-live-profit-wrap');
+      if(sw) sw.innerHTML = statusHTML;
+      if(pw) pw.innerHTML = profitHTML;
+    }
   });
 
   // Если никого нет
