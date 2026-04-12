@@ -5897,8 +5897,8 @@ function rktApply(d){
   }
   if(d.wait_left!=null){
     RKT.waitLeft=d.wait_left;
-    _rktWaitEnd=Date.now()+d.wait_left*1000;
-    // Перезапускаем таймер с новыми данными с сервера
+    // Всегда обновляем _rktWaitEnd — даже во время краша, чтобы когда краш закончится время было точным
+    if(!_rktCrashShown) _rktWaitEnd=Date.now()+d.wait_left*1000;
     if(RKT.phase==='waiting' && !_rktCrashShown) rktWaitTick();
   }
 
@@ -6432,35 +6432,36 @@ function rktUpdateTags(){
 // Обратный отсчёт — точный на Date.now()
 let _rktWT=null, _rktWaitEnd=0;
 function rktWaitTick(){
-  if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
-  // Пока показывается анимация краша — не запускаем таймер
+  // Очищаем предыдущий таймер — clearTimeout работает и для setTimeout и для setInterval
+  if(_rktWT){ clearTimeout(_rktWT); clearInterval(_rktWT); _rktWT=null; }
+
+  // Пока краш — ждём и перепроверяем каждые 100мс
   if(_rktCrashShown){
-    // Перепланируем через 200мс — проверим снова
-    _rktWT = setTimeout(()=>{ _rktWT=null; rktWaitTick(); }, 200);
+    _rktWT = setTimeout(()=>{ _rktWT=null; if(RKT.phase==='waiting') rktWaitTick(); }, 100);
     return;
   }
-  // НЕ трогаем флаги ставки здесь — только roundId change их сбрасывает
-  _rktWaitEnd=Date.now()+Math.max(0.1, RKT.waitLeft)*1000;
+
+  // Синхронизируем _rktWaitEnd с актуальным waitLeft от сервера
+  _rktWaitEnd = Date.now() + Math.max(0.1, RKT.waitLeft) * 1000;
   const totalWait = Math.max(RKT.waitLeft, 0.1);
+
   function tick(){
-    if(RKT.phase!=='waiting'){
+    if(RKT.phase !== 'waiting'){
       if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
       return;
     }
-    // Пока краш — не обновляем кнопку и прогресс
-    if(_rktCrashShown) return;
-    const left=Math.max(0,(_rktWaitEnd-Date.now())/1000);
-    RKT.waitLeft=left;
+    if(_rktCrashShown) return; // пауза пока краш
+    const left = Math.max(0, (_rktWaitEnd - Date.now()) / 1000);
+    RKT.waitLeft = left;
     rktUpdateBtn();
-    // Обновляем прогресс-бар
-    const pb=document.getElementById('rktProgressBar');
+    const pb = document.getElementById('rktProgressBar');
     if(pb){
-      const pct=Math.max(0,Math.min(100,(1-left/totalWait)*100));
-      pb.style.width=pct+'%';
+      const pct = Math.max(0, Math.min(100, (1 - left/totalWait) * 100));
+      pb.style.width = pct + '%';
     }
   }
   tick();
-  _rktWT=setInterval(tick, 100);
+  _rktWT = setInterval(tick, 100);
 }
 
 // ── Действия игрока ──────────────────────────────────────
