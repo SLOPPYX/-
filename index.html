@@ -5596,14 +5596,17 @@ function _rktShowCrash(crashMult){
   // Обновляем таблицу сразу
   rktUpdateTable();
 
-  // 4. Сбрасываем флаг краша и запускаем таймер
+  // 4. Сбрасываем флаг краша через 3800мс — таймер запускается сам
   setTimeout(()=>{
     _rktCrashShown = false;
     _rktCrashedSnapshot = [];
     RKT._myCrashMult = null;
     rktUpdateTable();
-    // Теперь запускаем таймер — краш закончился
-    if(RKT.phase==='waiting' && RKT.waitLeft>0) rktWaitTick();
+    // Запускаем таймер если он ждал (был заблокирован _rktCrashShown)
+    if(RKT.phase==='waiting'){
+      if(!_rktWT) rktWaitTick();
+      _rktTimerTick(); // немедленное обновление
+    }
     rktUI();
   }, 3800);
 }
@@ -5804,31 +5807,28 @@ function rktTickStart(){
           _rktBetUnlock();
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
-          // Анимация краша длится 3800мс от краша, мы уже внутри через 300мс
-          // Значит краш закончится ещё через 3500мс от сейчас
-          const _crashRemain = 3500; // мс до конца анимации краша
-          const _waitSec = 7;        // секунд ожидания ПОСЛЕ краша
-          const _totalDelay = _crashRemain + _waitSec * 1000; // полное время до старта
           RKT.phase = 'waiting';
-          // _rktWaitEnd — момент старта ракеты (от сейчас)
-          _rktWaitEnd = Date.now() + _totalDelay;
-          _rktWaitTotal = _waitSec;
-          RKT.waitLeft = _totalDelay / 1000;
-          if(_rktWT){ clearTimeout(_rktWT); clearInterval(_rktWT); _rktWT=null; }
-          rktWaitTick(); // запустит таймер когда _rktCrashShown станет false
+          RKT.waitLeft = 7;
           rktUI();
-          // Запускаем полёт через полное время
+          // Ждём пока закончится анимация краша (3500мс), потом 7 секунд таймер
           setTimeout(()=>{
             if(RKT.phase!=='waiting') return;
-            RKT.phase='flying'; RKT._ls=Date.now();
-            const r=Math.random();
-            RKT.crashAt = r<0.08 ? 10+Math.random()*40
-                        : r<0.25 ? 5+Math.random()*5
-                        : r<0.55 ? 2+Math.random()*3
-                        : r<0.80 ? 1.3+Math.random()*0.7
-                        :           1.0+Math.random()*0.25;
-            rTrail=[];rktAF();rktTickStart();rktUI();
-          }, _totalDelay);
+            // Запускаем обратный отсчёт 7 секунд
+            rktStartCountdown(7000, 7);
+            rktUI();
+            // Старт ракеты через 7 секунд
+            setTimeout(()=>{
+              if(RKT.phase!=='waiting') return;
+              RKT.phase='flying'; RKT._ls=Date.now();
+              const r=Math.random();
+              RKT.crashAt = r<0.08 ? 10+Math.random()*40
+                          : r<0.25 ? 5+Math.random()*5
+                          : r<0.55 ? 2+Math.random()*3
+                          : r<0.80 ? 1.3+Math.random()*0.7
+                          :           1.0+Math.random()*0.25;
+              rTrail=[];rktAF();rktTickStart();rktUI();
+            }, 7000);
+          }, 3500);
         },300);
       }
       return;
@@ -5923,7 +5923,7 @@ function rktApply(d){
   if(d.wait_left!=null){
     RKT.waitLeft=d.wait_left;
     if(RKT.phase==='waiting' && !_rktCrashShown){
-      // rktSetWaitTime обновляет _rktWaitEnd и запускает interval
+      // rktSetWaitTime обновляет время и запускает interval
       rktSetWaitTime(d.wait_left);
     }
   }
@@ -6455,52 +6455,57 @@ function rktUpdateTags(){
 }
 
 // Обратный отсчёт — точный на Date.now()
-let _rktWT=null, _rktWaitEnd=0, _rktWaitTotal=7;
+let _rktWT=null;
+// _rktLaunchAt — абсолютный timestamp когда ракета должна стартовать
+let _rktLaunchAt=0;
+// Полная длина периода ожидания (для прогресс-бара)
+let _rktWaitTotal=7;
 
-// Обновляем время окончания ожидания — вызывается из poll
-function rktSetWaitTime(secondsLeft){
-  const newEnd = Date.now() + secondsLeft * 1000;
-  // Обновляем если: разница >0.5с (коррекция сервера) ИЛИ новое время больше (новый раунд)
-  if(Math.abs(newEnd - _rktWaitEnd) > 500 || secondsLeft > _rktWaitTotal * 0.8){
-    _rktWaitEnd   = newEnd;
-    _rktWaitTotal = secondsLeft;
-  }
-  rktWaitTick();
+// Устанавливает когда ракета стартует и запускает таймер
+// launchInMs — через сколько миллисекунд старт
+function rktStartCountdown(launchInMs, totalSec){
+  _rktLaunchAt  = Date.now() + launchInMs;
+  _rktWaitTotal = totalSec || launchInMs/1000;
+  if(_rktWT){ clearTimeout(_rktWT); clearInterval(_rktWT); _rktWT=null; }
+  _rktWT = setInterval(_rktTimerTick, 80);
+  _rktTimerTick();
 }
 
-function rktWaitTick(){
-  // Останавливаем старый если есть
-  if(_rktWT){ clearTimeout(_rktWT); clearInterval(_rktWT); _rktWT=null; }
+// Совместимость — вызывается из poll
+function rktSetWaitTime(secondsLeft){
+  // Только если разница >0.5с — не даём poll дёргать каждые 80мс
+  const newLaunch = Date.now() + secondsLeft*1000;
+  if(Math.abs(newLaunch - _rktLaunchAt) > 500){
+    rktStartCountdown(secondsLeft*1000, secondsLeft);
+  }
+}
 
-  // Пока краш — ждём
+// Совместимость
+function rktWaitTick(){
+  if(_rktWT){ clearTimeout(_rktWT); clearInterval(_rktWT); _rktWT=null; }
   if(_rktCrashShown){
-    _rktWT = setTimeout(()=>{ _rktWT=null; if(RKT.phase==='waiting') rktWaitTick(); }, 150);
+    _rktWT = setTimeout(()=>{ _rktWT=null; rktWaitTick(); }, 150);
     return;
   }
+  if(!_rktLaunchAt || _rktLaunchAt <= Date.now()) return;
+  _rktWT = setInterval(_rktTimerTick, 80);
+  _rktTimerTick();
+}
 
-  // Если _rktWaitEnd не установлен — ставим из текущего waitLeft
-  if(_rktWaitEnd === 0 || _rktWaitEnd < Date.now()){
-    _rktWaitEnd   = Date.now() + Math.max(0.5, RKT.waitLeft) * 1000;
-    _rktWaitTotal = Math.max(1, RKT.waitLeft);
+function _rktTimerTick(){
+  if(RKT.phase !== 'waiting'){
+    if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
+    return;
   }
-
-  function tick(){
-    if(RKT.phase !== 'waiting'){
-      clearInterval(_rktWT); _rktWT=null;
-      return;
-    }
-    if(_rktCrashShown) return;
-    const left = Math.max(0, (_rktWaitEnd - Date.now()) / 1000);
-    RKT.waitLeft = left;
-    rktUpdateBtn();
-    const pb = document.getElementById('rktProgressBar');
-    if(pb){
-      const pct = Math.max(0, Math.min(100, (1 - left / _rktWaitTotal) * 100));
-      pb.style.width = pct + '%';
-    }
+  if(_rktCrashShown) return; // пауза во время краша
+  const left = Math.max(0, (_rktLaunchAt - Date.now()) / 1000);
+  RKT.waitLeft = left;
+  rktUpdateBtn();
+  const pb = document.getElementById('rktProgressBar');
+  if(pb){
+    const pct = Math.max(0, Math.min(100, (1 - left/_rktWaitTotal)*100));
+    pb.style.width = pct+'%';
   }
-  tick();
-  _rktWT = setInterval(tick, 100);
 }
 
 // ── Действия игрока ──────────────────────────────────────
@@ -6813,8 +6818,10 @@ function initRocket(){
       .then(d=>{if(d&&d.ok){rktApply(d);}});
     rktPollLoop();
   } else {
-    RKT.roundId = 1; RKT.waitLeft=5; _rktWaitTotal=5; rktSetWaitTime(5);
+    RKT.roundId = 1; RKT.waitLeft=7;
+    rktStartCountdown(7000, 7);
     setTimeout(()=>{
+      if(RKT.phase!=='waiting') return;
       RKT.phase='flying';RKT._ls=Date.now();
       const r = Math.random();
       RKT.crashAt = r < 0.08 ? 10 + Math.random()*40
@@ -6823,7 +6830,7 @@ function initRocket(){
                  : r < 0.80 ? 1.3+ Math.random()*0.7
                  :             1.0+ Math.random()*0.25;
       rTrail=[];rktAF();rktTickStart();rktUI();
-    },5000);
+    },7000);
   }
 }
 
