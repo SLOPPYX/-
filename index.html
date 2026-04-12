@@ -5968,8 +5968,11 @@ function rktApply(d){
 
     if(prev!=='flying'){
       rTrail=[];rCrashParticles=[];rSpeedParts=[];rCashNotifs=[];
-      // НЕ сбрасываем _rktBetState здесь — ответ сервера сам придёт
-      // Если сбросить здесь, кнопка мигает активной пока летим
+      // Если ставка была отправлена — сразу помечаем как принятую
+      if(_rktBetState !== 'idle' && RKT.myBet > 0 && !RKT.betPlaced){
+        RKT.betPlaced = true;
+        _rktBetLock('accepted');
+      }
       _rktOperating=false;
       RKT._betTs=0;
       // Сбрасываем data-disp чтобы иксы показались сразу
@@ -6183,10 +6186,11 @@ function rktUpdateBtn(){
   const inp = document.getElementById('rktInp');
   let betPreview = '';
   try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betPreview=' — '+v.toLocaleString('ru-RU'); }catch(e){}
-  const waitStr = RKT.waitLeft>0 ? ' · '+Math.ceil(RKT.waitLeft)+'с' : '';
+  const waitSecs = Math.ceil(RKT.waitLeft);
+  const waitStr = waitSecs > 0 ? ' · '+waitSecs+'с' : '';
   btnBet.textContent = '🚀 ПОСТАВИТЬ'+betPreview+waitStr;
   btnBet.style.display = 'block';
-  setStatus('ОЖИДАНИЕ СТАРТА', 'rgba(255,255,255,.25)');
+  setStatus('СТАРТ ЧЕРЕЗ '+waitSecs+'С — НЕЗАВИСИМО ОТ СТАВКИ', 'rgba(255,255,255,.2)');
 }
 // Оставляем для совместимости — просто вызывает rktUI
 function rktSetBtn(m){ rktUI(); }
@@ -6636,12 +6640,12 @@ function rktPlaceBet(){
       rktUI(); return; }
     if(r.error==='insufficient_funds'){ refund('Недостаточно токенов'); return; }
     if(r.error==='round_started'){
-      // Раунд стартовал пока отправляли — возвращаем баланс и ставим в следующем раунде автоматически
+      // Раунд уже стартовал — возвращаем ставку
       _rktBetUnlock();
       _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
       setBalance(balance + bet);
-      if(res){ res.textContent='⏳ Ставка '+bet.toLocaleString('ru-RU')+' — авто в след. раунде'; res.className='rkt-res'; }
-      showToast('⏳ Авто-ставка в следующем раунде','info');
+      if(res){ res.textContent='↩️ Ставка возвращена — раунд начался'; res.className='rkt-res'; }
+      showToast('↩️ '+bet.toLocaleString('ru-RU')+' возвращено','info');
       rktUI(); return;
     }
     if(r.error)                       { refund('Ошибка: '+r.error); return; }
