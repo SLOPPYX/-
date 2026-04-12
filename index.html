@@ -3542,7 +3542,7 @@ function renderAvatars() {
       div.style.cssText = locked ? 'border-color:rgba(255,255,255,.08)' : `border-color:${color}44`;
 
       const svgWrapped = `<div style="width:100%;height:100%;position:absolute;inset:0;border-radius:50%;overflow:hidden">${av.svg}</div>`;
-      div.innerHTML = svgWrapped + `<div class="avatar-name" style="position:relative;z-index:2;${sel?'color:'+color:''}">${av.name}</div>`;
+      div.innerHTML = svgWrapped; // без подписи имени
 
       if(!locked){
         div.onclick = () => saveAvatar(av.id);
@@ -3564,14 +3564,14 @@ function renderAvatars() {
   if(customLocked) {
     // Заблокировано — нет нужного уровня
     upDiv.innerHTML = '<div class="avatar-emoji" style="font-size:24px;display:flex;align-items:center;justify-content:center;filter:grayscale(1) opacity(0.4)">🖼</div>'
-      + '<div class="avatar-name" style="opacity:0.4">СВОЯ</div>'
+      + ''
       + '<div class="avatar-unlock-hint">LV5</div>';
     upDiv.title = 'Доступно с уровня 5';
   } else if(customSrc) {
     // Картинка загружена
     upDiv.innerHTML = '<div class="avatar-emoji" style="display:flex;align-items:center;justify-content:center">'
       + '<img src="' + customSrc + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;position:absolute;inset:0">'
-      + '</div><div class="avatar-name" style="font-size:8px">' + (isSel ? 'СМЕНИТЬ' : 'МОЯ') + '</div>';
+      + '</div>';
     upDiv.onclick = function(){
       if(isSel) {
         // Уже активна — нажали ещё раз → предлагаем сменить с кулдауном
@@ -3594,7 +3594,7 @@ function renderAvatars() {
   } else {
     // Нет картинки — предлагаем загрузить
     upDiv.innerHTML = '<div class="avatar-emoji" style="font-size:24px;display:flex;align-items:center;justify-content:center">＋</div>'
-      + '<div class="avatar-name" style="font-size:8px;color:rgba(0,229,255,.8)">СВОЯ</div>';
+      + '';
     upDiv.onclick = function(){ document.getElementById('avatarFileInput').click(); };
     upDiv.title = 'Загрузить свою аватарку (макс 5KB, 1 раз в сутки)';
   }
@@ -5596,12 +5596,15 @@ function _rktShowCrash(crashMult){
   // Обновляем таблицу сразу
   rktUpdateTable();
 
-  // 4. Сбрасываем снапшот когда таймер уже запустился (через 3.8с от краша = 3800мс)
+  // 4. Сбрасываем флаг краша и запускаем таймер
   setTimeout(()=>{
     _rktCrashShown = false;
     _rktCrashedSnapshot = [];
     RKT._myCrashMult = null;
     rktUpdateTable();
+    // Теперь запускаем таймер — краш закончился
+    if(RKT.phase==='waiting' && RKT.waitLeft>0) rktWaitTick();
+    rktUI();
   }, 3800);
 }
 
