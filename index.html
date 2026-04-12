@@ -5803,6 +5803,7 @@ function rktTickStart(){
           rTrail=[];rCrashParticles=[];
           // Сбрасываем _rktWT чтобы interval стартовал заново
           if(_rktWT){ clearTimeout(_rktWT); clearInterval(_rktWT); _rktWT=null; }
+          _rktWaitEnd=0; // сбросить чтобы взять свежее время
           if(RKT.waitLeft>0) rktWaitTick();
           rktUI();
         },300);
@@ -6434,21 +6435,31 @@ function rktUpdateTags(){
 // Обратный отсчёт — точный на Date.now()
 let _rktWT=null, _rktWaitEnd=0, _rktWaitTotal=7;
 
-// Единственная функция которая УСТАНАВЛИВАЕТ _rktWaitEnd — вызывается из poll
+// Обновляем время окончания ожидания — вызывается из poll
 function rktSetWaitTime(secondsLeft){
-  _rktWaitEnd   = Date.now() + secondsLeft * 1000;
-  _rktWaitTotal = Math.max(secondsLeft, _rktWaitTotal);
-  rktWaitTick(); // запускаем interval если не запущен
+  // Обновляем только если разница больше 0.5с — не даём poll сбрасывать таймер каждые 80мс
+  const newEnd = Date.now() + secondsLeft * 1000;
+  if(Math.abs(newEnd - _rktWaitEnd) > 500){
+    _rktWaitEnd   = newEnd;
+    _rktWaitTotal = secondsLeft;
+  }
+  rktWaitTick();
 }
 
-// Запускает interval для отображения таймера — НЕ сбрасывает _rktWaitEnd
 function rktWaitTick(){
-  if(_rktWT) return; // уже запущен — не перезапускаем
+  // Останавливаем старый если есть
+  if(_rktWT){ clearTimeout(_rktWT); clearInterval(_rktWT); _rktWT=null; }
 
   // Пока краш — ждём
   if(_rktCrashShown){
     _rktWT = setTimeout(()=>{ _rktWT=null; if(RKT.phase==='waiting') rktWaitTick(); }, 150);
     return;
+  }
+
+  // Если _rktWaitEnd не установлен — ставим из текущего waitLeft
+  if(_rktWaitEnd === 0 || _rktWaitEnd < Date.now()){
+    _rktWaitEnd   = Date.now() + Math.max(0.5, RKT.waitLeft) * 1000;
+    _rktWaitTotal = Math.max(1, RKT.waitLeft);
   }
 
   function tick(){
@@ -6462,7 +6473,7 @@ function rktWaitTick(){
     rktUpdateBtn();
     const pb = document.getElementById('rktProgressBar');
     if(pb){
-      const pct = Math.max(0, Math.min(100, (1 - left/_rktWaitTotal) * 100));
+      const pct = Math.max(0, Math.min(100, (1 - left / _rktWaitTotal) * 100));
       pb.style.width = pct + '%';
     }
   }
