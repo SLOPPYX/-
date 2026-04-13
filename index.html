@@ -5620,16 +5620,11 @@ function _rktShowCrash(crashMult){
     }
   }, 500);
 
-  // Через 3.3с от краша — иксы полностью исчезли (0.5 + 2.8)
-  // С ЭТОГО МОМЕНТА 5 секунд на ставки
+  // Через 3с — иксы исчезли, сбрасываем флаг
   setTimeout(()=>{
     _rktCrashShown = false;
-    rktUpdateTable();
-    if(RKT.phase==='waiting'){
-      rktStartCountdown(5000, _rktDemoFly); // 5с → летим
-      rktUI();
-    }
-  }, 3300);
+    rktUpdateTable(); rktUI();
+  }, 3000);
 
   // Убираем снапшот после взлёта (+5с от таймера)
   setTimeout(()=>{
@@ -5836,13 +5831,19 @@ function rktTickStart(){
           _rktBetUnlock();
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
-          // Новый раунд — сбрасываем всё
+          // Новый раунд
           RKT.phase='waiting'; RKT.waitLeft=5;
           _rktLaunchAt=0;
           if(_rktWT){clearInterval(_rktWT);_rktWT=null;}
           rktUI();
-          // Таймер запустится из _rktShowCrash когда иксы исчезнут (через 3.3с)
-          // Ракета полетит когда таймер дойдёт до 0
+          // Ждём пока иксы исчезнут (3с), потом 5 секунд таймер
+          if(!API_URL||!API_SECRET){
+            setTimeout(()=>{
+              if(RKT.phase!=='waiting') return;
+              _rktTimerStart(5000); // ровно 5с → ракета
+              rktUI();
+            }, 3000);
+          }
         },300);
       }
       return;
@@ -6474,53 +6475,41 @@ function rktUpdateTags(){
   });
 }
 
-// Обратный отсчёт — точный на Date.now()
 // ── ТАЙМЕР РАКЕТЫ ──────────────────────────────────────
 let _rktWT = null;
-let _rktLaunchAt = 0; // когда ракета стартует (абс. timestamp)
+let _rktLaunchAt = 0;
 
-// Запуск ракеты (демо-режим)
-function _rktDemoFly(){
-  if(RKT.phase !== 'waiting') return;
+function _rktTimerStart(ms){
+  // Запустить отсчёт ms миллисекунд
   if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
-  _rktLaunchAt = 0;
-  RKT.phase='flying'; RKT._ls=Date.now();
-  const r=Math.random();
-  RKT.crashAt = r<0.08?10+Math.random()*40
-              : r<0.25?5+Math.random()*5
-              : r<0.55?2+Math.random()*3
-              : r<0.80?1.5+Math.random()*0.5
-              :        1.2+Math.random()*0.3;
-  rTrail=[];rktAF();rktTickStart();rktUI();
-}
-
-// Запустить обратный отсчёт ms миллисекунд, потом вызвать onDone()
-function rktStartCountdown(ms, onDone){
-  if(_rktWT){ clearInterval(_rktWT); _rktWT = null; }
   _rktLaunchAt = Date.now() + ms;
-  RKT.waitLeft  = ms / 1000;
+  RKT.waitLeft = ms/1000;
   _rktWT = setInterval(()=>{
-    if(RKT.phase !== 'waiting'){ clearInterval(_rktWT); _rktWT=null; return; }
-    const left = Math.max(0, (_rktLaunchAt - Date.now()) / 1000);
+    if(RKT.phase!=='waiting'){ clearInterval(_rktWT);_rktWT=null;_rktLaunchAt=0; return; }
+    const left = Math.max(0, (_rktLaunchAt-Date.now())/1000);
     RKT.waitLeft = left;
     rktUpdateBtn();
-    const pb = document.getElementById('rktProgressBar');
-    if(pb){ pb.style.width = Math.min(100,(1-left/5)*100)+'%'; }
-    // Таймер дошёл до нуля — запускаем ракету
-    if(left <= 0){
-      clearInterval(_rktWT); _rktWT = null;
-      _rktLaunchAt = 0;
-      if(onDone) onDone();
+    const pb=document.getElementById('rktProgressBar');
+    if(pb) pb.style.width=Math.min(100,(1-left/5)*100)+'%';
+    if(left<=0){
+      clearInterval(_rktWT);_rktWT=null;_rktLaunchAt=0;
+      _rktTimerFly(); // время вышло — летим
     }
   }, 80);
 }
 
-// От сервера — только если есть API (не демо-режим)
-function rktSetWaitTime(sec){
-  if(!API_URL || !API_SECRET) return; // демо-режим — игнорируем
-  if(_rktLaunchAt > 0) return;        // таймер уже идёт — не трогаем
-  rktStartCountdown(sec*1000, null);  // только отображение, сервер сам запустит
+function _rktTimerFly(){
+  if(RKT.phase!=='waiting') return;
+  RKT.phase='flying'; RKT._ls=Date.now();
+  const r=Math.random();
+  RKT.crashAt=r<0.08?10+Math.random()*40:r<0.25?5+Math.random()*5
+    :r<0.55?2+Math.random()*3:r<0.80?1.5+Math.random()*0.5:1.2+Math.random()*0.3;
+  rTrail=[];rktAF();rktTickStart();rktUI();
 }
+
+// Совместимость — сервер присылает wait_left
+function rktSetWaitTime(sec){ if(API_URL&&API_SECRET&&_rktLaunchAt===0) _rktTimerStart(sec*1000); }
+function rktStartCountdown(ms){ _rktTimerStart(ms); }
 function rktWaitTick(){}
 
 // ── Действия игрока ──────────────────────────────────────
@@ -6835,7 +6824,7 @@ function initRocket(){
     rktPollLoop();
   } else {
     RKT.roundId = 1; RKT.waitLeft=5;
-    rktStartCountdown(5000, _rktDemoFly);
+    _rktTimerStart(5000);
   }
 }
 
