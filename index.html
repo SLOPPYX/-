@@ -6515,12 +6515,11 @@ function rktStartCountdown(ms, onDone){
   }, 80);
 }
 
-// От сервера — только если наш таймер ещё не запущен
+// От сервера — только если есть API (не демо-режим)
 function rktSetWaitTime(sec){
-  // Игнорируем если таймер уже идёт
-  if(_rktLaunchAt > 0) return;
-  // Только первое подключение
-  rktStartCountdown(sec*1000, _rktDemoFly);
+  if(!API_URL || !API_SECRET) return; // демо-режим — игнорируем
+  if(_rktLaunchAt > 0) return;        // таймер уже идёт — не трогаем
+  rktStartCountdown(sec*1000, null);  // только отображение, сервер сам запустит
 }
 function rktWaitTick(){}
 
