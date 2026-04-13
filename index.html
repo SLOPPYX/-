@@ -6462,10 +6462,12 @@ function rktStartCountdown(ms){
   }, 80);
 }
 
-// Совместимость с сервером — берём время только если больше текущего
+// От сервера — ТОЛЬКО если наш таймер ещё не запущен (первое подключение)
 function rktSetWaitTime(sec){
-  const t = Date.now() + sec*1000;
-  if(_rktLaunchAt === 0 || t > _rktLaunchAt + 1000){ rktStartCountdown(sec*1000); }
+  if(_rktLaunchAt === 0){
+    rktStartCountdown(sec*1000);
+  }
+  // Если таймер уже идёт — игнорируем сервер полностью
 }
 function rktWaitTick(){}
 
