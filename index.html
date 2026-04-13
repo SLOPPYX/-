@@ -1063,6 +1063,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 /* Теги игроков */
 /* Красный оверлей краша — как в видео */
+.rkt-frame {
+  position:absolute; inset:0; z-index:3; pointer-events:none;
+}
 .rkt-crash-overlay {
   position:absolute; inset:0; z-index:9; pointer-events:none;
   opacity:0; transition:opacity 1.2s ease;
@@ -2221,6 +2224,46 @@ display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
         <div class="rkt-sub" id="rktSub">Следующий раунд скоро</div>
       </div>
 
+      <!-- SVG рамка по краям -->
+      <svg class="rkt-frame" viewBox="0 0 400 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="fg1" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.8"/>
+            <stop offset="50%" stop-color="#7c3aed" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#00e5ff" stop-opacity="0.8"/>
+          </linearGradient>
+          <linearGradient id="fg2" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.8"/>
+            <stop offset="50%" stop-color="#7c3aed" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#00e5ff" stop-opacity="0.8"/>
+          </linearGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <!-- Верхняя линия -->
+        <line x1="20" y1="2" x2="380" y2="2" stroke="url(#fg1)" stroke-width="1.5" filter="url(#glow)" opacity="0.7"/>
+        <!-- Нижняя линия -->
+        <line x1="20" y1="298" x2="380" y2="298" stroke="url(#fg1)" stroke-width="1.5" filter="url(#glow)" opacity="0.7"/>
+        <!-- Левая линия -->
+        <line x1="2" y1="20" x2="2" y2="280" stroke="url(#fg2)" stroke-width="1.5" filter="url(#glow)" opacity="0.7"/>
+        <!-- Правая линия -->
+        <line x1="398" y1="20" x2="398" y2="280" stroke="url(#fg2)" stroke-width="1.5" filter="url(#glow)" opacity="0.7"/>
+        <!-- Углы — верх лево -->
+        <path d="M2,20 L2,2 L20,2" fill="none" stroke="#00e5ff" stroke-width="2.5" filter="url(#glow)" opacity="0.9"/>
+        <!-- Углы — верх право -->
+        <path d="M380,2 L398,2 L398,20" fill="none" stroke="#00e5ff" stroke-width="2.5" filter="url(#glow)" opacity="0.9"/>
+        <!-- Углы — низ лево -->
+        <path d="M2,280 L2,298 L20,298" fill="none" stroke="#00e5ff" stroke-width="2.5" filter="url(#glow)" opacity="0.9"/>
+        <!-- Углы — низ право -->
+        <path d="M380,298 L398,298 L398,280" fill="none" stroke="#00e5ff" stroke-width="2.5" filter="url(#glow)" opacity="0.9"/>
+        <!-- Засечки по центру верх -->
+        <line x1="198" y1="2" x2="202" y2="2" stroke="#00e5ff" stroke-width="3" filter="url(#glow)" opacity="0.9"/>
+        <!-- Засечки по центру низ -->
+        <line x1="198" y1="298" x2="202" y2="298" stroke="#00e5ff" stroke-width="3" filter="url(#glow)" opacity="0.9"/>
+        <!-- Засечки по центру лево -->
+        <line x1="2" y1="148" x2="2" y2="152" stroke="#00e5ff" stroke-width="3" filter="url(#glow)" opacity="0.9"/>
+        <!-- Засечки по центру право -->
+        <line x1="398" y1="148" x2="398" y2="152" stroke="#00e5ff" stroke-width="3" filter="url(#glow)" opacity="0.9"/>
+      </svg>
       <!-- Красный оверлей при краше -->
       <div class="rkt-crash-overlay" id="rktCrashOverlay"></div>
       <!-- Большой текст КРАШ -->
@@ -5903,8 +5946,10 @@ function rktApply(d){
   if(rid) rid.textContent='РАУНД #'+RKT.roundId;
 
   if(d.phase==='flying'){
+    // Сервер запустил раунд — останавливаем наш таймер
+    if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
+    _rktLaunchAt = 0;
     RKT.mult=d.mult||1.00;
-    // ВСЕГДА ресинхронизируем _ls — устраняем накопленный дрейф
     if(d.elapsed!=null && d.elapsed>=0){
       RKT._ls=Date.now()-d.elapsed*1000;
     } else {
