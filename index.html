@@ -5468,8 +5468,8 @@ function rDraw(){
   }
 
   // ── БОЛЬШОЙ ТАЙМЕР НА CANVAS (только фаза waiting И нет краша) ──────
-  if(RKT.phase==='waiting' && RKT.waitLeft>0 && !_rktCrashShown){
-    const left=RKT.waitLeft;
+  if(RKT.phase==='waiting' && !_rktCrashShown && _rktLaunchAt > Date.now()){
+    const left = Math.max(0, (_rktLaunchAt - Date.now()) / 1000);
     const sec=left<10?left.toFixed(1):Math.ceil(left).toString();
     const cx=rW*0.5, cy=rH*0.5;
     ctx.save();
@@ -5822,6 +5822,8 @@ function rktTickStart(){
               if(RKT.phase!=='waiting') return;
               console.log('🚀 РАКЕТА ЛЕТИТ раунд #'+RKT.roundId+' в', new Date().toLocaleTimeString());
               RKT.phase='flying'; RKT._ls=Date.now();
+              _rktLaunchAt=0; // сброс — больше не waiting
+              if(_rktWT){clearInterval(_rktWT);clearTimeout(_rktWT);_rktWT=null;}
               const r=Math.random();
               RKT.crashAt = r<0.08 ? 10+Math.random()*40
                           : r<0.25 ? 5+Math.random()*5
@@ -6463,32 +6465,34 @@ function rktUpdateTags(){
 // Обратный отсчёт — точный на Date.now()
 let _rktWT=null;
 let _rktLaunchAt=0;   // абсолютное время старта ракеты
-let _rktWaitTotal=10;  // полная длина периода (для прогресс-бара)
+let _rktWaitTotal = 10;
 
-// Вызывается ОДИН РАЗ при начале периода ожидания
-// launchInMs = через сколько мс стартует ракета (считая от сейчас)
+// rktStartCountdown(ms, total) — запускает отсчёт
 function rktStartCountdown(launchInMs, totalSec){
   if(_rktWT){ clearInterval(_rktWT); clearTimeout(_rktWT); _rktWT=null; }
   _rktLaunchAt  = Date.now() + launchInMs;
   _rktWaitTotal = totalSec || Math.round(launchInMs/1000);
+  RKT.waitLeft  = _rktWaitTotal; // сразу устанавливаем полное время
   _rktWT = setInterval(_rktTimerTick, 80);
+  _rktTimerTick(); // первый тик немедленно
 }
 
-// Вызывается из server poll — только корректирует время если сервер говорит другое
-// Вызывается из poll — устанавливает время ТОЛЬКО если новый раунд (wait_left вырос)
+// rktSetWaitTime — от сервера. Синхронизируем ТОЛЬКО при новом раунде
 function rktSetWaitTime(secondsLeft){
   const newLaunch = Date.now() + secondsLeft * 1000;
-  // Обновляем если: ещё не установлен ИЛИ сервер говорит БОЛЬШЕ чем мы думаем (новый раунд)
-  // НЕ обновляем если сервер говорит меньше — это просто обычный тик
-  if(_rktLaunchAt === 0 || newLaunch > _rktLaunchAt + 2000){
+  if(_rktLaunchAt === 0 || newLaunch > _rktLaunchAt + 1500){
+    // Новый раунд или первое подключение — берём время сервера
     _rktLaunchAt  = newLaunch;
-    _rktWaitTotal = secondsLeft;
+    _rktWaitTotal = Math.max(secondsLeft, 1);
+    RKT.waitLeft  = secondsLeft;
+    if(!_rktWT) _rktWT = setInterval(_rktTimerTick, 80);
   }
-  if(!_rktWT) _rktWT = setInterval(_rktTimerTick, 80);
+  // Если сервер говорит меньше — просто игнорируем (таймер идёт сам)
 }
 
 function rktWaitTick(){
-  if(!_rktWT) _rktWT = setInterval(_rktTimerTick, 80);
+  if(!_rktWT && _rktLaunchAt > Date.now())
+    _rktWT = setInterval(_rktTimerTick, 80);
 }
 
 function _rktTimerTick(){
@@ -6822,6 +6826,8 @@ function initRocket(){
     setTimeout(()=>{
       if(RKT.phase!=='waiting') return;
       RKT.phase='flying';RKT._ls=Date.now();
+      _rktLaunchAt=0;
+      if(_rktWT){clearInterval(_rktWT);clearTimeout(_rktWT);_rktWT=null;}
       const r = Math.random();
       RKT.crashAt = r < 0.08 ? 10 + Math.random()*40
                  : r < 0.25 ? 5  + Math.random()*5
