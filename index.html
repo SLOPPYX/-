@@ -6481,12 +6481,15 @@ let _rktWT = null;
 let _rktLaunchAt = 0;
 
 function _rktTimerStart(ms){
-  // Запустить отсчёт ms миллисекунд
   if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
   _rktLaunchAt = Date.now() + ms;
   RKT.waitLeft = ms/1000;
+  console.log('⏱ TIMER START', ms, 'phase='+RKT.phase, 'waitLeft='+RKT.waitLeft);
   _rktWT = setInterval(()=>{
-    if(RKT.phase!=='waiting'){ clearInterval(_rktWT);_rktWT=null;_rktLaunchAt=0; return; }
+    if(RKT.phase!=='waiting'){ 
+      console.log('⏱ TIMER STOP phase='+RKT.phase);
+      clearInterval(_rktWT);_rktWT=null;_rktLaunchAt=0; return; 
+    }
     const left = Math.max(0, (_rktLaunchAt-Date.now())/1000);
     RKT.waitLeft = left;
     rktUpdateBtn();
@@ -6494,7 +6497,8 @@ function _rktTimerStart(ms){
     if(pb) pb.style.width=Math.min(100,(1-left/5)*100)+'%';
     if(left<=0){
       clearInterval(_rktWT);_rktWT=null;_rktLaunchAt=0;
-      _rktTimerFly(); // время вышло — летим
+      console.log('⏱ TIMER DONE → FLY');
+      _rktTimerFly();
     }
   }, 80);
 }
