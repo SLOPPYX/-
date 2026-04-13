@@ -5939,14 +5939,13 @@ function rktApply(d){
     }
   }
   if(d.wait_left!=null && RKT.phase==='waiting'){
-    // Устанавливаем время только если нет или разница >1с (новый раунд)
-    const serverLaunch = Date.now() + d.wait_left*1000;
-    if(_rktLaunchAt===0 || serverLaunch > _rktLaunchAt+1000){
-      _rktLaunchAt = serverLaunch;
+    // Устанавливаем _rktLaunchAt ТОЛЬКО ОДИН РАЗ за раунд
+    if(_rktLaunchAt===0){
+      _rktLaunchAt = Date.now() + d.wait_left*1000;
+      _rktWaitTotal = d.wait_left;
     }
     // Запускаем interval если не запущен
     if(!_rktWT){
-      const _totalWait = Math.max(d.wait_left||5, 5);
       _rktWT = setInterval(()=>{
         if(RKT.phase!=='waiting'){clearInterval(_rktWT);_rktWT=null;_rktLaunchAt=0;return;}
         if(_rktLaunchAt===0) return;
@@ -5954,7 +5953,7 @@ function rktApply(d){
         RKT.waitLeft=left;
         rktUpdateBtn();
         const pb=document.getElementById('rktProgressBar');
-        if(pb) pb.style.width=Math.min(100,(1-left/_totalWait)*100)+'%';
+        if(pb) pb.style.width=Math.min(100,(1-left/(_rktWaitTotal||15))*100)+'%';
       },80);
     }
   }
