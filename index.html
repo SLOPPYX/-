@@ -5596,24 +5596,23 @@ function _rktShowCrash(crashMult){
   // Обновляем таблицу сразу
   rktUpdateTable();
 
-  // Иксы появляются через 1000мс и исчезают через 3000мс
-  // Таймер 5 секунд запускается КОГДА ПОКАЗАЛИСЬ ИКСЫ (через 1000мс)
+  // Иксы появляются через 1000мс
+  // В этот же момент: запускаем таймер 5с И сбрасываем _rktCrashShown
+  // чтобы canvas сразу показал таймер рядом с иксами
   setTimeout(()=>{
-    // Иксы только что появились — запускаем 5-секундный таймер
+    _rktCrashShown = false; // разблокируем canvas — пусть показывает таймер
     if(RKT.phase==='waiting'){
-      rktStartCountdown(5000, 5);
+      rktStartCountdown(5000, 5); // ровно 5 секунд
       rktUI();
     }
   }, 1000);
 
-  // Сбрасываем флаг краша через 3000мс (иксы исчезают)
+  // Убираем снапшот через 6000мс (после старта ракеты)
   setTimeout(()=>{
-    _rktCrashShown = false;
     _rktCrashedSnapshot = [];
     RKT._myCrashMult = null;
     rktUpdateTable();
-    if(RKT.phase==='waiting') rktUI();
-  }, 3000);
+  }, 6500);
 }
 
 function rktSpawnCrashParticles(x,y){
