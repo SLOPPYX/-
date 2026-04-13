@@ -4933,7 +4933,7 @@ window.addEventListener('pagehide', () => {
 // ══════════════════════════════════════════════════════════
 const RKT = {
   phase:'waiting', roundId:-1, mult:1.00, crashAt:null,
-  waitLeft:10, players:[], history:[], online:1,
+  waitLeft:7, players:[], history:[], online:1,
   betPlaced:false, cashedOut:false, myBet:10000, auto:0,
   _betTs:0, // timestamp когда была поставлена ставка
   _ls: Date.now(),
@@ -5806,7 +5806,7 @@ function rktTickStart(){
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
           RKT.phase = 'waiting';
-          RKT.waitLeft = 10;
+          RKT.waitLeft = 7;
           _rktLaunchAt = 0; // сбрасываем — таймер запустится после краша
           if(_rktWT){ clearInterval(_rktWT); clearTimeout(_rktWT); _rktWT=null; }
           rktUI();
@@ -5815,7 +5815,7 @@ function rktTickStart(){
           setTimeout(()=>{
             if(RKT.phase!=='waiting') return;
             console.log('⏱️ РАУНД #'+RKT.roundId+' — таймер 7с запущен в', new Date().toLocaleTimeString());
-          rktStartCountdown(10000, 10); // 10с для ставок
+          rktStartCountdown(7000, 7);
             rktUI();
             setTimeout(()=>{
               if(RKT.phase!=='waiting') return;
@@ -5828,7 +5828,7 @@ function rktTickStart(){
                           : r<0.80 ? 1.5+Math.random()*0.5
                           :           1.2+Math.random()*0.3;
               rTrail=[];rktAF();rktTickStart();rktUI();
-            }, 10000); // старт через 10с
+            }, 7000); // старт через 7с
           }, 3500); // ждём конца краша
         },300);
       }
@@ -6189,10 +6189,10 @@ function rktUpdateBtn(){
   let betPreview = '';
   try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betPreview=' — '+v.toLocaleString('ru-RU'); }catch(e){}
   const waitSecs = Math.ceil(RKT.waitLeft);
-  const waitStr = waitSecs > 0 ? ' · '+waitSecs+'с' : '';
-  btnBet.textContent = '🚀 ПОСТАВИТЬ'+betPreview+waitStr;
+  const waitStr = waitSecs > 0 ? ' · ' + waitSecs + 'с до старта' : '';
+  btnBet.textContent = '🚀 ПОСТАВИТЬ' + betPreview + waitStr;
   btnBet.style.display = 'block';
-  setStatus('СТАРТ ЧЕРЕЗ '+waitSecs+'С — НЕЗАВИСИМО ОТ СТАВКИ', 'rgba(255,255,255,.2)');
+  setStatus('⏱️ РАКЕТА СТАРТУЕТ ЧЕРЕЗ ' + waitSecs + 'С (независимо от ставки)', 'rgba(255,200,0,.4)');
 }
 // Оставляем для совместимости — просто вызывает rktUI
 function rktSetBtn(m){ rktUI(); }
@@ -6813,8 +6813,8 @@ function initRocket(){
       .then(d=>{if(d&&d.ok){rktApply(d);}});
     rktPollLoop();
   } else {
-    RKT.roundId = 1; RKT.waitLeft=10;
-    rktStartCountdown(10000, 10); // 10с с момента открытия страницы
+    RKT.roundId = 1; RKT.waitLeft=7;
+    rktStartCountdown(7000, 7);
     setTimeout(()=>{
       if(RKT.phase!=='waiting') return;
       RKT.phase='flying';RKT._ls=Date.now();
@@ -6825,7 +6825,7 @@ function initRocket(){
                  : r < 0.80 ? 1.5+ Math.random()*0.5
                  :             1.2+ Math.random()*0.3;
       rTrail=[];rktAF();rktTickStart();rktUI();
-    },10000);
+    },7000);
   }
 }
 
