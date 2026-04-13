@@ -5938,13 +5938,17 @@ function rktApply(d){
       RKT.mult=d.crash_at;
     }
   }
-  if(d.wait_left!=null){
-    // Синхронизируем только если таймер ещё не запущен
-    if(RKT.phase==='waiting' && !_rktCrashShown && _rktLaunchAt===0){
-      _rktLaunchAt = Date.now() + d.wait_left*1000;
-      RKT.waitLeft = d.wait_left;
-      if(!_rktWT) _rktWT = setInterval(()=>{
+  if(d.wait_left!=null && RKT.phase==='waiting'){
+    // Устанавливаем время только если нет или разница >1с (новый раунд)
+    const serverLaunch = Date.now() + d.wait_left*1000;
+    if(_rktLaunchAt===0 || serverLaunch > _rktLaunchAt+1000){
+      _rktLaunchAt = serverLaunch;
+    }
+    // Запускаем interval если не запущен
+    if(!_rktWT){
+      _rktWT = setInterval(()=>{
         if(RKT.phase!=='waiting'){clearInterval(_rktWT);_rktWT=null;_rktLaunchAt=0;return;}
+        if(_rktLaunchAt===0) return;
         const left=Math.max(0,(_rktLaunchAt-Date.now())/1000);
         RKT.waitLeft=left;
         rktUpdateBtn();
