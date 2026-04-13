@@ -5573,25 +5573,27 @@ function _rktShowCrash(crashMult){
     if(lbl && lblX){
       lblX.textContent = '×' + parseFloat(crashMult).toFixed(2);
       lbl.classList.remove('active'); void lbl.offsetWidth; lbl.classList.add('active');
+      // CSS анимация: появление 0.2с, держится 2.2с, исчезает 0.6с = итого 3с
     }
   }, 500);
 
-  // Через 2с — иксы исчезают, начинается таймер 5с для ставок
-  // _rktNewRound уже установил _rktLaunchAt на правильное время
+  // Через 3.3с от краша — иксы полностью исчезли (0.5 + 2.8)
+  // С ЭТОГО МОМЕНТА 5 секунд на ставки
   setTimeout(()=>{
-    const lbl = document.getElementById('rktCrashLabel');
-    if(lbl) lbl.classList.remove('active');
-    _rktCrashShown = false; // разблокируем canvas — показывает таймер
+    _rktCrashShown = false;
     rktUpdateTable();
-    if(RKT.phase==='waiting') rktUI();
-  }, 2000);
+    if(RKT.phase==='waiting'){
+      rktStartCountdown(5000); // 5 секунд с момента исчезновения иксов
+      rktUI();
+    }
+  }, 3300);
 
-  // Убираем снапшот после взлёта
+  // Убираем снапшот после взлёта (+5с от таймера)
   setTimeout(()=>{
     _rktCrashedSnapshot = [];
     RKT._myCrashMult = null;
     rktUpdateTable();
-  }, 8000);
+  }, 9000);
 }
 
 function rktSpawnCrashParticles(x,y){
@@ -5796,10 +5798,8 @@ function rktTickStart(){
           _rktLaunchAt=0;
           if(_rktWT){clearInterval(_rktWT);_rktWT=null;}
           rktUI();
-          // Иксы исчезают через 2с (_rktCrashShown=false в _rktShowCrash)
-          // Запускаем таймер 5с сразу — canvas покажет его после _rktCrashShown=false
-          rktStartCountdown(5000);
-          // Ракета стартует через 5с
+          // Таймер запускается из _rktShowCrash когда иксы исчезли (3.3с от краша)
+          // Ракета летит через 3300 + 5000 = 8300мс от краша = 8000мс от сейчас
           setTimeout(()=>{
             if(RKT.phase!=='waiting') return;
             _rktLaunchAt=0;
@@ -5812,7 +5812,7 @@ function rktTickStart(){
                         : r<0.80?1.5+Math.random()*0.5
                         :        1.2+Math.random()*0.3;
             rTrail=[];rktAF();rktTickStart();rktUI();
-          }, 5000);
+          }, 8000);
         },300);
       }
       return;
