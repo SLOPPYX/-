@@ -5583,7 +5583,7 @@ function _rktShowCrash(crashMult){
     _rktCrashShown = false;
     rktUpdateTable();
     if(RKT.phase==='waiting'){
-      rktStartCountdown(5000); // 5 секунд с момента исчезновения иксов
+      rktStartCountdown(5000, _rktDemoFly); // 5с → летим
       rktUI();
     }
   }, 3300);
@@ -5793,26 +5793,13 @@ function rktTickStart(){
           _rktBetUnlock();
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
-          // Новый раунд
+          // Новый раунд — сбрасываем всё
           RKT.phase='waiting'; RKT.waitLeft=5;
           _rktLaunchAt=0;
           if(_rktWT){clearInterval(_rktWT);_rktWT=null;}
           rktUI();
-          // Таймер запускается из _rktShowCrash когда иксы исчезли (3.3с от краша)
-          // Ракета летит через 3300 + 5000 = 8300мс от краша = 8000мс от сейчас
-          setTimeout(()=>{
-            if(RKT.phase!=='waiting') return;
-            _rktLaunchAt=0;
-            if(_rktWT){clearInterval(_rktWT);_rktWT=null;}
-            RKT.phase='flying'; RKT._ls=Date.now();
-            const r=Math.random();
-            RKT.crashAt = r<0.08?10+Math.random()*40
-                        : r<0.25?5+Math.random()*5
-                        : r<0.55?2+Math.random()*3
-                        : r<0.80?1.5+Math.random()*0.5
-                        :        1.2+Math.random()*0.3;
-            rTrail=[];rktAF();rktTickStart();rktUI();
-          }, 8000);
+          // Таймер запустится из _rktShowCrash когда иксы исчезнут (через 3.3с)
+          // Ракета полетит когда таймер дойдёт до 0
         },300);
       }
       return;
@@ -6447,8 +6434,23 @@ function rktUpdateTags(){
 let _rktWT = null;
 let _rktLaunchAt = 0; // когда ракета стартует (абс. timestamp)
 
-// Запустить обратный отсчёт N секунд
-function rktStartCountdown(ms){
+// Запуск ракеты (демо-режим)
+function _rktDemoFly(){
+  if(RKT.phase !== 'waiting') return;
+  if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
+  _rktLaunchAt = 0;
+  RKT.phase='flying'; RKT._ls=Date.now();
+  const r=Math.random();
+  RKT.crashAt = r<0.08?10+Math.random()*40
+              : r<0.25?5+Math.random()*5
+              : r<0.55?2+Math.random()*3
+              : r<0.80?1.5+Math.random()*0.5
+              :        1.2+Math.random()*0.3;
+  rTrail=[];rktAF();rktTickStart();rktUI();
+}
+
+// Запустить обратный отсчёт ms миллисекунд, потом вызвать onDone()
+function rktStartCountdown(ms, onDone){
   if(_rktWT){ clearInterval(_rktWT); _rktWT = null; }
   _rktLaunchAt = Date.now() + ms;
   RKT.waitLeft  = ms / 1000;
@@ -6459,15 +6461,21 @@ function rktStartCountdown(ms){
     rktUpdateBtn();
     const pb = document.getElementById('rktProgressBar');
     if(pb){ pb.style.width = Math.min(100,(1-left/5)*100)+'%'; }
+    // Таймер дошёл до нуля — запускаем ракету
+    if(left <= 0){
+      clearInterval(_rktWT); _rktWT = null;
+      _rktLaunchAt = 0;
+      if(onDone) onDone();
+    }
   }, 80);
 }
 
-// От сервера — ТОЛЬКО если наш таймер ещё не запущен (первое подключение)
+// От сервера — только если наш таймер ещё не запущен
 function rktSetWaitTime(sec){
-  if(_rktLaunchAt === 0){
-    rktStartCountdown(sec*1000);
-  }
-  // Если таймер уже идёт — игнорируем сервер полностью
+  // Игнорируем если таймер уже идёт
+  if(_rktLaunchAt > 0) return;
+  // Только первое подключение
+  rktStartCountdown(sec*1000, _rktDemoFly);
 }
 function rktWaitTick(){}
 
@@ -6783,20 +6791,7 @@ function initRocket(){
     rktPollLoop();
   } else {
     RKT.roundId = 1; RKT.waitLeft=5;
-    rktStartCountdown(5000);
-    setTimeout(()=>{
-      if(RKT.phase!=='waiting') return;
-      _rktLaunchAt=0;
-      if(_rktWT){clearInterval(_rktWT);_rktWT=null;}
-      RKT.phase='flying'; RKT._ls=Date.now();
-      const r=Math.random();
-      RKT.crashAt = r<0.08?10+Math.random()*40
-                 : r<0.25?5+Math.random()*5
-                 : r<0.55?2+Math.random()*3
-                 : r<0.80?1.5+Math.random()*0.5
-                 :        1.2+Math.random()*0.3;
-      rTrail=[];rktAF();rktTickStart();rktUI();
-    }, 5000);
+    rktStartCountdown(5000, _rktDemoFly);
   }
 }
 
