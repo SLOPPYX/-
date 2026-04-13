@@ -4933,7 +4933,7 @@ window.addEventListener('pagehide', () => {
 // ══════════════════════════════════════════════════════════
 const RKT = {
   phase:'waiting', roundId:-1, mult:1.00, crashAt:null,
-  waitLeft:10, players:[], history:[], online:1,
+  waitLeft:5, players:[], history:[], online:1,
   betPlaced:false, cashedOut:false, myBet:10000, auto:0,
   _betTs:0, // timestamp когда была поставлена ставка
   _ls: Date.now(),
@@ -5806,9 +5806,9 @@ function rktTickStart(){
           _rktRoundBetDone=false;_rktMinBalance=-1;
           rTrail=[];rCrashParticles=[];
           RKT.phase = 'waiting';
-          RKT.waitLeft = 10;
+          RKT.waitLeft = 5;
           _rktLaunchAt = 0; // сбрасываем — будет установлен заново
-          _rktWaitTotal = 10;
+          _rktWaitTotal = 5;
           if(_rktWT){ clearInterval(_rktWT); clearTimeout(_rktWT); _rktWT=null; }
           rktUI();
           // Ждём конца краш-анимации (3800мс от краша = ~3500мс от сейчас)
@@ -5816,7 +5816,7 @@ function rktTickStart(){
           setTimeout(()=>{
             if(RKT.phase!=='waiting') return;
             console.log('⏱️ РАУНД #'+RKT.roundId+' — таймер 7с запущен в', new Date().toLocaleTimeString());
-          rktStartCountdown(10000, 10);
+          rktStartCountdown(5000, 5);
             rktUI();
             setTimeout(()=>{
               if(RKT.phase!=='waiting') return;
@@ -5831,7 +5831,7 @@ function rktTickStart(){
                           : r<0.80 ? 1.5+Math.random()*0.5
                           :           1.2+Math.random()*0.3;
               rTrail=[];rktAF();rktTickStart();rktUI();
-            }, 10000); // старт через 10с
+            }, 5000); // старт через 5с
           }, 3500); // ждём конца краша
         },300);
       }
@@ -6465,7 +6465,7 @@ function rktUpdateTags(){
 // Обратный отсчёт — точный на Date.now()
 let _rktWT=null;
 let _rktLaunchAt=0;   // абсолютное время старта ракеты
-let _rktWaitTotal = 10;
+let _rktWaitTotal = 5;
 
 // rktStartCountdown(ms, total) — запускает отсчёт
 function rktStartCountdown(launchInMs, totalSec){
@@ -6821,8 +6821,8 @@ function initRocket(){
       .then(d=>{if(d&&d.ok){rktApply(d);}});
     rktPollLoop();
   } else {
-    RKT.roundId = 1; RKT.waitLeft=10;
-    rktStartCountdown(10000, 10);
+    RKT.roundId = 1; RKT.waitLeft=5;
+    rktStartCountdown(5000, 5);
     setTimeout(()=>{
       if(RKT.phase!=='waiting') return;
       RKT.phase='flying';RKT._ls=Date.now();
@@ -6835,7 +6835,7 @@ function initRocket(){
                  : r < 0.80 ? 1.5+ Math.random()*0.5
                  :             1.2+ Math.random()*0.3;
       rTrail=[];rktAF();rktTickStart();rktUI();
-    },10000);
+    },5000);
   }
 }
 
