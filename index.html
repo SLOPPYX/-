@@ -5864,6 +5864,8 @@ function rktApply(d){
   // Если раунд сменился — точно сбрасываем ставку (даже если _rktBetting)
   const roundChanged=(d.round_id!=null && d.round_id!==prevRoundId && prevRoundId!==-1);
   if(roundChanged){
+    // Новый раунд — сбрасываем таймер, следующий poll установит wait_left
+    if(_rktWT){clearInterval(_rktWT);_rktWT=null;} _rktLaunchAt=0;
     _rktOperating=false;
     _rktCashingOut=false;
     if(_rktBetState === 'sending'){
