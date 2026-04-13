@@ -5840,6 +5840,7 @@ function rktTickStart(){
           if(!API_URL||!API_SECRET){
             setTimeout(()=>{
               if(RKT.phase!=='waiting') return;
+              _rktCrashShown = false; // гарантируем сброс до запуска таймера
               _rktTimerStart(5000); // ровно 5с → ракета
               rktUI();
             }, 3000);
@@ -6823,8 +6824,10 @@ function initRocket(){
       .then(d=>{if(d&&d.ok){rktApply(d);}});
     rktPollLoop();
   } else {
+    _rktCrashShown = false; // гарантируем сброс
     RKT.roundId = 1; RKT.waitLeft=5;
-    _rktTimerStart(5000);
+    RKT.phase = 'waiting';
+    setTimeout(()=>_rktTimerStart(5000), 100); // небольшая задержка для инициализации canvas
   }
 }
 
