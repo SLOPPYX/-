@@ -5946,6 +5946,7 @@ function rktApply(d){
     }
     // Запускаем interval если не запущен
     if(!_rktWT){
+      const _totalWait = Math.max(d.wait_left||5, 5);
       _rktWT = setInterval(()=>{
         if(RKT.phase!=='waiting'){clearInterval(_rktWT);_rktWT=null;_rktLaunchAt=0;return;}
         if(_rktLaunchAt===0) return;
@@ -5953,7 +5954,7 @@ function rktApply(d){
         RKT.waitLeft=left;
         rktUpdateBtn();
         const pb=document.getElementById('rktProgressBar');
-        if(pb) pb.style.width=Math.min(100,(1-left/5)*100)+'%';
+        if(pb) pb.style.width=Math.min(100,(1-left/_totalWait)*100)+'%';
       },80);
     }
   }
