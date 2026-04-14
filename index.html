@@ -5864,8 +5864,7 @@ function rktApply(d){
   // Если раунд сменился — точно сбрасываем ставку (даже если _rktBetting)
   const roundChanged=(d.round_id!=null && d.round_id!==prevRoundId && prevRoundId!==-1);
   if(roundChanged){
-    // Новый раунд — сбрасываем таймер, следующий poll установит wait_left
-    if(_rktWT){clearInterval(_rktWT);_rktWT=null;} _rktLaunchAt=0;
+    // Новый раунд — waitLeft обновится из следующего poll
     _rktOperating=false;
     _rktCashingOut=false;
     if(_rktBetState === 'sending'){
@@ -5939,32 +5938,17 @@ function rktApply(d){
     }
   }
   if(d.wait_left!=null && RKT.phase==='waiting'){
-    // Устанавливаем _rktLaunchAt ТОЛЬКО ОДИН РАЗ за раунд
-    if(_rktLaunchAt===0){
-      _rktLaunchAt = Date.now() + d.wait_left*1000;
-      _rktWaitTotal = d.wait_left;
-    }
-    // Запускаем interval если не запущен
-    if(!_rktWT){
-      _rktWT = setInterval(()=>{
-        if(RKT.phase!=='waiting'){clearInterval(_rktWT);_rktWT=null;_rktLaunchAt=0;return;}
-        if(_rktLaunchAt===0) return;
-        const left=Math.max(0,(_rktLaunchAt-Date.now())/1000);
-        RKT.waitLeft=left;
-        rktUpdateBtn();
-        const pb=document.getElementById('rktProgressBar');
-        if(pb) pb.style.width=Math.min(100,(1-left/(_rktWaitTotal||15))*100)+'%';
-      },80);
-    }
+    // Просто обновляем waitLeft — canvas читает его напрямую
+    RKT.waitLeft = d.wait_left;
+    rktUpdateBtn();
+    const pb=document.getElementById('rktProgressBar');
+    if(pb) pb.style.width=Math.min(100,(1-d.wait_left/(_rktWaitTotal||15))*100)+'%';
   }
 
   const rid=document.getElementById('rktRoundId');
   if(rid) rid.textContent='РАУНД #'+RKT.roundId;
 
   if(d.phase==='flying'){
-    // Сервер запустил раунд — останавливаем таймер
-    if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
-    _rktLaunchAt = 0;
     RKT.waitLeft = 0;
     RKT.mult=d.mult||1.00;
     if(d.elapsed!=null && d.elapsed>=0){
@@ -6050,11 +6034,7 @@ function rktApply(d){
         _rktBetUnlock(); _rktCashingOut=false;
         _rktRoundBetDone=false; _rktBetRoundId=-99; _rktMinBalance=-1;
         _rktFrozenMult=null;
-        // Сбрасываем таймер — новый запустится из poll
-        if(_rktWT){clearInterval(_rktWT);_rktWT=null;} _rktLaunchAt=0;
         rTrail=[];rCrashParticles=[];
-        if(_rktWT){ clearTimeout(_rktWT); clearInterval(_rktWT); _rktWT=null; }
-        if(RKT.waitLeft>0) rktWaitTick();
         rktUI();
       },300);
     } else {
