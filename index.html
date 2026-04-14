@@ -512,7 +512,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
    EPIC SPLASH SCREEN
 ══════════════════════════════════════════ */
 #splash{position:fixed;inset:0;background:linear-gradient(180deg,#0a0500 0%,#150800 40%,#0a0005 100%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transition:opacity .5s ease;overflow:hidden}
-#splash.hide{opacity:0;pointer-events:none}
+#splash.hide{opacity:0;pointer-events:none;visibility:hidden}
 .splash-stars{position:absolute;inset:0;pointer-events:none}
 .splash-star{position:absolute;width:2px;height:2px;background:white;border-radius:50%;animation:starTwinkle var(--d,2s) ease-in-out infinite var(--delay,0s)}
 @keyframes starTwinkle{0%,100%{opacity:0.1;transform:scale(1)}50%{opacity:0.8;transform:scale(1.5)}}
@@ -819,881 +819,231 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .leader-crown{position:absolute;top:-2px;right:10px;font-size:14px;animation:crownFloat 2s ease-in-out infinite}
 @keyframes crownFloat{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-3px) rotate(5deg)}}
 .leader-empty{text-align:center;padding:40px 20px;font-family:var(--fd);font-size:10px;color:var(--muted);letter-spacing:2px}
-/* ══ РАКЕТКА МУЛЬТИПЛЕЕР — CRASH GAME ══════════════════ */
-.rocket-wrap { padding:12px 16px 16px }
+/* ══ РАКЕТКА — CRASH GAME ══════════════════════════════ */
+#page-rocket { padding:0; }
+#page-rocket.active { padding-bottom:20px; }
 
-/* Canvas — главная сцена */
-.rocket-canvas-wrap { position:relative; border-radius:16px; overflow:hidden;
-  margin-bottom:12px; background:#080808; border:1px solid rgba(255,255,255,.08) }
-#rocketCanvas { display:block; width:100%; height:260px }
-
-/* Большой множитель по центру */
-.rocket-multiplier { position:absolute; top:44%; left:50%; transform:translate(-50%,-50%);
-  font-family:var(--fd); font-size:58px; font-weight:900; color:#fff; line-height:1;
-  pointer-events:none; transition:color .2s; letter-spacing:-1px }
-.rocket-multiplier.crashed { color:#f87171 }
-.rocket-multiplier.waiting-state { font-size:22px; color:rgba(255,255,255,.3); letter-spacing:2px }
-
-/* Статус под множителем */
-.rocket-status-line { position:absolute; top:calc(44% + 38px); left:0; right:0; text-align:center;
-  font-family:var(--fd); font-size:9px; letter-spacing:2px; color:rgba(255,255,255,.3);
-  pointer-events:none }
-
-/* Онлайн-игроки */
-.rocket-players-bar { position:absolute; bottom:10px; left:10px; right:10px;
-  display:flex; gap:6px; flex-wrap:wrap; pointer-events:none }
-.rp-tag { padding:3px 8px; border-radius:20px; font-family:var(--fd); font-size:8px;
-  font-weight:700; letter-spacing:.5px; border:1px solid; backdrop-filter:blur(4px) }
-.rp-tag.active { background:rgba(74,222,128,.12); border-color:rgba(74,222,128,.3); color:#4ade80 }
-.rp-tag.cashout { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.15); color:rgba(255,255,255,.5) }
-.rp-tag.crashed { background:rgba(248,113,113,.1); border-color:rgba(248,113,113,.25); color:#f87171; text-decoration:line-through }
-
-/* Онлайн-счётчик */
-.rocket-online { position:absolute; top:10px; right:12px;
-  display:flex; align-items:center; gap:5px;
-  font-family:var(--fd); font-size:8px; letter-spacing:1px; color:rgba(255,255,255,.4) }
-.rocket-online-dot { width:5px; height:5px; border-radius:50%; background:#4ade80;
-  animation:connPulse 2s ease infinite }
-
-/* История */
-.rocket-history-bar { display:flex; gap:5px; margin-bottom:12px; overflow-x:auto;
-  padding-bottom:2px; scrollbar-width:none }
-.rocket-history-bar::-webkit-scrollbar { display:none }
-.rh-chip { flex-shrink:0; padding:5px 10px; border-radius:20px; font-family:var(--fd);
-  font-size:10px; font-weight:700; cursor:default }
-.rh-chip.high { background:rgba(74,222,128,.12); border:1px solid rgba(74,222,128,.28); color:#4ade80 }
-.rh-chip.mid  { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); color:rgba(255,255,255,.55) }
-.rh-chip.low  { background:rgba(248,113,113,.1);  border:1px solid rgba(248,113,113,.25); color:#f87171 }
-
-/* Управление */
-.rocket-controls-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px }
-.rocket-panel { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09);
-  border-radius:14px; padding:14px }
-.rocket-panel-label { font-family:var(--fd); font-size:8px; letter-spacing:2px;
-  color:rgba(255,255,255,.35); margin-bottom:8px }
-.rocket-bet-input { width:100%; padding:9px 12px; background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.1); border-radius:10px; color:#fff;
-  font-family:var(--fd); font-size:15px; font-weight:700; outline:none; text-align:center }
-.rocket-bet-input:focus { border-color:rgba(255,255,255,.25) }
-.rocket-bet-presets { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; margin-top:7px }
-.rocket-preset { padding:6px 2px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09);
-  border-radius:7px; color:rgba(255,255,255,.5); font-family:var(--fd); font-size:9px;
-  font-weight:700; cursor:pointer; text-align:center; transition:all .12s }
-.rocket-preset:active { transform:scale(.93) }
-.rocket-preset:hover { background:rgba(255,255,255,.09); color:#fff }
-.rocket-auto-btns { display:grid; grid-template-columns:repeat(4,1fr); gap:5px }
-.rocket-auto-btn { padding:9px 2px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09);
-  border-radius:9px; color:rgba(255,255,255,.45); font-family:var(--fd); font-size:10px;
-  font-weight:700; cursor:pointer; text-align:center; transition:all .13s }
-.rocket-auto-btn.active { background:rgba(255,255,255,.13); border-color:rgba(255,255,255,.3); color:#fff }
-.rocket-auto-btn:active { transform:scale(.93) }
-.rocket-auto-status { font-family:var(--fd); font-size:8px; color:rgba(255,255,255,.3);
-  letter-spacing:1px; margin-top:7px }
-
-/* Главная кнопка */
-.rocket-main-btn { width:100%; padding:17px; border:none; border-radius:14px;
-  font-family:var(--fd); font-size:15px; font-weight:900; letter-spacing:2px;
-  cursor:pointer; transition:all .15s; margin-bottom:12px; position:relative; overflow:hidden }
-.rocket-main-btn.state-bet { background:#fff; color:#0d0d0d; box-shadow:0 4px 20px rgba(255,255,255,.15) }
-.rocket-main-btn.state-cashout { background:#4ade80; color:#0d0d0d;
-  box-shadow:0 0 0 rgba(74,222,128,0); animation:cashoutPulse .7s ease infinite alternate }
-@keyframes cashoutPulse { to{box-shadow:0 0 24px rgba(74,222,128,.45)} }
-.rocket-main-btn.state-wait { background:rgba(255,255,255,.08); color:rgba(255,255,255,.3); cursor:not-allowed }
-.rocket-main-btn:active:not(.state-wait) { transform:scale(.97) }
-
-/* Статистика */
-.rocket-stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px }
-.rocket-stat-card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
-  border-radius:11px; padding:11px 7px; text-align:center }
-.rocket-stat-val { font-family:var(--fd); font-size:13px; font-weight:700; color:#fff;
-  display:block; margin-bottom:2px }
-.rocket-stat-lbl { font-size:9px; color:rgba(255,255,255,.35); letter-spacing:.5px }
-
-/* Результат */
-.rocket-result { height:40px; border-radius:10px; display:flex; align-items:center;
-  justify-content:center; font-family:var(--fb); font-size:13px; font-weight:700;
-  margin-bottom:10px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
-  color:rgba(255,255,255,.35); transition:all .3s }
-.rocket-result.win { background:rgba(74,222,128,.1); border-color:rgba(74,222,128,.35); color:#4ade80 }
-.rocket-result.loss { background:rgba(248,113,113,.08); border-color:rgba(248,113,113,.28); color:#f87171 }
-
-
-/* ══ РАКЕТКА — 3D MULTIPLAYER CRASH ═══════════════════ */
+.rkt-wrap { display:flex; flex-direction:column; }
 
 /* Сцена */
-.rkt-wrap { padding:0 }
-#page-rocket.active { padding-bottom:20px; }
-/* Отступ снизу для fixed кнопки + статистики */
 .rkt-scene {
-  position:relative; height:340px; overflow:hidden;
-  background:#000000;
-  border-bottom:1px solid rgba(255,255,255,.05);
+  position:relative; width:100%; height:300px;
+  background:#000; overflow:hidden; flex-shrink:0;
 }
-/* Координатная сетка поверх canvas — видна на ПК */
-.rkt-scene::before{
-  content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
-  background-image:
-    linear-gradient(rgba(255,120,0,.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,120,0,.06) 1px, transparent 1px);
-  background-size:40px 40px;
+@media(min-height:700px){ .rkt-scene{height:380px} }
+#rocketCanvas {
+  position:absolute; inset:0; width:100%; height:100%;
+  display:block; z-index:2;
 }
-/* Оси координат */
-.rkt-scene::after{
-  content:'';position:absolute;left:40px;bottom:40px;right:0;top:0;z-index:1;pointer-events:none;
-  border-left:1px solid rgba(255,130,0,.25);
-  border-bottom:1px solid rgba(255,130,0,.25);
-}
-/* Метки осей */
-.rkt-axis-x,.rkt-axis-y{
-  position:absolute;z-index:2;pointer-events:none;
-  font-family:var(--fd);font-size:7px;color:rgba(255,130,0,.35);letter-spacing:.5px;
-}
-.rkt-axis-y{left:6px;top:50%;transform:translateY(-50%) rotate(-90deg);letter-spacing:2px;}
-.rkt-axis-x{bottom:14px;right:12px;letter-spacing:2px;}
-@media(min-width:520px){
-  .rkt-scene{height:420px}
-}
-#rocketCanvas { position:absolute; inset:0; width:100%; height:100%; display:block; z-index:2; will-change:transform; transform:translateZ(0); }
 
 /* Множитель */
 .rkt-mult-wrap {
-  position:absolute; left:50%; top:38%;
+  position:absolute; top:50%; left:50%;
   transform:translate(-50%,-50%);
-  text-align:center; pointer-events:none;
-  z-index:2;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  z-index:10; text-align:center; pointer-events:none;
 }
 .rkt-mult {
-  font-family:var(--fd); font-size:88px; font-weight:900; line-height:1;
-  letter-spacing:-3px;
-  color:#fff;
-  font-variant-numeric:tabular-nums;
-  will-change:transform,filter;
-  transform:translateZ(0);
-  backface-visibility:hidden;
-  text-shadow:
-    0 0 30px rgba(255,255,255,.9),
-    0 0 60px rgba(255,255,255,.4),
-    0 2px 0 rgba(0,0,0,.8);
-  transition:color .15s, text-shadow .15s, transform 80ms ease-out;
-  display:block;
+  font-family:var(--fd); font-weight:900; font-size:52px;
+  letter-spacing:2px; line-height:1;
+  text-shadow:0 0 40px currentColor;
+  transition:color .15s;
 }
-/* Состояние ожидания */
-.rkt-mult.sw {
-  font-size:20px; letter-spacing:5px; color:rgba(255,255,255,.18);
-  text-shadow:none; font-weight:700; letter-spacing:4px;
+.rkt-mult.sw { color:rgba(255,255,255,.15); font-size:20px; }
+.rkt-mult.sf { color:#fff; }
+.rkt-mult.sf.sg  { color:#4ade80; }
+.rkt-mult.sf.sg2 { color:#ffd700; }
+.rkt-mult.sc { color:#f87171; }
+.rkt-sub {
+  font-family:var(--fd); font-size:10px; font-weight:600;
+  color:rgba(255,255,255,.35); letter-spacing:2px; margin-top:4px;
 }
-/* Краш — красный с большой вспышкой */
-.rkt-mult.sc {
-  color:#ff3333;
-  text-shadow:
-    0 0 40px rgba(255,50,50,1),
-    0 0 80px rgba(255,30,30,.7),
-    0 0 120px rgba(255,0,0,.4),
-    0 2px 0 rgba(0,0,0,.8);
-  animation:rCrashSlam .25s cubic-bezier(.3,1.6,.5,1) 1,
-            rCrashFade 1.0s ease 1.5s forwards;
-  opacity:1;
-}
-@keyframes rCrashSlam {
-  0%  { transform:scale(1.5); opacity:0; }
-  50% { transform:scale(.92); }
-  100%{ transform:scale(1); opacity:1; }
-}
-@keyframes rCrashFade {
-  0%   { opacity:1; }
-  100% { opacity:0; }
-}
-/* Полёт — белый */
-.rkt-mult.sf {
-  text-shadow:
-    0 0 30px rgba(255,255,255,.9),
-    0 0 60px rgba(255,255,255,.35),
-    0 2px 0 rgba(0,0,0,.8);
-}
-/* Зелёный (×5+) */
-.rkt-mult.sg {
-  color:#00ff88;
-  text-shadow:
-    0 0 40px rgba(0,255,136,.9),
-    0 0 80px rgba(0,255,136,.4),
-    0 2px 0 rgba(0,0,0,.8);
-}
-/* Золотой (×20+) */
-.rkt-mult.sg2 {
-  color:#ffd700;
-  text-shadow:
-    0 0 40px rgba(255,215,0,1),
-    0 0 80px rgba(255,215,0,.6),
-    0 0 120px rgba(255,140,0,.4),
-    0 2px 0 rgba(0,0,0,.8);
-}
-/* Анимация прыжка при обновлении */
 @keyframes rktMultJump {
-  0%  { transform:translate(-50%,-50%) scale(1.0); }
-  40% { transform:translate(-50%,-50%) scale(1.12); }
-  100%{ transform:translate(-50%,-50%) scale(1.0); }
+  0%{transform:scale(1)} 50%{transform:scale(1.12)} 100%{transform:scale(1)}
 }
 .rkt-mult-wrap.jumping { animation:rktMultJump 90ms ease-out; }
-.rkt-sub {
-  font-family:var(--fd); font-size:11px; letter-spacing:3px;
-  color:rgba(255,255,255,.3); margin-top:8px;
-  text-shadow:0 1px 3px rgba(0,0,0,.8);
-}
 
-/* Онлайн */
-.rkt-onl {
-  position:absolute; top:12px; right:14px;
-  display:flex; align-items:center; gap:5px;
-  background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.1);
-  border-radius:20px; padding:5px 12px;
-  font-family:var(--fd); font-size:8px; letter-spacing:1px; color:rgba(255,255,255,.45);
-  backdrop-filter:blur(12px);
-}
-.rkt-onl-dot { width:5px; height:5px; border-radius:50%; background:#4ade80; animation:connPulse 2s ease infinite }
-
-/* ID раунда */
-.rkt-round-id {
-  position:absolute; top:12px; left:14px;
-  background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.08);
-  border-radius:20px; padding:5px 12px;
-  font-family:var(--fd); font-size:8px; letter-spacing:1px; color:rgba(255,255,255,.3);
-  backdrop-filter:blur(12px);
-}
-
-/* Теги игроков */
-/* Красный оверлей краша — как в видео */
-.rkt-frame {
-  position:absolute; inset:0; z-index:3; pointer-events:none;
-}
+/* Краш оверлей */
 .rkt-crash-overlay {
-  position:absolute; inset:0; z-index:9; pointer-events:none;
-  opacity:0; transition:opacity 1.2s ease;
+  position:absolute; inset:0; z-index:8;
+  background:rgba(220,20,20,0); pointer-events:none;
+  transition:background .3s;
 }
-.rkt-crash-overlay.active {
-  opacity:1;
-  animation:rktCrashFlash 2.5s ease forwards;
-}
-@keyframes rktCrashFlash {
-  0%   { background:rgba(255,20,20,.75); }
-  25%  { background:rgba(220,0,0,.50);   }
-  60%  { background:rgba(180,0,0,.30);   }
-  100% { background:rgba(150,0,0,.10);   }
-}
-/* Большой текст КРАШ над иксами */
+.rkt-crash-overlay.active { background:rgba(220,20,20,.18); }
+
 .rkt-crash-label {
-  position:absolute; inset:0; z-index:10; pointer-events:none;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  opacity:0; transform:scale(1.3);
-  transition:opacity .15s, transform .15s;
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  z-index:15; text-align:center; pointer-events:none;
+  display:none;
 }
-.rkt-crash-label.active {
-  opacity:1; transform:scale(1);
-  animation:rktCrashLabelIn .2s cubic-bezier(.15,1.5,.4,1) forwards,
-             rktCrashLabelOut .6s ease 2.2s forwards;
-}
-@keyframes rktCrashLabelIn  {
-  0%  { transform:scale(2.2); opacity:0; }
-  60% { transform:scale(0.95); opacity:1; }
-  100%{ transform:scale(1); opacity:1; }
-}
-@keyframes rktCrashLabelOut { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(0.85)} }
+.rkt-crash-label.show { display:block; }
 .rkt-crash-label-x {
-  font-family:'Orbitron',monospace; font-weight:900;
-  font-size:68px; color:#ff2222; letter-spacing:2px;
-  text-shadow: 0 0 20px rgba(255,80,80,1), 0 0 60px rgba(255,40,40,.9),
-               0 0 100px rgba(255,0,0,.7), 0 0 160px rgba(200,0,0,.4);
-  line-height:1;
+  font-family:var(--fd); font-size:48px; font-weight:900;
+  color:#f87171; text-shadow:0 0 30px #f87171;
 }
 .rkt-crash-label-word {
-  font-family:'Orbitron',monospace; font-weight:900;
-  font-size:22px; color:rgba(255,120,120,.95); letter-spacing:8px;
-  margin-top:8px; text-shadow:0 0 30px rgba(255,60,60,.8);
+  font-family:var(--fd); font-size:13px; font-weight:700;
+  color:#f87171; letter-spacing:4px; opacity:.8;
 }
-.rkt-mult { transition:transform 80ms ease-out; }
 
-/* Прогресс-бар снизу сцены */
+/* Прогресс-бар */
 .rkt-progress-bar {
-  position:absolute; bottom:0; left:0; right:0; height:4px; z-index:8;
-  background:rgba(255,255,255,.08);
+  position:absolute; bottom:0; left:0; right:0;
+  height:3px; background:rgba(255,255,255,.08); z-index:12;
 }
 .rkt-pb-inner {
   height:100%; width:0%;
-  background:linear-gradient(90deg,#22c55e,#4ade80);
-  transition:width 0.15s linear;
-  box-shadow:0 0 8px rgba(74,222,128,.5);
+  background:linear-gradient(90deg,#ff6600,#ffcc00);
+  transition:width .1s linear;
 }
-.rkt-pb-inner.red {
-  background:linear-gradient(90deg,#ef4444,#f87171);
-  box-shadow:0 0 8px rgba(239,68,68,.5);
+.rkt-pb-inner.red { background:#f87171; }
+
+/* SVG рамка */
+.rkt-frame {
+  position:absolute; inset:0; width:100%; height:100%;
+  z-index:11; pointer-events:none;
 }
 
+/* Теги игроков */
 .rkt-players-overlay {
-  position:absolute; bottom:0; left:0; right:0;
-  padding:10px 12px; display:flex; flex-wrap:wrap; gap:5px;
-  pointer-events:none;
-  background:linear-gradient(0deg,rgba(0,0,10,.75) 0%,transparent 100%);
+  position:absolute; top:6px; left:6px; right:6px;
+  z-index:13; display:flex; flex-wrap:wrap; gap:4px; pointer-events:none;
 }
 .rkt-ptag {
-  padding:4px 10px; border-radius:20px; font-family:var(--fd);
-  font-size:8px; font-weight:700; letter-spacing:.4px;
-  backdrop-filter:blur(10px); border:1px solid; display:flex; align-items:center; gap:4px;
-  transition:all .25s;
+  display:flex; align-items:center; gap:4px;
+  background:rgba(0,0,0,.6); border-radius:8px;
+  padding:3px 7px 3px 4px; backdrop-filter:blur(4px);
+  border:1px solid rgba(255,255,255,.1);
 }
-.rkt-ptag.s-wait { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.14); color:rgba(255,255,255,.65) }
-.rkt-ptag.s-me   { background:rgba(232,184,75,.18);  border-color:rgba(232,184,75,.5);   color:#e8b84b; box-shadow:0 0 10px rgba(232,184,75,.2) }
-.rkt-ptag.s-cash { background:rgba(74,222,128,.15);  border-color:rgba(74,222,128,.4);   color:#4ade80; box-shadow:0 0 10px rgba(74,222,128,.2) }
-.rkt-ptag.s-boom { background:rgba(248,113,113,.1);  border-color:rgba(248,113,113,.3);  color:rgba(248,113,113,.65); text-decoration:line-through }
-.rkt-ptag-avatar { font-size:12px; line-height:1; display:flex;align-items:center }
-.rkt-ptag-avatar img { width:18px;height:18px;border-radius:50%;object-fit:cover }
-.rkt-ptag-info { display:flex; flex-direction:column; gap:1px }
-.rkt-ptag-name { font-size:8px }
-.rkt-ptag-val { font-size:9px; font-weight:900 }
+.rkt-ptag.s-cash { border-color:rgba(74,222,128,.4); }
+.rkt-ptag.s-boom  { border-color:rgba(248,113,113,.4); }
+.rkt-ptag-avatar { font-size:14px; line-height:1; }
+.rkt-ptag-info { display:flex; flex-direction:column; }
+.rkt-ptag-name { font-family:var(--fd); font-size:8px; color:rgba(255,255,255,.6); }
+.rkt-ptag-val  { font-family:var(--fd); font-size:9px; font-weight:700; color:#fff; }
 
-/* ── Панель управления ── */
-.rkt-panel { padding:14px 16px 16px; background:rgba(0,0,0,.2) }
+/* Кнопки */
+#rktBtnWrap {
+  position:sticky; top:0; z-index:20;
+  padding:8px 14px 8px; background:rgba(4,2,0,.98);
+  border-bottom:1px solid rgba(255,90,0,.15);
+  backdrop-filter:blur(10px);
+}
+#rktActionStatus {
+  font-family:var(--fd); font-size:9px; font-weight:700;
+  letter-spacing:1.5px; text-align:center;
+  color:rgba(255,255,255,.25); margin-bottom:5px; min-height:12px;
+}
+
+/* Панель */
+.rkt-panel { padding:12px 14px 0; }
+.rkt-res {
+  font-family:var(--fd); font-size:11px; font-weight:700;
+  letter-spacing:1px; color:rgba(255,255,255,.5);
+  text-align:center; padding:8px 0 6px; min-height:32px;
+}
+.rkt-res.win  { color:#4ade80; }
+.rkt-res.loss { color:#f87171; }
+
+.rkt-ctrl { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+.rkt-box { background:rgba(255,255,255,.04); border-radius:12px; padding:10px; }
+.rkt-lbl { font-family:var(--fd); font-size:8px; font-weight:700; letter-spacing:1.5px; color:rgba(255,255,255,.35); margin-bottom:6px; }
+.rkt-inp {
+  width:100%; box-sizing:border-box;
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
+  border-radius:8px; color:#fff; font-family:var(--fd); font-size:13px;
+  font-weight:700; padding:8px 10px; outline:none;
+}
+.rkt-presets { display:flex; gap:4px; flex-wrap:wrap; margin-top:6px; }
+.rkt-pr {
+  font-family:var(--fd); font-size:9px; font-weight:700;
+  background:rgba(255,255,255,.07); border-radius:6px;
+  padding:4px 7px; cursor:pointer; color:rgba(255,255,255,.6);
+}
+.rkt-pr:active { opacity:.6; }
+
+.rkt-autos { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; }
+.rkt-au {
+  font-family:var(--fd); font-size:9px; font-weight:700;
+  background:rgba(255,255,255,.06); border-radius:6px;
+  padding:5px 3px; text-align:center; cursor:pointer; color:rgba(255,255,255,.5);
+}
+.rkt-au.on { background:rgba(255,140,0,.2); color:#ffaa00; }
+.rkt-au-lbl { font-family:var(--fd); font-size:8px; color:rgba(255,255,255,.3); margin-top:5px; }
 
 /* История */
-.rkt-hist-wrap { display:flex; align-items:center; gap:8px; margin-bottom:12px }
-.rkt-hist-lbl { font-family:var(--fd); font-size:7px; letter-spacing:1.5px; color:rgba(255,255,255,.2); flex-shrink:0 }
-.rkt-hist { display:flex; gap:5px; overflow-x:auto; scrollbar-width:none; flex:1 }
-.rkt-hist::-webkit-scrollbar { display:none }
+.rkt-hist-wrap { margin-bottom:10px; }
+.rkt-hist-lbl { font-family:var(--fd); font-size:8px; font-weight:700; letter-spacing:1.5px; color:rgba(255,255,255,.3); margin-bottom:5px; }
+.rkt-hist { display:flex; gap:4px; flex-wrap:wrap; }
 .rkt-hc {
-  flex-shrink:0; cursor:default; display:inline-flex; align-items:center; justify-content:center;
-  transition:transform .12s;
+  font-family:var(--fd); font-size:9px; font-weight:700;
+  border-radius:6px; padding:3px 7px; border:1px solid;
 }
-.rkt-hc:active { transform:scale(.9) }
-.rkt-hc svg { display:block }
-.rkt-hc.hi svg .chip-bg { fill:rgba(30,60,30,.9) }
-.rkt-hc.hi svg .chip-border { stroke:#4ade80; stroke-opacity:.7 }
-.rkt-hc.hi svg .chip-glow { fill:#4ade80; fill-opacity:.12 }
-.rkt-hc.hi svg .chip-text { fill:#4ade80 }
-.rkt-hc.md svg .chip-bg { fill:rgba(30,30,40,.9) }
-.rkt-hc.md svg .chip-border { stroke:rgba(255,255,255,.3) }
-.rkt-hc.md svg .chip-glow { fill:rgba(255,255,255,.06) }
-.rkt-hc.md svg .chip-text { fill:rgba(255,255,255,.65) }
-.rkt-hc.lo svg .chip-bg { fill:rgba(50,18,18,.9) }
-.rkt-hc.lo svg .chip-border { stroke:#f87171; stroke-opacity:.6 }
-.rkt-hc.lo svg .chip-glow { fill:#f87171; fill-opacity:.1 }
-.rkt-hc.lo svg .chip-text { fill:#f87171 }
+.rkt-hc.hi { color:#4ade80; border-color:rgba(74,222,128,.4); background:rgba(74,222,128,.08); }
+.rkt-hc.md { color:rgba(255,255,255,.65); border-color:rgba(255,255,255,.2); background:rgba(255,255,255,.05); }
+.rkt-hc.lo { color:#f87171; border-color:rgba(248,113,113,.4); background:rgba(248,113,113,.06); }
 
-/* Таблица игроков */
-/* ── ЖИВАЯ ТАБЛИЦА ИГРОКОВ ── */
-.rkt-live-table-wrap {
-  margin:10px 0 6px;
-  border-radius:14px;
-  overflow:hidden;
-  border:1px solid rgba(255,255,255,.08);
-  background:rgba(255,255,255,.02);
-}
+/* Таблица */
+.rkt-live-table-wrap { margin-bottom:10px; }
 .rkt-live-table-header {
-  display:grid; grid-template-columns:1fr 60px 100px;
-  padding:7px 12px;
-  background:rgba(255,255,255,.04);
-  border-bottom:1px solid rgba(255,255,255,.07);
+  display:grid; grid-template-columns:1fr 80px 80px;
   font-family:var(--fd); font-size:8px; font-weight:700;
-  letter-spacing:1.5px; color:rgba(255,255,255,.3);
-  text-transform:uppercase;
+  letter-spacing:1px; color:rgba(255,255,255,.3);
+  padding:4px 8px; border-bottom:1px solid rgba(255,255,255,.06);
 }
 .rkt-live-row {
-  display:grid; grid-template-columns:1fr 60px 100px;
+  display:grid; grid-template-columns:1fr 80px 80px;
+  font-family:var(--fd); font-size:10px; font-weight:700;
+  padding:5px 8px; border-bottom:1px solid rgba(255,255,255,.04);
   align-items:center;
-  padding:7px 12px;
-  border-bottom:1px solid rgba(255,255,255,.04);
-  transition:background .3s ease;
-  position:relative; overflow:hidden;
-  contain:layout style;
-  will-change:contents;
 }
-.rkt-live-row:last-child { border-bottom:none; }
-.rkt-live-row.me   { background:rgba(232,184,75,.06); border-left:2px solid rgba(232,184,75,.5); }
-.rkt-live-row.cashed { background:rgba(74,222,128,.06); }
-.rkt-live-row.crashed { opacity:.75; background:rgba(248,113,113,.04); border-left:2px solid rgba(248,113,113,.3); }
-/* Flash анимация когда забирают */
-@keyframes cashFlash {
-  0%  { background:rgba(74,222,128,.35); }
-  100%{ background:rgba(74,222,128,.06); }
-}
-.rkt-live-row.flash-cash { animation:cashFlash .7s ease forwards; }
-@keyframes crashFlash {
-  0%  { background:rgba(248,113,113,.35); }
-  100%{ background:rgba(248,113,113,.04); }
-}
-.rkt-live-row.flash-crash { animation:crashFlash .8s ease forwards; }
-.rkt-live-player { display:flex; align-items:center; gap:7px; min-width:0; }
-.rkt-live-ava {
-  width:26px; height:26px; flex-shrink:0; border-radius:50%;
-  background:rgba(255,255,255,.07); border:1.5px solid rgba(255,255,255,.12);
-  display:flex; align-items:center; justify-content:center; overflow:hidden;
-  font-size:13px;
-}
-.rkt-live-name { font-family:var(--fd); font-size:10px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:90px; }
-.rkt-live-status { font-size:8px; color:rgba(255,255,255,.3); margin-top:1px; letter-spacing:.3px; }
-.rkt-live-status.flying { color:#fbbf24; font-weight:700; }
-.rkt-live-status.cashed { color:#4ade80; font-weight:900; font-size:9px; }
-.rkt-live-status.crashed { color:#f87171; font-weight:700; }
-.rkt-live-bet { font-family:var(--fd); font-size:10px; font-weight:700; color:rgba(255,255,255,.55); text-align:right; }
-.rkt-live-profit { font-family:var(--fd); font-size:12px; font-weight:900; text-align:right;
-  transition:color .3s ease; }
-.rkt-live-status-wrap { transition:color .3s ease; }
-.rkt-live-profit-wrap { transition:color .3s ease; }
-.rkt-live-profit.pos  { color:#4ade80; }
-.rkt-live-profit.neg  { color:#f87171; }
-.rkt-live-profit.grow { color:#86efac; }
-.rkt-live-profit.wait { color:rgba(255,255,255,.2); font-size:10px; }
+.rkt-live-row.me { background:rgba(255,140,0,.06); }
+.rkt-live-row .rn { color:rgba(255,255,255,.7); }
+.rkt-live-row .rb { color:rgba(255,255,255,.5); }
+.rkt-live-row .rp { color:rgba(255,255,255,.4); }
+.rkt-live-row .rp.win { color:#4ade80; }
+.rkt-live-row .rp.loss { color:#f87171; }
 
-.rkt-players-table {
-  background:rgba(255,255,255,.025); border:1px solid rgba(255,255,255,.08);
-  border-radius:14px; overflow:hidden; margin-bottom:12px;
-}
-.rkt-pt-header {
-  display:grid; grid-template-columns:1fr 80px 90px;
-  padding:8px 14px; border-bottom:1px solid rgba(255,255,255,.06);
-  font-family:var(--fd); font-size:7px; letter-spacing:1.5px; color:rgba(255,255,255,.25);
-}
-.rkt-pt-row {
-  display:grid; grid-template-columns:1fr 80px 90px;
-  padding:9px 14px; border-bottom:1px solid rgba(255,255,255,.04);
-  align-items:center; transition:background .25s;
-}
-.rkt-pt-row:last-child { border-bottom:none }
-.rkt-pt-row.r-me   { background:rgba(232,184,75,.07) }
-.rkt-pt-row.r-me.r-watch { background:rgba(255,255,255,.03); border-left:2px solid rgba(232,184,75,.3) }
-.rkt-pt-row.r-cash { background:rgba(74,222,128,.06) }
-.rkt-pt-row.r-boom { opacity:.45 }
-.rkt-pt-player { display:flex; align-items:center; gap:8px }
-.rkt-pt-ava    { width:32px; height:32px; flex-shrink:0; border-radius:50%; overflow:hidden; background:rgba(255,255,255,.06); border:1.5px solid rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; }
-.rkt-pt-ava img { width:100%;height:100%;border-radius:50%;object-fit:cover;display:block }
-.rkt-pt-ava svg { width:100%;height:100%;display:block }
-.rkt-pt-name   { font-family:var(--fd); font-size:10px; font-weight:700; color:#fff }
-.rkt-pt-tag    { font-family:var(--fd); font-size:7px; color:rgba(255,255,255,.3); margin-top:2px }
-.rkt-pt-bet    { font-family:var(--fd); font-size:11px; font-weight:700; color:rgba(255,255,255,.65); text-align:right }
-.rkt-pt-profit { font-family:var(--fd); font-size:12px; font-weight:900; text-align:right }
-.rkt-pt-profit.pos  { color:#4ade80; text-shadow:0 0 8px rgba(74,222,128,.4) }
-.rkt-pt-profit.neg  { color:#f87171 }
-.rkt-pt-profit.wait { color:#86efac; font-size:11px; text-shadow:0 0 6px rgba(74,222,128,.3) }
+/* Статистика */
+.rkt-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding-bottom:16px; }
+.rkt-sc { text-align:center; background:rgba(255,255,255,.04); border-radius:10px; padding:8px 4px; }
+.rkt-sv { display:block; font-family:var(--fd); font-size:14px; font-weight:900; color:#fff; }
+.rkt-sl { font-family:var(--fd); font-size:7px; font-weight:700; letter-spacing:1.5px; color:rgba(255,255,255,.3); }
 
-/* Результат */
-.rkt-res {
-  height:42px; border-radius:12px; display:flex; align-items:center;
-  justify-content:center; font-family:var(--fb); font-size:14px; font-weight:700;
-  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
-  color:rgba(255,255,255,.3); transition:all .3s; margin-bottom:12px;
-}
-.rkt-res.win  { background:rgba(74,222,128,.12); border-color:rgba(74,222,128,.35); color:#4ade80; box-shadow:0 0 20px rgba(74,222,128,.15) }
-.rkt-res.loss { background:rgba(248,113,113,.09); border-color:rgba(248,113,113,.28); color:#f87171 }
-
-/* Контролы */
-.rkt-ctrl { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px }
-.rkt-box {
-  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
-  border-radius:14px; padding:13px;
-}
-.rkt-lbl { font-family:var(--fd); font-size:7px; letter-spacing:2px; color:rgba(255,255,255,.28); margin-bottom:8px }
-.rkt-inp {
-  width:100%; padding:10px 12px; background:rgba(255,255,255,.07);
-  border:1px solid rgba(255,255,255,.12); border-radius:10px;
-  color:#fff; font-family:var(--fd); font-size:17px; font-weight:700;
-  outline:none; text-align:center; transition:border-color .15s;
-}
-.rkt-inp:focus { border-color:rgba(255,255,255,.3) }
-.rkt-inp, .custom-input { font-size:16px!important; }
-.rkt-presets { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; margin-top:7px }
-.rkt-pr {
-  padding:6px 2px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
-  border-radius:7px; color:rgba(255,255,255,.38); font-family:var(--fd); font-size:8px;
-  font-weight:700; cursor:pointer; text-align:center; transition:all .12s;
-}
-.rkt-pr:active { transform:scale(.91) }
-.rkt-pr:hover  { background:rgba(255,255,255,.11); color:#fff; border-color:rgba(255,255,255,.2) }
-.rkt-autos { display:grid; grid-template-columns:repeat(4,1fr); gap:4px }
-.rkt-au {
-  padding:9px 2px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
-  border-radius:9px; color:rgba(255,255,255,.35); font-family:var(--fd); font-size:10px;
-  font-weight:700; cursor:pointer; text-align:center; transition:all .12s;
-}
-.rkt-au.on { background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.3); color:#fff }
-.rkt-au:active { transform:scale(.91) }
-.rkt-au-lbl { font-family:var(--fd); font-size:8px; color:rgba(255,255,255,.22); letter-spacing:.7px; margin-top:7px }
-
-/* Главная кнопка */
-.rkt-btn {
-  width:100%; padding:20px; border:none; border-radius:16px;
-  font-family:var(--fd); font-size:17px; font-weight:900; letter-spacing:2px;
-  cursor:pointer; margin-bottom:12px; position:relative; overflow:hidden;
-  transition:background .5s ease, color .5s ease, box-shadow .5s ease, opacity .4s ease;
-}
-.rkt-btn::after {
-  content:''; position:absolute; inset:0;
-  background:linear-gradient(180deg,rgba(255,255,255,.12) 0%,transparent 60%);
-  pointer-events:none;
-}
-/* ПОСТАВИТЬ — белая, статичная, без пульсации */
-.rkt-btn.bb {
-  background:#ffffff;
-  color:#0a0a0a; font-size:18px; letter-spacing:3px;
-  box-shadow:0 4px 20px rgba(255,255,255,.2);
-}
-.rkt-btn.bb:hover { box-shadow:0 6px 28px rgba(255,255,255,.32); }
-/* ОТПРАВЛЯЕМ — оранжевая */
-.rkt-btn.bl {
-  background:#e08000;
-  color:#fff; font-size:16px; letter-spacing:2px;
-  box-shadow:0 4px 18px rgba(255,140,0,.35);
-  cursor:wait;
-}
-@keyframes rSpinIcon { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-.rkt-btn-spin { display:inline-block; animation:rSpinIcon .6s linear infinite; }
-/* ЗАБРАТЬ — зелёная */
-.rkt-btn.bc {
-  background:#16a34a;
-  color:#fff; font-size:19px; letter-spacing:1px;
-  text-shadow:0 1px 3px rgba(0,0,0,.3);
-  box-shadow:0 4px 18px rgba(74,222,128,.4);
-}
-.rkt-btn.bc:hover { box-shadow:0 6px 28px rgba(74,222,128,.55); }
-/* СЕРАЯ — неактивна */
-.rkt-btn.bw {
-  background:rgba(255,255,255,.07); color:rgba(255,255,255,.25);
-  cursor:not-allowed; box-shadow:none;
-}
-.rkt-btn:disabled { pointer-events:none }
-.rkt-btn:active:not(.bw):not(:disabled) { transform:scale(.97) }
-
-/* Оверлей кнопки внутри сцены — прилипает к низу canvas */
-.rkt-btn-overlay {
-  position:absolute;
-  bottom:14px; left:16px; right:16px;
-  z-index:10;
-  pointer-events:none;
-}
-.rkt-btn-overlay .rkt-btn {
-  pointer-events:all;
-  width:100%; margin:0;
-  padding:16px 20px;
-  font-size:17px;
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
-}
-
-/* Кнопка — sticky снизу, прямо над статистикой */
-
-
-
-/* ══ НОВАЯ ПАНЕЛЬ УПРАВЛЕНИЯ ══ */
-.rcp-wrap {
-  background:rgba(8,5,2,.98);
-  border-bottom:1px solid rgba(255,100,0,.12);
-  padding:10px 12px 12px;
-}
-.rcp-top-row {
-  display:flex; align-items:center; justify-content:space-between;
-  gap:8px; margin-bottom:10px; min-height:22px;
-}
-.rcp-top-row .rkt-res { flex:1; margin:0; padding:0; background:none; border:none; font-size:11px; }
-.rcp-top-row .rkt-hist { flex:1; min-width:0; }
-
-/* ОСНОВНАЯ СЕТКА */
-.rcp-main { display:flex; gap:10px; align-items:stretch; }
-.rcp-left { flex:1; display:flex; flex-direction:column; gap:7px; min-width:0; }
-.rcp-right { width:108px; flex-shrink:0; }
-
-/* ПОЛЕ СТАВКИ */
-.rcp-field-row {
-  display:flex; height:44px;
-  background:rgba(255,255,255,.06);
-  border:1.5px solid rgba(255,255,255,.1);
-  border-radius:12px; overflow:hidden;
-}
-.rcp-half, .rcp-dbl {
-  background:rgba(255,255,255,.07); border:none;
-  color:rgba(255,255,255,.55); font-family:var(--fd);
-  font-size:13px; font-weight:800; padding:0 13px;
-  cursor:pointer; transition:background .12s;
-  -webkit-tap-highlight-color:transparent; flex-shrink:0;
-}
-.rcp-half:active, .rcp-dbl:active { background:rgba(255,140,0,.25); color:#fff; }
-.rcp-inp {
-  flex:1; background:none; border:none; outline:none;
-  font-family:var(--fd); font-size:17px; font-weight:800;
-  color:#fff; text-align:center; padding:0 2px;
-}
-
-/* ПРЕСЕТЫ */
-.rcp-presets {
-  display:grid; grid-template-columns:repeat(5,1fr); gap:4px;
-}
-.rcp-presets button {
-  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09);
-  border-radius:8px; color:rgba(255,255,255,.5);
-  font-family:var(--fd); font-size:9px; font-weight:700; letter-spacing:.3px;
-  padding:6px 2px; cursor:pointer; text-align:center;
-  -webkit-tap-highlight-color:transparent; transition:all .12s;
-}
-.rcp-presets button:active { background:rgba(255,140,0,.2); color:#fff; border-color:rgba(255,140,0,.4); }
-.rcp-pr-max { color:#fbbf24 !important; border-color:rgba(251,191,36,.25) !important; }
-
-/* АВТО-ВЫВОД */
-.rcp-auto {
-  display:flex; align-items:center; gap:4px;
-}
-.rcp-auto span {
+/* WS статус */
+#rktWsStatus {
+  position:absolute; top:6px; right:6px; z-index:20;
   font-family:var(--fd); font-size:7px; font-weight:700;
-  letter-spacing:1.5px; color:rgba(255,255,255,.2);
-  white-space:nowrap; flex-shrink:0;
+  letter-spacing:1px; padding:2px 6px; border-radius:4px;
+  background:rgba(0,0,0,.6);
 }
-.rcp-au {
-  flex:1; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
-  border-radius:7px; color:rgba(255,255,255,.35);
-  font-family:var(--fd); font-size:8px; font-weight:700;
-  padding:5px 2px; cursor:pointer; text-align:center;
-  -webkit-tap-highlight-color:transparent; transition:all .12s;
-}
-.rcp-au.on, .rcp-au-active {
-  background:rgba(255,140,0,.15); border-color:rgba(255,140,0,.4); color:#fbbf24;
-}
-.rcp-au-off { color:rgba(255,255,255,.2); }
-.rcp-au:active { background:rgba(255,140,0,.2); }
+#rktWsStatus.ok   { color:#4ade80; }
+#rktWsStatus.err  { color:#f87171; }
+#rktWsStatus.wait { color:#fbbf24; }
 
-/* ══ БОЛЬШАЯ КНОПКА ══ */
-.rcp-btn {
-  width:100%; height:100%; min-height:118px;
-  border:none; border-radius:16px; cursor:pointer;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:3px; padding:10px 6px;
-  font-family:var(--fd);
-  transition:transform .08s; position:relative; overflow:hidden;
-  -webkit-tap-highlight-color:transparent;
-}
-.rcp-btn::after {
-  content:''; position:absolute; top:0; left:0; right:0; height:45%;
-  background:linear-gradient(180deg,rgba(255,255,255,.18) 0%,transparent 100%);
-  pointer-events:none; border-radius:16px 16px 0 0;
-}
-.rcp-btn:active:not(:disabled) { transform:scale(.95); }
-.rcp-btn:disabled { cursor:not-allowed; }
-.rcp-btn-label {
-  font-size:9px; font-weight:900; letter-spacing:2px; opacity:.75;
-}
-.rcp-btn-val {
-  font-size:16px; font-weight:900; letter-spacing:0;
-  line-height:1.15; text-align:center; white-space:pre-line;
+#rktOnlineWrap {
+  position:absolute; bottom:8px; right:8px; z-index:13;
+  font-family:var(--fd); font-size:9px; color:rgba(255,255,255,.4);
 }
 
-/* ПОСТАВИТЬ — белая, пульсирует */
-.rcp-bet {
-  background:linear-gradient(160deg,#ffffff 0%,#d4d4d4 100%);
-  box-shadow:0 4px 28px rgba(255,255,255,.3), 0 0 0 1px rgba(255,255,255,.15);
-  animation:rcpBetPulse 2s ease infinite alternate;
-  color:#0a0a0a;
-}
-@keyframes rcpBetPulse {
-  from { box-shadow:0 4px 20px rgba(255,255,255,.2); }
-  to   { box-shadow:0 6px 40px rgba(255,255,255,.5), 0 0 0 2px rgba(255,255,255,.12); }
-}
-/* ОТПРАВЛЯЕМ — оранжевая, мигает */
-.rcp-send {
-  background:linear-gradient(160deg,#f97316 0%,#c2410c 100%);
-  box-shadow:0 4px 20px rgba(249,115,22,.5);
-  animation:rcpSendPulse .5s ease infinite alternate;
-  color:#fff;
-}
-@keyframes rcpSendPulse { from{opacity:.75} to{opacity:1} }
-/* ЖДЁМ — серая, неактивна */
-.rcp-wait {
-  background:rgba(255,255,255,.06);
-  box-shadow:none; animation:none;
-  color:rgba(255,255,255,.2);
-}
-/* ЗАБРАТЬ — зелёная, пульсирует */
-.rcp-cash {
-  background:linear-gradient(160deg,#22c55e 0%,#15803d 100%);
-  box-shadow:0 4px 28px rgba(34,197,94,.6), 0 0 0 2px rgba(34,197,94,.2);
-  animation:rcpCashPulse .55s ease infinite alternate;
-  color:#fff;
-}
-@keyframes rcpCashPulse {
-  from { box-shadow:0 4px 20px rgba(34,197,94,.4); transform:scale(1); }
-  to   { box-shadow:0 8px 40px rgba(34,197,94,.8), 0 0 0 4px rgba(34,197,94,.2); transform:scale(1.03); }
-}
-
-/* История иксов поверх сцены — вверху */
-display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
-  position:sticky; bottom:0; z-index:10;
-  background:rgba(10,8,4,.96);
-  border-top:1px solid rgba(255,110,0,.2);
-  padding:10px 0 calc(8px + env(safe-area-inset-bottom));
-  backdrop-filter:blur(16px);
-  margin:0 -16px; padding-left:16px; padding-right:16px;
-}
-.rkt-sc {
-  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
-  border-radius:12px; padding:12px 8px; text-align:center;
-}
-.rkt-sv { font-family:var(--fd); font-size:14px; font-weight:700; color:#fff; display:block; margin-bottom:3px }
-.rkt-sl { font-size:9px; color:rgba(255,255,255,.28); letter-spacing:.4px }
-
-/* Тряска — строго по центру */
-@keyframes rktShake {
-  0%,100%{transform:translate(-50%,-50%) translate(0,0)}
-  20%{transform:translate(-50%,-50%) translate(-3px,-1.5px)}
-  40%{transform:translate(-50%,-50%) translate(3px,1.5px)}
-  60%{transform:translate(-50%,-50%) translate(-2px,-2px)}
-  80%{transform:translate(-50%,-50%) translate(2px,1px)}
-}
-@keyframes rktShakeMed {
-  0%,100%{transform:translate(-50%,-50%) translate(0,0) scale(1)}
-  15%{transform:translate(-50%,-50%) translate(-5px,-3px) scale(1.02)}
-  30%{transform:translate(-50%,-50%) translate(5px,3px) scale(0.98)}
-  45%{transform:translate(-50%,-50%) translate(-4px,-2px) scale(1.02)}
-  60%{transform:translate(-50%,-50%) translate(4px,2px) scale(0.99)}
-  75%{transform:translate(-50%,-50%) translate(-3px,-3px) scale(1.01)}
-  90%{transform:translate(-50%,-50%) translate(3px,1px) scale(1)}
-}
-@keyframes rktShakeHard {
-  0%,100%{transform:translate(-50%,-50%) translate(0,0) scale(1)}
-  10%{transform:translate(-50%,-50%) translate(-7px,-4px) scale(1.04)}
-  20%{transform:translate(-50%,-50%) translate(7px,4px) scale(0.96)}
-  30%{transform:translate(-50%,-50%) translate(-6px,-3px) scale(1.05)}
-  40%{transform:translate(-50%,-50%) translate(6px,3px) scale(0.97)}
-  50%{transform:translate(-50%,-50%) translate(-7px,3px) scale(1.04)}
-  60%{transform:translate(-50%,-50%) translate(7px,-3px) scale(0.96)}
-  70%{transform:translate(-50%,-50%) translate(-5px,4px) scale(1.03)}
-  80%{transform:translate(-50%,-50%) translate(5px,-2px) scale(0.98)}
-  90%{transform:translate(-50%,-50%) translate(-6px,-3px) scale(1.02)}
-}
-@keyframes rktShakeCrazy {
-  0%,100%{transform:translate(-50%,-50%) translate(0,0) scale(1) rotate(0deg)}
-  8%{transform:translate(-50%,-50%) translate(-10px,-5px) scale(1.06) rotate(-1deg)}
-  16%{transform:translate(-50%,-50%) translate(10px,5px) scale(0.94) rotate(1deg)}
-  24%{transform:translate(-50%,-50%) translate(-9px,-4px) scale(1.07) rotate(-0.5deg)}
-  32%{transform:translate(-50%,-50%) translate(9px,4px) scale(0.95) rotate(1deg)}
-  40%{transform:translate(-50%,-50%) translate(-10px,4px) scale(1.06) rotate(-1deg)}
-  48%{transform:translate(-50%,-50%) translate(10px,-4px) scale(0.95) rotate(0.5deg)}
-  56%{transform:translate(-50%,-50%) translate(-8px,5px) scale(1.05) rotate(-1deg)}
-  64%{transform:translate(-50%,-50%) translate(8px,-3px) scale(0.96) rotate(1deg)}
-  72%{transform:translate(-50%,-50%) translate(-9px,-5px) scale(1.04) rotate(-0.5deg)}
-  80%{transform:translate(-50%,-50%) translate(9px,4px) scale(0.97) rotate(0.5deg)}
-  90%{transform:translate(-50%,-50%) translate(-7px,-4px) scale(1.03) rotate(-0.5deg)}
-}
-.rkt-mult-wrap.shaking      { animation:rktShake     0.14s ease-in-out infinite }
-.rkt-mult-wrap.shaking-med  { animation:rktShakeMed  0.10s ease-in-out infinite }
-.rkt-mult-wrap.shaking-hard { animation:rktShakeHard 0.07s ease-in-out infinite }
-.rkt-mult-wrap.shaking-crazy{ animation:rktShakeCrazy 0.05s linear infinite }
-
-/* ── FREE FIRE декорации ── */
-.ff-corner{position:fixed;pointer-events:none;z-index:0;opacity:0.07}
-.ff-corner.tl{top:0;left:0;width:160px;height:160px;
-  background:radial-gradient(circle at 0% 0%,#ff6600,transparent 70%);}
-.ff-corner.br{bottom:0;right:0;width:160px;height:160px;
-  background:radial-gradient(circle at 100% 100%,#ff4400,transparent 70%);}
-.ff-corner.tr{top:0;right:0;width:120px;height:120px;
-  background:radial-gradient(circle at 100% 0%,#ffaa00,transparent 70%);}
-
-/* FF ромб-декор в хедере */
-.ff-diamond{
-  display:inline-block;width:8px;height:8px;
-  background:linear-gradient(135deg,#ff6600,#ffcc00);
-  transform:rotate(45deg);margin:0 4px;
-  box-shadow:0 0 6px rgba(255,100,0,.6);
-}
-
-/* Огненные линии под навигацией */
-.nav::after{
-  content:''; display:block; position:absolute;
-  bottom:-2px; left:18px; right:18px; height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,100,0,.4),rgba(255,200,0,.6),rgba(255,100,0,.4),transparent);
-}
-  border-color:rgba(255,120,0,.4)!important;
-  background:rgba(255,80,0,.1)!important;
-  color:#ffaa44!important;
-}
-
-/* FF-стиль счётчик онлайн */
-.rkt-onl-dot{background:#ff6600!important;}
-.rkt-onl{border-color:rgba(255,100,0,.3)!important;}
-
-/* Огненные иксы в истории */
-.rkt-hc.hi{
-  border-color:rgba(255,150,0,.4)!important;
-  color:#ffaa44!important;
-  text-shadow:0 0 8px rgba(255,100,0,.5)!important;
-}
-
-/* ── Анимированный слот на сплеше ── */
-.splash-slot { position:relative; margin-bottom:22px; flex-shrink:0; }
-.splash-slot-frame {
-  background:linear-gradient(160deg,#1c1c1c 0%,#2e2e2e 50%,#1a1a1a 100%);
-  border:2px solid rgba(255,160,0,.55);
-  border-radius:18px; padding:12px 14px;
-  box-shadow:0 0 40px rgba(255,100,0,.25), 0 0 80px rgba(255,60,0,.1),
-             inset 0 1px 0 rgba(255,255,255,.12), inset 0 -1px 0 rgba(0,0,0,.4);
-  position:relative; overflow:hidden;
-}
-.splash-slot-frame::before {
-  content:'◆  S L O P P Y X  C A S I N O  ◆';
-  display:block; text-align:center;
-  font-family:var(--fd); font-size:7px; letter-spacing:2px;
-  color:rgba(255,160,0,.5); margin-bottom:10px;
-}
-.splash-slot-frame::after {
-  content:''; position:absolute; top:0; left:0; right:0; height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,200,0,.7),transparent);
-}
-.splash-slot-reels {
-  display:flex; gap:8px; height:64px; overflow:hidden;
-  background:rgba(0,0,0,.5); border-radius:10px;
-  padding:0 6px; border:1px solid rgba(255,150,0,.2);
-}
-.splash-reel {
-  width:54px; height:64px; overflow:hidden;
-  position:relative; flex-shrink:0;
-}
-.splash-reel::before, .splash-reel::after {
-  content:''; position:absolute; left:0; right:0; height:18px; z-index:2;
-  pointer-events:none;
-}
-.splash-reel::before { top:0; background:linear-gradient(180deg,rgba(0,0,0,.9),transparent); }
-.splash-reel::after  { bottom:0; background:linear-gradient(0deg,rgba(0,0,0,.9),transparent); }
-.splash-reel-inner {
-  display:flex; flex-direction:column; align-items:center;
-  font-size:30px; line-height:1;
-  animation:reelSpin var(--rspd,0.18s) linear infinite;
-}
-.splash-reel-inner span { display:block; height:64px; line-height:64px; text-align:center; width:54px; }
-#splashReel0 .splash-reel-inner { --rspd:0.15s; }
-#splashReel1 .splash-reel-inner { --rspd:0.20s; animation-delay:-0.06s; }
-#splashReel2 .splash-reel-inner { --rspd:0.17s; animation-delay:-0.11s; }
-@keyframes reelSpin {
-  0%   { transform:translateY(0); }
-  100% { transform:translateY(-640px); }
-}
-.splash-slot-line {
-  position:absolute; left:14px; right:14px;
-  top:calc(50% + 8px); transform:translateY(-50%);
-  height:2px;
-  background:linear-gradient(90deg,transparent,rgba(255,200,0,.9),rgba(255,255,100,1),rgba(255,200,0,.9),transparent);
-  box-shadow:0 0 10px rgba(255,200,0,.6), 0 0 20px rgba(255,150,0,.3);
-}
-
-
-/* Анимации иконок главного меню */
-@keyframes iconSlots{0%,100%{transform:rotate(-8deg) scale(1)}50%{transform:rotate(8deg) scale(1.1)}}
-@keyframes iconRocket{0%,100%{transform:translateY(0) rotate(-10deg)}50%{transform:translateY(-8px) rotate(8deg)}}
-@keyframes iconProfile{0%,100%{transform:scale(1)}40%{transform:scale(1.1) rotate(-3deg)}80%{transform:scale(1.1) rotate(3deg)}}
-@keyframes iconTop{0%,100%{transform:rotate(-5deg) scale(1)}50%{transform:rotate(5deg) scale(1.12)}}
-@keyframes iconTable{0%,100%{transform:scale(1)}50%{transform:scale(1.12) rotate(8deg)}}
-.home-card.slots .home-card-icon span,.home-card.slots .home-card-icon{animation:iconSlots 2s ease-in-out infinite}
-.home-card.rocket .home-card-icon span,.home-card.rocket .home-card-icon{animation:iconRocket 1.8s ease-in-out infinite}
-.home-card.profile .home-card-icon span,.home-card.profile .home-card-icon{animation:iconProfile 2.2s ease-in-out infinite}
-.home-card.top .home-card-icon span,.home-card.top .home-card-icon{animation:iconTop 2s ease-in-out infinite}
-.home-card.table .home-card-icon span,.home-card.table .home-card-icon{animation:iconTable 2.5s ease-in-out infinite}
 </style>
 </head>
 <body>
 
 <div id="splash">
   <div class="splash-stars" id="splashStars"></div>
+  <!-- Кольца с аватаром -->
+  <div class="splash-rings" id="splashRings" style="margin-bottom:16px">
+    <div class="splash-ring"></div>
+    <div class="splash-ring"></div>
+    <div class="splash-ring"></div>
+    <div class="splash-center">
+      <div id="splashAvatarWrap" style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(0,0,0,.5);">
+        <span id="splashAvatarEl" style="font-size:44px;line-height:1">🐏</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Анимированный слот-автомат -->
   <div class="splash-slot" id="splashSlot">
     <div class="splash-slot-frame">
@@ -2218,13 +1568,19 @@ display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
     <div class="rkt-scene">
       <canvas id="rocketCanvas"></canvas>
 
-      <!-- Множитель по центру -->
+      <!-- WS статус -->
+      <div id="rktWsStatus" class="wait">●&nbsp;ПОДКЛЮЧЕНИЕ</div>
+
+      <!-- Онлайн -->
+      <div id="rktOnlineWrap">👥 <span id="rktOnl">1</span></div>
+
+      <!-- Множитель -->
       <div class="rkt-mult-wrap" id="rktMultWrap">
-        <div class="rkt-mult sw" id="rktMult">ЖДЁМ</div>
+        <div class="rkt-mult sw" id="rktMult"></div>
         <div class="rkt-sub" id="rktSub">Следующий раунд скоро</div>
       </div>
 
-      <!-- SVG рамка по краям -->
+      <!-- SVG рамка -->
       <svg class="rkt-frame" viewBox="0 0 400 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="fg1" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -2234,97 +1590,72 @@ display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
           </linearGradient>
           <linearGradient id="fg2" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.8"/>
-            <stop offset="50%" stop-color="#7c3aed" stop-opacity="0.5"/>
             <stop offset="100%" stop-color="#00e5ff" stop-opacity="0.8"/>
           </linearGradient>
-          <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         </defs>
-        <!-- Верхняя линия -->
         <line x1="20" y1="2" x2="380" y2="2" stroke="url(#fg1)" stroke-width="1.5" filter="url(#glow)" opacity="0.7"/>
-        <!-- Нижняя линия -->
         <line x1="20" y1="298" x2="380" y2="298" stroke="url(#fg1)" stroke-width="1.5" filter="url(#glow)" opacity="0.7"/>
-        <!-- Левая линия -->
         <line x1="2" y1="20" x2="2" y2="280" stroke="url(#fg2)" stroke-width="1.5" filter="url(#glow)" opacity="0.7"/>
-        <!-- Правая линия -->
         <line x1="398" y1="20" x2="398" y2="280" stroke="url(#fg2)" stroke-width="1.5" filter="url(#glow)" opacity="0.7"/>
-        <!-- Углы — верх лево -->
         <path d="M2,20 L2,2 L20,2" fill="none" stroke="#00e5ff" stroke-width="2.5" filter="url(#glow)" opacity="0.9"/>
-        <!-- Углы — верх право -->
         <path d="M380,2 L398,2 L398,20" fill="none" stroke="#00e5ff" stroke-width="2.5" filter="url(#glow)" opacity="0.9"/>
-        <!-- Углы — низ лево -->
         <path d="M2,280 L2,298 L20,298" fill="none" stroke="#00e5ff" stroke-width="2.5" filter="url(#glow)" opacity="0.9"/>
-        <!-- Углы — низ право -->
         <path d="M380,298 L398,298 L398,280" fill="none" stroke="#00e5ff" stroke-width="2.5" filter="url(#glow)" opacity="0.9"/>
-        <!-- Засечки по центру верх -->
-        <line x1="198" y1="2" x2="202" y2="2" stroke="#00e5ff" stroke-width="3" filter="url(#glow)" opacity="0.9"/>
-        <!-- Засечки по центру низ -->
-        <line x1="198" y1="298" x2="202" y2="298" stroke="#00e5ff" stroke-width="3" filter="url(#glow)" opacity="0.9"/>
-        <!-- Засечки по центру лево -->
-        <line x1="2" y1="148" x2="2" y2="152" stroke="#00e5ff" stroke-width="3" filter="url(#glow)" opacity="0.9"/>
-        <!-- Засечки по центру право -->
-        <line x1="398" y1="148" x2="398" y2="152" stroke="#00e5ff" stroke-width="3" filter="url(#glow)" opacity="0.9"/>
       </svg>
-      <!-- Красный оверлей при краше -->
+
+      <!-- Краш оверлей -->
       <div class="rkt-crash-overlay" id="rktCrashOverlay"></div>
-      <!-- Большой текст КРАШ -->
       <div class="rkt-crash-label" id="rktCrashLabel">
         <div class="rkt-crash-label-x" id="rktCrashLabelX">×0.00</div>
         <div class="rkt-crash-label-word">КРАШ</div>
       </div>
 
-      <!-- Прогресс-бар снизу сцены -->
+      <!-- Прогресс-бар -->
       <div class="rkt-progress-bar">
         <div class="rkt-pb-inner" id="rktProgressBar"></div>
       </div>
 
-      <!-- Теги игроков поверх сцены -->
+      <!-- Теги игроков -->
       <div class="rkt-players-overlay" id="rktTags"></div>
     </div>
 
-    <!-- КНОПКИ — sticky под игрой -->
-    <div id="rktBtnWrap" style="position:sticky;top:0;z-index:20;padding:8px 14px 6px;background:rgba(4,2,0,.98);border-bottom:1px solid rgba(255,90,0,.15);backdrop-filter:blur(10px);">
-      <div id="rktActionStatus" style="font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:1.5px;text-align:center;color:rgba(255,255,255,.25);margin-bottom:5px;min-height:12px;"></div>
-      <!-- Кнопка ПОСТАВИТЬ — скрывается после ставки -->
-      <button id="rktBtnBet" onclick="rktAction()"
+    <!-- Кнопки -->
+    <div id="rktBtnWrap">
+      <div id="rktActionStatus"></div>
+      <button id="rktBtnBet" onclick="rktPlaceBet()"
         style="display:none;width:100%;margin:0;padding:20px;border:none;border-radius:16px;font-family:var(--fd);font-size:18px;font-weight:900;letter-spacing:3px;cursor:pointer;background:#ffffff;color:#0a0a0a;box-shadow:0 4px 20px rgba(255,255,255,.2);">
         🚀 ПОСТАВИТЬ
       </button>
-      <!-- Кнопка ЗАБРАТЬ — появляется только во время полёта со ставкой -->
-      <button id="rktBtnCash" onclick="_rktFrozenMult=(RKT&&RKT.mult)?parseFloat(RKT.mult.toFixed(2)):null;rktDoCashout()"
+      <button id="rktBtnCash" onclick="rktDoCashout()"
         style="display:none;width:100%;margin:0;padding:20px;border:none;border-radius:16px;font-family:var(--fd);font-size:19px;font-weight:900;letter-spacing:1px;cursor:pointer;background:#16a34a;color:#fff;box-shadow:0 4px 18px rgba(74,222,128,.4);">
         💸 ЗАБРАТЬ
       </button>
-      <!-- Статусная кнопка — серая, недоступная (ожидание/отправка) -->
       <button id="rktBtnStatus" disabled
         style="display:none;width:100%;margin:0;padding:20px;border:none;border-radius:16px;font-family:var(--fd);font-size:16px;font-weight:900;letter-spacing:2px;cursor:not-allowed;background:rgba(255,255,255,.07);color:rgba(255,255,255,.3);">
-        ⏳ Загрузка...
+        ⏳
       </button>
     </div>
 
-    <!-- Панель управления -->
+    <!-- Панель -->
     <div class="rkt-panel">
-
-      <!-- Результат раунда -->
       <div class="rkt-res" id="rktRes">Поставь токены и жди старта 🚀</div>
-
-      <!-- Ставка + Авто-вывод -->
       <div class="rkt-ctrl">
         <div class="rkt-box">
           <div class="rkt-lbl">СТАВКА</div>
-          <input class="rkt-inp" id="rktInp" type="text" inputmode="numeric" pattern="[0-9]*" value="10000" placeholder="10000 / 1к / 1кк / 1ккк" min="1000" step="1000" enterkeyhint="done">
+          <input class="rkt-inp" id="rktInp" type="text" inputmode="numeric" pattern="[0-9]*" value="10000" placeholder="10000 / 1к / 1кк" enterkeyhint="done">
           <div class="rkt-presets">
             <div class="rkt-pr" onclick="rktPreset(10000)">10K</div>
-            <div class="rkt-pr" onclick="rktPreset(100000000)">100М</div>
-            <div class="rkt-pr" onclick="rktPreset(1000000)">1КК</div>
             <div class="rkt-pr" onclick="rktPreset(100000)">100K</div>
-            <div class="rkt-pr" onclick="rktMultBet(2)" style="color:var(--green)">×2</div>
+            <div class="rkt-pr" onclick="rktPreset(1000000)">1КК</div>
+            <div class="rkt-pr" onclick="rktPreset(100000000)">100М</div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px">
-            <div class="rkt-pr" style="color:#f87171;font-size:8px" onclick="rktMultBet(0.5)">×0.5</div>
-            <div class="rkt-pr" style="color:#fbbf24;font-size:8px" onclick="rktMultBet(1.5)">×1.5</div>
-            <div class="rkt-pr" style="color:#60a5fa;font-size:8px" onclick="rktMultBet(2)">×2</div>
-            <div class="rkt-pr" style="color:#c084fc;font-size:8px" onclick="rktMultBet(3)">×3</div>
-            <div class="rkt-pr" style="color:#4ade80;font-size:8px" onclick="rktMultBet(5)">×5</div>
+            <div class="rkt-pr" style="color:#f87171" onclick="rktMultBet(.5)">×0.5</div>
+            <div class="rkt-pr" style="color:#fbbf24" onclick="rktMultBet(1.5)">×1.5</div>
+            <div class="rkt-pr" style="color:#60a5fa" onclick="rktMultBet(2)">×2</div>
+            <div class="rkt-pr" style="color:#c084fc" onclick="rktMultBet(3)">×3</div>
+            <div class="rkt-pr" style="color:#4ade80" onclick="rktMultBet(5)">×5</div>
           </div>
         </div>
         <div class="rkt-box">
@@ -2339,33 +1670,26 @@ display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
         </div>
       </div>
 
-      <!-- История крашей -->
       <div class="rkt-hist-wrap">
         <div class="rkt-hist-lbl">ИКСЫ</div>
         <div class="rkt-hist" id="rktHist"></div>
       </div>
 
-      <!-- Живая таблица игроков -->
       <div class="rkt-live-table-wrap">
         <div class="rkt-live-table-header">
-          <span>ИГРОК</span>
-          <span>СТАВКА</span>
-          <span>ПРИБЫЛЬ</span>
+          <span>ИГРОК</span><span>СТАВКА</span><span>ПРИБЫЛЬ</span>
         </div>
         <div id="rktTable"></div>
       </div>
 
-      <!-- Мини-статистика -->
       <div class="rkt-stats">
         <div class="rkt-sc"><span class="rkt-sv" id="rStG">0</span><span class="rkt-sl">ИГРЫ</span></div>
         <div class="rkt-sc"><span class="rkt-sv" id="rStB" style="color:#4ade80">—</span><span class="rkt-sl">ЛУЧШИЙ</span></div>
         <div class="rkt-sc"><span class="rkt-sv" id="rStP">0</span><span class="rkt-sl">ПРИБЫЛЬ</span></div>
       </div>
-
     </div>
   </div>
 
-  <!-- ══ TOP LEADERS ══ -->
   <div class="page" id="page-top">
   <div class="pg-back" onclick="showPage('home')">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -2804,7 +2128,7 @@ function showPage(n) {
     }
   } catch(e){}
   if(n==='rocket') {
-    try { rktUI(); } catch(e){} // мгновенно обновляем кнопку до init
+    try { rktUpdateUI(); } catch(e){} // мгновенно обновляем кнопку до init
     try { initRocketOnce(); } catch(e){}
   } else {
     // Скрываем нативную кнопку если была включена
@@ -4365,17 +3689,21 @@ async function init() {
   const splash = document.getElementById('splash');
 
   function closeSplash() {
-    if(splash && splash.parentNode) {
-      splash.classList.add('hide');
-      setTimeout(() => { try { splash.remove(); } catch(e){} }, 500);
-    }
+    if(!splash) return;
+    splash.classList.add('hide');
+    splash.style.pointerEvents = 'none';
+    // Удаляем из DOM через 600мс после fade
+    setTimeout(() => {
+      try { if(splash.parentNode) splash.parentNode.removeChild(splash); } catch(e){}
+    }, 600);
     if(bar) bar.style.width = '100%';
   }
 
-  // Таймер: с API — ждём до 5 сек, без API — 1.5 сек
+  // Таймер: с API — ждём до 3с, без API — 800мс
   const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
-  const emergencyMs = hasApi ? 5000 : 1500;
+  const emergencyMs = hasApi ? 3000 : 800;
   const emergency = setTimeout(() => {
+    console.warn('[Init] Emergency timeout — закрываем сплеш принудительно');
     closeSplash();
     try { startBalancePolling(); } catch(e) {}
   }, emergencyMs);
@@ -4399,6 +3727,11 @@ async function init() {
       try {
         try { setAvaEl(document.getElementById('spoAvatar'), 44); } catch(e){}
         try { setAvaEl(document.getElementById('pAvatar'), 50); } catch(e){}
+        // Обновляем аватар на сплеше
+        try {
+          const splashAva = document.getElementById('splashAvatarEl');
+          if(splashAva) { splashAva.innerHTML = renderAvatarHtml(selectedAvatar||'🐏', 56); }
+        } catch(e){}
       } catch(e) {}
     } catch(e) {}
 
@@ -4441,7 +3774,7 @@ async function init() {
 
     const loadedBal = await Promise.race([
       safeLoadBalanceAnimated(),
-      new Promise(r=>setTimeout(()=>r(null), hasApi ? 4000 : 1000))
+      new Promise(r=>setTimeout(()=>r(null), hasApi ? 2500 : 800))
     ]);
 
     clearInterval(t3);
@@ -4454,7 +3787,7 @@ async function init() {
     try{ refreshBets(); }catch(e){}
     try{ for(const b of [100000,50000,25000,10000]){if(balance>=b){selectBet(b);break;}} }catch(e){}
 
-    await new Promise(r=>setTimeout(r,900));
+    await new Promise(r=>setTimeout(r,400));
 
   } catch(e) {
     console.warn('Init error:', e);
@@ -4646,7 +3979,7 @@ async function loadAllFromCloud() {
                 if(Math.abs(cr.p) > Math.abs(RKT.stats.p)) RKT.stats.p = cr.p;
               }
               try{ localStorage.setItem('rkt_'+USER_ID, JSON.stringify(RKT.stats)); }catch(e){}
-              try{ rktUI(); }catch(e){}
+              try{ rktUpdateUI(); }catch(e){}
               console.log('[CloudSync] 🚀 Ракетка из Cloud: ' + cr.g + ' раундов');
             }
           }catch(e){}
@@ -4971,1944 +4304,1022 @@ window.addEventListener('pagehide', () => {
 
 
 // ══════════════════════════════════════════════════════════
-// 🚀 РАКЕТКА — 3D MULTIPLAYER CRASH GAME
-// Реальные игроки через бота + 3D-модель ракеты на Canvas
-// ══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// 🚀 РАКЕТКА — CRASH GAME (WebSocket + Demo)
+// Чистая архитектура: один источник правды, RAF для анимации
+// ═══════════════════════════════════════════════════════════
+
+// ── Состояние ────────────────────────────────────────────
 const RKT = {
-  phase:'waiting', roundId:-1, mult:1.00, crashAt:null,
-  waitLeft:5, players:[], history:[], online:1,
-  betPlaced:false, cashedOut:false, myBet:10000, auto:0,
-  _betTs:0, // timestamp когда была поставлена ставка
-  _ls: Date.now(),
-  stats:(function(){
-    try{
-      const keys=['rkt_'+USER_ID,'backup_rkt_'+USER_ID,'cs_rkt_'+USER_ID];
-      for(const k of keys){
-        const r=localStorage.getItem(k);
-        if(r){const d=JSON.parse(r);if(d&&typeof d.g==='number')return{g:d.g||0,b:d.b||0,p:d.p||0};}
+  phase: 'waiting',   // waiting | flying | crashed
+  roundId: -1,
+  mult: 1.00,
+  crashAt: null,
+  waitLeft: 5,        // секунд до старта
+  waitTotal: 5,       // полная длина паузы (для прогресс-бара)
+  launchAt: 0,        // Date.now() + waitLeft*1000 — якорь таймера
+  ls: 0,              // Date.now() когда mult=1.00 (для вычисления mult)
+  players: [],
+  history: [],
+  online: 1,
+  betPlaced: false,
+  cashedOut: false,
+  cashedMult: null,
+  myBet: 10000,
+  auto: 0,
+  stats: (function(){
+    try {
+      for (const k of ['rkt_'+USER_ID,'backup_rkt_'+USER_ID]) {
+        const r = localStorage.getItem(k);
+        if (r) { const d=JSON.parse(r); if(d&&typeof d.g==='number') return {g:d.g||0,b:d.b||0,p:d.p||0}; }
       }
-    }catch(e){}
-    return{g:0,b:0,p:0};
+    } catch(e) {}
+    return {g:0, b:0, p:0};
   })()
 };
-function rktSave(){
-  const d=RKT.stats;
-  const key='rkt_'+USER_ID;
-  try{localStorage.setItem(key,JSON.stringify(d));}catch(e){}
-  try{localStorage.setItem('backup_'+key,JSON.stringify(d));}catch(e){}
-  if(d.g>0){ cloudSet('cs_rkt_'+USER_ID,JSON.stringify(d)); }
-  // Дополнительно сохраняем баланс
-  try{localStorage.setItem('bal_'+USER_ID, String(balance));}catch(e){}
-  cloudSet('balance_'+USER_ID, String(balance));
-}
 
-// Сохранить всё — вызывать при важных событиях
-function saveAllData(){
-  try{ saveStats(); } catch(e){}
-  try{ rktSave(); } catch(e){}
-  try{ localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
-  try{ cloudSet('balance_'+USER_ID, String(balance)); } catch(e){}
+function saveAllData() {
+  try { saveStats(); } catch(e) {}
+  try { rktSave(); }  catch(e) {}
+  try { localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e) {}
+  try { cloudSet('balance_'+USER_ID, String(balance)); } catch(e) {}
 }
-
-// Авто-сохранение каждые 30 секунд
 setInterval(saveAllData, 30000);
+try { window.addEventListener('beforeunload', saveAllData); } catch(e) {}
+try { document.addEventListener('visibilitychange', () => { if(document.hidden) saveAllData(); }); } catch(e) {}
 
-// Сохранение при уходе со страницы
-window.addEventListener('beforeunload', saveAllData);
-try{ document.addEventListener('visibilitychange', function(){ if(document.hidden) saveAllData(); }); }catch(e){}
+function rktSave() {
+  const d = RKT.stats;
+  const k = 'rkt_'+USER_ID;
+  try { localStorage.setItem(k, JSON.stringify(d)); } catch(e) {}
+  try { localStorage.setItem('backup_'+k, JSON.stringify(d)); } catch(e) {}
+  try { cloudSet(k, JSON.stringify(d)); } catch(e) {}
+  try { localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e) {}
+  try { cloudSet('balance_'+USER_ID, String(balance)); } catch(e) {}
+}
 
-// ── Canvas + рисование ────────────────────────────────────
-let rCvs,rCtx,rW,rH,rTrail=[],rAFid=null,rStars=null;
-let rTime=0, rCrashParticles=[], rSpeedParts=[];
-let _crashFlash=0, _crashRings=[];
-let rPermanentT=0, rPermanentDir=1;
+// ── Canvas ────────────────────────────────────────────────
+let rCvs, rCtx, rW, rH;
+let rStars = null;
+let rTime  = 0;
+let rTrail = [];          // [[x,y], …] трасса ракеты
+let rCrashParticles = [];
+let rCashNotifs = [];     // всплывающие уведомления кешаута
 
-// Скин Free Fire удалён
+function rktInitCanvas() {
+  rCvs = document.getElementById('rocketCanvas');
+  if (!rCvs) return;
+  const wrap = rCvs.parentElement;
+  rW = wrap.offsetWidth  || 360;
+  rH = wrap.offsetHeight || 300;
+  const dpr = window.devicePixelRatio || 1;
+  rCvs.width  = rW * dpr;
+  rCvs.height = rH * dpr;
+  rCvs.style.width  = rW + 'px';
+  rCvs.style.height = rH + 'px';
+  rCtx = rCvs.getContext('2d');
+  rCtx.scale(dpr, dpr);
 
+  // Звёзды
+  rStars = Array.from({length:120}, () => ({
+    x: Math.random()*rW, y: Math.random()*rH,
+    r: 0.3 + Math.random()*1.4,
+    bri: Math.random()*Math.PI*2,
+    spd: 0.15 + Math.random()*0.6,
+    vy: 0  // скорость скролла вниз во время полёта
+  }));
 
-function initRktCvs(){
-  rCvs=document.getElementById('rocketCanvas'); if(!rCvs) return;
-  const wrap=rCvs.parentElement;
-  rW=wrap.offsetWidth||360; rH=wrap.offsetHeight||320;
-  const dpr=window.devicePixelRatio||1;
-  rCvs.width=rW*dpr; rCvs.height=rH*dpr;
-  rCvs.style.width=rW+'px'; rCvs.style.height=rH+'px';
-  rCtx=rCvs.getContext('2d'); rCtx.scale(dpr,dpr);
-  // Звёзды с параллаксом
-  rStars=[];
-  for(let i=0;i<150;i++) rStars.push({
-    x:Math.random()*rW, y:Math.random()*rH,
-    r:0.2+Math.random()*1.5,
-    bri:Math.random()*Math.PI*2,
-    spd:0.15+Math.random()*0.7,
-    layer:Math.floor(Math.random()*3)
-  });
-  // Сразу запускаем постоянную анимацию
-  rPermAF();
-
-  // Реинициализация при изменении размера контейнера
-  if(rCvs._resizeObs) rCvs._resizeObs.disconnect();
+  // ResizeObserver
   try {
-    rCvs._resizeObs = new ResizeObserver(()=>{
-      const newW=wrap.offsetWidth||360, newH=wrap.offsetHeight||320;
-      if(Math.abs(newW-rW)>2 || Math.abs(newH-rH)>2){
-        rW=newW; rH=newH;
-        const dpr2=window.devicePixelRatio||1;
-        rCvs.width=rW*dpr2; rCvs.height=rH*dpr2;
+    if (rCvs._ro) rCvs._ro.disconnect();
+    rCvs._ro = new ResizeObserver(() => {
+      const nW = wrap.offsetWidth||360, nH = wrap.offsetHeight||300;
+      if (Math.abs(nW-rW)>2 || Math.abs(nH-rH)>2) {
+        rW=nW; rH=nH;
+        const d2=window.devicePixelRatio||1;
+        rCvs.width=rW*d2; rCvs.height=rH*d2;
         rCvs.style.width=rW+'px'; rCvs.style.height=rH+'px';
-        rCtx=rCvs.getContext('2d'); rCtx.scale(dpr2,dpr2);
+        rCtx=rCvs.getContext('2d'); rCtx.scale(d2,d2);
       }
     });
-    rCvs._resizeObs.observe(wrap);
-  } catch(e){}
+    rCvs._ro.observe(wrap);
+  } catch(e) {}
 }
 
-// ── Постоянный анимационный цикл (всегда работает) ──────
-let _rPermRunning=false;
-function rPermAF(){
-  if(_rPermRunning) return; // защита от дублей
-  _rPermRunning=true;
-  function _loop(){ rDraw(); requestAnimationFrame(_loop); }
-  requestAnimationFrame(_loop);
-}
-
-// ── Траектория ───────────────────────────────────────────
-function rPos(t){
-  // Трасса идёт от центра-низа вверх — ракета летит вертикально
-  const x = rW*0.5 + Math.sin(t*1.8)*rW*0.06; // лёгкий синусоидальный изгиб
-  const y = rH*0.85 - t*rH*0.75;
-  return [x, y];
-}
-
-// ── FREE FIRE РАКЕТА — большая, брендированная ────────────
-function rDrawRocket3D(ctx, x, y, scale, angle, thrustPow, crashed){
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(angle);
-  const s = scale * 1.4; // Размер ракеты
-  const t = rTime;
-
-  if(crashed){
-    const et = Math.min(((t % 60) / 60), 1);
-    const ef = 1 - et;
-    for(let ring=0; ring<6; ring++){
-      const rr = (ring+1) * 28 * et * s;
-      const alpha = Math.max(0, ef * 0.55 * (1 - ring*0.12));
-      const col1 = ring<2 ? `rgba(255,200,50,${alpha})` : ring<4 ? `rgba(255,80,0,${alpha*0.8})` : `rgba(200,0,0,${alpha*0.5})`;
-      const g = ctx.createRadialGradient(0,0,rr*0.1,0,0,rr);
-      g.addColorStop(0, col1); g.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,rr,0,Math.PI*2); ctx.fill();
-    }
-    for(let i=0; i<16; i++){
-      const a = (i/16)*Math.PI*2 + et*2.5;
-      const r2 = (35+i*2.5)*et*s;
-      const w = (4+i%3)*s*(1-et*0.5);
-      ctx.save(); ctx.translate(Math.cos(a)*r2, Math.sin(a)*r2); ctx.rotate(a);
-      const lg = ctx.createLinearGradient(0,-w,0,w*3);
-      lg.addColorStop(0,`rgba(255,240,100,${ef*0.95})`);
-      lg.addColorStop(0.3,`rgba(255,120,0,${ef*0.85})`);
-      lg.addColorStop(1,'rgba(200,0,0,0)');
-      ctx.fillStyle=lg;
-      ctx.beginPath(); ctx.moveTo(-w*0.5,0); ctx.quadraticCurveTo(w*0.3,-w*0.3,w*0.5,0); ctx.quadraticCurveTo(w*0.3,w*2.5,-w*0.5,0);
-      ctx.fill(); ctx.restore();
-    }
-    const flashR = 22*s*(1-et);
-    const fg=ctx.createRadialGradient(0,0,0,0,0,flashR);
-    fg.addColorStop(0,`rgba(255,255,255,${ef})`);
-    fg.addColorStop(0.5,`rgba(255,180,50,${ef*0.7})`);
-    fg.addColorStop(1,'rgba(255,80,0,0)');
-    ctx.fillStyle=fg; ctx.beginPath(); ctx.arc(0,0,flashR,0,Math.PI*2); ctx.fill();
-    ctx.restore(); return;
-  }
-
-  const h = 70*s;
-  const w = 16*s;
-  const bob = Math.sin(t*0.1)*2*s;
-  ctx.translate(0, bob);
-
-  // ── ПЛАМЯ ДВИГАТЕЛЯ (большое) ────────────────────────────
-  const thrLen = 50*s*(0.4 + thrustPow*1.1);
-  const thrW   = 14*s*(0.4 + thrustPow*0.6);
-  const flicker = 0.82 + Math.sin(t*0.9)*0.18;
-  const flames=[
-    {w:.25,l:.5,  c1:'rgba(255,255,220,1)',   c2:'rgba(255,230,80,.95)',c3:'rgba(255,140,0,0)'},
-    {w:.5, l:.75, c1:'rgba(255,210,70,.95)',  c2:'rgba(255,100,0,.8)', c3:'rgba(255,40,0,0)'},
-    {w:.78,l:1.0, c1:'rgba(255,150,20,.75)',  c2:'rgba(255,60,0,.45)', c3:'rgba(200,0,0,0)'},
-    {w:1.1,l:1.2, c1:'rgba(255,90,0,.4)',     c2:'rgba(200,20,0,.12)', c3:'rgba(0,0,0,0)'},
-  ];
-  flames.forEach((fl,fi)=>{
-    const jx=(Math.random()-.5)*5*s*flicker;
-    const jl=fl.l*(0.88+Math.sin(t*0.42+fi*1.4)*0.12);
-    const fg=ctx.createLinearGradient(0,h*.24,jx,h*.24+thrLen*jl);
-    fg.addColorStop(0,fl.c1); fg.addColorStop(.4,fl.c2); fg.addColorStop(1,fl.c3);
-    ctx.fillStyle=fg;
-    ctx.beginPath();
-    ctx.moveTo(-thrW*fl.w*.5,h*.24);
-    ctx.quadraticCurveTo(jx*.6+(Math.random()-.5)*3*s,h*.24+thrLen*jl*.5,jx,h*.24+thrLen*jl);
-    ctx.quadraticCurveTo(jx*.6+(Math.random()-.5)*3*s,h*.24+thrLen*jl*.5,thrW*fl.w*.5,h*.24);
-    ctx.closePath(); ctx.fill();
-  });
-  // Ядро пламени
-  const coreG=ctx.createRadialGradient(0,h*.26,0,0,h*.26,thrW*.7);
-  coreG.addColorStop(0,'rgba(255,255,240,1)'); coreG.addColorStop(.4,'rgba(255,190,50,.9)'); coreG.addColorStop(1,'rgba(255,80,0,0)');
-  ctx.fillStyle=coreG; ctx.beginPath(); ctx.arc(0,h*.26,thrW*.7*flicker,0,Math.PI*2); ctx.fill();
-
-  // ── КОРПУС (чёрный с оранжевыми деталями FF-стиль) ───────
-  // Свечение
-  const glowG=ctx.createRadialGradient(0,0,w*.5,0,0,w*4);
-  glowG.addColorStop(0,'rgba(255,100,0,0.15)'); glowG.addColorStop(1,'rgba(255,60,0,0)');
-  ctx.fillStyle=glowG; ctx.beginPath(); ctx.ellipse(0,-h*.3,w*4,h*.65,0,0,Math.PI*2); ctx.fill();
-
-  // Основной корпус — чёрный с текстурой
-  const bodyG=ctx.createLinearGradient(-w,0,w,0);
-  bodyG.addColorStop(0,'#0a0a0a');
-  bodyG.addColorStop(0.15,'#1a1a1a');
-  bodyG.addColorStop(0.4,'#2a2a2a');
-  bodyG.addColorStop(0.6,'#1e1e1e');
-  bodyG.addColorStop(0.85,'#111');
-  bodyG.addColorStop(1,'#050505');
-  ctx.shadowColor='rgba(255,100,0,.5)'; ctx.shadowBlur=12*s;
-  ctx.fillStyle=bodyG;
-  ctx.beginPath();
-  ctx.moveTo(0,-h*.78);
-  ctx.bezierCurveTo(w*.65,-h*.6, w*1.0,-h*.15, w,h*.14);
-  ctx.lineTo(-w,h*.14);
-  ctx.bezierCurveTo(-w*1.0,-h*.15, -w*.65,-h*.6, 0,-h*.78);
-  ctx.fill(); ctx.shadowBlur=0;
-
-  // Контур оранжевый
-  const outG=ctx.createLinearGradient(-w,0,w,0);
-  outG.addColorStop(0,'rgba(255,80,0,0)');
-  outG.addColorStop(0.5,'rgba(255,140,0,0.8)');
-  outG.addColorStop(1,'rgba(255,80,0,0)');
-  ctx.strokeStyle=outG; ctx.lineWidth=1.5*s;
-  ctx.beginPath();
-  ctx.moveTo(0,-h*.78);
-  ctx.bezierCurveTo(w*.65,-h*.6,w*1.0,-h*.15,w,h*.14);
-  ctx.lineTo(-w,h*.14);
-  ctx.bezierCurveTo(-w*1.0,-h*.15,-w*.65,-h*.6,0,-h*.78);
-  ctx.stroke();
-
-  // Полоса FREE FIRE — оранжевая полоска
-  const strG=ctx.createLinearGradient(-w*.9,-h*.02,w*.9,-h*.02);
-  strG.addColorStop(0,'rgba(255,100,0,0)');
-  strG.addColorStop(0.2,'rgba(255,150,0,1)');
-  strG.addColorStop(0.8,'rgba(255,150,0,1)');
-  strG.addColorStop(1,'rgba(255,100,0,0)');
-  ctx.fillStyle=strG;
-  ctx.beginPath(); ctx.ellipse(0,-h*.02,w*.88,2.8*s,0,0,Math.PI*2); ctx.fill();
-  // Вторая полоска
-  const str2G=ctx.createLinearGradient(-w*.75,-h*.18,w*.75,-h*.18);
-  str2G.addColorStop(0,'rgba(255,80,0,0)');
-  str2G.addColorStop(0.3,'rgba(255,120,0,.6)');
-  str2G.addColorStop(0.7,'rgba(255,120,0,.6)');
-  str2G.addColorStop(1,'rgba(255,80,0,0)');
-  ctx.fillStyle=str2G;
-  ctx.beginPath(); ctx.ellipse(0,-h*.18,w*.72,1.8*s,0,0,Math.PI*2); ctx.fill();
-
-  // Иллюминатор
-  const portR=7*s;
-  const portG=ctx.createRadialGradient(-portR*.2,-h*.38,portR*.1,0,-h*.38,portR);
-  portG.addColorStop(0,'rgba(255,200,100,1)');
-  portG.addColorStop(0.4,'rgba(255,120,0,.9)');
-  portG.addColorStop(1,'rgba(180,60,0,.4)');
-  ctx.shadowColor='rgba(255,150,0,.9)'; ctx.shadowBlur=10*s;
-  ctx.fillStyle=portG; ctx.beginPath(); ctx.arc(0,-h*.38,portR,0,Math.PI*2); ctx.fill();
-  ctx.strokeStyle='rgba(255,180,0,.7)'; ctx.lineWidth=1.2*s; ctx.stroke();
-  ctx.shadowBlur=0;
-  // FF в иллюминаторе
-  ctx.fillStyle='rgba(255,240,150,.9)';
-  ctx.font=`bold ${5*s}px Arial`;
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('FF',0,-h*.38);
-
-  // Крылья — острые, чёрные с оранжевым кантом
-  [1,-1].forEach(sx=>{
-    ctx.save(); ctx.scale(sx,1);
-    const wgG=ctx.createLinearGradient(w*.9,0,w*2.4,h*.2);
-    wgG.addColorStop(0,'#1a1a1a'); wgG.addColorStop(0.5,'#111'); wgG.addColorStop(1,'#050505');
-    ctx.fillStyle=wgG;
-    ctx.beginPath();
-    ctx.moveTo(w*.9,h*.04); ctx.lineTo(w*2.6,h*.24); ctx.lineTo(w*.95,h*.14); ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle='rgba(255,120,0,.5)'; ctx.lineWidth=1*s;
-    ctx.beginPath(); ctx.moveTo(w*.9,h*.04); ctx.lineTo(w*2.6,h*.24); ctx.stroke();
-    ctx.restore();
-  });
-
-  // ── НАДПИСЬ FREE FIRE ────────────────────────────────────
-  ctx.save();
-  // Фон таблички
-  const tagW=36*s, tagH=10*s;
-  const tagG=ctx.createLinearGradient(-tagW*.5,-h*.08,tagW*.5,-h*.08);
-  tagG.addColorStop(0,'rgba(255,80,0,0)');
-  tagG.addColorStop(0.2,'rgba(255,100,0,.9)');
-  tagG.addColorStop(0.8,'rgba(255,80,0,.9)');
-  tagG.addColorStop(1,'rgba(255,80,0,0)');
-  ctx.fillStyle=tagG;
-  ctx.beginPath(); ctx.roundRect(-tagW*.5,-h*.08-tagH*.5,tagW,tagH,2); ctx.fill();
-  // Текст FREE FIRE
-  ctx.shadowColor='rgba(255,200,0,.8)'; ctx.shadowBlur=6*s;
-  ctx.fillStyle='rgba(255,255,200,1)';
-  ctx.font=`bold ${5.5*s}px Arial Black, Arial`;
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('FREE FIRE',0,-h*.08);
-  ctx.shadowBlur=0;
-  ctx.restore();
-
-  // Носовой конус — глянцевый
-  const noseG=ctx.createLinearGradient(-w*.3,-h*.78,w*.3,-h*.6);
-  noseG.addColorStop(0,'rgba(255,180,80,0.6)'); noseG.addColorStop(1,'rgba(255,80,0,0)');
-  ctx.fillStyle=noseG;
-  ctx.beginPath();
-  ctx.moveTo(0,-h*.78); ctx.bezierCurveTo(w*.2,-h*.72,w*.25,-h*.66,w*.22,-h*.62);
-  ctx.lineTo(-w*.22,-h*.62); ctx.bezierCurveTo(-w*.25,-h*.66,-w*.2,-h*.72,0,-h*.78);
-  ctx.fill();
-
-  // Хвостовые сопла — два
-  [-w*.55, w*.55].forEach(ox=>{
-    ctx.fillStyle='#1a1a1a';
-    ctx.beginPath(); ctx.ellipse(ox,h*.16,5*s,3.5*s,0,0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle='rgba(255,120,0,.5)'; ctx.lineWidth=.8*s; ctx.stroke();
-  });
-
-  ctx.restore();
-}
-
-
-// ── ГЛАВНЫЙ РЕНДЕР ──────────────────────────────────────
-function rDraw(){
-  if(!rCtx) return;
+// ── Главный цикл рендера (всегда 60fps) ──────────────────
+(function rktRenderLoop() {
+  requestAnimationFrame(rktRenderLoop);
+  if (!rCtx) return;
   rTime++;
-  const ctx=rCtx;
 
-  // Фон — чистый чёрный
-  ctx.fillStyle='#000000'; ctx.fillRect(0,0,rW,rH);
+  const ctx = rCtx;
+  const phase = RKT.phase;
 
-  // Тёмная сетка
-  ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
-  const gridSize=40;
-  for(let x=0;x<rW;x+=gridSize){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,rH);ctx.stroke();}
-  for(let y=0;y<rH;y+=gridSize){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(rW,y);ctx.stroke();}
+  // Фон
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, rW, rH);
 
-  // Звёзды с мерцанием
-  if(rStars) rStars.forEach(s=>{
-    s.bri+=s.spd*0.025;
-    const a=0.2+Math.abs(Math.sin(s.bri))*0.8;
-    const sz=s.r;
-    ctx.globalAlpha=a;
-    // Яркие звёзды — с мягким свечением
-    if(sz>1.0){
-      const sg=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,sz*3);
-      sg.addColorStop(0,s.col||'#ffffff'); sg.addColorStop(1,'rgba(0,0,0,0)');
-      ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(s.x,s.y,sz*3,0,Math.PI*2); ctx.fill();
-    }
-    ctx.fillStyle=s.col||'#fff'; ctx.beginPath(); ctx.arc(s.x,s.y,sz,0,Math.PI*2); ctx.fill();
-  });
-  ctx.globalAlpha=1;
+  // Сетка
+  ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+  ctx.lineWidth = 1;
+  for (let x=0; x<rW; x+=40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,rH); ctx.stroke(); }
+  for (let y=0; y<rH; y+=40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(rW,y); ctx.stroke(); }
 
-  // ── ВСПЫШКА ───────────────────────────────────────────────
-  if(_crashFlash>0){
-    _crashFlash-=0.04;
-    ctx.save();
-    ctx.globalAlpha=Math.max(0,_crashFlash)*0.7;
-    ctx.fillStyle='#ffffff';
-    ctx.fillRect(0,0,rW,rH);
-    ctx.restore();
+  // Звёзды
+  if (rStars) {
+    const starSpd = phase==='flying' ? Math.min(1.5 + RKT.mult*0.3, 10) : 0;
+    rStars.forEach(s => {
+      s.bri += s.spd * 0.025;
+      s.y   += starSpd;
+      if (s.y > rH+4) { s.y=-4; s.x=Math.random()*rW; }
+      const a = 0.2 + Math.abs(Math.sin(s.bri)) * 0.75;
+      ctx.globalAlpha = a;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
   }
 
-  // ── УДАРНЫЕ ВОЛНЫ (кольца) ────────────────────────────────
-  _crashRings.forEach(ring=>{
-    if(ring.delay>0){ring.delay--;return;}
-    ring.started=true;
-    ring.r+=(ring.maxR-ring.r)*0.09+2;
-    ring.life-=0.025;
-    if(ring.life<=0) return;
-    ctx.save();
-    ctx.globalAlpha=Math.max(0,ring.life)*0.6;
-    const grad=ctx.createRadialGradient(ring.x,ring.y,ring.r*0.85,ring.x,ring.y,ring.r);
-    grad.addColorStop(0,'rgba(255,150,50,0)');
-    grad.addColorStop(0.7,'rgba(255,100,20,0.5)');
-    grad.addColorStop(1,'rgba(255,60,0,0)');
-    ctx.strokeStyle=`rgba(255,${100+Math.floor(ring.life*100)},20,${ring.life*0.8})`;
-    ctx.lineWidth=3+ring.life*4;
-    ctx.beginPath();
-    ctx.arc(ring.x,ring.y,ring.r,0,Math.PI*2);
-    ctx.stroke();
-    ctx.restore();
-  });
-  _crashRings=_crashRings.filter(r=>r.life>0||!r.started);
-
-  // ── ЧАСТИЦЫ ВЗРЫВА ───────────────────────────────────────
-  rCrashParticles.forEach(p=>{
-    if(p.type==='smoke'){
-      p.x+=p.vx*0.4; p.y+=p.vy*0.4; p.r+=0.5; p.life-=p.decay;
-      if(p.life<=0) return;
-      ctx.save();
-      ctx.globalAlpha=Math.max(0,p.life)*0.25;
-      ctx.fillStyle=p.c+p.life+')';
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-      ctx.restore();
-    } else if(p.type==='debris'){
-      p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.vx*=0.98; p.life-=p.decay; p.r*=0.98;
-      if(p.life<=0) return;
-      ctx.save();
-      ctx.globalAlpha=Math.max(0,p.life);
-      // Светящиеся осколки
-      ctx.shadowColor=p.c; ctx.shadowBlur=10;
-      ctx.fillStyle=p.c;
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-      ctx.restore();
-    } else {
-      // Искры — тянутся шлейфом
-      const ox=p.x-p.vx*3, oy=p.y-p.vy*3;
-      p.x+=p.vx; p.y+=p.vy; p.vy+=0.3; p.life-=p.decay; p.r*=0.97;
-      if(p.life<=0) return;
-      ctx.save();
-      ctx.globalAlpha=Math.max(0,p.life)*0.9;
-      const g=ctx.createLinearGradient(p.x,p.y,ox,oy);
-      g.addColorStop(0,p.c); g.addColorStop(1,'rgba(255,255,255,0)');
-      ctx.strokeStyle=g; ctx.lineWidth=p.r*1.5; ctx.lineCap='round';
-      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(ox,oy); ctx.stroke();
-      ctx.restore();
-    }
-  });
-  rCrashParticles=rCrashParticles.filter(p=>p.life>0);
-  ctx.globalAlpha=1;
-
-  // ── ЗВЁЗДЫ — двигаются только во время полёта ──
-  if(rStars){
-    let starSpd=0;
-    if(RKT.phase==='flying') starSpd=Math.min(1.5+RKT.mult*0.35,12);
-    if(starSpd>0){
-      rStars.forEach(s=>{
-        const lm=s.layer===2?1.6:s.layer===1?1.0:0.5;
-        // Звёзды летят вниз — иллюзия что ракета летит вверх
-        s.y += starSpd*lm;
-        s.bri+=0.025;
-        if(s.y > rH+4){ s.y=-4; s.x=Math.random()*rW; }
-      });
-    }
-  }
-
-  // ── РАКЕТА И ЧАСТИЦЫ ────────────────────────────────────
-  if(RKT.phase==='waiting'){
-    // Во время ожидания — только чистый экран для таймера
-    rSpeedParts=[]; rTrail=[];
-
-  } else if(RKT.phase==='flying'){
-    const m = RKT.mult||1;
-
-    // ── РАКЕТА ЛЕТИТ СВЕРХУ ВНИЗ ПО ЦЕНТРУ ──────────────────
-    const elapsed = (Date.now() - (RKT._ls || Date.now())) / 1000;
-
-    // Замедляется к центру при высоких иксах
-    const maxProg = Math.min(0.50 + Math.max(0, m - 10) * 0.018, 0.90);
-    const rawProg = Math.min(elapsed / 20, 1.0);
-    const easedProg = rawProg < 0.5
-      ? rawProg * 2 * 0.68
-      : 0.68 + (rawProg - 0.5) * 2 * 0.32;
-    const flyProg = Math.min(easedProg, maxProg);
-
-    // Сверху вниз по центру X — ракета летит вертикально
-    const startX = rW * 0.50; // центр
-    const startY = rH * 0.98; // самый низ
-    const endX   = rW * 0.50; // остаётся по центру
-    const endY   = rH * 0.28; // останавливается в верхней трети
-
-    const baseX = startX + (endX - startX) * flyProg;
-    const baseY = startY + (endY - startY) * flyProg;
-
-    // ── ТРЯСКА с иксами (горизонтальная, ракета дрожит) ─────
-    const shakeAmp = Math.min((m - 1) * 1.0, 22);
-    const shake1 = shakeAmp > 0.5 ? (Math.random()-0.5)*shakeAmp : 0;
-    const shake2 = shakeAmp > 0.5 ? (Math.random()-0.5)*shakeAmp*0.4 : 0;
-    const cx = baseX + shake1;
-    const cy = baseY + shake2;
-
-    const sc = 1.0 + Math.min(m * 0.004, 0.28);
-    const tp = Math.min(0.5 + m * 0.04, 1.0);
-
-    // Ракета летит вверх — нос смотрит вверх
-    // angle=0 = нос вверх — правильно для полёта вверх
-    const rktAngle = 0;
-
-    // Угол линий скорости — вертикально вверх
-    const moveAngle = -Math.PI / 2; // вверх
-
-    // Сохраняем позицию для взрыва
-    rTrail.push([cx, cy]);
-    if(rTrail.length > 5) rTrail.shift();
-    // ── ВЕРТИКАЛЬНЫЙ ЭФФЕКТ СКОРОСТИ — линии сверху вниз ────
-    const speedMult = Math.min(1 + m * 0.06, 5);
-    const lineCount = Math.floor(12 + Math.min(m * 1.2, 50));
-    const lineAngle = moveAngle; // PI/2 = вниз
-
-    for(let k=0; k<lineCount; k++){
-      // Распределяем линии по ширине экрана
-      const spread = (k / lineCount - 0.5) * rW * 1.8;
-      const sx = rW*0.5 + spread + (Math.random()-0.5)*20;
-      // Начало линии — ниже текущей позиции ракеты (летят вверх)
-      const offsetBack = (60 + Math.random() * rH * 0.5) * speedMult;
-      const sy = cy + offsetBack + (Math.random()-0.5)*20;
-
-      const baseLen = (50 + Math.random() * 120) * speedMult;
-      const ex2 = sx; // вертикально
-      const ey2 = sy - baseLen; // вверх
-
-      const alpha = Math.max(0.04, Math.min(0.70, m * 0.04 + Math.random()*0.08));
-      const lineW = 0.5 + Math.random() * (1.5 + m*0.05);
-
-      let r,g,b;
-      if(m >= 25)      { r=255; g=240; b=50;  }
-      else if(m >= 15) { r=255; g=180; b=30;  }
-      else if(m >= 8)  { r=255; g=130; b=20;  }
-      else if(m >= 3)  { r=200; g=210; b=255; }
-      else             { r=160; g=170; b=210; }
-
-      const sg = ctx.createLinearGradient(sx, sy, ex2, ey2);
-      sg.addColorStop(0,    `rgba(${r},${g},${b},0)`);
-      sg.addColorStop(0.2, `rgba(${r},${g},${b},${alpha})`);
-      sg.addColorStop(0.8,  `rgba(${r},${g},${b},${alpha*0.7})`);
-      sg.addColorStop(1,    `rgba(${r},${g},${b},0)`);
-      ctx.save(); ctx.strokeStyle=sg; ctx.lineWidth=lineW;
-      ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(ex2,ey2); ctx.stroke();
-      ctx.restore();
-    }
-
-    // Яркие вспышки вертикальные — снизу вверх
-    const flashCount = Math.floor(m * 0.5);
-    for(let k=0; k<flashCount; k++){
-      const fx = Math.random() * rW;
-      const fy = Math.random() * rH;
-      const fl = (12 + Math.random()*35) * speedMult;
-      const fa = 0.18 + Math.random()*0.35;
-      const fG = ctx.createLinearGradient(fx,fy,fx,fy-fl);
-      const fc = m>=15?`rgba(255,255,150,${fa})`:`rgba(255,200,100,${fa})`;
-      fG.addColorStop(0,'rgba(255,255,255,0)'); fG.addColorStop(0.5,fc); fG.addColorStop(1,'rgba(255,255,255,0)');
-      ctx.save(); ctx.strokeStyle=fG; ctx.lineWidth=1+Math.random()*2;
-      ctx.beginPath(); ctx.moveTo(fx,fy); ctx.lineTo(fx,fy-fl); ctx.stroke(); ctx.restore();
-    }
-
-    // ── СВЕЧЕНИЕ СОПЛА (снизу ракеты) ────────────────────────
-    const glowR = 40 + tp * 25;
-    const glowA = 0.18 + tp * 0.18;
-    const glowCol = m >= 10 ? `rgba(255,200,50,${glowA})` : `rgba(255,120,30,${glowA})`;
-    const gG = ctx.createRadialGradient(cx, cy + 60*sc, 0, cx, cy + 60*sc, glowR*1.5);
-    gG.addColorStop(0, glowCol);
-    gG.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = gG;
-    ctx.beginPath(); ctx.arc(cx, cy + 60*sc, glowR*1.5, 0, Math.PI*2); ctx.fill();
-
-    // Рисуем ракету вертикально по центру
-    rDrawRocket3D(ctx, cx, cy, sc, rktAngle, tp, false);
-
-  } else if(RKT.phase==='crashed'&&rTrail.length){
-    const[rx,ry]=rTrail[rTrail.length-1];
-    rDrawRocket3D(ctx,rx,ry,1.0,0,0,true);
-  } else if(RKT.phase==='crashed'){
-    rDrawRocket3D(ctx,rW*0.5,rH*0.5,1.0,0,0,true);
-  }
-
-  // ── БОЛЬШОЙ ТАЙМЕР НА CANVAS (только фаза waiting И нет краша) ──────
-  if(RKT.phase==='waiting' && !_rktCrashShown && RKT.waitLeft>0){
+  // ── WAITING: большой таймер ───────────────────────────
+  if (phase === 'waiting' && RKT.waitLeft > 0) {
     const left = RKT.waitLeft;
-    const sec=left.toFixed(1);
-    const cx=rW*0.5, cy=rH*0.5;
+    const cx = rW*0.5, cy = rH*0.5;
+    const pulse = 0.82 + Math.sin(rTime * (left<3 ? 0.45 : 0.15)) * 0.18;
+    const fs = Math.round(rH * 0.38);
+    const sec = left.toFixed(1);
+
     ctx.save();
+    ctx.font = `900 ${fs}px 'Orbitron',monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
 
-    // Пульсация — замедляется к концу отсчёта
-    const pulseSpeed=left<3?0.45:0.15;
-    const pulse=0.82+Math.sin(rTime*pulseSpeed)*0.18;
-
-    const fontSize=Math.round(rH*0.38);
-
-    // ── Слой 1: широкое мягкое свечение ──
-    ctx.globalAlpha=pulse*0.18;
-    ctx.font=`900 ${fontSize}px 'Orbitron',monospace`;
-    ctx.textAlign='center';
-    ctx.textBaseline='middle';
-    ctx.shadowColor='#ffffff';
-    ctx.shadowBlur=120;
-    ctx.fillStyle='#ffffff';
+    // свечение
+    ctx.globalAlpha = pulse * 0.18;
+    ctx.fillStyle = '#fff';
+    ctx.shadowColor = '#fff'; ctx.shadowBlur = 120;
+    ctx.fillText(sec, cx, cy-10);
+    ctx.globalAlpha = pulse * 0.35;
+    ctx.shadowBlur = 60;
     ctx.fillText(sec, cx, cy-10);
 
-    // ── Слой 2: среднее свечение ──
-    ctx.globalAlpha=pulse*0.35;
-    ctx.shadowBlur=60;
+    // основная цифра
+    ctx.globalAlpha = pulse;
+    ctx.shadowColor = 'rgba(255,255,255,.9)'; ctx.shadowBlur = 30;
+    ctx.fillStyle = '#fff';
     ctx.fillText(sec, cx, cy-10);
 
-    // ── Слой 3: основная цифра — чёткая белая ──
-    ctx.globalAlpha=pulse;
-    ctx.shadowColor='rgba(255,255,255,0.9)';
-    ctx.shadowBlur=30;
-    ctx.fillStyle='#ffffff';
-    ctx.fillText(sec, cx, cy-10);
-
-    // ── Подпись ──
-    ctx.shadowBlur=0;
-    ctx.globalAlpha=pulse*0.4;
-    const subSize=Math.round(rH*0.048);
-    ctx.font=`600 ${subSize}px 'Orbitron',monospace`;
-    ctx.fillStyle='rgba(255,255,255,1)';
-    ctx.letterSpacing='4px';
-    ctx.fillText('СЛЕДУЮЩИЙ РАУНД', cx, cy + fontSize*0.52);
-
+    // подпись
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = pulse * 0.4;
+    const sf = Math.round(rH * 0.046);
+    ctx.font = `600 ${sf}px 'Orbitron',monospace`;
+    ctx.fillText('СЛЕДУЮЩИЙ РАУНД', cx, cy + fs*0.52);
     ctx.restore();
   }
 
-  // Уведомления о кешауте игроков (всплывающие)
-  rDrawCashoutNotifs(ctx);
-}
+  // ── FLYING: ракета ────────────────────────────────────
+  if (phase === 'flying' || phase === 'crashed') {
+    const m = phase==='crashed' ? (RKT.crashAt||RKT.mult||1) : RKT.mult;
 
-// ── Уведомления о кешауте на экране ─────────────────────
-let rCashNotifs=[];
-function rAddCashNotif(name, mult, profit){
-  rCashNotifs.push({name,mult,profit,life:1.0,y:rH*0.45+Math.random()*rH*0.3});
-}
-function rDrawCashoutNotifs(ctx){
-  rCashNotifs.forEach(n=>{
-    n.life-=0.012; n.y-=0.7;
-    if(n.life<=0) return;
-    const a=Math.min(1,n.life*3);
-    ctx.save(); ctx.globalAlpha=a;
-    const txt='💰 '+n.name.slice(0,8)+' ×'+n.mult.toFixed(2)+' +'+n.profit.toLocaleString('ru-RU');
-    const fx=rW*0.5, fy=n.y;
-    ctx.font='bold '+(11+Math.min((1-n.life)*20,6))+'px Orbitron,monospace';
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    // Тень
-    ctx.shadowColor='rgba(74,222,128,0.6)'; ctx.shadowBlur=8;
-    ctx.fillStyle='#4ade80'; ctx.fillText(txt,fx,fy);
-    ctx.shadowBlur=0;
+    // Трасса
+    if (rTrail.length > 1) {
+      ctx.save();
+      ctx.strokeStyle = phase==='crashed' ? 'rgba(248,113,113,0.5)' : 'rgba(255,160,0,0.5)';
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(rTrail[0][0], rTrail[0][1]);
+      for (let i=1; i<rTrail.length; i++) ctx.lineTo(rTrail[i][0], rTrail[i][1]);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Позиция ракеты
+    const elapsed = (Date.now() - (RKT.ls||Date.now())) / 1000;
+    const prog = Math.min(elapsed/18, 0.85);
+    const rx = rW*0.5;
+    const ry = rH*0.9 - prog*(rH*0.65);
+
+    // Добавляем в трассу (каждые 3 кадра)
+    if (phase==='flying' && rTime%3===0) {
+      rTrail.push([rx, ry]);
+      if (rTrail.length > 120) rTrail.shift();
+    }
+
+    if (phase === 'flying') {
+      // Пламя
+      ctx.save();
+      const fl = 18 + Math.sin(rTime*0.4)*5;
+      const grd = ctx.createLinearGradient(rx, ry+10, rx, ry+10+fl);
+      grd.addColorStop(0,'rgba(255,255,255,.9)');
+      grd.addColorStop(0.3,'rgba(255,200,0,.8)');
+      grd.addColorStop(1,'rgba(255,60,0,0)');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.ellipse(rx, ry+10, 5, fl, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+
+      // Ракета (простая форма)
+      ctx.save();
+      ctx.translate(rx, ry);
+      // тело
+      const rg = ctx.createLinearGradient(-8,0,8,0);
+      rg.addColorStop(0,'#4080c0'); rg.addColorStop(0.5,'#e0f0ff'); rg.addColorStop(1,'#2060a0');
+      ctx.fillStyle = rg;
+      ctx.beginPath();
+      ctx.moveTo(0,-22); ctx.quadraticCurveTo(10,-8,8,10); ctx.lineTo(-8,10); ctx.quadraticCurveTo(-10,-8,0,-22);
+      ctx.fill();
+      // нос
+      ctx.fillStyle = '#ff6600';
+      ctx.beginPath();
+      ctx.moveTo(0,-26); ctx.lineTo(5,-20); ctx.lineTo(-5,-20); ctx.closePath();
+      ctx.fill();
+      // крылья
+      ctx.fillStyle = '#1050a0';
+      ctx.beginPath(); ctx.moveTo(8,8); ctx.lineTo(18,14); ctx.lineTo(8,14); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-8,8); ctx.lineTo(-18,14); ctx.lineTo(-8,14); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+
+    // Цифры над ракетой
+    const fs2 = Math.min(16 + (m-1)*0.4, 28);
+    ctx.save();
+    ctx.font = `bold ${fs2}px Orbitron,monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    const mc = phase==='crashed'?'rgba(248,113,113,.97)':m>=20?'rgba(255,215,0,.97)':m>=5?'rgba(74,222,128,.97)':m>=2?'rgba(251,191,36,.97)':'rgba(255,255,255,.92)';
+    ctx.fillStyle = mc;
+    ctx.shadowColor = 'rgba(0,0,0,.9)'; ctx.shadowBlur = 10;
+    ctx.fillText(m.toFixed(2)+'×', rx, ry-28);
+    ctx.restore();
+
+    // Частицы краша
+    if (phase === 'crashed') {
+      rCrashParticles = rCrashParticles.filter(p => p.life > 0);
+      rCrashParticles.forEach(p => {
+        p.x+=p.vx; p.y+=p.vy; p.vy+=0.15; p.life-=0.02;
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.c;
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Уведомления кешаута
+  rCashNotifs = rCashNotifs.filter(n=>n.life>0);
+  rCashNotifs.forEach(n => {
+    n.y -= 0.8; n.life -= 0.015;
+    ctx.save();
+    ctx.globalAlpha = Math.min(n.life*2, 1);
+    ctx.font = 'bold 11px Orbitron,monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#4ade80';
+    ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 8;
+    ctx.fillText('💰 '+n.name+' ×'+n.mult.toFixed(2), rW*0.5, n.y);
     ctx.restore();
   });
-  rCashNotifs=rCashNotifs.filter(n=>n.life>0);
+})();
+
+// ── WebSocket ─────────────────────────────────────────────
+let _ws = null;
+let _wsReconnectT = null;
+let _wsConnected = false;
+
+function rktWsConnect() {
+  if (!API_URL || !API_SECRET) return; // demo mode — no WS
+  // Конвертируем http(s):// в ws(s)://
+  const wsUrl = API_URL.replace(/^http/, 'ws')
+    + '/casino/rocket/ws?uid='+USER_ID+'&secret='+API_SECRET;
+
+  _wsSetStatus('wait', '● ПОДКЛЮЧЕНИЕ');
+  try { if (_ws) { _ws.onclose=null; _ws.close(); } } catch(e) {}
+
+  _ws = new WebSocket(wsUrl);
+
+  _ws.onopen = () => {
+    _wsConnected = true;
+    _wsSetStatus('ok', '● WS');
+    clearTimeout(_wsReconnectT);
+  };
+
+  _ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      rktHandleMsg(msg);
+    } catch(e2) {}
+  };
+
+  _ws.onclose = () => {
+    _wsConnected = false;
+    _wsSetStatus('err', '● РЕКОННЕКТ');
+    // Переподключаемся через 1.5с
+    clearTimeout(_wsReconnectT);
+    _wsReconnectT = setTimeout(rktWsConnect, 1500);
+  };
+
+  _ws.onerror = () => {
+    _wsSetStatus('err', '● ОШИБКА WS');
+  };
 }
 
-// ── ЭПИЧНЫЙ ВЗРЫВ ───────────────────────────────────────
-// ── АНИМАЦИЯ КРАША — независимая, не зависит от rktUI ──────
-let _rktCrashShown = false;       // флаг чтобы не показывать дважды
-let _rktCrashedSnapshot = [];     // снапшот проигравших игроков при краше
+function _wsSetStatus(cls, txt) {
+  const el = document.getElementById('rktWsStatus');
+  if (!el) return;
+  el.className = cls;
+  el.textContent = txt;
+}
 
-function _rktShowCrash(crashMult){
-  if(_rktCrashShown) return;
-  _rktCrashShown = true;
+// Обработка входящих сообщений от сервера
+function rktHandleMsg(msg) {
+  if (!msg || !msg.type) return;
 
-  // Снапшот проигравших для таблицы
-  _rktCrashedSnapshot = [];
-  (RKT.players||[]).forEach(p=>{
-    if(!p.cashed_at && !p.is_me) _rktCrashedSnapshot.push({
-      uid:p.uid, name:(p.name||'?').slice(0,12), bet:p.bet||0,
-      avatar:p.avatar||'ghost', crashed:true, crashMult, cashedAt:null, isMe:false
-    });
+  switch (msg.type) {
+
+    case 'state':   // полное состояние при подключении
+    case 'sync': {  // синхронизация
+      const prev = RKT.phase;
+      RKT.roundId  = msg.round_id ?? RKT.roundId;
+      RKT.history  = msg.history  ?? RKT.history;
+      RKT.online   = msg.online   ?? RKT.online;
+      if (msg.players != null) _mergePlayers(msg.players);
+      if (msg.crash_at != null) RKT.crashAt = msg.crash_at;
+
+      if (msg.phase === 'waiting') {
+        const wasFlying = prev === 'flying';
+        if (wasFlying) {
+          // Только что был краш — показываем анимацию
+          RKT.phase = 'crashed';
+          RKT.crashAt = msg.crash_at ?? RKT.crashAt;
+          _rktShowCrash(RKT.crashAt);
+          // Через 2.5с переходим в waiting
+          setTimeout(() => {
+            RKT.phase = 'waiting';
+            _rktResetBet();
+            rTrail = [];
+            rCrashParticles = [];
+            rktUpdateUI();
+          }, 2500);
+        } else {
+          RKT.phase = 'waiting';
+        }
+        // Запускаем таймер
+        if (msg.wait_left > 0) {
+          _rktTimerStart(msg.wait_left);
+        }
+
+      } else if (msg.phase === 'flying') {
+        if (prev !== 'flying') {
+          // Старт раунда
+          RKT.phase = 'flying';
+          RKT.mult  = msg.mult ?? 1.00;
+          RKT.ls    = msg.elapsed != null ? Date.now() - msg.elapsed*1000 : Date.now();
+          RKT.crashAt = msg.crash_at;
+          _rktStopTimer();
+          rTrail = []; rCrashParticles = [];
+          rktUpdateUI();
+          _rktTickStart();
+        } else {
+          // Уже летим — только sync elapsed
+          if (msg.elapsed != null) RKT.ls = Date.now() - msg.elapsed*1000;
+          if (msg.crash_at != null) RKT.crashAt = msg.crash_at;
+        }
+      }
+      rktUpdateUI();
+      break;
+    }
+
+    case 'waiting': {
+      // Фаза ожидания
+      const wasFlying = RKT.phase === 'flying';
+      if (wasFlying) {
+        RKT.phase = 'crashed';
+        RKT.crashAt = msg.crash_at ?? RKT.crashAt;
+        _rktShowCrash(RKT.crashAt);
+        if (msg.players) _mergePlayers(msg.players);
+        setTimeout(() => {
+          RKT.phase    = 'waiting';
+          RKT.roundId  = msg.round_id ?? RKT.roundId;
+          RKT.history  = msg.history  ?? RKT.history;
+          RKT.online   = msg.online   ?? RKT.online;
+          rTrail = []; rCrashParticles = [];
+          _rktResetBet();
+          rktUpdateUI();
+          if (msg.wait_left > 0) _rktTimerStart(msg.wait_left);
+        }, 2500);
+      } else {
+        RKT.phase   = 'waiting';
+        RKT.roundId = msg.round_id ?? RKT.roundId;
+        RKT.history = msg.history  ?? RKT.history;
+        RKT.online  = msg.online   ?? RKT.online;
+        if (msg.players) _mergePlayers(msg.players);
+        if (msg.wait_left > 0) _rktTimerStart(msg.wait_left);
+        rktUpdateUI();
+      }
+      break;
+    }
+
+    case 'flying': {
+      // Ракета стартовала
+      _rktStopTimer();
+      RKT.phase   = 'flying';
+      RKT.roundId = msg.round_id ?? RKT.roundId;
+      RKT.crashAt = msg.crash_at ?? null;
+      RKT.mult    = 1.00;
+      RKT.ls      = Date.now();
+      if (msg.players) _mergePlayers(msg.players);
+      rTrail = []; rCrashParticles = [];
+      rktUpdateUI();
+      _rktTickStart();
+      break;
+    }
+
+    case 'tick': {
+      // Регулярный тик во время полёта (sync elapsed)
+      if (RKT.phase === 'flying' && msg.elapsed != null) {
+        RKT.ls = Date.now() - msg.elapsed*1000;
+      }
+      if (msg.online != null) RKT.online = msg.online;
+      break;
+    }
+
+    case 'cashout': {
+      // Кто-то вывел
+      if (msg.players) _mergePlayers(msg.players);
+      if (!msg.is_me && msg.name && msg.mult) {
+        rCashNotifs.push({
+          name: (msg.name||'?').slice(0,8),
+          mult: msg.mult,
+          profit: msg.profit||0,
+          life: 1.0,
+          y: rH*0.3 + Math.random()*rH*0.3
+        });
+      }
+      if (msg.is_me && msg.prize != null) {
+        setBalance(msg.prize + balance);
+        _rktOnCashoutDone(msg.mult, msg.prize);
+      }
+      rktUpdateTable();
+      rktUpdateTags();
+      break;
+    }
+
+    case 'players': {
+      if (msg.players) _mergePlayers(msg.players);
+      rktUpdateTable(); rktUpdateTags();
+      break;
+    }
+
+    case 'bet_ok': {
+      // Сервер подтвердил нашу ставку
+      if (msg.balance != null) setBalance(msg.balance);
+      RKT.betPlaced = true;
+      _rktBetLocked = true;
+      const res = document.getElementById('rktRes');
+      if (res) { res.textContent='✅ Ставка '+RKT.myBet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
+      rktUpdateUI();
+      break;
+    }
+
+    case 'bet_err': {
+      // Ошибка ставки — возвращаем деньги
+      setBalance(balance + RKT.myBet);
+      _rktBetLocked = false;
+      RKT.betPlaced = false;
+      const res2 = document.getElementById('rktRes');
+      if (res2) { res2.textContent='↩️ '+(msg.reason||'Ставка не принята'); res2.className='rkt-res'; }
+      rktUpdateUI();
+      break;
+    }
+
+    case 'wait_left': {
+      // Сервер присылает обновлённое время (опционально, для синхронизации)
+      if (RKT.phase === 'waiting' && msg.value > 0) {
+        const localLeft = Math.max(0, (RKT.launchAt - Date.now()) / 1000);
+        if (Math.abs(localLeft - msg.value) > 0.3) {
+          RKT.launchAt = Date.now() + msg.value * 1000;
+        }
+      }
+      break;
+    }
+  }
+}
+
+function _mergePlayers(arr) {
+  if (!Array.isArray(arr)) return;
+  // Сохраняем prize/profit из предыдущего состояния
+  arr.forEach(np => {
+    const old = (RKT.players||[]).find(op =>
+      (op.uid!=null && op.uid===np.uid) || (op.name && op.name===np.name)
+    );
+    if (old) {
+      if (np.prize  == null && old.prize  != null) np.prize  = old.prize;
+      if (np.profit == null && old.profit != null) np.profit = old.profit;
+    }
   });
-  if(RKT.betPlaced && !RKT.cashedOut) RKT._myCrashMult = crashMult;
-  rktUpdateTable();
-
-  // Красный оверлей мгновенно
-  const ov = document.getElementById('rktCrashOverlay');
-  if(ov){ ov.classList.remove('active'); void ov.offsetWidth; ov.classList.add('active'); }
-
-  // Большие иксы через 0.5с
-  setTimeout(()=>{
-    const lbl = document.getElementById('rktCrashLabel');
-    const lblX = document.getElementById('rktCrashLabelX');
-    if(lbl && lblX){
-      lblX.textContent = '×' + parseFloat(crashMult).toFixed(2);
-      lbl.classList.remove('active'); void lbl.offsetWidth; lbl.classList.add('active');
-      // CSS анимация: появление 0.2с, держится 2.2с, исчезает 0.6с = итого 3с
-    }
-  }, 500);
-
-  // Через 3с — иксы исчезли, сбрасываем флаг
-  setTimeout(()=>{
-    _rktCrashShown = false;
-    rktUpdateTable(); rktUI();
-  }, 3000);
-
-  // Убираем снапшот после взлёта (+5с от таймера)
-  setTimeout(()=>{
-    _rktCrashedSnapshot = [];
-    RKT._myCrashMult = null;
-    rktUpdateTable();
-  }, 9000);
+  RKT.players = arr;
 }
 
-function rktSpawnCrashParticles(x,y){
-  rCrashParticles=[];
-  _crashRings=[];
-  _crashFlash=1.0; // белая вспышка
+// ── Таймер ожидания (RAF) ─────────────────────────────────
+let _timerRaf = null;
 
-  // 3 ударные волны-кольца с задержкой
-  for(let w=0;w<3;w++){
-    _crashRings.push({x,y,r:0,maxR:rW*0.7*(0.5+w*0.25),life:1,delay:w*8,started:false});
-  }
+function _rktTimerStart(seconds) {
+  _rktStopTimer();
+  RKT.waitLeft  = seconds;
+  RKT.waitTotal = seconds;
+  RKT.launchAt  = Date.now() + seconds * 1000;
 
-  // Крупные осколки (медленные, далеко летят)
-  for(let i=0;i<18;i++){
-    const a=Math.random()*Math.PI*2;
-    const spd=3+Math.random()*6;
-    rCrashParticles.push({
-      x,y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd-3,
-      r:3+Math.random()*6, life:1, decay:0.012,
-      c:['#ff4400','#ff7700','#ffaa00','#ffdd00','#ffffff'][Math.floor(Math.random()*5)],
-      type:'debris'
-    });
-  }
-  // Мелкие искры (быстрые, много)
-  for(let i=0;i<60;i++){
-    const a=Math.random()*Math.PI*2;
-    const spd=4+Math.random()*14;
-    rCrashParticles.push({
-      x,y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd-4,
-      r:0.8+Math.random()*2, life:1, decay:0.022,
-      c:['#fff','#ffcc44','#ff8800','#ff4400','#ffaaaa'][Math.floor(Math.random()*5)],
-      type:'spark'
-    });
-  }
-  // Дымовые облака (крупные, медленные, тёмные)
-  for(let i=0;i<12;i++){
-    const a=Math.random()*Math.PI*2;
-    const spd=1+Math.random()*3;
-    rCrashParticles.push({
-      x,y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd-1,
-      r:8+Math.random()*16, life:0.6, decay:0.008,
-      c:'rgba(80,40,20,',
-      type:'smoke'
-    });
-  }
-}
+  function _frame() {
+    if (RKT.phase !== 'waiting') { _timerRaf=null; return; }
+    const left = Math.max(0, (RKT.launchAt - Date.now()) / 1000);
+    RKT.waitLeft = left;
 
-// ── Сервер ───────────────────────────────────────────────
-async function rktFetch(path,opts={}){
-  if(!API_URL||!API_SECRET) return null;
-  // Таймаут: для ставки/кешаута 5с, для poll/state 3с
-  const isMutation = opts.method==='POST';
-  const ms = isMutation ? 5000 : 3000;
-  const ctrl = new AbortController();
-  const t = setTimeout(()=>ctrl.abort(), ms);
-  try{
-    const r=await fetch(API_URL+path,{...opts,signal:ctrl.signal,headers:{...(opts.headers||{}),'ngrok-skip-browser-warning':'1','Content-Type':'application/json'}});
-    try{ return await r.json(); }catch(e){ return null; }
-  }catch(e){ return null; }
-  finally{ clearTimeout(t); }
-}
+    // Прогресс-бар
+    const pb = document.getElementById('rktProgressBar');
+    const total = RKT.waitTotal || 5;
+    if (pb) pb.style.width = Math.min(100, (1 - left/total)*100)+'%';
 
-// Long-poll синхронизация с сервером
-let _rktPoll=false;
-async function rktPollLoop(){
-  if(_rktPoll) return; _rktPoll=true;
-  while(true){
-    try{
-      if(!API_URL||!API_SECRET){ await new Promise(r=>setTimeout(r,2000)); continue; }
-      const d = await rktFetch('/casino/rocket/poll?uid='+USER_ID+'&secret='+API_SECRET+'&phase='+RKT.phase+'&round_id='+RKT.roundId+'&_t='+Date.now());
-      if(d && d.ok){
-        const phaseChanged = d.phase && d.phase !== RKT.phase;
-        const roundChanged = d.round_id != null && d.round_id !== RKT.roundId;
+    // Кнопки
+    rktUpdateBtn();
 
-        if(phaseChanged || roundChanged){
-          // Смена фазы/раунда — полный apply
-          rktApply(d);
-          // После apply — если теперь waiting и таймер не идёт — запускаем
-          if(RKT.phase === 'waiting' && d.wait_left > 0 && !_rktWT){
-            _rktTimerStart(d.wait_left * 1000);
-          }
-        } else if(RKT.phase === 'waiting'){
-          // Та же фаза waiting — только синхронизируем таймер
-          if(d.wait_left > 0){
-            if(!_rktWT){
-              // Таймер вообще не запущен — стартуем
-              _rktTimerStart(d.wait_left * 1000);
-            } else {
-              // Таймер идёт — корректируем при расхождении > 0.3с
-              const localLeft = Math.max(0, (_rktLaunchAt - Date.now()) / 1000);
-              if(Math.abs(localLeft - d.wait_left) > 0.3){
-                _rktLaunchAt = Date.now() + d.wait_left * 1000;
-              }
-            }
-          }
-        } else if(RKT.phase === 'flying'){
-          // Летим — только тихо синхронизируем _ls, без UI
-          if(d.elapsed != null && d.elapsed >= 0){
-            RKT._ls = Date.now() - d.elapsed * 1000;
-          }
-          // Если crashAt изменился — обновляем
-          if(d.crash_at != null) RKT.crashAt = d.crash_at;
-          // Обновляем игроков для таблицы (без полного redraw)
-          if(d.players != null) RKT.players = d.players;
-        }
-      }
-    }catch(e){}
-    await new Promise(r=>setTimeout(r,80));
-  }
-}
-
-// 60fps RAF — единственный источник mult на клиенте
-let _rktTick=false, _rktLastTable=0;
-// Замороженный mult в момент нажатия ЗАБРАТЬ — RAF больше не обновляет его
-let _rktFrozenMult = null;
-
-function rktTickStart(){
-  if(_rktTick) return;
-  _rktTick=true;
-  function frame(){
-    if(!_rktTick||RKT.phase!=='flying'){_rktTick=false;return;}
-
-    const elapsed=(Date.now()-RKT._ls)/1000;
-    const raw=Math.pow(Math.E, elapsed*0.085);
-    const cap=RKT.crashAt||9999;
-    const m=Math.min(raw, cap);
-
-    RKT.mult=m;
-
-    // Обновляем кнопку ЗАБРАТЬ каждый кадр
-    if(RKT.betPlaced && !RKT.cashedOut && !_rktCashingOut){
-      const btnCashLive=document.getElementById('rktBtnCash');
-      const stLive=document.getElementById('rktActionStatus');
-      if(btnCashLive && btnCashLive.style.display!=='none'){
-        btnCashLive.textContent='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
-        if(stLive && RKT.myBet){
-          const mc=Math.round(m*100);
-          const prize=Math.round(RKT.myBet*mc/100);
-          const profit=prize-RKT.myBet;
-          stLive.textContent='СТАВКА: '+RKT.myBet.toLocaleString('ru-RU')+'  →  '+prize.toLocaleString('ru-RU')+'  (+'+profit.toLocaleString('ru-RU')+')';
-          stLive.style.color='#fbbf24';
-        }
-      }
-    }
-
-    const el=document.getElementById('rktMult');
-    if(el){
-      // ПРЫГАЮЩИЕ ИКСЫ — обновляем не каждый кадр, а рывками
-      // Шаг зависит от скорости: медленно до 2x, быстрее после
-      const prevDisp = parseFloat(el.getAttribute('data-disp')||'1');
-      let step = m < 2 ? 0.01 : m < 5 ? 0.01 : m < 10 ? 0.02 : m < 20 ? 0.03 : 0.05;
-      // Обновляем только если разница >= шага
-      if(m - prevDisp >= step || m >= cap){
-        const disp = m >= cap ? m : Math.round(m * 100) / 100; // без округления до кратных
-        el.textContent = disp.toFixed(2)+'×';
-        el.setAttribute('data-disp', disp);
-        // Анимация прыжка через wrapper
-        const mw2=document.getElementById('rktMultWrap');
-        if(mw2){ mw2.classList.add('jumping'); setTimeout(()=>mw2.classList.remove('jumping'),100); }
-      }
-      const cls = (m>=cap && cap<9999) ? 'rkt-mult sc'
-                : m>=20 ? 'rkt-mult sf sg sg2'
-                : m>=5  ? 'rkt-mult sf sg'
-                :         'rkt-mult sf';
-      if(el.className!==cls) el.className=cls;
-    }
-    // Обновляем цвет SVG рамки по иксам
-    try{
-      const mfG = document.getElementById('mfG');
-      if(mfG){
-        let c1,c2,c3;
-        if(m>=20){ c1='#ffd700'; c2='#fff700'; c3='#ff8800'; } // золото
-        else if(m>=10){ c1='#ff8800'; c2='#ffdd00'; c3='#ff4400'; } // оранжево-золотой
-        else if(m>=5){ c1='#00ff88'; c2='#44ffaa'; c3='#00cc66'; } // зелёный
-        else{ c1='#ff6600'; c2='#ffcc00'; c3='#ff3300'; } // дефолт оранж
-        mfG.children[0].setAttribute('stop-color',c1);
-        mfG.children[1].setAttribute('stop-color',c2);
-        mfG.children[2].setAttribute('stop-color',c3);
-      }
-    }catch(e){}
-    const btnCash2=document.getElementById('rktBtnCash');
-    if(btnCash2&&btnCash2.style.display!=='none'){
-      btnCash2.textContent='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
-    }
-    // Тряска цифр — 4 уровня по иксам
-    const mw=document.getElementById('rktMultWrap');
-    if(mw){
-      if(m>=50)      mw.className='rkt-mult-wrap shaking-crazy';
-      else if(m>=20) mw.className='rkt-mult-wrap shaking-hard';
-      else if(m>=10) mw.className='rkt-mult-wrap shaking-med';
-      else if(m>=3)  mw.className='rkt-mult-wrap shaking';
-      else           mw.className='rkt-mult-wrap';
-    }
-    // Размер цифр растёт с иксами — до 120px на ×50+
-    const el2=document.getElementById('rktMult');
-    if(el2&&RKT.phase==='flying'){
-      const fs = Math.min(80 + (m-1)*0.7, 120);
-      el2.style.fontSize = fs + 'px';
-    }
-    // Авто-вывод
-    if(RKT.betPlaced&&!RKT.cashedOut&&RKT.auto>0&&m>=RKT.auto) rktDoCashout();
-    // Достигли crashAt — СРАЗУ взрыв на клиенте, не ждём сервер
-    if(cap<9999 && raw>=cap){
-      _rktTick=false;
-      RKT.mult=cap;
-      if(el){ el.textContent=cap.toFixed(2)+'×'; el.className='rkt-mult sc'; }
-      // Немедленный взрыв прямо здесь
-      if(RKT.phase==='flying'){
-        RKT.phase='crashed';
-        console.log('💥 КРАШ ×'+cap.toFixed(2)+' раунд #'+RKT.roundId+' в', new Date().toLocaleTimeString());
-        _rktShowCrash(cap); // запускаем анимацию краша
-        rktSpawnCrashParticles(
-          rTrail.length?rTrail[rTrail.length-1][0]:rW*0.5,
-          rTrail.length?rTrail[rTrail.length-1][1]:rH*0.5
-        );
-        if(rAFid){cancelAnimationFrame(rAFid);rAFid=null;}
-        if(RKT.betPlaced&&!RKT.cashedOut){
-          RKT.stats.g++;RKT.stats.p-=RKT.myBet; rktSave();
-          const res2=document.getElementById('rktRes');
-          if(res2){res2.textContent='💥 Краш ×'+cap.toFixed(2)+' — -'+RKT.myBet.toLocaleString('ru-RU');res2.className='rkt-res loss';}
-          showToast('💥 Краш ×'+cap.toFixed(2),'error');
-        }
-        const mw=document.getElementById('rktMultWrap');
-        if(mw) mw.className='rkt-mult-wrap';
-        // Через 2.8с переходим в waiting
-        setTimeout(()=>{
-          // Если ставка была в процессе отправки — вернуть баланс
-          if(_rktBetState==='sending' && RKT.myBet>0){
-            setBalance(balance+RKT.myBet);
-            showToast('↩️ '+RKT.myBet.toLocaleString('ru-RU')+' возвращено','info');
-          }
-          RKT.roundId = (RKT.roundId||0) + 1;
-          _rktBetRoundId = -99;
-          RKT.betPlaced=false;RKT.cashedOut=false;
-          RKT.cashedPrize=null;RKT.cashedProfit=null;RKT.cashedMult=null;
-          _rktOperating=false;_rktSetBetting(false);
-          _rktBetUnlock();
-          _rktRoundBetDone=false;_rktMinBalance=-1;
-          rTrail=[];rCrashParticles=[];
-          // Новый раунд
-          RKT.phase='waiting'; RKT.waitLeft=5;
-          _rktLaunchAt=0;
-          if(_rktWT){clearInterval(_rktWT);_rktWT=null;}
-          rktUI();
-          // Ждём пока иксы исчезнут (3с), потом 5 секунд таймер
-          if(!API_URL||!API_SECRET){
-            setTimeout(()=>{
-              if(RKT.phase!=='waiting') return;
-              _rktCrashShown = false; // гарантируем сброс до запуска таймера
-              _rktTimerStart(5000); // ровно 5с → ракета
-              rktUI();
-            }, 3000);
-          }
-        },300);
-      }
+    if (left <= 0) {
+      // Время вышло — в demo режиме запускаем сами
+      _timerRaf = null;
+      if (!API_URL || !API_SECRET) _demoFly();
       return;
     }
-    const now=Date.now();
-    if(now-_rktLastTable>50){_rktLastTable=now;rktUpdateTable();}
-    requestAnimationFrame(frame);
+    _timerRaf = requestAnimationFrame(_frame);
   }
-  requestAnimationFrame(frame);
+  _timerRaf = requestAnimationFrame(_frame);
 }
 
-// Применяем состояние с сервера
-function rktApply(d){
-  const prev=RKT.phase;
-  const prevRoundId=RKT.roundId;
-  RKT.phase=d.phase||RKT.phase; RKT.roundId=d.round_id??RKT.roundId;
-  // Если раунд сменился — точно сбрасываем ставку (даже если _rktBetting)
-  const roundChanged=(d.round_id!=null && d.round_id!==prevRoundId && prevRoundId!==-1);
-  if(roundChanged){
-    // Новый раунд — waitLeft обновится из следующего poll
-    _rktOperating=false;
-    _rktCashingOut=false;
-    if(_rktBetState === 'sending'){
-      // Ставка в процессе — проверяем подтвердил ли сервер
-      const meInPlayers = (d.players||[]).find(p =>
-        p.is_me ||
-        (USER_ID && (String(p.uid)===String(USER_ID)||String(p.user_id)===String(USER_ID)))
-      );
-      if(meInPlayers && meInPlayers.bet > 0){
-        RKT.betPlaced = true; RKT.myBet = meInPlayers.bet;
-        _rktBetLock('accepted'); _rktRoundBetDone = true;
-        _rktBetRoundId = RKT.roundId; // синхронизируем
+function _rktStopTimer() {
+  if (_timerRaf) { cancelAnimationFrame(_timerRaf); _timerRaf=null; }
+}
+
+// ── Тик множителя (RAF, только flying) ───────────────────
+let _tickRaf = null;
+
+function _rktTickStart() {
+  if (_tickRaf) return;
+  function _frame() {
+    if (RKT.phase !== 'flying') { _tickRaf=null; return; }
+    const elapsed = (Date.now() - RKT.ls) / 1000;
+    const raw = Math.exp(elapsed * 0.085);
+    const cap = RKT.crashAt || 99999;
+    RKT.mult = Math.min(raw, cap);
+
+    // Обновляем DOM-множитель
+    const el = document.getElementById('rktMult');
+    if (el) {
+      el.textContent = RKT.mult.toFixed(2)+'×';
+      const cls = RKT.mult>=20?'rkt-mult sf sg sg2':RKT.mult>=5?'rkt-mult sf sg':'rkt-mult sf';
+      if (el.className!==cls) el.className=cls;
+    }
+
+    // Обновляем кнопку ЗАБРАТЬ
+    const btnCash = document.getElementById('rktBtnCash');
+    if (btnCash && btnCash.style.display!=='none') {
+      btnCash.textContent = '💸 '+RKT.mult.toFixed(2)+'× — ЗАБРАТЬ!';
+    }
+
+    // Авто-вывод
+    if (RKT.auto > 0 && RKT.betPlaced && !RKT.cashedOut && RKT.mult >= RKT.auto) {
+      rktDoCashout();
+    }
+
+    // Краш на клиенте (только demo)
+    if (!API_URL && RKT.mult >= cap) {
+      _demoServerCrash();
+      return;
+    }
+
+    _tickRaf = requestAnimationFrame(_frame);
+  }
+  _tickRaf = requestAnimationFrame(_frame);
+}
+
+// ── Demo режим ────────────────────────────────────────────
+function _demoFly() {
+  _rktStopTimer();
+  RKT.phase   = 'flying';
+  RKT.mult    = 1.00;
+  RKT.ls      = Date.now();
+  // Генерируем crashAt
+  const r = Math.random();
+  RKT.crashAt = r<0.08 ? 10+Math.random()*40
+              : r<0.25 ? 5+Math.random()*5
+              : r<0.55 ? 2+Math.random()*3
+              : r<0.80 ? 1.5+Math.random()*.5
+              :          1.1+Math.random()*.4;
+  rTrail=[]; rCrashParticles=[];
+  rktUpdateUI();
+  _rktTickStart();
+}
+
+function _demoServerCrash() {
+  _tickRaf = null;
+  RKT.phase   = 'crashed';
+  RKT.mult    = RKT.crashAt;
+  _rktShowCrash(RKT.crashAt);
+
+  if (RKT.betPlaced && !RKT.cashedOut) {
+    RKT.stats.g++; RKT.stats.p -= RKT.myBet; rktSave();
+    const res=document.getElementById('rktRes');
+    if (res){res.textContent='💥 Краш ×'+RKT.crashAt.toFixed(2)+' — -'+RKT.myBet.toLocaleString('ru-RU');res.className='rkt-res loss';}
+    showToast('💥 Краш ×'+RKT.crashAt.toFixed(2),'error');
+  }
+
+  setTimeout(() => {
+    RKT.phase='waiting'; RKT.betPlaced=false; RKT.cashedOut=false;
+    RKT.cashedMult=null; RKT.players=[];
+    rTrail=[]; rCrashParticles=[];
+    _rktResetBet();
+    rktUpdateUI();
+    _rktTimerStart(5);
+  }, 2500);
+}
+
+function _rktShowCrash(mult) {
+  const overlay = document.getElementById('rktCrashOverlay');
+  const label   = document.getElementById('rktCrashLabel');
+  const lx      = document.getElementById('rktCrashLabelX');
+  if (overlay) overlay.classList.add('active');
+  if (lx)      lx.textContent = '×'+(mult||1).toFixed(2);
+  if (label)   label.classList.add('show');
+  // Частицы
+  const cx=rW*0.5, cy=rH*0.5;
+  for (let i=0;i<40;i++) {
+    const a=Math.random()*Math.PI*2, spd=2+Math.random()*5;
+    rCrashParticles.push({
+      x:cx,y:cy, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd-2,
+      r:2+Math.random()*4, life:1,
+      c:['#f87171','#ff6600','#fbbf24','#fff'][Math.floor(Math.random()*4)]
+    });
+  }
+  setTimeout(() => {
+    if (overlay) overlay.classList.remove('active');
+    if (label)   label.classList.remove('show');
+  }, 2400);
+}
+
+// ── Ставка ─────────────────────────────────────────────────
+let _rktBetLocked = false;
+let _rktBetSending = false;
+
+function rktPlaceBet() {
+  if (_rktBetLocked || RKT.betPlaced) return;
+  if (RKT.phase !== 'waiting') return;
+  if (RKT.waitLeft < 1.5 && RKT.waitLeft > 0) {
+    showToast('⏱️ Слишком поздно!', 'error'); return;
+  }
+
+  const inp = document.getElementById('rktInp');
+  const bet = Math.min(parseBetStr(inp ? inp.value : '10000')||0, 1000000000);
+  if (bet < 1000) { showToast('Минимум 1 000 токенов','error'); return; }
+  if (bet > balance) { showToast('Недостаточно токенов!','error'); return; }
+
+  RKT.myBet   = bet;
+  _rktBetLocked = true;
+  _rktBetSending = true;
+  RKT.betPlaced = true; // оптимистично
+  setBalance(balance - bet);
+
+  const res = document.getElementById('rktRes');
+  if (res) { res.textContent='⏳ Отправляем ставку...'; res.className='rkt-res'; }
+  rktUpdateUI();
+
+  if (!API_URL || !API_SECRET) {
+    // Demo
+    _rktBetSending = false;
+    if (res) { res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
+    showToast('🚀 Ставка '+bet.toLocaleString('ru-RU')+'!','success');
+    rktUpdateUI(); return;
+  }
+
+  // Отправляем через WS если есть, иначе HTTP
+  if (_wsConnected && _ws && _ws.readyState===1) {
+    _ws.send(JSON.stringify({
+      type:'bet', uid:parseInt(USER_ID), secret:API_SECRET,
+      bet, name:USER_NAME||CUSTOM_ID||USER_ID, avatar_id:selectedAvatar||'ghost'
+    }));
+    // Ответ придёт как bet_ok / bet_err
+    // Таймаут — если за 4с нет ответа, возвращаем
+    const t = setTimeout(() => {
+      if (_rktBetSending) {
+        _rktBetSending=false; _rktBetLocked=false; RKT.betPlaced=false;
+        setBalance(balance+bet);
+        if(res){res.textContent='↩️ Нет ответа сервера';res.className='rkt-res';}
+        rktUpdateUI();
+      }
+    }, 4000);
+    // Сохраняем таймаут чтобы сбросить в bet_ok/bet_err
+    _rktBetTimeout = t;
+  } else {
+    // Fallback HTTP
+    const ctrl=new AbortController(); const ht=setTimeout(()=>ctrl.abort(),5000);
+    fetch(API_URL+'/casino/rocket/bet',{
+      method:'POST', signal:ctrl.signal,
+      headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'1'},
+      body:JSON.stringify({uid:parseInt(USER_ID),secret:API_SECRET,bet,
+        name:USER_NAME||CUSTOM_ID||USER_ID,avatar_id:selectedAvatar||'ghost'})
+    }).then(r=>r.json()).then(d=>{
+      clearTimeout(ht); _rktBetSending=false;
+      if(d.error==='round_started'||d.error==='insufficient_funds'||d.error){
+        _rktBetLocked=false; RKT.betPlaced=false; setBalance(balance+bet);
+        if(res){res.textContent='↩️ '+(d.error==='round_started'?'Раунд начался':d.error);res.className='rkt-res';}
       } else {
-        const refundAmt = RKT.myBet||0;
-        _rktBetUnlock(); _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
-        _rktBetRoundId = -99; // ставка не прошла — разрешаем снова
-        if(refundAmt>0){ setBalance(balance+refundAmt); showToast('\u21a9\ufe0f '+refundAmt.toLocaleString('ru-RU')+' \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0435\u043d\u043e','info'); }
+        if(d.balance!=null) setBalance(d.balance);
+        if(res){res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!';res.className='rkt-res';}
+        showToast('🚀 Ставка '+bet.toLocaleString('ru-RU')+'!','success');
       }
-    } else if(!RKT.betPlaced){
-      // Нет ставки — сбрасываем всё и разрешаем ставить
-      _rktBetUnlock(); _rktSetBetting(false);
-      _rktRoundBetDone=false; _rktBetAccepted=false;
-      _rktBetRoundId = -99; _rktMinBalance=-1;
-    }
-    // Если betPlaced=true — ничего не трогаем, ставка активна
-  }
-
-  // Детектируем кешаут других игроков
-  if(d.players&&RKT.players){
-    d.players.forEach(np=>{
-      if(np.is_me) return;
-      const op=RKT.players.find(p=>(p.uid===np.uid)||(p.name===np.name));
-      if(np.cashed_at&&(!op||!op.cashed_at)){
-        const prof=Math.floor(np.bet*(np.cashed_at))-np.bet;
-        try{rAddCashNotif(np.name||'ИГРОК',np.cashed_at,prof);}catch(e){}
-      }
+      rktUpdateUI();
+    }).catch(()=>{
+      clearTimeout(ht); _rktBetSending=false;
+      // При ошибке сети — считаем принятой (optimistic)
+      if(res){res.textContent='✅ Ставка принята!';res.className='rkt-res';}
+      rktUpdateUI();
     });
   }
-
-  // Мержим players — сохраняем prize/profit если уже были
-  if(d.players != null){
-    d.players.forEach(np => {
-      // Сохраняем prize/profit из предыдущего состояния если сервер не прислал
-      const old = (RKT.players||[]).find(op =>
-        (op.uid != null && op.uid === np.uid) ||
-        (op.name && op.name === np.name)
-      );
-      if(old){
-        if(np.prize  == null && old.prize  != null) np.prize  = old.prize;
-        if(np.profit == null && old.profit != null) np.profit = old.profit;
-      }
-    });
-    RKT.players = d.players;
-  }
-  if(d.history != null) RKT.history=d.history;
-  if(d.online  != null) RKT.online=d.online;
-  // Если в players есть мы — синхронизируем betPlaced
-  if(d.players != null && RKT.phase==='waiting'){
-    const meInPoll=(d.players||[]).find(p=>p.is_me||(USER_ID&&String(p.uid)===String(USER_ID)));
-    if(meInPoll && meInPoll.bet>0 && !RKT.betPlaced){
-      RKT.betPlaced=true; RKT.myBet=meInPoll.bet;
-      _rktBetRoundId=RKT.roundId; _rktRoundBetDone=true;
-      _rktBetLock('accepted');
-    }
-  }
-  if(d.crash_at!=null){
-    RKT.crashAt=d.crash_at;
-    // Если мы летим и превысили crashAt — немедленно применяем краш
-    if(RKT.phase==='flying'&&RKT.mult>d.crash_at){
-      RKT.mult=d.crash_at;
-    }
-  }
-  // wait_left: синхронизация таймера — запуск делает poll/initRocket, здесь только коррекция
-  if(d.wait_left != null && d.wait_left > 0 && RKT.phase === 'waiting'){
-    const serverLeft = d.wait_left;
-    if(_rktWT){
-      // Таймер идёт — корректируем при расхождении > 0.3с
-      const localLeft = Math.max(0, (_rktLaunchAt - Date.now()) / 1000);
-      if(Math.abs(localLeft - serverLeft) > 0.3){
-        _rktLaunchAt = Date.now() + serverLeft * 1000;
-      }
-    }
-    // Если таймер НЕ идёт — poll loop его запустит на следующей итерации
-  }
-
-  const rid=document.getElementById('rktRoundId');
-  if(rid) rid.textContent='РАУНД #'+RKT.roundId;
-
-  if(d.phase==='flying'){
-    RKT.waitLeft = 0;
-    RKT.mult=d.mult||1.00;
-    if(d.elapsed!=null && d.elapsed>=0){
-      RKT._ls=Date.now()-d.elapsed*1000;
-    } else {
-      RKT._ls=Date.now()-(Math.log(Math.max(RKT.mult,1.001))/0.085)*1000;
-    }
-
-    // ── ГЛАВНЫЙ ФИX: синхронизируем betPlaced с сервера ──
-    // Ищем себя в списке игроков который прислал сервер
-    const meOnServer = (d.players||[]).find(p =>
-      p.is_me ||
-      (USER_ID && String(p.uid) === String(USER_ID)) ||
-      (USER_ID && String(p.user_id) === String(USER_ID))
-    );
-    if(meOnServer && meOnServer.bet > 0){
-      // Сервер подтверждает: наша ставка в этом раунде принята
-      if(!RKT.betPlaced){
-        RKT.betPlaced = true;
-        RKT.myBet = meOnServer.bet;
-        rktUpdateTable(); // мгновенно обновляем таблицу
-      }
-      // Всегда синхронизируем betRoundId с текущим раундом
-      _rktBetRoundId = RKT.roundId;
-      _rktRoundBetDone = true;
-      if(_rktBetState === 'sending'){
-        _rktBetLock('accepted');
-      }
-      const res=document.getElementById('rktRes');
-      if(res && res.className!=='rkt-res win'){
-        res.textContent='🚀 Летим! Нажми ЗАБРАТЬ когда захочешь';
-        res.className='rkt-res';
-      }
-    }
-
-    if(prev!=='flying'){
-      rTrail=[];rCrashParticles=[];rSpeedParts=[];rCashNotifs=[];
-      // Если ставка была отправлена — сразу помечаем как принятую
-      if(_rktBetState !== 'idle' && RKT.myBet > 0 && !RKT.betPlaced){
-        RKT.betPlaced = true;
-        _rktBetLock('accepted');
-      }
-      _rktOperating=false;
-      RKT._betTs=0;
-      // Сбрасываем data-disp чтобы иксы показались сразу
-      const multEl=document.getElementById('rktMult');
-      if(multEl){ multEl.removeAttribute('data-disp'); }
-      if(rAFid) cancelAnimationFrame(rAFid);
-      rktAF(); rktTickStart();
-      if(RKT.betPlaced&&!RKT.cashedOut){
-        const res=document.getElementById('rktRes');
-        if(res&&res.className!=='rkt-res win'){
-          res.textContent='🚀 Летим! Нажми ЗАБРАТЬ когда захочешь';
-          res.className='rkt-res';
-        }
-      }
-    }
-  } else if(d.phase==='waiting'){
-    if(prev==='flying'){
-      // Немедленно останавливаем все анимации
-      _rktTick=false; // rAF frame проверит и остановится
-      if(rAFid){cancelAnimationFrame(rAFid);rAFid=null;}
-      // Фиксируем финальный mult = crashAt
-      if(d.crash_at) RKT.mult=d.crash_at;
-      RKT.phase='crashed';
-      _rktShowCrash(RKT.crashAt||RKT.mult||1); // запускаем анимацию краша
-      rktSpawnCrashParticles(rTrail.length?rTrail[rTrail.length-1][0]:rW*0.5, rTrail.length?rTrail[rTrail.length-1][1]:rH*0.5);
-      // Если не вывели — проигрыш
-      if(RKT.betPlaced&&!RKT.cashedOut){
-        RKT.stats.g++;RKT.stats.p-=RKT.myBet; rktSave();
-        const res=document.getElementById('rktRes');
-        if(res){res.textContent='💥 Краш ×'+(RKT.crashAt||RKT.mult).toFixed(2)+' — -'+RKT.myBet.toLocaleString('ru-RU');res.className='rkt-res loss';}
-        showToast('💥 Краш ×'+(RKT.crashAt||RKT.mult).toFixed(2),'error');
-      }
-      setTimeout(()=>{
-        if(_rktBetState==='sending' && RKT.myBet>0){
-          setBalance(balance+RKT.myBet);
-          showToast('\u21a9\ufe0f '+RKT.myBet.toLocaleString('ru-RU')+' \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0435\u043d\u043e','info');
-        }
-        RKT.phase='waiting';RKT.betPlaced=false;RKT.cashedOut=false;
-        RKT.cashedPrize=null;RKT.cashedProfit=null;RKT.cashedMult=null;
-        _rktOperating=false; _rktSetBetting(false);
-        _rktBetUnlock(); _rktCashingOut=false;
-        _rktRoundBetDone=false; _rktBetRoundId=-99; _rktMinBalance=-1;
-        _rktFrozenMult=null;
-        rTrail=[];rCrashParticles=[];
-        rktUI();
-      },300);
-    } else {
-      // waiting→waiting
-      _rktOperating=false;
-    }
-  }
-  // Перерисовываем UI только при смене фазы, не во время полёта (RAF сам обновляет)
-  if(d.phase !== 'flying' || prev !== 'flying') { rktHist(); rktRedraw(); }
 }
 
-// ── UI обновления ────────────────────────────────────────
-function rktUI(){
-  const me=document.getElementById('rktMult');
-  const sb=document.getElementById('rktSub');
-  const on=document.getElementById('rktOnl');
-  const overlay=document.getElementById('rktCrashOverlay');
+let _rktBetTimeout = null;
+
+// ── Кешаут ────────────────────────────────────────────────
+let _rktCashingOut = false;
+
+async function rktDoCashout() {
+  if (!RKT.betPlaced || RKT.cashedOut || _rktCashingOut) return;
+  if (RKT.phase !== 'flying') return;
+  _rktCashingOut = true;
+
+  const mult  = parseFloat(RKT.mult.toFixed(2));
+  const prize = Math.round(RKT.myBet * mult);
+  const profit= prize - RKT.myBet;
+
+  if (!API_URL || !API_SECRET) {
+    // Demo
+    _rktOnCashoutDone(mult, prize);
+    return;
+  }
+
+  // WS
+  if (_wsConnected && _ws && _ws.readyState===1) {
+    _ws.send(JSON.stringify({
+      type:'cashout', uid:parseInt(USER_ID), secret:API_SECRET, mult
+    }));
+    return; // ответ придёт в cashout handler
+  }
+
+  // Fallback HTTP
+  try {
+    const ctrl=new AbortController(); const t2=setTimeout(()=>ctrl.abort(),5000);
+    const r=await fetch(API_URL+'/casino/rocket/cashout',{
+      method:'POST',signal:ctrl.signal,
+      headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'1'},
+      body:JSON.stringify({uid:parseInt(USER_ID),secret:API_SECRET,mult})
+    });
+    clearTimeout(t2);
+    const d=await r.json();
+    if(d.ok) {
+      if(d.balance!=null) setBalance(d.balance);
+      _rktOnCashoutDone(d.mult||mult, d.prize||prize);
+    } else {
+      _rktCashingOut=false;
+    }
+  } catch(e) {
+    _rktCashingOut=false;
+  }
+}
+
+function _rktOnCashoutDone(mult, prize) {
+  RKT.cashedOut  = true;
+  RKT.cashedMult = mult;
+  const profit = prize - RKT.myBet;
+  RKT.stats.g++; RKT.stats.b=Math.max(RKT.stats.b,mult); RKT.stats.p+=profit; rktSave();
+  if (!API_URL) setBalance(balance + prize); // demo
+  const res=document.getElementById('rktRes');
+  if(res){res.textContent='🎉 Забрано ×'+mult.toFixed(2)+' — +'+profit.toLocaleString('ru-RU');res.className='rkt-res win';}
+  showToast('🎉 ×'+mult.toFixed(2)+' +'+profit.toLocaleString('ru-RU'),'success');
+  rktUpdateUI();
+}
+
+function _rktResetBet() {
+  RKT.betPlaced=false; RKT.cashedOut=false; RKT.cashedMult=null;
+  _rktBetLocked=false; _rktBetSending=false; _rktCashingOut=false;
+  clearTimeout(_rktBetTimeout);
   const pb=document.getElementById('rktProgressBar');
-  if(on) on.textContent=RKT.online;
-
-  if(RKT.phase==='waiting'){
-    if(me){me.textContent='';me.className='rkt-mult sw';}
-    if(overlay) overlay.classList.remove('active');
-    // Прогресс ожидания — заполняется по таймеру
-    if(pb){
-      const total=_rktWaitTotal||5; const left=RKT.waitLeft||0;
-      const pct = total>0 ? Math.max(0,Math.min(100,(1-left/total)*100)) : 100;
-      pb.style.width=pct+'%'; pb.className='rkt-pb-inner';
-    }
-  } else if(RKT.phase==='flying'){
-    if(me&&!_rktTick){me.textContent=(RKT.mult||1).toFixed(2)+'×';me.className='rkt-mult sf';}
-    if(sb) sb.textContent='';
-    if(overlay) overlay.classList.remove('active');
-    if(pb){ pb.style.width='100%'; pb.className='rkt-pb-inner'; }
-  } else if(RKT.phase==='crashed'){
-    const crashMult = (RKT.crashAt||(RKT.mult||1));
-    if(me){me.textContent=crashMult.toFixed(2)+'×';me.className='rkt-mult sc';}
-    if(sb) sb.textContent='';
-    if(overlay) overlay.classList.add('active');
-    if(pb){ pb.style.width='100%'; pb.className='rkt-pb-inner red'; }
-  }
-  rktUpdateBtn();
-  const g=document.getElementById('rStG');if(g)g.textContent=RKT.stats.g;
-  const b=document.getElementById('rStB');if(b)b.textContent=RKT.stats.b>0?'×'+RKT.stats.b.toFixed(2):'—';
-  const p=document.getElementById('rStP');
-  if(p){p.textContent=(RKT.stats.p>=0?'+':'')+RKT.stats.p.toLocaleString('ru-RU');p.style.color=RKT.stats.p>=0?'#4ade80':'#f87171';}
+  if(pb){pb.style.width='0%';pb.className='rkt-pb-inner';}
 }
 
-// Единственная функция управления кнопкой — вызывать только через rktUI()
-function rktUpdateBtn(){
+// ── UI ─────────────────────────────────────────────────────
+function rktUpdateUI() {
+  const me      = document.getElementById('rktMult');
+  const sub     = document.getElementById('rktSub');
+  const overlay = document.getElementById('rktCrashOverlay');
+  const label   = document.getElementById('rktCrashLabel');
+  const onl     = document.getElementById('rktOnl');
+  if (onl) onl.textContent = RKT.online;
+
+  if (RKT.phase === 'waiting') {
+    if (me)  { me.textContent=''; me.className='rkt-mult sw'; }
+    if (sub) sub.textContent = 'Следующий раунд скоро';
+    if (overlay) overlay.classList.remove('active');
+    if (label)   label.classList.remove('show');
+  } else if (RKT.phase === 'flying') {
+    if (me&&!_tickRaf){ me.textContent=RKT.mult.toFixed(2)+'×'; me.className='rkt-mult sf'; }
+    if (sub) sub.textContent='';
+    if (overlay) overlay.classList.remove('active');
+    if (label)   label.classList.remove('show');
+  } else if (RKT.phase === 'crashed') {
+    const cm=RKT.crashAt||RKT.mult||1;
+    if (me)  { me.textContent=cm.toFixed(2)+'×'; me.className='rkt-mult sc'; }
+    if (sub) sub.textContent='';
+  }
+
+  rktUpdateBtn();
+  rktUpdateTable();
+  rktUpdateTags();
+  rktUpdateHist();
+  rktUpdateStats();
+}
+
+function rktUpdateBtn() {
   const btnBet    = document.getElementById('rktBtnBet');
   const btnCash   = document.getElementById('rktBtnCash');
   const btnStatus = document.getElementById('rktBtnStatus');
-  const st        = document.getElementById('rktActionStatus');
-  if(!btnBet || !btnCash || !btnStatus) return;
+  const actStatus = document.getElementById('rktActionStatus');
+  if (!btnBet) return;
 
-  const setStatus = (txt, color) => {
-    if(st){ st.textContent=txt; st.style.color=color||'rgba(255,255,255,.25)'; }
+  const hide = el => { if(el) el.style.display='none'; };
+  hide(btnBet); hide(btnCash); hide(btnStatus);
+
+  const setStatus = (txt,col) => {
+    if (!actStatus) return;
+    actStatus.textContent=txt; actStatus.style.color=col||'rgba(255,255,255,.25)';
   };
 
-  // Скрываем все три
-  btnBet.style.display    = 'none';
-  btnCash.style.display   = 'none';
-  btnStatus.style.display = 'none';
-
-  // ── ПОЛЁТ ──────────────────────────────────────────────
-  if(RKT.phase==='flying'){
-    if(RKT.betPlaced && !RKT.cashedOut && !_rktCashingOut){
-      // Показываем ЗАБРАТЬ с текущим множителем
-      const m = RKT.mult||1;
-      const prize = Math.round((RKT.myBet||0) * m);
-      const profit = prize - (RKT.myBet||0);
-      btnCash.textContent = '💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
-      btnCash.style.display = 'block';
-      setStatus('СТАВКА: '+(RKT.myBet||0).toLocaleString('ru-RU')+'  →  '+prize.toLocaleString('ru-RU')+'  (+'+profit.toLocaleString('ru-RU')+')', '#fbbf24');
-      return;
-    }
-    if(RKT.cashedOut){
-      btnStatus.textContent = '✅ Забрано ×'+(RKT.cashedMult||RKT.mult||1).toFixed(2);
-      btnStatus.style.display = 'block';
-      setStatus('ЗАБРАНО — РАУНД ЗАВЕРШЁН', '#4ade80');
-      return;
-    }
-    // Летим — ставка отправлена но ещё не подтверждена
-    if(_rktBetState !== 'idle' && RKT.myBet > 0){
-      // Сразу помечаем betPlaced чтобы ЗАБРАТЬ работало
-      if(!RKT.betPlaced){ RKT.betPlaced = true; _rktBetLock('accepted'); }
-      const m2 = RKT.mult||1;
-      const prize2 = Math.round(RKT.myBet * m2);
-      const profit2 = prize2 - RKT.myBet;
-      btnCash.textContent = '💸 '+m2.toFixed(2)+'× — ЗАБРАТЬ!';
-      btnCash.style.display = 'block';
-      setStatus('СТАВКА: '+RKT.myBet.toLocaleString('ru-RU')+'  →  '+prize2.toLocaleString('ru-RU')+'  (+'+profit2.toLocaleString('ru-RU')+')', '#fbbf24');
+  if (RKT.phase === 'flying') {
+    if (RKT.betPlaced && !RKT.cashedOut) {
+      const m=RKT.mult||1;
+      btnCash.textContent='💸 '+m.toFixed(2)+'× — ЗАБРАТЬ!';
+      btnCash.style.display='block';
+      const prize=Math.round(RKT.myBet*m);
+      setStatus('СТАВКА: '+RKT.myBet.toLocaleString('ru-RU')+'  →  '+prize.toLocaleString('ru-RU'),'#fbbf24');
+    } else if (RKT.cashedOut) {
+      btnStatus.textContent='✅ Забрано ×'+(RKT.cashedMult||RKT.mult).toFixed(2);
+      btnStatus.style.display='block';
+      setStatus('ЗАБРАНО','#4ade80');
     } else {
-      btnStatus.textContent = '— раунд идёт';
-      btnStatus.style.background = 'rgba(255,255,255,.07)';
-      btnStatus.style.color = 'rgba(255,255,255,.25)';
-      btnStatus.style.display = 'block';
-      setStatus('', '');
+      btnStatus.textContent='— раунд идёт';
+      btnStatus.style.display='block';
+      setStatus('','');
     }
     return;
   }
 
-  // ── КРАШ ───────────────────────────────────────────────
-  if(RKT.phase==='crashed'){
-    btnStatus.textContent = '⏳ Новый раунд...';
-    btnStatus.style.background = 'rgba(255,255,255,.07)';
-    btnStatus.style.color = 'rgba(255,255,255,.25)';
-    btnStatus.style.display = 'block';
-    setStatus('', '');
+  if (RKT.phase === 'crashed') {
+    btnStatus.textContent='⏳ Новый раунд...';
+    btnStatus.style.display='block';
+    setStatus('','');
     return;
   }
 
-  // ── ОЖИДАНИЕ ───────────────────────────────────────────
-  // Ставка уже есть если betRoundId совпадает с текущим раундом ИЛИ betPlaced
-  const _betThisRound = RKT.betPlaced || _rktRoundBetDone || _rktBetAccepted
-                     || (_rktBetRoundId === RKT.roundId && RKT.roundId !== -1);
-  if(_betThisRound){
-    const betFmt = RKT.myBet ? RKT.myBet.toLocaleString('ru-RU') : '';
-    btnStatus.textContent = '✅ Ставка '+ betFmt +' принята';
-    btnStatus.style.background = 'rgba(22,163,74,.15)';
-    btnStatus.style.color = '#4ade80';
-    btnStatus.style.display = 'block';
-    setStatus('ЖДЁМ СТАРТА 🚀', '#4ade80');
+  // waiting
+  if (_rktBetLocked || RKT.betPlaced) {
+    btnStatus.textContent='✅ Ставка '+RKT.myBet.toLocaleString('ru-RU')+' принята';
+    btnStatus.style.display='block';
+    setStatus('ЖДЁМ СТАРТА 🚀','#4ade80');
     return;
   }
-  // Отправляем
-  if(_rktBetState === 'sending' || _rktBetting){
-    btnStatus.textContent = '⟳ Отправляем...';
-    btnStatus.style.background = 'rgba(255,140,0,.15)';
-    btnStatus.style.color = 'rgba(255,180,0,.8)';
-    btnStatus.style.display = 'block';
-    setStatus('ОТПРАВЛЯЕМ СТАВКУ...', '#fbbf24');
+  if (_rktBetSending) {
+    btnStatus.textContent='⏳ Отправляем...';
+    btnStatus.style.display='block';
+    setStatus('ОТПРАВЛЯЕМ...','#fbbf24');
     return;
   }
-  // Таймер после отправки
-  if(_rktLastSentAt > 0 && Date.now() - _rktLastSentAt < 4000){
-    btnStatus.textContent = '⏳ Отправляем...';
-    btnStatus.style.background = 'rgba(255,140,0,.15)';
-    btnStatus.style.color = 'rgba(255,180,0,.8)';
-    btnStatus.style.display = 'block';
-    setStatus('ОЖИДАЕМ ОТВЕТА...', '#fbbf24');
+  if (RKT.waitLeft < 1.5 && RKT.waitLeft > 0) {
+    btnStatus.textContent='🚀 Старт через '+RKT.waitLeft.toFixed(1)+'с';
+    btnStatus.style.display='block';
+    setStatus('','');
     return;
   }
 
-  // Показываем ПОСТАВИТЬ только если осталось <= 5 секунд
-  // Пока краш — вообще не показываем таймер на кнопке
-  if(_rktCrashShown){
-    btnStatus.textContent = '💥 Краш...';
-    btnStatus.style.background = 'rgba(255,30,30,.08)';
-    btnStatus.style.color = 'rgba(248,113,113,.5)';
-    btnStatus.style.display = 'block';
-    setStatus('', '');
-    return;
-  }
-  // Блокируем только за 1.5с до старта — остальное время кнопка активна
-  if(RKT.waitLeft < 1.5 && RKT.waitLeft > 0){
-    const secsLeft = RKT.waitLeft.toFixed(1);
-    btnStatus.textContent = '🚀 Старт через ' + secsLeft + 'с';
-    btnStatus.style.background = 'rgba(255,100,0,.08)';
-    btnStatus.style.color = 'rgba(255,180,0,.7)';
-    btnStatus.style.display = 'block';
-    setStatus('', '');
-    return;
-  }
-  const inp = document.getElementById('rktInp');
-  let betPreview = '';
-  try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betPreview=' — '+v.toLocaleString('ru-RU'); }catch(e){}
-  const waitDisp = RKT.waitLeft > 0 ? RKT.waitLeft.toFixed(1) : '0.0';
-  const waitStr = RKT.waitLeft > 0 ? ' · ' + waitDisp + 'с до старта' : '';
-  btnBet.textContent = '🚀 ПОСТАВИТЬ' + betPreview + waitStr;
-  btnBet.style.display = 'block';
-  setStatus('⏱️ РАКЕТА СТАРТУЕТ ЧЕРЕЗ ' + waitDisp + 'С (независимо от ставки)', 'rgba(255,200,0,.4)');
-}
-// Оставляем для совместимости — просто вызывает rktUI
-function rktSetBtn(m){ rktUI(); }
-
-// Батч-обновление всего UI ракеты — вызывай вместо трёх функций
-function rktRedraw(){
-  rktUI();
-  rktUpdateTable();
-  rktUpdateTags();
+  // Кнопка ПОСТАВИТЬ
+  const inp=document.getElementById('rktInp');
+  let bp='';
+  try{const v=parseBetStr(inp?inp.value:'0')||0;if(v>=1000)bp=' — '+v.toLocaleString('ru-RU');}catch(e){}
+  const ws=RKT.waitLeft>0?' · '+RKT.waitLeft.toFixed(1)+'с до старта':'';
+  btnBet.textContent='🚀 ПОСТАВИТЬ'+bp+ws;
+  btnBet.style.display='block';
+  setStatus('⏱️ РАКЕТА СТАРТУЕТ ЧЕРЕЗ '+RKT.waitLeft.toFixed(1)+'С','rgba(255,200,0,.4)');
 }
 
-function rktHist(){
-  const h=document.getElementById('rktHist');if(!h)return;
+function rktUpdateTable() {
+  const t=document.getElementById('rktTable'); if(!t) return;
+  t.innerHTML='';
+  (RKT.players||[]).forEach(p=>{
+    const isMe=p.is_me||(USER_ID&&String(p.uid)===String(USER_ID));
+    const row=document.createElement('div');
+    row.className='rkt-live-row'+(isMe?' me':'');
+    const prof=p.cashed_at?Math.round(p.bet*(p.cashed_at-1)):null;
+    const profStr=p.cashed_at?'×'+p.cashed_at.toFixed(2):RKT.phase==='crashed'&&!p.cashed_at?'💥':'—';
+    const profCls=p.cashed_at?'rp win':RKT.phase==='crashed'&&!p.cashed_at?'rp loss':'rp';
+    row.innerHTML=`<span class="rn">${renderAvatarHtml(p.avatar||'🎮',14)} ${(p.name||'?').slice(0,10)}</span>`
+      +`<span class="rb">${(p.bet/1000).toFixed(0)}K</span>`
+      +`<span class="${profCls}">${profStr}</span>`;
+    t.appendChild(row);
+  });
+}
+
+function rktUpdateTags() {
+  const wrap=document.getElementById('rktTags'); if(!wrap) return;
+  wrap.innerHTML='';
+  (RKT.players||[]).slice(0,8).forEach(p=>{
+    const cls='rkt-ptag '+(p.cashed_at?'s-cash':RKT.phase==='crashed'&&!p.cashed_at?'s-boom':'');
+    const val=p.cashed_at?'×'+p.cashed_at.toFixed(2):(p.bet/1000).toFixed(0)+'K';
+    const t=document.createElement('div');
+    t.className=cls;
+    t.innerHTML=`<span class="rkt-ptag-avatar">${renderAvatarHtml(p.avatar||'🎮',14)}</span>`
+      +`<div class="rkt-ptag-info"><span class="rkt-ptag-name">${(p.name||'?').slice(0,6)}</span>`
+      +`<span class="rkt-ptag-val">${val}</span></div>`;
+    wrap.appendChild(t);
+  });
+}
+
+function rktUpdateHist() {
+  const h=document.getElementById('rktHist'); if(!h) return;
   h.innerHTML='';
   (RKT.history||[]).slice(0,15).forEach(m=>{
-    const tier = m>=5?'hi':m>=2?'md':'lo';
-    const label = '×'+m.toFixed(2);
-    const w = 44 + Math.max(0, label.length - 5) * 5;
-    const ch = document.createElement('div');
-    ch.className = 'rkt-hc ' + tier;
-
-    // Цвет по уровню
-    const glowColor = tier==='hi' ? 'rgba(74,222,128,.55)' : tier==='lo' ? 'rgba(248,113,113,.45)' : 'rgba(255,255,255,.2)';
-    const textColor = tier==='hi' ? '#4ade80' : tier==='lo' ? '#f87171' : 'rgba(255,255,255,.65)';
-    const borderColor = tier==='hi' ? '#4ade80' : tier==='lo' ? '#f87171' : 'rgba(255,255,255,.28)';
-    const bgColor = tier==='hi' ? 'rgba(20,50,25,.95)' : tier==='lo' ? 'rgba(50,15,15,.95)' : 'rgba(20,20,30,.95)';
-
-    ch.innerHTML = `<svg width="${w}" height="30" viewBox="0 0 ${w} 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="cg${m.toFixed(0).replace('.','_')}"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      </defs>
-      <!-- тело чипа -->
-      <rect x="1" y="1" width="${w-2}" height="28" rx="8" fill="${bgColor}" stroke="${borderColor}" stroke-width="1"/>
-      <!-- блик сверху -->
-      <rect x="4" y="2" width="${w-8}" height="8" rx="5" fill="rgba(255,255,255,.07)"/>
-      <!-- внутренний ободок -->
-      <rect x="3" y="3" width="${w-6}" height="24" rx="6" fill="none" stroke="${borderColor}" stroke-width=".4" stroke-opacity=".4"/>
-      <!-- засечки по бокам (как у настоящего чипа) -->
-      <rect x="1" y="8" width="3" height="3" rx=".5" fill="${borderColor}" opacity=".5"/>
-      <rect x="1" y="14" width="3" height="3" rx=".5" fill="${borderColor}" opacity=".5"/>
-      <rect x="1" y="20" width="3" height="3" rx=".5" fill="${borderColor}" opacity=".5"/>
-      <rect x="${w-4}" y="8" width="3" height="3" rx=".5" fill="${borderColor}" opacity=".5"/>
-      <rect x="${w-4}" y="14" width="3" height="3" rx=".5" fill="${borderColor}" opacity=".5"/>
-      <rect x="${w-4}" y="20" width="3" height="3" rx=".5" fill="${borderColor}" opacity=".5"/>
-      <!-- текст -->
-      <text x="${w/2}" y="19.5" text-anchor="middle" font-family="Oxanium,Orbitron,sans-serif" font-size="10" font-weight="800" fill="${textColor}" filter="url(#cg${m.toFixed(0).replace('.','_')})">${label}</text>
-    </svg>`;
-    h.appendChild(ch);
+    const tier=m>=5?'hi':m>=2?'md':'lo';
+    const d=document.createElement('div');
+    d.className='rkt-hc '+tier;
+    d.textContent='×'+m.toFixed(2);
+    h.appendChild(d);
   });
 }
 
-// Таблица игроков — видно ставки, статус и прибыль каждого
-function rktUpdateTable(){
-  const tbl = document.getElementById('rktTable');
-  if(!tbl) return;
-
-  // Собираем список игроков — max 10, сначала мы, потом остальные
-  const allPlayers = [];
-
-  // Всегда добавляем себя если есть ставка
-  // Показываем себя если: есть ставка, забрал, или только что крашнулся
-  const _myBet = RKT.myBet||0;
-  const _showMe = RKT.betPlaced || RKT.cashedOut || RKT._myCrashMult ||
-                  (RKT.phase==='waiting' && _rktBetRoundId===RKT.roundId);
-  if(_myBet > 0 && _showMe){
-    const myCashedAt  = RKT.cashedOut ? (RKT.cashedMult||RKT.mult) : null;
-    const myCrashed   = !!RKT._myCrashMult && !RKT.cashedOut;
-    allPlayers.push({
-      uid: 'me',
-      name: USER_NAME || 'ВЫ',
-      bet: _myBet,
-      cashedAt: myCashedAt,
-      prize:  RKT.cashedPrize||null,
-      profit: RKT.cashedProfit||null,
-      avatar: selectedAvatar||'ghost',
-      isMe: true,
-      crashed: myCrashed,
-      crashMult: RKT._myCrashMult||null,
-    });
-  }
-
-  // Добавляем других игроков из live-списка
-  (RKT.players||[]).forEach(p => {
-    if(p.is_me) return;
-    if(allPlayers.length >= 10) return;
-    // Не добавляем если уже есть в снапшоте краша
-    const inSnapshot = _rktCrashedSnapshot.some(s => s.uid === p.uid);
-    if(inSnapshot) return;
-    const pCrashed = (RKT.phase==='crashed') && !p.cashed_at;
-    allPlayers.push({
-      uid:       p.uid,
-      name:      (p.name||'?').slice(0,12),
-      bet:       p.bet||0,
-      cashedAt:  p.cashed_at||null,
-      prize:     p.prize||null,
-      profit:    p.profit||null,
-      avatar:    p.avatar||'ghost',
-      isMe:      false,
-      crashed:   pCrashed,
-      crashMult: RKT.crashAt || RKT.mult || null,
-    });
-  });
-
-  // Добавляем проигравших из снапшота краша (они сохраняются даже после сброса players)
-  _rktCrashedSnapshot.forEach(p => {
-    if(allPlayers.length >= 10) return;
-    if(allPlayers.some(a => a.uid === p.uid)) return; // не дублируем
-    allPlayers.push(p);
-  });
-
-  // Обновляем DOM — переиспользуем строки чтобы не мигало
-  const m = RKT.mult||1.00;
-
-  // Убираем лишние строки
-  while(tbl.children.length > allPlayers.length) tbl.removeChild(tbl.lastChild);
-  // Добавляем нужные
-  while(tbl.children.length < allPlayers.length){
-    const row = document.createElement('div');
-    row.className = 'rkt-live-row';
-    tbl.appendChild(row);
-  }
-
-  allPlayers.forEach((p, i) => {
-    const row = tbl.children[i];
-
-    // Определяем класс строки
-    let rowCls = 'rkt-live-row';
-    if(p.isMe) rowCls += ' me';
-    else if(p.cashedAt) rowCls += ' cashed';
-    else if(p.crashed) rowCls += ' crashed';
-
-    // Flash при кешауте и краше
-    const wasCashed  = row.dataset.cashed === '1';
-    const wasCrashed = row.dataset.crashed === '1';
-    const nowCashed  = !!p.cashedAt;
-    const nowCrashed = !!p.crashed;
-    if(nowCashed && !wasCashed && !p.isMe){
-      rowCls += ' flash-cash';
-      setTimeout(()=>{ if(row.parentNode) row.classList.remove('flash-cash'); }, 700);
-    }
-    if(nowCrashed && !wasCrashed){
-      rowCls += ' flash-crash';
-      setTimeout(()=>{ if(row.parentNode) row.classList.remove('flash-crash'); }, 800);
-    }
-    row.dataset.cashed  = nowCashed ? '1' : '0';
-    row.dataset.crashed = nowCrashed ? '1' : '0';
-
-    if(row.className !== rowCls) row.className = rowCls;
-
-    // Прибыль
-    let profitHTML, statusHTML;
-    if(!p.bet){
-      profitHTML = '<span class="rkt-live-profit wait">—</span>';
-      statusHTML = '<div class="rkt-live-status">👀 наблюдает</div>';
-    } else if(p.cashedAt){
-      // Используем точные данные с сервера (prize/profit)
-      // Для себя — из локального кеша, для других — с сервера
-      let prize, profit;
-      if(p.isMe && RKT.cashedPrize){
-        prize  = RKT.cashedPrize;
-        profit = RKT.cashedProfit;
-      } else if(p.prize != null && p.profit != null){
-        // Сервер прислал точные значения
-        prize  = p.prize;
-        profit = p.profit;
-      } else {
-        // Fallback: считаем на клиенте
-        const mc = Math.round(parseFloat(p.cashedAt)*100);
-        prize  = Math.round(p.bet * mc / 100);
-        profit = prize - p.bet;
-      }
-      const profitSign = profit>=0?'+':'';
-      // Большая прибыль + под ней итого
-      profitHTML = '<div style="text-align:right">'
-        +'<div class="rkt-live-profit pos">'+profitSign+profit.toLocaleString('ru-RU')+'</div>'
-        +'<div style="font-size:8px;color:rgba(74,222,128,.6);font-family:var(--fd)">'
-        +'='+prize.toLocaleString('ru-RU')+'</div>'
-        +'</div>';
-      statusHTML = '<div class="rkt-live-status cashed">✅ ×'+parseFloat(p.cashedAt).toFixed(2)+'</div>';
-    } else if(p.crashed){
-      // Показываем что могли забрать на множителе краша
-      const crashM   = p.crashMult || RKT.crashAt || RKT.mult || 1;
-      const couldHave = Math.round(p.bet * crashM) - p.bet;
-      profitHTML = '<div style="text-align:right">'
-        +'<div class="rkt-live-profit neg">-'+p.bet.toLocaleString('ru-RU')+'</div>'
-        +'<div style="font-size:8px;color:rgba(248,113,113,.55);font-family:var(--fd)" title="Могли забрать">'
-        +'↓+'+couldHave.toLocaleString('ru-RU')+'</div>'
-        +'</div>';
-      statusHTML = '<div class="rkt-live-status crashed">💥 ×'+crashM.toFixed(2)+'</div>';
-    } else if(RKT.phase==='flying'){
-      const growing = Math.round(p.bet * m) - p.bet;
-      const prize2  = Math.round(p.bet * m);
-      const sign = growing>=0?'+':'';
-      profitHTML = '<div style="text-align:right">'
-        +'<div class="rkt-live-profit grow">'+sign+growing.toLocaleString('ru-RU')+'</div>'
-        +'<div style="font-size:8px;color:rgba(134,239,172,.5);font-family:var(--fd)">'
-        +'='+prize2.toLocaleString('ru-RU')+'</div>'
-        +'</div>';
-      statusHTML = '<div class="rkt-live-status flying">🚀 ×'+m.toFixed(2)+'</div>';
-    } else {
-      profitHTML = '<span class="rkt-live-profit wait">—</span>';
-      statusHTML = '<div class="rkt-live-status">⏳ ждёт</div>';
-    }
-
-    const betK = p.bet >= 1000000 ? (p.bet/1000000).toFixed(1)+'М'
-               : p.bet >= 1000 ? Math.round(p.bet/1000)+'K' : String(p.bet);
-
-    const nameLabel = p.isMe ? ('👤 '+(p.name||'ВЫ')) : (p.name||'?');
-    const avaHtml = renderAvatarHtml(p.avatar||'ghost', 26);
-
-    // Статическая часть: аватар + имя (не меняется)
-    const staticKey = p.uid+'|'+nameLabel+'|'+betK;
-    if(row.dataset.staticKey !== staticKey){
-      row.dataset.staticKey = staticKey;
-      row.innerHTML =
-        '<div class="rkt-live-player">'
-          +'<div class="rkt-live-ava">'+avaHtml+'</div>'
-          +'<div>'
-            +'<div class="rkt-live-name">'+nameLabel+'</div>'
-            +'<div class="rkt-live-status-wrap"></div>'
-          +'</div>'
-        +'</div>'
-        +'<div class="rkt-live-bet">'+betK+'</div>'
-        +'<div class="rkt-live-profit-wrap"></div>';
-    }
-    // Динамическая часть: статус и прибыль (обновляем отдельно)
-    const dynKey = statusHTML+'|'+profitHTML;
-    if(row.dataset.dynKey !== dynKey){
-      row.dataset.dynKey = dynKey;
-      const sw = row.querySelector('.rkt-live-status-wrap');
-      const pw = row.querySelector('.rkt-live-profit-wrap');
-      if(sw) sw.innerHTML = statusHTML;
-      if(pw) pw.innerHTML = profitHTML;
-    }
-  });
-
-  // Если никого нет
-  if(allPlayers.length === 0){
-    tbl.innerHTML = '<div style="padding:14px;text-align:center;font-family:var(--fd);font-size:9px;color:rgba(255,255,255,.2);letter-spacing:1.5px">ЖДЁМ ИГРОКОВ...</div>';
-  }
+function rktUpdateStats() {
+  const g=document.getElementById('rStG'); if(g) g.textContent=RKT.stats.g;
+  const b=document.getElementById('rStB'); if(b) b.textContent=RKT.stats.b>0?'×'+RKT.stats.b.toFixed(2):'—';
+  const p=document.getElementById('rStP');
+  if(p){p.textContent=(RKT.stats.p>=0?'+':'')+Math.round(RKT.stats.p).toLocaleString('ru-RU');p.style.color=RKT.stats.p>=0?'#4ade80':'#f87171';}
 }
 
-
-function rktUpdateTags(){
-  const tags=document.getElementById('rktTags');if(!tags)return;
-  tags.innerHTML='';
-  if(RKT.betPlaced){
-    const t=document.createElement('div');
-    const cls=RKT.cashedOut?'s-cash':(RKT.phase==='crashed'&&!RKT.cashedOut?'s-boom':'s-me');
-    t.className='rkt-ptag '+cls;
-    const val=RKT.cashedOut?'×'+(RKT.cashedMult||RKT.mult).toFixed(2):RKT.myBet.toLocaleString('ru-RU');
-    t.innerHTML='<span class="rkt-ptag-avatar">'+getCurrentAvatarEmoji()+'</span><div class="rkt-ptag-info"><span class="rkt-ptag-name">ВЫ</span><span class="rkt-ptag-val">'+val+'</span></div>';
-    tags.appendChild(t);
-  }
-  (RKT.players||[]).forEach(p=>{
-    if(p.is_me) return;
-    const cls=p.cashed_at?'s-cash':(RKT.phase==='crashed'&&!p.cashed_at?'s-boom':'s-wait');
-    const t=document.createElement('div');
-    t.className='rkt-ptag '+cls;
-    const val2=p.cashed_at?'×'+(+p.cashed_at).toFixed(2):(p.bet/1000).toFixed(0)+'K';
-    const name=(p.name||'?').slice(0,6);
-    t.innerHTML='<span class="rkt-ptag-avatar">'+renderAvatarHtml(p.avatar||'🎮',18)+'</span><div class="rkt-ptag-info"><span class="rkt-ptag-name">'+name+'</span><span class="rkt-ptag-val">'+val2+'</span></div>';
-    tags.appendChild(t);
-  });
+// ── Пресеты / авто ─────────────────────────────────────────
+function rktPreset(v) {
+  const inp=document.getElementById('rktInp'); if(inp) inp.value=v;
 }
-
-// ── ТАЙМЕР РАКЕТЫ ──────────────────────────────────────
-let _rktWT = null;
-let _rktLaunchAt = 0;
-let _rktWaitTotal = 5; // полная длина фазы ожидания (секунды) для прогресс-бара
-
-function _rktTimerStart(ms){
-  if(_rktWT){ cancelAnimationFrame(_rktWT); _rktWT=null; }
-  _rktLaunchAt = Date.now() + ms;
-  _rktWaitTotal = ms/1000;
-  RKT.waitLeft  = ms/1000;
-  console.log('⏱ TIMER START', ms, 'phase='+RKT.phase, 'waitLeft='+RKT.waitLeft);
-  // RAF даёт 60fps — таймер плавный как анимация
-  function _timerFrame(){
-    if(RKT.phase!=='waiting'){
-      console.log('⏱ TIMER STOP phase='+RKT.phase);
-      _rktWT=null; _rktLaunchAt=0; return;
-    }
-    const left = Math.max(0, (_rktLaunchAt - Date.now()) / 1000);
-    RKT.waitLeft = left;
-    rktUpdateBtn();
-    const pb = document.getElementById('rktProgressBar');
-    const total = _rktWaitTotal || 5;
-    if(pb) pb.style.width = Math.min(100,(1-left/total)*100)+'%';
-    if(left <= 0){
-      _rktWT = null; _rktLaunchAt = 0;
-      console.log('⏱ TIMER DONE → FLY');
-      _rktTimerFly();
-      return;
-    }
-    _rktWT = requestAnimationFrame(_timerFrame);
-  }
-  _rktWT = requestAnimationFrame(_timerFrame);
-}
-
-function _rktTimerFly(){
-  if(RKT.phase!=='waiting') return;
-  RKT.phase='flying'; RKT._ls=Date.now();
-  const r=Math.random();
-  RKT.crashAt=r<0.08?10+Math.random()*40:r<0.25?5+Math.random()*5
-    :r<0.55?2+Math.random()*3:r<0.80?1.5+Math.random()*0.5:1.2+Math.random()*0.3;
-  rTrail=[];rktAF();rktTickStart();rktUI();
-}
-
-// Совместимость — сервер присылает wait_left
-function rktSetWaitTime(sec){} // handled in rktApply
-function rktStartCountdown(ms){ _rktTimerStart(ms); }
-function rktWaitTick(){}
-
-// ── Действия игрока ──────────────────────────────────────
-// _rktRoundBetDone: ставка поставлена в ЭТОМ раунде — не сбрасывается до смены раунда
-let _rktRoundBetDone = false;
-let _rktBetRoundId = -99; // ID раунда в котором поставили — надёжнее булева флага
-
-// АТОМАРНЫЙ ЛОК — единственный источник истины о состоянии кнопки
-// 'idle' | 'sending' | 'accepted' | 'cashing'
-let _rktBetState = 'idle';
-// Timestamp последней отправки ставки — кнопка не активируется раньше чем через 3 сек
-let _rktLastSentAt = 0;
-
-function _rktBetLock(state){
-  _rktBetState = state;
-  _rktBetting     = (state === 'sending');
-  _rktBetAccepted = (state === 'accepted');
-  // При подтверждении — всегда фиксируем roundId чтобы кнопка не мигала
-  if(state === 'accepted' && RKT.roundId !== -1){
-    _rktBetRoundId = RKT.roundId;
-    _rktRoundBetDone = true;
-  }
-  if(_rktBettingTimer){ clearTimeout(_rktBettingTimer); _rktBettingTimer=null; }
-  // Watchdog: если через 8 сек нет ответа — делаем полный refund
-  if(state === 'sending'){
-    _rktBettingTimer = setTimeout(()=>{
-      if(_rktBetState === 'sending'){
-        // Полный откат — возвращаем баланс и разблокируем
-        const refundBet = RKT.myBet || 0;
-        _rktBetState='idle'; _rktBetting=false; _rktBettingTimer=null;
-        _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
-        if(refundBet > 0) setBalance(balance + refundBet);
-        const res=document.getElementById('rktRes');
-        if(res){ res.textContent='↩️ Нет ответа от сервера — ставка возвращена'; res.className='rkt-res'; }
-        showToast('↩️ '+refundBet.toLocaleString('ru-RU')+' возвращено (таймаут)','info');
-        rktUI();
-      }
-    }, 8000);
-  }
-}
-
-function _rktBetUnlock(){
-  if(_rktBettingTimer){ clearTimeout(_rktBettingTimer); _rktBettingTimer=null; }
-  _rktBetState='idle'; _rktBetting=false; _rktBetAccepted=false;
-}
-
-function rktAction(){
-  // Используем новые кнопки — проверяем видимость ПОСТАВИТЬ
-  const btnBetCheck=document.getElementById('rktBtnBet');
-  if(!btnBetCheck || btnBetCheck.style.display==='none') return;
-  if(RKT.phase==='flying'&&RKT.betPlaced&&!RKT.cashedOut&&!_rktCashingOut){
-    _rktFrozenMult = parseFloat(RKT.mult.toFixed(2));
-    try{ tg.HapticFeedback.impactOccurred('heavy'); }catch(e){}
-    rktDoCashout();
-    return;
-  }
-  // Принимаем ставку только в idle
-  if(_rktBetState==='idle' && !_rktRoundBetDone && !RKT.betPlaced){ rktPlaceBet(); }
-}
-
-
-let _rktBetting=false;
-let _rktBettingTimer=null;
-let _rktBetAccepted=false;
-
-function _rktSetBetting(val){
-  if(val){ _rktBetLock('sending'); }
-  else if(_rktBetState==='sending'){ _rktBetLock('idle'); }
-}
-function rktPlaceBet(){
-  if(_rktBetState !== 'idle') return;
-  if(_rktRoundBetDone) return;
-  if(RKT.betPlaced) return;
-  if(RKT.phase==='flying') return;
-  if(RKT.phase==='crashed') return;
-  if(_rktBetRoundId !== -99 && _rktBetRoundId === RKT.roundId) return;
-  // Принимаем ставки только когда осталось <= 5 секунд
-  if(RKT.phase==='waiting' && RKT.waitLeft < 1.5) return; // блокируем за 1.5с до старта
-
-  const i   = document.getElementById('rktInp');
-  const bet = Math.min(parseBetStr(i?i.value:String(RKT.myBet))||0, MAX_BET_RKT);
-  if(bet < 1000){ showToast('Минимум 1 000 токенов','error'); return; }
-  if(bet > balance){ showToast('Недостаточно токенов!','error'); return; }
-
-  const res   = document.getElementById('rktRes');
-  const stEl  = document.getElementById('rktActionStatus');
-
-  // АТОМАРНО блокируем — первой строкой
-  console.log('💰 СТАВКА поставлена, раунд #'+RKT.roundId+', waitLeft='+RKT.waitLeft.toFixed(1)+'с, в', new Date().toLocaleTimeString());
-  _rktLastSentAt = Date.now();
-  _rktBetRoundId = RKT.roundId;
-  _rktBetLock('sending');
-  _rktRoundBetDone = true;
-  RKT.betPlaced    = true;
-  RKT.myBet        = bet;
-
-  rktUI(); // сразу обновляем кнопки — ПОСТАВИТЬ скрывается
-  if(stEl)  stEl.textContent = 'ОТПРАВЛЯЕМ...';
-  if(res)  { res.textContent='⏳ Отправляем ставку...'; res.className='rkt-res'; }
-
-  setBalance(balance - bet);
-  _rktMinBalance = balance;
-  rktUpdateTable(); rktUpdateTags();
-
-  const refund = (msg) => {
-    _rktLastSentAt = 0; // возврат — сбрасываем таймер
-    _rktBetUnlock();
-    _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
-    setBalance(balance + bet);
-    if(res){ res.textContent = msg; res.className='rkt-res'; }
-    showToast('↩️ '+bet.toLocaleString('ru-RU')+' возвращено','info');
-    rktUI();
-  };
-
-  if(!API_URL || !API_SECRET){
-    _rktLastSentAt = 0; // подтверждено — снимаем таймер
-    _rktBetLock('accepted');
-    if(res){ res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
-    showToast('🚀 Ставка '+bet.toLocaleString('ru-RU')+'!','success');
-    rktUI(); return;
-  }
-
-  rktFetch('/casino/rocket/bet', {
-    method:'POST',
-    body:JSON.stringify({ uid:parseInt(USER_ID), secret:API_SECRET, bet,
-      name:USER_NAME||CUSTOM_ID||USER_ID, avatar_id:selectedAvatar||'ghost' })
-  }).then(r => {
-    if(!r){ _rktBetLock('accepted');
-      if(res){ res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
-      rktUI(); return; }
-    if(r.error==='insufficient_funds'){ refund('Недостаточно токенов'); return; }
-    if(r.error==='round_started'){
-      // Сервер отклонил — деньги НЕ списаны, просто разблокируем
-      _rktBetUnlock();
-      _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
-      setBalance(balance + bet); // возвращаем локально списанное
-      _rktBetRoundId=-99;
-      // Если ещё waiting — можно было опоздать чуть-чуть, объясняем
-      const msg = (r.phase==='waiting')
-        ? '⏱️ Слишком поздно — раунд вот-вот стартует'
-        : '↩️ Ставка возвращена — раунд начался';
-      if(res){ res.textContent=msg; res.className='rkt-res'; }
-      showToast('↩️ '+bet.toLocaleString('ru-RU')+' возвращено','info');
-      rktUI(); return;
-    }
-    if(r.error)                       { refund('Ошибка: '+r.error); return; }
-    if(typeof r.balance==='number') setBalance(r.balance);
-    _rktLastSentAt = 0; // подтверждено сервером
-    _rktBetLock('accepted');
-    if(res){ res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
-    showToast('🚀 Ставка '+bet.toLocaleString('ru-RU')+'!','success');
-    rktUI(); rktUpdateTable();
-  }).catch(() => {
-    _rktBetLock('accepted');
-    if(res){ res.textContent='✅ Ставка '+bet.toLocaleString('ru-RU')+' принята!'; res.className='rkt-res'; }
-    rktUI();
-  });
-}
-
-async function rktDoCashout(){
-  // Принимаем кешаут если: есть ставка ИЛИ отправляли ставку (betState != idle)
-  const _canCashout = (RKT.betPlaced || (_rktBetState !== 'idle' && RKT.myBet > 0)) && !RKT.cashedOut && !_rktCashingOut;
-  if(!_canCashout) return;
-  if(!RKT.betPlaced && RKT.myBet > 0){ RKT.betPlaced = true; }
-
-  // Захватываем mult синхронно — то что видел пользователь на экране
-  const mult  = _rktFrozenMult !== null ? _rktFrozenMult : parseFloat(RKT.mult.toFixed(2));
-  const myBet = RKT.myBet;
-
-  _rktCashingOut = true;   // мгновенно блокируем повторное нажатие
-  _rktFrozenMult = mult;
-  _rktOperating  = true;
-
-  // Точный расчёт — СНАЧАЛА считаем, ПОТОМ сохраняем
-  const multCents   = Math.round(mult * 100);
-  const localPrize  = Math.round(myBet * multCents / 100);
-  const localProfit = localPrize - myBet;
-
-  // Теперь сохраняем в RKT — localPrize уже определён
-  RKT.cashedMult   = mult;
-  RKT.cashedOut    = true;
-  RKT.cashedPrize  = localPrize;
-  RKT.cashedProfit = localProfit;
-
-  // Показываем мгновенно
-  const res = document.getElementById('rktRes');
-  const btnCashOut=document.getElementById('rktBtnCash');
-  if(btnCashOut){ btnCashOut.style.display='none'; }
-  const btnStatusOut=document.getElementById('rktBtnStatus');
-  if(btnStatusOut){ btnStatusOut.textContent='⏳ Забрано ×'+mult.toFixed(2); btnStatusOut.style.display='block'; btnStatusOut.style.background='rgba(22,163,74,.15)'; btnStatusOut.style.color='#4ade80'; }
-  if(res){
-    res.innerHTML='<span style="color:#fbbf24">×'+mult.toFixed(2)+'</span>'
-      +' <span style="color:rgba(255,255,255,.4)">⏳ считаем...</span>';
-    res.className='rkt-res win';
-  }
-  rktUpdateTable(); rktUpdateTags();
-
-  // API — получаем точный баланс с сервера
-  if(API_URL && API_SECRET){
-    try{
-      const r = await rktFetch('/casino/rocket/cashout',{
-        method:'POST',
-        body:JSON.stringify({
-          uid:parseInt(USER_ID),
-          secret:API_SECRET,
-          client_mult:mult
-        })
-      });
-      if(r && r.ok){
-        // prize считаем ТОЛЬКО по клиентскому mult — то что видел пользователь
-        // Баланс берём с сервера как финансовую истину
-        const sBal = (typeof r.balance === 'number') ? r.balance : (balance + localPrize);
-
-        RKT.cashedMult = mult;
-        setBalance(sBal);
-        RKT.stats.g++;
-        RKT.stats.p += localProfit;
-        if(mult > RKT.stats.b) RKT.stats.b = mult;
-        rktSave();
-
-        // Показываем КЛИЕНТСКИЕ данные — mult и prize которые видел пользователь
-        _showCashoutResult(res, mult, localProfit, localPrize);
-        showToast('×'+mult.toFixed(2)+'  +'+localProfit.toLocaleString('ru-RU')+' 💰','gold');
-        try{ rAddCashNotif(USER_NAME||'ВЫ', mult, localProfit); }catch(e){}
-        if(btn){ btn.textContent='✅ Забрано ×'+mult.toFixed(2); }
-        rktUpdateTable(); rktUpdateTags();
-        _rktOperating=false; _rktCashingOut=false;
-        return;
-      }
-    }catch(e){}
-  }
-
-  // Офлайн fallback
-  setBalance(balance + localPrize);
-  RKT.stats.g++;
-  RKT.stats.p += localProfit;
-  if(mult > RKT.stats.b) RKT.stats.b = mult;
-  rktSave();
-  _showCashoutResult(res, mult, localProfit, localPrize);
-  showToast('×'+mult.toFixed(2)+'  +'+localProfit.toLocaleString('ru-RU')+' 💰','gold');
-  try{ rAddCashNotif(USER_NAME||'ВЫ', mult, localProfit); }catch(e){}
-  if(btn){ btn.textContent='✅ Забрано ×'+mult.toFixed(2); }
-  rktUpdateTable(); rktUpdateTags();
-  _rktOperating=false; _rktCashingOut=false;
-}
-
-function _showCashoutResult(res, mult, profit, prize){
-  if(!res) return;
-  const profitFmt = profit.toLocaleString('ru-RU');
-  const prizeFmt  = prize.toLocaleString('ru-RU');
-  res.innerHTML = '<span style="color:#fbbf24">×'+mult.toFixed(2)+'</span>'
-    + ' &nbsp;<strong style="color:#4ade80">+'+ profitFmt +'</strong>'
-    + ' &nbsp;<span style="color:rgba(255,255,255,.5)">= '+ prizeFmt +'</span>';
-  res.className = 'rkt-res win';
-}
-function rktPreset(v){RKT.myBet=v;const i=document.getElementById('rktInp');if(i){i.value=v;i.blur();}}
-
-// overscroll управляется через CSS overscroll-behavior-y:none
-
-// Закрываем клавиатуру по Enter и по тапу вне инпута
-(function(){
-  function blurOnEnter(e){ if(e.key==='Enter'||e.keyCode===13){ e.target.blur(); } }
-  document.addEventListener('keydown', blurOnEnter);
-  // Тап вне инпута — снять фокус (закрыть клавиатуру)
-  document.addEventListener('touchstart', function(e){
-    const active = document.activeElement;
-    if(active && (active.tagName==='INPUT'||active.tagName==='TEXTAREA')){
-      if(!active.contains(e.target)) active.blur();
-    }
-  }, {passive:true});
-})();
-function rktMultBet(x){
+function rktMultBet(x) {
   const inp=document.getElementById('rktInp');
-  const cur=Math.floor(parseInt(inp?inp.value:RKT.myBet)||10000);
-  const nb=Math.max(1000,Math.floor(cur*x/1000)*1000);
-  rktPreset(nb);
+  if(!inp) return;
+  const cur=parseBetStr(inp.value)||RKT.myBet;
+  rktPreset(Math.max(1000,Math.round(cur*x/1000)*1000));
 }
-function rktAutoSet(x){
+function rktAutoSet(x) {
   RKT.auto=x;
   document.querySelectorAll('.rkt-au').forEach(b=>b.classList.remove('on'));
-  const m={1.5:0,2:1,5:2,0:3}; const bs=document.querySelectorAll('.rkt-au');
-  if(m[x]!==undefined) bs[m[x]]&&bs[m[x]].classList.add('on');
-  const l=document.getElementById('rktAuLbl');if(l) l.textContent=x?'Авто при ×'+x:'Авто выключен';
+  const idx={1.5:0,2:1,5:2,0:3}[x];
+  const bs=document.querySelectorAll('.rkt-au'); if(idx!=null) bs[idx]&&bs[idx].classList.add('on');
+  const l=document.getElementById('rktAuLbl'); if(l) l.textContent=x?'Авто при ×'+x:'Авто выключен';
 }
-function rktAuto(x){rktAutoSet(x);}
+function rktAction() { rktPlaceBet(); }
 
+// ── Инициализация ─────────────────────────────────────────
+function initRocket() {
+  rktInitCanvas();
+  rktUpdateUI();
+  rktUpdateHist();
 
-function rktAF(){
-  if(RKT.phase!=='flying' && RKT.phase!=='crashed'){rAFid=null;return;}
-  if(RKT.phase==='crashed' && rTrail.length===0){rAFid=null;return;}
-  // Звёзды скроллятся вниз — иллюзия что ракета летит вверх
-  if(rStars){
-    const spd = Math.min(0.8 + RKT.mult*0.35, 12);
-    rStars.forEach(s=>{
-      const layerMult = s.layer===2?1.5:s.layer===1?1.0:0.55;
-      s.y += spd * layerMult;
-      if(s.y > rH+4){ s.y = -4; s.x = Math.random()*rW; }
-    });
+  if (API_URL && API_SECRET) {
+    // Серверный режим — WebSocket
+    rktWsConnect();
+    // Попутно получаем state по HTTP (быстрый старт до WS)
+    fetch(API_URL+'/casino/rocket/state?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
+      {headers:{'ngrok-skip-browser-warning':'1'}})
+      .then(r=>r.json())
+      .then(d=>{
+        if(d&&d.ok){
+          rktHandleMsg({...d, type:'state'});
+        }
+      }).catch(()=>{});
+  } else {
+    // Demo режим
+    _wsSetStatus('wait','● ДЕМО');
+    RKT.phase='waiting'; RKT.roundId=1;
+    _rktTimerStart(5);
   }
-  rAFid=requestAnimationFrame(rktAF);
 }
 
 let _rktInited=false;
-// ══════════════════════════════════════════════════════════
-// TELEGRAM MAINBUTTON — нативная кнопка для ракетки
-
-function initRocketOnce(){
-  if(_rktInited) return;
-  _rktInited=true;
-  initRocket();
-}
-
-function initRocket(){
-  initRktCvs(); rktUI(); rktHist(); rktUpdateTable();
-  if(API_URL&&API_SECRET){
-    // Получаем текущее состояние с сервера
-    rktFetch('/casino/rocket/state?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now())
-      .then(d=>{
-        if(d && d.ok){
-          rktApply(d);
-          // Если waiting — запускаем локальный таймер от серверного значения
-          if(d.phase==='waiting' && d.wait_left > 0 && !_rktWT){
-            _rktTimerStart(d.wait_left * 1000);
-          }
-          // Если flying — запускаем тик и canvas
-          if(d.phase==='flying'){
-            if(!_rktTick){ rktTickStart(); }
-            if(!rAFid){ rktAF(); }
-          }
-        } else {
-          // Нет ответа — запускаем таймер по умолчанию
-          _rktTimerStart(5000);
-        }
-      })
-      .catch(()=>{ _rktTimerStart(5000); });
-    rktPollLoop();
-  } else {
-    // Демо-режим
-    _rktCrashShown = false;
-    RKT.roundId = 1; RKT.waitLeft = 5;
-    RKT.phase = 'waiting';
-    setTimeout(()=>_rktTimerStart(5000), 100);
-  }
-}
+function initRocketOnce(){ if(_rktInited)return; _rktInited=true; initRocket(); }
+// Совместимость со старыми вызовами
+function rktUI()        { try { rktUpdateUI(); }   catch(e){} }
+function rktRedraw()    { try { rktUpdateUI(); }   catch(e){} }
+function rktHist()      { try { rktUpdateHist(); } catch(e){} }
+function rktSetBtn()    { try { rktUpdateBtn(); }  catch(e){} }
 
 init();
 </script>
