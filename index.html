@@ -511,8 +511,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 /* ══════════════════════════════════════════
    EPIC SPLASH SCREEN
 ══════════════════════════════════════════ */
-#splash{position:fixed;inset:0;background:linear-gradient(180deg,#0a0500 0%,#150800 40%,#0a0005 100%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transition:opacity .5s ease;overflow:hidden}
-#splash.hide{opacity:0;pointer-events:none}
+#splash{position:fixed;inset:0;background:linear-gradient(180deg,#0a0500 0%,#150800 40%,#0a0005 100%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;overflow:hidden}
+#splash.hide{opacity:0;pointer-events:none;visibility:hidden}
 .splash-stars{position:absolute;inset:0;pointer-events:none}
 .splash-star{position:absolute;width:2px;height:2px;background:white;border-radius:50%;animation:starTwinkle var(--d,2s) ease-in-out infinite var(--delay,0s)}
 @keyframes starTwinkle{0%,100%{opacity:0.1;transform:scale(1)}50%{opacity:0.8;transform:scale(1.5)}}
@@ -881,12 +881,48 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-pb-fill.red { background:#f87171; }
 
 /* Краш оверлей */
-.rkt-crash-ov { position:absolute; inset:0; z-index:6; background:rgba(200,20,20,0); pointer-events:none; transition:background .25s; }
-.rkt-crash-ov.on { background:rgba(200,20,20,.2); }
-.rkt-crash-lbl { position:absolute; inset:0; z-index:7; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; opacity:0; transition:opacity .2s; }
+.rkt-crash-ov { position:absolute; inset:0; z-index:6; background:rgba(200,20,20,0); pointer-events:none; transition:background .3s; }
+.rkt-crash-ov.on { background:rgba(200,20,20,.25); }
+.rkt-crash-lbl { position:absolute; inset:0; z-index:7; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; opacity:0; transition:opacity .15s; gap:0; }
 .rkt-crash-lbl.on { opacity:1; }
-.rkt-crash-x { font-family:var(--fd); font-size:46px; font-weight:900; color:#f87171; text-shadow:0 0 30px #f87171; }
-.rkt-crash-word { font-family:var(--fd); font-size:12px; font-weight:700; color:#f87171; letter-spacing:5px; opacity:.8; margin-top:2px; }
+
+/* SVG взрыв */
+.rkt-crash-svg { opacity:0; transform:scale(0.2); transition:opacity .25s ease, transform .35s cubic-bezier(.17,.67,.35,1.4); }
+.rkt-crash-lbl.on .rkt-crash-svg { opacity:1; transform:scale(1); }
+@keyframes expPulse { 0%{transform:scale(1)} 50%{transform:scale(1.08)} 100%{transform:scale(1)} }
+.rkt-crash-lbl.on .rkt-crash-svg { animation:expPulse 0.5s ease-out .3s both; }
+
+/* Лучи */
+@keyframes raysOut { from{stroke-dashoffset:40} to{stroke-dashoffset:0} }
+.exp-rays line { stroke-dasharray:40; stroke-dashoffset:40; }
+.rkt-crash-lbl.on .exp-rays line { animation:raysOut .35s ease-out .1s forwards; }
+
+/* Кольца */
+@keyframes ringPulse { 0%{opacity:0;r:5} 40%{opacity:1} 100%{opacity:0;r:58} }
+.exp-ring-1 { animation:none; }
+.exp-ring-2 { animation:none; }
+.rkt-crash-lbl.on .exp-ring-1 { animation:ringPulse .8s ease-out .05s forwards; }
+.rkt-crash-lbl.on .exp-ring-2 { animation:ringPulse .7s ease-out .15s forwards; }
+
+/* Осколки */
+@keyframes debris1 { to{transform:translate(-18px,-35px) rotate(200deg); opacity:0} }
+@keyframes debris2 { to{transform:translate(30px,-20px) rotate(-150deg); opacity:0} }
+@keyframes debris3 { to{transform:translate(22px,30px) rotate(220deg); opacity:0} }
+@keyframes debris4 { to{transform:translate(-25px,28px) rotate(-180deg); opacity:0} }
+@keyframes debris5 { to{transform:translate(-32px,-18px) rotate(190deg); opacity:0} }
+@keyframes debris6 { to{transform:translate(5px,-40px) rotate(120deg); opacity:0} }
+.rkt-crash-lbl.on .debris-1 { animation:debris1 .9s ease-out .05s forwards; }
+.rkt-crash-lbl.on .debris-2 { animation:debris2 .85s ease-out .08s forwards; }
+.rkt-crash-lbl.on .debris-3 { animation:debris3 .95s ease-out .03s forwards; }
+.rkt-crash-lbl.on .debris-4 { animation:debris4 .9s ease-out .1s forwards; }
+.rkt-crash-lbl.on .debris-5 { animation:debris5 .8s ease-out .06s forwards; }
+.rkt-crash-lbl.on .debris-6 { animation:debris6 .85s ease-out .04s forwards; }
+
+/* Коэффициент — появляется с задержкой */
+.rkt-crash-mult { opacity:0; transform:scale(0.4) translateY(10px); transition:none; text-align:center; margin-top:10px; }
+.rkt-crash-mult.show { opacity:1; transform:scale(1) translateY(0); transition:opacity .5s ease, transform .5s cubic-bezier(.34,1.56,.64,1); }
+.rkt-crash-x { font-family:var(--fd); font-size:52px; font-weight:900; color:#f87171; text-shadow:0 0 40px rgba(248,113,113,.8), 0 0 80px rgba(248,113,113,.4); }
+.rkt-crash-word { font-family:var(--fd); font-size:11px; font-weight:700; color:#f87171; letter-spacing:6px; opacity:.75; margin-top:2px; }
 
 /* Теги игроков */
 .rkt-tags { position:absolute; top:6px; left:6px; z-index:8; display:flex; flex-wrap:wrap; gap:3px; pointer-events:none; max-width:60%; }
@@ -1549,8 +1585,59 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <!-- Краш -->
       <div class="rkt-crash-ov" id="rktCrashOv"></div>
       <div class="rkt-crash-lbl" id="rktCrashLbl">
-        <div class="rkt-crash-x" id="rktCrashX">×1.00</div>
-        <div class="rkt-crash-word">КРАШ</div>
+        <!-- SVG взрыв -->
+        <div class="rkt-crash-svg" id="rktCrashSvg">
+          <svg viewBox="0 0 120 120" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="expGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"   stop-color="#fff"   stop-opacity="1"/>
+                <stop offset="25%"  stop-color="#ffdd00" stop-opacity="1"/>
+                <stop offset="55%"  stop-color="#ff5500" stop-opacity="0.9"/>
+                <stop offset="100%" stop-color="#cc0000" stop-opacity="0"/>
+              </radialGradient>
+              <filter id="expBlur"><feGaussianBlur stdDeviation="2.5"/></filter>
+            </defs>
+            <!-- Внешнее свечение -->
+            <circle cx="60" cy="60" r="55" fill="rgba(255,50,0,0.15)" class="exp-ring exp-ring-1"/>
+            <circle cx="60" cy="60" r="42" fill="rgba(255,100,0,0.2)"  class="exp-ring exp-ring-2"/>
+            <!-- Центральный взрыв -->
+            <circle cx="60" cy="60" r="28" fill="url(#expGrad)" class="exp-core"/>
+            <!-- Лучи взрыва -->
+            <g class="exp-rays" transform="translate(60,60)">
+              <line x1="0" y1="-50" x2="0" y2="-32"   stroke="#ff8800" stroke-width="3.5" stroke-linecap="round"/>
+              <line x1="35" y1="-35" x2="23" y2="-23"  stroke="#ffcc00" stroke-width="3"   stroke-linecap="round"/>
+              <line x1="50" y1="0"   x2="32" y2="0"    stroke="#ff6600" stroke-width="3.5" stroke-linecap="round"/>
+              <line x1="35" y1="35"  x2="23" y2="23"   stroke="#ff4400" stroke-width="3"   stroke-linecap="round"/>
+              <line x1="0" y1="50"   x2="0" y2="32"    stroke="#ff8800" stroke-width="3.5" stroke-linecap="round"/>
+              <line x1="-35" y1="35" x2="-23" y2="23"  stroke="#ffcc00" stroke-width="3"   stroke-linecap="round"/>
+              <line x1="-50" y1="0"  x2="-32" y2="0"   stroke="#ff6600" stroke-width="3.5" stroke-linecap="round"/>
+              <line x1="-35" y1="-35" x2="-23" y2="-23" stroke="#ff4400" stroke-width="3" stroke-linecap="round"/>
+              <!-- Диагональные короткие лучи -->
+              <line x1="20" y1="-48" x2="13" y2="-31"  stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+              <line x1="48" y1="-20" x2="31" y2="-13"  stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+              <line x1="48" y1="20"  x2="31" y2="13"   stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+              <line x1="20" y1="48"  x2="13" y2="31"   stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+              <line x1="-20" y1="48" x2="-13" y2="31"  stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+              <line x1="-48" y1="20" x2="-31" y2="13"  stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+              <line x1="-48" y1="-20" x2="-31" y2="-13" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+              <line x1="-20" y1="-48" x2="-13" y2="-31" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+            </g>
+            <!-- Осколки ракеты -->
+            <g class="exp-debris" opacity="0.9">
+              <rect x="52" y="10" width="5" height="12" rx="2" fill="#90c8ff" transform="rotate(15,54,16)" class="debris-1"/>
+              <rect x="88" y="42" width="4" height="10" rx="2" fill="#2870d0" transform="rotate(-30,90,47)" class="debris-2"/>
+              <rect x="78" y="82" width="3" height="9"  rx="1" fill="#ff5500" transform="rotate(45,80,86)"  class="debris-3"/>
+              <rect x="22" y="75" width="4" height="11" rx="2" fill="#90c8ff" transform="rotate(-20,24,80)" class="debris-4"/>
+              <rect x="14" y="35" width="3" height="8"  rx="1" fill="#2870d0" transform="rotate(60,16,39)"  class="debris-5"/>
+              <polygon points="60,5 64,12 56,12" fill="#ff5500" class="debris-6"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Коэффициент — появляется через 800мс -->
+        <div class="rkt-crash-mult" id="rktCrashMult">
+          <div class="rkt-crash-x" id="rktCrashX"></div>
+          <div class="rkt-crash-word">КРАШ</div>
+        </div>
       </div>
 
       <!-- Прогресс -->
@@ -3625,122 +3712,58 @@ function splashBalShow(val, sourceText, sourceClass) {
 }
 
 async function init() {
-  // Диагностика при старте — сразу видим что передано
-  console.log('[Casino INIT] ==========================================');
-  console.log('[Casino INIT] USER_ID:', USER_ID);
-  console.log('[Casino INIT] URL_BAL:', URL_BAL);
-  console.log('[Casino INIT] API_URL:', API_URL || '❌ ПУСТОЙ');
-  console.log('[Casino INIT] API_SECRET:', API_SECRET ? API_SECRET.substring(0,6)+'...' : '❌ ПУСТОЙ');
-  try { console.log('[Casino INIT] Full URL:', window.location.href.substring(0, 200)); } catch(e){}
-  console.log('[Casino INIT] ==========================================');
-
-  const bar    = document.getElementById('splashBar');
-  const status = document.getElementById('splashStatus');
   const splash = document.getElementById('splash');
 
+  // Закрываем сплеш — просто и надёжно
   function closeSplash() {
-    if(splash && splash.parentNode) {
-      splash.classList.add('hide');
-      setTimeout(() => { try { splash.remove(); } catch(e){} }, 500);
-    }
-    if(bar) bar.style.width = '100%';
+    if (!splash) return;
+    splash.style.cssText = 'display:none!important;opacity:0;visibility:hidden;pointer-events:none;z-index:-1';
+    try { splash.parentNode && splash.parentNode.removeChild(splash); } catch(e) {}
   }
 
-  // Таймер: с API — ждём до 5 сек, без API — 1.5 сек
-  const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
-  const emergencyMs = hasApi ? 5000 : 1500;
-  const emergency = setTimeout(() => {
-    closeSplash();
-    try { startBalancePolling(); } catch(e) {}
-  }, emergencyMs);
+  // Гарантированное закрытие через 1.5с — ничто не должно висеть дольше
+  const emergency = setTimeout(closeSplash, 1500);
 
   try {
-    // ── Звёздочки сплеша ───────────────────────────────────────
-    try {
-      const st = document.getElementById('splashStars');
-      if(st) for(let i=0;i<60;i++){
-        const s=document.createElement('div'); s.className='splash-star';
-        s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${1.5+Math.random()*3}s;--delay:${Math.random()*2}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;opacity:${0.1+Math.random()*0.5}`;
-        st.appendChild(s);
-      }
-    } catch(e){}
+    // Баланс из URL (мгновенно)
+    if (URL_BAL > 0) setBalance(URL_BAL);
 
-    // ── Сначала загружаем все данные из CloudStorage (аватарка, статистика) ──
-    // Это быстро и синхронизирует устройства
-    try {
-      await Promise.race([loadAllFromCloud(), new Promise(r => setTimeout(r, 800))]);
-      // После загрузки из Cloud обновляем UI аватарки
+    // Пробуем получить баланс из API (если есть) — но не ждём долго
+    if (API_URL && API_SECRET && USER_ID && USER_ID !== '0') {
       try {
-        try { setAvaEl(document.getElementById('spoAvatar'), 44); } catch(e){}
-        try { setAvaEl(document.getElementById('pAvatar'), 50); } catch(e){}
-      } catch(e) {}
-    } catch(e) {}
-
-    // ── Показываем --- пока ждём баланс из API ──
-    try { updateMiniStats(); } catch(e){}
-    try {
-      const bv = document.getElementById('splashBalValue');
-      if(bv) { bv.className = 'splash-bal-value loading'; bv.textContent = '---'; }
-    } catch(e){}
-
-    // ── Прогресс-бар: 0 → 35% пока буквы анимируются ──────────
-    let prog = 0;
-    const t1 = setInterval(()=>{ prog=Math.min(prog+2,35); if(bar) bar.style.width=prog+'%'; },30);
-    await new Promise(r=>setTimeout(r,1200));
-    clearInterval(t1);
-    if(bar) bar.style.width='35%';
-
-    // ── Шаг 1: Подключение к серверу ───────────────────────────
-    splashStep('step1', 'active');
-    if(status) status.textContent='ПОДКЛЮЧЕНИЕ...';
-
-    const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
-    const t2 = setInterval(()=>{ prog=Math.min(prog+1,65); if(bar) bar.style.width=prog+'%'; },50);
-
-    await new Promise(r=>setTimeout(r,600));
-
-    if(hasApi) {
-      splashStep('step1', 'done');
-      splashStep('step2', 'active');
-      if(status) status.textContent='ПОЛУЧЕНИЕ БАЛАНСА...';
-    } else {
-      splashStep('step1', 'fail');
-      splashStep('step2', 'fail');
-      if(status) status.textContent='API НЕДОСТУПЕН — КЭШИРОВАННЫЙ БАЛАНС';
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 1000);
+        const r = await fetch(API_URL + '/casino/balance?uid=' + USER_ID + '&secret=' + API_SECRET + '&_t=' + Date.now(), {
+          signal: ctrl.signal, headers: { 'ngrok-skip-browser-warning': '1' }
+        });
+        clearTimeout(t);
+        const d = await r.json();
+        if (d && d.ok && typeof d.balance === 'number') setBalance(d.balance);
+      } catch(e) { /* не страшно — баланс из URL */ }
     }
 
-    // ── Шаг 2+3: Загружаем актуальный баланс из бота ──────────
-    clearInterval(t2);
-    const t3 = setInterval(()=>{ prog=Math.min(prog+1,90); if(bar) bar.style.width=prog+'%'; },40);
+    // Загружаем аватарку из localStorage (мгновенно)
+    try {
+      const saved = localStorage.getItem(AVATAR_KEY);
+      if (saved) selectedAvatar = saved;
+    } catch(e) {}
 
-    const loadedBal = await Promise.race([
-      safeLoadBalanceAnimated(),
-      new Promise(r=>setTimeout(()=>r(null), hasApi ? 4000 : 1000))
-    ]);
-
-    clearInterval(t3);
-
-    // ── Финал ──────────────────────────────────────────────────
-    _lastKnownBalance = balance;
-    if(bar) bar.style.width='100%';
-    if(status) status.textContent='✅ ' + balance.toLocaleString('ru-RU') + ' ТОКЕНОВ';
-
-    try{ refreshBets(); }catch(e){}
-    try{ for(const b of [100000,50000,25000,10000]){if(balance>=b){selectBet(b);break;}} }catch(e){}
-
-    await new Promise(r=>setTimeout(r,900));
+    // Обновляем UI
+    try { updateMiniStats(); } catch(e) {}
+    try { refreshBets(); } catch(e) {}
+    try { for(const b of [100000,50000,25000,10000]){ if(balance>=b){ selectBet(b); break; } } } catch(e) {}
 
   } catch(e) {
     console.warn('Init error:', e);
   } finally {
     clearTimeout(emergency);
     closeSplash();
-    try { tg.BackButton.show(); } catch(e){}
-    // Не перезаписываем onClick — он уже установлен правильно выше
-    try { tg.enableClosingConfirmation(); } catch(e){}
-    // canvas убран — используется CSS баннер
-try{ initProfileBanner(); window._pauseProfileBanner && window._pauseProfileBanner(); }catch(e){}
-    try{ startBalancePolling(); }catch(e){}
+    try { startBalancePolling(); } catch(e) {}
+    try { longPoll(); } catch(e) {}
+    try { tg.BackButton.show(); } catch(e) {}
+    try { tg.enableClosingConfirmation(); } catch(e) {}
+    try { initProfileBanner(); window._pauseProfileBanner && window._pauseProfileBanner(); } catch(e) {}
+    _lastKnownBalance = balance;
   }
 }
 
@@ -4345,25 +4368,41 @@ function _rktStartRenderLoop() {
   const ctx = RX;
   const ph  = R.phase;
 
-  // Фон
+  // ── Фон ─────────────────────────────────────────────
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, RW, RH);
 
   // Сетка
-  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.025)';
   ctx.lineWidth = 1;
-  for (let x = 0; x < RW; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,RH); ctx.stroke(); }
-  for (let y = 0; y < RH; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(RW,y); ctx.stroke(); }
+  for (let gx = 0; gx < RW; gx += 40) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,RH); ctx.stroke(); }
+  for (let gy = 0; gy < RH; gy += 40) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(RW,gy); ctx.stroke(); }
 
-  // Звёзды
-  const starSpd = ph === 'flying' ? Math.min(1.2 + R.mult * 0.28, 9) : 0;
+  // ── Звёзды ───────────────────────────────────────────
+  const starSpd = ph === 'flying' ? Math.min(1.5 + R.mult * 0.32, 12) : 0;
+  // Эффект скорости при высоких иксах — звёзды вытягиваются в линии
+  const highSpeed = ph === 'flying' && R.mult > 5;
+  ctx.fillStyle = '#fff';
   rStars.forEach(s => {
     s.b += s.s * 0.022;
     s.y += starSpd;
-    if (s.y > RH + 2) { s.y = -2; s.x = Math.random() * RW; }
-    ctx.globalAlpha = 0.15 + Math.abs(Math.sin(s.b)) * 0.75;
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
+    if (s.y > RH + 4) { s.y = -4; s.x = Math.random() * RW; }
+    const alpha = 0.18 + Math.abs(Math.sin(s.b)) * 0.72;
+    ctx.globalAlpha = alpha;
+    if (highSpeed && starSpd > 3) {
+      // Вытягиваем в стрик
+      const strk = Math.min(starSpd * 2.5, 30);
+      ctx.save();
+      const sg = ctx.createLinearGradient(s.x, s.y - strk, s.x, s.y);
+      sg.addColorStop(0, 'rgba(255,255,255,0)');
+      sg.addColorStop(1, `rgba(255,255,255,${alpha})`);
+      ctx.strokeStyle = sg;
+      ctx.lineWidth = s.r * 1.2;
+      ctx.beginPath(); ctx.moveTo(s.x, s.y - strk); ctx.lineTo(s.x, s.y);
+      ctx.stroke(); ctx.restore();
+    } else {
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
+    }
   });
   ctx.globalAlpha = 1;
 
@@ -4373,106 +4412,211 @@ function _rktStartRenderLoop() {
     const cx = RW * 0.5, cy = RH * 0.5 - 10;
     const pulse = 0.84 + Math.sin(rTime * (left < 2 ? 0.5 : 0.13)) * 0.16;
     const fs = Math.round(RH * 0.37);
-
     ctx.save();
     ctx.font = `900 ${fs}px 'Barlow Condensed','Orbitron',monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.globalAlpha = pulse;
     ctx.fillStyle = '#fff';
-    ctx.shadowColor = 'rgba(255,255,255,.7)'; ctx.shadowBlur = 20;
+    ctx.shadowColor = 'rgba(255,255,255,.6)'; ctx.shadowBlur = 18;
     ctx.fillText(left.toFixed(1), cx, cy);
     ctx.shadowBlur = 0;
-    ctx.globalAlpha = pulse * 0.38;
-    const sf = Math.round(RH * 0.044);
+    ctx.globalAlpha = pulse * 0.35;
+    const sf = Math.round(RH * 0.043);
     ctx.font = `600 ${sf}px 'Barlow Condensed',monospace`;
+    ctx.fillStyle = '#fff';
     ctx.fillText('СЛЕДУЮЩИЙ РАУНД', cx, cy + fs * 0.53);
     ctx.restore();
   }
 
-  // ── FLYING / CRASHED: ракета ─────────────────────────
+  // ── FLYING / CRASHED ─────────────────────────────────
   if (ph === 'flying' || ph === 'crashed') {
     const m = ph === 'crashed' ? (R.crashAt || R.mult) : R.mult;
 
+    // Дрожание экрана при высоких иксах
+    let shakeX = 0, shakeY = 0;
+    if (ph === 'flying' && m > 8) {
+      const shakeAmt = Math.min((m - 8) * 0.4, 6);
+      shakeX = (Math.random() - 0.5) * shakeAmt;
+      shakeY = (Math.random() - 0.5) * shakeAmt;
+      ctx.save();
+      ctx.translate(shakeX, shakeY);
+    }
+
     // Позиция ракеты
     const elapsed = (Date.now() - R.ls) / 1000;
-    const prog = Math.min(elapsed / 16, 0.82);
+    const prog = Math.min(elapsed / 18, 0.82);
     const rx = RW * 0.5;
-    const ry = RH * 0.88 - prog * RH * 0.62;
+    const ry = RH * 0.88 - prog * RH * 0.64;
 
     // Трасса
-    if (ph === 'flying' && rTime % 3 === 0) {
+    if (ph === 'flying' && rTime % 2 === 0) {
       rTrail.push([rx, ry]);
-      if (rTrail.length > 100) rTrail.shift();
+      if (rTrail.length > 120) rTrail.shift();
     }
     if (rTrail.length > 1) {
       ctx.save();
-      ctx.strokeStyle = ph === 'crashed' ? 'rgba(248,113,113,.45)' : 'rgba(255,150,0,.45)';
-      ctx.lineWidth = 2; ctx.lineJoin = 'round';
-      ctx.beginPath(); ctx.moveTo(rTrail[0][0], rTrail[0][1]);
-      for (let i = 1; i < rTrail.length; i++) ctx.lineTo(rTrail[i][0], rTrail[i][1]);
-      ctx.stroke(); ctx.restore();
-    }
-
-    if (ph === 'flying') {
-      // Пламя
-      ctx.save();
-      const fl = 16 + Math.sin(rTime * 0.45) * 5;
-      const fg = ctx.createLinearGradient(rx, ry + 10, rx, ry + 10 + fl);
-      fg.addColorStop(0, 'rgba(255,255,255,.9)');
-      fg.addColorStop(0.3, 'rgba(255,190,0,.85)');
-      fg.addColorStop(1, 'rgba(255,50,0,0)');
-      ctx.fillStyle = fg;
-      ctx.beginPath(); ctx.ellipse(rx, ry + 10, 4.5, fl, 0, 0, Math.PI*2);
-      ctx.fill(); ctx.restore();
-
-      // Ракета
-      ctx.save(); ctx.translate(rx, ry);
-      const bg = ctx.createLinearGradient(-7,0,7,0);
-      bg.addColorStop(0,'#3070b0'); bg.addColorStop(.5,'#d8eeff'); bg.addColorStop(1,'#1550a0');
-      ctx.fillStyle = bg;
-      ctx.beginPath();
-      ctx.moveTo(0,-20); ctx.quadraticCurveTo(9,-7,7,9); ctx.lineTo(-7,9); ctx.quadraticCurveTo(-9,-7,0,-20);
-      ctx.fill();
-      // нос
-      ctx.fillStyle = '#ff5500';
-      ctx.beginPath(); ctx.moveTo(0,-24); ctx.lineTo(5,-18); ctx.lineTo(-5,-18); ctx.closePath(); ctx.fill();
-      // крылья
-      ctx.fillStyle = '#0d3d80';
-      ctx.beginPath(); ctx.moveTo(7,7); ctx.lineTo(16,13); ctx.lineTo(7,13); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(-7,7); ctx.lineTo(-16,13); ctx.lineTo(-7,13); ctx.closePath(); ctx.fill();
+      // Градиентная трасса
+      for (let ti = 1; ti < rTrail.length; ti++) {
+        const t = ti / rTrail.length;
+        ctx.strokeStyle = ph === 'crashed'
+          ? `rgba(248,113,113,${t * 0.5})`
+          : `rgba(255,${Math.round(100+t*100)},0,${t * 0.55})`;
+        ctx.lineWidth = 1 + t * 2;
+        ctx.beginPath();
+        ctx.moveTo(rTrail[ti-1][0], rTrail[ti-1][1]);
+        ctx.lineTo(rTrail[ti][0], rTrail[ti][1]);
+        ctx.stroke();
+      }
       ctx.restore();
     }
 
-    // Цифра над ракетой
-    const fc = ph==='crashed'?'rgba(248,113,113,.95)':m>=20?'rgba(255,215,0,.95)':m>=5?'rgba(74,222,128,.95)':m>=2?'rgba(251,191,36,.95)':'rgba(255,255,255,.9)';
-    const ff = Math.min(14 + (m-1)*0.35, 26);
-    ctx.save();
-    ctx.font = `bold ${ff}px 'Barlow Condensed','Orbitron',monospace`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-    ctx.fillStyle = fc;
-    ctx.fillText(m.toFixed(2) + '×', rx, ry - 26);
-    ctx.restore();
+    if (ph === 'flying') {
+      // ── Пламя ──
+      ctx.save();
+      const flicker = 0.85 + Math.sin(rTime * 0.6) * 0.15;
+      const fl = (18 + Math.sin(rTime * 0.45) * 5) * flicker;
+      // Внешнее свечение пламени
+      const fgOut = ctx.createRadialGradient(rx, ry+8, 0, rx, ry+8, fl*1.5);
+      fgOut.addColorStop(0, 'rgba(255,140,0,0.15)');
+      fgOut.addColorStop(1, 'rgba(255,60,0,0)');
+      ctx.fillStyle = fgOut;
+      ctx.beginPath(); ctx.ellipse(rx, ry+8, fl*0.8, fl*1.5, 0, 0, Math.PI*2); ctx.fill();
+      // Основное пламя
+      const fg = ctx.createLinearGradient(rx, ry+6, rx, ry+6+fl);
+      fg.addColorStop(0, 'rgba(255,255,255,.95)');
+      fg.addColorStop(0.2, 'rgba(255,220,0,.9)');
+      fg.addColorStop(0.6, 'rgba(255,80,0,.75)');
+      fg.addColorStop(1, 'rgba(255,20,0,0)');
+      ctx.fillStyle = fg;
+      ctx.beginPath(); ctx.ellipse(rx, ry+6, 5+flicker*2, fl, 0, 0, Math.PI*2); ctx.fill();
+      // Маленькие искры
+      for (let sp=0; sp<3; sp++) {
+        const sx = rx + (Math.random()-0.5)*8;
+        const sy = ry + 12 + Math.random()*fl*0.7;
+        ctx.fillStyle = 'rgba(255,220,100,0.6)';
+        ctx.beginPath(); ctx.arc(sx,sy,0.8+Math.random()*1.2,0,Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
 
-    // Частицы краша
+      // ── Ракета SVG-like на canvas ──
+      ctx.save();
+      ctx.translate(rx, ry);
+
+      // Лёгкое покачивание
+      const wobble = Math.sin(rTime * 0.08) * 0.03;
+      ctx.rotate(wobble);
+
+      // Крылья (под телом)
+      const wingG = ctx.createLinearGradient(-18,5,0,14);
+      wingG.addColorStop(0,'#0a2860'); wingG.addColorStop(1,'#1a4a90');
+      ctx.fillStyle = wingG;
+      // Левое крыло
+      ctx.beginPath(); ctx.moveTo(-8,6); ctx.lineTo(-20,18); ctx.lineTo(-18,22); ctx.lineTo(-8,14); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(100,160,255,0.3)'; ctx.lineWidth=0.5; ctx.stroke();
+      // Правое крыло
+      ctx.beginPath(); ctx.moveTo(8,6); ctx.lineTo(20,18); ctx.lineTo(18,22); ctx.lineTo(8,14); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+      // Тело ракеты
+      const bodyG = ctx.createLinearGradient(-10,-22,10,-22);
+      bodyG.addColorStop(0,'#1a4080'); bodyG.addColorStop(0.3,'#5090d0');
+      bodyG.addColorStop(0.5,'#d8eeff'); bodyG.addColorStop(0.7,'#5090d0');
+      bodyG.addColorStop(1,'#0e2860');
+      ctx.fillStyle = bodyG;
+      ctx.beginPath();
+      ctx.moveTo(0,-24);
+      ctx.bezierCurveTo(10,-18,11,-8,9,6);
+      ctx.lineTo(9,14); ctx.lineTo(-9,14);
+      ctx.bezierCurveTo(-11,-8,-10,-18,0,-24);
+      ctx.fill();
+      // Блик тела
+      ctx.fillStyle='rgba(255,255,255,0.18)';
+      ctx.beginPath();
+      ctx.moveTo(-2,-22); ctx.bezierCurveTo(4,-18,5,-10,3,2); ctx.lineTo(0,2);
+      ctx.bezierCurveTo(-2,-10,-3,-18,-2,-22); ctx.fill();
+
+      // Нос
+      const noseG = ctx.createLinearGradient(-5,-28,5,-28);
+      noseG.addColorStop(0,'#cc4400'); noseG.addColorStop(0.5,'#ff8800'); noseG.addColorStop(1,'#cc4400');
+      ctx.fillStyle = noseG;
+      ctx.beginPath(); ctx.moveTo(0,-30); ctx.lineTo(6,-22); ctx.lineTo(-6,-22); ctx.closePath(); ctx.fill();
+
+      // Акцентная полоска
+      ctx.fillStyle='rgba(255,120,0,0.8)';
+      ctx.beginPath(); ctx.roundRect(-9,-2,18,4,2); ctx.fill();
+
+      // Иллюминатор
+      const portG = ctx.createRadialGradient(-1,-13,0,0,-13,5);
+      portG.addColorStop(0,'rgba(200,240,255,1)');
+      portG.addColorStop(0.5,'rgba(120,200,255,0.9)');
+      portG.addColorStop(1,'rgba(40,100,200,0.7)');
+      ctx.fillStyle = portG;
+      ctx.beginPath(); ctx.arc(0,-13,5,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='rgba(180,220,255,0.6)'; ctx.lineWidth=1;
+      ctx.stroke();
+      // Блик иллюминатора
+      ctx.fillStyle='rgba(255,255,255,0.55)';
+      ctx.beginPath(); ctx.ellipse(-1.5,-15,2,1.5,Math.PI*0.3,0,Math.PI*2); ctx.fill();
+
+      // Двигатели
+      const engG = ctx.createLinearGradient(-6,12,6,22);
+      engG.addColorStop(0,'#1a3060'); engG.addColorStop(1,'#0a1830');
+      ctx.fillStyle = engG;
+      ctx.beginPath(); ctx.roundRect(-6,12,12,10,2); ctx.fill();
+      ctx.strokeStyle='rgba(80,140,220,0.4)'; ctx.lineWidth=0.8; ctx.stroke();
+
+      ctx.restore();
+
+      // Эффект скорости — размытые полосы по бокам при высоких иксах
+      if (m > 3) {
+        const speedAmt = Math.min((m - 3) / 15, 1);
+        ctx.save();
+        ctx.globalAlpha = speedAmt * 0.35;
+        for (let sp = 0; sp < 8; sp++) {
+          const sx = rx + (Math.random()-0.5) * RW * 0.9;
+          const sy = Math.random() * RH;
+          const sl = 20 + Math.random() * 60 * speedAmt;
+          const sg = ctx.createLinearGradient(sx, sy-sl, sx, sy);
+          sg.addColorStop(0, 'rgba(255,255,255,0)');
+          sg.addColorStop(1, `rgba(255,255,255,${speedAmt*0.5})`);
+          ctx.strokeStyle = sg;
+          ctx.lineWidth = 0.5 + Math.random();
+          ctx.beginPath(); ctx.moveTo(sx, sy-sl); ctx.lineTo(sx, sy); ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+    } // end flying
+
+    // ── Частицы краша ──
     rParticles = rParticles.filter(p => p.life > 0);
     rParticles.forEach(p => {
-      p.x+=p.vx; p.y+=p.vy; p.vy+=0.14; p.life-=0.022;
-      ctx.globalAlpha = p.life;
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.vx*=0.98; p.life-=0.018;
+      ctx.globalAlpha = Math.pow(p.life, 0.7);
       ctx.fillStyle = p.c;
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI*2); ctx.fill();
     });
     ctx.globalAlpha = 1;
+
+    if (ph === 'flying' && m > 8) ctx.restore(); // restore shake
   }
 
-  // Кешаут-попапы
+  // ── DOM-множитель — цвет по фазе ─────────────────────
+  // (обновляется в rktTickStart RAF, здесь только для краша)
+  if (ph === 'crashed' && rTime % 4 === 0) {
+    const elFlash = document.getElementById('rktMult');
+    if (elFlash && elFlash.className !== 'rkt-mult red') {
+      elFlash.className = 'rkt-mult red';
+    }
+  }
+
+  // ── Кешаут-попапы ────────────────────────────────────
   rCashPopups = rCashPopups.filter(n => n.life > 0);
   rCashPopups.forEach(n => {
-    n.y -= 0.7; n.life -= 0.014;
+    n.y -= 0.6; n.life -= 0.012;
     ctx.save();
     ctx.globalAlpha = Math.min(n.life * 2, 1);
-    ctx.font = 'bold 10px Barlow Condensed,monospace';
+    ctx.font = `bold 11px 'Barlow Condensed',monospace`;
     ctx.textAlign = 'center'; ctx.fillStyle = '#4ade80';
-    ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 7;
     ctx.fillText('💰 ' + n.name + ' ×' + n.mult.toFixed(2), RW * 0.5, n.y);
     ctx.restore();
   });
@@ -4538,14 +4682,13 @@ function rktMsg(msg) {
       if (msg.phase === 'waiting') {
         const wasFlying = R.phase === 'flying';
         if (wasFlying) {
-          // Показываем краш-анимацию, потом переходим в waiting
           R.phase = 'crashed'; R.crashAt = msg.crash_at ?? R.crashAt;
           rktShowCrash(R.crashAt);
           setTimeout(() => {
             R.phase = 'waiting'; rktResetBet(); rTrail = []; rParticles = [];
             if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
             rktUI();
-          }, 2500);
+          }, 1500);
         } else {
           R.phase = 'waiting';
           if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
@@ -4564,20 +4707,37 @@ function rktMsg(msg) {
       break;
     }
 
+    case 'crashed': {
+      // Сервер объявил краш — показываем анимацию
+      _tickRaf && cancelAnimationFrame(_tickRaf); _tickRaf = null;
+      R.phase = 'crashed';
+      R.crashAt = msg.crash_at ?? R.crashAt;
+      R.mult = R.crashAt;
+      rktShowCrash(R.crashAt);
+      rktUI();
+      // Ждём waiting от сервера (придёт через ~3с)
+      break;
+    }
+
     case 'waiting': {
-      const wasF = R.phase === 'flying';
+      const wasF = R.phase === 'flying' || R.phase === 'crashed';
       R.id      = msg.round_id ?? R.id;
       R.history = msg.history  ?? R.history;
       R.online  = msg.online   ?? R.online;
       if (msg.players) rktMergePlayers(msg.players);
       if (wasF) {
-        R.phase = 'crashed'; R.crashAt = msg.crash_at ?? R.crashAt;
-        rktShowCrash(R.crashAt);
+        // Если ещё не показали краш — покажем
+        if (R.phase !== 'crashed') {
+          R.phase = 'crashed'; R.crashAt = msg.crash_at ?? R.crashAt;
+          rktShowCrash(R.crashAt);
+        }
+        // Переходим в waiting после краш-анимации
+        const delay = R.phase === 'crashed' ? 1500 : 0;
         setTimeout(() => {
           R.phase = 'waiting'; rktResetBet(); rTrail = []; rParticles = [];
           if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
           rktUI();
-        }, 2500);
+        }, delay);
       } else {
         R.phase = 'waiting';
         if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
@@ -4708,7 +4868,15 @@ let _tickRaf = null;
 function rktTickStart() {
   if (_tickRaf) return;
   function frame() {
-    if (R.phase !== 'flying') { _tickRaf = null; return; }
+    if (R.phase !== 'flying') {
+      _tickRaf = null;
+      // Если crashed — сразу красим DOM-иксы
+      if (R.phase === 'crashed') {
+        const elC = document.getElementById('rktMult');
+        if (elC) { elC.textContent=(R.crashAt||R.mult||1).toFixed(2)+'×'; elC.className='rkt-mult red'; }
+      }
+      return;
+    }
     const elapsed = (Date.now() - R.ls) / 1000;
     const raw = Math.exp(elapsed * 0.085);
     R.mult = Math.min(raw, R.crashAt || 99999);
@@ -4767,7 +4935,7 @@ function _demoCrash() {
     rktUI(); rktDrawHist();
     _rktDemoId = (_rktDemoId||0) + 1; R.id = _rktDemoId;
     rktTimerStart(5);
-  }, 2500);
+  }, 2000);
 }
 let _rktDemoId = 1;
 
@@ -4775,20 +4943,66 @@ function rktShowCrash(mult) {
   const ov = document.getElementById('rktCrashOv');
   const lb = document.getElementById('rktCrashLbl');
   const cx = document.getElementById('rktCrashX');
-  if (ov) ov.classList.add('on');
-  if (cx) cx.textContent = '×' + (mult||1).toFixed(2);
-  if (lb) lb.classList.add('on');
-  // Частицы
-  const px = RW ? RW*0.5 : 180, py = RH ? RH*0.4 : 120;
-  for (let i=0; i<45; i++) {
-    const a=Math.random()*Math.PI*2, spd=2+Math.random()*5;
-    rParticles.push({x:px,y:py,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-1.5,r:2+Math.random()*3.5,life:1,c:['#f87171','#ff6600','#fbbf24','#fff'][Math.floor(Math.random()*4)]});
+  const cm = document.getElementById('rktCrashMult');
+  const elM = document.getElementById('rktMult');
+
+  // Сброс
+  if (cm) cm.classList.remove('show');
+  if (cx) cx.textContent = '';
+  if (lb) lb.classList.remove('on');
+  if (ov) ov.classList.remove('on');
+
+  // ── Шаг 0: DOM-иксы сразу краснеют ──────────────────
+  if (elM) {
+    elM.textContent = (mult||1).toFixed(2) + '×';
+    elM.className = 'rkt-mult red';
   }
+
+  // ── Шаг 1 (50ms): красная вспышка + SVG взрыв ───────
   setTimeout(() => {
-    if(ov) ov.classList.remove('on');
-    if(lb) lb.classList.remove('on');
-  }, 2400);
-}
+    if (ov) ov.classList.add('on');
+    if (lb) lb.classList.add('on'); // SVG взрыв
+
+    // Canvas-частицы — много, разлетаются от позиции ракеты
+    const elapsed = (Date.now() - R.ls) / 1000;
+    const prog = Math.min(elapsed / 18, 0.82);
+    const px = RW * 0.5;
+    const py = RH * 0.88 - prog * RH * 0.64;
+    // Большие куски
+    for (let i = 0; i < 30; i++) {
+      const a = Math.random() * Math.PI * 2, spd = 4 + Math.random() * 8;
+      rParticles.push({
+        x:px, y:py, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd - 3,
+        r: 3 + Math.random() * 5, life: 1,
+        c: ['#f87171','#ff6600','#fbbf24','#ffaa00','#ff3300'][Math.floor(Math.random()*5)]
+      });
+    }
+    // Мелкие искры
+    for (let i = 0; i < 40; i++) {
+      const a = Math.random() * Math.PI * 2, spd = 2 + Math.random() * 12;
+      rParticles.push({
+        x:px + (Math.random()-0.5)*20, y:py + (Math.random()-0.5)*20,
+        vx:Math.cos(a)*spd, vy:Math.sin(a)*spd - 2,
+        r: 1 + Math.random() * 2.5, life: 1,
+        c: ['#fff','#ffd700','#ff8800'][Math.floor(Math.random()*3)]
+      });
+    }
+  }, 50);
+
+  // ── Шаг 2 (900ms): коэффициент плавно выезжает ──────
+  setTimeout(() => {
+    if (cx) cx.textContent = '×' + (mult||1).toFixed(2);
+    if (cm) cm.classList.add('show');
+  }, 900);
+
+  // ── Шаг 3 (3600ms): всё скрывается ──────────────────
+  // (сервер к этому моменту уже пришлёт waiting с таймером)
+  setTimeout(() => {
+    if (ov) ov.classList.remove('on');
+    if (lb) lb.classList.remove('on');
+    if (cm) cm.classList.remove('show');
+  }, 3600);
+}}
 
 // ── Ставка ─────────────────────────────────────────────
 let _betTimeout = null;
