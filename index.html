@@ -5682,11 +5682,16 @@ function rktSpawnCrashParticles(x,y){
 // ── Сервер ───────────────────────────────────────────────
 async function rktFetch(path,opts={}){
   if(!API_URL||!API_SECRET) return null;
+  // Таймаут: для ставки/кешаута 5с, для poll/state 3с
+  const isMutation = opts.method==='POST';
+  const ms = isMutation ? 5000 : 3000;
+  const ctrl = new AbortController();
+  const t = setTimeout(()=>ctrl.abort(), ms);
   try{
-    const r=await fetch(API_URL+path,{...opts,headers:{...(opts.headers||{}),'ngrok-skip-browser-warning':'1','Content-Type':'application/json'}});
-    // Читаем тело ВСЕГДА — даже при HTTP 4xx/5xx
+    const r=await fetch(API_URL+path,{...opts,signal:ctrl.signal,headers:{...(opts.headers||{}),'ngrok-skip-browser-warning':'1','Content-Type':'application/json'}});
     try{ return await r.json(); }catch(e){ return null; }
   }catch(e){ return null; }
+  finally{ clearTimeout(t); }
 }
 
 // Long-poll синхронизация с сервером
@@ -6658,11 +6663,16 @@ function rktPlaceBet(){
       rktUI(); return; }
     if(r.error==='insufficient_funds'){ refund('Недостаточно токенов'); return; }
     if(r.error==='round_started'){
-      // Раунд уже стартовал — возвращаем ставку
+      // Сервер отклонил — деньги НЕ списаны, просто разблокируем
       _rktBetUnlock();
       _rktRoundBetDone=false; RKT.betPlaced=false; _rktMinBalance=-1;
-      setBalance(balance + bet);
-      if(res){ res.textContent='↩️ Ставка возвращена — раунд начался'; res.className='rkt-res'; }
+      setBalance(balance + bet); // возвращаем локально списанное
+      _rktBetRoundId=-99;
+      // Если ещё waiting — можно было опоздать чуть-чуть, объясняем
+      const msg = (r.phase==='waiting')
+        ? '⏱️ Слишком поздно — раунд вот-вот стартует'
+        : '↩️ Ставка возвращена — раунд начался';
+      if(res){ res.textContent=msg; res.className='rkt-res'; }
       showToast('↩️ '+bet.toLocaleString('ru-RU')+' возвращено','info');
       rktUI(); return;
     }
