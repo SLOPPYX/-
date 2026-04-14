@@ -5702,7 +5702,7 @@ async function rktPollLoop(){
     try{
       if(!API_URL||!API_SECRET){await new Promise(r=>setTimeout(r,2000));continue;}
       const d=await rktFetch('/casino/rocket/poll?uid='+USER_ID+'&secret='+API_SECRET+'&phase='+RKT.phase+'&round_id='+RKT.roundId+'&_t='+Date.now());
-      if(d&&d.ok&&d.changed) rktApply(d);
+      if(d&&d.ok){ rktApply(d); }
     }catch(e){}
     await new Promise(r=>setTimeout(r,80));
   }
@@ -5943,22 +5943,17 @@ function rktApply(d){
     }
   }
   if(d.wait_left!=null && RKT.phase==='waiting'){
-    // Синхронизируем локальный таймер с сервером:
-    // обновляем _rktLaunchAt чтобы плавный setInterval не прыгал,
-    // но только если расхождение > 0.3с (не трогаем без нужды)
     const serverLeft = d.wait_left;
-    const localLeft  = _rktLaunchAt ? Math.max(0, (_rktLaunchAt - Date.now()) / 1000) : serverLeft;
-    if(!_rktLaunchAt || Math.abs(localLeft - serverLeft) > 0.3){
-      _rktLaunchAt = Date.now() + serverLeft * 1000;
-      // Если таймер не был запущен локально — запомним total для прогресс-бара
-      if(!_rktWT && serverLeft > _rktWaitTotal * 0.8) _rktWaitTotal = serverLeft;
+    if(!_rktWT){
+      // Таймер не запущен — запускаем его от серверного значения
+      _rktTimerStart(serverLeft * 1000);
+    } else {
+      // Таймер уже идёт — синхронизируем только при расхождении > 0.3с
+      const localLeft = Math.max(0, (_rktLaunchAt - Date.now()) / 1000);
+      if(Math.abs(localLeft - serverLeft) > 0.3){
+        _rktLaunchAt = Date.now() + serverLeft * 1000;
+      }
     }
-    // waitLeft обновляем только если локальный таймер не запущен
-    if(!_rktWT) RKT.waitLeft = serverLeft;
-    rktUpdateBtn();
-    const pb=document.getElementById('rktProgressBar');
-    const total = _rktWaitTotal || serverLeft || 5;
-    if(pb) pb.style.width=Math.min(100,(1-serverLeft/total)*100)+'%';
   }
 
   const rid=document.getElementById('rktRoundId');
@@ -6850,7 +6845,15 @@ function initRocket(){
   initRktCvs(); rktUI(); rktHist(); rktUpdateTable();
   if(API_URL&&API_SECRET){
     rktFetch('/casino/rocket/state?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now())
-      .then(d=>{if(d&&d.ok){rktApply(d);}});
+      .then(d=>{
+        if(d&&d.ok){
+          rktApply(d);
+          // Если сервер вернул waiting и таймер не стартовал — запускаем
+          if(d.phase==='waiting' && d.wait_left>0 && !_rktWT){
+            _rktTimerStart(d.wait_left * 1000);
+          }
+        }
+      });
     rktPollLoop();
   } else {
     _rktCrashShown = false; // гарантируем сброс
