@@ -5697,12 +5697,26 @@ async function rktFetch(path,opts={}){
 // Long-poll синхронизация с сервером
 let _rktPoll=false;
 async function rktPollLoop(){
-  if(_rktPoll) return; _rktPoll=true; // единственный экземпляр навсегда
+  if(_rktPoll) return; _rktPoll=true;
+  let lastElapsedSync = 0;
   while(true){
     try{
       if(!API_URL||!API_SECRET){await new Promise(r=>setTimeout(r,2000));continue;}
       const d=await rktFetch('/casino/rocket/poll?uid='+USER_ID+'&secret='+API_SECRET+'&phase='+RKT.phase+'&round_id='+RKT.roundId+'&_t='+Date.now());
-      if(d&&d.ok){ rktApply(d); }
+      if(d&&d.ok){
+        const phaseChanged = d.phase !== RKT.phase;
+        const roundChanged = d.round_id != null && d.round_id !== RKT.roundId;
+        const now = Date.now();
+        // Во время полёта применяем только при смене фазы/раунда или раз в 2с (sync elapsed)
+        // Это предотвращает мигание цифр от постоянных rktRedraw()
+        if(phaseChanged || roundChanged || RKT.phase !== 'flying' || (now - lastElapsedSync > 2000)){
+          if(RKT.phase === 'flying' && !phaseChanged && !roundChanged) lastElapsedSync = now;
+          rktApply(d);
+        } else {
+          // Летим — просто обновляем elapsed без UI
+          if(d.elapsed != null && d.elapsed >= 0) RKT._ls = Date.now() - d.elapsed * 1000;
+        }
+      }
     }catch(e){}
     await new Promise(r=>setTimeout(r,80));
   }
@@ -5942,13 +5956,13 @@ function rktApply(d){
       RKT.mult=d.crash_at;
     }
   }
-  if(d.wait_left!=null && RKT.phase==='waiting'){
+  if(d.wait_left!=null && d.wait_left > 0 && RKT.phase==='waiting'){
     const serverLeft = d.wait_left;
     if(!_rktWT){
-      // Таймер не запущен — запускаем его от серверного значения
+      // Таймер не запущен — запускаем от серверного значения
       _rktTimerStart(serverLeft * 1000);
     } else {
-      // Таймер уже идёт — синхронизируем только при расхождении > 0.3с
+      // Таймер уже идёт — корректируем только при расхождении > 0.3с
       const localLeft = Math.max(0, (_rktLaunchAt - Date.now()) / 1000);
       if(Math.abs(localLeft - serverLeft) > 0.3){
         _rktLaunchAt = Date.now() + serverLeft * 1000;
@@ -6053,7 +6067,8 @@ function rktApply(d){
       _rktOperating=false;
     }
   }
-  rktHist(); rktRedraw();
+  // Перерисовываем UI только при смене фазы, не во время полёта (RAF сам обновляет)
+  if(d.phase !== 'flying' || prev !== 'flying') { rktHist(); rktRedraw(); }
 }
 
 // ── UI обновления ────────────────────────────────────────
@@ -6818,7 +6833,8 @@ function rktAuto(x){rktAutoSet(x);}
 
 
 function rktAF(){
-  if(RKT.phase!=='flying'){rAFid=null;return;}
+  if(RKT.phase!=='flying' && RKT.phase!=='crashed'){rAFid=null;return;}
+  if(RKT.phase==='crashed' && rTrail.length===0){rAFid=null;return;}
   // Звёзды скроллятся вниз — иллюзия что ракета летит вверх
   if(rStars){
     const spd = Math.min(0.8 + RKT.mult*0.35, 12);
