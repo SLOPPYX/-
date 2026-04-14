@@ -5938,11 +5938,22 @@ function rktApply(d){
     }
   }
   if(d.wait_left!=null && RKT.phase==='waiting'){
-    // Просто обновляем waitLeft — canvas читает его напрямую
-    RKT.waitLeft = d.wait_left;
+    // Синхронизируем локальный таймер с сервером:
+    // обновляем _rktLaunchAt чтобы плавный setInterval не прыгал,
+    // но только если расхождение > 0.3с (не трогаем без нужды)
+    const serverLeft = d.wait_left;
+    const localLeft  = _rktLaunchAt ? Math.max(0, (_rktLaunchAt - Date.now()) / 1000) : serverLeft;
+    if(!_rktLaunchAt || Math.abs(localLeft - serverLeft) > 0.3){
+      _rktLaunchAt = Date.now() + serverLeft * 1000;
+      // Если таймер не был запущен локально — запомним total для прогресс-бара
+      if(!_rktWT && serverLeft > _rktWaitTotal * 0.8) _rktWaitTotal = serverLeft;
+    }
+    // waitLeft обновляем только если локальный таймер не запущен
+    if(!_rktWT) RKT.waitLeft = serverLeft;
     rktUpdateBtn();
     const pb=document.getElementById('rktProgressBar');
-    if(pb) pb.style.width=Math.min(100,(1-d.wait_left/(_rktWaitTotal||15))*100)+'%';
+    const total = _rktWaitTotal || serverLeft || 5;
+    if(pb) pb.style.width=Math.min(100,(1-serverLeft/total)*100)+'%';
   }
 
   const rid=document.getElementById('rktRoundId');
@@ -6476,11 +6487,13 @@ function rktUpdateTags(){
 // ── ТАЙМЕР РАКЕТЫ ──────────────────────────────────────
 let _rktWT = null;
 let _rktLaunchAt = 0;
+let _rktWaitTotal = 5; // полная длина фазы ожидания (секунды) для прогресс-бара
 
 function _rktTimerStart(ms){
   if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
   _rktLaunchAt = Date.now() + ms;
-  RKT.waitLeft = ms/1000;
+  _rktWaitTotal = ms/1000;          // запоминаем полное время для прогресс-бара
+  RKT.waitLeft  = ms/1000;
   console.log('⏱ TIMER START', ms, 'phase='+RKT.phase, 'waitLeft='+RKT.waitLeft);
   _rktWT = setInterval(()=>{
     if(RKT.phase!=='waiting'){ 
@@ -6491,7 +6504,8 @@ function _rktTimerStart(ms){
     RKT.waitLeft = left;
     rktUpdateBtn();
     const pb=document.getElementById('rktProgressBar');
-    if(pb) pb.style.width=Math.min(100,(1-left/5)*100)+'%';
+    const total = _rktWaitTotal||5;
+    if(pb) pb.style.width=Math.min(100,(1-left/total)*100)+'%';
     if(left<=0){
       clearInterval(_rktWT);_rktWT=null;_rktLaunchAt=0;
       console.log('⏱ TIMER DONE → FLY');
