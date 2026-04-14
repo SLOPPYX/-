@@ -511,7 +511,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 /* ══════════════════════════════════════════
    EPIC SPLASH SCREEN
 ══════════════════════════════════════════ */
-#splash{position:fixed;inset:0;background:linear-gradient(180deg,#0a0500 0%,#150800 40%,#0a0005 100%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;overflow:hidden}
+#splash{position:fixed;inset:0;background:linear-gradient(180deg,#0a0500 0%,#150800 40%,#0a0005 100%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;overflow:hidden;animation:splashAutoHide 0.01s linear 2.5s forwards}
+@keyframes splashAutoHide{to{display:none;visibility:hidden;pointer-events:none;opacity:0;z-index:-1}}
 #splash.hide{opacity:0;pointer-events:none;visibility:hidden}
 .splash-stars{position:absolute;inset:0;pointer-events:none}
 .splash-star{position:absolute;width:2px;height:2px;background:white;border-radius:50%;animation:starTwinkle var(--d,2s) ease-in-out infinite var(--delay,0s)}
@@ -3711,60 +3712,33 @@ function splashBalShow(val, sourceText, sourceClass) {
   } catch(e) {}
 }
 
-async function init() {
-  const splash = document.getElementById('splash');
+function init() {
+  // Сплеш скрывается CSS-анимацией автоматически через 2.5с
+  // Здесь только грузим данные и скрываем сплеш явно когда готово
 
-  // Закрываем сплеш — просто и надёжно
-  function closeSplash() {
+  const splash = document.getElementById('splash');
+  function killSplash() {
     if (!splash) return;
-    splash.style.cssText = 'display:none!important;opacity:0;visibility:hidden;pointer-events:none;z-index:-1';
+    splash.style.cssText = 'display:none!important;visibility:hidden!important;pointer-events:none!important;z-index:-1!important;opacity:0!important';
     try { splash.parentNode && splash.parentNode.removeChild(splash); } catch(e) {}
   }
 
-  // Гарантированное закрытие через 1.5с — ничто не должно висеть дольше
-  const emergency = setTimeout(closeSplash, 1500);
+  // Данные из localStorage — синхронно, мгновенно
+  if (URL_BAL > 0) setBalance(URL_BAL);
+  try { const s = localStorage.getItem(AVATAR_KEY); if(s) selectedAvatar=s; } catch(e){}
+  try { updateMiniStats(); } catch(e){}
+  try { refreshBets(); } catch(e){}
+  try { for(const b of [100000,50000,25000,10000]){ if(balance>=b){selectBet(b);break;} } } catch(e){}
+  try { _lastKnownBalance = balance; } catch(e){}
 
-  try {
-    // Баланс из URL (мгновенно)
-    if (URL_BAL > 0) setBalance(URL_BAL);
+  // Запускаем фоновые процессы
+  try { startBalancePolling(); } catch(e){}
+  try { tg.BackButton.show(); } catch(e){}
+  try { tg.enableClosingConfirmation(); } catch(e){}
+  try { initProfileBanner(); window._pauseProfileBanner&&window._pauseProfileBanner(); } catch(e){}
 
-    // Пробуем получить баланс из API (если есть) — но не ждём долго
-    if (API_URL && API_SECRET && USER_ID && USER_ID !== '0') {
-      try {
-        const ctrl = new AbortController();
-        const t = setTimeout(() => ctrl.abort(), 1000);
-        const r = await fetch(API_URL + '/casino/balance?uid=' + USER_ID + '&secret=' + API_SECRET + '&_t=' + Date.now(), {
-          signal: ctrl.signal, headers: { 'ngrok-skip-browser-warning': '1' }
-        });
-        clearTimeout(t);
-        const d = await r.json();
-        if (d && d.ok && typeof d.balance === 'number') setBalance(d.balance);
-      } catch(e) { /* не страшно — баланс из URL */ }
-    }
-
-    // Загружаем аватарку из localStorage (мгновенно)
-    try {
-      const saved = localStorage.getItem(AVATAR_KEY);
-      if (saved) selectedAvatar = saved;
-    } catch(e) {}
-
-    // Обновляем UI
-    try { updateMiniStats(); } catch(e) {}
-    try { refreshBets(); } catch(e) {}
-    try { for(const b of [100000,50000,25000,10000]){ if(balance>=b){ selectBet(b); break; } } } catch(e) {}
-
-  } catch(e) {
-    console.warn('Init error:', e);
-  } finally {
-    clearTimeout(emergency);
-    closeSplash();
-    try { startBalancePolling(); } catch(e) {}
-    try { longPoll(); } catch(e) {}
-    try { tg.BackButton.show(); } catch(e) {}
-    try { tg.enableClosingConfirmation(); } catch(e) {}
-    try { initProfileBanner(); window._pauseProfileBanner && window._pauseProfileBanner(); } catch(e) {}
-    _lastKnownBalance = balance;
-  }
+  // Закрываем сплеш через 200мс (JS уже отработал к этому моменту)
+  setTimeout(killSplash, 200);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -5293,6 +5267,16 @@ function initRocket() {
 function rktUI_compat() { try{ rktUI(); }catch(e){} }
 
 init();
+// Баланс с сервера — в фоне, не блокирует UI
+if (API_URL && API_SECRET && USER_ID && USER_ID !== '0') {
+  setTimeout(function() {
+    fetch(API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
+      {headers:{'ngrok-skip-browser-warning':'1'}})
+      .then(function(r){return r.json();})
+      .then(function(d){if(d&&d.ok&&typeof d.balance==='number')setBalance(d.balance);})
+      .catch(function(){});
+  }, 500);
+}
 </script>
 </body>
 </html>
