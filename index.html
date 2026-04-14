@@ -5513,7 +5513,7 @@ function rDraw(){
   // ── БОЛЬШОЙ ТАЙМЕР НА CANVAS (только фаза waiting И нет краша) ──────
   if(RKT.phase==='waiting' && !_rktCrashShown && RKT.waitLeft>0){
     const left = RKT.waitLeft;
-    const sec=left<10?left.toFixed(1):Math.ceil(left).toString();
+    const sec=left.toFixed(1);
     const cx=rW*0.5, cy=rH*0.5;
     ctx.save();
 
@@ -6075,7 +6075,7 @@ function rktUI(){
     if(overlay) overlay.classList.remove('active');
     // Прогресс ожидания — заполняется по таймеру
     if(pb){
-      const total=6; const left=RKT.waitLeft||0;
+      const total=_rktWaitTotal||5; const left=RKT.waitLeft||0;
       const pct = total>0 ? Math.max(0,Math.min(100,(1-left/total)*100)) : 100;
       pb.style.width=pct+'%'; pb.className='rkt-pb-inner';
     }
@@ -6218,11 +6218,11 @@ function rktUpdateBtn(){
   const inp = document.getElementById('rktInp');
   let betPreview = '';
   try{ const v=parseBetStr(inp?inp.value:'0')||0; if(v>=1000) betPreview=' — '+v.toLocaleString('ru-RU'); }catch(e){}
-  const waitSecs = Math.ceil(RKT.waitLeft);
-  const waitStr = waitSecs > 0 ? ' · ' + waitSecs + 'с до старта' : '';
+  const waitDisp = RKT.waitLeft > 0 ? RKT.waitLeft.toFixed(1) : '0.0';
+  const waitStr = RKT.waitLeft > 0 ? ' · ' + waitDisp + 'с до старта' : '';
   btnBet.textContent = '🚀 ПОСТАВИТЬ' + betPreview + waitStr;
   btnBet.style.display = 'block';
-  setStatus('⏱️ РАКЕТА СТАРТУЕТ ЧЕРЕЗ ' + waitSecs + 'С (независимо от ставки)', 'rgba(255,200,0,.4)');
+  setStatus('⏱️ РАКЕТА СТАРТУЕТ ЧЕРЕЗ ' + waitDisp + 'С (независимо от ставки)', 'rgba(255,200,0,.4)');
 }
 // Оставляем для совместимости — просто вызывает rktUI
 function rktSetBtn(m){ rktUI(); }
@@ -6495,28 +6495,32 @@ let _rktLaunchAt = 0;
 let _rktWaitTotal = 5; // полная длина фазы ожидания (секунды) для прогресс-бара
 
 function _rktTimerStart(ms){
-  if(_rktWT){ clearInterval(_rktWT); _rktWT=null; }
+  if(_rktWT){ cancelAnimationFrame(_rktWT); _rktWT=null; }
   _rktLaunchAt = Date.now() + ms;
-  _rktWaitTotal = ms/1000;          // запоминаем полное время для прогресс-бара
+  _rktWaitTotal = ms/1000;
   RKT.waitLeft  = ms/1000;
   console.log('⏱ TIMER START', ms, 'phase='+RKT.phase, 'waitLeft='+RKT.waitLeft);
-  _rktWT = setInterval(()=>{
-    if(RKT.phase!=='waiting'){ 
+  // RAF даёт 60fps — таймер плавный как анимация
+  function _timerFrame(){
+    if(RKT.phase!=='waiting'){
       console.log('⏱ TIMER STOP phase='+RKT.phase);
-      clearInterval(_rktWT);_rktWT=null;_rktLaunchAt=0; return; 
+      _rktWT=null; _rktLaunchAt=0; return;
     }
-    const left = Math.max(0, (_rktLaunchAt-Date.now())/1000);
+    const left = Math.max(0, (_rktLaunchAt - Date.now()) / 1000);
     RKT.waitLeft = left;
     rktUpdateBtn();
-    const pb=document.getElementById('rktProgressBar');
-    const total = _rktWaitTotal||5;
-    if(pb) pb.style.width=Math.min(100,(1-left/total)*100)+'%';
-    if(left<=0){
-      clearInterval(_rktWT);_rktWT=null;_rktLaunchAt=0;
+    const pb = document.getElementById('rktProgressBar');
+    const total = _rktWaitTotal || 5;
+    if(pb) pb.style.width = Math.min(100,(1-left/total)*100)+'%';
+    if(left <= 0){
+      _rktWT = null; _rktLaunchAt = 0;
       console.log('⏱ TIMER DONE → FLY');
       _rktTimerFly();
+      return;
     }
-  }, 80);
+    _rktWT = requestAnimationFrame(_timerFrame);
+  }
+  _rktWT = requestAnimationFrame(_timerFrame);
 }
 
 function _rktTimerFly(){
