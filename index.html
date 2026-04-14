@@ -5698,23 +5698,44 @@ async function rktFetch(path,opts={}){
 let _rktPoll=false;
 async function rktPollLoop(){
   if(_rktPoll) return; _rktPoll=true;
-  let lastElapsedSync = 0;
   while(true){
     try{
-      if(!API_URL||!API_SECRET){await new Promise(r=>setTimeout(r,2000));continue;}
-      const d=await rktFetch('/casino/rocket/poll?uid='+USER_ID+'&secret='+API_SECRET+'&phase='+RKT.phase+'&round_id='+RKT.roundId+'&_t='+Date.now());
-      if(d&&d.ok){
-        const phaseChanged = d.phase !== RKT.phase;
+      if(!API_URL||!API_SECRET){ await new Promise(r=>setTimeout(r,2000)); continue; }
+      const d = await rktFetch('/casino/rocket/poll?uid='+USER_ID+'&secret='+API_SECRET+'&phase='+RKT.phase+'&round_id='+RKT.roundId+'&_t='+Date.now());
+      if(d && d.ok){
+        const phaseChanged = d.phase && d.phase !== RKT.phase;
         const roundChanged = d.round_id != null && d.round_id !== RKT.roundId;
-        const now = Date.now();
-        // Во время полёта применяем только при смене фазы/раунда или раз в 2с (sync elapsed)
-        // Это предотвращает мигание цифр от постоянных rktRedraw()
-        if(phaseChanged || roundChanged || RKT.phase !== 'flying' || (now - lastElapsedSync > 2000)){
-          if(RKT.phase === 'flying' && !phaseChanged && !roundChanged) lastElapsedSync = now;
+
+        if(phaseChanged || roundChanged){
+          // Смена фазы/раунда — полный apply
           rktApply(d);
-        } else {
-          // Летим — просто обновляем elapsed без UI
-          if(d.elapsed != null && d.elapsed >= 0) RKT._ls = Date.now() - d.elapsed * 1000;
+          // После apply — если теперь waiting и таймер не идёт — запускаем
+          if(RKT.phase === 'waiting' && d.wait_left > 0 && !_rktWT){
+            _rktTimerStart(d.wait_left * 1000);
+          }
+        } else if(RKT.phase === 'waiting'){
+          // Та же фаза waiting — только синхронизируем таймер
+          if(d.wait_left > 0){
+            if(!_rktWT){
+              // Таймер вообще не запущен — стартуем
+              _rktTimerStart(d.wait_left * 1000);
+            } else {
+              // Таймер идёт — корректируем при расхождении > 0.3с
+              const localLeft = Math.max(0, (_rktLaunchAt - Date.now()) / 1000);
+              if(Math.abs(localLeft - d.wait_left) > 0.3){
+                _rktLaunchAt = Date.now() + d.wait_left * 1000;
+              }
+            }
+          }
+        } else if(RKT.phase === 'flying'){
+          // Летим — только тихо синхронизируем _ls, без UI
+          if(d.elapsed != null && d.elapsed >= 0){
+            RKT._ls = Date.now() - d.elapsed * 1000;
+          }
+          // Если crashAt изменился — обновляем
+          if(d.crash_at != null) RKT.crashAt = d.crash_at;
+          // Обновляем игроков для таблицы (без полного redraw)
+          if(d.players != null) RKT.players = d.players;
         }
       }
     }catch(e){}
@@ -5956,18 +5977,17 @@ function rktApply(d){
       RKT.mult=d.crash_at;
     }
   }
-  if(d.wait_left!=null && d.wait_left > 0 && RKT.phase==='waiting'){
+  // wait_left: синхронизация таймера — запуск делает poll/initRocket, здесь только коррекция
+  if(d.wait_left != null && d.wait_left > 0 && RKT.phase === 'waiting'){
     const serverLeft = d.wait_left;
-    if(!_rktWT){
-      // Таймер не запущен — запускаем от серверного значения
-      _rktTimerStart(serverLeft * 1000);
-    } else {
-      // Таймер уже идёт — корректируем только при расхождении > 0.3с
+    if(_rktWT){
+      // Таймер идёт — корректируем при расхождении > 0.3с
       const localLeft = Math.max(0, (_rktLaunchAt - Date.now()) / 1000);
       if(Math.abs(localLeft - serverLeft) > 0.3){
         _rktLaunchAt = Date.now() + serverLeft * 1000;
       }
     }
+    // Если таймер НЕ идёт — poll loop его запустит на следующей итерации
   }
 
   const rid=document.getElementById('rktRoundId');
@@ -6860,22 +6880,33 @@ function initRocketOnce(){
 function initRocket(){
   initRktCvs(); rktUI(); rktHist(); rktUpdateTable();
   if(API_URL&&API_SECRET){
+    // Получаем текущее состояние с сервера
     rktFetch('/casino/rocket/state?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now())
       .then(d=>{
-        if(d&&d.ok){
+        if(d && d.ok){
           rktApply(d);
-          // Если сервер вернул waiting и таймер не стартовал — запускаем
-          if(d.phase==='waiting' && d.wait_left>0 && !_rktWT){
+          // Если waiting — запускаем локальный таймер от серверного значения
+          if(d.phase==='waiting' && d.wait_left > 0 && !_rktWT){
             _rktTimerStart(d.wait_left * 1000);
           }
+          // Если flying — запускаем тик и canvas
+          if(d.phase==='flying'){
+            if(!_rktTick){ rktTickStart(); }
+            if(!rAFid){ rktAF(); }
+          }
+        } else {
+          // Нет ответа — запускаем таймер по умолчанию
+          _rktTimerStart(5000);
         }
-      });
+      })
+      .catch(()=>{ _rktTimerStart(5000); });
     rktPollLoop();
   } else {
-    _rktCrashShown = false; // гарантируем сброс
-    RKT.roundId = 1; RKT.waitLeft=5;
+    // Демо-режим
+    _rktCrashShown = false;
+    RKT.roundId = 1; RKT.waitLeft = 5;
     RKT.phase = 'waiting';
-    setTimeout(()=>_rktTimerStart(5000), 100); // небольшая задержка для инициализации canvas
+    setTimeout(()=>_rktTimerStart(5000), 100);
   }
 }
 
