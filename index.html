@@ -5301,11 +5301,12 @@ function rktWsSend(obj) {
 function rktMsg(msg) {
   if (!msg || !msg.type) return;
 
-  // DEBUG: логируем события фаз (waiting/flying/crashed/state/sync)
-  // Лог можно отключить поставив window._rktDebug = false в консоли
-  if (window._rktDebug !== false && ['waiting','flying','crashed','state','sync'].indexOf(msg.type) >= 0) {
+  // DEBUG: логирование событий. По умолчанию ВЫКЛЮЧЕНО.
+  // Чтобы включить — в консоли браузера: window._rktDebug = true
+  if (window._rktDebug === true && ['waiting','flying','crashed','state','sync'].indexOf(msg.type) >= 0) {
     console.log('[RKT]', msg.type, '| phase:', R.phase, '→', msg.phase||msg.type,
-                '| crash_at:', msg.crash_at, '| wait_left:', msg.wait_left, '| elapsed:', msg.elapsed);
+                '| crash_at:', msg.crash_at, '| wait_left:', msg.wait_left, '| elapsed:', msg.elapsed,
+                '| animActive:', !!window._crashAnimationActive);
   }
 
   switch (msg.type) {
@@ -5327,6 +5328,7 @@ function rktMsg(msg) {
           if (_tickRaf) { cancelAnimationFrame(_tickRaf); _tickRaf = null; }
           R.phase = 'crashed'; R.crashAt = msg.crash_at ?? R.crashAt;
           R.mult = R.crashAt;
+          // rktShowCrash сам проверит флаг _crashAnimationActive и не запустится повторно
           rktShowCrash(R.crashAt);
           setTimeout(() => {
             // RACE PROTECT
@@ -5335,21 +5337,17 @@ function rktMsg(msg) {
             if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
             rktUI();
           }, 3800);
+        } else if (R.phase === 'crashed') {
+          // Уже в crashed (анимация играется) — ничего не делаем, просто обновим waiting через таймер
+          // если он ещё не запущен
         } else {
           R.phase = 'waiting';
           if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
         }
       } else if (msg.phase === 'flying') {
         if (R.phase !== 'flying') {
-          // Очищаем возможные остатки crash-оверлея от прошлого раунда
-          const sc = document.querySelector('.rkt-scene');
-          const ov = document.getElementById('rktCrashOv');
-          const lb = document.getElementById('rktCrashLbl');
-          const cm = document.getElementById('rktCrashMult');
-          if (sc) sc.classList.remove('crash-active', 'shake');
-          if (ov) ov.classList.remove('on', 'fade');
-          if (lb) lb.classList.remove('on', 'hide-svg');
-          if (cm) cm.classList.remove('show', 'hide');
+          // Используем force reset
+          _rktForceCrashReset();
 
           R.phase = 'flying'; R.mult = msg.mult ?? 1;
           R.crashAt = null;   // см. выше — не сохраняем
@@ -5422,23 +5420,9 @@ function rktMsg(msg) {
 
     case 'flying': {
       rktTimerStop();
-      // Всегда принудительно очищаем crash-оверлей — на случай если
-      // сервер прислал flying раньше чем закончилась crash-анимация.
-      // Иначе новый раунд рисуется ПОД старым взрывом/цифрой.
-      const sc = document.querySelector('.rkt-scene');
-      const ov = document.getElementById('rktCrashOv');
-      const lb = document.getElementById('rktCrashLbl');
-      const cm = document.getElementById('rktCrashMult');
-      if (sc) sc.classList.remove('crash-active', 'shake');
-      if (ov) ov.classList.remove('on', 'fade');
-      if (lb) lb.classList.remove('on', 'hide-svg');
-      if (cm) cm.classList.remove('show', 'hide');
-      // Также отменяем pending setTimeout'ы которые могли быть запланированы
-      // в rktShowCrash и случайно запустить анимацию в новом раунде
-      if (window._rktCrashTimers) {
-        window._rktCrashTimers.forEach(t => clearTimeout(t));
-        window._rktCrashTimers = [];
-      }
+      // Принудительно сбрасываем crash-анимацию если она ещё идёт
+      // (иначе новый раунд рисуется ПОД старым взрывом/цифрой)
+      _rktForceCrashReset();
       // Отменяем возможный RAF от предыдущего раунда
       if (_tickRaf) { cancelAnimationFrame(_tickRaf); _tickRaf = null; }
 
@@ -5688,6 +5672,19 @@ function _demoCrash() {
 let _rktDemoId = 1;
 
 function rktShowCrash(mult) {
+  // ── Защита от двойного вызова ──
+  // Если crash-анимация уже играется, НЕ перезапускаем её — иначе таймеры
+  // сбрасываются и анимация визуально прерывается. На сервере часто бывает
+  // что сразу за "waiting" прилетает "state" или следующий "waiting" — и без
+  // этой защиты анимация никогда не показывалась полностью.
+  if (window._crashAnimationActive) {
+    // Но обновляем значение цифры в случае если mult отличается
+    const cxEl = document.getElementById('rktCrashX');
+    if (cxEl) cxEl.textContent = '×' + (mult||1).toFixed(2);
+    return;
+  }
+  window._crashAnimationActive = true;
+
   const ov = document.getElementById('rktCrashOv');
   const lb = document.getElementById('rktCrashLbl');
   const cx = document.getElementById('rktCrashX');
@@ -5695,14 +5692,12 @@ function rktShowCrash(mult) {
   const elM = document.getElementById('rktMult');
   const sc = document.querySelector('.rkt-scene');
 
-  // ── Отмена предыдущих pending timeout'ов (на случай быстрых повторных крашей) ──
+  // Очищаем pending timers от прошлых запусков (на случай если флаг сбросили принудительно)
   if (!window._rktCrashTimers) window._rktCrashTimers = [];
   window._rktCrashTimers.forEach(t => clearTimeout(t));
   window._rktCrashTimers = [];
-  // Helper: setTimeout с трекингом
   const schedule = (fn, ms) => {
     const id = setTimeout(() => {
-      // Убираем себя из трекера при срабатывании
       window._rktCrashTimers = window._rktCrashTimers.filter(t => t !== id);
       fn();
     }, ms);
@@ -5783,7 +5778,25 @@ function rktShowCrash(mult) {
     if (lb) lb.classList.remove('on', 'hide-svg');
     if (cm) cm.classList.remove('show', 'hide');
     if (sc) sc.classList.remove('crash-active');
+    window._crashAnimationActive = false;  // разрешаем новый запуск
   }, 3800);
+}
+
+// Принудительный сброс crash-анимации (для case 'flying' когда приходит новый раунд)
+function _rktForceCrashReset() {
+  if (window._rktCrashTimers) {
+    window._rktCrashTimers.forEach(t => clearTimeout(t));
+    window._rktCrashTimers = [];
+  }
+  window._crashAnimationActive = false;
+  const sc = document.querySelector('.rkt-scene');
+  const ov = document.getElementById('rktCrashOv');
+  const lb = document.getElementById('rktCrashLbl');
+  const cm = document.getElementById('rktCrashMult');
+  if (sc) sc.classList.remove('crash-active', 'shake');
+  if (ov) ov.classList.remove('on', 'fade');
+  if (lb) lb.classList.remove('on', 'hide-svg');
+  if (cm) cm.classList.remove('show', 'hide');
 }
 
 // ── Ставка ─────────────────────────────────────────────
