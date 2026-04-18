@@ -5309,25 +5309,43 @@ function rktMsg(msg) {
       if (msg.online   != null) R.online  = msg.online;
       if (msg.round_id != null) R.id      = msg.round_id;
       if (msg.players  != null) rktMergePlayers(msg.players);
-      if (msg.crash_at != null) R.crashAt = msg.crash_at;
+      // ПРИМЕЧАНИЕ: crash_at намеренно НЕ сохраняем в R.crashAt во время flying —
+      // иначе клиент останавливает цифру раньше времени. crash_at используется только
+      // в фазе waiting (для отображения результата прошлого раунда).
 
       if (msg.phase === 'waiting') {
         const wasFlying = R.phase === 'flying';
         if (wasFlying) {
+          // Останавливаем RAF чтобы R.mult не рос дальше
+          if (_tickRaf) { cancelAnimationFrame(_tickRaf); _tickRaf = null; }
           R.phase = 'crashed'; R.crashAt = msg.crash_at ?? R.crashAt;
+          R.mult = R.crashAt;
           rktShowCrash(R.crashAt);
           setTimeout(() => {
+            // RACE PROTECT
+            if (R.phase !== 'crashed') return;
             R.phase = 'waiting'; rktResetBet(); rTrail = []; rParticles = [];
             if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
             rktUI();
-          }, 1500);
+          }, 4550);
         } else {
           R.phase = 'waiting';
           if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
         }
       } else if (msg.phase === 'flying') {
         if (R.phase !== 'flying') {
+          // Очищаем возможные остатки crash-оверлея от прошлого раунда
+          const sc = document.querySelector('.rkt-scene');
+          const ov = document.getElementById('rktCrashOv');
+          const lb = document.getElementById('rktCrashLbl');
+          const cm = document.getElementById('rktCrashMult');
+          if (sc) sc.classList.remove('crash-active', 'shake');
+          if (ov) ov.classList.remove('on', 'fade');
+          if (lb) lb.classList.remove('on', 'hide-svg');
+          if (cm) cm.classList.remove('show', 'hide');
+
           R.phase = 'flying'; R.mult = msg.mult ?? 1;
+          R.crashAt = null;   // см. выше — не сохраняем
           R.ls = msg.elapsed != null ? Date.now() - msg.elapsed * 1000 : Date.now();
           rktTimerStop(); rTrail = []; rParticles = [];
           rktTickStart();
@@ -5360,17 +5378,33 @@ function rktMsg(msg) {
       if (wasF) {
         // Если ещё не показали краш — покажем
         if (R.phase !== 'crashed') {
-          R.phase = 'crashed'; R.crashAt = msg.crash_at ?? R.crashAt;
+          // ВАЖНО: сначала останавливаем RAF, чтобы R.mult не продолжал расти
+          if (_tickRaf) { cancelAnimationFrame(_tickRaf); _tickRaf = null; }
+          R.phase = 'crashed';
+          R.crashAt = msg.crash_at ?? R.crashAt;
+          R.mult = R.crashAt;           // фиксируем цифру ровно на серверной crash_at
           rktShowCrash(R.crashAt);
         }
+        // Если у игрока была ставка и он не успел забрать — показываем убыток
+        if (R.betPlaced && !R.cashedOut && R.myBet > 0) {
+          R.stats.g = (R.stats.g||0) + 1;
+          R.stats.p = (R.stats.p||0) - R.myBet;
+          rktSaveStats();
+          rktSetRes('💥 Краш ×' + R.crashAt.toFixed(2) + ' — −' + R.myBet.toLocaleString('ru-RU'), 'loss');
+          try { showToast('💥 Краш ×' + R.crashAt.toFixed(2), 'error'); } catch(e) {}
+        }
+        rktUI();
         // Переходим в waiting ПОСЛЕ полной краш-анимации (0-4550мс)
-        // 4550мс = взрыв (0-900) + пауза (900-1050) + цифра держится 3с + уход (4050-4550)
-        const delay = R.phase === 'crashed' ? 4550 : 0;
+        // Запоминаем round_id этого краша, чтобы в setTimeout не перезатереть новый flying
+        const _crashedId = R.id;
         setTimeout(() => {
+          // RACE PROTECT: если за это время сервер уже запустил новый раунд (R.phase='flying'),
+          // не перезаписываем фазу в waiting — иначе новый объект пропадёт и цифры замёрзнут
+          if (R.phase !== 'crashed') return;
           R.phase = 'waiting'; rktResetBet(); rTrail = []; rParticles = [];
           if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
           rktUI();
-        }, delay);
+        }, 4550);
       } else {
         R.phase = 'waiting';
         if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
@@ -5381,9 +5415,29 @@ function rktMsg(msg) {
 
     case 'flying': {
       rktTimerStop();
+      // RACE PROTECT: если только что был краш и crash-анимация ещё идёт,
+      // отменяем её и стартуем новый раунд чисто
+      if (R.phase === 'crashed') {
+        const sc = document.querySelector('.rkt-scene');
+        const ov = document.getElementById('rktCrashOv');
+        const lb = document.getElementById('rktCrashLbl');
+        const cm = document.getElementById('rktCrashMult');
+        if (sc) sc.classList.remove('crash-active', 'shake');
+        if (ov) ov.classList.remove('on', 'fade');
+        if (lb) lb.classList.remove('on', 'hide-svg');
+        if (cm) cm.classList.remove('show', 'hide');
+      }
+      // Отменяем возможный RAF от предыдущего раунда
+      if (_tickRaf) { cancelAnimationFrame(_tickRaf); _tickRaf = null; }
+
       R.phase = 'flying'; R.id = msg.round_id ?? R.id;
-      R.crashAt = msg.crash_at ?? null; R.mult = 1.00;
-      R.ls = Date.now();
+      // ВАЖНО: не сохраняем crash_at от сервера!
+      //   1) fair-play: игрок не должен знать когда крашнется
+      //   2) стабильность: cap в rktTickStart (Math.min(raw, R.crashAt)) замораживал цифру раньше времени,
+      //      из-за чего множитель «стоял на одном значении» на сервере
+      R.crashAt = null;
+      R.mult = msg.mult ?? 1.00;
+      R.ls = msg.elapsed != null ? Date.now() - msg.elapsed * 1000 : Date.now();
       if (msg.players) rktMergePlayers(msg.players);
       rTrail = []; rParticles = [];
       rktUI(); rktTickStart();
@@ -5520,7 +5574,10 @@ function rktTickStart() {
     }
     const elapsed = (Date.now() - R.ls) / 1000;
     const raw = Math.exp(elapsed * 0.085);
-    R.mult = Math.min(raw, R.crashAt || 99999);
+    // Ограничиваем множитель разумным потолком 1000×. При нормальной работе
+    // сервер должен прислать waiting задолго до этого значения. Cap защищает
+    // от сетевого лага: если сообщение потерялось, цифра не улетит в бесконечность.
+    R.mult = Math.min(raw, R.crashAt || 1000);
 
     // Интенсивность тряски: 0..1 плавно от ×1 до ×10 (такая же формула как у объекта)
     const shakeLvl = Math.min((R.mult - 1) / 9, 1);
