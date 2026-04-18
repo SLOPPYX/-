@@ -511,9 +511,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 /* ══════════════════════════════════════════
    EPIC SPLASH SCREEN
 ══════════════════════════════════════════ */
-#splash{position:fixed;inset:0;background:linear-gradient(180deg,#0a0500 0%,#150800 40%,#0a0005 100%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;overflow:hidden;animation:splashAutoHide 0.01s linear 2.5s forwards}
-@keyframes splashAutoHide{to{display:none;visibility:hidden;pointer-events:none;opacity:0;z-index:-1}}
-#splash.hide{opacity:0;pointer-events:none;visibility:hidden}
+#splash{position:fixed;inset:0;background:linear-gradient(180deg,#0a0500 0%,#150800 40%,#0a0005 100%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;overflow:hidden}
+#splash.hide{opacity:0;pointer-events:none}
 .splash-stars{position:absolute;inset:0;pointer-events:none}
 .splash-star{position:absolute;width:2px;height:2px;background:white;border-radius:50%;animation:starTwinkle var(--d,2s) ease-in-out infinite var(--delay,0s)}
 @keyframes starTwinkle{0%,100%{opacity:0.1;transform:scale(1)}50%{opacity:0.8;transform:scale(1.5)}}
@@ -538,9 +537,14 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 @keyframes letterDrop{from{opacity:0;transform:translateY(-28px) scale(.6)}to{opacity:1;transform:translateY(0) scale(1)}}
 .splash-casino-lbl{font-family:var(--fd);font-size:10px;font-weight:400;letter-spacing:6px;color:var(--muted);margin-bottom:22px;animation:fadeInUp .6s ease .55s both}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.splash-bar-wrap{width:220px;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-bottom:10px}
-.splash-bar{height:100%;width:0%;background:linear-gradient(90deg,#ff6600,#ffaa00,#ff3300,#ffcc00);background-size:200% auto;animation:splashBarGlow 1s ease infinite;border-radius:2px;transition:width .15s ease;position:relative}
-.splash-bar::after{content:'';position:absolute;right:0;top:-1px;width:6px;height:5px;background:white;border-radius:50%;box-shadow:0 0 8px white;opacity:.8}
+.splash-bar-wrap{width:240px;margin-bottom:10px;position:relative}
+.splash-bar-svg{width:100%;display:block}
+.splash-bar-track{fill:none;stroke:rgba(255,255,255,.08);stroke-width:3;stroke-linecap:round}
+.splash-bar-fill{fill:none;stroke:url(#barGrad);stroke-width:3;stroke-linecap:round;
+  stroke-dasharray:220;stroke-dashoffset:220;transition:stroke-dashoffset .2s ease}
+.splash-bar-glow{fill:none;stroke:rgba(255,200,0,.3);stroke-width:6;stroke-linecap:round;
+  stroke-dasharray:220;stroke-dashoffset:220;transition:stroke-dashoffset .2s ease;filter:blur(3px)}
+.splash-bar-dot{fill:#fff;filter:drop-shadow(0 0 4px #fff);opacity:0;transition:opacity .2s}
 .splash-status{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:2px;color:#ff9900;min-height:14px;text-align:center;animation:statusPulse 1s ease infinite alternate}
 @keyframes splashBarGlow{0%{background-position:0% center}100%{background-position:200% center}}
 @keyframes statusPulse{from{opacity:.4}to{opacity:1}}
@@ -837,12 +841,19 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   display:block; z-index:1;
 }
 
-/* Множитель поверх canvas */
+/* Множитель поверх canvas — подняли наверх, чтобы ракета не долетала до него */
 .rkt-mult-wrap {
-  position:absolute; top:50%; left:50%;
-  transform:translate(-50%,-52%);
+  position:absolute; top:22%; left:50%;
+  transform:translate(-50%,-50%);
   z-index:5; text-align:center; pointer-events:none;
+  transition:opacity .18s ease;
 }
+/* В фазе ожидания — центрируем (показ "ЖДЁМ" + таймер-цифра на canvas тоже в центре) */
+.rkt-scene.phase-waiting .rkt-mult-wrap {
+  top:50%;
+}
+/* При краше основной множитель прячем — остаётся только красная цифра взрыва */
+.rkt-scene.crash-active .rkt-mult-wrap { opacity:0; }
 .rkt-mult {
   font-family:var(--fd); font-weight:900; font-size:54px;
   letter-spacing:2px; line-height:1; color:#fff;
@@ -882,48 +893,245 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-pb-fill.red { background:#f87171; }
 
 /* Краш оверлей */
-.rkt-crash-ov { position:absolute; inset:0; z-index:6; background:rgba(200,20,20,0); pointer-events:none; transition:background .3s; }
-.rkt-crash-ov.on { background:rgba(200,20,20,.25); }
-.rkt-crash-lbl { position:absolute; inset:0; z-index:7; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; opacity:0; transition:opacity .15s; gap:0; }
-.rkt-crash-lbl.on { opacity:1; }
+/* ── Краш оверлей ── */
+/* Красный overlay больше не затемняет всю сцену при появлении цифры —
+   он включается только в момент взрыва (0-900мс), потом исчезает */
+.rkt-crash-ov { position:absolute; inset:0; z-index:6; background:rgba(200,20,20,0); pointer-events:none; transition:background .45s ease; }
+.rkt-crash-ov.on  { background:rgba(180,0,0,.35); }
+.rkt-crash-ov.fade { background:rgba(180,0,0,0); } /* плавно убираем когда появляется цифра */
+.rkt-crash-lbl {
+  position:absolute; inset:0; z-index:7;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  pointer-events:none; gap:0;
+  opacity:0; visibility:hidden;
+  transition:opacity .15s ease, visibility 0s linear .15s;
+}
+.rkt-crash-lbl.on {
+  opacity:1; visibility:visible;
+  transition:opacity .15s ease, visibility 0s linear 0s;
+}
+/* Когда показывается цифра — SVG взрыва плавно убираем (чтобы не перекрывал) */
+.rkt-crash-lbl.hide-svg .rkt-crash-svg {
+  opacity:0;
+  transition:opacity .35s ease;
+}
+.rkt-crash-lbl.on .rkt-crash-svg { animation:expAppear .2s cubic-bezier(.17,.67,.35,1.5) forwards; }
+@keyframes expAppear { from{opacity:0;transform:scale(.1)} to{opacity:1;transform:scale(1)} }
 
-/* SVG взрыв */
-.rkt-crash-svg { opacity:0; transform:scale(0.2); transition:opacity .25s ease, transform .35s cubic-bezier(.17,.67,.35,1.4); }
-.rkt-crash-lbl.on .rkt-crash-svg { opacity:1; transform:scale(1); }
-@keyframes expPulse { 0%{transform:scale(1)} 50%{transform:scale(1.08)} 100%{transform:scale(1)} }
-.rkt-crash-lbl.on .rkt-crash-svg { animation:expPulse 0.5s ease-out .3s both; }
+/* ═══ Реалистичный взрыв — пошаговые слои ═══ */
 
-/* Лучи */
-@keyframes raysOut { from{stroke-dashoffset:40} to{stroke-dashoffset:0} }
-.exp-rays line { stroke-dasharray:40; stroke-dashoffset:40; }
-.rkt-crash-lbl.on .exp-rays line { animation:raysOut .35s ease-out .1s forwards; }
+/* --- Слой 1: Дымные клубы (появляются позже, расплываются и тускнеют) --- */
+@keyframes smoke1 { 0%{transform:translate(0,0) scale(.3);opacity:0} 20%{opacity:.9} 100%{transform:translate(-14px,-18px) scale(3);opacity:0} }
+@keyframes smoke2 { 0%{transform:translate(0,0) scale(.3);opacity:0} 20%{opacity:.85} 100%{transform:translate(16px,-14px) scale(2.8);opacity:0} }
+@keyframes smoke3 { 0%{transform:translate(0,0) scale(.3);opacity:0} 20%{opacity:.8} 100%{transform:translate(18px,16px) scale(3.1);opacity:0} }
+@keyframes smoke4 { 0%{transform:translate(0,0) scale(.3);opacity:0} 20%{opacity:.85} 100%{transform:translate(-18px,14px) scale(2.9);opacity:0} }
+@keyframes smoke5 { 0%{transform:translate(0,0) scale(.3);opacity:0} 20%{opacity:.75} 100%{transform:translate(2px,-22px) scale(2.7);opacity:0} }
+.exp-smoke circle { transform-origin:100px 100px; transform-box:fill-box; }
+.rkt-crash-lbl.on .smoke-1 { animation:smoke1 1.3s ease-out .15s forwards; }
+.rkt-crash-lbl.on .smoke-2 { animation:smoke2 1.4s ease-out .18s forwards; }
+.rkt-crash-lbl.on .smoke-3 { animation:smoke3 1.35s ease-out .22s forwards; }
+.rkt-crash-lbl.on .smoke-4 { animation:smoke4 1.25s ease-out .2s forwards; }
+.rkt-crash-lbl.on .smoke-5 { animation:smoke5 1.45s ease-out .12s forwards; }
 
-/* Кольца */
-@keyframes ringPulse { 0%{opacity:0;r:5} 40%{opacity:1} 100%{opacity:0;r:58} }
-.exp-ring-1 { animation:none; }
-.exp-ring-2 { animation:none; }
-.rkt-crash-lbl.on .exp-ring-1 { animation:ringPulse .8s ease-out .05s forwards; }
-.rkt-crash-lbl.on .exp-ring-2 { animation:ringPulse .7s ease-out .15s forwards; }
+/* --- Слой 2: Ударная волна (очень быстрое белое кольцо) --- */
+@keyframes shockwave { 0%{r:8;stroke-width:2;opacity:1} 60%{opacity:.6} 100%{r:95;stroke-width:.3;opacity:0} }
+.shockwave { opacity:0; }
+.rkt-crash-lbl.on .shockwave { animation:shockwave .5s cubic-bezier(.1,.6,.3,1) 0s forwards; }
 
-/* Осколки */
-@keyframes debris1 { to{transform:translate(-18px,-35px) rotate(200deg); opacity:0} }
-@keyframes debris2 { to{transform:translate(30px,-20px) rotate(-150deg); opacity:0} }
-@keyframes debris3 { to{transform:translate(22px,30px) rotate(220deg); opacity:0} }
-@keyframes debris4 { to{transform:translate(-25px,28px) rotate(-180deg); opacity:0} }
-@keyframes debris5 { to{transform:translate(-32px,-18px) rotate(190deg); opacity:0} }
-@keyframes debris6 { to{transform:translate(5px,-40px) rotate(120deg); opacity:0} }
-.rkt-crash-lbl.on .debris-1 { animation:debris1 .9s ease-out .05s forwards; }
-.rkt-crash-lbl.on .debris-2 { animation:debris2 .85s ease-out .08s forwards; }
-.rkt-crash-lbl.on .debris-3 { animation:debris3 .95s ease-out .03s forwards; }
-.rkt-crash-lbl.on .debris-4 { animation:debris4 .9s ease-out .1s forwards; }
-.rkt-crash-lbl.on .debris-5 { animation:debris5 .8s ease-out .06s forwards; }
-.rkt-crash-lbl.on .debris-6 { animation:debris6 .85s ease-out .04s forwards; }
+/* --- Слой 3: Огненные кольца (расширяются медленнее и дольше горят) --- */
+@keyframes ring1Out { 0%{r:6;opacity:0} 15%{opacity:1} 100%{r:85;opacity:0} }
+@keyframes ring2Out { 0%{r:5;opacity:0} 15%{opacity:.85} 100%{r:72;opacity:0} }
+@keyframes ring3Out { 0%{r:4;opacity:0} 15%{opacity:.6}  100%{r:95;opacity:0} }
+.exp-ring-1,.exp-ring-2,.exp-ring-3 { opacity:0; }
+.rkt-crash-lbl.on .exp-ring-1 { animation:ring1Out .85s ease-out .04s forwards; }
+.rkt-crash-lbl.on .exp-ring-2 { animation:ring2Out .75s ease-out .12s forwards; }
+.rkt-crash-lbl.on .exp-ring-3 { animation:ring3Out .95s ease-out .08s forwards; }
 
-/* Коэффициент — появляется с задержкой */
-.rkt-crash-mult { opacity:0; transform:scale(0.4) translateY(10px); transition:none; text-align:center; margin-top:10px; }
-.rkt-crash-mult.show { opacity:1; transform:scale(1) translateY(0); transition:opacity .5s ease, transform .5s cubic-bezier(.34,1.56,.64,1); }
-.rkt-crash-x { font-family:var(--fd); font-size:52px; font-weight:900; color:#f87171; text-shadow:0 0 40px rgba(248,113,113,.8), 0 0 80px rgba(248,113,113,.4); }
-.rkt-crash-word { font-family:var(--fd); font-size:11px; font-weight:700; color:#f87171; letter-spacing:6px; opacity:.75; margin-top:2px; }
+/* --- Слой 4: Внешнее свечение (медленно пульсирует и угасает) --- */
+@keyframes expGlowAnim {
+  0%   { opacity:0; transform:scale(.4); }
+  20%  { opacity:1; transform:scale(1.1); }
+  50%  { opacity:.9; transform:scale(1); }
+  100% { opacity:0; transform:scale(1.3); }
+}
+.exp-glow { opacity:0; transform-origin:100px 100px; transform-box:fill-box; }
+.rkt-crash-lbl.on .exp-glow { animation:expGlowAnim .9s ease-out forwards; }
+
+/* --- Слой 5: Огненные языки (вылетают, трепещут, затухают) --- */
+@keyframes flame-out-1 { 0%{transform:scale(0) rotate(0);opacity:0} 25%{transform:scale(1.2);opacity:1} 60%{transform:scale(1) rotate(8deg);opacity:.85} 100%{transform:scale(.3) rotate(-5deg);opacity:0} }
+@keyframes flame-out-2 { 0%{transform:scale(0) rotate(0);opacity:0} 25%{transform:scale(1.15);opacity:1} 60%{transform:scale(.95) rotate(-6deg);opacity:.8} 100%{transform:scale(.25) rotate(4deg);opacity:0} }
+.exp-flames path { opacity:0; transform-origin:center; }
+.rkt-crash-lbl.on .flame-1 { animation:flame-out-1 .7s ease-out .05s forwards; }
+.rkt-crash-lbl.on .flame-2 { animation:flame-out-2 .65s ease-out .08s forwards; }
+.rkt-crash-lbl.on .flame-3 { animation:flame-out-1 .75s ease-out .03s forwards; }
+.rkt-crash-lbl.on .flame-4 { animation:flame-out-2 .7s ease-out .07s forwards; }
+.rkt-crash-lbl.on .flame-5 { animation:flame-out-1 .68s ease-out .06s forwards; }
+.rkt-crash-lbl.on .flame-6 { animation:flame-out-2 .72s ease-out .04s forwards; }
+.rkt-crash-lbl.on .flame-7 { animation:flame-out-1 .66s ease-out .09s forwards; }
+.rkt-crash-lbl.on .flame-8 { animation:flame-out-2 .74s ease-out .02s forwards; }
+
+/* --- Слой 6: Ядро (яркая вспышка → сжимается в точку → исчезает) --- */
+@keyframes expCoreAnim {
+  0%   { transform:scale(.1); opacity:0; }
+  15%  { transform:scale(1.3); opacity:1; }
+  35%  { transform:scale(1); opacity:.95; }
+  65%  { transform:scale(.75); opacity:.7; }
+  100% { transform:scale(.2); opacity:0; }
+}
+.exp-core { opacity:0; transform-origin:100px 100px; transform-box:fill-box; }
+.rkt-crash-lbl.on .exp-core { animation:expCoreAnim .85s ease-out forwards; }
+
+/* --- Слой 7: Искры (разлетаются по траектории с затуханием) --- */
+@keyframes spark-1  { 0%{transform:translate(0,0);opacity:0} 10%{opacity:1} 100%{transform:translate(45px,-35px) scale(.3);opacity:0} }
+@keyframes spark-2  { 0%{transform:translate(0,0);opacity:0} 10%{opacity:1} 100%{transform:translate(-50px,-25px) scale(.3);opacity:0} }
+@keyframes spark-3  { 0%{transform:translate(0,0);opacity:0} 10%{opacity:1} 100%{transform:translate(30px,50px) scale(.4);opacity:0} }
+@keyframes spark-4  { 0%{transform:translate(0,0);opacity:0} 10%{opacity:1} 100%{transform:translate(-35px,45px) scale(.3);opacity:0} }
+@keyframes spark-5  { 0%{transform:translate(0,0);opacity:0} 10%{opacity:1} 100%{transform:translate(55px,10px) scale(.25);opacity:0} }
+@keyframes spark-6  { 0%{transform:translate(0,0);opacity:0} 10%{opacity:1} 100%{transform:translate(-55px,15px) scale(.3);opacity:0} }
+@keyframes spark-7  { 0%{transform:translate(0,0);opacity:0} 10%{opacity:1} 100%{transform:translate(8px,-55px) scale(.35);opacity:0} }
+@keyframes spark-8  { 0%{transform:translate(0,0);opacity:0} 10%{opacity:1} 100%{transform:translate(-10px,55px) scale(.3);opacity:0} }
+@keyframes spark-9  { 0%{transform:translate(0,0);opacity:0} 10%{opacity:1} 100%{transform:translate(40px,30px) scale(.25);opacity:0} }
+@keyframes spark-10 { 0%{transform:translate(0,0);opacity:0} 10%{opacity:1} 100%{transform:translate(-40px,-38px) scale(.3);opacity:0} }
+@keyframes spark-11 { 0%{transform:translate(0,0);opacity:0} 10%{opacity:1} 100%{transform:translate(25px,-48px) scale(.25);opacity:0} }
+@keyframes spark-12 { 0%{transform:translate(0,0);opacity:0} 10%{opacity:1} 100%{transform:translate(-28px,50px) scale(.3);opacity:0} }
+.exp-sparks circle { opacity:0; }
+.rkt-crash-lbl.on .spark-1  { animation:spark-1  .8s ease-out .05s forwards; }
+.rkt-crash-lbl.on .spark-2  { animation:spark-2  .75s ease-out .08s forwards; }
+.rkt-crash-lbl.on .spark-3  { animation:spark-3  .85s ease-out .03s forwards; }
+.rkt-crash-lbl.on .spark-4  { animation:spark-4  .7s ease-out .07s forwards; }
+.rkt-crash-lbl.on .spark-5  { animation:spark-5  .8s ease-out .04s forwards; }
+.rkt-crash-lbl.on .spark-6  { animation:spark-6  .82s ease-out .06s forwards; }
+.rkt-crash-lbl.on .spark-7  { animation:spark-7  .78s ease-out .02s forwards; }
+.rkt-crash-lbl.on .spark-8  { animation:spark-8  .76s ease-out .09s forwards; }
+.rkt-crash-lbl.on .spark-9  { animation:spark-9  .72s ease-out .05s forwards; }
+.rkt-crash-lbl.on .spark-10 { animation:spark-10 .84s ease-out .03s forwards; }
+.rkt-crash-lbl.on .spark-11 { animation:spark-11 .74s ease-out .08s forwards; }
+.rkt-crash-lbl.on .spark-12 { animation:spark-12 .88s ease-out .02s forwards; }
+
+/* --- Слой 8: Осколки разлетаются (координаты под viewBox 200x200) --- */
+@keyframes d1 { to{transform:translate(-55px,-85px) rotate(280deg) scale(.3);opacity:0} }
+@keyframes d2 { to{transform:translate(75px,-45px) rotate(-200deg) scale(.2);opacity:0} }
+@keyframes d3 { to{transform:translate(55px,75px) rotate(300deg) scale(.3);opacity:0} }
+@keyframes d4 { to{transform:translate(-70px,65px) rotate(-250deg) scale(.2);opacity:0} }
+@keyframes d5 { to{transform:translate(-78px,-35px) rotate(220deg) scale(.3);opacity:0} }
+@keyframes d6 { to{transform:translate(15px,-92px) rotate(180deg) scale(.2);opacity:0} }
+@keyframes d7 { to{transform:translate(85px,30px) rotate(-170deg) scale(.25);opacity:0} }
+@keyframes d8 { to{transform:translate(-28px,85px) rotate(240deg) scale(.2);opacity:0} }
+.rkt-crash-lbl.on .debris-1 { animation:d1 .9s cubic-bezier(.2,0,.6,1) .03s forwards; }
+.rkt-crash-lbl.on .debris-2 { animation:d2 .85s cubic-bezier(.2,0,.6,1) .05s forwards; }
+.rkt-crash-lbl.on .debris-3 { animation:d3 .95s cubic-bezier(.2,0,.6,1) .02s forwards; }
+.rkt-crash-lbl.on .debris-4 { animation:d4 .9s cubic-bezier(.2,0,.6,1) .07s forwards; }
+.rkt-crash-lbl.on .debris-5 { animation:d5 .8s cubic-bezier(.2,0,.6,1) .04s forwards; }
+.rkt-crash-lbl.on .debris-6 { animation:d6 .85s cubic-bezier(.2,0,.6,1) .03s forwards; }
+.rkt-crash-lbl.on .debris-7 { animation:d7 .9s cubic-bezier(.2,0,.6,1) .06s forwards; }
+.rkt-crash-lbl.on .debris-8 { animation:d8 .95s cubic-bezier(.2,0,.6,1) .02s forwards; }
+
+/* Экранный flash */
+@keyframes crashFlash { 0%{opacity:0} 10%{opacity:.7} 40%{opacity:.2} 100%{opacity:0} }
+.rkt-crash-lbl.on::before {
+  content:''; position:absolute; inset:0; background:#ff3300;
+  animation:crashFlash .4s ease-out forwards; pointer-events:none;
+}
+
+/* ── Коэффициент — абсолютно по центру, чуть выше середины ── */
+/* Вытащили из flex-потока родителя — чтобы не зависеть от исчезающего SVG взрыва */
+.rkt-crash-mult {
+  position:absolute;
+  top:42%; left:50%;                 /* 42% — чуть выше середины сцены */
+  transform:translate(-50%, -50%);
+  opacity:0; text-align:center; pointer-events:none;
+  z-index:2;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+
+/* Цифра: плавный scale-in (без overshoot) + мощное свечение */
+@keyframes crashNumIn {
+  0%   { opacity:0; transform:translate(-50%,-50%) scale(0.6) translateY(6px); filter:blur(6px); }
+  60%  { opacity:1; transform:translate(-50%,-50%) scale(1.08) translateY(-2px); filter:blur(0); }
+  100% { opacity:1; transform:translate(-50%,-50%) scale(1)  translateY(0); filter:blur(0); }
+}
+@keyframes crashGlowPulse {
+  0%, 100% {
+    text-shadow:
+      0 0 20px rgba(255,40,40,1),
+      0 0 45px rgba(255,20,20,.95),
+      0 0 80px rgba(255,0,0,.7),
+      0 0 130px rgba(255,0,0,.45);
+  }
+  50% {
+    text-shadow:
+      0 0 30px rgba(255,80,80,1),
+      0 0 65px rgba(255,40,40,1),
+      0 0 110px rgba(255,10,10,.85),
+      0 0 180px rgba(255,0,0,.55);
+  }
+}
+@keyframes crashNumOut {
+  0%   { opacity:1; transform:translate(-50%,-50%) scale(1);   filter:blur(0); }
+  100% { opacity:0; transform:translate(-50%,-50%) scale(.85); filter:blur(4px); }
+}
+
+/* Слово "КРАШ" — короткий fade + spread letter-spacing */
+@keyframes crashWordIn {
+  0%   { opacity:0; transform:translateY(-6px); letter-spacing:2px; }
+  100% { opacity:.95; transform:translateY(0); letter-spacing:10px; }
+}
+@keyframes crashWordOut {
+  0%   { opacity:.95; transform:translateY(0); }
+  100% { opacity:0;   transform:translateY(4px); }
+}
+
+/* Показ/скрытие */
+.rkt-crash-mult.show {
+  opacity:1;
+  animation: crashNumIn .5s cubic-bezier(.2,.8,.2,1) forwards;
+}
+.rkt-crash-mult.show .rkt-crash-x {
+  animation: crashGlowPulse 1.8s ease-in-out infinite;
+}
+.rkt-crash-mult.show .rkt-crash-word {
+  animation: crashWordIn .45s ease-out .25s both;
+}
+/* Плавный уход */
+.rkt-crash-mult.hide {
+  animation: crashNumOut .45s ease-in forwards;
+}
+.rkt-crash-mult.hide .rkt-crash-word { animation: crashWordOut .35s ease-in forwards; }
+
+.rkt-crash-x {
+  font-family:var(--fd); font-size:78px; font-weight:900;
+  color:#ff2222;                     /* ярко-красный вместо приглушённого */
+  text-shadow:
+    0 0 20px rgba(255,40,40,1),
+    0 0 45px rgba(255,20,20,.95),
+    0 0 80px rgba(255,0,0,.7),
+    0 0 130px rgba(255,0,0,.45);
+  display:inline-block; line-height:1;
+  will-change:opacity, filter;
+  letter-spacing:1px;
+}
+.rkt-crash-word {
+  font-family:var(--fd); font-size:14px; font-weight:800;
+  color:#ff3333;                     /* тоже ярко-красный */
+  letter-spacing:10px; opacity:0; margin-top:10px;
+  text-shadow:0 0 12px rgba(255,30,30,.9), 0 0 24px rgba(255,0,0,.5);
+  display:inline-block; will-change:transform, opacity;
+}
+
+/* Screen shake сцены при краше */
+@keyframes rktSceneShake {
+  0%,100% { transform:translate(0,0); }
+  10% { transform:translate(-4px,2px); }
+  20% { transform:translate(3px,-3px); }
+  30% { transform:translate(-3px,1px); }
+  40% { transform:translate(2px,3px); }
+  50% { transform:translate(-2px,-2px); }
+  60% { transform:translate(3px,1px); }
+  70% { transform:translate(-1px,-1px); }
+  80% { transform:translate(1px,2px); }
+  90% { transform:translate(-1px,0); }
+}
+.rkt-scene.shake { animation: rktSceneShake .45s cubic-bezier(.36,.07,.19,.97) both; }
 
 /* Теги игроков */
 .rkt-tags { position:absolute; top:6px; left:6px; z-index:8; display:flex; flex-wrap:wrap; gap:3px; pointer-events:none; max-width:60%; }
@@ -954,6 +1162,15 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-btn.bet  { background:#fff; color:#0a0a0a; box-shadow:0 4px 20px rgba(255,255,255,.15); }
 .rkt-btn.cash { background:#16a34a; color:#fff; box-shadow:0 4px 18px rgba(74,222,128,.35); font-size:18px; }
 .rkt-btn.stat { background:rgba(255,255,255,.06); color:rgba(255,255,255,.3); cursor:not-allowed; }
+/* Красная кнопка с убытком при краше с проигрышем */
+.rkt-btn.loss {
+  background:linear-gradient(180deg,#c01515,#7a0a0a);
+  color:#fff; font-size:17px; cursor:not-allowed;
+  box-shadow:0 4px 18px rgba(220,30,30,.4), inset 0 1px 0 rgba(255,255,255,.15);
+  border:1px solid rgba(255,100,100,.3);
+}
+.rkt-btn.loss .rkt-loss-main { font-size:15px; letter-spacing:2px; opacity:.95; }
+.rkt-btn.loss .rkt-loss-sum  { display:block; font-size:19px; letter-spacing:1px; margin-top:4px; color:#ffd0d0; }
 
 /* Панель */
 .rkt-panel { padding:10px 14px 0; }
@@ -1055,6 +1272,22 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 /* ══ конец барабанов ══ */
 </style>
 </head>
+<script>
+// Этот маленький скрипт парсится мгновенно — закрывает сплеш через 1.5с
+// Выполняется ДО основного 275KB скрипта
+(function(){
+  function ks(){
+    var s=document.getElementById('splash');
+    if(!s)return;
+    s.style.cssText='display:none!important;visibility:hidden!important;pointer-events:none!important;opacity:0!important';
+    try{s.parentNode.removeChild(s);}catch(e){}
+  }
+  // Закрыть через 1.5с в любом случае
+  setTimeout(ks, 1500);
+  // Или когда основной скрипт вызовет window.__closeSplash()
+  window.__closeSplash = ks;
+})();
+</script>
 <body>
 
 <div id="splash">
@@ -1098,7 +1331,26 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     <div class="splash-step" id="step3"><div class="splash-step-dot"></div><span>Синхронизация данных</span></div>
   </div>
 
-  <div class="splash-bar-wrap"><div class="splash-bar" id="splashBar"></div></div>
+  <div class="splash-bar-wrap">
+    <svg class="splash-bar-svg" viewBox="0 0 240 8" xmlns="http://www.w3.org/2000/svg" id="splashBar">
+      <defs>
+        <linearGradient id="barGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#ff4400"/>
+          <stop offset="40%" stop-color="#ff8800"/>
+          <stop offset="70%" stop-color="#ffcc00"/>
+          <stop offset="100%" stop-color="#ffffff"/>
+        </linearGradient>
+      </defs>
+      <!-- Трек -->
+      <line class="splash-bar-track" x1="4" y1="4" x2="236" y2="4"/>
+      <!-- Свечение -->
+      <line class="splash-bar-glow" id="splashBarGlow" x1="4" y1="4" x2="236" y2="4"/>
+      <!-- Заливка -->
+      <line class="splash-bar-fill" id="splashBarFill" x1="4" y1="4" x2="236" y2="4"/>
+      <!-- Точка-огонёк на конце -->
+      <circle class="splash-bar-dot" id="splashBarDot" cx="4" cy="4" r="3"/>
+    </svg>
+  </div>
   <div class="splash-status" id="splashStatus">ИНИЦИАЛИЗАЦИЯ...</div>
 </div>
 
@@ -1586,51 +1838,108 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <!-- Краш -->
       <div class="rkt-crash-ov" id="rktCrashOv"></div>
       <div class="rkt-crash-lbl" id="rktCrashLbl">
-        <!-- SVG взрыв -->
+        <!-- SVG взрыв — реалистичный -->
         <div class="rkt-crash-svg" id="rktCrashSvg">
-          <svg viewBox="0 0 120 120" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 200 200" width="200" height="200" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <radialGradient id="expGrad" cx="50%" cy="50%" r="50%">
-                <stop offset="0%"   stop-color="#fff"   stop-opacity="1"/>
-                <stop offset="25%"  stop-color="#ffdd00" stop-opacity="1"/>
-                <stop offset="55%"  stop-color="#ff5500" stop-opacity="0.9"/>
-                <stop offset="100%" stop-color="#cc0000" stop-opacity="0"/>
+              <!-- Горячее ядро: белое → жёлтое → оранжевое → красное -->
+              <radialGradient id="expCore" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"   stop-color="#ffffff"/>
+                <stop offset="15%"  stop-color="#fff2a8"/>
+                <stop offset="35%"  stop-color="#ffdd33"/>
+                <stop offset="60%"  stop-color="#ff7b1c"/>
+                <stop offset="85%"  stop-color="#c41400" stop-opacity=".7"/>
+                <stop offset="100%" stop-color="#600000" stop-opacity="0"/>
               </radialGradient>
-              <filter id="expBlur"><feGaussianBlur stdDeviation="2.5"/></filter>
+              <!-- Дымный клуб -->
+              <radialGradient id="expSmoke" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"  stop-color="#2a2018" stop-opacity=".85"/>
+                <stop offset="60%" stop-color="#1a1210" stop-opacity=".55"/>
+                <stop offset="100%" stop-color="#000"   stop-opacity="0"/>
+              </radialGradient>
+              <!-- Горячее внешнее свечение -->
+              <radialGradient id="expGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"   stop-color="#ffaa00" stop-opacity=".55"/>
+                <stop offset="50%"  stop-color="#ff3300" stop-opacity=".25"/>
+                <stop offset="100%" stop-color="#600000" stop-opacity="0"/>
+              </radialGradient>
+              <!-- Размытие для дыма -->
+              <filter id="expBlur" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="1.5"/>
+              </filter>
+              <!-- Искра-точка -->
+              <radialGradient id="sparkGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"  stop-color="#ffffff"/>
+                <stop offset="40%" stop-color="#ffdd66"/>
+                <stop offset="100%" stop-color="#ff6600" stop-opacity="0"/>
+              </radialGradient>
             </defs>
-            <!-- Внешнее свечение -->
-            <circle cx="60" cy="60" r="55" fill="rgba(255,50,0,0.15)" class="exp-ring exp-ring-1"/>
-            <circle cx="60" cy="60" r="42" fill="rgba(255,100,0,0.2)"  class="exp-ring exp-ring-2"/>
-            <!-- Центральный взрыв -->
-            <circle cx="60" cy="60" r="28" fill="url(#expGrad)" class="exp-core"/>
-            <!-- Лучи взрыва -->
-            <g class="exp-rays" transform="translate(60,60)">
-              <line x1="0" y1="-50" x2="0" y2="-32"   stroke="#ff8800" stroke-width="3.5" stroke-linecap="round"/>
-              <line x1="35" y1="-35" x2="23" y2="-23"  stroke="#ffcc00" stroke-width="3"   stroke-linecap="round"/>
-              <line x1="50" y1="0"   x2="32" y2="0"    stroke="#ff6600" stroke-width="3.5" stroke-linecap="round"/>
-              <line x1="35" y1="35"  x2="23" y2="23"   stroke="#ff4400" stroke-width="3"   stroke-linecap="round"/>
-              <line x1="0" y1="50"   x2="0" y2="32"    stroke="#ff8800" stroke-width="3.5" stroke-linecap="round"/>
-              <line x1="-35" y1="35" x2="-23" y2="23"  stroke="#ffcc00" stroke-width="3"   stroke-linecap="round"/>
-              <line x1="-50" y1="0"  x2="-32" y2="0"   stroke="#ff6600" stroke-width="3.5" stroke-linecap="round"/>
-              <line x1="-35" y1="-35" x2="-23" y2="-23" stroke="#ff4400" stroke-width="3" stroke-linecap="round"/>
-              <!-- Диагональные короткие лучи -->
-              <line x1="20" y1="-48" x2="13" y2="-31"  stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
-              <line x1="48" y1="-20" x2="31" y2="-13"  stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
-              <line x1="48" y1="20"  x2="31" y2="13"   stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
-              <line x1="20" y1="48"  x2="13" y2="31"   stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
-              <line x1="-20" y1="48" x2="-13" y2="31"  stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
-              <line x1="-48" y1="20" x2="-31" y2="13"  stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
-              <line x1="-48" y1="-20" x2="-31" y2="-13" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
-              <line x1="-20" y1="-48" x2="-13" y2="-31" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+
+            <!-- ── СЛОЙ 1: Дымные клубы (сзади, расплываются) ── -->
+            <g class="exp-smoke" filter="url(#expBlur)">
+              <circle class="smoke-1" cx="100" cy="100" r="14" fill="url(#expSmoke)"/>
+              <circle class="smoke-2" cx="100" cy="100" r="12" fill="url(#expSmoke)"/>
+              <circle class="smoke-3" cx="100" cy="100" r="10" fill="url(#expSmoke)"/>
+              <circle class="smoke-4" cx="100" cy="100" r="13" fill="url(#expSmoke)"/>
+              <circle class="smoke-5" cx="100" cy="100" r="11" fill="url(#expSmoke)"/>
             </g>
-            <!-- Осколки ракеты -->
-            <g class="exp-debris" opacity="0.9">
-              <rect x="52" y="10" width="5" height="12" rx="2" fill="#90c8ff" transform="rotate(15,54,16)" class="debris-1"/>
-              <rect x="88" y="42" width="4" height="10" rx="2" fill="#2870d0" transform="rotate(-30,90,47)" class="debris-2"/>
-              <rect x="78" y="82" width="3" height="9"  rx="1" fill="#ff5500" transform="rotate(45,80,86)"  class="debris-3"/>
-              <rect x="22" y="75" width="4" height="11" rx="2" fill="#90c8ff" transform="rotate(-20,24,80)" class="debris-4"/>
-              <rect x="14" y="35" width="3" height="8"  rx="1" fill="#2870d0" transform="rotate(60,16,39)"  class="debris-5"/>
-              <polygon points="60,5 64,12 56,12" fill="#ff5500" class="debris-6"/>
+
+            <!-- ── СЛОЙ 2: Ударная волна (тонкое кольцо, быстро расходится) ── -->
+            <circle class="shockwave" cx="100" cy="100" r="8"
+              fill="none" stroke="rgba(255,220,180,.9)" stroke-width="1.5"/>
+
+            <!-- ── СЛОЙ 3: Расходящиеся горячие кольца ── -->
+            <circle class="exp-ring exp-ring-1" cx="100" cy="100" r="6"
+              fill="none" stroke="rgba(255,180,40,.9)" stroke-width="3"/>
+            <circle class="exp-ring exp-ring-2" cx="100" cy="100" r="5"
+              fill="none" stroke="rgba(255,100,20,.75)" stroke-width="2.2"/>
+            <circle class="exp-ring exp-ring-3" cx="100" cy="100" r="4"
+              fill="none" stroke="rgba(255,220,60,.5)" stroke-width="1.6"/>
+
+            <!-- ── СЛОЙ 4: Внешнее свечение ── -->
+            <circle class="exp-glow" cx="100" cy="100" r="65" fill="url(#expGlow)"/>
+
+            <!-- ── СЛОЙ 5: Огненные языки (неровные, как настоящий огонь) ── -->
+            <g class="exp-flames" transform="translate(100,100)">
+              <path class="flame-1" d="M 0,-50 Q -6,-30 -3,-22 Q 0,-32 3,-22 Q 6,-30 0,-50 Z" fill="#ffcc00"/>
+              <path class="flame-2" d="M 35,-35 Q 22,-22 20,-14 Q 28,-20 30,-12 Q 35,-22 35,-35 Z" fill="#ff8800"/>
+              <path class="flame-3" d="M 50,0 Q 30,-5 24,-2 Q 32,0 24,3 Q 30,6 50,0 Z" fill="#ffaa00"/>
+              <path class="flame-4" d="M 35,35 Q 22,22 14,20 Q 20,28 12,30 Q 22,35 35,35 Z" fill="#ff6600"/>
+              <path class="flame-5" d="M 0,50 Q 6,30 3,22 Q 0,32 -3,22 Q -6,30 0,50 Z" fill="#ffcc00"/>
+              <path class="flame-6" d="M -35,35 Q -22,22 -14,20 Q -20,28 -12,30 Q -22,35 -35,35 Z" fill="#ff8800"/>
+              <path class="flame-7" d="M -50,0 Q -30,-5 -24,-2 Q -32,0 -24,3 Q -30,6 -50,0 Z" fill="#ffaa00"/>
+              <path class="flame-8" d="M -35,-35 Q -22,-22 -20,-14 Q -28,-20 -30,-12 Q -35,-22 -35,-35 Z" fill="#ff6600"/>
+            </g>
+
+            <!-- ── СЛОЙ 6: Ядро взрыва (самое горячее) ── -->
+            <circle class="exp-core" cx="100" cy="100" r="34" fill="url(#expCore)"/>
+
+            <!-- ── СЛОЙ 7: Искры (мелкие яркие точки) ── -->
+            <g class="exp-sparks" transform="translate(100,100)">
+              <circle class="spark-1" cx="0" cy="0" r="2" fill="url(#sparkGrad)"/>
+              <circle class="spark-2" cx="0" cy="0" r="1.8" fill="url(#sparkGrad)"/>
+              <circle class="spark-3" cx="0" cy="0" r="1.5" fill="url(#sparkGrad)"/>
+              <circle class="spark-4" cx="0" cy="0" r="2.2" fill="url(#sparkGrad)"/>
+              <circle class="spark-5" cx="0" cy="0" r="1.6" fill="url(#sparkGrad)"/>
+              <circle class="spark-6" cx="0" cy="0" r="2" fill="url(#sparkGrad)"/>
+              <circle class="spark-7" cx="0" cy="0" r="1.4" fill="url(#sparkGrad)"/>
+              <circle class="spark-8" cx="0" cy="0" r="1.8" fill="url(#sparkGrad)"/>
+              <circle class="spark-9" cx="0" cy="0" r="2.1" fill="url(#sparkGrad)"/>
+              <circle class="spark-10" cx="0" cy="0" r="1.5" fill="url(#sparkGrad)"/>
+              <circle class="spark-11" cx="0" cy="0" r="1.7" fill="url(#sparkGrad)"/>
+              <circle class="spark-12" cx="0" cy="0" r="1.9" fill="url(#sparkGrad)"/>
+            </g>
+
+            <!-- ── СЛОЙ 8: Осколки ракеты (разлетаются с дымным следом) ── -->
+            <g class="exp-debris">
+              <rect class="debris-1" x="97" y="36" width="6" height="14" rx="2" fill="#5090d0"/>
+              <rect class="debris-2" x="134" y="72" width="5" height="12" rx="2" fill="#2060a0"/>
+              <rect class="debris-3" x="124" y="120" width="4" height="11" rx="2" fill="#3070b0"/>
+              <rect class="debris-4" x="58"  y="116" width="5" height="13" rx="2" fill="#5090d0"/>
+              <rect class="debris-5" x="50"  y="68" width="4" height="10" rx="2" fill="#2060a0"/>
+              <polygon class="debris-6" points="100,30 105,40 95,40"  fill="#ff5500"/>
+              <polygon class="debris-7" points="140,88 154,100 140,100" fill="#1a4a90"/>
+              <polygon class="debris-8" points="60,88 46,100 60,100"  fill="#1a4a90"/>
             </g>
           </svg>
         </div>
@@ -1870,6 +2179,15 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 <div class="toast" id="toast"></div>
 
 <script>
+// ─── Убиваем сплеш через 2с — гарантия на любом устройстве ───
+!function(){
+  var t = setTimeout(function(){
+    var s = document.getElementById('splash');
+    if(s){ s.style.cssText='display:none!important;visibility:hidden!important;pointer-events:none!important;opacity:0!important;z-index:-1!important'; try{s.parentNode.removeChild(s);}catch(e){} }
+  }, 2000);
+  // Если init() сработает быстрее — он сам закроет и отменит этот таймер
+  window.__splashKillTimer = t;
+}();
 // ══════════════════════════════════════════════════════════
 // TELEGRAM INIT — максимально безопасно
 // ══════════════════════════════════════════════════════════
@@ -3695,6 +4013,22 @@ function splashStep(id, state) {
     if(el) el.className = 'splash-step ' + state;
   } catch(e) {}
 }
+function setBar(pct) {
+  try {
+    const offset = 220 - (220 * Math.min(pct,100) / 100);
+    const fill = document.getElementById('splashBarFill');
+    const glow = document.getElementById('splashBarGlow');
+    const dot  = document.getElementById('splashBarDot');
+    if(fill) fill.style.strokeDashoffset = offset;
+    if(glow) glow.style.strokeDashoffset = offset;
+    if(dot) {
+      // Позиция точки
+      const x = 4 + (232 * Math.min(pct,100) / 100);
+      dot.setAttribute('cx', x);
+      dot.style.opacity = pct > 2 ? '1' : '0';
+    }
+  } catch(e) {}
+}
 function splashBalShow(val, sourceText, sourceClass) {
   try {
     const bv = document.getElementById('splashBalValue');
@@ -3712,33 +4046,151 @@ function splashBalShow(val, sourceText, sourceClass) {
   } catch(e) {}
 }
 
-function init() {
-  // Сплеш скрывается CSS-анимацией автоматически через 2.5с
-  // Здесь только грузим данные и скрываем сплеш явно когда готово
+async function init() {
+  const splash  = document.getElementById('splash');
+  const status  = document.getElementById('splashStatus');
 
-  const splash = document.getElementById('splash');
-  function killSplash() {
-    if (!splash) return;
-    splash.style.cssText = 'display:none!important;visibility:hidden!important;pointer-events:none!important;z-index:-1!important;opacity:0!important';
-    try { splash.parentNode && splash.parentNode.removeChild(splash); } catch(e) {}
+  function closeSplash() {
+    try { clearTimeout(window.__splashKillTimer); } catch(e) {}
+    try { window.__closeSplash && window.__closeSplash(); } catch(e) {}
+    try {
+      if (splash) {
+        splash.style.display = 'none';
+        splash.style.visibility = 'hidden';
+        splash.style.pointerEvents = 'none';
+        try { splash.parentNode && splash.parentNode.removeChild(splash); } catch(e){}
+      }
+    } catch(e) {}
+    setBar(100);
   }
 
-  // Данные из localStorage — синхронно, мгновенно
-  if (URL_BAL > 0) setBalance(URL_BAL);
-  try { const s = localStorage.getItem(AVATAR_KEY); if(s) selectedAvatar=s; } catch(e){}
-  try { updateMiniStats(); } catch(e){}
-  try { refreshBets(); } catch(e){}
-  try { for(const b of [100000,50000,25000,10000]){ if(balance>=b){selectBet(b);break;} } } catch(e){}
-  try { _lastKnownBalance = balance; } catch(e){}
+  const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
 
-  // Запускаем фоновые процессы
-  try { startBalancePolling(); } catch(e){}
-  try { tg.BackButton.show(); } catch(e){}
-  try { tg.enableClosingConfirmation(); } catch(e){}
-  try { initProfileBanner(); window._pauseProfileBanner&&window._pauseProfileBanner(); } catch(e){}
+  // Страховка — закрываем через 8с в любом случае
+  const emergency = setTimeout(() => {
+    closeSplash();
+    try { startBalancePolling(); } catch(e) {}
+  }, hasApi ? 8000 : 1500);
 
-  // Закрываем сплеш через 200мс (JS уже отработал к этому моменту)
-  setTimeout(killSplash, 200);
+  try {
+    // ── Звёздочки
+    try {
+      const st = document.getElementById('splashStars');
+      if (st) for (let i=0;i<60;i++) {
+        const s = document.createElement('div'); s.className='splash-star';
+        s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${1.5+Math.random()*3}s;--delay:${Math.random()*2}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;opacity:${0.1+Math.random()*0.5}`;
+        st.appendChild(s);
+      }
+    } catch(e){}
+
+    // ── Показываем кэш сразу
+    if (URL_BAL > 0) {
+      setBalance(URL_BAL);
+      splashBalShow(URL_BAL, '📦 ИЗ URL', 'from-cache');
+    } else {
+      try {
+        const cached = parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10);
+        if (cached > 0) { setBalance(cached); splashBalShow(cached, '📦 КЭШ', 'from-cache'); }
+      } catch(e){}
+    }
+
+    // ── Прогресс 0→30% — анимация появления
+    let prog = 0;
+    const t1 = setInterval(()=>{ prog=Math.min(prog+3,30); setBar(prog); }, 30);
+    await new Promise(r=>setTimeout(r,500));
+    clearInterval(t1); setBar(30);
+
+    // ── Шаг 1: Подключение
+    splashStep('step1', 'active');
+    if (status) status.textContent = 'ПОДКЛЮЧЕНИЕ К СЕРВЕРУ...';
+    await new Promise(r=>setTimeout(r,300));
+
+    if (!hasApi) {
+      splashStep('step1', 'fail');
+      splashStep('step2', 'fail');
+      splashStep('step3', 'active');
+      if (status) status.textContent = 'ДЕМО РЕЖИМ — API НЕ ПОДКЛЮЧЁН';
+      setBar(60);
+      await new Promise(r=>setTimeout(r,500));
+      splashStep('step3', 'done');
+      setBar(100);
+      if (status) status.textContent = '✅ ' + balance.toLocaleString('ru-RU') + ' ТОКЕНОВ';
+      await new Promise(r=>setTimeout(r,600));
+    } else {
+      splashStep('step1', 'done');
+      setBar(40);
+      await new Promise(r=>setTimeout(r,250));
+
+      // ── Шаг 2: Получение баланса
+      splashStep('step2', 'active');
+      if (status) status.textContent = 'ПОЛУЧЕНИЕ БАЛАНСА...';
+
+      const t2 = setInterval(()=>{ prog=Math.min(prog+1,75); setBar(prog); }, 60);
+      prog = 40;
+
+      // Ждём баланс до 5 секунд — ngrok может быть медленным
+      let apiBal = null;
+      try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(()=>ctrl.abort(), 5000);
+        const r = await fetch(
+          API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
+          { signal: ctrl.signal, headers: {'ngrok-skip-browser-warning':'1'} }
+        );
+        clearTimeout(tid);
+        const d = await r.json();
+        if (d && d.ok && typeof d.balance==='number') apiBal = d.balance;
+      } catch(e){}
+
+      clearInterval(t2);
+
+      if (apiBal !== null) {
+        setBalance(apiBal);
+        try { localStorage.setItem('bal_'+USER_ID, String(apiBal)); } catch(e){}
+        splashBalShow(apiBal, '✅ АКТУАЛЬНЫЙ', 'from-bot');
+        splashStep('step2', 'done');
+        setBar(80);
+        await new Promise(r=>setTimeout(r,300));
+
+        // ── Шаг 3: Синхронизация данных
+        splashStep('step3', 'active');
+        if (status) status.textContent = 'СИНХРОНИЗАЦИЯ ДАННЫХ...';
+        try { await Promise.race([loadAllFromCloud(), new Promise(r=>setTimeout(r,800))]); } catch(e){}
+        try { setAvaEl(document.getElementById('spoAvatar'), 44); } catch(e){}
+        try { setAvaEl(document.getElementById('pAvatar'), 50); } catch(e){}
+        splashStep('step3', 'done');
+        setBar(100);
+        if (status) status.textContent = '✅ ' + apiBal.toLocaleString('ru-RU') + ' ТОКЕНОВ';
+        await new Promise(r=>setTimeout(r,700));
+
+      } else {
+        // Не получили баланс
+        splashStep('step2', 'fail');
+        splashStep('step3', 'active');
+        if (status) status.textContent = 'КЭШИРОВАННЫЙ БАЛАНС';
+        setBar(90);
+        await new Promise(r=>setTimeout(r,400));
+        splashStep('step3', 'done');
+        setBar(100);
+        if (status) status.textContent = '⚠️ ' + balance.toLocaleString('ru-RU') + ' (КЭШ)';
+        await new Promise(r=>setTimeout(r,600));
+      }
+    }
+
+  } catch(e) {
+    console.warn('Init error:', e);
+  } finally {
+    clearTimeout(emergency);
+    closeSplash();
+    try { updateMiniStats(); } catch(e){}
+    try { refreshBets(); } catch(e){}
+    try { for(const b of [100000,50000,25000,10000]){if(balance>=b){selectBet(b);break;}} } catch(e){}
+    try { _lastKnownBalance = balance; } catch(e){}
+    try { tg.BackButton.show(); } catch(e){}
+    try { tg.enableClosingConfirmation(); } catch(e){}
+    try { initProfileBanner(); window._pauseProfileBanner&&window._pauseProfileBanner(); } catch(e){}
+    try { startBalancePolling(); } catch(e){}
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3795,7 +4247,7 @@ async function fetchBalanceFromAPI(timeoutMs) {
 
   try {
     const ctrl = new AbortController();
-    const t    = setTimeout(() => ctrl.abort(), timeoutMs || 2500);
+    const t    = setTimeout(() => ctrl.abort(), Math.min(timeoutMs||800, 800));
     try {
       const r = await fetch(url, {
         signal: ctrl.signal,
@@ -3952,7 +4404,7 @@ async function safeLoadBalanceAnimated() {
   splashStep('step2','active');
   setBotStatus('loading','ЗАПРОС...');
 
-  const apiBal = await fetchBalanceFromAPI(2000);
+  const apiBal = await fetchBalanceFromAPI(800);
 
   if(apiBal !== null) {
     // ✅ Успех — применяем и синхронизируем
@@ -3979,7 +4431,7 @@ async function safeLoadBalanceAnimated() {
 
 // Безопасная загрузка (используется в refresh и polling)
 async function safeLoadBalance() {
-  const apiBal = await fetchBalanceFromAPI(3000);
+  const apiBal = await fetchBalanceFromAPI(2000);
   if(apiBal !== null) {
     setBalance(apiBal);
     try { setBotStatus('connected','ПОДКЛЮЧЁН'); } catch(e){}
@@ -4352,10 +4804,11 @@ function _rktStartRenderLoop() {
   for (let gx = 0; gx < RW; gx += 40) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,RH); ctx.stroke(); }
   for (let gy = 0; gy < RH; gy += 40) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(RW,gy); ctx.stroke(); }
 
-  // ── Звёзды ───────────────────────────────────────────
-  const starSpd = ph === 'flying' ? Math.min(1.5 + R.mult * 0.32, 12) : 0;
-  // Эффект скорости при высоких иксах — звёзды вытягиваются в линии
-  const highSpeed = ph === 'flying' && R.mult > 5;
+  // ── Звёзды + эффект скорости (нарастает ПЛАВНО с ×1) ──
+  const starSpd = ph === 'flying' ? Math.min(1.5 + R.mult * 0.75, 28) : 0;
+  // Эффект теперь включён с самого старта полёта, интенсивность 0..1 по шкале ×1..×10
+  const rktSpeedOn  = ph === 'flying';
+  const rktSpeedLvl = rktSpeedOn ? Math.min((R.mult - 1) / 9, 1) : 0; // 0..1 от ×1 до ×10
   ctx.fillStyle = '#fff';
   rStars.forEach(s => {
     s.b += s.s * 0.022;
@@ -4363,15 +4816,15 @@ function _rktStartRenderLoop() {
     if (s.y > RH + 4) { s.y = -4; s.x = Math.random() * RW; }
     const alpha = 0.18 + Math.abs(Math.sin(s.b)) * 0.72;
     ctx.globalAlpha = alpha;
-    if (highSpeed && starSpd > 3) {
-      // Вытягиваем в стрик
-      const strk = Math.min(starSpd * 2.5, 30);
+    if (rktSpeedOn && starSpd > 1.5) {
+      // Звёзды-стрики с первых моментов (длина растёт с множителем)
+      const strk = Math.min(starSpd * (1.5 + rktSpeedLvl * 4), 80);
       ctx.save();
       const sg = ctx.createLinearGradient(s.x, s.y - strk, s.x, s.y);
       sg.addColorStop(0, 'rgba(255,255,255,0)');
       sg.addColorStop(1, `rgba(255,255,255,${alpha})`);
       ctx.strokeStyle = sg;
-      ctx.lineWidth = s.r * 1.2;
+      ctx.lineWidth = s.r * (1 + rktSpeedLvl * 1.2);
       ctx.beginPath(); ctx.moveTo(s.x, s.y - strk); ctx.lineTo(s.x, s.y);
       ctx.stroke(); ctx.restore();
     } else {
@@ -4379,6 +4832,87 @@ function _rktStartRenderLoop() {
     }
   });
   ctx.globalAlpha = 1;
+
+  // ── Speed-lines — яркие вертикальные полосы (15→55, скорость 20→80) ──
+  if (rktSpeedOn) {
+    const lineCount = Math.round(15 + rktSpeedLvl * 40); // 15..55
+    const baseSpd = 20 + rktSpeedLvl * 60;               // 20..80 px/frame
+    if (!window._rktSpeedLines) window._rktSpeedLines = [];
+    while (window._rktSpeedLines.length < lineCount) {
+      window._rktSpeedLines.push({
+        x: Math.random() * RW,
+        y: Math.random() * RH,
+        len: 35 + Math.random() * 55 + rktSpeedLvl * 90, // длиннее
+        w: 1 + Math.random() * 1.8,
+        a: 0.35 + Math.random() * 0.55,
+        side: Math.random() < 0.65
+      });
+    }
+    if (window._rktSpeedLines.length > lineCount) {
+      window._rktSpeedLines.length = lineCount;
+    }
+    ctx.save();
+    for (let i = 0; i < window._rktSpeedLines.length; i++) {
+      const ln = window._rktSpeedLines[i];
+      ln.y += baseSpd;
+      const edgeBias = ln.side ? (ln.x < RW/2 ? -1 : 1) * rktSpeedLvl * 0.5 : 0;
+      ln.x += edgeBias;
+      if (ln.y > RH + ln.len || ln.x < -10 || ln.x > RW + 10) {
+        ln.y = -ln.len;
+        ln.x = ln.side
+          ? (Math.random() < 0.5 ? Math.random() * RW * 0.28 : RW * 0.72 + Math.random() * RW * 0.28)
+          : Math.random() * RW;
+        ln.len = 35 + Math.random() * 55 + rktSpeedLvl * 90;
+      }
+      const g = ctx.createLinearGradient(ln.x, ln.y - ln.len, ln.x, ln.y);
+      // Цвет: бело-жёлтый → оранжевый с ростом
+      const hue = rktSpeedLvl > 0.55
+        ? `255,${Math.round(210 - rktSpeedLvl*100)},${Math.round(120 - rktSpeedLvl*100)}`
+        : '255,245,210';
+      g.addColorStop(0,   `rgba(${hue},0)`);
+      g.addColorStop(0.6, `rgba(${hue},${ln.a * 0.45})`);
+      g.addColorStop(1,   `rgba(${hue},${ln.a * (0.8 + rktSpeedLvl * 0.2)})`);
+      ctx.strokeStyle = g;
+      ctx.lineWidth = ln.w * (1 + rktSpeedLvl * 1.1);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(ln.x, ln.y - ln.len);
+      ctx.lineTo(ln.x, ln.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // ── Motion blur по краям (vignette) — усилен с ×1, мощнее на краях ──
+    // Края экрана постепенно "замыливаются" с ростом множителя
+    if (rktSpeedLvl > 0.02) {
+      // Основной vignette — чёрный к краям
+      const vg = ctx.createRadialGradient(RW/2, RH/2, RH*0.15, RW/2, RH/2, RH*0.75);
+      vg.addColorStop(0, 'rgba(0,0,0,0)');
+      vg.addColorStop(0.6, `rgba(0,0,0,${rktSpeedLvl * 0.25})`);
+      vg.addColorStop(1, `rgba(0,0,0,${0.15 + rktSpeedLvl * 0.55})`);
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, RW, RH);
+
+      // Дополнительное оранжевое свечение-размытие по бокам (огненный туннель)
+      if (rktSpeedLvl > 0.15) {
+        const sideAlpha = rktSpeedLvl * 0.18;
+        // Левый край
+        const lg = ctx.createLinearGradient(0, 0, RW * 0.25, 0);
+        lg.addColorStop(0, `rgba(255,80,0,${sideAlpha})`);
+        lg.addColorStop(1, 'rgba(255,80,0,0)');
+        ctx.fillStyle = lg;
+        ctx.fillRect(0, 0, RW * 0.25, RH);
+        // Правый край
+        const rg = ctx.createLinearGradient(RW, 0, RW * 0.75, 0);
+        rg.addColorStop(0, `rgba(255,80,0,${sideAlpha})`);
+        rg.addColorStop(1, 'rgba(255,80,0,0)');
+        ctx.fillStyle = rg;
+        ctx.fillRect(RW * 0.75, 0, RW * 0.25, RH);
+      }
+    }
+  } else if (window._rktSpeedLines) {
+    window._rktSpeedLines.length = 0;
+  }
 
   // ── WAITING: таймер ──────────────────────────────────
   if (ph === 'waiting' && R.waitLeft > 0) {
@@ -4416,11 +4950,12 @@ function _rktStartRenderLoop() {
       ctx.translate(shakeX, shakeY);
     }
 
-    // Позиция ракеты
+    // Позиция ракеты — не долетает до множителя (который теперь наверху)
+    // Максимум поднимется до середины-чуть-выше (~38% от верха), не дальше
     const elapsed = (Date.now() - R.ls) / 1000;
     const prog = Math.min(elapsed / 18, 0.82);
     const rx = RW * 0.5;
-    const ry = RH * 0.88 - prog * RH * 0.64;
+    const ry = RH * 0.88 - prog * RH * 0.50; // было 0.64, стало 0.50 — высота полёта уменьшена
 
     // Трасса
     if (ph === 'flying' && rTime % 2 === 0) {
@@ -4445,119 +4980,242 @@ function _rktStartRenderLoop() {
     }
 
     if (ph === 'flying') {
-      // ── Пламя ──
+      // ── Пламя под объектом — растёт с множителем ──
       ctx.save();
       const flicker = 0.85 + Math.sin(rTime * 0.6) * 0.15;
-      const fl = (18 + Math.sin(rTime * 0.45) * 5) * flicker;
+      // Длина пламени существенно зависит от rktSpeedLvl (0..1)
+      const flBase = 22 + rktSpeedLvl * 28;            // 22..50
+      const fl = (flBase + Math.sin(rTime * 0.45) * (6 + rktSpeedLvl * 5)) * flicker;
+      const flameW = 1 + rktSpeedLvl * 0.6;            // ширина тоже растёт
       // Внешнее свечение пламени
-      const fgOut = ctx.createRadialGradient(rx, ry+8, 0, rx, ry+8, fl*1.5);
-      fgOut.addColorStop(0, 'rgba(255,140,0,0.15)');
+      const fgOut = ctx.createRadialGradient(rx, ry+18, 0, rx, ry+18, fl*1.8);
+      fgOut.addColorStop(0, `rgba(255,140,0,${0.18 + rktSpeedLvl*0.15})`);
       fgOut.addColorStop(1, 'rgba(255,60,0,0)');
       ctx.fillStyle = fgOut;
-      ctx.beginPath(); ctx.ellipse(rx, ry+8, fl*0.8, fl*1.5, 0, 0, Math.PI*2); ctx.fill();
-      // Основное пламя
-      const fg = ctx.createLinearGradient(rx, ry+6, rx, ry+6+fl);
-      fg.addColorStop(0, 'rgba(255,255,255,.95)');
-      fg.addColorStop(0.2, 'rgba(255,220,0,.9)');
-      fg.addColorStop(0.6, 'rgba(255,80,0,.75)');
-      fg.addColorStop(1, 'rgba(255,20,0,0)');
-      ctx.fillStyle = fg;
-      ctx.beginPath(); ctx.ellipse(rx, ry+6, 5+flicker*2, fl, 0, 0, Math.PI*2); ctx.fill();
-      // Маленькие искры
-      for (let sp=0; sp<3; sp++) {
-        const sx = rx + (Math.random()-0.5)*8;
-        const sy = ry + 12 + Math.random()*fl*0.7;
-        ctx.fillStyle = 'rgba(255,220,100,0.6)';
-        ctx.beginPath(); ctx.arc(sx,sy,0.8+Math.random()*1.2,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(rx, ry+18, fl*1.2*flameW, fl*1.8, 0, 0, Math.PI*2); ctx.fill();
+      // Основное пламя — две волны
+      for (let fw = 0; fw < 2; fw++) {
+        const fOff = fw === 0 ? 0 : (Math.sin(rTime * 0.25) * 6);
+        const fg = ctx.createLinearGradient(rx + fOff, ry+14, rx + fOff, ry+14+fl);
+        fg.addColorStop(0,   'rgba(255,255,200,.95)');
+        fg.addColorStop(0.25,'rgba(255,220,40,.9)');
+        fg.addColorStop(0.6, 'rgba(255,80,0,.75)');
+        fg.addColorStop(1,   'rgba(180,20,0,0)');
+        ctx.fillStyle = fg;
+        ctx.beginPath();
+        ctx.ellipse(rx + fOff, ry+14, ((6+flicker*2.5) - fw*1.5) * flameW, fl - fw*4, 0, 0, Math.PI*2);
+        ctx.fill();
+      }
+      // Искры (количество растёт с множителем)
+      const sparkCount = 5 + Math.round(rktSpeedLvl * 10); // 5..15
+      for (let sp=0; sp<sparkCount; sp++) {
+        const sx = rx + (Math.random()-0.5)*(18 + rktSpeedLvl*14);
+        const sy = ry + 16 + Math.random()*fl*0.9;
+        ctx.fillStyle = `rgba(255,${200+Math.random()*55|0},${Math.random()*120|0},${0.7 + rktSpeedLvl*0.3})`;
+        ctx.beginPath(); ctx.arc(sx,sy,0.8+Math.random()*(1.4 + rktSpeedLvl*0.8),0,Math.PI*2); ctx.fill();
       }
       ctx.restore();
 
-      // ── Ракета SVG-like на canvas ──
+      // ══ Free Fire — огненный кристалл ══
+      // Шестиугольный щит с буквами FF + орбитальные искры + пульсирующее пламя по периметру
       ctx.save();
-      ctx.translate(rx, ry);
 
-      // Лёгкое покачивание
+      // Вибрация объекта — плавное нарастание с ×1 (синхронно с эффектом скорости)
+      // Формула та же что у DOM-множителя: 0..1 от ×1 до ×10
+      const vibr = Math.min((R.mult - 1) / 9, 1);
+      const vibX = vibr ? (Math.random() - 0.5) * 4 * vibr : 0;   // до ±2px
+      const vibY = vibr ? (Math.random() - 0.5) * 2 * vibr : 0;   // до ±1px
+      ctx.translate(rx + vibX, ry + vibY);
+
+      // Покачивание + пульсация
       const wobble = Math.sin(rTime * 0.08) * 0.03;
+      const pulse  = 1 + Math.sin(rTime * 0.14) * 0.045;
       ctx.rotate(wobble);
+      ctx.scale(pulse, pulse);
 
-      // Крылья (под телом)
-      const wingG = ctx.createLinearGradient(-18,5,0,14);
-      wingG.addColorStop(0,'#0a2860'); wingG.addColorStop(1,'#1a4a90');
-      ctx.fillStyle = wingG;
-      // Левое крыло
-      ctx.beginPath(); ctx.moveTo(-8,6); ctx.lineTo(-20,18); ctx.lineTo(-18,22); ctx.lineTo(-8,14); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle='rgba(100,160,255,0.3)'; ctx.lineWidth=0.5; ctx.stroke();
-      // Правое крыло
-      ctx.beginPath(); ctx.moveTo(8,6); ctx.lineTo(20,18); ctx.lineTo(18,22); ctx.lineTo(8,14); ctx.closePath(); ctx.fill(); ctx.stroke();
-
-      // Тело ракеты
-      const bodyG = ctx.createLinearGradient(-10,-22,10,-22);
-      bodyG.addColorStop(0,'#1a4080'); bodyG.addColorStop(0.3,'#5090d0');
-      bodyG.addColorStop(0.5,'#d8eeff'); bodyG.addColorStop(0.7,'#5090d0');
-      bodyG.addColorStop(1,'#0e2860');
-      ctx.fillStyle = bodyG;
-      ctx.beginPath();
-      ctx.moveTo(0,-24);
-      ctx.bezierCurveTo(10,-18,11,-8,9,6);
-      ctx.lineTo(9,14); ctx.lineTo(-9,14);
-      ctx.bezierCurveTo(-11,-8,-10,-18,0,-24);
-      ctx.fill();
-      // Блик тела
-      ctx.fillStyle='rgba(255,255,255,0.18)';
-      ctx.beginPath();
-      ctx.moveTo(-2,-22); ctx.bezierCurveTo(4,-18,5,-10,3,2); ctx.lineTo(0,2);
-      ctx.bezierCurveTo(-2,-10,-3,-18,-2,-22); ctx.fill();
-
-      // Нос
-      const noseG = ctx.createLinearGradient(-5,-28,5,-28);
-      noseG.addColorStop(0,'#cc4400'); noseG.addColorStop(0.5,'#ff8800'); noseG.addColorStop(1,'#cc4400');
-      ctx.fillStyle = noseG;
-      ctx.beginPath(); ctx.moveTo(0,-30); ctx.lineTo(6,-22); ctx.lineTo(-6,-22); ctx.closePath(); ctx.fill();
-
-      // Акцентная полоска
-      ctx.fillStyle='rgba(255,120,0,0.8)';
-      ctx.beginPath(); ctx.roundRect(-9,-2,18,4,2); ctx.fill();
-
-      // Иллюминатор
-      const portG = ctx.createRadialGradient(-1,-13,0,0,-13,5);
-      portG.addColorStop(0,'rgba(200,240,255,1)');
-      portG.addColorStop(0.5,'rgba(120,200,255,0.9)');
-      portG.addColorStop(1,'rgba(40,100,200,0.7)');
-      ctx.fillStyle = portG;
-      ctx.beginPath(); ctx.arc(0,-13,5,0,Math.PI*2); ctx.fill();
-      ctx.strokeStyle='rgba(180,220,255,0.6)'; ctx.lineWidth=1;
-      ctx.stroke();
-      // Блик иллюминатора
-      ctx.fillStyle='rgba(255,255,255,0.55)';
-      ctx.beginPath(); ctx.ellipse(-1.5,-15,2,1.5,Math.PI*0.3,0,Math.PI*2); ctx.fill();
-
-      // Двигатели
-      const engG = ctx.createLinearGradient(-6,12,6,22);
-      engG.addColorStop(0,'#1a3060'); engG.addColorStop(1,'#0a1830');
-      ctx.fillStyle = engG;
-      ctx.beginPath(); ctx.roundRect(-6,12,12,10,2); ctx.fill();
-      ctx.strokeStyle='rgba(80,140,220,0.4)'; ctx.lineWidth=0.8; ctx.stroke();
-
-      ctx.restore();
-
-      // Эффект скорости — размытые полосы по бокам при высоких иксах
-      if (m > 3) {
-        const speedAmt = Math.min((m - 3) / 15, 1);
+      // Motion blur shadow (нарастает плавно от ×1)
+      // Рисуем тёмно-оранжевый след снизу для ощущения движения
+      const blurAmt = Math.min((R.mult - 1) * 0.15, 1);
+      if (blurAmt > 0.05) {
         ctx.save();
-        ctx.globalAlpha = speedAmt * 0.35;
-        for (let sp = 0; sp < 8; sp++) {
-          const sx = rx + (Math.random()-0.5) * RW * 0.9;
-          const sy = Math.random() * RH;
-          const sl = 20 + Math.random() * 60 * speedAmt;
-          const sg = ctx.createLinearGradient(sx, sy-sl, sx, sy);
-          sg.addColorStop(0, 'rgba(255,255,255,0)');
-          sg.addColorStop(1, `rgba(255,255,255,${speedAmt*0.5})`);
-          ctx.strokeStyle = sg;
-          ctx.lineWidth = 0.5 + Math.random();
-          ctx.beginPath(); ctx.moveTo(sx, sy-sl); ctx.lineTo(sx, sy); ctx.stroke();
+        ctx.globalAlpha = blurAmt * 0.4;
+        // Шлейф ниже объекта (3 призрачных копии)
+        for (let bl = 1; bl <= 3; bl++) {
+          ctx.save();
+          ctx.translate(0, bl * 6);
+          ctx.scale(1 - bl*0.08, 1 - bl*0.08);
+          ctx.globalAlpha = blurAmt * 0.3 / bl;
+          // простой кружок-след
+          const g = ctx.createRadialGradient(0, 0, 4, 0, 0, 28);
+          g.addColorStop(0, `rgba(255,180,40,${0.5/bl})`);
+          g.addColorStop(1, 'rgba(255,80,0,0)');
+          ctx.fillStyle = g;
+          ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI*2); ctx.fill();
+          ctx.restore();
         }
         ctx.restore();
       }
+
+      // Внешний ореол (свечение)
+      const haloG = ctx.createRadialGradient(0, 0, 6, 0, 0, 68);
+      haloG.addColorStop(0,   'rgba(255,230,80,0.55)');
+      haloG.addColorStop(0.3, 'rgba(255,140,0,0.35)');
+      haloG.addColorStop(0.65,'rgba(255,50,0,0.18)');
+      haloG.addColorStop(1,   'rgba(255,0,0,0)');
+      ctx.fillStyle = haloG;
+      ctx.beginPath(); ctx.arc(0, 0, 68, 0, Math.PI*2); ctx.fill();
+
+      // Орбитальные искры (маленькие яркие точки вращающиеся вокруг кристалла)
+      const orbRot = rTime * 0.04;
+      for (let oi = 0; oi < 6; oi++) {
+        const ang = orbRot + oi * (Math.PI * 2 / 6);
+        const orbR = 32 + Math.sin(rTime * 0.1 + oi) * 3;
+        const ox = Math.cos(ang) * orbR;
+        const oy = Math.sin(ang) * orbR * 0.8;
+        const spSize = 1.5 + Math.sin(rTime * 0.2 + oi * 1.5) * 0.8;
+        ctx.fillStyle = 'rgba(255,220,80,0.9)';
+        ctx.shadowColor = 'rgba(255,150,0,1)';
+        ctx.shadowBlur = 8;
+        ctx.beginPath(); ctx.arc(ox, oy, spSize, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.shadowBlur = 0;
+
+      // ── 6 острых лепестков пламени вокруг гексагона ──
+      // Лепестки пульсируют, создают "огненную корону"
+      const petalPulse = 1 + Math.sin(rTime * 0.25) * 0.15;
+      for (let pi = 0; pi < 6; pi++) {
+        const ang = pi * (Math.PI * 2 / 6) - Math.PI/2; // начиная сверху
+        const phase = rTime * 0.22 + pi * 0.9;
+        const pLen = (16 + Math.sin(phase) * 5) * petalPulse;
+        const pBase = 22; // откуда стартует лепесток
+        const pTipX = Math.cos(ang) * (pBase + pLen);
+        const pTipY = Math.sin(ang) * (pBase + pLen);
+        const pBaseX1 = Math.cos(ang - 0.15) * pBase;
+        const pBaseY1 = Math.sin(ang - 0.15) * pBase;
+        const pBaseX2 = Math.cos(ang + 0.15) * pBase;
+        const pBaseY2 = Math.sin(ang + 0.15) * pBase;
+
+        // Градиент лепестка: светлый у основания → тёмно-красный к концу
+        const petG = ctx.createLinearGradient(
+          (pBaseX1+pBaseX2)/2, (pBaseY1+pBaseY2)/2,
+          pTipX, pTipY
+        );
+        petG.addColorStop(0,    'rgba(255,255,180,0.95)');
+        petG.addColorStop(0.3,  'rgba(255,200,40,0.9)');
+        petG.addColorStop(0.7,  'rgba(255,80,0,0.7)');
+        petG.addColorStop(1,    'rgba(180,0,0,0)');
+        ctx.fillStyle = petG;
+        ctx.beginPath();
+        ctx.moveTo(pBaseX1, pBaseY1);
+        ctx.quadraticCurveTo(
+          Math.cos(ang) * pBase * 1.3 + Math.sin(phase) * 2,
+          Math.sin(ang) * pBase * 1.3 + Math.cos(phase) * 2,
+          pTipX, pTipY
+        );
+        ctx.quadraticCurveTo(
+          Math.cos(ang) * pBase * 1.3 - Math.sin(phase) * 2,
+          Math.sin(ang) * pBase * 1.3 - Math.cos(phase) * 2,
+          pBaseX2, pBaseY2
+        );
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // ── Гексагональный щит (основная форма) ──
+      // Внешний слой — тёмно-красная рамка
+      const hexPoints = [];
+      for (let i = 0; i < 6; i++) {
+        const ang = i * (Math.PI / 3) - Math.PI/2;
+        hexPoints.push([Math.cos(ang) * 23, Math.sin(ang) * 23]);
+      }
+      // Тень под щитом (глубина)
+      ctx.save();
+      ctx.translate(0, 2);
+      ctx.fillStyle = 'rgba(60,0,0,0.6)';
+      ctx.beginPath();
+      hexPoints.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // Внешняя огненная рамка
+      const frameG = ctx.createLinearGradient(0, -23, 0, 23);
+      frameG.addColorStop(0,    '#ffcc00');
+      frameG.addColorStop(0.3,  '#ff7700');
+      frameG.addColorStop(0.7,  '#cc2200');
+      frameG.addColorStop(1,    '#660000');
+      ctx.fillStyle = frameG;
+      ctx.beginPath();
+      hexPoints.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+      ctx.closePath();
+      ctx.fill();
+
+      // Внутренний слой — тёмный металл (глубина щита)
+      const innerHex = hexPoints.map(p => [p[0] * 0.82, p[1] * 0.82]);
+      const metalG = ctx.createRadialGradient(-4, -6, 2, 0, 0, 20);
+      metalG.addColorStop(0,   '#3a1a0a');
+      metalG.addColorStop(0.5, '#200808');
+      metalG.addColorStop(1,   '#0a0202');
+      ctx.fillStyle = metalG;
+      ctx.beginPath();
+      innerHex.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+      ctx.closePath();
+      ctx.fill();
+
+      // Тонкая яркая обводка внутреннего гексагона
+      ctx.strokeStyle = 'rgba(255,180,40,0.75)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      innerHex.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+      ctx.closePath();
+      ctx.stroke();
+
+      // ── Буквы "FF" — огненные, по центру ──
+      ctx.save();
+      ctx.font = '900 22px "Oxanium","Barlow Condensed","Orbitron",Impact,sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Градиент FF
+      const ffG = ctx.createLinearGradient(0, -11, 0, 8);
+      ffG.addColorStop(0,    '#ffffb0');
+      ffG.addColorStop(0.3,  '#ffd23d');
+      ffG.addColorStop(0.7,  '#ff7700');
+      ffG.addColorStop(1,    '#cc1100');
+
+      // Обводка
+      ctx.strokeStyle = 'rgba(40,0,0,0.95)';
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.strokeText('FF', 0, -2);
+
+      // Заливка с glow
+      ctx.shadowColor = 'rgba(255,140,0,1)';
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = ffG;
+      ctx.fillText('FF', 0, -2);
+      ctx.shadowBlur = 0;
+
+      // Мелкая подпись "FREE FIRE"
+      ctx.font = '800 5.5px "Barlow Condensed","Oxanium",sans-serif';
+      ctx.fillStyle = 'rgba(255,200,60,0.85)';
+      ctx.shadowColor = 'rgba(255,100,0,0.8)';
+      ctx.shadowBlur = 4;
+      ctx.fillText('FREE FIRE', 0, 11);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+
+      // Центральный блик на щите (белый highlight)
+      ctx.save();
+      ctx.globalCompositeOperation = 'overlay';
+      const shineG = ctx.createRadialGradient(-5, -8, 0, -5, -8, 12);
+      shineG.addColorStop(0, 'rgba(255,255,255,0.7)');
+      shineG.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = shineG;
+      ctx.beginPath(); ctx.arc(-5, -8, 12, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+
+      ctx.restore();
 
     } // end flying
 
@@ -4705,8 +5363,9 @@ function rktMsg(msg) {
           R.phase = 'crashed'; R.crashAt = msg.crash_at ?? R.crashAt;
           rktShowCrash(R.crashAt);
         }
-        // Переходим в waiting после краш-анимации
-        const delay = R.phase === 'crashed' ? 1500 : 0;
+        // Переходим в waiting ПОСЛЕ полной краш-анимации (0-4550мс)
+        // 4550мс = взрыв (0-900) + пауза (900-1050) + цифра держится 3с + уход (4050-4550)
+        const delay = R.phase === 'crashed' ? 4550 : 0;
         setTimeout(() => {
           R.phase = 'waiting'; rktResetBet(); rTrail = []; rParticles = [];
           if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
@@ -4847,7 +5506,15 @@ function rktTickStart() {
       // Если crashed — сразу красим DOM-иксы
       if (R.phase === 'crashed') {
         const elC = document.getElementById('rktMult');
-        if (elC) { elC.textContent=(R.crashAt||R.mult||1).toFixed(2)+'×'; elC.className='rkt-mult red'; }
+        if (elC) {
+          elC.textContent=(R.crashAt||R.mult||1).toFixed(2)+'×';
+          elC.className='rkt-mult red';
+          elC.style.transform = ''; // убираем тряску
+        }
+      } else {
+        // waiting — тоже сбрасываем тряску
+        const elC = document.getElementById('rktMult');
+        if (elC) elC.style.transform = '';
       }
       return;
     }
@@ -4855,18 +5522,44 @@ function rktTickStart() {
     const raw = Math.exp(elapsed * 0.085);
     R.mult = Math.min(raw, R.crashAt || 99999);
 
-    // Обновляем DOM-множитель
+    // Интенсивность тряски: 0..1 плавно от ×1 до ×10 (такая же формула как у объекта)
+    const shakeLvl = Math.min((R.mult - 1) / 9, 1);
+
+    // Обновляем DOM-множитель + тряска
     const el = document.getElementById('rktMult');
     if (el) {
       el.textContent = R.mult.toFixed(2) + '×';
       const nc = R.mult>=20?'rkt-mult gold':R.mult>=5?'rkt-mult green':'rkt-mult';
       if (el.className !== nc) el.className = nc;
+      // Тряска — чем выше множитель, тем сильнее (максимум ±6px горизонтально, ±3px вертикально)
+      if (shakeLvl > 0.02) {
+        const sx = (Math.random() - 0.5) * shakeLvl * 6;
+        const sy = (Math.random() - 0.5) * shakeLvl * 3;
+        // Микро-поворот для усиления эффекта (±2.5 градуса на максимуме)
+        const sr = (Math.random() - 0.5) * shakeLvl * 2.5;
+        el.style.transform = `translate(${sx.toFixed(2)}px, ${sy.toFixed(2)}px) rotate(${sr.toFixed(2)}deg)`;
+      } else {
+        el.style.transform = '';
+      }
     }
 
-    // Кнопка ЗАБРАТЬ — обновляем текст с иксами
+    // Кнопка ЗАБРАТЬ — обновляем текст + лёгкая тряска
+    // ВАЖНО: обновляем только если: кнопка видима, есть ставка, НЕ забрали ещё, и фаза flying.
+    // Без этих проверок после краша/вывода мог оставаться устаревший текст "×1.91 — ЗАБРАТЬ!"
     const bc = document.getElementById('rktBtnCash');
-    if (bc && bc.style.display !== 'none') {
+    if (bc && bc.style.display !== 'none' && R.phase === 'flying' && R.betPlaced && !R.cashedOut) {
       bc.textContent = '💸 ' + R.mult.toFixed(2) + '× — ЗАБРАТЬ!';
+      // Тряска кнопки — слабее (она interactive) с ×3
+      if (R.mult >= 3) {
+        const bshLvl = Math.min((R.mult - 3) / 7, 1);
+        const bsx = (Math.random() - 0.5) * bshLvl * 2.5;
+        const bsy = (Math.random() - 0.5) * bshLvl * 1.5;
+        bc.style.transform = `translate(${bsx.toFixed(2)}px, ${bsy.toFixed(2)}px)`;
+      } else {
+        bc.style.transform = '';
+      }
+    } else if (bc) {
+      bc.style.transform = ''; // сброс на всякий случай
     }
 
     // Авто-вывод
@@ -4903,13 +5596,15 @@ function _demoCrash() {
     rktSetRes('💥 Краш ×' + R.crashAt.toFixed(2) + ' — -' + R.myBet.toLocaleString('ru-RU'), 'loss');
     showToast('💥 Краш ×' + R.crashAt.toFixed(2), 'error');
   }
+  // FIX: обновляем UI чтобы кнопка ЗАБРАТЬ пропала и появилась "Следующий раунд..."
+  rktUI();
   setTimeout(() => {
     R.phase='waiting'; rktResetBet(); rTrail=[]; rParticles=[];
     R.history = [R.crashAt, ...R.history.slice(0,14)];
     rktUI(); rktDrawHist();
     _rktDemoId = (_rktDemoId||0) + 1; R.id = _rktDemoId;
     rktTimerStart(5);
-  }, 2000);
+  }, 4550); // синхронно с новым timeline краш-анимации (взрыв + цифра 3с + уход)
 }
 let _rktDemoId = 1;
 
@@ -4919,30 +5614,37 @@ function rktShowCrash(mult) {
   const cx = document.getElementById('rktCrashX');
   const cm = document.getElementById('rktCrashMult');
   const elM = document.getElementById('rktMult');
+  const sc = document.querySelector('.rkt-scene');
 
-  // Сброс
-  if (cm) cm.classList.remove('show');
-  if (cx) cx.textContent = '';
-  if (lb) lb.classList.remove('on');
-  if (ov) ov.classList.remove('on');
+  // ── Сброс состояния ────────────────────────────────
+  if (cm) cm.classList.remove('show', 'hide');
+  if (lb) lb.classList.remove('on', 'hide-svg');
+  if (ov) ov.classList.remove('on', 'fade');
+  if (sc) sc.classList.remove('shake');
+  if (cx) cx.textContent = '×' + (mult||1).toFixed(2);
 
-  // ── Шаг 0: DOM-иксы сразу краснеют ──────────────────
+  // ── Шаг 0 (0мс): прячем основную цифру, включаем режим краша ──
+  if (sc) sc.classList.add('crash-active');
   if (elM) {
     elM.textContent = (mult||1).toFixed(2) + '×';
     elM.className = 'rkt-mult red';
   }
 
-  // ── Шаг 1 (50ms): красная вспышка + SVG взрыв ───────
-  setTimeout(() => {
+  // ── Шаг 1 (следующий кадр): ВЗРЫВ стартует, красный фон, shake ──
+  // Взрыв отыгрывает 0-900мс, красный фон виден в этот же период
+  requestAnimationFrame(() => {
     if (ov) ov.classList.add('on');
-    if (lb) lb.classList.add('on'); // SVG взрыв
+    if (lb) lb.classList.add('on');
+    if (sc) {
+      void sc.offsetWidth;
+      sc.classList.add('shake');
+    }
 
-    // Canvas-частицы — много, разлетаются от позиции ракеты
+    // Canvas-частицы из позиции ракеты
     const elapsed = (Date.now() - R.ls) / 1000;
     const prog = Math.min(elapsed / 18, 0.82);
     const px = RW * 0.5;
-    const py = RH * 0.88 - prog * RH * 0.64;
-    // Большие куски
+    const py = RH * 0.88 - prog * RH * 0.50;
     for (let i = 0; i < 30; i++) {
       const a = Math.random() * Math.PI * 2, spd = 4 + Math.random() * 8;
       rParticles.push({
@@ -4951,7 +5653,6 @@ function rktShowCrash(mult) {
         c: ['#f87171','#ff6600','#fbbf24','#ffaa00','#ff3300'][Math.floor(Math.random()*5)]
       });
     }
-    // Мелкие искры
     for (let i = 0; i < 40; i++) {
       const a = Math.random() * Math.PI * 2, spd = 2 + Math.random() * 12;
       rParticles.push({
@@ -4961,22 +5662,37 @@ function rktShowCrash(mult) {
         c: ['#fff','#ffd700','#ff8800'][Math.floor(Math.random()*3)]
       });
     }
-  }, 50);
+  });
 
-  // ── Шаг 2 (900ms): коэффициент плавно выезжает ──────
+  // ── Шаг 2 (900мс): взрыв отыграл → убираем красный фон и SVG взрыва ──
+  // плавно (450мс transition) — экран становится чистым для цифры
   setTimeout(() => {
-    if (cx) cx.textContent = '×' + (mult||1).toFixed(2);
-    if (cm) cm.classList.add('show');
+    if (ov) ov.classList.add('fade');      // красный фон → прозрачный
+    if (lb) lb.classList.add('hide-svg');  // SVG взрыв → прозрачный
   }, 900);
 
-  // ── Шаг 3 (3600ms): всё скрывается ──────────────────
-  // (сервер к этому моменту уже пришлёт waiting с таймером)
+  // ── Шаг 3 (1050мс): на чистом фоне ПЛАВНО ПОЯВЛЯЕТСЯ ЦИФРА ×N.NN + КРАШ ──
+  // На 150мс позже начала fade — чтобы взрыв уже начал угасать
   setTimeout(() => {
-    if (ov) ov.classList.remove('on');
-    if (lb) lb.classList.remove('on');
-    if (cm) cm.classList.remove('show');
-  }, 3600);
-}}
+    if (!cm) return;
+    cm.classList.remove('hide');
+    void cm.offsetWidth;
+    cm.classList.add('show');
+  }, 1050);
+
+  // ── Шаг 4 (4050мс): цифра висит 3сек → начинаем плавный уход ──
+  setTimeout(() => {
+    if (cm) cm.classList.add('hide');
+  }, 4050);
+
+  // ── Шаг 5 (4550мс): всё скрываем, возвращаем основную цифру ──
+  setTimeout(() => {
+    if (ov) ov.classList.remove('on', 'fade');
+    if (lb) lb.classList.remove('on', 'hide-svg');
+    if (cm) cm.classList.remove('show', 'hide');
+    if (sc) sc.classList.remove('crash-active');
+  }, 4550);
+}
 
 // ── Ставка ─────────────────────────────────────────────
 let _betTimeout = null;
@@ -5098,17 +5814,42 @@ function rktUI() {
   const elM   = document.getElementById('rktMult');
   const elS   = document.getElementById('rktSub');
   const elOn  = document.getElementById('rktOnlineN');
+  const sc    = document.querySelector('.rkt-scene');
   if (elOn) elOn.textContent = R.online;
 
+  // Защита: если фаза уже не crashed — гарантированно снимаем crash-оверлей.
+  // Нужно на случай, если сервер шлёт новый waiting/flying раньше,
+  // чем отработает setTimeout 3600мс в rktShowCrash.
+  if (sc && R.phase !== 'crashed') {
+    if (sc.classList.contains('crash-active')) {
+      sc.classList.remove('crash-active', 'shake');
+      const lb = document.getElementById('rktCrashLbl');
+      const ov = document.getElementById('rktCrashOv');
+      const cm = document.getElementById('rktCrashMult');
+      if (lb) lb.classList.remove('on');
+      if (ov) ov.classList.remove('on');
+      if (cm) cm.classList.remove('show');
+    }
+  }
+
   if (R.phase === 'waiting') {
-    if (elM) { elM.textContent='ЖДЁМ'; elM.className='rkt-mult dim'; }
+    if (sc) sc.classList.add('phase-waiting');
+    if (elM) {
+      elM.textContent='ЖДЁМ'; elM.className='rkt-mult dim';
+      elM.style.transform = ''; // сброс тряски
+    }
     if (elS) elS.textContent='Следующий раунд скоро';
   } else if (R.phase === 'flying') {
+    if (sc) sc.classList.remove('phase-waiting');
     if (elM && !_tickRaf) { elM.textContent=R.mult.toFixed(2)+'×'; elM.className='rkt-mult'; }
     if (elS) elS.textContent='';
   } else if (R.phase === 'crashed') {
+    if (sc) sc.classList.remove('phase-waiting');
     const cm = R.crashAt||R.mult||1;
-    if (elM) { elM.textContent=cm.toFixed(2)+'×'; elM.className='rkt-mult red'; }
+    if (elM) {
+      elM.textContent=cm.toFixed(2)+'×'; elM.className='rkt-mult red';
+      elM.style.transform = ''; // сброс тряски — при краше цифра стоит ровно
+    }
     if (elS) elS.textContent='';
   }
 
@@ -5146,8 +5887,38 @@ function rktUpdateBtn() {
     return;
   }
   if (R.phase === 'crashed') {
-    bStat.textContent='⏳ Следующий раунд...';
-    bStat.style.display='block'; setLbl('',''); return;
+    // Если была ставка и не успел забрать — показываем красную кнопку с убытком
+    if (R.betPlaced && !R.cashedOut) {
+      const cm = R.crashAt || R.mult || 1;
+      bStat.innerHTML = '<span class="rkt-loss-main">💥 КРАШ ×'+cm.toFixed(2)+'</span>' +
+                        '<span class="rkt-loss-sum">−'+R.myBet.toLocaleString('ru-RU')+'</span>';
+      bStat.className = 'rkt-btn loss'; // временно переключаем класс на loss
+      bStat.style.display='block';
+      setLbl('ПРОИГРАНО','#f87171');
+    } else if (R.cashedOut) {
+      // Забрал до краша — показываем зелёный статус с выигрышем
+      const cm = R.cashedMult || R.mult || 1;
+      const profit = Math.round(R.myBet * cm) - R.myBet;
+      bStat.innerHTML = '<span class="rkt-loss-main" style="color:#4ade80">✅ ЗАБРАНО ×'+cm.toFixed(2)+'</span>' +
+                        '<span class="rkt-loss-sum" style="color:#86efac">+'+profit.toLocaleString('ru-RU')+'</span>';
+      bStat.className = 'rkt-btn stat';
+      bStat.style.cssText = 'display:block;background:linear-gradient(180deg,#16a34a,#0d6a30);color:#fff;border:1px solid rgba(100,255,100,.3);cursor:not-allowed';
+      setLbl('ВЫИГРЫШ','#4ade80');
+    } else {
+      // Ставки не было — обычный статус
+      bStat.textContent='⏳ Следующий раунд...';
+      bStat.className = 'rkt-btn stat';
+      bStat.style.cssText = ''; // сброс inline-стилей
+      bStat.style.display='block';
+      setLbl('','');
+    }
+    return;
+  }
+  // При выходе из crashed — сбрасываем возможно изменённые inline-стили/innerHTML у bStat
+  if (bStat && (bStat.className !== 'rkt-btn stat' || bStat.style.cssText)) {
+    bStat.className = 'rkt-btn stat';
+    bStat.style.cssText = '';
+    bStat.innerHTML = ''; // очищаем innerHTML (будет перезаписан textContent ниже)
   }
   // waiting
   if (R.betSending) {
@@ -5267,16 +6038,6 @@ function initRocket() {
 function rktUI_compat() { try{ rktUI(); }catch(e){} }
 
 init();
-// Баланс с сервера — в фоне, не блокирует UI
-if (API_URL && API_SECRET && USER_ID && USER_ID !== '0') {
-  setTimeout(function() {
-    fetch(API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-      {headers:{'ngrok-skip-browser-warning':'1'}})
-      .then(function(r){return r.json();})
-      .then(function(d){if(d&&d.ok&&typeof d.balance==='number')setBalance(d.balance);})
-      .catch(function(){});
-  }, 500);
-}
 </script>
 </body>
 </html>
