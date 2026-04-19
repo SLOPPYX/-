@@ -5308,11 +5308,13 @@ function rktWsSend(obj) {
 function rktMsg(msg) {
   if (!msg || !msg.type) return;
 
-  // DEBUG: логирование событий. По умолчанию ВЫКЛЮЧЕНО.
-  // Чтобы включить — в консоли браузера: window._rktDebug = true
-  if (window._rktDebug === true && ['waiting','flying','crashed','state','sync'].indexOf(msg.type) >= 0) {
-    console.log('[RKT]', msg.type, '| phase:', R.phase, '→', msg.phase||msg.type,
-                '| crash_at:', msg.crash_at, '| wait_left:', msg.wait_left, '| elapsed:', msg.elapsed,
+  // Включено по умолчанию для диагностики. Чтобы отключить: window._rktDebug = false
+  if (window._rktDebug !== false) {
+    const t = new Date().toISOString().substr(14,9);
+    console.log('[RKT '+t+']', msg.type,
+                '| phase:', R.phase, '→', msg.phase||msg.type,
+                '| crash_at:', msg.crash_at, '| wait_left:', msg.wait_left,
+                '| elapsed:', msg.elapsed, '| mult:', msg.mult,
                 '| animActive:', !!window._crashAnimationActive);
   }
 
@@ -5698,18 +5700,29 @@ function _demoCrash() {
 let _rktDemoId = 1;
 
 function rktShowCrash(mult) {
+  if (window._rktDebug !== false) {
+    console.log('[RKT] rktShowCrash called with mult=', mult, 'animActive=', !!window._crashAnimationActive);
+  }
+
   // ── Защита от двойного вызова ──
   // Если crash-анимация уже играется, НЕ перезапускаем её — иначе таймеры
-  // сбрасываются и анимация визуально прерывается. На сервере часто бывает
-  // что сразу за "waiting" прилетает "state" или следующий "waiting" — и без
-  // этой защиты анимация никогда не показывалась полностью.
+  // сбрасываются и анимация визуально прерывается.
   if (window._crashAnimationActive) {
-    // Но обновляем значение цифры в случае если mult отличается
+    // Обновляем значение цифры в случае если mult отличается
     const cxEl = document.getElementById('rktCrashX');
     if (cxEl) cxEl.textContent = '×' + (mult||1).toFixed(2);
     return;
   }
   window._crashAnimationActive = true;
+
+  // SAFETY TIMEOUT: если из-за какого-то бага setTimeout ниже не срабатывает,
+  // принудительно сбрасываем флаг через 3 секунды (timeline 2.5с + запас 0.5с).
+  // Без этого залипший _crashAnimationActive навсегда заблокирует следующие крахи.
+  if (window._crashSafetyTimer) clearTimeout(window._crashSafetyTimer);
+  window._crashSafetyTimer = setTimeout(() => {
+    if (window._rktDebug !== false) console.log('[RKT] SAFETY unblock fired');
+    window._crashAnimationActive = false;
+  }, 3000);
 
   const ov = document.getElementById('rktCrashOv');
   const lb = document.getElementById('rktCrashLbl');
@@ -5813,6 +5826,10 @@ function _rktForceCrashReset() {
   if (window._rktCrashTimers) {
     window._rktCrashTimers.forEach(t => clearTimeout(t));
     window._rktCrashTimers = [];
+  }
+  if (window._crashSafetyTimer) {
+    clearTimeout(window._crashSafetyTimer);
+    window._crashSafetyTimer = null;
   }
   window._crashAnimationActive = false;
   const sc = document.querySelector('.rkt-scene');
