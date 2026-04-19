@@ -1221,6 +1221,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .rkt-row .rp { color:rgba(255,255,255,.35); font-size:9px; text-align:right; }
 .rkt-row .rp.win  { color:#4ade80; font-size:10px; }
 .rkt-row .rp.loss { color:#f87171; font-size:10px; }
+.rkt-row .rp.live { color:#fbbf24; font-size:10px; animation:rktLivePulse 1.2s ease-in-out infinite; }
+@keyframes rktLivePulse { 0%,100%{opacity:.85} 50%{opacity:1} }
 
 /* Статистика */
 .rkt-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding-bottom:20px; }
@@ -1276,19 +1278,51 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 </style>
 </head>
 <script>
-// Этот маленький скрипт парсится мгновенно — закрывает сплеш через 1.5с
+// Этот маленький скрипт парсится мгновенно — управляет сплешем
 // Выполняется ДО основного 275KB скрипта
 (function(){
+  var splashStartedAt = Date.now();
+  var MIN_SPLASH_MS = 2500; // минимум показа — чтобы пользователь увидел анимацию
+  var MAX_SPLASH_MS = 4500; // максимум — hard timeout на случай если что-то не загрузится
+  var dataReady = false;
+  var closed = false;
+
   function ks(){
+    if (closed) return;
+    closed = true;
     var s=document.getElementById('splash');
     if(!s)return;
-    s.style.cssText='display:none!important;visibility:hidden!important;pointer-events:none!important;opacity:0!important';
-    try{s.parentNode.removeChild(s);}catch(e){}
+    // Плавный fade-out
+    s.style.transition='opacity .4s ease';
+    s.style.opacity='0';
+    setTimeout(function(){
+      s.style.cssText='display:none!important;visibility:hidden!important;pointer-events:none!important;opacity:0!important';
+      try{s.parentNode.removeChild(s);}catch(e){}
+    }, 420);
   }
-  // Закрыть через 1.5с в любом случае
-  setTimeout(ks, 1500);
-  // Или когда основной скрипт вызовет window.__closeSplash()
+
+  // Попытка закрыть — учитываем minimum и готовность данных
+  function tryClose() {
+    var elapsed = Date.now() - splashStartedAt;
+    if (dataReady && elapsed >= MIN_SPLASH_MS) ks();
+    else if (elapsed >= MAX_SPLASH_MS) ks(); // hard timeout
+    else setTimeout(tryClose, 200);
+  }
+
+  // Если по любой причине не закрыли — hard close через MAX
+  setTimeout(ks, MAX_SPLASH_MS);
+
+  // Основной скрипт вызовет window.__dataLoaded() когда баланс/статы подгрузятся
+  window.__dataLoaded = function() {
+    dataReady = true;
+    tryClose();
+  };
+
+  // Для обратной совместимости — принудительное закрытие
   window.__closeSplash = ks;
+
+  // Стартуем цикл проверки
+  setTimeout(tryClose, MIN_SPLASH_MS);
 })();
 </script>
 <body>
@@ -4057,15 +4091,8 @@ async function init() {
 
   function closeSplash() {
     try { clearTimeout(window.__splashKillTimer); } catch(e) {}
-    try { window.__closeSplash && window.__closeSplash(); } catch(e) {}
-    try {
-      if (splash) {
-        splash.style.display = 'none';
-        splash.style.visibility = 'hidden';
-        splash.style.pointerEvents = 'none';
-        try { splash.parentNode && splash.parentNode.removeChild(splash); } catch(e){}
-      }
-    } catch(e) {}
+    // Сигналим что данные готовы — splash закроется не раньше MIN_SPLASH_MS (2.5с)
+    try { window.__dataLoaded && window.__dataLoaded(); } catch(e) {}
     setBar(100);
   }
 
@@ -4186,6 +4213,9 @@ async function init() {
     console.warn('Init error:', e);
   } finally {
     clearTimeout(emergency);
+    // Сигналим splash'у что данные загружены (он сам решит когда закрываться —
+    // но не раньше MIN_SPLASH_MS = 2.5с чтобы пользователь увидел анимацию)
+    try { window.__dataLoaded && window.__dataLoaded(); } catch(e) {}
     closeSplash();
     try { updateMiniStats(); } catch(e){}
     try { refreshBets(); } catch(e){}
@@ -5662,6 +5692,15 @@ function rktTickStart() {
       bc.textContent = '💸 ' + displayStr + '× — ЗАБРАТЬ!';
     }
 
+    // Обновляем таблицу игроков (с прибылью в реальном времени) раз в 200мс
+    // чтобы у всех играющих профит рос синхронно с множителем
+    if (!window._rktTableLastDraw) window._rktTableLastDraw = 0;
+    const nowT = Date.now();
+    if (nowT - window._rktTableLastDraw > 200) {
+      window._rktTableLastDraw = nowT;
+      rktDrawTable();
+    }
+
     // Авто-вывод
     if (R.autoAt > 0 && R.betPlaced && !R.cashedOut && R.mult >= R.autoAt) {
       rktCashout();
@@ -6194,28 +6233,38 @@ function rktDrawTable() {
   const t=document.getElementById('rktTable'); if(!t) return;
   t.innerHTML='';
   // Форматирование суммы с разделителями тысяч (как 10 000)
-  const fmt = n => Math.abs(n).toLocaleString('ru-RU');
+  const fmt = n => Math.abs(Math.round(n)).toLocaleString('ru-RU');
   R.players.forEach(p=>{
     const isMe = p.is_me || (USER_ID && String(p.uid) === String(USER_ID));
     const row = document.createElement('div');
     row.className = 'rkt-row' + (isMe ? ' me' : '');
     const won = p.cashed_at != null;                    // забрал
     const lost = !won && p.profit != null && p.profit < 0; // проиграл (профит отрицательный)
-    const playing = !won && !lost;                       // ещё летит (нет результата)
+    const playing = !won && !lost && R.phase === 'flying'; // ещё летит в текущем раунде
 
-    // Столбец "результат":
-    //  — победа: +5 000 (зелёным)
+    // Столбец "прибыль":
+    //  — победа: +5 000 (зелёным, финальная цифра)
     //  — проигрыш: −10 000 (красным)
-    //  — играет: × (пока ничего)
+    //  — играет (летит): +X токенов растёт в реальном времени (жёлтым)
+    //  — до начала раунда: × серым
     let profStr, profCls;
     if (won) {
-      // prize есть → показываем прибыль. Если вдруг profit пришёл — используем его.
       const profit = p.profit != null ? p.profit : ((p.prize || 0) - (p.bet || 0));
       profStr = '+' + fmt(profit);
       profCls = 'rp win';
     } else if (lost) {
-      profStr = '−' + fmt(p.profit);  // profit отрицательный → показываем модуль
+      profStr = '−' + fmt(p.profit);
       profCls = 'rp loss';
+    } else if (playing) {
+      // Прибыль растёт в реальном времени: bet * (mult - 1) = потенциальная прибыль
+      const curProfit = (p.bet || 0) * (R.mult - 1);
+      if (curProfit > 0.5) {
+        profStr = '+' + fmt(curProfit);
+        profCls = 'rp live';  // отдельный класс для анимации
+      } else {
+        profStr = '×' + R.mult.toFixed(2);
+        profCls = 'rp';
+      }
     } else {
       profStr = '×';
       profCls = 'rp';
