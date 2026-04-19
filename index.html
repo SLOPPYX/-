@@ -5345,7 +5345,7 @@ function rktMsg(msg) {
             const remaining = Math.max(0.1, (launchAtAbs - Date.now()) / 1000);
             rktTimerStart(remaining);
             rktUI();
-          }, 3800);
+          }, 2500);
         } else if (R.phase === 'crashed') {
           // Уже в crashed (анимация играется) — ничего не делаем
         } else {
@@ -5422,7 +5422,7 @@ function rktMsg(msg) {
           const remaining = Math.max(0.1, (launchAtAbs - Date.now()) / 1000);
           rktTimerStart(remaining);
           rktUI();
-        }, 3800);
+        }, 2500);
       } else {
         R.phase = 'waiting';
         if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
@@ -5453,6 +5453,20 @@ function rktMsg(msg) {
     }
 
     case 'tick': {
+      // Если вдруг tick пришёл а клиент НЕ в flying (например WS переподключился
+      // и state ещё не пришёл) — стартуем flying автоматически.
+      if (R.phase !== 'flying' && msg.elapsed != null && msg.elapsed >= 0) {
+        _rktForceCrashReset();
+        if (_tickRaf) { cancelAnimationFrame(_tickRaf); _tickRaf = null; }
+        R.phase = 'flying';
+        R.crashAt = null;
+        R.mult = 1.00;
+        R.ls = Date.now() - msg.elapsed * 1000;
+        rktTimerStop(); rTrail = []; rParticles = [];
+        rktUI(); rktTickStart();
+        if (msg.online != null) R.online = msg.online;
+        break;
+      }
       if (R.phase === 'flying') {
         // Ресинхронизация времени: сервер шлёт elapsed каждые 0.5с
         // Без сглаживания цифра бы дёргалась из-за network jitter (50-200мс).
@@ -5464,7 +5478,6 @@ function rktMsg(msg) {
             // Большое расхождение — корректируем
             R.ls = Date.now() - msg.elapsed * 1000;
           }
-          // Мелкий jitter <0.5с — игнорируем, локальная экспонента сама догонит
         }
         if (msg.online  != null) R.online = msg.online;
         const onEl = document.getElementById('rktOnlineN');
@@ -5680,7 +5693,7 @@ function _demoCrash() {
     rktUI(); rktDrawHist();
     _rktDemoId = (_rktDemoId||0) + 1; R.id = _rktDemoId;
     rktTimerStart(5);
-  }, 3800); // синхронно с новым timeline краш-анимации (взрыв + цифра 3с + уход)
+  }, 2500); // синхронно с новым timeline краш-анимации (взрыв + цифра 3с + уход)
 }
 let _rktDemoId = 1;
 
@@ -5770,7 +5783,7 @@ function rktShowCrash(mult) {
   schedule(() => {
     if (ov) ov.classList.add('fade');
     if (lb) lb.classList.add('hide-svg');
-  }, 700);
+  }, 500);
 
   // ── Шаг 3 (850мс): цифра появляется ──
   schedule(() => {
@@ -5778,12 +5791,12 @@ function rktShowCrash(mult) {
     cm.classList.remove('hide');
     void cm.offsetWidth;
     cm.classList.add('show');
-  }, 850);
+  }, 650);
 
   // ── Шаг 4 (3300мс): цифра держится 2.45сек → начинаем уход ──
   schedule(() => {
     if (cm) cm.classList.add('hide');
-  }, 3300);
+  }, 2200);
 
   // ── Шаг 5 (3800мс): всё скрываем (было 4550мс, сокращено чтобы сервер не обрывал) ──
   schedule(() => {
@@ -5792,7 +5805,7 @@ function rktShowCrash(mult) {
     if (cm) cm.classList.remove('show', 'hide');
     if (sc) sc.classList.remove('crash-active');
     window._crashAnimationActive = false;  // разрешаем новый запуск
-  }, 3800);
+  }, 2500);
 }
 
 // Принудительный сброс crash-анимации (для case 'flying' когда приходит новый раунд)
@@ -5818,7 +5831,7 @@ let _betTimeout = null;
 function rktBet() {
   if (R.betLocked || R.betPlaced || R.betSending) return;
   if (R.phase !== 'waiting') { showToast('Подожди начала раунда','error'); return; }
-  if (R.waitLeft > 0 && R.waitLeft < 1.5) { showToast('⏱ Слишком поздно!','error'); return; }
+  if (R.waitLeft > 0 && R.waitLeft < 0.3) { showToast('⏱ Слишком поздно!','error'); return; }
 
   const inp = document.getElementById('rktInp');
   const bet = Math.min(parseBetStr(inp ? inp.value : '10000') || 0, 1000000000);
@@ -6047,7 +6060,7 @@ function rktUpdateBtn() {
     bStat.textContent='✅ Ставка '+R.myBet.toLocaleString('ru-RU')+' принята';
     bStat.style.display='block'; setLbl('ЖДЁМ СТАРТА 🚀','#4ade80'); return;
   }
-  if (R.waitLeft > 0 && R.waitLeft < 1.5) {
+  if (R.waitLeft > 0 && R.waitLeft < 0.3) {
     bStat.textContent='🚀 Старт через '+R.waitLeft.toFixed(1)+'с';
     bStat.style.display='block'; setLbl('',''); return;
   }
