@@ -3829,9 +3829,11 @@ function initSpaceCanvas() {
 
     ctx.restore();
 
-    // ── Цифры множителя над ракетой ──
-    if(RKT.phase==='flying' || RKT.phase==='crashed'){
-      const m = (RKT.phase==='crashed') ? (RKT.crashAt||RKT.mult||1) : (RKT.mult||1);
+    // ── Цифры множителя над ракетой (home-card анимация) ──
+    // Защита: RKT — старое глобальное имя, может быть undefined
+    const _RKT = (typeof RKT !== 'undefined') ? RKT : null;
+    if(_RKT && (_RKT.phase==='flying' || _RKT.phase==='crashed')){
+      const m = (_RKT.phase==='crashed') ? (_RKT.crashAt||_RKT.mult||1) : (_RKT.mult||1);
       const multTxt = m.toFixed(2)+'×';
       const fontSize = Math.min(18 + (m-1)*0.5, 30);
       ctx.save();
@@ -3839,7 +3841,7 @@ function initSpaceCanvas() {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       let color;
-      if(RKT.phase==='crashed')    color='rgba(248,113,113,0.97)';
+      if(_RKT.phase==='crashed')    color='rgba(248,113,113,0.97)';
       else if(m>=20) color='rgba(255,215,0,0.97)';
       else if(m>=5)  color='rgba(74,222,128,0.97)';
       else if(m>=2)  color='rgba(251,191,36,0.97)';
@@ -4733,6 +4735,11 @@ function rktSaveStats() {
   try { localStorage.setItem('rkt_' + USER_ID, JSON.stringify(R.stats)); } catch(e) {}
 }
 
+// Алиас для легаси-кода (где используется RKT.phase, RKT.stats и т.д.)
+// Без этого ReferenceError в функциях рендера главной страницы
+// ломал весь canvas-loop и соответственно мог приводить к проблемам в ракетке.
+try { window.RKT = R; } catch(e) {}
+
 // ── Canvas ─────────────────────────────────────────────
 let RC, RX, RW, RH;
 let rTime = 0;
@@ -5330,16 +5337,17 @@ function rktMsg(msg) {
           R.mult = R.crashAt;
           // rktShowCrash сам проверит флаг _crashAnimationActive и не запустится повторно
           rktShowCrash(R.crashAt);
+          // Абсолютное время старта (см. комментарий в case 'waiting')
+          const launchAtAbs = Date.now() + (msg.wait_left || 5) * 1000;
           setTimeout(() => {
-            // RACE PROTECT
             if (R.phase !== 'crashed') return;
             R.phase = 'waiting'; rktResetBet(); rTrail = []; rParticles = [];
-            if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
+            const remaining = Math.max(0.1, (launchAtAbs - Date.now()) / 1000);
+            rktTimerStart(remaining);
             rktUI();
           }, 3800);
         } else if (R.phase === 'crashed') {
-          // Уже в crashed (анимация играется) — ничего не делаем, просто обновим waiting через таймер
-          // если он ещё не запущен
+          // Уже в crashed (анимация играется) — ничего не делаем
         } else {
           R.phase = 'waiting';
           if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
@@ -5399,15 +5407,20 @@ function rktMsg(msg) {
           try { showToast('💥 Краш ×' + R.crashAt.toFixed(2), 'error'); } catch(e) {}
         }
         rktUI();
-        // Переходим в waiting ПОСЛЕ полной краш-анимации (0-4550мс)
-        // Запоминаем round_id этого краша, чтобы в setTimeout не перезатереть новый flying
-        const _crashedId = R.id;
+        // КЛЮЧЕВОЙ ФИКС: запоминаем АБСОЛЮТНОЕ время когда должен начаться следующий раунд
+        // (а не относительное wait_left, которое устарело за время crash-анимации).
+        // Сервер шлёт wait_left относительно момента отправки сообщения.
+        // Если мы сейчас получили сообщение и через 3800мс запустим таймер на wait_left секунд —
+        // реальные оставшиеся секунды будут (wait_left - 3.8). Иначе таймер идёт с 5.0,
+        // а серверный flying приходит через ~1.2 секунды → игрок не успевает поставить ставку.
+        const launchAtAbs = Date.now() + (msg.wait_left || 5) * 1000;
         setTimeout(() => {
-          // RACE PROTECT: если за это время сервер уже запустил новый раунд (R.phase='flying'),
-          // не перезаписываем фазу в waiting — иначе новый объект пропадёт и цифры замёрзнут
+          // RACE PROTECT: если за это время сервер уже запустил новый раунд, не трогаем
           if (R.phase !== 'crashed') return;
           R.phase = 'waiting'; rktResetBet(); rTrail = []; rParticles = [];
-          if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
+          // Вычисляем реально оставшееся время до серверного старта
+          const remaining = Math.max(0.1, (launchAtAbs - Date.now()) / 1000);
+          rktTimerStart(remaining);
           rktUI();
         }, 3800);
       } else {
