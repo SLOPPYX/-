@@ -5352,10 +5352,18 @@ function rktMsg(msg) {
     }
 
     case 'cashout_err': {
+      // Сервер отверг cashout — откатываем оптимистичный UI
       _cashingOut = false;
       if (window._cashoutTimeout) {
         clearTimeout(window._cashoutTimeout);
         window._cashoutTimeout = null;
+      }
+      // Восстанавливаем состояние (мы в оптимистичном режиме прибавили выигрыш к балансу)
+      if (R.cashedOut && R.cashedMult != null && !R._statsRecorded) {
+        const optimisticPrize = Math.round(R.myBet * R.cashedMult);
+        setBalance(balance - optimisticPrize);  // откатываем баланс
+        R.cashedOut = false;
+        R.cashedMult = null;
       }
       const reason = msg.reason || 'error';
       const reasonText = {
@@ -5364,6 +5372,7 @@ function rktMsg(msg) {
         'already_cashed':'Уже забрано',
       }[reason] || reason;
       showToast('❌ ' + reasonText, 'error');
+      rktUI();
       if (window._rktDebug !== false) console.log('[RKT] cashout_err:', reason);
       break;
     }
@@ -5905,60 +5914,88 @@ function rktCashout() {
                 'cashedOut=', R.cashedOut, '_cashingOut=', _cashingOut);
   }
   if (!R.betPlaced) { showToast('Сначала поставь ставку', 'error'); return; }
-  if (R.cashedOut)  { showToast('Уже забрано', 'error'); return; }
-  if (_cashingOut)  return;
-  // УБРАЛИ гейт "R.phase !== 'flying'" — пусть сервер сам решит, можно или нет.
-  // Если рассинхрон (клиент думает crashed, сервер ещё flying) — раньше пользователь
-  // не мог кликнуть, а сервер бы принял. Теперь всё решает сервер.
+  if (R.cashedOut)  return; // уже забрано
+  if (_cashingOut)  return; // в процессе
   _cashingOut = true;
 
   const mult  = parseFloat((R.mult || 1).toFixed(2));
   const prize = Math.round(R.myBet * mult);
+  const profit = prize - R.myBet;
 
   if (!API_URL || !API_SECRET) {
     // demo
     rktOnCashoutDone(mult, prize); return;
   }
 
-  // Сначала пробуем WS, потом HTTP как fallback
+  // ── ОПТИМИСТИЧНЫЙ UI ──
+  // Сразу показываем игроку что кнопка сработала — не ждём серверного ответа.
+  // Если сервер отвергнет — откатим в cashout_err handler.
+  R.cashedOut = true;
+  R.cashedMult = mult;
+  setBalance(balance + prize);  // сразу добавляем выигрыш в баланс
+  rktSetRes('🎉 Забрано ×'+mult.toFixed(2)+' — +'+profit.toLocaleString('ru-RU'), 'win');
+  showToast('🎉 ×'+mult.toFixed(2)+' +'+profit.toLocaleString('ru-RU'),'success');
+  rktUI();  // моментально перерисовать кнопку
+
+  // Теперь отправляем на сервер для подтверждения
   const sent = rktWsSend({type:'cashout', uid:parseInt(USER_ID), secret:API_SECRET, mult});
 
-  // Safety timeout: если сервер не ответит за 3 секунды, разблокируем клавишу и покажем ошибку
+  // Safety timeout — если сервер не ответит, считаем что WS умер и HTTP отправляем
   const cashoutTimeout = setTimeout(() => {
     if (_cashingOut) {
-      _cashingOut = false;
-      showToast('❌ Сервер не ответил — попробуй ещё', 'error');
-      if (window._rktDebug !== false) console.log('[RKT] cashout timeout');
+      // Пробуем HTTP fallback
+      fetch(API_URL+'/casino/rocket/cashout',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'1'},
+        body:JSON.stringify({uid:parseInt(USER_ID),secret:API_SECRET,mult})
+      }).then(r=>r.json()).then(d=>{
+        if(d.ok){
+          if(d.balance!=null) setBalance(d.balance);
+          // подтверждение — уже UI показал, просто фиксируем статистику
+          if (!R._statsRecorded) {
+            R.stats.g++; R.stats.b=Math.max(R.stats.b||0,mult); R.stats.p=(R.stats.p||0)+profit;
+            rktSaveStats(); R._statsRecorded = true;
+          }
+          _cashingOut = false;
+        } else {
+          // ОТКАТ: сервер отверг. Восстанавливаем баланс и состояние.
+          setBalance(balance); // (balance уже обновлён через setBalance выше — возвращаем к доставке)
+          R.cashedOut = false; R.cashedMult = null;
+          _cashingOut = false;
+          showToast('❌ ' + (d.error||'Сервер отверг cashout'), 'error');
+          rktUI();
+        }
+      }).catch(() => {
+        _cashingOut = false;
+        // Оставляем оптимистичный UI — WS скоро вернётся и подтвердит
+      });
     }
-  }, 3000);
+  }, 1500);  // ускоренный timeout — раньше было 3000мс
 
   if (!sent) {
-    // WS недоступен — HTTP fallback
-    if (window._rktDebug !== false) console.log('[RKT] WS unavailable, using HTTP');
+    // WS не отправлен — сразу HTTP
+    clearTimeout(cashoutTimeout);
     fetch(API_URL+'/casino/rocket/cashout',{
       method:'POST',
       headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'1'},
       body:JSON.stringify({uid:parseInt(USER_ID),secret:API_SECRET,mult})
     }).then(r=>r.json()).then(d=>{
-      clearTimeout(cashoutTimeout);
       if(d.ok){
         if(d.balance!=null) setBalance(d.balance);
-        rktOnCashoutDone(d.mult||mult, d.prize||prize);
+        if (!R._statsRecorded) {
+          R.stats.g++; R.stats.b=Math.max(R.stats.b||0,mult); R.stats.p=(R.stats.p||0)+profit;
+          rktSaveStats(); R._statsRecorded = true;
+        }
+        _cashingOut = false;
       } else {
-        _cashingOut=false;
+        setBalance(balance);
+        R.cashedOut = false; R.cashedMult = null;
+        _cashingOut = false;
         showToast('❌ ' + (d.error||'Не удалось забрать'), 'error');
-        if (window._rktDebug !== false) console.log('[RKT] cashout HTTP err:', d);
+        rktUI();
       }
-    }).catch(err => {
-      clearTimeout(cashoutTimeout);
-      _cashingOut=false;
-      showToast('❌ Ошибка сети', 'error');
-      if (window._rktDebug !== false) console.log('[RKT] cashout fetch err:', err);
-    });
+    }).catch(() => { _cashingOut = false; });
   } else {
-    // WS отправлено — ждём ответа типа 'cashout' с is_me:true
-    // Тот ответ попадёт в rktMsg → rktOnCashoutDone → _cashingOut станет false там
-    // Сохраняем timeout в глобальной переменной на случай нужды очистить при успехе
     window._cashoutTimeout = cashoutTimeout;
   }
 }
@@ -5969,9 +6006,19 @@ function rktOnCashoutDone(mult, prize) {
     clearTimeout(window._cashoutTimeout);
     window._cashoutTimeout = null;
   }
+
+  // Идемпотентность: если мы уже применили оптимистичный cashout, не дублируем
+  const alreadyDone = R.cashedOut && R._statsRecorded;
+  if (alreadyDone) {
+    _cashingOut = false;
+    if (window._rktDebug !== false) console.log('[RKT] cashout already confirmed (idempotent)');
+    return;
+  }
+
   R.cashedOut=true; R.cashedMult=mult; _cashingOut=false;
   const profit = prize - R.myBet;
   R.stats.g++; R.stats.b=Math.max(R.stats.b||0,mult); R.stats.p=(R.stats.p||0)+profit;
+  R._statsRecorded = true;
   rktSaveStats();
   if (!API_URL) setBalance(balance + prize); // demo
   rktSetRes('🎉 Забрано ×'+mult.toFixed(2)+' — +'+profit.toLocaleString('ru-RU'), 'win');
@@ -5982,6 +6029,7 @@ function rktOnCashoutDone(mult, prize) {
 function rktResetBet() {
   R.betPlaced=false; R.betLocked=false; R.betSending=false;
   R.cashedOut=false; R.cashedMult=null; _cashingOut=false;
+  R._statsRecorded = false;  // сброс флага для оптимистичного кешаута
   clearTimeout(_betTimeout);
   const pb = document.getElementById('rktPb');
   if (pb) { pb.style.width='0%'; pb.className='rkt-pb-fill'; }
