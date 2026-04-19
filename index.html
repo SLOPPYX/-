@@ -5304,205 +5304,38 @@ function rktWsSend(obj) {
   return false;
 }
 
-// ── Обработка сообщений ────────────────────────────────
+// ── Обработка сообщений (НОВАЯ АРХИТЕКТУРА на основе snapshot) ─────────
+//
+// Сервер шлёт snapshot каждые 300мс + при каждой смене фазы. Клиент применяет
+// snapshot идемпотентно. Если один snapshot потеряется — следующий через 300мс
+// всё исправит. Нет больше отдельных case 'flying'/'waiting'/'tick'/'state'.
+//
+// Сохраняем предыдущий snapshot чтобы детектировать переходы фаз
+// (старый → новый): это триггеры для crash-анимации, сброса ставки и т.д.
+let _lastSnap = null;
+
 function rktMsg(msg) {
   if (!msg || !msg.type) return;
 
-  // Включено по умолчанию для диагностики. Чтобы отключить: window._rktDebug = false
   if (window._rktDebug !== false) {
     const t = new Date().toISOString().substr(14,9);
     console.log('[RKT '+t+']', msg.type,
                 '| phase:', R.phase, '→', msg.phase||msg.type,
-                '| crash_at:', msg.crash_at, '| wait_left:', msg.wait_left,
-                '| elapsed:', msg.elapsed, '| mult:', msg.mult,
-                '| animActive:', !!window._crashAnimationActive);
+                '| round:', msg.round_id,
+                '| mult:', msg.mult,
+                '| wait_left:', msg.wait_left);
   }
 
   switch (msg.type) {
 
-    case 'state':
-    case 'sync': {
-      if (msg.history  != null) R.history = msg.history;
-      if (msg.online   != null) R.online  = msg.online;
-      if (msg.round_id != null) R.id      = msg.round_id;
-      if (msg.players  != null) rktMergePlayers(msg.players);
-      // ПРИМЕЧАНИЕ: crash_at намеренно НЕ сохраняем в R.crashAt во время flying —
-      // иначе клиент останавливает цифру раньше времени. crash_at используется только
-      // в фазе waiting (для отображения результата прошлого раунда).
-
-      if (msg.phase === 'waiting') {
-        const wasFlying = R.phase === 'flying';
-        if (wasFlying) {
-          // Останавливаем RAF чтобы R.mult не рос дальше
-          if (_tickRaf) { cancelAnimationFrame(_tickRaf); _tickRaf = null; }
-          R.phase = 'crashed'; R.crashAt = msg.crash_at ?? R.crashAt;
-          R.mult = R.crashAt;
-          // rktShowCrash сам проверит флаг _crashAnimationActive и не запустится повторно
-          rktShowCrash(R.crashAt);
-          // Абсолютное время старта (см. комментарий в case 'waiting')
-          const launchAtAbs = Date.now() + (msg.wait_left || 5) * 1000;
-          setTimeout(() => {
-            if (R.phase !== 'crashed') return;
-            R.phase = 'waiting'; rktResetBet(); rTrail = []; rParticles = [];
-            const remaining = Math.max(0.1, (launchAtAbs - Date.now()) / 1000);
-            rktTimerStart(remaining);
-            rktUI();
-          }, 2500);
-        } else if (R.phase === 'crashed') {
-          // Уже в crashed (анимация играется) — ничего не делаем
-        } else {
-          R.phase = 'waiting';
-          if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
-        }
-      } else if (msg.phase === 'flying') {
-        if (R.phase !== 'flying') {
-          // Используем force reset
-          _rktForceCrashReset();
-
-          R.phase = 'flying'; R.mult = msg.mult ?? 1;
-          R.crashAt = null;   // см. выше — не сохраняем
-          R.ls = msg.elapsed != null ? Date.now() - msg.elapsed * 1000 : Date.now();
-          rktTimerStop(); rTrail = []; rParticles = [];
-          rktTickStart();
-        } else {
-          if (msg.elapsed != null) R.ls = Date.now() - msg.elapsed * 1000;
-        }
-      }
-      rktUI();
+    // Новый унифицированный тип — snapshot всего состояния ракетки
+    case 'snapshot':
+    case 'state':    // для обратной совместимости
+    case 'sync':
+      applyState(msg);
       break;
-    }
 
-    case 'crashed': {
-      // Сервер объявил краш — показываем анимацию
-      _tickRaf && cancelAnimationFrame(_tickRaf); _tickRaf = null;
-      R.phase = 'crashed';
-      R.crashAt = msg.crash_at ?? R.crashAt;
-      R.mult = R.crashAt;
-      rktShowCrash(R.crashAt);
-      rktUI();
-      // Ждём waiting от сервера (придёт через ~3с)
-      break;
-    }
-
-    case 'waiting': {
-      const wasF = R.phase === 'flying' || R.phase === 'crashed';
-      R.id      = msg.round_id ?? R.id;
-      R.history = msg.history  ?? R.history;
-      R.online  = msg.online   ?? R.online;
-      if (msg.players) rktMergePlayers(msg.players);
-      if (wasF) {
-        // Если ещё не показали краш — покажем
-        if (R.phase !== 'crashed') {
-          // ВАЖНО: сначала останавливаем RAF, чтобы R.mult не продолжал расти
-          if (_tickRaf) { cancelAnimationFrame(_tickRaf); _tickRaf = null; }
-          R.phase = 'crashed';
-          R.crashAt = msg.crash_at ?? R.crashAt;
-          R.mult = R.crashAt;           // фиксируем цифру ровно на серверной crash_at
-          rktShowCrash(R.crashAt);
-        }
-        // Если у игрока была ставка и он не успел забрать — показываем убыток
-        if (R.betPlaced && !R.cashedOut && R.myBet > 0) {
-          R.stats.g = (R.stats.g||0) + 1;
-          R.stats.p = (R.stats.p||0) - R.myBet;
-          rktSaveStats();
-          rktSetRes('💥 Краш ×' + R.crashAt.toFixed(2) + ' — −' + R.myBet.toLocaleString('ru-RU'), 'loss');
-          try { showToast('💥 Краш ×' + R.crashAt.toFixed(2), 'error'); } catch(e) {}
-        }
-        rktUI();
-        // КЛЮЧЕВОЙ ФИКС: запоминаем АБСОЛЮТНОЕ время когда должен начаться следующий раунд
-        // (а не относительное wait_left, которое устарело за время crash-анимации).
-        // Сервер шлёт wait_left относительно момента отправки сообщения.
-        // Если мы сейчас получили сообщение и через 3800мс запустим таймер на wait_left секунд —
-        // реальные оставшиеся секунды будут (wait_left - 3.8). Иначе таймер идёт с 5.0,
-        // а серверный flying приходит через ~1.2 секунды → игрок не успевает поставить ставку.
-        const launchAtAbs = Date.now() + (msg.wait_left || 5) * 1000;
-        setTimeout(() => {
-          // RACE PROTECT: если за это время сервер уже запустил новый раунд, не трогаем
-          if (R.phase !== 'crashed') return;
-          R.phase = 'waiting'; rktResetBet(); rTrail = []; rParticles = [];
-          // Вычисляем реально оставшееся время до серверного старта
-          const remaining = Math.max(0.1, (launchAtAbs - Date.now()) / 1000);
-          rktTimerStart(remaining);
-          rktUI();
-        }, 2500);
-      } else {
-        R.phase = 'waiting';
-        if (msg.wait_left > 0) rktTimerStart(msg.wait_left);
-        rktUI();
-      }
-      break;
-    }
-
-    case 'flying': {
-      rktTimerStop();
-      // Принудительно сбрасываем crash-анимацию если она ещё идёт
-      _rktForceCrashReset();
-      // Отменяем возможный RAF от предыдущего раунда
-      if (_tickRaf) { cancelAnimationFrame(_tickRaf); _tickRaf = null; }
-
-      // КРИТИЧНО: если это НОВЫЙ round_id — сбросить состояние ставки.
-      // Без этого после прошлого раунда R.betPlaced оставался true, и кнопка ЗАБРАТЬ
-      // продолжала показываться в новом раунде (где у игрока нет активной ставки).
-      const newRoundId = msg.round_id ?? R.id;
-      if (newRoundId !== R.id) {
-        rktResetBet();
-        rTrail = []; rParticles = [];
-      }
-      R.id = newRoundId;
-
-      R.phase = 'flying';
-      R.crashAt = null;  // fair-play: не сохраняем серверный crash_at
-      R.mult = msg.mult ?? 1.00;
-      R.ls = msg.elapsed != null ? Date.now() - msg.elapsed * 1000 : Date.now();
-      if (msg.players) rktMergePlayers(msg.players);
-      rTrail = []; rParticles = [];
-      rktUI(); rktTickStart();
-      break;
-    }
-
-    case 'tick': {
-      // Если вдруг tick пришёл а клиент НЕ в flying (например WS переподключился
-      // и state ещё не пришёл) — стартуем flying автоматически.
-      if (R.phase !== 'flying' && msg.elapsed != null && msg.elapsed >= 0) {
-        _rktForceCrashReset();
-        if (_tickRaf) { cancelAnimationFrame(_tickRaf); _tickRaf = null; }
-        R.phase = 'flying';
-        R.crashAt = null;
-        R.mult = 1.00;
-        R.ls = Date.now() - msg.elapsed * 1000;
-        rktTimerStop(); rTrail = []; rParticles = [];
-        rktUI(); rktTickStart();
-        if (msg.online != null) R.online = msg.online;
-        break;
-      }
-      if (R.phase === 'flying') {
-        // Ресинхронизация времени: сервер шлёт elapsed каждые 0.5с
-        // Без сглаживания цифра бы дёргалась из-за network jitter (50-200мс).
-        // Поэтому принимаем серверное время ТОЛЬКО если расхождение > 0.5с.
-        if (msg.elapsed != null) {
-          const localElapsed = (Date.now() - R.ls) / 1000;
-          const drift = Math.abs(localElapsed - msg.elapsed);
-          if (drift > 0.5) {
-            // Большое расхождение — корректируем
-            R.ls = Date.now() - msg.elapsed * 1000;
-          }
-        }
-        if (msg.online  != null) R.online = msg.online;
-        const onEl = document.getElementById('rktOnlineN');
-        if (onEl) onEl.textContent = R.online;
-      }
-      break;
-    }
-
-    case 'wait_tick': {
-      // Сервер присылает wait_left для синхронизации
-      if (R.phase === 'waiting' && msg.value > 0) {
-        const local = Math.max(0, (R.launchAt - Date.now()) / 1000);
-        if (Math.abs(local - msg.value) > 0.35) R.launchAt = Date.now() + msg.value * 1000;
-      }
-      break;
-    }
-
+    // Отдельные события — ставка/cashout — остаются как есть
     case 'cashout': {
       if (msg.players) rktMergePlayers(msg.players);
       if (!msg.is_me && msg.name && msg.mult) {
@@ -5519,7 +5352,6 @@ function rktMsg(msg) {
     }
 
     case 'cashout_err': {
-      // Сервер отверг cashout — разблокируем кнопку и покажем ошибку
       _cashingOut = false;
       if (window._cashoutTimeout) {
         clearTimeout(window._cashoutTimeout);
@@ -5533,12 +5365,6 @@ function rktMsg(msg) {
       }[reason] || reason;
       showToast('❌ ' + reasonText, 'error');
       if (window._rktDebug !== false) console.log('[RKT] cashout_err:', reason);
-      break;
-    }
-
-    case 'players': {
-      if (msg.players) rktMergePlayers(msg.players);
-      rktDrawTable(); rktDrawTags();
       break;
     }
 
@@ -5560,8 +5386,157 @@ function rktMsg(msg) {
       rktUI();
       break;
     }
+
+    // Старые типы игнорируем — всё берётся из snapshot'ов
+    case 'tick':
+    case 'flying':
+    case 'waiting':
+    case 'players':
+      // молча игнорируем; snapshot через 300мс всё равно придёт
+      break;
   }
 }
+
+// ── applyState: применяет snapshot к клиентскому состоянию ─────────────
+// Идемпотентно: можно вызывать с одним и тем же snapshot сколько угодно раз.
+// Детектирует переходы фаз сравнением с _lastSnap.
+function applyState(snap) {
+  if (!snap) return;
+
+  // Базовая валидация
+  const newPhase = snap.phase === 'flying' ? 'flying' : 'waiting';
+  const newRoundId = snap.round_id ?? R.id;
+
+  // Всегда обновляем глобальные поля
+  R.online = snap.online ?? R.online;
+  if (Array.isArray(snap.history)) R.history = snap.history;
+  if (Array.isArray(snap.players)) rktMergePlayers(snap.players);
+
+  // ── ДЕТЕКТИРУЕМ ПЕРЕХОД ФАЗ ──
+  const prevPhase = _lastSnap ? (_lastSnap.phase || 'waiting') : R.phase;
+  const prevRoundId = _lastSnap ? _lastSnap.round_id : R.id;
+
+  // 1) Переход flying → waiting = КРАШ
+  if (prevPhase === 'flying' && newPhase === 'waiting') {
+    // Новый round_id значит старый раунд крашнулся
+    if (window._rktDebug !== false) console.log('[RKT] 💥 CRASH detected', snap.crash_at);
+
+    // Останавливаем RAF-loop множителя
+    if (_tickRaf) { cancelAnimationFrame(_tickRaf); _tickRaf = null; }
+    // Фиксируем финальный mult = серверный crash_at
+    R.crashAt = snap.crash_at || R.mult || 1;
+    R.mult = R.crashAt;
+    R.phase = 'crashed';  // локальная фаза для анимации
+
+    // Запускаем crash-анимацию
+    rktShowCrash(R.crashAt);
+
+    // Если игрок не забрал — зафиксировать убыток
+    if (R.betPlaced && !R.cashedOut && R.myBet > 0) {
+      R.stats.g = (R.stats.g||0) + 1;
+      R.stats.p = (R.stats.p||0) - R.myBet;
+      rktSaveStats();
+      rktSetRes('💥 Краш ×' + R.crashAt.toFixed(2) + ' — −' + R.myBet.toLocaleString('ru-RU'), 'loss');
+      try { showToast('💥 Краш ×' + R.crashAt.toFixed(2), 'error'); } catch(e) {}
+    }
+    rktUI();
+
+    // Через 2500мс выходим из crashed в waiting и стартуем таймер ожидания
+    if (window._crashTransitionTimer) clearTimeout(window._crashTransitionTimer);
+    window._crashTransitionTimer = setTimeout(() => {
+      // Only если всё ещё crashed (не пришёл новый flying раньше)
+      if (R.phase === 'crashed') {
+        R.phase = 'waiting';
+        R.id = newRoundId;
+        rktResetBet();
+        rTrail = []; rParticles = [];
+        // waitLeft возьмём из последнего snapshot'а
+        if (_lastSnap && _lastSnap.wait_left != null) {
+          R.waitLeft = _lastSnap.wait_left;
+          R.launchAt = Date.now() + R.waitLeft * 1000;
+        }
+        rktUI();
+      }
+    }, 2500);
+
+    _lastSnap = snap;
+    return; // в crashed-фазе остальные обновления не нужны
+  }
+
+  // 2) Переход waiting → flying = НОВЫЙ РАУНД
+  if (prevPhase === 'waiting' && newPhase === 'flying') {
+    if (window._rktDebug !== false) console.log('[RKT] 🚀 new FLYING round', newRoundId);
+
+    _rktForceCrashReset();  // очищаем остатки crash-оверлея
+    if (window._crashTransitionTimer) {
+      clearTimeout(window._crashTransitionTimer);
+      window._crashTransitionTimer = null;
+    }
+    if (_tickRaf) { cancelAnimationFrame(_tickRaf); _tickRaf = null; }
+
+    // Новый round_id → сбросить ставку
+    if (newRoundId !== R.id) {
+      rktResetBet();
+    }
+    R.id = newRoundId;
+    R.phase = 'flying';
+    R.crashAt = null;
+    R.mult = snap.mult || 1.00;
+    R.ls = snap.elapsed != null ? Date.now() - snap.elapsed * 1000 : Date.now();
+    rTrail = []; rParticles = [];
+    rktTimerStop();
+    rktUI();
+    rktTickStart();
+
+    _lastSnap = snap;
+    return;
+  }
+
+  // 3) Нет перехода — обновляем текущее состояние
+  R.id = newRoundId;
+
+  if (newPhase === 'flying') {
+    // Продолжаем полёт
+    if (R.phase !== 'flying' && R.phase !== 'crashed') {
+      // Первый snapshot (например при подключении) — стартуем flying
+      _rktForceCrashReset();
+      if (newRoundId !== R.id) rktResetBet();
+      R.phase = 'flying';
+      R.crashAt = null;
+      R.mult = snap.mult || 1.00;
+      R.ls = snap.elapsed != null ? Date.now() - snap.elapsed * 1000 : Date.now();
+      rTrail = []; rParticles = [];
+      rktTimerStop();
+      rktUI();
+      rktTickStart();
+    } else if (R.phase === 'flying') {
+      // Уже летим — плавная ресинхронизация времени
+      if (snap.elapsed != null) {
+        const localElapsed = (Date.now() - R.ls) / 1000;
+        const drift = Math.abs(localElapsed - snap.elapsed);
+        if (drift > 0.5) {
+          R.ls = Date.now() - snap.elapsed * 1000;
+        }
+      }
+    }
+  } else if (newPhase === 'waiting') {
+    // В фазе ожидания — обновляем таймер из серверного wait_left
+    if (R.phase !== 'crashed') {
+      // (не перезаписываем фазу во время crash-анимации)
+      R.phase = 'waiting';
+      if (snap.wait_left != null && snap.wait_left > 0) {
+        R.waitLeft = snap.wait_left;
+        R.launchAt = Date.now() + snap.wait_left * 1000;
+        // Запускаем timer RAF только если не идёт
+        if (!_timerRaf) rktTimerStart(snap.wait_left);
+      }
+    }
+  }
+
+  rktUI();
+  _lastSnap = snap;
+}
+
 
 function rktMergePlayers(arr) {
   if (!Array.isArray(arr)) return;
