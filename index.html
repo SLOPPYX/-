@@ -826,7 +826,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .leader-empty{text-align:center;padding:40px 20px;font-family:var(--fd);font-size:10px;color:var(--muted);letter-spacing:2px}
 
 /* ══ РАКЕТКА ════════════════════════════════════════════ */
-#page-rocket { padding:0; background:#000; }
+#page-rocket { padding:0 0 100px 0; background:#000; }
 .rkt-wrap { flex-direction:column; min-height:100%; }
 .page.active.rkt-wrap { display:flex; }
 
@@ -1155,22 +1155,24 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   color:rgba(255,255,255,.25); margin-bottom:5px;
 }
 .rkt-btn {
-  width:100%; border:none; border-radius:14px; cursor:pointer;
-  font-family:var(--fd); font-weight:900; letter-spacing:2px;
-  padding:18px; font-size:17px; display:none;
+  width:100%; border:none; border-radius:12px; cursor:pointer;
+  font-family:var(--fd); font-weight:900; letter-spacing:1px;
+  padding:14px 10px; font-size:14px; display:none;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  min-height:48px; box-sizing:border-box;
 }
 .rkt-btn.bet  { background:#fff; color:#0a0a0a; box-shadow:0 4px 20px rgba(255,255,255,.15); }
-.rkt-btn.cash { background:#16a34a; color:#fff; box-shadow:0 4px 18px rgba(74,222,128,.35); font-size:18px; }
+.rkt-btn.cash { background:#16a34a; color:#fff; box-shadow:0 4px 18px rgba(74,222,128,.35); font-size:15px; }
 .rkt-btn.stat { background:rgba(255,255,255,.06); color:rgba(255,255,255,.3); cursor:not-allowed; }
 /* Красная кнопка с убытком при краше с проигрышем */
 .rkt-btn.loss {
   background:linear-gradient(180deg,#c01515,#7a0a0a);
-  color:#fff; font-size:17px; cursor:not-allowed;
+  color:#fff; font-size:14px; cursor:not-allowed;
   box-shadow:0 4px 18px rgba(220,30,30,.4), inset 0 1px 0 rgba(255,255,255,.15);
   border:1px solid rgba(255,100,100,.3);
 }
-.rkt-btn.loss .rkt-loss-main { font-size:15px; letter-spacing:2px; opacity:.95; }
-.rkt-btn.loss .rkt-loss-sum  { display:block; font-size:19px; letter-spacing:1px; margin-top:4px; color:#ffd0d0; }
+.rkt-btn.loss .rkt-loss-main { font-size:12px; letter-spacing:1.5px; opacity:.95; }
+.rkt-btn.loss .rkt-loss-sum  { display:block; font-size:16px; letter-spacing:0.5px; margin-top:3px; color:#ffd0d0; }
 
 /* Панель */
 .rkt-panel { padding:10px 14px 0; }
@@ -1817,7 +1819,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   </div>
 
   <!-- ══ ROCKET GAME ══ -->
-  <div class="page rkt-wrap" id="page-rocket" style="padding:0">
+  <div class="page rkt-wrap" id="page-rocket" style="padding:0 0 100px 0">
 
     <!-- Сцена -->
     <div class="rkt-scene">
@@ -5621,13 +5623,20 @@ function rktTickStart() {
     // от сетевого лага: если сообщение потерялось, цифра не улетит в бесконечность.
     R.mult = Math.min(raw, R.crashAt || 1000);
 
+    // Для отображения используем "округление вниз" (Math.floor) —
+    // чтобы игрок видел ровно столько, сколько получит если нажмёт ЗАБРАТЬ сейчас.
+    // toFixed(2) иногда округляет вверх (1.357 → 1.36), и игрок ожидает выплату по 1.36,
+    // а сервер отдаёт по floor(1.357*100)/100 = 1.35. Теперь UI и cashout синхронны.
+    const displayMult = Math.floor(R.mult * 100) / 100;
+    const displayStr = displayMult.toFixed(2);
+
     // Интенсивность тряски: 0..1 плавно от ×1 до ×10 (такая же формула как у объекта)
     const shakeLvl = Math.min((R.mult - 1) / 9, 1);
 
     // Обновляем DOM-множитель + тряска
     const el = document.getElementById('rktMult');
     if (el) {
-      el.textContent = R.mult.toFixed(2) + '×';
+      el.textContent = displayStr + '×';
       const nc = R.mult>=20?'rkt-mult gold':R.mult>=5?'rkt-mult green':'rkt-mult';
       if (el.className !== nc) el.className = nc;
       // Тряска — чем выше множитель, тем сильнее (максимум ±6px горизонтально, ±3px вертикально)
@@ -5646,7 +5655,7 @@ function rktTickStart() {
     // Тряску УБРАЛИ чтобы не ломать клики (transform может смещать hitbox)
     const bc = document.getElementById('rktBtnCash');
     if (bc && bc.style.display !== 'none' && R.phase === 'flying' && R.betPlaced && !R.cashedOut) {
-      bc.textContent = '💸 ' + R.mult.toFixed(2) + '× — ЗАБРАТЬ!';
+      bc.textContent = '💸 ' + displayStr + '× — ЗАБРАТЬ!';
     }
 
     // Авто-вывод
@@ -5918,7 +5927,10 @@ function rktCashout() {
   if (_cashingOut)  return; // в процессе
   _cashingOut = true;
 
-  const mult  = parseFloat((R.mult || 1).toFixed(2));
+  // Используем Math.floor чтобы игрок получил ровно то, что видит на экране.
+  // parseFloat(toFixed(2)) могло округлить 1.356 → 1.36, а игрок видел 1.35 →
+  // разница сумм. Теперь 1.356 → 1.35 (floor), игрок не получит меньше.
+  const mult  = Math.floor((R.mult || 1) * 100) / 100;
   const prize = Math.round(R.myBet * mult);
   const profit = prize - R.myBet;
 
