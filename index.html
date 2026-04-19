@@ -39,9 +39,39 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 /* ── HEADER ── */
 .header{padding:12px 18px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;position:relative;min-height:48px}
-.logo-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;position:absolute;left:50%;transform:translateX(-50%);top:12px;pointer-events:none}
-.logo-main{font-family:var(--fd);font-size:18px;font-weight:900;letter-spacing:4px;color:#fff}
-.logo-sub{font-family:var(--fd);font-size:9px;font-weight:400;letter-spacing:3px;color:var(--muted)}
+.logo-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;position:absolute;left:50%;transform:translateX(-50%);top:12px;pointer-events:none}
+.logo-main{
+  display:flex;align-items:center;gap:10px;
+  font-family:var(--fd);font-size:18px;font-weight:900;letter-spacing:4px;
+  background:linear-gradient(180deg,#ffe29a 0%,#ffb44a 45%,#ff6a00 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  text-shadow:0 0 18px rgba(255,140,0,.35);
+  filter:drop-shadow(0 1px 0 rgba(0,0,0,.4));
+}
+.logo-main svg{flex-shrink:0;filter:drop-shadow(0 0 6px rgba(255,120,0,.55))}
+.logo-sub{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:3px;
+  color:rgba(255,180,80,.85);
+  text-shadow:0 0 8px rgba(255,120,0,.3);
+}
+.logo-sub-line{
+  width:22px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,160,50,.6),transparent);
+}
+.logo-sub-name{
+  color:#ffd084;
+  background:linear-gradient(90deg,#ffb84a,#fff1c2,#ffb84a);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-size:200% 100%;
+  animation:logoShine 3.5s linear infinite;
+}
+@keyframes logoShine{
+  0%  {background-position:0% 50%}
+  100%{background-position:200% 50%}
+}
 /* ── HEADER BACK BUTTON ── */
 .header-back{
   display:flex;align-items:center;justify-content:center;
@@ -57,6 +87,19 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .header-back.exit-btn{background:rgba(255,60,0,.08);border-color:rgba(255,80,0,.2)}
 .header-back.exit-btn svg{opacity:.5}
 .header-back.exit-btn:active{background:rgba(255,60,0,.18)}
+/* Кнопка "Инструкция" — в правом верхнем углу */
+.header-help{
+  display:flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border-radius:10px;
+  background:rgba(255,160,30,.08);
+  border:1px solid rgba(255,160,30,.25);
+  color:rgba(255,180,80,.85);
+  cursor:pointer;transition:all .15s;
+  flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;
+}
+.header-help:hover{background:rgba(255,160,30,.14);border-color:rgba(255,160,30,.4)}
+.header-help:active{transform:scale(.92);background:rgba(255,160,30,.18)}
 .balance-bar{
   display:flex;align-items:center;justify-content:space-between;
   margin:12px 18px 0;
@@ -139,6 +182,21 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   background:rgba(255,110,0,.14);color:rgba(255,165,60,.9);border:1px solid rgba(255,100,0,.32)
 }
 .home-card-title{font-family:'Oxanium',sans-serif;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:1.5px;line-height:1.1;text-transform:uppercase}
+.ff-badge{
+  display:inline-block;
+  font-family:var(--fd);font-size:11px;font-weight:900;letter-spacing:1px;
+  padding:3px 7px;border-radius:6px;margin-left:4px;
+  background:linear-gradient(135deg,#ff6a00 0%,#ff2200 100%);
+  color:#fff;
+  box-shadow:0 2px 8px rgba(255,90,0,.55), inset 0 1px 0 rgba(255,255,255,.3);
+  vertical-align:middle;
+  text-shadow:0 1px 0 rgba(0,0,0,.3);
+  animation:ffBadgePulse 2s ease-in-out infinite;
+}
+@keyframes ffBadgePulse{
+  0%,100%{box-shadow:0 2px 8px rgba(255,90,0,.55), inset 0 1px 0 rgba(255,255,255,.3)}
+  50%{box-shadow:0 2px 14px rgba(255,130,0,.85), inset 0 1px 0 rgba(255,255,255,.4)}
+}
 .home-card-sub{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:500;margin-top:5px;color:rgba(255,255,255,.42);line-height:1.35;letter-spacing:.4px}
 
 /* ── Иконка — обёртка с подсветкой ── */
@@ -260,19 +318,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .home-row2 .home-card-sub{font-size:9.5px;margin-top:3px}
 .home-row2 .home-card-icon{font-size:34px;width:54px;height:54px;padding:0;margin:0 12px 10px 0;align-self:flex-end;border-radius:14px}
 
-/* ── BOTTOM BAR ── */
-.bottom-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:50;width:100%;max-width:480px;
-  background:rgba(10,7,3,.97);
-  border-top:1px solid rgba(255,110,0,.25);
-  backdrop-filter:blur(28px);
-  padding:10px 14px calc(12px + env(safe-area-inset-bottom));
-  display:flex;gap:8px;box-sizing:border-box;
-  box-shadow:0 -1px 0 rgba(255,160,50,.35), 0 -12px 40px rgba(0,0,0,.7), 0 -4px 24px rgba(255,80,0,.08)}
-.bb-btn{flex:1;padding:11px 4px;border:1px solid rgba(255,100,0,.15);border-radius:13px;color:rgba(255,200,120,.38);font-family:var(--fb);font-size:11px;font-weight:600;cursor:pointer;text-align:center;background:rgba(255,80,0,.04);transition:all .15s;-webkit-tap-highlight-color:transparent}
-.bb-btn:active{transform:scale(.95)}
-.bb-btn.bb-main{background:linear-gradient(145deg,rgba(255,110,0,.22),rgba(255,60,0,.12));border-color:rgba(255,130,0,.5);color:rgba(255,190,80,.95);font-weight:700;box-shadow:0 0 14px rgba(255,100,0,.2)}
+/* Bottom bar убран — все действия перенесены в header (выйти слева, инструкция справа) */
 /* ── PAGES ── */
-.page{display:none;padding:14px 18px 76px}
+.page{display:none;padding:14px 18px 24px}
 .page.active{display:block}
 #page-home.active{display:flex;flex-direction:column}
 /* ── BACK BUTTON ── */
@@ -826,7 +874,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .leader-empty{text-align:center;padding:40px 20px;font-family:var(--fd);font-size:10px;color:var(--muted);letter-spacing:2px}
 
 /* ══ РАКЕТКА ════════════════════════════════════════════ */
-#page-rocket { padding:0 0 100px 0; background:#000; }
+#page-rocket { padding:0 0 30px 0; background:#000; }
 .rkt-wrap { flex-direction:column; min-height:100%; }
 .page.active.rkt-wrap { display:flex; }
 
@@ -1282,8 +1330,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 // Выполняется ДО основного 275KB скрипта
 (function(){
   var splashStartedAt = Date.now();
-  var MIN_SPLASH_MS = 2500; // минимум показа — чтобы пользователь увидел анимацию
-  var MAX_SPLASH_MS = 4500; // максимум — hard timeout на случай если что-то не загрузится
+  var MIN_SPLASH_MS = 3200; // минимум показа — чтобы все 3 галочки успели стать done и бар доехал до 100%
+  var MAX_SPLASH_MS = 5500; // максимум — hard timeout на случай если что-то не загрузится
   var dataReady = false;
   var closed = false;
 
@@ -1412,14 +1460,58 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       </svg>
     </div>
     <div class="logo-wrap">
-      <div class="logo-main"><span class="ff-diamond"></span>CASINO<span class="ff-diamond"></span></div>
-      <div class="logo-sub">by SloppyX</div>
+      <div class="logo-main">
+        <!-- Огонь слева -->
+        <svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lgFl1" x1="0.5" y1="0" x2="0.5" y2="1">
+              <stop offset="0%" stop-color="#fff5c0"/>
+              <stop offset="35%" stop-color="#ffc14a"/>
+              <stop offset="70%" stop-color="#ff6a00"/>
+              <stop offset="100%" stop-color="#b02800"/>
+            </linearGradient>
+          </defs>
+          <path d="M9 1 C12 5 15 8 15 13 C15 17.5 12.3 21 9 21 C5.7 21 3 17.5 3 13 C3 9 5 6 7 4 C7 6 8 7 9 8 C9 6 8.5 3 9 1 Z" fill="url(#lgFl1)"/>
+          <path d="M9 8 C10.5 10 12 12 12 14.5 C12 16.5 10.7 18 9 18 C7.3 18 6 16.5 6 14.5 C6 12.5 7 11 8 10 C8 11 8.5 11.5 9 12 C9 11 9 9.5 9 8 Z" fill="#fff2a8" opacity="0.8"/>
+        </svg>
+
+        <span>CASINO</span>
+
+        <!-- Огонь справа -->
+        <svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 1 C12 5 15 8 15 13 C15 17.5 12.3 21 9 21 C5.7 21 3 17.5 3 13 C3 9 5 6 7 4 C7 6 8 7 9 8 C9 6 8.5 3 9 1 Z" fill="url(#lgFl1)"/>
+          <path d="M9 8 C10.5 10 12 12 12 14.5 C12 16.5 10.7 18 9 18 C7.3 18 6 16.5 6 14.5 C6 12.5 7 11 8 10 C8 11 8.5 11.5 9 12 C9 11 9 9.5 9 8 Z" fill="#fff2a8" opacity="0.8"/>
+        </svg>
+      </div>
+      <div class="logo-sub">
+        <span class="logo-sub-line"></span>
+        <!-- маленькая звёздочка SVG -->
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+          <path d="M4 0 L4.8 3.2 L8 4 L4.8 4.8 L4 8 L3.2 4.8 L0 4 L3.2 3.2 Z" fill="#ffb84a"/>
+        </svg>
+        <span>by</span>
+        <span class="logo-sub-name">SloppyX</span>
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+          <path d="M4 0 L4.8 3.2 L8 4 L4.8 4.8 L4 8 L3.2 4.8 L0 4 L3.2 3.2 Z" fill="#ffb84a"/>
+        </svg>
+        <span class="logo-sub-line"></span>
+      </div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
       <div id="newBalanceBadge" style="display:none;font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:1px;color:var(--green);text-shadow:0 0 6px rgba(0,255,136,0.6);animation:badgePulse 1s ease infinite alternate;cursor:pointer" onclick="refreshBalanceNow()">▲ ОБНОВИТЬ</div>
-      <div class="bot-status loading" id="botStatus" onclick="showApiDiag()" style="cursor:pointer" title="Нажми для диагностики">
-        <div class="bot-status-dot"></div>
-        <span id="botStatusText"></span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <!-- Кнопка "Инструкция" — заменяет нижнюю панель -->
+        <div id="headerHelpBtn" class="header-help" onclick="showHelp()" title="Инструкция">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="bot-status loading" id="botStatus" onclick="showApiDiag()" style="cursor:pointer" title="Нажми для диагностики">
+          <div class="bot-status-dot"></div>
+          <span id="botStatusText"></span>
+        </div>
       </div>
     </div>
   </div>
@@ -1474,7 +1566,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="home-card rocket" onclick="showPage('rocket')">
         <div class="home-card-txt">
           <div class="home-card-tag">МУЛЬТИПЛЕЕР</div>
-          <div class="home-card-title">РАКЕТКА</div>
+          <div class="home-card-title">РАКЕТКА <span class="ff-badge">FF</span></div>
           <div class="home-card-sub">Взлетай — успей забрать выигрыш!</div>
         </div>
         <span class="home-card-arrow">›</span>
@@ -1854,7 +1946,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   </div>
 
   <!-- ══ ROCKET GAME ══ -->
-  <div class="page rkt-wrap" id="page-rocket" style="padding:0 0 100px 0">
+  <div class="page rkt-wrap" id="page-rocket" style="padding:0 0 30px 0">
 
     <!-- Сцена -->
     <div class="rkt-scene">
@@ -2157,12 +2249,6 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 
 
 </div><!-- /app -->
-
-<div class="bottom-bar">
-  <button class="bb-btn" onclick="showExitDialog()">💾 Сохранить</button>
-  <button class="bb-btn bb-main" onclick="showHelp()" id="bHelpBtn">📖 Инструкция</button>
-  <button class="bb-btn" onclick="showExitDialog()">✖ Выйти</button>
-</div>
 
 <!-- ══ ИНСТРУКЦИЯ ══ -->
 <div class="warn-overlay" id="helpOverlay" onclick="if(event.target===this)hideHelp()" style="z-index:400">
@@ -4091,9 +4177,9 @@ async function init() {
 
   function closeSplash() {
     try { clearTimeout(window.__splashKillTimer); } catch(e) {}
-    // Сигналим что данные готовы — splash закроется не раньше MIN_SPLASH_MS (2.5с)
-    try { window.__dataLoaded && window.__dataLoaded(); } catch(e) {}
     setBar(100);
+    // Закрытие splash теперь управляется из finally блока init() через __dataLoaded()
+    // Тут только финализируем визуальное состояние (прогресс-бар 100%)
   }
 
   const hasApi = !!(API_URL && API_SECRET && USER_ID && USER_ID !== '0');
@@ -4213,10 +4299,16 @@ async function init() {
     console.warn('Init error:', e);
   } finally {
     clearTimeout(emergency);
-    // Сигналим splash'у что данные загружены (он сам решит когда закрываться —
-    // но не раньше MIN_SPLASH_MS = 2.5с чтобы пользователь увидел анимацию)
-    try { window.__dataLoaded && window.__dataLoaded(); } catch(e) {}
-    closeSplash();
+    // Гарантируем что последний шаг "done" и бар на 100% (визуально)
+    try { splashStep('step1', 'done'); } catch(e){}
+    try { splashStep('step2', 'done'); } catch(e){}
+    try { splashStep('step3', 'done'); } catch(e){}
+    try { setBar(100); } catch(e){}
+    // Даём браузеру 600мс чтобы отрисовать done-галочки и прогресс-бар на 100%
+    // ПОТОМ сигналим что данные готовы (splash закроется не раньше MIN_SPLASH_MS)
+    setTimeout(() => {
+      try { window.__dataLoaded && window.__dataLoaded(); } catch(e) {}
+    }, 600);
     try { updateMiniStats(); } catch(e){}
     try { refreshBets(); } catch(e){}
     try { for(const b of [100000,50000,25000,10000]){if(balance>=b){selectBet(b);break;}} } catch(e){}
@@ -5312,7 +5404,7 @@ function rktWsConnect() {
 
   _ws.onopen = () => {
     _wsOk = true;
-    rktWsStatus('ok', '● WS');
+    rktWsStatus('ok', '● LIVE');
     clearTimeout(_wsRecon);
   };
   _ws.onmessage = e => {
