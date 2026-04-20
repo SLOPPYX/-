@@ -1421,8 +1421,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 // Выполняется ДО основного 275KB скрипта
 (function(){
   var splashStartedAt = Date.now();
-  var MIN_SPLASH_MS = 6500; // минимум показа — чтобы строгая последовательность галочек+бара успела полностью пройти
-  var MAX_SPLASH_MS = 12000; // максимум — hard timeout на случай если что-то не загрузится
+  var MIN_SPLASH_MS = 8000; // минимум показа — 8 секунд для неторопливой красивой загрузки
+  var MAX_SPLASH_MS = 14000; // максимум — hard timeout на случай если что-то не загрузится
   var dataReady = false;
   var closed = false;
 
@@ -4648,23 +4648,33 @@ async function init() {
         for (let i=Math.max(prog,65); i<=70; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
         await new Promise(r=>setTimeout(r,800));  // пауза после галочки 2
 
-        // ── Шаг 3: Синхронизация данных (минимум 1.5 секунды)
+        // ── Шаг 3: Синхронизация данных (ждём ВСЁ реально)
         splashStep('step3', 'active');
         if (status) status.textContent = 'СИНХРОНИЗАЦИЯ ДАННЫХ...';
-        const t3 = setInterval(()=>{ prog=Math.min(prog+1,90); setBar(prog); }, 100);
+        const t3 = setInterval(()=>{ prog=Math.min(prog+1,90); setBar(prog); }, 120);
         prog = 70;
-        // Ждём реальной загрузки статов/аватарки/ракетки из Cloud — до 3 сек
-        // (раньше был таймаут 1000мс — из-за этого статы не успевали прийти и юзер видел 0/0)
-        try { await Promise.race([loadAllFromCloud(), new Promise(r=>setTimeout(r,3000))]); } catch(e){}
-        // Рендерим статы СРАЗУ — чтобы после закрытия splash юзер увидел актуальные числа
+
+        // Параллельно: 1) cloud-статы (слоты+ракетка+аватарка), 2) предзагрузка топлидеров
+        // — чтобы к моменту закрытия splash юзер мог сразу открыть любую вкладку
+        const cloudPromise = loadAllFromCloud().catch(e => console.warn('[splash] cloud:', e));
+        const topPromise = (typeof loadLeaderboard === 'function')
+          ? loadLeaderboard(true).catch(e => console.warn('[splash] top:', e))
+          : Promise.resolve();
+
+        // Ждём реальной загрузки cloud — до 5 секунд (раньше было 1с и статы не успевали)
+        try { await Promise.race([cloudPromise, new Promise(r=>setTimeout(r,5000))]); } catch(e){}
+        // Топ подгружается параллельно — не блокируем им splash, даём ему максимум 2 сек сверху
+        try { await Promise.race([topPromise, new Promise(r=>setTimeout(r,2000))]); } catch(e){}
+
+        // Рендерим всё СРАЗУ — чтобы после закрытия splash юзер увидел актуальные данные
         try { renderProfile(); } catch(e){}
         try { updateMiniStats(); } catch(e){}
         try { rktUI && rktUI(); } catch(e){}
         try { setAvaEl(document.getElementById('spoAvatar'), 44); } catch(e){}
         try { setAvaEl(document.getElementById('pAvatar'), 50); } catch(e){}
         clearInterval(t3);
-        // Гарантируем минимум 800мс в шаге 3
-        await new Promise(r=>setTimeout(r,800));
+        // Гарантируем минимум 1 секунду в шаге 3 (визуально)
+        await new Promise(r=>setTimeout(r,1000));
         splashStep('step3', 'done');
         // Плавно до 100%
         for (let i=Math.max(prog,90); i<=100; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
