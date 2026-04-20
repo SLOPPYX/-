@@ -2142,7 +2142,6 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     <!-- ══ АВАТАРКИ ══ -->
     <div class="avatars-section">
       <div class="avatars-title">Аватарки</div>
-      <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
 <div class="avatars-grid" id="avatarsGrid">
         <!-- генерируется JS -->
       </div>
@@ -3347,6 +3346,47 @@ const LEVELS = [
   { lv:5, name:'ЛЕГЕНДА',     icon:'👑', need:100_000_000, cls:'lv5' },
 ];
 
+// Общий score = токены выигранные в слотах + положительная прибыль ракетки
+// Минусовая прибыль ракетки НЕ понижает уровень (иначе проигрывая в ракетке терялся бы уровень)
+function getCombinedScore() {
+  try {
+    var slotsWon = (typeof S !== 'undefined' && S && typeof S.totalWon === 'number') ? S.totalWon : 0;
+    var rktP = 0;
+    try {
+      var _r = (typeof RKT !== 'undefined' && RKT && RKT.stats) ? RKT.stats
+             : (typeof R !== 'undefined' && R && R.stats) ? R.stats : null;
+      if(_r && typeof _r.p === 'number') rktP = Math.max(0, _r.p);
+    } catch(e){}
+    return slotsWon + rktP;
+  } catch(e) { return 0; }
+}
+
+// Общие счётчики побед и игр (слоты + ракетка)
+function getCombinedWins() {
+  try {
+    var sw = (typeof S !== 'undefined' && S && typeof S.wins === 'number') ? S.wins : 0;
+    var rw = 0;
+    try {
+      var _r = (typeof RKT !== 'undefined' && RKT && RKT.stats) ? RKT.stats
+             : (typeof R !== 'undefined' && R && R.stats) ? R.stats : null;
+      if(_r && typeof _r.b === 'number') rw = _r.b;
+    } catch(e){}
+    return sw + rw;
+  } catch(e) { return 0; }
+}
+function getCombinedGames() {
+  try {
+    var sg = (typeof S !== 'undefined' && S && typeof S.spins === 'number') ? S.spins : 0;
+    var rg = 0;
+    try {
+      var _r = (typeof RKT !== 'undefined' && RKT && RKT.stats) ? RKT.stats
+             : (typeof R !== 'undefined' && R && R.stats) ? R.stats : null;
+      if(_r && typeof _r.g === 'number') rg = _r.g;
+    } catch(e){}
+    return sg + rg;
+  } catch(e) { return 0; }
+}
+
 function getUserLevel(totalWon) {
   let cur = LEVELS[0];
   for(const l of LEVELS) { if(totalWon >= l.need) cur = l; else break; }
@@ -3536,9 +3576,17 @@ const AVATAR_KEY = 'avatar_' + USER_ID;
 // Быстрый старт — из localStorage кэша (обновится из Cloud после загрузки)
 let selectedAvatar = (() => {
   try {
-    return localStorage.getItem('cs_' + AVATAR_KEY)
-        || localStorage.getItem(AVATAR_KEY)
-        || 'default';
+    var v = localStorage.getItem('cs_' + AVATAR_KEY)
+         || localStorage.getItem(AVATAR_KEY)
+         || 'default';
+    // Кастомные аватарки отключены — мигрируем на default
+    if(v === 'custom') {
+      v = 'default';
+      try { localStorage.setItem(AVATAR_KEY, 'default'); } catch(e){}
+      try { localStorage.setItem('cs_' + AVATAR_KEY, 'default'); } catch(e){}
+      try { localStorage.removeItem('custom_avatar_img'); } catch(e){}
+    }
+    return v;
   } catch(e) { return 'default'; }
 })();
 
@@ -3698,7 +3746,7 @@ function setAvaEl(el, size) {
 function renderAvatars() {
   const grid = document.getElementById('avatarsGrid');
   if(!grid) return;
-  const totalWon = S.totalWon || 0;
+  const totalWon = getCombinedScore();
   const userLv   = getUserLevel(totalWon).lv;
   grid.innerHTML = '';
 
@@ -3741,58 +3789,12 @@ function renderAvatars() {
     });
   });
 
-  // Слот «Своя картинка» — доступен с уровня 5 (ЛЕГЕНДА)
-  var upDiv = document.createElement('div');
-  var customSrc = null;
-  try { customSrc = localStorage.getItem('custom_avatar_img'); } catch(e){}
-  var isSel = (selectedAvatar === 'custom');
-  var customLocked = (userLv < 5);
-
-  upDiv.className = 'avatar-item upload-slot' + (isSel && !customLocked ? ' selected' : '') + (customLocked ? ' locked' : '');
-
-  if(customLocked) {
-    // Заблокировано — нет нужного уровня
-    upDiv.innerHTML = '<div class="avatar-emoji" style="font-size:24px;display:flex;align-items:center;justify-content:center;filter:grayscale(1) opacity(0.4)">🖼</div>'
-      + ''
-      + '<div class="avatar-unlock-hint">LV5</div>';
-    upDiv.title = 'Доступно с уровня 5';
-  } else if(customSrc) {
-    // Картинка загружена
-    upDiv.innerHTML = '<div class="avatar-emoji" style="display:flex;align-items:center;justify-content:center">'
-      + '<img src="' + customSrc + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;position:absolute;inset:0">'
-      + '</div>';
-    upDiv.onclick = function(){
-      if(isSel) {
-        // Уже активна — нажали ещё раз → предлагаем сменить с кулдауном
-        var _ck = 'ava_upload_ts_' + USER_ID;
-        var _lt = 0;
-        try { _lt = parseInt(localStorage.getItem(_ck)||'0'); } catch(er){}
-        var _now = Date.now(), _day = 24*60*60*1000;
-        if(_lt > 0 && (_now - _lt) < _day){
-          var _h = Math.ceil((_day - (_now - _lt)) / 3600000);
-          showToast('Менять аватарку можно раз в сутки. Осталось: ' + _h + ' ч.', 'error');
-          return;
-        }
-        document.getElementById('avatarFileInput').click();
-      } else {
-        // Не активна — просто выбрать
-        saveAvatar('custom');
-      }
-    };
-    upDiv.title = isSel ? 'Нажми ещё раз чтобы сменить (1 раз в сутки)' : 'Выбрать мою аватарку';
-  } else {
-    // Нет картинки — предлагаем загрузить
-    upDiv.innerHTML = '<div class="avatar-emoji" style="font-size:24px;display:flex;align-items:center;justify-content:center">＋</div>'
-      + '';
-    upDiv.onclick = function(){ document.getElementById('avatarFileInput').click(); };
-    upDiv.title = 'Загрузить свою аватарку (макс 5KB, 1 раз в сутки)';
-  }
-  grid.appendChild(upDiv);
+  // Слот «Своя картинка» удалён — кастомные аватарки отключены
 }
 
 function renderLevelBlock() {
   try {
-    const totalWon  = S.totalWon || 0;
+    const totalWon  = getCombinedScore();
     const curLv     = getUserLevel(totalWon);
     const nextLv    = getNextLevel(totalWon);
 
@@ -3888,11 +3890,13 @@ function renderProfile() {
 
     // ── Обновляем футер главной страницы ──
     try {
-      const totalWon = (typeof S !== 'undefined') ? (S.totalWon || 0) : 0;
-      const lv = getUserLevel(totalWon);
+      // Уровень — от combined score (слоты + прибыль ракетки)
+      const combined = getCombinedScore();
+      const lv = getUserLevel(combined);
       const hfL = _g('hfLevelVal'); if (hfL) hfL.textContent = lv.lv;
-      const hfW = _g('hfWinsVal'); if (hfW) hfW.textContent = (S.wins||0).toString();
-      const hfG = _g('hfGamesVal'); if (hfG) hfG.textContent = (S.spins||0).toString();
+      // Победы и игры — сумма слотов и ракетки
+      const hfW = _g('hfWinsVal');  if (hfW) hfW.textContent = getCombinedWins().toString();
+      const hfG = _g('hfGamesVal'); if (hfG) hfG.textContent = getCombinedGames().toString();
     } catch(e){}
 
     // ── Canvas overlay ──
@@ -4649,7 +4653,13 @@ async function init() {
         if (status) status.textContent = 'СИНХРОНИЗАЦИЯ ДАННЫХ...';
         const t3 = setInterval(()=>{ prog=Math.min(prog+1,90); setBar(prog); }, 100);
         prog = 70;
-        try { await Promise.race([loadAllFromCloud(), new Promise(r=>setTimeout(r,1000))]); } catch(e){}
+        // Ждём реальной загрузки статов/аватарки/ракетки из Cloud — до 3 сек
+        // (раньше был таймаут 1000мс — из-за этого статы не успевали прийти и юзер видел 0/0)
+        try { await Promise.race([loadAllFromCloud(), new Promise(r=>setTimeout(r,3000))]); } catch(e){}
+        // Рендерим статы СРАЗУ — чтобы после закрытия splash юзер увидел актуальные числа
+        try { renderProfile(); } catch(e){}
+        try { updateMiniStats(); } catch(e){}
+        try { rktUI && rktUI(); } catch(e){}
         try { setAvaEl(document.getElementById('spoAvatar'), 44); } catch(e){}
         try { setAvaEl(document.getElementById('pAvatar'), 50); } catch(e){}
         clearInterval(t3);
@@ -4690,6 +4700,7 @@ async function init() {
     setTimeout(() => {
       try { window.__dataLoaded && window.__dataLoaded(); } catch(e) {}
     }, 600);
+    try { renderProfile(); } catch(e){}
     try { updateMiniStats(); } catch(e){}
     try { refreshBets(); } catch(e){}
     try { for(const b of [100000,50000,25000,10000]){if(balance>=b){selectBet(b);break;}} } catch(e){}
@@ -4799,7 +4810,8 @@ async function loadAllFromCloud() {
       clearTimeout(timeout);
       try {
         // ── Аватарка ──
-        const cloudAvatar = values && values[CS_AVATAR];
+        let cloudAvatar = values && values[CS_AVATAR];
+        if(cloudAvatar === 'custom') cloudAvatar = 'default'; // кастом отключён
         if(cloudAvatar && cloudAvatar !== selectedAvatar) {
           selectedAvatar = cloudAvatar;
           try { localStorage.setItem(AVATAR_KEY, cloudAvatar); } catch(e) {}
