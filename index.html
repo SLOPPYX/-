@@ -439,10 +439,11 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 @keyframes rStop{0%{transform:translate3d(0,7px,0) scaleY(0.95)}100%{transform:translate3d(0,0,0) scaleY(1)}}
 .reel.win-glow{border-color:rgba(255,255,255,.7)!important;animation:rWin .45s ease-in-out infinite alternate}
 @keyframes rWin{from{box-shadow:0 0 16px rgba(255,255,255,.2)}to{box-shadow:0 0 32px rgba(255,255,255,.5)}}
-.result-strip{height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--fb);font-size:14px;font-weight:700;letter-spacing:.4px;text-align:center;padding:8px;transition:all .3s;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);color:var(--muted)}
-.result-strip.win{background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.35);color:#4ade80}
-.result-strip.loss{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.28);color:#f87171}
+.result-strip{height:54px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--fb);font-size:14px;font-weight:700;letter-spacing:.4px;text-align:center;padding:8px;transition:all .3s;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);color:var(--muted)}
+.result-strip.win{background:rgba(74,222,128,.15);border-color:rgba(74,222,128,.5);color:#4ade80;box-shadow:0 0 18px rgba(74,222,128,.25), inset 0 0 12px rgba(74,222,128,.1);animation:resultPop .4s ease-out}
+.result-strip.loss{background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.5);color:#f87171;box-shadow:0 0 16px rgba(248,113,113,.2);animation:resultPop .4s ease-out}
 .result-strip.idle{font-size:11px;letter-spacing:2.5px;text-transform:uppercase}
+@keyframes resultPop{0%{transform:scale(.92);opacity:.5}60%{transform:scale(1.03)}100%{transform:scale(1);opacity:1}}
 
 /* ── SPEED CONTROLS ── */
 .speed-row{display:flex;gap:6px;margin-bottom:12px}
@@ -1420,8 +1421,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 // Выполняется ДО основного 275KB скрипта
 (function(){
   var splashStartedAt = Date.now();
-  var MIN_SPLASH_MS = 4500; // минимум показа — чтобы все 3 галочки и плавный бар успели отрисоваться
-  var MAX_SPLASH_MS = 9000; // максимум — hard timeout на случай если что-то не загрузится
+  var MIN_SPLASH_MS = 6500; // минимум показа — чтобы строгая последовательность галочек+бара успела полностью пройти
+  var MAX_SPLASH_MS = 12000; // максимум — hard timeout на случай если что-то не загрузится
   var dataReady = false;
   var closed = false;
 
@@ -2058,8 +2059,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div class="bet-btn" style="color:var(--gold)"   onclick="multBet(5)">×5</div>
     </div>
     <div class="custom-row">
-      <input class="custom-input" id="customInput" type="text" inputmode="numeric" pattern="[0-9]*" min="10000" placeholder="Ставка: 10000 / 1к / 1кк / 1ккк" enterkeyhint="done">
-      <button class="custom-ok" onclick="applyCustom()">Сделать ставку</button>
+      <input class="custom-input" id="customInput" type="text" inputmode="numeric" pattern="[0-9]*" min="10000" placeholder="Своя сумма (Enter чтобы применить)" enterkeyhint="done"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();applyCustom();this.blur();}"
+        onblur="if(this.value.trim())applyCustom();">
     </div>
 
     <!-- Save status -->
@@ -2473,16 +2475,16 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     <div style="height:6px"></div>
     <div class="pt-card">
       <div class="pt-title">Таблица выплат</div>
-      <div class="pt-row"><span class="pt-syms">💎💎💎</span><span class="pt-mult mega">× 100 ✦</span></div>
-      <div class="pt-row"><span class="pt-syms">7️⃣7️⃣7️⃣</span><span class="pt-mult" style="color:var(--pink)">× 50</span></div>
-      <div class="pt-row"><span class="pt-syms">🍀🍀🍀</span><span class="pt-mult" style="color:var(--green)">× 15</span></div>
-      <div class="pt-row"><span class="pt-syms">🍒🍒🍒</span><span class="pt-mult" style="color:#ff6b6b">× 20</span></div>
-      <div class="pt-row"><span class="pt-syms">⭐⭐⭐</span><span class="pt-mult" style="color:var(--cyan)">× 8</span></div>
-      <div class="pt-row"><span class="pt-syms">🔔🔔🔔</span><span class="pt-mult">× 5</span></div>
-      <div class="pt-row"><span class="pt-syms">🍋🍋🍋</span><span class="pt-mult" style="color:var(--text)">× 3</span></div>
-      <div class="pt-row"><span class="pt-syms" style="font-size:12px">Пара 💎💎 / ⭐⭐</span><span class="pt-mult" style="color:var(--gold)">× 3</span></div>
-      <div class="pt-row"><span class="pt-syms" style="font-size:12px">Пара 7️⃣7️⃣ / 🍒🍒 / 🍀🍀</span><span class="pt-mult" style="color:var(--cyan)">× 2</span></div>
-      <div class="pt-row"><span class="pt-syms" style="font-size:12px">Пара 🔔🔔 / 🍋🍋</span><span class="pt-mult" style="color:var(--muted)">× 1 (возврат)</span></div>
+      <div class="pt-row"><span class="pt-syms" id="ptRow1"></span><span class="pt-mult mega">× 100 ✦</span></div>
+      <div class="pt-row"><span class="pt-syms" id="ptRow2"></span><span class="pt-mult" style="color:var(--pink)">× 50</span></div>
+      <div class="pt-row"><span class="pt-syms" id="ptRow3"></span><span class="pt-mult" style="color:#ffd060">× 30</span></div>
+      <div class="pt-row"><span class="pt-syms" id="ptRow4"></span><span class="pt-mult" style="color:#ff6b6b">× 20</span></div>
+      <div class="pt-row"><span class="pt-syms" id="ptRow5"></span><span class="pt-mult" style="color:var(--green)">× 15</span></div>
+      <div class="pt-row"><span class="pt-syms" id="ptRow6"></span><span class="pt-mult" style="color:var(--cyan)">× 8</span></div>
+      <div class="pt-row"><span class="pt-syms" id="ptRow7"></span><span class="pt-mult">× 5</span></div>
+      <div class="pt-row"><span class="pt-syms" id="ptRow8" style="font-size:12px"></span><span class="pt-mult" style="color:var(--gold)">× 3</span></div>
+      <div class="pt-row"><span class="pt-syms" id="ptRow9" style="font-size:12px"></span><span class="pt-mult" style="color:var(--cyan)">× 2</span></div>
+      <div class="pt-row"><span class="pt-syms" id="ptRow10" style="font-size:12px"></span><span class="pt-mult" style="color:var(--muted)">× 1 (возврат)</span></div>
       <div class="pt-row"><span class="pt-syms" style="font-size:13px;color:var(--muted)">Без совпадений</span><span class="pt-mult zero">проигрыш</span></div>
     </div>
     <div class="pt-card">
@@ -2546,7 +2548,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       <div style="font-family:var(--fd);font-size:11px;color:var(--cyan);letter-spacing:1.5px;margin:14px 0 6px">🎰 СЛОТЫ</div>
       <div style="font-family:var(--fb);font-size:12px;color:rgba(255,255,255,.8);line-height:1.65">
         Выбери размер ставки кнопками или введи своё число. Нажми <b style="color:#fff">КРУТИТЬ</b> — барабаны закрутятся. Три одинаковых символа = выигрыш с множителем. Чем реже символ, тем больше приз. Смотри таблицу выплат во вкладке <b style="color:#fff">Таблица</b>.<br><br>
-        <b style="color:var(--gold)">💡 Совет:</b> напиши любую сумму которую хочешь поставить и нажми кнопку <b style="color:#fff">«Сделать ставку»</b> — тогда ставка применится!
+        <b style="color:var(--gold)">💡 Совет:</b> напиши любую сумму в поле <b style="color:#fff">«Своя сумма»</b> и нажми <b style="color:#fff">Enter</b> — ставка применится автоматически!
       </div>
 
       <div style="font-family:var(--fd);font-size:11px;color:var(--cyan);letter-spacing:1.5px;margin:14px 0 6px">🚀 РАКЕТКА</div>
@@ -2792,6 +2794,31 @@ const SYMS = [
 function getSymHtml(id) {
   return SLOT_SVGS[id] || id;
 }
+
+// Рендер таблицы выплат с реальными SVG символами
+function renderPaytable() {
+  // Каждая иконка в строке таблицы — 32×32 чтобы помещалась
+  const icon = (sym) => `<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;margin:0 2px;vertical-align:middle">${getSymHtml(sym).replace('<svg ','<svg width="32" height="32" ')}</span>`;
+  const triple = (sym) => icon(sym) + icon(sym) + icon(sym);
+  const pair = (sym) => icon(sym) + icon(sym);
+
+  const rows = [
+    { id:'ptRow1', html: triple('diamond') },                           // ×100
+    { id:'ptRow2', html: triple('seven') },                             // ×50
+    { id:'ptRow3', html: triple('ram') },                               // ×30
+    { id:'ptRow4', html: triple('cherry') },                            // ×20
+    { id:'ptRow5', html: triple('clover') },                            // ×15
+    { id:'ptRow6', html: triple('star') },                              // ×8
+    { id:'ptRow7', html: triple('bell') },                              // ×5
+    { id:'ptRow8', html: 'Пара ' + pair('diamond') },                   // ×3
+    { id:'ptRow9', html: 'Пара ' + pair('seven') + ' / ' + pair('ram') + ' / ' + pair('cherry') + ' / ' + pair('star') + ' / ' + pair('clover') }, // ×2
+    { id:'ptRow10', html: 'Пара ' + pair('bell') },                     // ×1
+  ];
+  rows.forEach(r => {
+    const el = document.getElementById(r.id);
+    if (el) el.innerHTML = r.html;
+  });
+}
 const TW = SYMS.reduce((a,s)=>a+s.w, 0);
 function rnd() {
   let r = Math.random()*TW;
@@ -2867,6 +2894,9 @@ function showPage(n) {
       });
     }catch(e){}
   }
+  if(n==='pay'){
+    try { renderPaytable(); } catch(e){}
+  }
   document.getElementById('page-'+n).classList.add('active');
   // Обновляем кнопку в хедере
   try { _updateHeaderBack(n); } catch(e){}
@@ -2910,8 +2940,10 @@ function showPage(n) {
 // ══════════════════════════════════════════════════════════
 // Применить баланс: обновить переменную, DOM, кеш
 function applyBalance(val, save) {
-  // Блокируем если ракетка управляет балансом
-  if(_rktBetting || (typeof RKT!=='undefined' && RKT.betPlaced && RKT.phase==='waiting')) return;
+  // Раньше тут стояла блокировка "если ракетка активна — не обновляй баланс".
+  // Но это ломало слоты: после выигрыша баланс не добавлялся. Убрали блокировку —
+  // слоты и ракетка корректно управляют балансом независимо (ракетка уже сама
+  // применяет свой баланс через WS cashout с актуальным серверным значением).
   setBalance(val);
 }
 // Совместимость
@@ -3050,80 +3082,111 @@ async function spin() {
     setSave('saving','СОХРАНЕНИЕ...');
     const apiResp = await apiPromise;
 
-    if(apiResp && apiResp.ok) {
-      applyBalance(apiResp.balance, true);
-    } else {
-      applyBalance(Math.max(0, balance - currentBet + (res.win ? currentBet*res.mult : 0)), true);
+    // Вычисляем prize здесь, до обновления UI — чтобы если applyBalance упадёт,
+    // отображение результата всё равно прошло
+    const computedPrize = res.win
+      ? (apiResp && apiResp.prize ? apiResp.prize : Math.floor(currentBet * res.mult))
+      : 0;
+
+    // === ГЛАВНОЕ: сначала показываем результат НА ЭКРАНЕ, потом обновляем баланс ===
+    // Раньше было наоборот: если applyBalance бросит исключение или зависнет,
+    // игрок не видел что выиграл/проиграл. Теперь результат точно покажется.
+
+    try {
+      if (res.win) {
+        S.wins++;
+        S.profit += computedPrize - currentBet;
+        S.totalWon += computedPrize;
+        if (computedPrize > S.bestWin) S.bestWin = computedPrize;
+        S.history.push('w');
+        S.streak = S.streakType === 'w' ? S.streak + 1 : 1;
+        S.streakType = 'w';
+
+        const isTriple = res.type === 'triple';
+        const tier = res.mult >= 100 ? 3 : res.mult >= 50 ? 2 : res.mult >= 10 ? 1 : 0;
+
+        if (isTriple) {
+          // Подсветка барабанов
+          requestAnimationFrame(() => {
+            try {
+              machine.classList.add('winning');
+              reels.forEach(r => r.classList.add('win-glow'));
+              setTimeout(() => {
+                reels.forEach(r => { r.classList.remove('win-glow'); r.classList.add('idle-glow'); });
+              }, 2200);
+            } catch(e){}
+          });
+          const glowMs = speedMode === 'fast' ? 1000
+                       : tier === 3 ? 3500 : tier === 2 ? 2800 : tier === 1 ? 2000 : 1500;
+          setTimeout(() => {
+            try {
+              machine.classList.remove('winning');
+              reels.forEach(r => r.classList.remove('win-glow'));
+            } catch(e){}
+          }, glowMs);
+
+          if (speedMode !== 'fast') {
+            try { spawnParticles(); } catch(e){}
+            if (tier >= 2) setTimeout(() => { try { spawnParticles(); } catch(e){} }, 350);
+            if (tier >= 3) setTimeout(() => { try { spawnParticles(); } catch(e){} }, 700);
+          }
+
+          const symHtml = getSymHtml(res.emoji);
+          const label = tier === 3 ? '🏆 ДЖЕКПОТ!'
+                      : tier === 2 ? '🎰 СУПЕР!'
+                      : tier === 1 ? '🎉 ВЫИГРЫШ!'
+                      : '✨ ВЫИГРЫШ!';
+          result.className = 'result-strip win';
+          result.innerHTML = `<span style="display:flex;align-items:center;gap:6px;justify-content:center">${label} <span style="display:inline-flex;gap:3px">${symHtml}${symHtml}${symHtml}</span> ×${res.mult} &nbsp;+${computedPrize.toLocaleString('ru-RU')} токенов</span>`;
+          try { showToast(`+${computedPrize.toLocaleString('ru-RU')} 💰`, tier >= 2 ? 'gold' : 'info'); } catch(e){}
+
+        } else {
+          // Пара
+          const symHtml = getSymHtml(res.emoji);
+          result.className = 'result-strip win';
+          if (res.mult >= 2) {
+            result.innerHTML = `<span style="display:flex;align-items:center;gap:6px;justify-content:center">✨ Пара <span style="display:inline-flex;gap:3px">${symHtml}${symHtml}</span> ×${res.mult} &nbsp;+${computedPrize.toLocaleString('ru-RU')} токенов</span>`;
+            try { showToast(`+${computedPrize.toLocaleString('ru-RU')} ✨`, 'gold'); } catch(e){}
+          } else {
+            result.innerHTML = `<span style="display:flex;align-items:center;gap:6px;justify-content:center">🤝 Пара <span style="display:inline-flex;gap:3px">${symHtml}${symHtml}</span> ×1 &nbsp;±0 (возврат)</span>`;
+            try { showToast('Пара — возврат', 'info'); } catch(e){}
+          }
+        }
+      } else {
+        S.losses++;
+        S.profit -= currentBet;
+        S.totalLost += currentBet;
+        S.history.push('l');
+        S.streak = S.streakType === 'l' ? S.streak + 1 : 1;
+        S.streakType = 'l';
+        result.className = 'result-strip loss';
+        result.textContent = `😔 Не повезло  −${currentBet.toLocaleString('ru-RU')} токенов`;
+        try { reels.forEach(r => r.classList.add('idle-glow')); } catch(e){}
+      }
+    } catch(uiErr) {
+      console.error('UI result error:', uiErr);
+      // Fallback — хотя бы простой текст если весь UI сломался
+      try {
+        result.className = res.win ? 'result-strip win' : 'result-strip loss';
+        result.textContent = res.win
+          ? `✨ Выигрыш ×${res.mult} — +${computedPrize.toLocaleString('ru-RU')}`
+          : `😔 Проигрыш −${currentBet.toLocaleString('ru-RU')}`;
+      } catch(e){}
     }
-    // Дублируем в localStorage и CloudStorage
-    try { localStorage.setItem('bal_'+USER_ID, String(balance)); } catch(e){}
-    saveCloudBalance(balance);
 
     S.spins++;
-    if(res.win) {
-      const prize = apiResp ? apiResp.prize : Math.floor(currentBet * res.mult);
-      S.wins++; S.profit+=prize-currentBet; S.totalWon+=prize;
-      if(prize>S.bestWin) S.bestWin=prize;
-      S.history.push('w');
-      S.streak=S.streakType==='w'?S.streak+1:1; S.streakType='w';
 
-      // ── Анимация по типу и уровню выигрыша ──
-      const isTriple = res.type==='triple';
-      const isPair   = res.type==='pair';
-      const tier = res.mult>=100 ? 3    // 💎 ДЖЕКПОТ
-                 : res.mult>=50  ? 2    // 7️⃣ СУПЕР
-                 : res.mult>=10  ? 1    // 🍒⭐ ХОРОШО
-                 : 0;                   // остальные / пара
-
-      if(isTriple) {
-        // Добавляем классы через rAF чтобы гарантированно применились
-        requestAnimationFrame(()=>{
-          machine.classList.add('winning');
-          reels.forEach(r=>r.classList.add('win-glow'));
-          setTimeout(()=>{reels.forEach(r=>{r.classList.remove('win-glow');r.classList.add('idle-glow');});},2200);
-        });
-        const glowMs = speedMode==='fast' ? 1000
-                     : tier===3 ? 3500 : tier===2 ? 2800 : tier===1 ? 2000 : 1500;
-        setTimeout(()=>{
-          machine.classList.remove('winning');
-          reels.forEach(r=>r.classList.remove('win-glow'));
-        }, glowMs);
-
-        if(speedMode!=='fast') {
-          spawnParticles();
-          if(tier>=2) setTimeout(spawnParticles, 350);
-          if(tier>=3) setTimeout(spawnParticles, 700);
-        }
-
-        const symHtml = getSymHtml(res.emoji);
-        const label = tier===3 ? '🏆 ДЖЕКПОТ!'
-                    : tier===2 ? '🎰 СУПЕР!'
-                    : tier===1 ? '🎉 ВЫИГРЫШ!'
-                    : '✨ ВЫИГРЫШ!';
-        result.className='result-strip win';
-        result.innerHTML=`<span style="display:flex;align-items:center;gap:6px;justify-content:center">${label} <span style="display:inline-flex;gap:3px">${symHtml}${symHtml}${symHtml}</span> ×${res.mult} &nbsp;+${prize.toLocaleString('ru-RU')} токенов</span>`;
-        showToast(`+${prize.toLocaleString('ru-RU')} 💰`, tier>=2 ? 'gold' : 'info');
-
+    // Применяем баланс ПОСЛЕ показа результата (если раньше ошибка, результат всё равно видно)
+    try {
+      if (apiResp && apiResp.ok) {
+        applyBalance(apiResp.balance, true);
       } else {
-        // Пара — ×2 или ×1 в зависимости от символа
-        const symHtml = getSymHtml(res.emoji);
-        result.className='result-strip win';
-        if(res.mult >= 2) {
-          result.innerHTML=`<span style="display:flex;align-items:center;gap:6px;justify-content:center">✨ Пара <span style="display:inline-flex;gap:3px">${symHtml}${symHtml}</span> ×${res.mult} &nbsp;+${prize.toLocaleString('ru-RU')} токенов</span>`;
-          showToast(`+${prize.toLocaleString('ru-RU')} ✨`, 'gold');
-        } else {
-          result.innerHTML=`<span style="display:flex;align-items:center;gap:6px;justify-content:center">🤝 Пара <span style="display:inline-flex;gap:3px">${symHtml}${symHtml}</span> ×1 &nbsp;±0 (возврат)</span>`;
-          showToast(`Пара — возврат`, 'info');
-        }
+        applyBalance(Math.max(0, balance - currentBet + (res.win ? currentBet * res.mult : 0)), true);
       }
-
-    } else {
-      S.losses++; S.profit-=currentBet; S.totalLost+=currentBet;
-      S.history.push('l');
-      S.streak=S.streakType==='l'?S.streak+1:1; S.streakType='l';
-      result.className='result-strip loss';
-      result.textContent=`😔 Не повезло  -${currentBet.toLocaleString('ru-RU')} токенов`;
-      reels.forEach(r=>r.classList.add('idle-glow'));
+      try { localStorage.setItem('bal_' + USER_ID, String(balance)); } catch(e){}
+      try { saveCloudBalance(balance); } catch(e){}
+    } catch(balErr) {
+      console.error('Balance apply error:', balErr);
     }
     if(S.history.length>20) S.history=S.history.slice(-20);
     saveStats();
@@ -3146,9 +3209,16 @@ async function spin() {
     console.error('Spin error:',err);
     // Тихо — не показываем ошибку пользователю
   } finally {
-    spinning=false;
-    btn.disabled=false; if(bBtn) bBtn.disabled=false;
+    // Задержка перед тем как разрешить следующий спин — чтобы пользователь
+    // успел прочитать результат (выигрыш/проигрыш). Без этого при быстром клике
+    // текст результата мгновенно перезаписывается "КРУТИМ..." и игрок не понимает
+    // что произошло.
     btn.textContent='🎰 КРУТИТЬ';
+    const unlockDelay = autoMode ? 0 : (speedMode==='fast' ? 500 : 1200);
+    setTimeout(() => {
+      spinning=false;
+      btn.disabled=false; if(bBtn) bBtn.disabled=false;
+    }, unlockDelay);
   }
 }
 
@@ -4000,7 +4070,10 @@ async function loadLeaderboard(force = false) {
           _leaderboardCache = leaders;
           _leaderboardTs    = Date.now();
           renderLeaderboard(leaders, d.my_rank);
-          if(status) status.textContent = 'ОБНОВЛЕНО: ' + new Date().toLocaleTimeString('ru-RU');
+          if(status) {
+            const total = d.total || leaders.length;
+            status.textContent = 'ВСЕГО ИГРОКОВ: ' + total + ' · ОБНОВЛЕНО: ' + new Date().toLocaleTimeString('ru-RU');
+          }
           if(btn) btn.disabled = false;
           return;
         }
@@ -4042,7 +4115,7 @@ function renderLeaderboard(leaders, myRank) {
     const rankTxt  = rank <= 4 ? RANK_ICONS[rank-1] : '#' + rank;
 
     const won  = (p.total_won || 0).toLocaleString('ru-RU');
-    const name = (p.name || p.custom_id || 'ИГРОК').toString().toUpperCase().slice(0, 12);
+    const name = (p.name || p.custom_id || 'ИГРОК').toString().toUpperCase().slice(0, 15);
     var _rawAva = p.avatar || (rank === 1 ? '👑' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🎮');
     const ava = renderAvatarHtml(_rawAva, 36);
     const rnkColor = rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'rx';
@@ -4063,12 +4136,14 @@ function renderLeaderboard(leaders, myRank) {
     list.appendChild(card);
   });
 
-  // Моё место если не в топ-10
+  // Твоё место — показываем всегда если игрок есть в базе и не в топ-3
+  // (в топ-3 игрок сам себя увидит с пометкой "← ВЫ")
   const myCard = document.getElementById('myRankCard');
   const myTxt  = document.getElementById('myRankText');
-  if(myCard && myTxt && myRank && myRank > 10) {
+  if(myCard && myTxt && myRank && myRank > 3) {
     myCard.style.display = 'block';
-    myTxt.textContent = '#' + myRank + ' место · ' + (S.totalWon||0).toLocaleString('ru-RU') + ' токенов выиграно';
+    const suffix = myRank === 1 ? '!' : myRank <= 10 ? ' — в топе!' : '';
+    myTxt.textContent = '#' + myRank + ' место · ' + (S.totalWon||0).toLocaleString('ru-RU') + ' токенов' + suffix;
   } else if(myCard) {
     myCard.style.display = 'none';
   }
@@ -4482,7 +4557,7 @@ async function init() {
   const emergency = setTimeout(() => {
     closeSplash();
     try { startBalancePolling(); } catch(e) {}
-  }, hasApi ? 11000 : 2500);
+  }, hasApi ? 14000 : 3500);
 
   try {
     // ── Звёздочки
@@ -4506,39 +4581,39 @@ async function init() {
       } catch(e){}
     }
 
-    // ── Прогресс 0→25% — анимация появления
+    // ── Прогресс 0→20% — анимация появления (1.2 секунды)
     let prog = 0;
-    const t1 = setInterval(()=>{ prog=Math.min(prog+2,25); setBar(prog); }, 50);
-    await new Promise(r=>setTimeout(r,800));
-    clearInterval(t1); setBar(25);
+    const t1 = setInterval(()=>{ prog=Math.min(prog+1,20); setBar(prog); }, 60);
+    await new Promise(r=>setTimeout(r,1200));
+    clearInterval(t1); setBar(20);
 
-    // ── Шаг 1: Подключение
+    // ── Шаг 1: Подключение (минимум 1.5 секунды)
     splashStep('step1', 'active');
     if (status) status.textContent = 'ПОДКЛЮЧЕНИЕ К СЕРВЕРУ...';
-    await new Promise(r=>setTimeout(r,700));  // было 300 — держим дольше
+    await new Promise(r=>setTimeout(r,1200));
 
     if (!hasApi) {
       splashStep('step1', 'fail');
       splashStep('step2', 'fail');
       splashStep('step3', 'active');
       if (status) status.textContent = 'ДЕМО РЕЖИМ — API НЕ ПОДКЛЮЧЁН';
-      setBar(60);
-      await new Promise(r=>setTimeout(r,600));
-      splashStep('step3', 'done');
-      setBar(100);
-      if (status) status.textContent = '✅ ' + balance.toLocaleString('ru-RU') + ' ТОКЕНОВ';
+      for (let i=20; i<=60; i++) { setBar(i); await new Promise(r=>setTimeout(r,25)); }
       await new Promise(r=>setTimeout(r,900));
+      splashStep('step3', 'done');
+      for (let i=60; i<=100; i++) { setBar(i); await new Promise(r=>setTimeout(r,25)); }
+      if (status) status.textContent = '✅ ' + balance.toLocaleString('ru-RU') + ' ТОКЕНОВ';
+      await new Promise(r=>setTimeout(r,1200));
     } else {
       splashStep('step1', 'done');
-      // Плавный прогресс 25% → 40%
-      for (let i=25; i<=40; i++) { setBar(i); await new Promise(r=>setTimeout(r,20)); }
-      await new Promise(r=>setTimeout(r,500));  // небольшая пауза после галочки 1
+      // Плавный прогресс 20% → 40% (600мс)
+      for (let i=20; i<=40; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
+      await new Promise(r=>setTimeout(r,800));  // пауза после галочки 1
 
-      // ── Шаг 2: Получение баланса
+      // ── Шаг 2: Получение баланса (минимум 1.5 секунды видимых)
       splashStep('step2', 'active');
       if (status) status.textContent = 'ПОЛУЧЕНИЕ БАЛАНСА...';
 
-      const t2 = setInterval(()=>{ prog=Math.min(prog+1,65); setBar(prog); }, 80);
+      const t2 = setInterval(()=>{ prog=Math.min(prog+1,65); setBar(prog); }, 100);
       prog = 40;
 
       // Ждём баланс до 5 секунд — ngrok может быть медленным
@@ -4557,47 +4632,47 @@ async function init() {
 
       clearInterval(t2);
 
-      // Гарантируем минимум 800мс в шаге 2 (даже если сервер ответил мгновенно)
-      await new Promise(r=>setTimeout(r,400));
+      // Гарантируем минимум 800мс в шаге 2
+      await new Promise(r=>setTimeout(r,800));
 
       if (apiBal !== null) {
         setBalance(apiBal);
         try { localStorage.setItem('bal_'+USER_ID, String(apiBal)); } catch(e){}
         splashBalShow(apiBal, '✅ АКТУАЛЬНЫЙ', 'from-bot');
         splashStep('step2', 'done');
-        // Плавно до 75%
-        for (let i=Math.max(prog,65); i<=75; i++) { setBar(i); await new Promise(r=>setTimeout(r,25)); }
-        await new Promise(r=>setTimeout(r,500));  // пауза после галочки 2
+        // Плавно до 70%
+        for (let i=Math.max(prog,65); i<=70; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
+        await new Promise(r=>setTimeout(r,800));  // пауза после галочки 2
 
-        // ── Шаг 3: Синхронизация данных
+        // ── Шаг 3: Синхронизация данных (минимум 1.5 секунды)
         splashStep('step3', 'active');
         if (status) status.textContent = 'СИНХРОНИЗАЦИЯ ДАННЫХ...';
-        const t3 = setInterval(()=>{ prog=Math.min(prog+1,92); setBar(prog); }, 80);
-        prog = 75;
-        try { await Promise.race([loadAllFromCloud(), new Promise(r=>setTimeout(r,900))]); } catch(e){}
+        const t3 = setInterval(()=>{ prog=Math.min(prog+1,90); setBar(prog); }, 100);
+        prog = 70;
+        try { await Promise.race([loadAllFromCloud(), new Promise(r=>setTimeout(r,1000))]); } catch(e){}
         try { setAvaEl(document.getElementById('spoAvatar'), 44); } catch(e){}
         try { setAvaEl(document.getElementById('pAvatar'), 50); } catch(e){}
         clearInterval(t3);
-        // Гарантируем минимум 700мс в шаге 3
-        await new Promise(r=>setTimeout(r,400));
+        // Гарантируем минимум 800мс в шаге 3
+        await new Promise(r=>setTimeout(r,800));
         splashStep('step3', 'done');
         // Плавно до 100%
-        for (let i=Math.max(prog,92); i<=100; i++) { setBar(i); await new Promise(r=>setTimeout(r,25)); }
+        for (let i=Math.max(prog,90); i<=100; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
         if (status) status.textContent = '✅ ' + apiBal.toLocaleString('ru-RU') + ' ТОКЕНОВ';
         // Задержка ПОСЛЕ того как всё готово — чтобы показать законченное состояние
-        await new Promise(r=>setTimeout(r,900));
+        await new Promise(r=>setTimeout(r,1200));
 
       } else {
         // Не получили баланс
         splashStep('step2', 'fail');
         splashStep('step3', 'active');
         if (status) status.textContent = 'КЭШИРОВАННЫЙ БАЛАНС';
-        for (let i=prog; i<=90; i++) { setBar(i); await new Promise(r=>setTimeout(r,25)); }
-        await new Promise(r=>setTimeout(r,500));
+        for (let i=prog; i<=90; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
+        await new Promise(r=>setTimeout(r,800));
         splashStep('step3', 'done');
-        for (let i=90; i<=100; i++) { setBar(i); await new Promise(r=>setTimeout(r,25)); }
+        for (let i=90; i<=100; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
         if (status) status.textContent = '⚠️ ' + balance.toLocaleString('ru-RU') + ' (КЭШ)';
-        await new Promise(r=>setTimeout(r,900));
+        await new Promise(r=>setTimeout(r,1200));
       }
     }
 
@@ -5879,6 +5954,19 @@ function applyState(snap) {
       R.stats.g = (R.stats.g||0) + 1;
       R.stats.p = (R.stats.p||0) - R.myBet;
       rktSaveStats();
+      // ── Глобальная статистика казино — засчитываем игру и проигрыш ──
+      try {
+        S.spins = (S.spins || 0) + 1;
+        S.losses = (S.losses || 0) + 1;
+        S.profit = (S.profit || 0) - R.myBet;
+        S.totalLost = (S.totalLost || 0) + R.myBet;
+        S.history = S.history || [];
+        S.history.push('l');
+        if (S.history.length > 20) S.history = S.history.slice(-20);
+        saveStats();
+        try { updateMiniStats(); } catch(e){}
+        try { renderProfile(); } catch(e){}
+      } catch(e) {}
       rktSetRes('💥 Краш ×' + R.crashAt.toFixed(2) + ' — −' + R.myBet.toLocaleString('ru-RU'), 'loss');
       try { showToast('💥 Краш ×' + R.crashAt.toFixed(2), 'error'); } catch(e) {}
     }
@@ -6130,6 +6218,15 @@ function _demoCrash() {
   rktShowCrash(R.crashAt);
   if (R.betPlaced && !R.cashedOut) {
     R.stats.g++; R.stats.p -= R.myBet; rktSaveStats();
+    try {
+      S.spins = (S.spins || 0) + 1;
+      S.losses = (S.losses || 0) + 1;
+      S.profit = (S.profit || 0) - R.myBet;
+      S.totalLost = (S.totalLost || 0) + R.myBet;
+      saveStats();
+      try { updateMiniStats(); } catch(e){}
+      try { renderProfile(); } catch(e){}
+    } catch(e){}
     rktSetRes('💥 Краш ×' + R.crashAt.toFixed(2) + ' — -' + R.myBet.toLocaleString('ru-RU'), 'loss');
     showToast('💥 Краш ×' + R.crashAt.toFixed(2), 'error');
   }
@@ -6390,6 +6487,29 @@ function rktCashout() {
   showToast('🎉 ×'+mult.toFixed(2)+' +'+profit.toLocaleString('ru-RU'),'success');
   rktUI();  // моментально перерисовать кнопку
 
+  // ── ГЛОБАЛЬНАЯ СТАТИСТИКА КАЗИНО ──
+  // Обновляем S прямо здесь (оптимистично), чтобы в профиле и топе
+  // выигрыш появился сразу, не дожидаясь серверного подтверждения.
+  // Идемпотентно: R._statsRecorded защищает от двойного учёта
+  if (!R._statsRecorded) {
+    try {
+      R.stats.g++; R.stats.b = Math.max(R.stats.b||0, mult); R.stats.p = (R.stats.p||0) + profit;
+      R._statsRecorded = true;
+      rktSaveStats();
+      S.spins = (S.spins || 0) + 1;
+      S.wins  = (S.wins  || 0) + 1;
+      S.profit = (S.profit || 0) + profit;
+      S.totalWon = (S.totalWon || 0) + prize;
+      if (prize > (S.bestWin || 0)) S.bestWin = prize;
+      S.history = S.history || [];
+      S.history.push('w');
+      if (S.history.length > 20) S.history = S.history.slice(-20);
+      saveStats();
+      try { updateMiniStats(); } catch(e){}
+      try { renderProfile(); } catch(e){}
+    } catch(e) { console.warn('[RKT] stats update err', e); }
+  }
+
   // Теперь отправляем на сервер для подтверждения
   const sent = rktWsSend({type:'cashout', uid:parseInt(USER_ID), secret:API_SECRET, mult});
 
@@ -6473,6 +6593,26 @@ function rktOnCashoutDone(mult, prize) {
   R.stats.g++; R.stats.b=Math.max(R.stats.b||0,mult); R.stats.p=(R.stats.p||0)+profit;
   R._statsRecorded = true;
   rktSaveStats();
+
+  // ── ГЛОБАЛЬНАЯ СТАТИСТИКА КАЗИНО (профиль + топ) ──
+  // Добавляем выигрыш ракетки в общую статистику казино (S), чтобы:
+  // 1) В профиле отображался общий выигрыш (слоты + ракетка)
+  // 2) В топе учитывались токены с ракетки (offline fallback)
+  // 3) Футер главной страницы показывал правильное число побед
+  try {
+    S.spins = (S.spins || 0) + 1;
+    S.wins  = (S.wins  || 0) + 1;
+    S.profit = (S.profit || 0) + profit;
+    S.totalWon = (S.totalWon || 0) + prize;
+    if (prize > (S.bestWin || 0)) S.bestWin = prize;
+    S.history = S.history || [];
+    S.history.push('w');
+    if (S.history.length > 20) S.history = S.history.slice(-20);
+    saveStats();
+    try { updateMiniStats(); } catch(e){}
+    try { renderProfile(); } catch(e){}
+  } catch(e) { console.warn('[RKT] stats update err', e); }
+
   if (!API_URL) setBalance(balance + prize); // demo
   rktSetRes('🎉 Забрано ×'+mult.toFixed(2)+' — +'+profit.toLocaleString('ru-RU'), 'win');
   showToast('🎉 ×'+mult.toFixed(2)+' +'+profit.toLocaleString('ru-RU'),'success');
