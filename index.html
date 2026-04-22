@@ -4585,13 +4585,45 @@ async function init() {
       } catch(e){}
     }
 
+    // ══════════════════════════════════════════════════════════
+    // ПАРАЛЛЕЛЬНАЯ ЗАГРУЗКА: все fetch стартуют СРАЗУ, в фоне
+    // Анимация прогресс-бара и галочек идёт поверх и красиво ждёт
+    // К моменту закрытия splash всё уже загружено и отрендерено
+    // ══════════════════════════════════════════════════════════
+
+    // Promise 1: баланс из API (до 5с)
+    const balancePromise = hasApi ? (async () => {
+      try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(()=>ctrl.abort(), 5000);
+        const r = await fetch(
+          API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
+          { signal: ctrl.signal, headers: {'ngrok-skip-browser-warning':'1'} }
+        );
+        clearTimeout(tid);
+        const d = await r.json();
+        if (d && d.ok && typeof d.balance==='number') return d.balance;
+      } catch(e){}
+      return null;
+    })() : Promise.resolve(null);
+
+    // Promise 2: cloud-статы (слоты + ракетка + аватарка)
+    const cloudPromise = (typeof loadAllFromCloud === 'function')
+      ? loadAllFromCloud().catch(e => console.warn('[splash] cloud:', e))
+      : Promise.resolve();
+
+    // Promise 3: предзагрузка топлидеров — параллельно
+    const topPromise = (hasApi && typeof loadLeaderboard === 'function')
+      ? loadLeaderboard(true).catch(e => console.warn('[splash] top:', e))
+      : Promise.resolve();
+
     // ── Прогресс 0→20% — анимация появления (1.2 секунды)
     let prog = 0;
     const t1 = setInterval(()=>{ prog=Math.min(prog+1,20); setBar(prog); }, 60);
     await new Promise(r=>setTimeout(r,1200));
     clearInterval(t1); setBar(20);
 
-    // ── Шаг 1: Подключение (минимум 1.5 секунды)
+    // ── Шаг 1: Подключение (1.2 сек визуально)
     splashStep('step1', 'active');
     if (status) status.textContent = 'ПОДКЛЮЧЕНИЕ К СЕРВЕРУ...';
     await new Promise(r=>setTimeout(r,1200));
@@ -4609,34 +4641,22 @@ async function init() {
       await new Promise(r=>setTimeout(r,1200));
     } else {
       splashStep('step1', 'done');
-      // Плавный прогресс 20% → 40% (600мс)
+      // Плавный прогресс 20% → 40%
       for (let i=20; i<=40; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
-      await new Promise(r=>setTimeout(r,800));  // пауза после галочки 1
+      await new Promise(r=>setTimeout(r,800));
 
-      // ── Шаг 2: Получение баланса (минимум 1.5 секунды видимых)
+      // ── Шаг 2: Получение баланса — ждём Promise который уже крутится в фоне
       splashStep('step2', 'active');
       if (status) status.textContent = 'ПОЛУЧЕНИЕ БАЛАНСА...';
 
       const t2 = setInterval(()=>{ prog=Math.min(prog+1,65); setBar(prog); }, 100);
       prog = 40;
 
-      // Ждём баланс до 5 секунд — ngrok может быть медленным
-      let apiBal = null;
-      try {
-        const ctrl = new AbortController();
-        const tid = setTimeout(()=>ctrl.abort(), 5000);
-        const r = await fetch(
-          API_URL+'/casino/balance?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-          { signal: ctrl.signal, headers: {'ngrok-skip-browser-warning':'1'} }
-        );
-        clearTimeout(tid);
-        const d = await r.json();
-        if (d && d.ok && typeof d.balance==='number') apiBal = d.balance;
-      } catch(e){}
+      // Balance уже летит параллельно — просто дожидаемся его
+      const apiBal = await balancePromise;
 
       clearInterval(t2);
-
-      // Гарантируем минимум 800мс в шаге 2
+      // Минимум 800мс визуально на шаге 2 (даже если балans пришёл мгновенно)
       await new Promise(r=>setTimeout(r,800));
 
       if (apiBal !== null) {
@@ -4644,49 +4664,44 @@ async function init() {
         try { localStorage.setItem('bal_'+USER_ID, String(apiBal)); } catch(e){}
         splashBalShow(apiBal, '✅ АКТУАЛЬНЫЙ', 'from-bot');
         splashStep('step2', 'done');
-        // Плавно до 70%
         for (let i=Math.max(prog,65); i<=70; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
-        await new Promise(r=>setTimeout(r,800));  // пауза после галочки 2
+        await new Promise(r=>setTimeout(r,800));
 
-        // ── Шаг 3: Синхронизация данных (ждём ВСЁ реально)
+        // ── Шаг 3: Синхронизация данных — cloud+top уже крутятся в фоне
         splashStep('step3', 'active');
         if (status) status.textContent = 'СИНХРОНИЗАЦИЯ ДАННЫХ...';
         const t3 = setInterval(()=>{ prog=Math.min(prog+1,90); setBar(prog); }, 120);
         prog = 70;
 
-        // Параллельно: 1) cloud-статы (слоты+ракетка+аватарка), 2) предзагрузка топлидеров
-        // — чтобы к моменту закрытия splash юзер мог сразу открыть любую вкладку
-        const cloudPromise = loadAllFromCloud().catch(e => console.warn('[splash] cloud:', e));
-        const topPromise = (typeof loadLeaderboard === 'function')
-          ? loadLeaderboard(true).catch(e => console.warn('[splash] top:', e))
-          : Promise.resolve();
-
-        // Ждём реальной загрузки cloud — до 5 секунд (раньше было 1с и статы не успевали)
+        // Ждём cloud (он уже крутится с t=0 — к этому моменту обычно уже готов)
         try { await Promise.race([cloudPromise, new Promise(r=>setTimeout(r,5000))]); } catch(e){}
-        // Топ подгружается параллельно — не блокируем им splash, даём ему максимум 2 сек сверху
+        // Ждём топ (тоже с t=0 — скорее всего уже готов)
         try { await Promise.race([topPromise, new Promise(r=>setTimeout(r,2000))]); } catch(e){}
 
-        // Рендерим всё СРАЗУ — чтобы после закрытия splash юзер увидел актуальные данные
+        // Рендерим ВСЁ перед закрытием splash
         try { renderProfile(); } catch(e){}
         try { updateMiniStats(); } catch(e){}
         try { rktUI && rktUI(); } catch(e){}
         try { setAvaEl(document.getElementById('spoAvatar'), 44); } catch(e){}
         try { setAvaEl(document.getElementById('pAvatar'), 50); } catch(e){}
+
         clearInterval(t3);
-        // Гарантируем минимум 1 секунду в шаге 3 (визуально)
         await new Promise(r=>setTimeout(r,1000));
         splashStep('step3', 'done');
-        // Плавно до 100%
         for (let i=Math.max(prog,90); i<=100; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
         if (status) status.textContent = '✅ ' + apiBal.toLocaleString('ru-RU') + ' ТОКЕНОВ';
-        // Задержка ПОСЛЕ того как всё готово — чтобы показать законченное состояние
         await new Promise(r=>setTimeout(r,1200));
 
       } else {
-        // Не получили баланс
+        // Баланс не пришёл — работаем на кэше
         splashStep('step2', 'fail');
         splashStep('step3', 'active');
         if (status) status.textContent = 'КЭШИРОВАННЫЙ БАЛАНС';
+        // Но cloud и top всё равно могли прийти — подождём их
+        try { await Promise.race([cloudPromise, new Promise(r=>setTimeout(r,3000))]); } catch(e){}
+        try { renderProfile(); } catch(e){}
+        try { updateMiniStats(); } catch(e){}
+        try { rktUI && rktUI(); } catch(e){}
         for (let i=prog; i<=90; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
         await new Promise(r=>setTimeout(r,800));
         splashStep('step3', 'done');
