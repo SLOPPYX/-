@@ -2588,15 +2588,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── Убиваем сплеш через 2с — гарантия на любом устройстве ───
-!function(){
-  var t = setTimeout(function(){
-    var s = document.getElementById('splash');
-    if(s){ s.style.cssText='display:none!important;visibility:hidden!important;pointer-events:none!important;opacity:0!important;z-index:-1!important'; try{s.parentNode.removeChild(s);}catch(e){} }
-  }, 2000);
-  // Если init() сработает быстрее — он сам закроет и отменит этот таймер
-  window.__splashKillTimer = t;
-}();
+// Саботажник удалён — раньше здесь был setTimeout(() => remove splash, 2000),
+// который убивал splash через 2 сек независимо от init().
+// Теперь splash полностью управляется контроллером сверху (MIN_SPLASH_MS / MAX_SPLASH_MS).
 // ══════════════════════════════════════════════════════════
 // TELEGRAM INIT — максимально безопасно
 // ══════════════════════════════════════════════════════════
@@ -4586,12 +4580,8 @@ async function init() {
     }
 
     // ══════════════════════════════════════════════════════════
-    // ПАРАЛЛЕЛЬНАЯ ЗАГРУЗКА: все fetch стартуют СРАЗУ, в фоне
-    // Анимация прогресс-бара и галочек идёт поверх и красиво ждёт
-    // К моменту закрытия splash всё уже загружено и отрендерено
+    // ПАРАЛЛЕЛЬНАЯ ЗАГРУЗКА — стартует в t=0, пока идёт анимация
     // ══════════════════════════════════════════════════════════
-
-    // Promise 1: баланс из API (до 5с)
     const balancePromise = hasApi ? (async () => {
       try {
         const ctrl = new AbortController();
@@ -4607,12 +4597,10 @@ async function init() {
       return null;
     })() : Promise.resolve(null);
 
-    // Promise 2: cloud-статы (слоты + ракетка + аватарка)
     const cloudPromise = (typeof loadAllFromCloud === 'function')
       ? loadAllFromCloud().catch(e => console.warn('[splash] cloud:', e))
       : Promise.resolve();
 
-    // Promise 3: предзагрузка топлидеров — параллельно
     const topPromise = (hasApi && typeof loadLeaderboard === 'function')
       ? loadLeaderboard(true).catch(e => console.warn('[splash] top:', e))
       : Promise.resolve();
@@ -4623,7 +4611,7 @@ async function init() {
     await new Promise(r=>setTimeout(r,1200));
     clearInterval(t1); setBar(20);
 
-    // ── Шаг 1: Подключение (1.2 сек визуально)
+    // ── Шаг 1: Подключение (1.2 сек)
     splashStep('step1', 'active');
     if (status) status.textContent = 'ПОДКЛЮЧЕНИЕ К СЕРВЕРУ...';
     await new Promise(r=>setTimeout(r,1200));
@@ -4641,22 +4629,19 @@ async function init() {
       await new Promise(r=>setTimeout(r,1200));
     } else {
       splashStep('step1', 'done');
-      // Плавный прогресс 20% → 40%
       for (let i=20; i<=40; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
       await new Promise(r=>setTimeout(r,800));
 
-      // ── Шаг 2: Получение баланса — ждём Promise который уже крутится в фоне
+      // ── Шаг 2: Получение баланса — promise уже летит в фоне
       splashStep('step2', 'active');
       if (status) status.textContent = 'ПОЛУЧЕНИЕ БАЛАНСА...';
 
       const t2 = setInterval(()=>{ prog=Math.min(prog+1,65); setBar(prog); }, 100);
       prog = 40;
 
-      // Balance уже летит параллельно — просто дожидаемся его
       const apiBal = await balancePromise;
 
       clearInterval(t2);
-      // Минимум 800мс визуально на шаге 2 (даже если балans пришёл мгновенно)
       await new Promise(r=>setTimeout(r,800));
 
       if (apiBal !== null) {
@@ -4667,18 +4652,15 @@ async function init() {
         for (let i=Math.max(prog,65); i<=70; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
         await new Promise(r=>setTimeout(r,800));
 
-        // ── Шаг 3: Синхронизация данных — cloud+top уже крутятся в фоне
+        // ── Шаг 3: Синхронизация — cloud+top уже крутятся в фоне
         splashStep('step3', 'active');
         if (status) status.textContent = 'СИНХРОНИЗАЦИЯ ДАННЫХ...';
         const t3 = setInterval(()=>{ prog=Math.min(prog+1,90); setBar(prog); }, 120);
         prog = 70;
 
-        // Ждём cloud (он уже крутится с t=0 — к этому моменту обычно уже готов)
         try { await Promise.race([cloudPromise, new Promise(r=>setTimeout(r,5000))]); } catch(e){}
-        // Ждём топ (тоже с t=0 — скорее всего уже готов)
         try { await Promise.race([topPromise, new Promise(r=>setTimeout(r,2000))]); } catch(e){}
 
-        // Рендерим ВСЁ перед закрытием splash
         try { renderProfile(); } catch(e){}
         try { updateMiniStats(); } catch(e){}
         try { rktUI && rktUI(); } catch(e){}
@@ -4693,11 +4675,9 @@ async function init() {
         await new Promise(r=>setTimeout(r,1200));
 
       } else {
-        // Баланс не пришёл — работаем на кэше
         splashStep('step2', 'fail');
         splashStep('step3', 'active');
         if (status) status.textContent = 'КЭШИРОВАННЫЙ БАЛАНС';
-        // Но cloud и top всё равно могли прийти — подождём их
         try { await Promise.race([cloudPromise, new Promise(r=>setTimeout(r,3000))]); } catch(e){}
         try { renderProfile(); } catch(e){}
         try { updateMiniStats(); } catch(e){}
