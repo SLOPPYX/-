@@ -1421,8 +1421,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 // Выполняется ДО основного 275KB скрипта
 (function(){
   var splashStartedAt = Date.now();
-  var MIN_SPLASH_MS = 8000; // минимум показа — 8 секунд для неторопливой красивой загрузки
-  var MAX_SPLASH_MS = 14000; // максимум — hard timeout на случай если что-то не загрузится
+  var MIN_SPLASH_MS = 5500; // минимум показа — 5.5 секунд (быстрая загрузка)
+  var MAX_SPLASH_MS = 11000; // максимум — hard timeout на случай если что-то не загрузится
   var dataReady = false;
   var closed = false;
 
@@ -2740,16 +2740,19 @@ function saveStats() {
 }
 const _ss = loadStats();
 // Гарантируем все поля — если localStorage был из старой версии без некоторых полей
+// Счётчики (spins/wins/losses) обязаны быть целыми — Math.floor защищает от
+// мусора типа 24.31, который мог попасть из предыдущих версий из-за бага
+// суммирования R.stats.b (best multiplier) как количества побед
 const S = {
-  spins:     (_ss && typeof _ss.spins    === 'number') ? _ss.spins    : 0,
-  wins:      (_ss && typeof _ss.wins     === 'number') ? _ss.wins     : 0,
-  losses:    (_ss && typeof _ss.losses   === 'number') ? _ss.losses   : 0,
+  spins:     Math.floor((_ss && typeof _ss.spins    === 'number') ? _ss.spins    : 0),
+  wins:      Math.floor((_ss && typeof _ss.wins     === 'number') ? _ss.wins     : 0),
+  losses:    Math.floor((_ss && typeof _ss.losses   === 'number') ? _ss.losses   : 0),
   profit:    (_ss && typeof _ss.profit   === 'number') ? _ss.profit   : 0,
   totalWon:  (_ss && typeof _ss.totalWon === 'number') ? _ss.totalWon : 0,
   totalLost: (_ss && typeof _ss.totalLost=== 'number') ? _ss.totalLost: 0,
   bestWin:   (_ss && typeof _ss.bestWin  === 'number') ? _ss.bestWin  : 0,
   history:   (_ss && Array.isArray(_ss.history))       ? _ss.history  : [],
-  streak:    (_ss && typeof _ss.streak   === 'number') ? _ss.streak   : 0,
+  streak:    Math.floor((_ss && typeof _ss.streak   === 'number') ? _ss.streak   : 0),
   streakType:(_ss && _ss.streakType)                   ? _ss.streakType: null,
 };
 
@@ -3351,33 +3354,25 @@ function getCombinedScore() {
              : (typeof R !== 'undefined' && R && R.stats) ? R.stats : null;
       if(_r && typeof _r.p === 'number') rktP = Math.max(0, _r.p);
     } catch(e){}
-    return slotsWon + rktP;
+    return Math.floor(slotsWon + rktP);
   } catch(e) { return 0; }
 }
 
-// Общие счётчики побед и игр (слоты + ракетка)
+// Общие счётчики побед и игр.
+// ВАЖНО: ракетка сама инкрементирует S.wins и S.spins при успешном кешауте,
+// поэтому S.wins и S.spins УЖЕ включают и слоты и ракетку. Суммировать с
+// R.stats не надо — это двойной учёт. А R.stats.b — это лучший множитель
+// (например ×24.31), а не количество побед.
 function getCombinedWins() {
   try {
-    var sw = (typeof S !== 'undefined' && S && typeof S.wins === 'number') ? S.wins : 0;
-    var rw = 0;
-    try {
-      var _r = (typeof RKT !== 'undefined' && RKT && RKT.stats) ? RKT.stats
-             : (typeof R !== 'undefined' && R && R.stats) ? R.stats : null;
-      if(_r && typeof _r.b === 'number') rw = _r.b;
-    } catch(e){}
-    return sw + rw;
+    var w = (typeof S !== 'undefined' && S && typeof S.wins === 'number') ? S.wins : 0;
+    return Math.floor(w);
   } catch(e) { return 0; }
 }
 function getCombinedGames() {
   try {
-    var sg = (typeof S !== 'undefined' && S && typeof S.spins === 'number') ? S.spins : 0;
-    var rg = 0;
-    try {
-      var _r = (typeof RKT !== 'undefined' && RKT && RKT.stats) ? RKT.stats
-             : (typeof R !== 'undefined' && R && R.stats) ? R.stats : null;
-      if(_r && typeof _r.g === 'number') rg = _r.g;
-    } catch(e){}
-    return sg + rg;
+    var g = (typeof S !== 'undefined' && S && typeof S.spins === 'number') ? S.spins : 0;
+    return Math.floor(g);
   } catch(e) { return 0; }
 }
 
@@ -4571,11 +4566,11 @@ async function init() {
     // ── Показываем кэш сразу
     if (URL_BAL > 0) {
       setBalance(URL_BAL);
-      splashBalShow(URL_BAL, '📦 ИЗ URL', 'from-cache');
+      splashBalShow(URL_BAL, '⏳ ЗАГРУЗКА ДАННЫХ', 'from-cache');
     } else {
       try {
         const cached = parseInt(localStorage.getItem('bal_'+USER_ID)||'0',10);
-        if (cached > 0) { setBalance(cached); splashBalShow(cached, '📦 КЭШ', 'from-cache'); }
+        if (cached > 0) { setBalance(cached); splashBalShow(cached, '⏳ ЗАГРУЗКА ДАННЫХ', 'from-cache'); }
       } catch(e){}
     }
 
@@ -4605,22 +4600,35 @@ async function init() {
       ? loadLeaderboard(true).catch(e => console.warn('[splash] top:', e))
       : Promise.resolve();
 
-    // ── Прогресс 0→20% — анимация появления (1.2 секунды)
+    // Хелпер для обновления подписи под балансом (splashSource)
+    function setSource(text, cls) {
+      try {
+        const src = document.getElementById('splashSource');
+        if (src) {
+          src.textContent = text;
+          src.className = 'splash-source show ' + (cls || '');
+        }
+      } catch(e){}
+    }
+
+    // ── Прогресс 0→20% — анимация появления (0.8 секунды)
     let prog = 0;
-    const t1 = setInterval(()=>{ prog=Math.min(prog+1,20); setBar(prog); }, 60);
-    await new Promise(r=>setTimeout(r,1200));
+    const t1 = setInterval(()=>{ prog=Math.min(prog+1,20); setBar(prog); }, 40);
+    await new Promise(r=>setTimeout(r,800));
     clearInterval(t1); setBar(20);
 
-    // ── Шаг 1: Подключение (1.2 сек)
+    // ── Шаг 1: Подключение (0.8 сек)
     splashStep('step1', 'active');
     if (status) status.textContent = 'ПОДКЛЮЧЕНИЕ К СЕРВЕРУ...';
-    await new Promise(r=>setTimeout(r,1200));
+    setSource('🔌 ПОДКЛЮЧЕНИЕ', 'from-cache');
+    await new Promise(r=>setTimeout(r,800));
 
     if (!hasApi) {
       splashStep('step1', 'fail');
       splashStep('step2', 'fail');
       splashStep('step3', 'active');
       if (status) status.textContent = 'ДЕМО РЕЖИМ — API НЕ ПОДКЛЮЧЁН';
+      setSource('⚠️ ДЕМО РЕЖИМ', 'error');
       for (let i=20; i<=60; i++) { setBar(i); await new Promise(r=>setTimeout(r,25)); }
       await new Promise(r=>setTimeout(r,900));
       splashStep('step3', 'done');
@@ -4629,12 +4637,13 @@ async function init() {
       await new Promise(r=>setTimeout(r,1200));
     } else {
       splashStep('step1', 'done');
-      for (let i=20; i<=40; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
-      await new Promise(r=>setTimeout(r,800));
+      for (let i=20; i<=40; i++) { setBar(i); await new Promise(r=>setTimeout(r,25)); }
+      await new Promise(r=>setTimeout(r,500));
 
       // ── Шаг 2: Получение баланса — promise уже летит в фоне
       splashStep('step2', 'active');
       if (status) status.textContent = 'ПОЛУЧЕНИЕ БАЛАНСА...';
+      setSource('💰 ЗАГРУЗКА БАЛАНСА', 'from-cache');
 
       const t2 = setInterval(()=>{ prog=Math.min(prog+1,65); setBar(prog); }, 100);
       prog = 40;
@@ -4642,24 +4651,26 @@ async function init() {
       const apiBal = await balancePromise;
 
       clearInterval(t2);
-      await new Promise(r=>setTimeout(r,800));
+      await new Promise(r=>setTimeout(r,500));
 
       if (apiBal !== null) {
         setBalance(apiBal);
         try { localStorage.setItem('bal_'+USER_ID, String(apiBal)); } catch(e){}
-        splashBalShow(apiBal, '✅ АКТУАЛЬНЫЙ', 'from-bot');
+        splashBalShow(apiBal, '💰 БАЛАНС ПОЛУЧЕН', 'from-bot');
         splashStep('step2', 'done');
-        for (let i=Math.max(prog,65); i<=70; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
-        await new Promise(r=>setTimeout(r,800));
+        for (let i=Math.max(prog,65); i<=70; i++) { setBar(i); await new Promise(r=>setTimeout(r,25)); }
+        await new Promise(r=>setTimeout(r,500));
 
         // ── Шаг 3: Синхронизация — cloud+top уже крутятся в фоне
         splashStep('step3', 'active');
         if (status) status.textContent = 'СИНХРОНИЗАЦИЯ ДАННЫХ...';
-        const t3 = setInterval(()=>{ prog=Math.min(prog+1,90); setBar(prog); }, 120);
+        setSource('📊 СИНХРОНИЗАЦИЯ СТАТИСТИКИ', 'from-cache');
+        const t3 = setInterval(()=>{ prog=Math.min(prog+1,90); setBar(prog); }, 100);
         prog = 70;
 
-        try { await Promise.race([cloudPromise, new Promise(r=>setTimeout(r,5000))]); } catch(e){}
-        try { await Promise.race([topPromise, new Promise(r=>setTimeout(r,2000))]); } catch(e){}
+        try { await Promise.race([cloudPromise, new Promise(r=>setTimeout(r,4000))]); } catch(e){}
+        setSource('🏆 ЗАГРУЗКА ТОПЛИДЕРОВ', 'from-cache');
+        try { await Promise.race([topPromise, new Promise(r=>setTimeout(r,1500))]); } catch(e){}
 
         try { renderProfile(); } catch(e){}
         try { updateMiniStats(); } catch(e){}
@@ -4668,26 +4679,29 @@ async function init() {
         try { setAvaEl(document.getElementById('pAvatar'), 50); } catch(e){}
 
         clearInterval(t3);
-        await new Promise(r=>setTimeout(r,1000));
+        await new Promise(r=>setTimeout(r,500));
         splashStep('step3', 'done');
-        for (let i=Math.max(prog,90); i<=100; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
+        for (let i=Math.max(prog,90); i<=100; i++) { setBar(i); await new Promise(r=>setTimeout(r,25)); }
         if (status) status.textContent = '✅ ' + apiBal.toLocaleString('ru-RU') + ' ТОКЕНОВ';
-        await new Promise(r=>setTimeout(r,1200));
+        setSource('✅ ГОТОВО', 'from-bot');
+        await new Promise(r=>setTimeout(r,600));
 
       } else {
         splashStep('step2', 'fail');
         splashStep('step3', 'active');
-        if (status) status.textContent = 'КЭШИРОВАННЫЙ БАЛАНС';
-        try { await Promise.race([cloudPromise, new Promise(r=>setTimeout(r,3000))]); } catch(e){}
+        if (status) status.textContent = 'СИНХРОНИЗАЦИЯ ДАННЫХ...';
+        setSource('📊 СИНХРОНИЗАЦИЯ СТАТИСТИКИ', 'from-cache');
+        try { await Promise.race([cloudPromise, new Promise(r=>setTimeout(r,2500))]); } catch(e){}
         try { renderProfile(); } catch(e){}
         try { updateMiniStats(); } catch(e){}
         try { rktUI && rktUI(); } catch(e){}
-        for (let i=prog; i<=90; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
-        await new Promise(r=>setTimeout(r,800));
+        for (let i=prog; i<=90; i++) { setBar(i); await new Promise(r=>setTimeout(r,25)); }
+        await new Promise(r=>setTimeout(r,500));
         splashStep('step3', 'done');
-        for (let i=90; i<=100; i++) { setBar(i); await new Promise(r=>setTimeout(r,30)); }
-        if (status) status.textContent = '⚠️ ' + balance.toLocaleString('ru-RU') + ' (КЭШ)';
-        await new Promise(r=>setTimeout(r,1200));
+        for (let i=90; i<=100; i++) { setBar(i); await new Promise(r=>setTimeout(r,25)); }
+        if (status) status.textContent = '✅ ' + balance.toLocaleString('ru-RU') + ' ТОКЕНОВ';
+        setSource('✅ ГОТОВО', 'from-bot');
+        await new Promise(r=>setTimeout(r,600));
       }
     }
 
@@ -4700,11 +4714,11 @@ async function init() {
     try { splashStep('step2', 'done'); } catch(e){}
     try { splashStep('step3', 'done'); } catch(e){}
     try { setBar(100); } catch(e){}
-    // Даём браузеру 600мс чтобы отрисовать done-галочки и прогресс-бар на 100%
+    // Даём браузеру 300мс чтобы отрисовать done-галочки и прогресс-бар на 100%
     // ПОТОМ сигналим что данные готовы (splash закроется не раньше MIN_SPLASH_MS)
     setTimeout(() => {
       try { window.__dataLoaded && window.__dataLoaded(); } catch(e) {}
-    }, 600);
+    }, 300);
     try { renderProfile(); } catch(e){}
     try { updateMiniStats(); } catch(e){}
     try { refreshBets(); } catch(e){}
@@ -4834,26 +4848,26 @@ async function loadAllFromCloud() {
               const localRicher = (S.spins > cs.spins) || (S.totalWon > cs.totalWon);
               if(!localRicher) {
                 // Cloud богаче — берём из Cloud как основу
-                S.spins      = cs.spins     || 0;
-                S.wins       = cs.wins      || 0;
-                S.losses     = cs.losses    || 0;
+                S.spins      = Math.floor(cs.spins  || 0);
+                S.wins       = Math.floor(cs.wins   || 0);
+                S.losses     = Math.floor(cs.losses || 0);
                 S.totalWon   = cs.totalWon  || 0;
                 S.totalLost  = cs.totalLost || 0;
                 S.bestWin    = cs.bestWin   || 0;
                 S.profit     = cs.profit    || 0;
                 S.history    = cs.history   || [];
-                S.streak     = cs.streak    || 0;
+                S.streak     = Math.floor(cs.streak || 0);
                 S.streakType = cs.streakType|| null;
               } else {
                 // Местные богаче — берём максимум каждого поля
-                S.spins     = Math.max(S.spins || 0,     cs.spins     || 0);
-                S.wins      = Math.max(S.wins  || 0,     cs.wins      || 0);
-                S.losses    = Math.max(S.losses|| 0,     cs.losses    || 0);
+                S.spins     = Math.floor(Math.max(S.spins || 0,     cs.spins     || 0));
+                S.wins      = Math.floor(Math.max(S.wins  || 0,     cs.wins      || 0));
+                S.losses    = Math.floor(Math.max(S.losses|| 0,     cs.losses    || 0));
                 S.totalWon  = Math.max(S.totalWon|| 0,   cs.totalWon  || 0);
                 S.totalLost = Math.max(S.totalLost|| 0,  cs.totalLost || 0);
                 S.bestWin   = Math.max(S.bestWin|| 0,    cs.bestWin   || 0);
                 if((cs.history||[]).length > (S.history||[]).length) {
-                  S.history = cs.history; S.streak = cs.streak||0; S.streakType = cs.streakType||null;
+                  S.history = cs.history; S.streak = Math.floor(cs.streak||0); S.streakType = cs.streakType||null;
                 }
               }
               // Обновляем localStorage и сохраняем мерж обратно в Cloud
