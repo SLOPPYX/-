@@ -43,13 +43,34 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .logo-main{
   display:flex;align-items:center;gap:10px;
   font-family:var(--fd);font-size:18px;font-weight:900;letter-spacing:4px;
-  background:linear-gradient(180deg,#ffe29a 0%,#ffb44a 45%,#ff6a00 100%);
+  background:linear-gradient(90deg,#ffe29a 0%,#ffb44a 30%,#ff8a1a 50%,#ffb44a 70%,#ffe29a 100%);
+  background-size:200% 100%;
   -webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:transparent;
   text-shadow:0 0 18px rgba(255,140,0,.35);
   filter:drop-shadow(0 1px 0 rgba(0,0,0,.4));
+  animation:casinoShimmer 2.8s linear infinite;
+}
+@keyframes casinoShimmer{
+  0%  {background-position:0% 50%}
+  100%{background-position:-200% 50%}
 }
 .logo-main svg{flex-shrink:0;filter:drop-shadow(0 0 6px rgba(255,120,0,.55))}
+/* Пламя — мерцает и дышит */
+.logo-main svg.flame-left  { animation:flameFlickerL 0.6s ease-in-out infinite; transform-origin:center bottom; }
+.logo-main svg.flame-right { animation:flameFlickerR 0.55s ease-in-out infinite; transform-origin:center bottom; animation-delay:-0.3s; }
+@keyframes flameFlickerL{
+  0%,100% { transform:scaleY(1)    scaleX(1)    rotate(-1deg); filter:drop-shadow(0 0 6px rgba(255,120,0,.55)) brightness(1);   }
+  25%     { transform:scaleY(1.08) scaleX(0.95) rotate(1deg);  filter:drop-shadow(0 0 10px rgba(255,160,40,.75)) brightness(1.15); }
+  50%     { transform:scaleY(0.95) scaleX(1.03) rotate(-2deg); filter:drop-shadow(0 0 5px rgba(255,100,0,.5)) brightness(0.95); }
+  75%     { transform:scaleY(1.05) scaleX(0.97) rotate(2deg);  filter:drop-shadow(0 0 9px rgba(255,140,0,.7)) brightness(1.1);  }
+}
+@keyframes flameFlickerR{
+  0%,100% { transform:scaleY(1)    scaleX(1)    rotate(1deg);  filter:drop-shadow(0 0 6px rgba(255,120,0,.55)) brightness(1);   }
+  25%     { transform:scaleY(1.06) scaleX(0.97) rotate(-1deg); filter:drop-shadow(0 0 9px rgba(255,150,30,.7)) brightness(1.12); }
+  50%     { transform:scaleY(0.96) scaleX(1.04) rotate(2deg);  filter:drop-shadow(0 0 5px rgba(255,100,0,.5)) brightness(0.95); }
+  75%     { transform:scaleY(1.08) scaleX(0.95) rotate(-2deg); filter:drop-shadow(0 0 11px rgba(255,170,50,.8)) brightness(1.18);}
+}
 .logo-sub{
   display:flex;align-items:center;gap:6px;
   font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:3px;
@@ -59,6 +80,25 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .logo-sub-line{
   width:22px;height:1px;
   background:linear-gradient(90deg,transparent,rgba(255,160,50,.6),transparent);
+  animation:logoLinePulse 2.4s ease-in-out infinite;
+}
+@keyframes logoLinePulse{
+  0%,100% { opacity:0.4; transform:scaleX(1);   }
+  50%     { opacity:1.0; transform:scaleX(1.3); }
+}
+/* Маленькие звёздочки — крутятся и мерцают */
+.logo-sub svg{
+  animation:logoStarSpin 3s linear infinite, logoStarTwinkle 1.8s ease-in-out infinite;
+  transform-origin:center;
+  filter:drop-shadow(0 0 3px rgba(255,184,74,.6));
+}
+.logo-sub svg:last-of-type{ animation-direction:reverse, normal; animation-delay:-0.9s, -0.6s; }
+@keyframes logoStarSpin{
+  to { transform:rotate(360deg); }
+}
+@keyframes logoStarTwinkle{
+  0%,100% { opacity:0.7; }
+  50%     { opacity:1.0; }
 }
 .logo-sub-name{
   color:#ffd084;
@@ -1553,7 +1593,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     <div class="logo-wrap">
       <div class="logo-main">
         <!-- Огонь слева -->
-        <svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg class="flame-left" width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="lgFl1" x1="0.5" y1="0" x2="0.5" y2="1">
               <stop offset="0%" stop-color="#fff5c0"/>
@@ -1569,7 +1609,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
         <span>CASINO</span>
 
         <!-- Огонь справа -->
-        <svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg class="flame-right" width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 1 C12 5 15 8 15 13 C15 17.5 12.3 21 9 21 C5.7 21 3 17.5 3 13 C3 9 5 6 7 4 C7 6 8 7 9 8 C9 6 8.5 3 9 1 Z" fill="url(#lgFl1)"/>
           <path d="M9 8 C10.5 10 12 12 12 14.5 C12 16.5 10.7 18 9 18 C7.3 18 6 16.5 6 14.5 C6 12.5 7 11 8 10 C8 11 8.5 11.5 9 12 C9 11 9 9.5 9 8 Z" fill="#fff2a8" opacity="0.8"/>
         </svg>
@@ -3735,8 +3775,6 @@ function setAvaEl(el, size) {
 function renderAvatars() {
   const grid = document.getElementById('avatarsGrid');
   if(!grid) return;
-  const totalWon = getCombinedScore();
-  const userLv   = getUserLevel(totalWon).lv;
   grid.innerHTML = '';
 
   const levels = [
@@ -3752,28 +3790,25 @@ function renderAvatars() {
     const avs = AVATARS.filter(a => a.needLv === lv);
     if(!avs.length) return;
 
-    // Заголовок уровня
+    // Заголовок категории (без замков — все доступны)
     const hdr = document.createElement('div');
     hdr.style.cssText = `grid-column:1/-1;display:flex;align-items:center;gap:8px;margin:8px 0 4px;`;
     hdr.innerHTML = `<span style="font-family:var(--fd);font-size:8px;font-weight:700;letter-spacing:2px;color:${color}">${label}</span>`
-      + `<div style="flex:1;height:1px;background:linear-gradient(90deg,${color}44,transparent)"></div>`
-      + (userLv >= lv ? '' : `<span style="font-size:9px;opacity:.5">🔒 LV${lv}</span>`);
+      + `<div style="flex:1;height:1px;background:linear-gradient(90deg,${color}44,transparent)"></div>`;
     grid.appendChild(hdr);
 
     avs.forEach(av => {
-      const locked = av.needLv > userLv;
-      const sel    = av.id === selectedAvatar && !locked;
+      const sel    = av.id === selectedAvatar;
       const div    = document.createElement('div');
-      div.className = 'avatar-item' + (sel ? ' selected' : '') + (locked ? ' locked' : '');
-      div.style.cssText = locked ? 'border-color:rgba(255,255,255,.08)' : `border-color:${color}44`;
+      div.className = 'avatar-item' + (sel ? ' selected' : '');
+      div.style.cssText = `border-color:${color}44`;
 
       const svgWrapped = `<div style="width:100%;height:100%;position:absolute;inset:0;border-radius:50%;overflow:hidden">${av.svg}</div>`;
-      div.innerHTML = svgWrapped; // без подписи имени
+      div.innerHTML = svgWrapped;
 
-      if(!locked){
-        div.onclick = () => saveAvatar(av.id);
-        div.title   = av.name;
-      }
+      // Все аватарки кликабельны — без ограничений по уровню
+      div.onclick = () => saveAvatar(av.id);
+      div.title   = av.name;
       grid.appendChild(div);
     });
   });
@@ -3982,6 +4017,19 @@ function updateMiniStats() {
   const pp=document.getElementById('sProfit');
   pp.textContent=(S.profit>=0?'+':'')+S.profit.toLocaleString('ru-RU');
   pp.style.color=S.profit>=0?'var(--green)':'var(--red)';
+
+  // Обновляем hf-статы в футере главной (Уровень / Побед / Игр)
+  // чтобы они актуализировались после каждого спина/раунда
+  try {
+    const combined = getCombinedScore();
+    const lv = getUserLevel(combined);
+    const hfL = document.getElementById('hfLevelVal');
+    const hfW = document.getElementById('hfWinsVal');
+    const hfG = document.getElementById('hfGamesVal');
+    if (hfL) hfL.textContent = lv.lv;
+    if (hfW) hfW.textContent = getCombinedWins().toString();
+    if (hfG) hfG.textContent = getCombinedGames().toString();
+  } catch(e) {}
 }
 
 // ══════════════════════════════════════════════════════════
