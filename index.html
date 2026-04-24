@@ -53,14 +53,15 @@ html.mobile-perf .logo-main,
 html.mobile-perf .logo-main svg,
 html.mobile-perf .logo-sub svg,
 html.mobile-perf .logo-sub-name,
-html.mobile-perf .rkt-mult,
-html.mobile-perf .rkt-mult-wrap,
 html.mobile-perf .splash-star,
 html.mobile-perf #splash {
   transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
+/* NB: translateZ(0) НЕ ставим на .rkt-mult и .rkt-mult-wrap —
+   у них собственные transform (translate -50%,-50% для центровки + JS-тряска),
+   и translateZ перекрыл бы их, сбивая позицию множителя в сторону */
 
 /* will-change только на тех элементах, что реально анимируются
    (will-change на всём подряд — антипаттерн, ест память) */
@@ -1211,9 +1212,11 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   z-index:5; text-align:center; pointer-events:none;
   transition:opacity .18s ease;
 }
-/* В фазе ожидания — центрируем (показ "ЖДЁМ" + таймер-цифра на canvas тоже в центре) */
+/* В фазе ожидания — DOM-элемент полностью прячем, canvas рисует большой
+   таймер "3.8" + подпись "СЛЕДУЮЩИЙ РАУНД" сам. Иначе "ЖДЁМ" и canvas-текст
+   наезжают друг на друга и получается каша из букв. */
 .rkt-scene.phase-waiting .rkt-mult-wrap {
-  top:50%;
+  opacity: 0;
 }
 /* При краше основной множитель прячем — остаётся только красная цифра взрыва */
 .rkt-scene.crash-active .rkt-mult-wrap { opacity:0; }
@@ -1221,10 +1224,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   font-family:var(--fd); font-weight:900; font-size:54px;
   letter-spacing:2px; line-height:1; color:#fff;
   text-shadow:0 0 40px currentColor;
-  /* Форсим GPU-слой для тряски (transform каждый кадр) — убирает тормоза на мобилках */
+  /* will-change ок — говорит браузеру заранее подготовить слой.
+     НЕ ставим transform здесь — JS его сам выставляет при тряске (и сбрасывает в ''). */
   will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
 }
 .rkt-mult.green { color:#4ade80; }
 .rkt-mult.gold  { color:#ffd700; }
