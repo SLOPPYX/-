@@ -9,8 +9,113 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0d0d0d">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════
+// РАННИЙ ДЕТЕКТ МОБИЛКИ — до рендера CSS
+// Ставим класс .mobile-perf на <html>, чтобы все тяжёлые эффекты
+// (backdrop-filter, filter:blur, infinite animations на иконках)
+// ПОЛНОСТЬЮ выпиливались на мобиле через CSS-селекторы.
+// Это самый эффективный способ — быстрее чем JS-оптимизации.
+// ═══════════════════════════════════════════════════════════
+(function() {
+  try {
+    var mobile = false;
+    if (/Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(navigator.userAgent)) mobile = true;
+    else if ('maxTouchPoints' in navigator && navigator.maxTouchPoints > 1 && window.innerWidth < 900) mobile = true;
+    if (mobile) {
+      document.documentElement.classList.add('mobile-perf');
+      // Ещё одна метка — для совсем слабых устройств (2-4 ядра)
+      if ((navigator.hardwareConcurrency || 4) <= 4) {
+        document.documentElement.classList.add('low-end-perf');
+      }
+    }
+  } catch(e) {}
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Bebas+Neue&family=Barlow+Condensed:wght@600;700;800&family=Oxanium:wght@700;800&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
 <style>
+/* ═══════════════════════════════════════════════════════════
+   MOBILE-PERF ОПТИМИЗАЦИИ
+   На мобилках выпиливаем самые дорогие CSS-свойства которые
+   убивают FPS: backdrop-filter, filter:blur, infinite-анимации
+   с transform/filter на иконках. На ПК всё остаётся как было.
+   ═══════════════════════════════════════════════════════════ */
+
+/* backdrop-filter — самое дорогое свойство на мобильном GPU.
+   На мобилке убираем ВСЕ вхождения, заменяя на увеличенный alpha фон */
+html.mobile-perf *,
+html.mobile-perf *::before,
+html.mobile-perf *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* filter: blur() — тоже очень дорогой, особенно на каждом кадре анимации.
+   На мобиле полностью отключаем блюр */
+html.mobile-perf .home-card::before,
+html.mobile-perf .rkt-tag,
+html.mobile-perf #tokenAddedBanner,
+html.mobile-perf .warn-overlay {
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* Infinite-анимации иконок на главной — 5 штук одновременно крутят
+   transform каждый кадр. На слабых мобилках это чистый тормоз.
+   Отключаем полностью — иконки остаются статичными. */
+html.mobile-perf .home-card.slots .home-card-icon,
+html.mobile-perf .home-card.rocket .home-card-icon,
+html.mobile-perf .home-card.profile .home-card-icon,
+html.mobile-perf .home-card.top .home-card-icon,
+html.mobile-perf .home-card.table .home-card-icon {
+  animation: none !important;
+}
+
+/* Свечение карточек (cardGlow) — box-shadow с анимацией дорогое
+   на мобилке, каждый кадр перекомпозит все слои */
+html.mobile-perf .home-card {
+  animation: none !important;
+}
+
+/* Логотип — упрощаем на мобилке:
+   - убираем flicker пламени (было каждые 0.6с с transform/filter)
+   - убираем shimmer CASINO (gradient-shift каждые 2.8с)
+   - убираем вращение звёзд (transform infinite) */
+html.mobile-perf .logo-main,
+html.mobile-perf .logo-main svg.flame-left,
+html.mobile-perf .logo-main svg.flame-right,
+html.mobile-perf .logo-sub-line,
+html.mobile-perf .logo-sub svg,
+html.mobile-perf .logo-sub-name {
+  animation: none !important;
+}
+
+/* Hover-glow рамки карточек на мобилке не виден (нет hover) — отключаем */
+html.mobile-perf .home-card:hover { transform: none !important; }
+
+/* ::before overlay на home-card — blur(.4px) на каждом сбивает render.
+   На мобиле убираем. */
+html.mobile-perf .home-card::before { display: none !important; }
+
+/* Ракета: тряска DOM-множителя при ×10+ может дёргать весь layout.
+   На мобилке тряска уже уменьшена JS-ом, а тут форсим GPU-слой */
+html.mobile-perf .rkt-mult {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Плавный скролл на мобилке часто вызывает jank на слабых GPU */
+html.mobile-perf { scroll-behavior: auto; }
+
+/* Text-shadow glow на мобилке — GPU множит эти пиксели.
+   Сильно упрощаем на самых лагающих элементах */
+html.low-end-perf .rkt-mult {
+  text-shadow: 0 0 8px currentColor; /* было 40px — тоже большой blur */
+}
+
+/* ═══ Конец mobile-perf блока ═══ */
+
+
 :root {
   --bg:#0d0d0d; --bg2:#141414; --bg3:#1a1a1a;
   --panel:rgba(255,255,255,0.05); --panel2:rgba(255,255,255,0.09);
