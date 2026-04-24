@@ -1037,6 +1037,10 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   font-family:var(--fd); font-weight:900; font-size:54px;
   letter-spacing:2px; line-height:1; color:#fff;
   text-shadow:0 0 40px currentColor;
+  /* Форсим GPU-слой для тряски (transform каждый кадр) — убирает тормоза на мобилках */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 .rkt-mult.green { color:#4ade80; }
 .rkt-mult.gold  { color:#ffd700; }
@@ -3097,9 +3101,19 @@ async function spin() {
     btn.textContent='⏳';
     reels.forEach(r=>{ r.classList.add('spinning'); r.innerHTML=getSymHtml('ram'); });
 
-    // rAF-based ticker для 60fps
+    // rAF-based ticker для 60fps (30fps на мобилке — innerHTML очень дорогой)
     let tickRunning=true;
-    const tickFn=()=>{ if(tickRunning){ reels.forEach(r=>{ r.innerHTML=getSymHtml(rnd().e); }); requestAnimationFrame(tickFn); } };
+    let tickSkip=0;
+    const tickFn=()=>{
+      if(!tickRunning) return;
+      // На мобилке обновляем каждый 2-й кадр — DOM-мутации дорогие
+      if (window._IS_MOBILE_SLOTS && (++tickSkip & 1)) {
+        requestAnimationFrame(tickFn);
+        return;
+      }
+      reels.forEach(r=>{ r.innerHTML=getSymHtml(rnd().e); });
+      requestAnimationFrame(tickFn);
+    };
     requestAnimationFrame(tickFn);
 
     await sleep(spinMs);
@@ -5333,25 +5347,63 @@ let rTrail = [];
 let rParticles = [];
 let rCashPopups = [];   // всплывающие уведомления кешаута
 
+// ═══════════════════════════════════════════════════════════
+// ПРОФИЛЬ ПРОИЗВОДИТЕЛЬНОСТИ — детект мобилки/слабого устройства
+// ═══════════════════════════════════════════════════════════
+// На мобилках DPR 3x + дорогие createLinearGradient убивают FPS.
+// Эти флаги проверяются в hot-path цикла ракетки и других местах.
+const _IS_MOBILE = (() => {
+  try {
+    if (/Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(navigator.userAgent)) return true;
+    if ('maxTouchPoints' in navigator && navigator.maxTouchPoints > 1 && window.innerWidth < 900) return true;
+    return false;
+  } catch(e) { return false; }
+})();
+// Hardware concurrency — грубая оценка "слабости" устройства
+const _IS_LOW_END = _IS_MOBILE && ((navigator.hardwareConcurrency || 4) <= 4);
+
+// Проброс в global для других модулей (слоты и т.д.)
+try { window._IS_MOBILE_SLOTS = _IS_MOBILE; } catch(e) {}
+
+// Кэп DPR — на iPhone бывает 3, что в 9 раз больше пикселей. Для ракеты
+// 2 более чем достаточно (разница визуально незаметна, выигрыш в FPS — огромный)
+const _PERF_DPR_CAP = _IS_MOBILE ? 1.5 : 2;
+
 function rktInitCanvas() {
   RC = document.getElementById('rktCanvas');
   if (!RC) return;
   const wrap = RC.parentElement;
   RW = wrap.offsetWidth  || 360;
   RH = wrap.offsetHeight || 300;
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(window.devicePixelRatio || 1, _PERF_DPR_CAP);
   RC.width  = RW * dpr; RC.height = RH * dpr;
   RC.style.width = RW + 'px'; RC.style.height = RH + 'px';
-  RX = RC.getContext('2d');
+  RX = RC.getContext('2d', { alpha: false }); // alpha:false — быстрее на мобилках
   RX.scale(dpr, dpr);
 
-  // Звёзды
-  rStars = Array.from({length: 80}, () => ({
+  // Звёзды — меньше на мобилках
+  const starCount = _IS_LOW_END ? 35 : (_IS_MOBILE ? 50 : 80);
+  rStars = Array.from({length: starCount}, () => ({
     x: Math.random() * RW, y: Math.random() * RH,
     r: 0.3 + Math.random() * 1.3,
     b: Math.random() * Math.PI * 2,
     s: 0.15 + Math.random() * 0.6
   }));
+
+  // Кэш сетки на off-screen canvas — рисуем ОДИН раз вместо каждого кадра
+  try {
+    const gridC = document.createElement('canvas');
+    gridC.width  = RW * dpr;
+    gridC.height = RH * dpr;
+    const gx = gridC.getContext('2d');
+    gx.scale(dpr, dpr);
+    gx.strokeStyle = 'rgba(255,255,255,0.025)';
+    gx.lineWidth = 1;
+    for (let i = 0; i < RW; i += 40) { gx.beginPath(); gx.moveTo(i,0); gx.lineTo(i,RH); gx.stroke(); }
+    for (let i = 0; i < RH; i += 40) { gx.beginPath(); gx.moveTo(0,i); gx.lineTo(RW,i); gx.stroke(); }
+    window._rktGridCache = gridC;
+    window._rktGridDpr = dpr;
+  } catch(e) { window._rktGridCache = null; }
 
   // Запускаем render loop
   _rktStartRenderLoop();
@@ -5363,10 +5415,20 @@ function rktInitCanvas() {
       const nW = wrap.offsetWidth||360, nH = wrap.offsetHeight||300;
       if (Math.abs(nW-RW)>3 || Math.abs(nH-RH)>3) {
         RW=nW; RH=nH;
-        const d2 = window.devicePixelRatio||1;
+        const d2 = Math.min(window.devicePixelRatio||1, _PERF_DPR_CAP);
         RC.width=RW*d2; RC.height=RH*d2;
         RC.style.width=RW+'px'; RC.style.height=RH+'px';
-        RX = RC.getContext('2d'); RX.scale(d2,d2);
+        RX = RC.getContext('2d', { alpha: false }); RX.scale(d2,d2);
+        // Пересоздаём кэш сетки при ресайзе
+        try {
+          const gc = document.createElement('canvas');
+          gc.width = RW*d2; gc.height = RH*d2;
+          const gcx = gc.getContext('2d'); gcx.scale(d2,d2);
+          gcx.strokeStyle='rgba(255,255,255,0.025)'; gcx.lineWidth=1;
+          for (let i=0;i<RW;i+=40){gcx.beginPath();gcx.moveTo(i,0);gcx.lineTo(i,RH);gcx.stroke();}
+          for (let i=0;i<RH;i+=40){gcx.beginPath();gcx.moveTo(0,i);gcx.lineTo(RW,i);gcx.stroke();}
+          window._rktGridCache=gc; window._rktGridDpr=d2;
+        } catch(e) {}
       }
     });
     RC._ro.observe(wrap);
@@ -5390,11 +5452,17 @@ function _rktStartRenderLoop() {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, RW, RH);
 
-  // Сетка
-  ctx.strokeStyle = 'rgba(255,255,255,0.025)';
-  ctx.lineWidth = 1;
-  for (let gx = 0; gx < RW; gx += 40) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,RH); ctx.stroke(); }
-  for (let gy = 0; gy < RH; gy += 40) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(RW,gy); ctx.stroke(); }
+  // Сетка — из кэша (рисуется один раз в off-screen canvas). На десктопе
+  // без кэша перерисовываем по-старому.
+  if (window._rktGridCache) {
+    // drawImage копирует готовые пиксели — в разы дешевле чем beginPath/stroke
+    ctx.drawImage(window._rktGridCache, 0, 0, RW, RH);
+  } else {
+    ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+    ctx.lineWidth = 1;
+    for (let gx = 0; gx < RW; gx += 40) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,RH); ctx.stroke(); }
+    for (let gy = 0; gy < RH; gy += 40) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(RW,gy); ctx.stroke(); }
+  }
 
   // ── Звёзды + эффект скорости (нарастает ПЛАВНО с ×1) ──
   const starSpd = ph === 'flying' ? Math.min(1.5 + R.mult * 0.75, 28) : 0;
@@ -5427,7 +5495,10 @@ function _rktStartRenderLoop() {
 
   // ── Speed-lines — яркие вертикальные полосы (15→55, скорость 20→80) ──
   if (rktSpeedOn) {
-    const lineCount = Math.round(15 + rktSpeedLvl * 40); // 15..55
+    // На мобилках снижаем количество полос ~в 2.5 раза — иначе 55 создаваемых
+    // каждый кадр градиентов (createLinearGradient) убивают FPS на слабом CPU
+    const maxLines = _IS_LOW_END ? 18 : (_IS_MOBILE ? 28 : 55);
+    const lineCount = Math.round(15 + rktSpeedLvl * (maxLines - 15));
     const baseSpd = 20 + rktSpeedLvl * 60;               // 20..80 px/frame
     if (!window._rktSpeedLines) window._rktSpeedLines = [];
     while (window._rktSpeedLines.length < lineCount) {
@@ -5444,6 +5515,17 @@ function _rktStartRenderLoop() {
       window._rktSpeedLines.length = lineCount;
     }
     ctx.save();
+    // На мобилке — один общий цвет без createLinearGradient на каждой линии
+    const useFastLines = _IS_MOBILE;
+    let fastColor = null;
+    if (useFastLines) {
+      // Упрощённая заливка одним цветом — в ~3-4 раза быстрее чем gradient
+      fastColor = rktSpeedLvl > 0.55
+        ? `rgba(255,${Math.round(210 - rktSpeedLvl*100)},${Math.round(120 - rktSpeedLvl*100)},${0.55 + rktSpeedLvl*0.25})`
+        : `rgba(255,245,210,${0.5 + rktSpeedLvl*0.25})`;
+      ctx.strokeStyle = fastColor;
+      ctx.lineCap = 'round';
+    }
     for (let i = 0; i < window._rktSpeedLines.length; i++) {
       const ln = window._rktSpeedLines[i];
       ln.y += baseSpd;
@@ -5456,27 +5538,35 @@ function _rktStartRenderLoop() {
           : Math.random() * RW;
         ln.len = 35 + Math.random() * 55 + rktSpeedLvl * 90;
       }
-      const g = ctx.createLinearGradient(ln.x, ln.y - ln.len, ln.x, ln.y);
-      // Цвет: бело-жёлтый → оранжевый с ростом
-      const hue = rktSpeedLvl > 0.55
-        ? `255,${Math.round(210 - rktSpeedLvl*100)},${Math.round(120 - rktSpeedLvl*100)}`
-        : '255,245,210';
-      g.addColorStop(0,   `rgba(${hue},0)`);
-      g.addColorStop(0.6, `rgba(${hue},${ln.a * 0.45})`);
-      g.addColorStop(1,   `rgba(${hue},${ln.a * (0.8 + rktSpeedLvl * 0.2)})`);
-      ctx.strokeStyle = g;
-      ctx.lineWidth = ln.w * (1 + rktSpeedLvl * 1.1);
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(ln.x, ln.y - ln.len);
-      ctx.lineTo(ln.x, ln.y);
-      ctx.stroke();
+      if (useFastLines) {
+        ctx.lineWidth = ln.w * (1 + rktSpeedLvl * 1.1);
+        ctx.beginPath();
+        ctx.moveTo(ln.x, ln.y - ln.len);
+        ctx.lineTo(ln.x, ln.y);
+        ctx.stroke();
+      } else {
+        const g = ctx.createLinearGradient(ln.x, ln.y - ln.len, ln.x, ln.y);
+        // Цвет: бело-жёлтый → оранжевый с ростом
+        const hue = rktSpeedLvl > 0.55
+          ? `255,${Math.round(210 - rktSpeedLvl*100)},${Math.round(120 - rktSpeedLvl*100)}`
+          : '255,245,210';
+        g.addColorStop(0,   `rgba(${hue},0)`);
+        g.addColorStop(0.6, `rgba(${hue},${ln.a * 0.45})`);
+        g.addColorStop(1,   `rgba(${hue},${ln.a * (0.8 + rktSpeedLvl * 0.2)})`);
+        ctx.strokeStyle = g;
+        ctx.lineWidth = ln.w * (1 + rktSpeedLvl * 1.1);
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(ln.x, ln.y - ln.len);
+        ctx.lineTo(ln.x, ln.y);
+        ctx.stroke();
+      }
     }
     ctx.restore();
 
-    // ── Motion blur по краям (vignette) — усилен с ×1, мощнее на краях ──
-    // Края экрана постепенно "замыливаются" с ростом множителя
-    if (rktSpeedLvl > 0.02) {
+    // ── Motion blur по краям (vignette) — НА МОБИЛКЕ ОТКЛЮЧЕНО ──
+    // createRadialGradient дорогой + fillRect полным размером канваса каждый кадр
+    if (!_IS_MOBILE && rktSpeedLvl > 0.02) {
       // Основной vignette — чёрный к краям
       const vg = ctx.createRadialGradient(RW/2, RH/2, RH*0.15, RW/2, RH/2, RH*0.75);
       vg.addColorStop(0, 'rgba(0,0,0,0)');
@@ -5582,27 +5672,40 @@ function _rktStartRenderLoop() {
       const flBase = 22 + rktSpeedLvl * 28;            // 22..50
       const fl = (flBase + Math.sin(rTime * 0.45) * (6 + rktSpeedLvl * 5)) * flicker;
       const flameW = 1 + rktSpeedLvl * 0.6;            // ширина тоже растёт
-      // Внешнее свечение пламени
-      const fgOut = ctx.createRadialGradient(rx, ry+18, 0, rx, ry+18, fl*1.8);
-      fgOut.addColorStop(0, `rgba(255,140,0,${0.18 + rktSpeedLvl*0.15})`);
-      fgOut.addColorStop(1, 'rgba(255,60,0,0)');
-      ctx.fillStyle = fgOut;
-      ctx.beginPath(); ctx.ellipse(rx, ry+18, fl*1.2*flameW, fl*1.8, 0, 0, Math.PI*2); ctx.fill();
-      // Основное пламя — две волны
-      for (let fw = 0; fw < 2; fw++) {
-        const fOff = fw === 0 ? 0 : (Math.sin(rTime * 0.25) * 6);
-        const fg = ctx.createLinearGradient(rx + fOff, ry+14, rx + fOff, ry+14+fl);
-        fg.addColorStop(0,   'rgba(255,255,200,.95)');
-        fg.addColorStop(0.25,'rgba(255,220,40,.9)');
-        fg.addColorStop(0.6, 'rgba(255,80,0,.75)');
-        fg.addColorStop(1,   'rgba(180,20,0,0)');
-        ctx.fillStyle = fg;
+
+      if (_IS_MOBILE) {
+        // Упрощённое пламя на мобилке — одна эллипс-волна + fillStyle без градиентов
+        // Экономит ~6 createGradient на кадр → +15-20 FPS
+        ctx.fillStyle = `rgba(255,140,0,${0.3 + rktSpeedLvl*0.2})`;
+        ctx.beginPath(); ctx.ellipse(rx, ry+18, fl*1.0*flameW, fl*1.4, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = `rgba(255,220,40,${0.55 + rktSpeedLvl*0.15})`;
         ctx.beginPath();
-        ctx.ellipse(rx + fOff, ry+14, ((6+flicker*2.5) - fw*1.5) * flameW, fl - fw*4, 0, 0, Math.PI*2);
+        ctx.ellipse(rx, ry+14, (6+flicker*2.5) * flameW, fl*0.7, 0, 0, Math.PI*2);
         ctx.fill();
+      } else {
+        // Внешнее свечение пламени
+        const fgOut = ctx.createRadialGradient(rx, ry+18, 0, rx, ry+18, fl*1.8);
+        fgOut.addColorStop(0, `rgba(255,140,0,${0.18 + rktSpeedLvl*0.15})`);
+        fgOut.addColorStop(1, 'rgba(255,60,0,0)');
+        ctx.fillStyle = fgOut;
+        ctx.beginPath(); ctx.ellipse(rx, ry+18, fl*1.2*flameW, fl*1.8, 0, 0, Math.PI*2); ctx.fill();
+        // Основное пламя — две волны
+        for (let fw = 0; fw < 2; fw++) {
+          const fOff = fw === 0 ? 0 : (Math.sin(rTime * 0.25) * 6);
+          const fg = ctx.createLinearGradient(rx + fOff, ry+14, rx + fOff, ry+14+fl);
+          fg.addColorStop(0,   'rgba(255,255,200,.95)');
+          fg.addColorStop(0.25,'rgba(255,220,40,.9)');
+          fg.addColorStop(0.6, 'rgba(255,80,0,.75)');
+          fg.addColorStop(1,   'rgba(180,20,0,0)');
+          ctx.fillStyle = fg;
+          ctx.beginPath();
+          ctx.ellipse(rx + fOff, ry+14, ((6+flicker*2.5) - fw*1.5) * flameW, fl - fw*4, 0, 0, Math.PI*2);
+          ctx.fill();
+        }
       }
-      // Искры (количество растёт с множителем)
-      const sparkCount = 5 + Math.round(rktSpeedLvl * 10); // 5..15
+      // Искры (количество растёт с множителем) — на мобилке меньше
+      const sparkMaxBase = _IS_LOW_END ? 4 : (_IS_MOBILE ? 6 : 10);
+      const sparkCount = 3 + Math.round(rktSpeedLvl * sparkMaxBase);
       for (let sp=0; sp<sparkCount; sp++) {
         const sx = rx + (Math.random()-0.5)*(18 + rktSpeedLvl*14);
         const sy = ry + 16 + Math.random()*fl*0.9;
@@ -5628,10 +5731,10 @@ function _rktStartRenderLoop() {
       ctx.rotate(wobble);
       ctx.scale(pulse, pulse);
 
-      // Motion blur shadow (нарастает плавно от ×1)
+      // Motion blur shadow (нарастает плавно от ×1) — ОТКЛЮЧЕНО НА МОБИЛКЕ
       // Рисуем тёмно-оранжевый след снизу для ощущения движения
       const blurAmt = Math.min((R.mult - 1) * 0.15, 1);
-      if (blurAmt > 0.05) {
+      if (!_IS_MOBILE && blurAmt > 0.05) {
         ctx.save();
         ctx.globalAlpha = blurAmt * 0.4;
         // Шлейф ниже объекта (3 призрачных копии)
@@ -5690,16 +5793,21 @@ function _rktStartRenderLoop() {
         const pBaseX2 = Math.cos(ang + 0.15) * pBase;
         const pBaseY2 = Math.sin(ang + 0.15) * pBase;
 
-        // Градиент лепестка: светлый у основания → тёмно-красный к концу
-        const petG = ctx.createLinearGradient(
-          (pBaseX1+pBaseX2)/2, (pBaseY1+pBaseY2)/2,
-          pTipX, pTipY
-        );
-        petG.addColorStop(0,    'rgba(255,255,180,0.95)');
-        petG.addColorStop(0.3,  'rgba(255,200,40,0.9)');
-        petG.addColorStop(0.7,  'rgba(255,80,0,0.7)');
-        petG.addColorStop(1,    'rgba(180,0,0,0)');
-        ctx.fillStyle = petG;
+        if (_IS_MOBILE) {
+          // Упрощённо — одна заливка (createLinearGradient на каждый лепесток × 6 = дорого)
+          ctx.fillStyle = 'rgba(255,160,30,0.75)';
+        } else {
+          // Градиент лепестка: светлый у основания → тёмно-красный к концу
+          const petG = ctx.createLinearGradient(
+            (pBaseX1+pBaseX2)/2, (pBaseY1+pBaseY2)/2,
+            pTipX, pTipY
+          );
+          petG.addColorStop(0,    'rgba(255,255,180,0.95)');
+          petG.addColorStop(0.3,  'rgba(255,200,40,0.9)');
+          petG.addColorStop(0.7,  'rgba(255,80,0,0.7)');
+          petG.addColorStop(1,    'rgba(180,0,0,0)');
+          ctx.fillStyle = petG;
+        }
         ctx.beginPath();
         ctx.moveTo(pBaseX1, pBaseY1);
         ctx.quadraticCurveTo(
@@ -6235,17 +6343,29 @@ function rktTickStart() {
     // Обновляем DOM-множитель + тряска
     const el = document.getElementById('rktMult');
     if (el) {
-      el.textContent = displayStr + '×';
+      // textContent меняется только при реальной смене отображаемой цифры
+      // (раньше обновляли на каждом кадре даже если цифра не сменилась)
+      if (el._lastTxt !== displayStr) {
+        el.textContent = displayStr + '×';
+        el._lastTxt = displayStr;
+      }
       const nc = R.mult>=20?'rkt-mult gold':R.mult>=5?'rkt-mult green':'rkt-mult';
       if (el.className !== nc) el.className = nc;
-      // Тряска — чем выше множитель, тем сильнее (максимум ±6px горизонтально, ±3px вертикально)
+      // Тряска — чем выше множитель, тем сильнее
+      // На мобилке — уменьшенная тряска + округление до целых пикселей
+      // (дробные transform вызывают subpixel rendering → тормоза на слабом GPU)
       if (shakeLvl > 0.02) {
-        const sx = (Math.random() - 0.5) * shakeLvl * 6;
-        const sy = (Math.random() - 0.5) * shakeLvl * 3;
-        // Микро-поворот для усиления эффекта (±2.5 градуса на максимуме)
-        const sr = (Math.random() - 0.5) * shakeLvl * 2.5;
-        el.style.transform = `translate(${sx.toFixed(2)}px, ${sy.toFixed(2)}px) rotate(${sr.toFixed(2)}deg)`;
-      } else {
+        if (_IS_MOBILE) {
+          const sx = ((Math.random() - 0.5) * shakeLvl * 4) | 0;
+          const sy = ((Math.random() - 0.5) * shakeLvl * 2) | 0;
+          el.style.transform = `translate(${sx}px,${sy}px)`;
+        } else {
+          const sx = (Math.random() - 0.5) * shakeLvl * 6;
+          const sy = (Math.random() - 0.5) * shakeLvl * 3;
+          const sr = (Math.random() - 0.5) * shakeLvl * 2.5;
+          el.style.transform = `translate(${sx.toFixed(2)}px, ${sy.toFixed(2)}px) rotate(${sr.toFixed(2)}deg)`;
+        }
+      } else if (el.style.transform !== '') {
         el.style.transform = '';
       }
     }
