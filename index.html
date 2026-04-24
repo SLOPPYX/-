@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -6152,42 +6152,6 @@ function _rktStartRenderLoop() {
 
 // ── WebSocket ──────────────────────────────────────────
 let _ws = null, _wsOk = false, _wsRecon = null;
-// HTTP fallback — если WS не работает, поллим состояние ракетки по HTTP
-let _rktHttpPoll = null;
-let _rktHttpFallbackOn = false;
-
-function _rktStartHttpFallback() {
-  if (_rktHttpFallbackOn || !API_URL || !API_SECRET) return;
-  _rktHttpFallbackOn = true;
-  const tick = async () => {
-    if (_wsOk) {
-      // WS вернулся — выключаем fallback
-      _rktHttpFallbackOn = false;
-      if (_rktHttpPoll) { clearTimeout(_rktHttpPoll); _rktHttpPoll = null; }
-      return;
-    }
-    try {
-      const r = await fetch(
-        API_URL+'/casino/rocket/state?uid='+USER_ID+'&secret='+API_SECRET+'&_t='+Date.now(),
-        { headers:{'ngrok-skip-browser-warning':'1'} }
-      );
-      const d = await r.json();
-      if (d && d.ok) {
-        rktMsg({...d, type: 'snapshot'});
-        // Если HTTP работает — обозначим статус как "fallback"
-        rktWsStatus('wait', '● HTTP');
-      }
-    } catch(e) {}
-    // На мобилке — медленнее (1.5с), на ПК — 800мс
-    _rktHttpPoll = setTimeout(tick, (typeof _IS_MOBILE !== 'undefined' && _IS_MOBILE) ? 1500 : 800);
-  };
-  tick();
-}
-
-function _rktStopHttpFallback() {
-  _rktHttpFallbackOn = false;
-  if (_rktHttpPoll) { clearTimeout(_rktHttpPoll); _rktHttpPoll = null; }
-}
 
 function rktWsConnect() {
   if (!API_URL || !API_SECRET) return;
@@ -6198,38 +6162,21 @@ function rktWsConnect() {
     '/casino/rocket/ws?uid=' + USER_ID + '&secret=' + API_SECRET;
   _ws = new WebSocket(url);
 
-  // Таймаут на подключение — если WS не открылся за 4 сек, включаем HTTP fallback
-  const connectTimeout = setTimeout(() => {
-    if (!_wsOk) {
-      console.warn('[RKT] WS connect timeout → HTTP fallback');
-      _rktStartHttpFallback();
-    }
-  }, 4000);
-
   _ws.onopen = () => {
     _wsOk = true;
-    clearTimeout(connectTimeout);
     rktWsStatus('ok', '● LIVE');
     clearTimeout(_wsRecon);
-    _rktStopHttpFallback(); // WS заработал — больше HTTP не нужен
   };
   _ws.onmessage = e => {
     try { rktMsg(JSON.parse(e.data)); } catch(err) {}
   };
   _ws.onclose = () => {
     _wsOk = false;
-    clearTimeout(connectTimeout);
     rktWsStatus('err', '● РЕКОННЕКТ');
     clearTimeout(_wsRecon);
     _wsRecon = setTimeout(rktWsConnect, 1500);
-    // WS упал — включаем HTTP fallback чтобы ракетка продолжала работать
-    _rktStartHttpFallback();
   };
-  _ws.onerror = () => {
-    rktWsStatus('err', '● ОШИБКА');
-    // Ошибка WS — сразу HTTP fallback (не ждём таймаута)
-    _rktStartHttpFallback();
-  };
+  _ws.onerror = () => rktWsStatus('err', '● ОШИБКА');
 }
 
 function rktWsStatus(cls, txt) {
