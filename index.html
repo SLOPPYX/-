@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+      <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -113,15 +113,34 @@ html.mobile-perf .home-card.table  .home-card-icon { animation-duration: 5s; }
 /* Glow карточек — медленнее */
 html.mobile-perf .home-card { animation-duration: 5s; }
 
-/* Логотип: shimmer, flicker пламени, вращение звёзд — замедляем */
-html.mobile-perf .logo-main { animation-duration: 4.5s; }
+/* Логотип: на мобилке убираем самые дорогие для iOS Safari операции */
+html.mobile-perf .logo-main {
+  /* background-clip:text + анимированный gradient = kill FPS на iOS */
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  -webkit-text-fill-color: #ffb44a !important;
+  color: #ffb44a !important;
+  /* filter:drop-shadow = дорогой, убираем */
+  filter: none !important;
+  /* Статичный — без shimmer */
+  animation: none !important;
+}
 html.mobile-perf .logo-main svg.flame-left  { animation-duration: 1s; }
 html.mobile-perf .logo-main svg.flame-right { animation-duration: 0.95s; }
 html.mobile-perf .logo-sub-line { animation-duration: 4s; }
 html.mobile-perf .logo-sub svg {
   animation-duration: 5s, 2.8s; /* spin, twinkle */
 }
-html.mobile-perf .logo-sub-name { animation-duration: 5.5s; }
+/* SloppyX — тоже без анимированного background-clip */
+html.mobile-perf .logo-sub-name {
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  -webkit-text-fill-color: #ffc14a !important;
+  color: #ffc14a !important;
+  animation: none !important;
+}
 
 /* ── 5. Смягчение text-shadow glow ───────────────────────── */
 /* 40px blur на каждом кадре = очень дорого для tряски множителя.
@@ -153,6 +172,23 @@ html.mobile-perf #splash {
    говорим браузеру что можно скроллить немедленно */
 html.mobile-perf .rkt-tbl-wrap,
 html.mobile-perf .paytable-wrap {
+  touch-action: pan-y;
+}
+
+html.mobile-perf .bg-grid,
+html.mobile-perf .bg-glow {
+  position: absolute !important;
+  height: 100vh;
+}
+/* На iOS position:fixed с background-image перекрашивается при скролле
+   — это один из главных убийц FPS. absolute с ограниченной высотой решает */
+
+/* На iOS Safari: включаем аппаратно-ускоренный скролл для списков,
+   иначе скролл рваный и main thread блокируется на каждом кадре */
+html.mobile-perf .rkt-tbl-wrap,
+html.mobile-perf .paytable-wrap,
+html.mobile-perf body {
+  -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
 }
 
@@ -4949,6 +4985,7 @@ async function init() {
 // Применяем баланс — устанавливает ВСЕ переменные и DOM сразу
 function setBalance(val) {
   if(typeof val !== 'number' || isNaN(val) || val < 0) return;
+  const prevBalance = balance;
   balance = val;
   INIT_BAL = val;
   _lastKnownBalance = val;
@@ -4957,7 +4994,11 @@ function setBalance(val) {
   try { document.getElementById('pBal').textContent = fmt; } catch(e){}
   try { const sb=document.getElementById('spoBal'); if(sb) sb.textContent=fmt; } catch(e){}
   try { const eb=document.getElementById('exitBalPreview'); if(eb) eb.textContent=val.toLocaleString('ru-RU'); } catch(e){}
-  try { const bp=document.getElementById('balancePill'); if(bp){bp.classList.remove('pulse');void bp.offsetWidth;bp.classList.add('pulse');} } catch(e){}
+  // Pulse-анимация только при реальном изменении баланса (не при каждом API ответе)
+  // void offsetWidth = forced reflow, на iOS блокирует main thread на 20-50мс
+  if (prevBalance !== val) {
+    try { const bp=document.getElementById('balancePill'); if(bp){bp.classList.remove('pulse');void bp.offsetWidth;bp.classList.add('pulse');} } catch(e){}
+  }
   try { setSave('ok','✅ '+fmt); } catch(e){}
   try { localStorage.setItem('bal_'+USER_ID, String(val)); } catch(e){}
 }
@@ -5284,7 +5325,8 @@ function startBalancePolling() {
   stopBalancePolling();
   _lpStop = false;
   longPoll();
-  _notifyTimer = setInterval(notifyBalance, 3000);
+  // На мобилке notify раз в 6 сек (а не 3) — экономим main thread
+  _notifyTimer = setInterval(notifyBalance, _IS_MOBILE ? 6000 : 3000);
 }
 
 function stopBalancePolling() {
@@ -5325,7 +5367,9 @@ async function longPoll() {
       }
     } catch(e) { /* timeout — нормально */ }
     if(_lpStop) break;
-    await new Promise(r=>setTimeout(r,100));
+    // На мобилке делаем паузу значительно больше — 10 fetch/сек забивают main thread
+    // и дают чувство лагов всего сайта. 2 fetch/сек более чем достаточно для баланса.
+    await new Promise(r=>setTimeout(r, _IS_MOBILE ? 500 : 100));
   }
 }
 
@@ -5595,196 +5639,6 @@ function _rktStartRenderLoop() {
 
   const ctx = RX;
   const ph  = R.phase;
-
-  // ═══════════════════════════════════════════════════════════
-  // MOBILE FAST-PATH — упрощённый рендер для мобилок
-  // ═══════════════════════════════════════════════════════════
-  // Настоящий рендер с пламенем/орбитальными искрами/лепестками
-  // на слабом мобильном GPU даёт 3-5 FPS. Здесь — минимум работы:
-  // чёрный фон, сетка из кэша, мало звёзд, простой кристалл FF,
-  // простая ракета. Визуал проще но на iPhone стабильные 60 FPS.
-  // На ПК (не mobile) дальше идёт полный рендер как было.
-  if (_IS_MOBILE) {
-    // ── Фон ──
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, RW, RH);
-    // Сетка
-    if (window._rktGridCache) ctx.drawImage(window._rktGridCache, 0, 0, RW, RH);
-
-    // ── Звёзды простые (без стриков-градиентов) ──
-    const starSpdM = ph === 'flying' ? Math.min(1.5 + R.mult * 0.75, 28) : 0;
-    const speedLvlM = ph === 'flying' ? Math.min((R.mult - 1) / 9, 1) : 0;
-    ctx.fillStyle = '#fff';
-    for (let i = 0; i < rStars.length; i++) {
-      const s = rStars[i];
-      s.b += s.s * 0.022;
-      s.y += starSpdM;
-      if (s.y > RH + 4) { s.y = -4; s.x = Math.random() * RW; }
-      const alpha = 0.18 + Math.abs(Math.sin(s.b)) * 0.72;
-      ctx.globalAlpha = alpha;
-      if (starSpdM > 2) {
-        // Простой штрих белым — без градиентов
-        ctx.fillRect(s.x, s.y - 6 - speedLvlM * 8, s.r, 6 + speedLvlM * 8);
-      } else {
-        ctx.fillRect(s.x, s.y, s.r, s.r);
-      }
-    }
-    ctx.globalAlpha = 1;
-
-    // ── Speed-lines (упрощённые — без градиентов) ──
-    if (ph === 'flying') {
-      const lineCount = Math.round(12 + speedLvlM * 14); // 12..26 на мобилке
-      if (!window._rktSpeedLines) window._rktSpeedLines = [];
-      while (window._rktSpeedLines.length < lineCount) {
-        window._rktSpeedLines.push({
-          x: Math.random() * RW,
-          y: Math.random() * RH,
-          len: 30 + Math.random() * 50 + speedLvlM * 60,
-          w: 1 + Math.random() * 1.5,
-          a: 0.35 + Math.random() * 0.35
-        });
-      }
-      if (window._rktSpeedLines.length > lineCount) window._rktSpeedLines.length = lineCount;
-
-      const baseSpdM = 20 + speedLvlM * 60;
-      const lineColor = speedLvlM > 0.55
-        ? `rgba(255,${Math.round(210 - speedLvlM*100)},${Math.round(120 - speedLvlM*100)},0.7)`
-        : 'rgba(255,245,210,0.6)';
-      ctx.strokeStyle = lineColor;
-      ctx.lineCap = 'round';
-      for (let i = 0; i < window._rktSpeedLines.length; i++) {
-        const ln = window._rktSpeedLines[i];
-        ln.y += baseSpdM;
-        if (ln.y > RH + ln.len) {
-          ln.y = -ln.len;
-          ln.x = Math.random() * RW;
-        }
-        ctx.lineWidth = ln.w * (1 + speedLvlM);
-        ctx.beginPath();
-        ctx.moveTo(ln.x, ln.y - ln.len);
-        ctx.lineTo(ln.x, ln.y);
-        ctx.stroke();
-      }
-    } else if (window._rktSpeedLines) {
-      window._rktSpeedLines.length = 0;
-    }
-
-    // ── WAITING: таймер ──
-    if (ph === 'waiting' && R.waitLeft > 0) {
-      const left = R.waitLeft;
-      const cx = RW * 0.5, cy = RH * 0.5 - 10;
-      const fs = Math.round(RH * 0.37);
-      ctx.font = `900 ${fs}px 'Barlow Condensed','Orbitron',monospace`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#fff';
-      ctx.fillText(left.toFixed(1), cx, cy);
-      ctx.globalAlpha = 0.35;
-      const sf = Math.round(RH * 0.043);
-      ctx.font = `600 ${sf}px 'Barlow Condensed',monospace`;
-      ctx.fillText('СЛЕДУЮЩИЙ РАУНД', cx, cy + fs * 0.53);
-      ctx.globalAlpha = 1;
-    }
-
-    // ── FLYING / CRASHED: простая ракета ──
-    if (ph === 'flying' || ph === 'crashed') {
-      const elapsed = (Date.now() - R.ls) / 1000;
-      const prog = Math.min(elapsed / 18, 0.82);
-      const rx = RW * 0.5;
-      const ry = RH * 0.88 - prog * RH * 0.50;
-
-      if (ph === 'flying') {
-        // Ореол — один радиальный градиент (нечасто, 1 на кадр)
-        const halo = ctx.createRadialGradient(rx, ry, 8, rx, ry, 48);
-        halo.addColorStop(0, 'rgba(255,200,60,0.5)');
-        halo.addColorStop(1, 'rgba(255,100,0,0)');
-        ctx.fillStyle = halo;
-        ctx.beginPath(); ctx.arc(rx, ry, 48, 0, Math.PI*2); ctx.fill();
-
-        // Простое пламя — одна эллипс-заливка
-        const flicker = 0.85 + Math.sin(rTime * 0.6) * 0.15;
-        const fl = (22 + speedLvlM * 22) * flicker;
-        ctx.fillStyle = `rgba(255,140,0,${0.4 + speedLvlM*0.2})`;
-        ctx.beginPath(); ctx.ellipse(rx, ry+18, 10, fl*1.2, 0, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = `rgba(255,220,40,0.75)`;
-        ctx.beginPath(); ctx.ellipse(rx, ry+13, 6, fl*0.6, 0, 0, Math.PI*2); ctx.fill();
-      }
-
-      // Гексагональный щит — без rotation/scale/pulse вибрации
-      ctx.save();
-      ctx.translate(rx, ry);
-
-      // Рамка
-      ctx.fillStyle = '#ff7700';
-      ctx.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const ang = i * (Math.PI / 3) - Math.PI/2;
-        const x = Math.cos(ang) * 23, y = Math.sin(ang) * 23;
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.fill();
-
-      // Внутренний тёмный слой
-      ctx.fillStyle = '#220808';
-      ctx.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const ang = i * (Math.PI / 3) - Math.PI/2;
-        const x = Math.cos(ang) * 19, y = Math.sin(ang) * 19;
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.fill();
-
-      // Буквы FF
-      ctx.font = '900 22px "Oxanium","Barlow Condensed",Impact,sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#ffd23d';
-      ctx.fillText('FF', 0, -2);
-      // Мелкая подпись
-      ctx.font = '800 5.5px "Barlow Condensed",sans-serif';
-      ctx.fillStyle = 'rgba(255,200,60,0.85)';
-      ctx.fillText('FREE FIRE', 0, 11);
-
-      ctx.restore();
-
-      // Частицы краша
-      rParticles = rParticles.filter(p => p.life > 0);
-      for (let i = 0; i < rParticles.length; i++) {
-        const p = rParticles[i];
-        p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.vx*=0.98; p.life-=0.018;
-        ctx.globalAlpha = Math.pow(p.life, 0.7);
-        ctx.fillStyle = p.c;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI*2); ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-    }
-
-    // ── DOM-множитель: crash-цвет ──
-    if (ph === 'crashed' && rTime % 4 === 0) {
-      const elFlash = document.getElementById('rktMult');
-      if (elFlash && elFlash.className !== 'rkt-mult red') {
-        elFlash.className = 'rkt-mult red';
-      }
-    }
-
-    // ── Cash popups (простые) ──
-    rCashPopups = rCashPopups.filter(n => n.life > 0);
-    for (let i = 0; i < rCashPopups.length; i++) {
-      const n = rCashPopups[i];
-      n.y -= 0.6; n.life -= 0.012;
-      ctx.globalAlpha = Math.min(n.life * 2, 1);
-      ctx.font = `bold 11px 'Barlow Condensed',monospace`;
-      ctx.textAlign = 'center'; ctx.fillStyle = '#4ade80';
-      ctx.fillText('💰 ' + n.name + ' ×' + n.mult.toFixed(2), RW * 0.5, n.y);
-    }
-    ctx.globalAlpha = 1;
-
-    return; // конец mobile fast-path
-  }
-  // ═══════════════════════════════════════════════════════════
-  // ДАЛЬШЕ — ПОЛНЫЙ рендер для ПК (оригинальный код)
-  // ═══════════════════════════════════════════════════════════
 
   // ── Фон ─────────────────────────────────────────────
   ctx.fillStyle = '#000';
