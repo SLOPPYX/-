@@ -106,6 +106,7 @@ html.mobile-perf .home-card::before {
    но compositor делает в ~2 раза меньше работы.
    Визуально это даже красивее — более плавно и элегантно. */
 html.mobile-perf .home-card.slots  .home-card-icon { animation-duration: 3.2s; }
+html.mobile-perf .home-card.mines  .home-card-icon { animation-duration: 3.8s; }
 html.mobile-perf .home-card.rocket .home-card-icon { animation-duration: 4.5s; }
 html.mobile-perf .home-card.profile .home-card-icon { animation-duration: 5s; }
 html.mobile-perf .home-card.top    .home-card-icon { animation-duration: 4s; }
@@ -468,9 +469,27 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   box-shadow:0 0 0 1px rgba(80,200,255,.22), 0 0 18px rgba(60,180,255,.3), inset 0 1px 0 rgba(255,255,255,.12);
   filter:drop-shadow(0 4px 14px rgba(60,180,255,.45))
 }
+/* Мины — красно-серое опасное свечение */
+.home-card.mines .home-card-icon{
+  background:radial-gradient(ellipse at 50% 50%,rgba(255,80,80,.16) 0%,rgba(140,40,40,.10) 60%,transparent 100%);
+  box-shadow:0 0 0 1px rgba(255,100,100,.2), 0 0 18px rgba(255,80,60,.3), inset 0 1px 0 rgba(255,255,255,.10);
+  filter:drop-shadow(0 4px 14px rgba(220,60,60,.45));
+  animation:minesPulse 1.6s ease-in-out infinite;
+}
+@keyframes minesPulse {
+  0%,100% {
+    box-shadow:0 0 0 1px rgba(255,100,100,.2), 0 0 18px rgba(255,80,60,.3), inset 0 1px 0 rgba(255,255,255,.10);
+    transform:scale(1);
+  }
+  50% {
+    box-shadow:0 0 0 1px rgba(255,140,100,.45), 0 0 28px rgba(255,90,60,.65), inset 0 1px 0 rgba(255,255,255,.18);
+    transform:scale(1.05);
+  }
+}
 
 /* ── Оранжевый акцент у каждой карточки (разная интенсивность) ── */
 .home-card.slots  {border-color:rgba(255,120,0,.3);animation-delay:0s}
+.home-card.mines  {border-color:rgba(255,80,60,.28);animation-delay:.3s}
 .home-card.rocket {border-color:rgba(255,100,0,.26);animation-delay:.6s}
 .home-card.profile{border-color:rgba(255,130,0,.28);animation-delay:1.2s}
 .home-card.top    {border-color:rgba(255,160,0,.4);box-shadow:0 2px 0 rgba(255,160,0,.6),0 6px 28px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06);animation-delay:1.8s}
@@ -1643,6 +1662,268 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
   90% {transform:translateY(-342px)}
   100%{transform:translateY(0)}
 }
+/* ══ МИНЫ ══════════════════════════════════════════════ */
+#page-mines { padding:0 0 30px 0; background:#000; }
+.mns-wrap { padding:14px 16px 20px; display:flex; flex-direction:column; gap:14px; }
+
+/* Верхняя панель: множитель + следующий */
+.mns-top {
+  position:relative;
+  background:linear-gradient(180deg,rgba(40,10,10,0.6),rgba(10,0,0,0.4));
+  border:1px solid rgba(255,80,60,0.3);
+  border-radius:16px;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+.mns-mult-wrap {
+  display:flex; flex-direction:column; align-items:flex-start; gap:3px;
+}
+.mns-mult-lbl {
+  font-family:var(--fd); font-size:9px; font-weight:700;
+  color:rgba(255,255,255,.4); letter-spacing:2px;
+}
+.mns-mult {
+  font-family:var(--fd); font-size:32px; font-weight:900;
+  color:#fff; letter-spacing:1.5px; line-height:1;
+  text-shadow:0 0 20px currentColor;
+}
+.mns-mult.green { color:#4ade80; }
+.mns-mult.gold  { color:#ffd700; }
+.mns-next-wrap {
+  display:flex; flex-direction:column; align-items:flex-end; gap:3px;
+}
+.mns-next-lbl {
+  font-family:var(--fd); font-size:9px; font-weight:700;
+  color:rgba(74,222,128,.6); letter-spacing:2px;
+}
+.mns-next-val {
+  font-family:var(--fd); font-size:20px; font-weight:900;
+  color:#4ade80; letter-spacing:1px; line-height:1;
+}
+
+/* Поле 5×5 */
+.mns-grid {
+  display:grid;
+  grid-template-columns:repeat(5, 1fr);
+  grid-template-rows:repeat(5, 1fr);
+  gap:7px;
+  aspect-ratio:1/1;
+  padding:10px;
+  background:linear-gradient(180deg,rgba(20,20,30,0.5),rgba(5,5,10,0.3));
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:14px;
+}
+.mns-cell {
+  position:relative;
+  background:linear-gradient(180deg,#2a2a38,#1a1a25);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px;
+  cursor:pointer;
+  overflow:hidden;
+  transition:transform .14s cubic-bezier(.3,1.7,.5,1), background .2s, box-shadow .2s;
+  display:flex; align-items:center; justify-content:center;
+  user-select:none; -webkit-user-select:none;
+}
+.mns-cell:not(.opened):not(.disabled):hover {
+  background:linear-gradient(180deg,#3a3a48,#2a2a38);
+  box-shadow:0 0 0 2px rgba(255,255,255,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.mns-cell:not(.opened):not(.disabled):active {
+  transform:scale(.92);
+}
+.mns-cell.opened {
+  cursor:default;
+  animation:mnsOpen .35s cubic-bezier(.34,1.56,.64,1);
+}
+.mns-cell.opened.safe {
+  background:linear-gradient(180deg,rgba(40,200,100,0.35),rgba(20,120,60,0.2));
+  border-color:rgba(100,255,150,0.6);
+  box-shadow:0 0 14px rgba(80,220,120,0.5), inset 0 0 10px rgba(80,220,120,0.3);
+}
+.mns-cell.opened.bomb {
+  background:linear-gradient(180deg,rgba(255,60,40,0.45),rgba(120,20,10,0.3));
+  border-color:rgba(255,100,70,0.8);
+  box-shadow:0 0 16px rgba(255,80,60,0.7), inset 0 0 12px rgba(255,80,60,0.4);
+  animation:mnsBomb .5s ease-out;
+}
+.mns-cell.revealed-bomb {
+  background:linear-gradient(180deg,rgba(80,20,20,0.5),rgba(40,10,10,0.3));
+  border-color:rgba(255,80,60,0.4);
+  opacity:0.75;
+}
+.mns-cell.disabled { cursor:default; }
+.mns-cell-icon {
+  width:55%; height:55%;
+  display:flex; align-items:center; justify-content:center;
+}
+@keyframes mnsOpen {
+  0% {transform:scale(.5) rotateY(90deg); opacity:0}
+  60%{transform:scale(1.08) rotateY(0deg); opacity:1}
+  100%{transform:scale(1) rotateY(0deg); opacity:1}
+}
+@keyframes mnsBomb {
+  0% {transform:scale(.5); filter:brightness(2.5)}
+  30%{transform:scale(1.25); filter:brightness(1.8)}
+  100%{transform:scale(1); filter:brightness(1)}
+}
+
+/* Панель управления под полем */
+.mns-ctrl {
+  display:flex; flex-direction:column; gap:10px;
+}
+.mns-stat-row {
+  display:flex; justify-content:space-between; align-items:center;
+  background:rgba(20,20,30,0.4); border:1px solid rgba(255,255,255,0.08);
+  border-radius:10px; padding:8px 14px;
+  font-family:var(--fd); font-size:10px; font-weight:700;
+  letter-spacing:1.5px; color:rgba(255,255,255,.6);
+}
+.mns-stat-row b { color:#fff; font-size:13px; }
+.mns-stat-row .mns-stat-gain { color:#4ade80; }
+
+.mns-bet-wrap {
+  display:flex; flex-direction:column; gap:6px;
+}
+.mns-bet-lbl {
+  font-family:var(--fd); font-size:9px; font-weight:700;
+  color:rgba(255,255,255,.45); letter-spacing:2px; padding-left:4px;
+}
+.mns-bet-input {
+  background:rgba(20,20,30,0.6); border:1px solid rgba(255,255,255,0.12);
+  border-radius:10px; padding:11px 14px;
+  font-family:var(--fd); font-size:18px; font-weight:900;
+  color:#fff; width:100%;
+  outline:none; transition:border-color .2s;
+}
+.mns-bet-input:focus { border-color:rgba(255,180,40,0.5); }
+.mns-bet-input:disabled { opacity:0.55; cursor:not-allowed; }
+
+.mns-bet-chips {
+  display:grid; grid-template-columns:repeat(4, 1fr); gap:6px;
+}
+.mns-bet-chips button {
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px; padding:7px 0;
+  font-family:var(--fd); font-size:11px; font-weight:700;
+  letter-spacing:.5px; color:rgba(255,255,255,.7);
+  cursor:pointer; transition:all .14s;
+}
+.mns-bet-chips button:hover { background:rgba(255,180,40,0.15); color:#fff; }
+.mns-bet-chips button:active { transform:scale(.95); }
+.mns-bet-chips button:disabled { opacity:0.4; cursor:not-allowed; }
+
+.mns-mult-chips {
+  display:grid; grid-template-columns:repeat(5, 1fr); gap:6px;
+}
+.mns-mult-chips button {
+  background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px; padding:7px 0;
+  font-family:var(--fd); font-size:11px; font-weight:700;
+  color:rgba(255,255,255,.65); cursor:pointer; transition:all .14s;
+}
+.mns-mult-chips button:hover { background:rgba(74,222,128,0.2); color:#fff; }
+.mns-mult-chips button:active { transform:scale(.95); }
+.mns-mult-chips button.red { color:#ef4444; }
+.mns-mult-chips button.green { color:#4ade80; }
+.mns-mult-chips button.purple { color:#a855f7; }
+.mns-mult-chips button:disabled { opacity:0.4; cursor:not-allowed; }
+
+/* Слайдер мин */
+.mns-mines-wrap {
+  display:flex; flex-direction:column; gap:8px;
+  background:rgba(20,20,30,0.4); border:1px solid rgba(255,100,70,0.25);
+  border-radius:12px; padding:12px 14px;
+}
+.mns-mines-hdr {
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--fd); font-size:10px; font-weight:700;
+  letter-spacing:2px; color:rgba(255,255,255,.5);
+}
+.mns-mines-hdr b {
+  font-size:20px; color:#ff6050; letter-spacing:0;
+}
+.mns-slider {
+  -webkit-appearance:none; appearance:none; width:100%; height:6px;
+  background:linear-gradient(90deg,#4ade80 0%,#ffd700 50%,#ff6050 100%);
+  border-radius:3px; outline:none; cursor:pointer;
+}
+.mns-slider::-webkit-slider-thumb {
+  -webkit-appearance:none; appearance:none;
+  width:22px; height:22px; border-radius:50%;
+  background:#fff; border:2px solid #ff6050; cursor:pointer;
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
+}
+.mns-slider::-moz-range-thumb {
+  width:22px; height:22px; border-radius:50%;
+  background:#fff; border:2px solid #ff6050; cursor:pointer;
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
+}
+.mns-slider:disabled { opacity:0.5; cursor:not-allowed; }
+
+/* Главные кнопки */
+.mns-main-btn {
+  width:100%; padding:16px;
+  font-family:var(--fd); font-size:15px; font-weight:900;
+  letter-spacing:2px; border:none; border-radius:14px;
+  cursor:pointer; transition:transform .1s, filter .2s;
+  text-transform:uppercase;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.mns-main-btn.start {
+  background:linear-gradient(180deg,#ff8a1a,#cc5500);
+  color:#fff;
+  box-shadow:0 4px 0 #992f00, 0 8px 20px rgba(255,120,0,.4);
+}
+.mns-main-btn.start:active { transform:translateY(3px); box-shadow:0 1px 0 #992f00, 0 3px 10px rgba(255,120,0,.3); }
+.mns-main-btn.cashout {
+  background:linear-gradient(180deg,#22c55e,#15803d);
+  color:#fff;
+  box-shadow:0 4px 0 #0f5028, 0 8px 20px rgba(34,197,94,.4);
+  animation:mnsPulseG 1.2s ease-in-out infinite;
+}
+.mns-main-btn.cashout:active { transform:translateY(3px); box-shadow:0 1px 0 #0f5028, 0 3px 10px rgba(34,197,94,.3); }
+.mns-main-btn.lost {
+  background:linear-gradient(180deg,#dc2626,#7f1d1d);
+  color:#fff;
+  box-shadow:0 4px 0 #450a0a, 0 8px 20px rgba(220,38,38,.3);
+}
+.mns-main-btn:disabled { opacity:0.6; cursor:not-allowed; animation:none; }
+@keyframes mnsPulseG {
+  0%,100%{filter:brightness(1)}
+  50% {filter:brightness(1.2)}
+}
+
+/* Кнопка отмены — серая, чтобы не путать с главной */
+.mns-cancel-btn {
+  width:100%; padding:11px;
+  font-family:var(--fd); font-size:11px; font-weight:800;
+  letter-spacing:2px; border:1px solid rgba(255,90,90,0.3);
+  border-radius:10px; cursor:pointer;
+  background:rgba(180,40,40,0.15); color:rgba(255,180,180,.85);
+  transition:background .14s, transform .1s;
+  text-transform:uppercase;
+}
+.mns-cancel-btn:hover { background:rgba(220,60,60,0.25); }
+.mns-cancel-btn:active { transform:scale(.98); }
+
+/* История раундов */
+.mns-hist {
+  display:flex; gap:5px; flex-wrap:wrap;
+  padding:8px 2px 0;
+}
+.mns-hist-item {
+  font-family:var(--fd); font-size:10px; font-weight:800;
+  padding:4px 8px; border-radius:6px;
+  background:rgba(20,20,30,0.5);
+  border:1px solid rgba(255,255,255,0.1);
+}
+.mns-hist-item.win  { color:#4ade80; border-color:rgba(74,222,128,0.3); }
+.mns-hist-item.lose { color:#ef4444; border-color:rgba(239,68,68,0.3); }
+
+/* ══ конец мин ══ */
 /* ══ конец барабанов ══ */
 </style>
 </head>
@@ -1883,6 +2164,59 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
       </div>
 
 
+
+      <div class="home-card mines" onclick="showPage('mines')">
+        <div class="home-card-txt">
+          <div class="home-card-tag">МИНИ-ИГРА</div>
+          <div class="home-card-title">МИНЫ <span class="ff-badge">×</span></div>
+          <div class="home-card-sub">Находи алмазы — избегай мин!</div>
+        </div>
+        <span class="home-card-arrow">›</span>
+        <div class="home-card-icon">
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="mineB" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#5a5a5a"/>
+                <stop offset="60%" stop-color="#2a2a2a"/>
+                <stop offset="100%" stop-color="#0a0a0a"/>
+              </radialGradient>
+              <radialGradient id="mineHL" cx="35%" cy="30%" r="40%">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
+                <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="fuseGl" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#fff" stop-opacity="1"/>
+                <stop offset="40%" stop-color="#ffcc00" stop-opacity="0.9"/>
+                <stop offset="100%" stop-color="#ff3300" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <!-- Тело мины (шар) -->
+            <circle cx="22" cy="25" r="13" fill="url(#mineB)"/>
+            <circle cx="22" cy="25" r="13" fill="url(#mineHL)"/>
+            <!-- Шипы -->
+            <rect x="20.5" y="8" width="3" height="5" fill="#1a1a1a" rx="0.5"/>
+            <rect x="20.5" y="37" width="3" height="5" fill="#1a1a1a" rx="0.5"/>
+            <rect x="4" y="23.5" width="5" height="3" fill="#1a1a1a" rx="0.5"/>
+            <rect x="35" y="23.5" width="5" height="3" fill="#1a1a1a" rx="0.5"/>
+            <rect x="8" y="11" width="4" height="3" fill="#1a1a1a" rx="0.5" transform="rotate(-45 10 12.5)"/>
+            <rect x="32" y="11" width="4" height="3" fill="#1a1a1a" rx="0.5" transform="rotate(45 34 12.5)"/>
+            <rect x="8" y="36" width="4" height="3" fill="#1a1a1a" rx="0.5" transform="rotate(45 10 37.5)"/>
+            <rect x="32" y="36" width="4" height="3" fill="#1a1a1a" rx="0.5" transform="rotate(-45 34 37.5)"/>
+            <!-- Фитиль -->
+            <path d="M 22 12 Q 26 6 28 4" stroke="#8b6f47" stroke-width="1.5" fill="none"/>
+            <!-- Искра на конце фитиля (анимированная) -->
+            <circle cx="28" cy="4" r="4" fill="url(#fuseGl)">
+              <animate attributeName="r" values="3;5;3" dur="0.9s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.7;1;0.7" dur="0.9s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="28" cy="4" r="1.5" fill="#fff">
+              <animate attributeName="r" values="1.2;2.2;1.2" dur="0.9s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Блик на теле -->
+            <ellipse cx="17" cy="19" rx="4" ry="3" fill="rgba(255,255,255,0.3)"/>
+          </svg>
+        </div>
+      </div>
 
       <div class="home-card rocket" onclick="showPage('rocket')">
         <div class="home-card-txt">
@@ -2458,6 +2792,76 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
     <div style="background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
       <span style="font-size:9px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;flex-shrink:0">История</span>
       <div class="streak-dots" id="streakDots" style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end"></div>
+    </div>
+  </div>
+
+  <!-- ══ MINES GAME ══ -->
+  <div class="page" id="page-mines">
+    <div class="mns-wrap">
+
+      <!-- Верхняя панель: текущий мультипликатор + следующий -->
+      <div class="mns-top">
+        <div class="mns-mult-wrap">
+          <div class="mns-mult-lbl">МНОЖИТЕЛЬ</div>
+          <div class="mns-mult" id="mnsMult">×1.00</div>
+        </div>
+        <div class="mns-next-wrap">
+          <div class="mns-next-lbl">СЛЕДУЮЩИЙ</div>
+          <div class="mns-next-val" id="mnsNext">×1.08</div>
+        </div>
+      </div>
+
+      <!-- Поле 5×5 -->
+      <div class="mns-grid" id="mnsGrid"></div>
+
+      <!-- Ряд статистики -->
+      <div class="mns-stat-row">
+        <span>ОТКРЫТО: <b id="mnsOpened">0</b> / 25</span>
+        <span>ВЫИГРЫШ: <b class="mns-stat-gain" id="mnsGain">0</b></span>
+      </div>
+
+      <!-- Главная кнопка (ИГРАТЬ / ЗАБРАТЬ / ОТМЕНА появляется отдельно) -->
+      <div style="display:flex;gap:8px;flex-direction:column">
+        <button class="mns-main-btn start" id="mnsMainBtn" onclick="mnsClickMain()">🚀 ИГРАТЬ</button>
+        <button class="mns-cancel-btn" id="mnsCancelBtn" onclick="mnsCancel()" style="display:none">❌ ОТМЕНА — ВЕРНУТЬ СТАВКУ</button>
+      </div>
+
+      <!-- Ставка -->
+      <div class="mns-bet-wrap">
+        <div class="mns-bet-lbl">СТАВКА (мин 10 000 / макс 100 000 000)</div>
+        <input class="mns-bet-input" id="mnsBetInput" type="number" inputmode="numeric" value="10000" min="10000" max="100000000" oninput="mnsUpdateNext()">
+        <div class="mns-bet-chips">
+          <button onclick="mnsSetBet(10000)">10K</button>
+          <button onclick="mnsSetBet(100000)">100K</button>
+          <button onclick="mnsSetBet(1000000)">1M</button>
+          <button onclick="mnsSetBet(10000000)">10M</button>
+        </div>
+        <div class="mns-mult-chips">
+          <button class="red" onclick="mnsMulBet(0.5)">×½</button>
+          <button onclick="mnsMulBet(1.5)">×1.5</button>
+          <button class="green" onclick="mnsMulBet(2)">×2</button>
+          <button class="purple" onclick="mnsMulBet(3)">×3</button>
+          <button onclick="mnsMulBet(5)">×5</button>
+        </div>
+      </div>
+
+      <!-- Информация о минах (фикс. 5) -->
+      <div class="mns-mines-wrap">
+        <div class="mns-mines-hdr">
+          <span>💣 МИН НА ПОЛЕ</span>
+          <b>5</b>
+        </div>
+        <div style="font-family:var(--fd);font-size:9px;color:rgba(255,255,255,.4);letter-spacing:1px;text-align:center">
+          Найди алмазы — избегай мин!
+        </div>
+      </div>
+
+      <!-- История последних раундов -->
+      <div>
+        <div style="font-family:var(--fd);font-size:9px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:2px;margin-bottom:6px;padding-left:4px">ПОСЛЕДНИЕ ИГРЫ</div>
+        <div class="mns-hist" id="mnsHist"></div>
+      </div>
+
     </div>
   </div>
 
@@ -3141,6 +3545,9 @@ function showPage(n) {
   } else {
     // Скрываем нативную кнопку если была включена
     try{ tg.MainButton.hide(); }catch(e){}
+  }
+  if(n==='mines') {
+    try { mnsInitOnce(); } catch(e){}
   }
   if(n==='top') {
     try { loadLeaderboard(true); } catch(e){}
@@ -5488,7 +5895,440 @@ window.addEventListener('pagehide', () => {
 
 
 
-// ══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// 💣 МИНЫ — Mines Game (клиентская логика)
+// ═══════════════════════════════════════════════════════
+
+// Лимиты ставки
+const MNS_MIN_BET = 10000;
+const MNS_MAX_BET = 100000000;
+// Фиксированное число мин (5 — классика Stake)
+const MNS_MINES_FIXED = 5;
+
+// ── Состояние мин ──
+const MNS = {
+  phase: 'idle',        // idle | playing | won | lost
+  mines: MNS_MINES_FIXED,
+  bet: MNS_MIN_BET,
+  opened: [],
+  bombs: [],
+  mult: 1.0,
+  history: [],
+};
+
+// ── Расчёт множителя ──
+// Формула близка к Stake: базируется на комбинаторике + house edge ~3%
+// Для n открытых безопасных клеток при m минах:
+//   mult = product_{k=0..n-1} ((25-k) / (25-m-k)) * 0.97
+function mnsMultFor(minesCount, opened) {
+  if (opened === 0) return 1.0;
+  let mult = 1.0;
+  for (let k = 0; k < opened; k++) {
+    mult *= (25 - k) / (25 - minesCount - k);
+  }
+  return mult * 0.97; // house edge
+}
+
+function mnsFormatMult(m) {
+  if (m < 10) return '×' + m.toFixed(2);
+  if (m < 100) return '×' + m.toFixed(1);
+  return '×' + Math.round(m);
+}
+
+// ── Инициализация (пустое поле 5x5) ──
+function mnsInit() {
+  const grid = document.getElementById('mnsGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (let i = 0; i < 25; i++) {
+    const c = document.createElement('div');
+    c.className = 'mns-cell disabled';
+    c.dataset.idx = i;
+    c.onclick = () => mnsClickCell(i);
+    grid.appendChild(c);
+  }
+  // Загружаем ставку из localStorage если есть (с учётом нового min)
+  try {
+    let savedBet = parseInt(localStorage.getItem('mns_bet_'+USER_ID)||String(MNS_MIN_BET));
+    if (savedBet < MNS_MIN_BET) savedBet = MNS_MIN_BET;
+    if (savedBet > MNS_MAX_BET) savedBet = MNS_MAX_BET;
+    MNS.bet = savedBet;
+    document.getElementById('mnsBetInput').value = savedBet;
+  } catch(e){}
+  mnsUpdateNext();
+  mnsRenderHist();
+}
+
+// ── Начать игру ──
+function mnsStart() {
+  // Валидация ставки
+  const betInput = document.getElementById('mnsBetInput');
+  const bet = parseInt(betInput.value) || 0;
+  if (bet < MNS_MIN_BET) {
+    showToast('Минимальная ставка: ' + MNS_MIN_BET.toLocaleString('ru-RU'), 'error');
+    return;
+  }
+  if (bet > MNS_MAX_BET) {
+    showToast('Максимальная ставка: ' + MNS_MAX_BET.toLocaleString('ru-RU'), 'error');
+    return;
+  }
+  if (bet > balance) { showToast('Недостаточно токенов!', 'error'); return; }
+
+  MNS.bet = bet;
+  MNS.phase = 'playing';
+  MNS.opened = [];
+  MNS.mult = 1.0;
+  // Генерируем новые позиции мин
+  MNS.bombs = mnsPickBombs(MNS.mines);
+
+  // Списываем ставку локально + отправляем на сервер
+  balance -= bet;
+  setBalance(balance);
+  // На сервер уходит как "spin" с пометкой "loss" (пока). Если выиграет — пошлём ещё win-spin.
+  try { apiSpin(bet, 'loss', 0); } catch(e){}
+  try { localStorage.setItem('mns_bet_'+USER_ID, String(bet)); } catch(e){}
+
+  // Обновляем UI
+  mnsEnableCells();
+  mnsUpdateMult();
+  mnsRenderBtn();
+  // Показываем кнопку отмены (доступна пока не открыта первая клетка)
+  const cancelBtn = document.getElementById('mnsCancelBtn');
+  if (cancelBtn) cancelBtn.style.display = 'block';
+  // Блокируем контролы
+  document.getElementById('mnsBetInput').disabled = true;
+  document.querySelectorAll('.mns-bet-chips button').forEach(b => b.disabled = true);
+  document.querySelectorAll('.mns-mult-chips button').forEach(b => b.disabled = true);
+}
+
+// ── ОТМЕНА игры до первого клика — возврат ставки ──
+function mnsCancel() {
+  if (MNS.phase !== 'playing') return;
+  if (MNS.opened.length > 0) {
+    showToast('Уже поздно — клетка открыта!', 'error');
+    return;
+  }
+  // Возвращаем ставку
+  balance += MNS.bet;
+  setBalance(balance);
+  // Откатываем "loss" запись на сервере: отправляем компенсирующий "win" с mult=1
+  // (apiSpin: bet, result, mult — если win с mult=1, начислится bet*1 = bet, что и есть возврат)
+  try { apiSpin(MNS.bet, 'win', 1.0); } catch(e){}
+  showToast('💵 Ставка возвращена: ' + MNS.bet.toLocaleString('ru-RU'), 'gold');
+  try { tg.HapticFeedback.impactOccurred('medium'); } catch(e){}
+  // Сброс к начальному состоянию
+  mnsReset();
+}
+
+// ── Рандомная расстановка мин ──
+function mnsPickBombs(count) {
+  const positions = Array.from({length: 25}, (_, i) => i);
+  // Фишер-Йейтс перемешивание
+  for (let i = positions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [positions[i], positions[j]] = [positions[j], positions[i]];
+  }
+  return positions.slice(0, count).sort((a, b) => a - b);
+}
+
+// ── Клик по клетке ──
+function mnsClickCell(idx) {
+  if (MNS.phase !== 'playing') return;
+  if (MNS.opened.includes(idx)) return;
+
+  const cell = document.querySelector(`.mns-cell[data-idx="${idx}"]`);
+  if (!cell) return;
+
+  if (MNS.bombs.includes(idx)) {
+    // ПРОИГРЫШ 💥
+    MNS.phase = 'lost';
+    MNS.opened.push(idx);
+    cell.classList.remove('disabled');
+    cell.classList.add('opened', 'bomb');
+    cell.innerHTML = '<div class="mns-cell-icon">' + mnsBombIcon() + '</div>';
+    // Скрываем кнопку отмены
+    const cancelBtn = document.getElementById('mnsCancelBtn');
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    // Открываем все остальные бомбы (показать что было)
+    setTimeout(() => {
+      MNS.bombs.forEach(bi => {
+        if (bi === idx) return;
+        const c = document.querySelector(`.mns-cell[data-idx="${bi}"]`);
+        if (c) {
+          c.classList.add('revealed-bomb');
+          c.innerHTML = '<div class="mns-cell-icon">' + mnsBombIcon(true) + '</div>';
+        }
+      });
+    }, 150);
+    // Показываем кнопку "проигрыш"
+    mnsRenderBtn();
+    // Блокируем клетки
+    document.querySelectorAll('.mns-cell').forEach(c => c.classList.add('disabled'));
+    // Статистика
+    S.spins = (S.spins || 0) + 1;
+    S.losses = (S.losses || 0) + 1;
+    S.profit = (S.profit || 0) - MNS.bet;
+    S.totalLost = (S.totalLost || 0) + MNS.bet;
+    try { saveStats(); updateMiniStats(); } catch(e){}
+    // История
+    MNS.history.unshift({mult: 0, won: false});
+    MNS.history = MNS.history.slice(0, 10);
+    mnsRenderHist();
+    // Тост
+    showToast('💥 БУМ! Ты проиграл ' + MNS.bet.toLocaleString('ru-RU'), 'error');
+    // Вибро + частицы
+    try { tg.HapticFeedback.notificationOccurred('error'); } catch(e){}
+    try { spawnParticles(); } catch(e){}
+    // Разблокируем контролы ставки — юзер может поменять сумму перед "ИГРАТЬ СНОВА"
+    mnsUnlockControls();
+  } else {
+    // БЕЗОПАСНАЯ КЛЕТКА 💎
+    MNS.opened.push(idx);
+    cell.classList.remove('disabled');
+    cell.classList.add('opened', 'safe');
+    cell.innerHTML = '<div class="mns-cell-icon">' + mnsGemIcon() + '</div>';
+    // Скрываем кнопку отмены — после первого клика возврата нет
+    const cancelBtn = document.getElementById('mnsCancelBtn');
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    // Увеличиваем множитель
+    MNS.mult = mnsMultFor(MNS.mines, MNS.opened.length);
+    mnsUpdateMult();
+    mnsUpdateNext();
+    mnsRenderBtn();
+    // Вибро
+    try { tg.HapticFeedback.impactOccurred('light'); } catch(e){}
+    // Если все безопасные открыты — авто-кэшаут
+    if (MNS.opened.length >= 25 - MNS.mines) {
+      setTimeout(mnsCashout, 400);
+    }
+  }
+}
+
+// ── Забрать выигрыш ──
+function mnsCashout() {
+  if (MNS.phase !== 'playing') return;
+  if (MNS.opened.length === 0) { showToast('Открой хотя бы одну клетку', 'error'); return; }
+
+  MNS.phase = 'won';
+  const win = Math.floor(MNS.bet * MNS.mult);
+  // Начисляем выигрыш (ставка уже списана при старте)
+  balance += win;
+  setBalance(balance);
+  try { apiSpin(MNS.bet, 'win', MNS.mult); } catch(e){}
+
+  // Статистика
+  S.spins = (S.spins || 0) + 1;
+  S.wins = (S.wins || 0) + 1;
+  const profit = win - MNS.bet;
+  S.profit = (S.profit || 0) + profit;
+  S.totalWon = (S.totalWon || 0) + win;
+  if (win > (S.bestWin || 0)) S.bestWin = win;
+  try { saveStats(); updateMiniStats(); } catch(e){}
+
+  // Показать все бомбы
+  MNS.bombs.forEach(bi => {
+    const c = document.querySelector(`.mns-cell[data-idx="${bi}"]`);
+    if (c) {
+      c.classList.add('revealed-bomb');
+      c.innerHTML = '<div class="mns-cell-icon">' + mnsBombIcon(true) + '</div>';
+    }
+  });
+
+  // История
+  MNS.history.unshift({mult: MNS.mult, won: true});
+  MNS.history = MNS.history.slice(0, 10);
+  mnsRenderHist();
+
+  // Обновить UI
+  mnsRenderBtn();
+  document.querySelectorAll('.mns-cell').forEach(c => c.classList.add('disabled'));
+  // Тост
+  showToast('💰 +' + win.toLocaleString('ru-RU') + ' ×' + MNS.mult.toFixed(2), 'gold');
+  try { tg.HapticFeedback.notificationOccurred('success'); } catch(e){}
+  try { spawnParticles(); } catch(e){}
+  // Разблокируем контролы ставки — юзер может поменять сумму перед "ИГРАТЬ СНОВА"
+  mnsUnlockControls();
+}
+
+// ── Сброс для новой игры ──
+function mnsUnlockControls() {
+  // Разблокировать все элементы управления ставкой
+  try { document.getElementById('mnsBetInput').disabled = false; } catch(e){}
+  document.querySelectorAll('.mns-bet-chips button').forEach(b => b.disabled = false);
+  document.querySelectorAll('.mns-mult-chips button').forEach(b => b.disabled = false);
+}
+
+function mnsReset() {
+  MNS.phase = 'idle';
+  MNS.opened = [];
+  MNS.bombs = [];
+  MNS.mult = 1.0;
+  // Очистить клетки
+  document.querySelectorAll('.mns-cell').forEach(c => {
+    c.className = 'mns-cell disabled';
+    c.innerHTML = '';
+  });
+  // Скрыть кнопку отмены
+  const cancelBtn = document.getElementById('mnsCancelBtn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  // Разблокировать контролы
+  mnsUnlockControls();
+  mnsUpdateMult();
+  mnsUpdateNext();
+  mnsRenderBtn();
+}
+
+// ── Нажатие главной кнопки ──
+function mnsClickMain() {
+  if (MNS.phase === 'idle' || MNS.phase === 'won' || MNS.phase === 'lost') {
+    if (MNS.phase !== 'idle') mnsReset();
+    mnsStart();
+  } else if (MNS.phase === 'playing') {
+    mnsCashout();
+  }
+}
+
+// ── Разблокировка клеток после старта ──
+function mnsEnableCells() {
+  document.querySelectorAll('.mns-cell').forEach(c => c.classList.remove('disabled'));
+}
+
+// ── Обновление UI множителя ──
+function mnsUpdateMult() {
+  const el = document.getElementById('mnsMult');
+  if (!el) return;
+  el.textContent = mnsFormatMult(MNS.mult);
+  el.className = 'mns-mult' + (MNS.mult >= 5 ? ' gold' : (MNS.mult > 1 ? ' green' : ''));
+  // Обновляем текущий выигрыш (ставка × множитель)
+  const gain = document.getElementById('mnsGain');
+  if (gain) {
+    const g = MNS.phase === 'playing' ? Math.floor(MNS.bet * MNS.mult) : 0;
+    gain.textContent = g.toLocaleString('ru-RU');
+  }
+  const opened = document.getElementById('mnsOpened');
+  if (opened) opened.textContent = MNS.opened.length;
+}
+
+// ── Обновление "следующий множитель" ──
+function mnsUpdateNext() {
+  const nextOpened = MNS.phase === 'playing' ? MNS.opened.length + 1 : 1;
+  const nm = mnsMultFor(MNS.mines, nextOpened);
+  const el = document.getElementById('mnsNext');
+  if (el) el.textContent = mnsFormatMult(nm);
+}
+
+// ── Рендер главной кнопки в зависимости от фазы ──
+function mnsRenderBtn() {
+  const btn = document.getElementById('mnsMainBtn');
+  if (!btn) return;
+  if (MNS.phase === 'playing') {
+    if (MNS.opened.length === 0) {
+      btn.className = 'mns-main-btn start';
+      btn.textContent = '💎 ОТКРОЙ КЛЕТКУ';
+      btn.disabled = true;
+    } else {
+      btn.className = 'mns-main-btn cashout';
+      const win = Math.floor(MNS.bet * MNS.mult);
+      btn.textContent = '💰 ЗАБРАТЬ ' + win.toLocaleString('ru-RU');
+      btn.disabled = false;
+    }
+  } else if (MNS.phase === 'won') {
+    btn.className = 'mns-main-btn start';
+    btn.textContent = '🚀 ИГРАТЬ СНОВА';
+    btn.disabled = false;
+  } else if (MNS.phase === 'lost') {
+    btn.className = 'mns-main-btn start';
+    btn.textContent = '🔄 ПОПРОБОВАТЬ СНОВА';
+    btn.disabled = false;
+  } else {
+    btn.className = 'mns-main-btn start';
+    btn.textContent = '🚀 ИГРАТЬ';
+    btn.disabled = false;
+  }
+}
+
+// ── Быстрые ставки (клампятся в [MIN, MAX]) ──
+function mnsSetBet(v) {
+  if (MNS.phase === 'playing') return;
+  v = Math.max(MNS_MIN_BET, Math.min(MNS_MAX_BET, v));
+  MNS.bet = v;
+  document.getElementById('mnsBetInput').value = v;
+  mnsUpdateNext();
+}
+function mnsMulBet(m) {
+  if (MNS.phase === 'playing') return;
+  const cur = parseInt(document.getElementById('mnsBetInput').value) || MNS_MIN_BET;
+  let nv = Math.max(MNS_MIN_BET, Math.floor(cur * m));
+  nv = Math.min(MNS_MAX_BET, nv);
+  MNS.bet = nv;
+  document.getElementById('mnsBetInput').value = nv;
+  mnsUpdateNext();
+}
+
+// ── История ──
+function mnsRenderHist() {
+  const el = document.getElementById('mnsHist');
+  if (!el) return;
+  el.innerHTML = '';
+  if (MNS.history.length === 0) {
+    el.innerHTML = '<span style="font-family:var(--fd);font-size:10px;color:rgba(255,255,255,.3);letter-spacing:1px">— пусто —</span>';
+    return;
+  }
+  MNS.history.forEach(h => {
+    const item = document.createElement('span');
+    item.className = 'mns-hist-item ' + (h.won ? 'win' : 'lose');
+    item.textContent = h.won ? ('×' + h.mult.toFixed(2)) : '💥';
+    el.appendChild(item);
+  });
+}
+
+// ── SVG иконки для клеток ──
+function mnsGemIcon() {
+  return `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">
+    <defs>
+      <linearGradient id="gemG" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#a7f3d0"/>
+        <stop offset="50%" stop-color="#34d399"/>
+        <stop offset="100%" stop-color="#047857"/>
+      </linearGradient>
+    </defs>
+    <path d="M16 4 L28 14 L16 28 L4 14 Z" fill="url(#gemG)" stroke="rgba(255,255,255,0.4)" stroke-width="0.8"/>
+    <path d="M16 4 L22 14 L16 14 Z" fill="rgba(255,255,255,0.3)"/>
+    <path d="M16 4 L10 14 L16 14 Z" fill="rgba(255,255,255,0.15)"/>
+    <path d="M4 14 L16 14 L16 28 Z" fill="rgba(0,0,0,0.15)"/>
+  </svg>`;
+}
+
+function mnsBombIcon(revealed) {
+  const opacity = revealed ? 0.6 : 1;
+  return `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;opacity:${opacity}">
+    <defs>
+      <radialGradient id="bombB${revealed?'R':''}" cx="35%" cy="30%" r="60%">
+        <stop offset="0%" stop-color="#666"/>
+        <stop offset="60%" stop-color="#222"/>
+        <stop offset="100%" stop-color="#000"/>
+      </radialGradient>
+    </defs>
+    <circle cx="16" cy="18" r="10" fill="url(#bombB${revealed?'R':''})"/>
+    <!-- шипы -->
+    <rect x="14.5" y="5" width="3" height="3" fill="#111"/>
+    <rect x="14.5" y="28" width="3" height="3" fill="#111"/>
+    <rect x="2" y="16.5" width="3" height="3" fill="#111"/>
+    <rect x="27" y="16.5" width="3" height="3" fill="#111"/>
+    <!-- фитиль -->
+    <path d="M 16 8 Q 20 4 22 2" stroke="#8b6f47" stroke-width="1.5" fill="none"/>
+    ${!revealed ? '<circle cx="22" cy="2" r="2" fill="#ff3300"/>' : ''}
+    <!-- блик -->
+    <ellipse cx="12" cy="14" rx="2.5" ry="2" fill="rgba(255,255,255,0.3)"/>
+  </svg>`;
+}
+
+// Флаг что мины проинициализированы (init только при первом открытии страницы)
+let _mnsInited = false;
+function mnsInitOnce() { if (_mnsInited) return; _mnsInited = true; mnsInit(); }
+
+
+
 // ═══════════════════════════════════════════════════════
 // 🚀 РАКЕТКА — Crash Game (WebSocket + Demo)
 // ═══════════════════════════════════════════════════════
