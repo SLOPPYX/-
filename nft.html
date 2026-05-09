@@ -155,9 +155,10 @@ body::after {
   color: var(--text-0);
   font-weight: 500;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 14px;
-  letter-spacing: 0.02em;
+  font-size: 13px;
+  letter-spacing: 0.01em;
 }
+#balanceVal { font-size: 12px; }
 
 /* ─────────── Tabs ─────────── */
 .tabs {
@@ -285,6 +286,147 @@ body::after {
   font-size: 56px;
   filter: drop-shadow(0 0 16px var(--card-rarity-glow));
   transform: translateZ(20px);
+}
+
+/* ─────────── SVG-силуэты оружия + анимации по редкостям ─────────── */
+.card-weapon-vis {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+  position: relative;
+  transform: translateZ(20px);
+}
+.card-weapon-vis svg {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  filter: drop-shadow(0 0 8px var(--card-rarity-glow));
+  /* по умолчанию — общая лёгкая жизнь */
+  animation: weaponBreathe 3.4s ease-in-out infinite;
+}
+
+/* Большая версия для модалки */
+.modal-weapon-vis {
+  margin: 8px 0 12px;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  min-height: 90px;
+}
+.modal-weapon-big svg {
+  width: 75%;
+  max-width: 240px;
+  height: auto;
+  filter: drop-shadow(0 0 18px var(--card-rarity-glow));
+}
+
+/* Дыхание — лёгкое масштабирование */
+@keyframes weaponBreathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.04); }
+}
+
+/* COMMON — лёгкое мерцание контура */
+.card[data-rarity="common"] .card-weapon-vis svg path,
+.card[data-rarity="common"] .card-weapon-vis svg rect,
+.card[data-rarity="common"] .card-weapon-vis svg line,
+.card[data-rarity="common"] .card-weapon-vis svg circle {
+  animation: commonFlicker 4s ease-in-out infinite;
+}
+@keyframes commonFlicker {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.78; }
+}
+
+/* RARE — пульс свечения */
+.card[data-rarity="rare"] .card-weapon-vis svg {
+  animation: weaponBreathe 3.4s ease-in-out infinite,
+             rarePulse 2.2s ease-in-out infinite;
+}
+@keyframes rarePulse {
+  0%, 100% { filter: drop-shadow(0 0 6px var(--card-rarity-glow)); }
+  50%      { filter: drop-shadow(0 0 22px var(--card-rarity-glow))
+                     drop-shadow(0 0 30px var(--card-rarity-glow)); }
+}
+
+/* EPIC — дрожь + цветовая пульсация */
+.card[data-rarity="epic"] .card-weapon-vis svg {
+  animation: weaponBreathe 3.4s ease-in-out infinite,
+             epicTremble 0.18s steps(2) infinite,
+             epicGlow 1.6s ease-in-out infinite;
+}
+@keyframes epicTremble {
+  0%   { transform: translate(0px, 0px); }
+  25%  { transform: translate(0.6px, -0.4px); }
+  50%  { transform: translate(-0.5px, 0.5px); }
+  75%  { transform: translate(0.4px, 0.5px); }
+  100% { transform: translate(0px, 0px); }
+}
+@keyframes epicGlow {
+  0%, 100% { filter: drop-shadow(0 0 8px var(--card-rarity-glow))
+                     drop-shadow(0 0 14px var(--card-rarity-glow)); }
+  50%      { filter: drop-shadow(0 0 18px var(--card-rarity-glow))
+                     drop-shadow(0 0 32px rgba(185, 111, 255, 0.7))
+                     drop-shadow(0 0 50px rgba(91, 169, 255, 0.4)); }
+}
+
+/* LEGENDARY — вращение + золотые лучи + сильное свечение */
+.card[data-rarity="legendary"] .card-weapon-vis {
+  position: relative;
+}
+.card[data-rarity="legendary"] .card-weapon-vis::before {
+  /* Лучи — крутятся за оружием */
+  content: '';
+  position: absolute;
+  inset: -10%;
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(255, 169, 64, 0.25) 30deg,
+      transparent 60deg,
+      transparent 90deg,
+      rgba(255, 169, 64, 0.18) 130deg,
+      transparent 165deg,
+      transparent 200deg,
+      rgba(255, 169, 64, 0.22) 240deg,
+      transparent 275deg,
+      transparent 310deg,
+      rgba(255, 169, 64, 0.15) 340deg,
+      transparent 360deg
+    );
+  border-radius: 50%;
+  animation: legendaryRays 12s linear infinite;
+  z-index: 0;
+  filter: blur(4px);
+  opacity: 0.6;
+}
+.card[data-rarity="legendary"] .card-weapon-vis svg {
+  position: relative;
+  z-index: 1;
+  animation: weaponBreathe 3.4s ease-in-out infinite,
+             legendaryPulseGlow 2.0s ease-in-out infinite;
+}
+@keyframes legendaryRays {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes legendaryPulseGlow {
+  0%, 100% { filter: drop-shadow(0 0 12px var(--card-rarity-glow))
+                     drop-shadow(0 0 22px rgba(255, 169, 64, 0.5)); }
+  50%      { filter: drop-shadow(0 0 22px var(--card-rarity-glow))
+                     drop-shadow(0 0 40px rgba(255, 169, 64, 0.8))
+                     drop-shadow(0 0 60px rgba(255, 169, 64, 0.4)); }
+}
+
+/* В модалке — те же эффекты, лучи только для legendary */
+.modal-weapon-vis::before {
+  content: none;
+}
+.modal-content .modal-weapon-vis[data-rarity="legendary"]::before {
+  content: '';
 }
 .card-name {
   font-family: 'Bebas Neue', sans-serif;
@@ -740,6 +882,168 @@ function fmtLore(item) {
   return LANG === 'en' ? item.lore_en : item.lore_ru;
 }
 
+// ═══════════════════════════════════════════════════════════
+// SVG-силуэты оружия (inline, currentColor подхватывает редкость)
+// ═══════════════════════════════════════════════════════════
+const WEAPON_SVG = {
+  // M1014 — помповый дробовик
+  M1014: `<svg viewBox="-10 195 240 70" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="125" y="218" width="85" height="10" rx="1.5"/>
+    <line x1="135" y1="218" x2="135" y2="228"/>
+    <line x1="145" y1="218" x2="145" y2="228"/>
+    <line x1="155" y1="218" x2="155" y2="228"/>
+    <line x1="165" y1="218" x2="165" y2="228"/>
+    <line x1="175" y1="218" x2="175" y2="228"/>
+    <line x1="185" y1="218" x2="185" y2="228"/>
+    <circle cx="208" cy="223" r="2"/>
+    <rect x="125" y="230" width="65" height="4" rx="1"/>
+    <rect x="95" y="228" width="35" height="14" rx="2"/>
+    <line x1="100" y1="230" x2="100" y2="240"/>
+    <line x1="105" y1="230" x2="105" y2="240"/>
+    <line x1="110" y1="230" x2="110" y2="240"/>
+    <line x1="115" y1="230" x2="115" y2="240"/>
+    <line x1="120" y1="230" x2="120" y2="240"/>
+    <rect x="65" y="218" width="35" height="22" rx="2"/>
+    <rect x="70" y="223" width="22" height="6" rx="1"/>
+    <rect x="74" y="232" width="14" height="4" rx="1"/>
+    <rect x="68" y="212" width="32" height="3" rx="0.5"/>
+    <path d="M 195 214 L 198 208 L 201 214 Z"/>
+    <rect x="72" y="212" width="6" height="6"/>
+    <ellipse cx="55" cy="246" rx="9" ry="6"/>
+    <path d="M 53 243 Q 53 248 56 248"/>
+    <path d="M 65 226 L 30 240 L 22 255 L 28 260 L 60 246 Z"/>
+    <circle cx="28" cy="252" r="2"/>
+  </svg>`,
+
+  // Groza — буллпап АР
+  Groza: `<svg viewBox="0 195 240 80" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="155" y="222" width="55" height="6" rx="1"/>
+    <rect x="205" y="219" width="14" height="12" rx="1"/>
+    <line x1="208" y1="222" x2="208" y2="228"/>
+    <line x1="212" y1="222" x2="212" y2="228"/>
+    <line x1="216" y1="222" x2="216" y2="228"/>
+    <rect x="135" y="216" width="55" height="3" rx="0.5"/>
+    <rect x="80" y="204" width="25" height="10" rx="1.5"/>
+    <rect x="90" y="200" width="6" height="4"/>
+    <line x1="83" y1="214" x2="83" y2="218"/>
+    <line x1="103" y1="214" x2="103" y2="218"/>
+    <rect x="50" y="216" width="80" height="4" rx="0.5"/>
+    <line x1="55" y1="216" x2="55" y2="220"/>
+    <line x1="60" y1="216" x2="60" y2="220"/>
+    <line x1="65" y1="216" x2="65" y2="220"/>
+    <line x1="70" y1="216" x2="70" y2="220"/>
+    <line x1="115" y1="216" x2="115" y2="220"/>
+    <line x1="120" y1="216" x2="120" y2="220"/>
+    <line x1="125" y1="216" x2="125" y2="220"/>
+    <rect x="20" y="220" width="130" height="22" rx="2"/>
+    <rect x="14" y="222" width="6" height="18" rx="2"/>
+    <line x1="14" y1="226" x2="20" y2="226"/>
+    <line x1="14" y1="230" x2="20" y2="230"/>
+    <line x1="14" y1="234" x2="20" y2="234"/>
+    <path d="M 80 242 L 82 265 L 100 265 L 102 242 Z"/>
+    <line x1="83" y1="248" x2="100" y2="248"/>
+    <line x1="84" y1="254" x2="100" y2="254"/>
+    <line x1="85" y1="260" x2="100" y2="260"/>
+    <path d="M 50 242 L 45 265 L 60 265 L 60 242 Z"/>
+    <line x1="48" y1="248" x2="58" y2="248"/>
+    <line x1="48" y1="254" x2="58" y2="254"/>
+    <ellipse cx="55" cy="246" rx="6" ry="4"/>
+    <circle cx="35" cy="230" r="2.5"/>
+    <line x1="35" y1="230" x2="40" y2="230"/>
+  </svg>`,
+
+  // M1887 — рычажный дробовик
+  M1887: `<svg viewBox="0 195 240 80" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="105" y="218" width="105" height="8" rx="1"/>
+    <rect x="105" y="228" width="90" height="6" rx="2"/>
+    <rect x="120" y="226" width="4" height="10" rx="0.5"/>
+    <rect x="155" y="226" width="4" height="10" rx="0.5"/>
+    <circle cx="208" cy="222" r="1.5"/>
+    <line x1="205" y1="219" x2="205" y2="225"/>
+    <rect x="80" y="226" width="30" height="12" rx="2"/>
+    <line x1="85" y1="228" x2="85" y2="236"/>
+    <line x1="90" y1="228" x2="90" y2="236"/>
+    <line x1="95" y1="228" x2="95" y2="236"/>
+    <line x1="100" y1="228" x2="100" y2="236"/>
+    <line x1="105" y1="228" x2="105" y2="236"/>
+    <rect x="50" y="218" width="35" height="22" rx="2"/>
+    <line x1="55" y1="224" x2="80" y2="224"/>
+    <line x1="55" y1="228" x2="80" y2="228"/>
+    <line x1="55" y1="232" x2="75" y2="232"/>
+    <path d="M 56 218 L 54 212 L 60 214 Z"/>
+    <path d="M 55 240 Q 55 260 65 260 L 78 260 Q 90 260 90 246" stroke-width="2.8"/>
+    <path d="M 65 246 Q 65 254 70 254"/>
+    <path d="M 50 226 Q 30 228 18 240 L 12 255 L 18 260 L 45 242 Z"/>
+    <line x1="12" y1="252" x2="20" y2="258"/>
+    <line x1="14" y1="248" x2="22" y2="254"/>
+    <circle cx="20" cy="252" r="1.5"/>
+    <path d="M 195 214 L 198 208 L 201 214"/>
+    <line x1="194" y1="216" x2="202" y2="216"/>
+  </svg>`,
+
+  // AWM — снайперка
+  AWM: `<svg viewBox="0 195 245 85" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="135" y="230" width="85" height="6" rx="1"/>
+    <line x1="140" y1="230" x2="140" y2="236"/>
+    <line x1="150" y1="230" x2="150" y2="236"/>
+    <line x1="160" y1="230" x2="160" y2="236"/>
+    <line x1="170" y1="230" x2="170" y2="236"/>
+    <line x1="180" y1="230" x2="180" y2="236"/>
+    <line x1="190" y1="230" x2="190" y2="236"/>
+    <rect x="218" y="226" width="20" height="14" rx="1.5"/>
+    <line x1="221" y1="223" x2="221" y2="243"/>
+    <line x1="226" y1="223" x2="226" y2="243"/>
+    <line x1="231" y1="223" x2="231" y2="243"/>
+    <line x1="235" y1="223" x2="235" y2="243"/>
+    <rect x="60" y="204" width="65" height="14" rx="3"/>
+    <rect x="80" y="196" width="10" height="10" rx="1"/>
+    <line x1="82" y1="199" x2="88" y2="199"/>
+    <line x1="82" y1="202" x2="88" y2="202"/>
+    <rect x="92" y="196" width="8" height="10" rx="1"/>
+    <rect x="55" y="206" width="8" height="10" rx="2"/>
+    <rect x="120" y="203" width="12" height="16" rx="2"/>
+    <line x1="123" y1="203" x2="123" y2="219"/>
+    <line x1="68" y1="218" x2="68" y2="224"/>
+    <line x1="118" y1="218" x2="118" y2="224"/>
+    <rect x="65" y="222" width="8" height="4" rx="0.5"/>
+    <rect x="115" y="222" width="8" height="4" rx="0.5"/>
+    <rect x="55" y="224" width="80" height="14" rx="2"/>
+    <rect x="100" y="220" width="20" height="6" rx="1"/>
+    <circle cx="118" cy="223" r="2"/>
+    <line x1="118" y1="223" x2="124" y2="219"/>
+    <rect x="80" y="238" width="22" height="20" rx="1"/>
+    <line x1="82" y1="244" x2="100" y2="244"/>
+    <line x1="82" y1="250" x2="100" y2="250"/>
+    <path d="M 55 238 L 47 260 L 58 262 L 62 238 Z"/>
+    <line x1="50" y1="246" x2="60" y2="248"/>
+    <line x1="50" y1="252" x2="60" y2="254"/>
+    <ellipse cx="63" cy="242" rx="7" ry="4"/>
+    <path d="M 55 228 L 18 230 L 12 250 L 50 240 Z"/>
+    <ellipse cx="32" cy="234" rx="8" ry="4"/>
+    <rect x="22" y="224" width="20" height="5" rx="1"/>
+    <rect x="10" y="242" width="6" height="14" rx="1"/>
+    <line x1="10" y1="246" x2="16" y2="246"/>
+    <line x1="10" y1="250" x2="16" y2="250"/>
+    <line x1="135" y1="238" x2="128" y2="258"/>
+    <line x1="145" y1="238" x2="152" y2="258"/>
+    <circle cx="128" cy="258" r="1.5"/>
+    <circle cx="152" cy="258" r="1.5"/>
+  </svg>`,
+};
+
+function getWeaponSVG(weaponName, rarity) {
+  // Цвет силуэта = цвет редкости (CSS-переменная)
+  const color = `var(--rarity-${rarity}, var(--rarity-common))`;
+  const svg = WEAPON_SVG[weaponName];
+  if (!svg) {
+    // Fallback — просто пустой квадрат
+    return `<svg viewBox="0 0 100 100" stroke="${color}" stroke-width="2" fill="none"><rect x="10" y="10" width="80" height="80" rx="6"/></svg>`;
+  }
+  // Подменим currentColor на конкретный цвет редкости
+  return svg.replace('stroke="currentColor"', `stroke="${color}"`);
+}
+
+
 function renderCard(item, opts = {}) {
   const r = item.rarity || 'common';
   const isHolo = (r === 'epic' || r === 'legendary');
@@ -767,7 +1071,7 @@ function renderCard(item, opts = {}) {
         <div class="card-inner">
           <div class="card-rarity-tag">${RARITY_LABEL[r] || r.toUpperCase()}</div>
           ${date ? `<div class="card-date">${date}</div>` : ''}
-          <div class="card-emoji">${item.emoji || '🎴'}</div>
+          <div class="card-weapon-vis">${getWeaponSVG(item.weapon, r)}</div>
           <div class="card-name">${fmtName(item)}</div>
           <div class="card-weapon">${item.weapon || ''}</div>
           ${priceHtml}
@@ -924,7 +1228,7 @@ function openCardModal(id) {
       <div class="modal-rarity">${RARITY_LABEL[r] || r}</div>
       <button class="modal-close" id="modalCloseBtn">✕</button>
     </div>
-    <div class="modal-emoji">${item.emoji || '🎴'}</div>
+    <div class="modal-weapon-vis modal-weapon-big">${getWeaponSVG(item.weapon, r)}</div>
     <div class="modal-name">${fmtName(item)}</div>
     <div class="modal-tag">«${fmtTagline(item)}»</div>
     <dl class="modal-info-grid">
@@ -1000,10 +1304,8 @@ document.querySelectorAll('.tab').forEach(tabEl => {
 // ═══════════════════════════════════════════════════════════
 function fmtTokens(n) {
   if (typeof n !== 'number') return '—';
-  if (n >= 1e9) return (n / 1e9).toFixed(1).replace('.0','') + 'B';
-  if (n >= 1e6) return (n / 1e6).toFixed(1).replace('.0','') + 'M';
-  if (n >= 1e3) return (n / 1e3).toFixed(1).replace('.0','') + 'K';
-  return String(n);
+  // Полный баланс с разделителями тысяч (узкий неразрывный пробел U+202F)
+  return n.toLocaleString('ru-RU').replace(/\s/g, '\u202F');
 }
 
 async function loadMe() {
