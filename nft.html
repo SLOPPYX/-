@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>FF SLOPPYX — NFT</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+/* ─────────── Шрифты ─────────── */
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ─────────── Переменные по редкостям ─────────── */
+:root {
+  --bg-0: #050608;
+  --bg-1: #0c0e12;
+  --bg-2: #14171c;
+  --line: rgba(255, 255, 255, 0.06);
+  --text-0: #e8e9ec;
+  --text-1: #9ba0a8;
+  --text-2: #5a5e66;
+
+  --rarity-common:    #c8ccd1;
+  --rarity-rare:      #5BA9FF;
+  --rarity-epic:      #B96FFF;
+  --rarity-legendary: #FFA940;
+
+  --rarity-common-glow:    rgba(200, 204, 209, 0.25);
+  --rarity-rare-glow:      rgba(91, 169, 255, 0.45);
+  --rarity-epic-glow:      rgba(185, 111, 255, 0.55);
+  --rarity-legendary-glow: rgba(255, 169, 64, 0.65);
+
+  --accent: #FFA940;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg-0);
+  color: var(--text-0);
+  font-family: 'Rajdhani', system-ui, sans-serif;
+  font-weight: 500;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  min-height: 100vh;
+}
+
+/* Атмосферный фон — носитель силы NFT */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255, 169, 64, 0.08), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(185, 111, 255, 0.05), transparent 70%),
+    repeating-linear-gradient(180deg, transparent, transparent 39px, rgba(255,255,255,0.012) 40px),
+    var(--bg-0);
+  pointer-events: none;
+}
+
+/* Шум поверх */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.4'/></svg>");
+  opacity: 0.025;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+#app { position: relative; z-index: 1; padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
+
+/* ─────────── Шапка ─────────── */
+.hdr {
+  padding: 14px 16px 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hdr-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  line-height: 1;
+}
+.hdr-logo span { color: var(--text-0); }
+.hdr-spacer { flex: 1; }
+.hdr-stats {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-2);
+  text-align: right;
+  line-height: 1.3;
+}
+.hdr-stats b { color: var(--text-0); }
+
+/* ─────────── Tabs ─────────── */
+.tabs {
+  display: flex;
+  margin: 8px 16px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-1);
+  overflow: hidden;
+}
+.tab {
+  flex: 1;
+  padding: 12px;
+  text-align: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.12em;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  position: relative;
+}
+.tab:not(:last-child) { border-right: 1px solid var(--line); }
+.tab.active {
+  color: var(--accent);
+  background: linear-gradient(180deg, rgba(255, 169, 64, 0.12), rgba(255, 169, 64, 0.04));
+}
+.tab.active::after {
+  content: '';
+  position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 28px; height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+}
+
+/* ─────────── Сетка карт ─────────── */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 16px 80px;
+}
+
+/* ─────────── Карта (3D) ─────────── */
+.card-wrap {
+  perspective: 1200px;
+  aspect-ratio: 3 / 4;
+  transition: transform 0.3s ease;
+}
+.card-wrap:hover { transform: translateY(-2px); }
+
+.card {
+  width: 100%; height: 100%;
+  position: relative;
+  border-radius: 14px;
+  background: linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 100%);
+  border: 1px solid var(--card-rarity, var(--rarity-common));
+  transform-style: preserve-3d;
+  cursor: pointer;
+  overflow: hidden;
+  /* Точка вращения по умолчанию — центр */
+  transform: rotateY(var(--rx, 0deg)) rotateX(var(--ry, 0deg));
+  transition: transform 0.08s ease-out, box-shadow 0.3s ease;
+  box-shadow:
+    0 0 0 1px var(--card-rarity, var(--rarity-common)),
+    0 4px 18px var(--card-rarity-glow, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* Голограмма: переливающийся блик. Активируется через CSS-переменные mx/my (мышь/палец) */
+.card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(
+    circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255,255,255,0.18) 0%,
+    rgba(255,255,255,0.04) 30%,
+    transparent 60%
+  );
+  pointer-events: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  mix-blend-mode: screen;
+}
+
+/* Голографическая радуга — только для epic/legendary */
+.card.holo::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 169, 64, 0.08) 40%,
+    rgba(185, 111, 255, 0.10) 50%,
+    rgba(91, 169, 255, 0.08) 60%,
+    transparent 70%
+  );
+  background-size: 300% 300%;
+  background-position: var(--holo-x, 0%) var(--holo-y, 0%);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* Контент карты */
+.card-inner {
+  position: relative;
+  width: 100%; height: 100%;
+  padding: 12px 11px;
+  display: flex;
+  flex-direction: column;
+  z-index: 2;
+}
+.card-rarity-tag {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--card-rarity);
+  text-shadow: 0 0 8px var(--card-rarity-glow);
+}
+.card-emoji {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  filter: drop-shadow(0 0 16px var(--card-rarity-glow));
+  transform: translateZ(20px);
+}
+.card-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  color: var(--text-0);
+  margin-top: auto;
+}
+.card-weapon {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-2);
+  margin-top: 3px;
+  letter-spacing: 0.05em;
+}
+.card-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-2);
+  position: absolute;
+  top: 12px; right: 11px;
+}
+.card-price {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+  margin-top: 6px;
+}
+.card-price.locked {
+  color: var(--text-2);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+.card-price.locked::before { content: '🔒 '; }
+
+/* Декоративные углы — зачем стандартные рамки когда есть это */
+.corner {
+  position: absolute;
+  width: 12px; height: 12px;
+  border: 1.5px solid var(--card-rarity);
+  z-index: 3;
+}
+.corner.tl { top: 6px; left: 6px; border-right: none; border-bottom: none; }
+.corner.tr { top: 6px; right: 6px; border-left: none; border-bottom: none; }
+.corner.bl { bottom: 6px; left: 6px; border-right: none; border-top: none; }
+.corner.br { bottom: 6px; right: 6px; border-left: none; border-top: none; }
+
+/* Рарити-цвета на карты */
+.card[data-rarity="common"] {
+  --card-rarity: var(--rarity-common);
+  --card-rarity-glow: var(--rarity-common-glow);
+}
+.card[data-rarity="rare"] {
+  --card-rarity: var(--rarity-rare);
+  --card-rarity-glow: var(--rarity-rare-glow);
+}
+.card[data-rarity="epic"] {
+  --card-rarity: var(--rarity-epic);
+  --card-rarity-glow: var(--rarity-epic-glow);
+}
+.card[data-rarity="legendary"] {
+  --card-rarity: var(--rarity-legendary);
+  --card-rarity-glow: var(--rarity-legendary-glow);
+}
+
+/* Лёгкая пульсация рамки для legendary */
+@keyframes legendaryPulse {
+  0%, 100% { box-shadow: 0 0 0 1px var(--card-rarity), 0 4px 18px var(--card-rarity-glow), inset 0 1px 0 rgba(255,255,255,0.04); }
+  50%      { box-shadow: 0 0 0 1px var(--card-rarity), 0 6px 28px var(--card-rarity-glow), inset 0 1px 0 rgba(255,255,255,0.08); }
+}
+.card[data-rarity="legendary"] {
+  animation: legendaryPulse 2.6s ease-in-out infinite;
+}
+
+/* ─────────── Empty state ─────────── */
+.empty {
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--text-2);
+}
+.empty-icon { font-size: 48px; opacity: 0.4; }
+.empty-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.1em;
+  color: var(--text-1);
+  margin: 14px 0 6px;
+}
+.empty-sub { font-size: 13px; line-height: 1.5; }
+
+/* Loading skeleton */
+.skel {
+  background: linear-gradient(90deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-1) 100%);
+  background-size: 200% 100%;
+  animation: skelShimmer 1.4s ease-in-out infinite;
+  border-radius: 14px;
+  aspect-ratio: 3/4;
+}
+@keyframes skelShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─────────── Modal с подробной картой ─────────── */
+.modal-back {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(5, 6, 8, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.modal-back.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.modal {
+  background: var(--bg-1);
+  border: 1px solid var(--card-rarity, var(--line));
+  border-radius: 16px;
+  padding: 18px;
+  max-width: 360px;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  transform: scale(0.92) translateY(20px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 0 1px var(--card-rarity, var(--line)), 0 20px 60px rgba(0,0,0,0.6);
+}
+.modal-back.open .modal {
+  transform: scale(1) translateY(0);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.modal-rarity {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: var(--card-rarity);
+  text-shadow: 0 0 10px var(--card-rarity-glow);
+}
+.modal-close {
+  margin-left: auto;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text-1);
+  cursor: pointer;
+  font-size: 16px;
+}
+.modal-emoji {
+  font-size: 80px;
+  text-align: center;
+  margin: 10px 0;
+  filter: drop-shadow(0 0 24px var(--card-rarity-glow));
+}
+.modal-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  text-align: center;
+  margin: 8px 0 4px;
+}
+.modal-tag {
+  text-align: center;
+  font-style: italic;
+  color: var(--text-1);
+  font-size: 13px;
+  margin-bottom: 16px;
+  padding: 0 12px;
+}
+.modal-info-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--bg-2);
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+.modal-info-grid dt { color: var(--text-2); }
+.modal-info-grid dd { color: var(--text-0); margin: 0; }
+.modal-lore {
+  font-size: 13px;
+  color: var(--text-1);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  padding: 12px;
+  background: rgba(255,255,255,0.02);
+  border-left: 2px solid var(--card-rarity);
+  border-radius: 4px;
+}
+.modal-action {
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px;
+  background: var(--card-rarity);
+  border: none;
+  border-radius: 10px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  color: var(--bg-0);
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
+}
+.modal-action:active { transform: scale(0.98); }
+.modal-action:hover { filter: brightness(1.1); }
+.modal-action[disabled] {
+  background: var(--bg-2);
+  color: var(--text-2);
+  cursor: not-allowed;
+  border: 1px solid var(--line);
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: calc(20px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 13px;
+  color: var(--text-0);
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  max-width: 90%;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ─────────── Утилитки ─────────── */
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="hdr">
+    <div class="hdr-logo">FF<span> SLOPPYX</span></div>
+    <div class="hdr-spacer"></div>
+    <div class="hdr-stats">
+      <div>NFT: <b id="nftCount">—</b></div>
+      <div>USR: <b id="userId">—</b></div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="my">МОИ</div>
+    <div class="tab" data-tab="market">МАРКЕТ</div>
+  </div>
+
+  <!-- Контейнер для карт (рендерится через JS) -->
+  <div id="content">
+    <div class="grid">
+      <div class="skel"></div>
+      <div class="skel"></div>
+      <div class="skel"></div>
+      <div class="skel"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal с подробностями -->
+<div class="modal-back" id="modal">
+  <div class="modal" id="modalCard"></div>
+</div>
+
+<!-- Toast для уведомлений -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// Telegram WebApp init
+// ═══════════════════════════════════════════════════════════
+const tg = (window.Telegram && window.Telegram.WebApp) || {
+  initData: '', initDataUnsafe: {}, themeParams: {},
+  expand() {}, ready() {}, close() {},
+  HapticFeedback: { impactOccurred() {}, notificationOccurred() {}, selectionChanged() {} },
+};
+try { tg.expand(); } catch(e) {}
+try { tg.ready(); } catch(e) {}
+// Тема: предпочитаем тёмную (даже если у юзера светлая в TG — наш дизайн под dark)
+try { tg.setHeaderColor('#050608'); } catch(e) {}
+try { tg.setBackgroundColor('#050608'); } catch(e) {}
+
+// ═══════════════════════════════════════════════════════════
+// Параметры из URL
+// ═══════════════════════════════════════════════════════════
+const params = new URLSearchParams(location.search);
+const UID    = params.get('uid')    || (tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) || '0';
+const SECRET = params.get('secret') || '';
+const LANG   = params.get('lang')   || 'ru';
+
+// API_BASE: если задан в URL — используем его (для разработки),
+// иначе пытаемся вычислить из href (если хостится рядом с ботом — не нужно)
+const API_BASE = params.get('api') || '';
+
+document.getElementById('userId').textContent = String(UID).slice(-4);
+
+// ═══════════════════════════════════════════════════════════
+// Lang strings
+// ═══════════════════════════════════════════════════════════
+const T = {
+  ru: {
+    empty_my_title:    'КОЛЛЕКЦИЯ ПУСТА',
+    empty_my_sub:      'NFT появятся здесь после получения за достижения, ивенты или выигрыши.',
+    empty_market_title:'МАРКЕТ ЗАКРЫТ',
+    empty_market_sub:  'Откроется в одном из ближайших обновлений.',
+    err_load:          'Ошибка загрузки',
+    err_network:       'Нет соединения',
+    rarity_label:      'Редкость',
+    weapon_label:      'Оружие',
+    obtained_label:    'Получено',
+    price_label:       'Цена',
+    price_locked:      'Скоро в маркете',
+    btn_close:         'Закрыть',
+    btn_buy:           'КУПИТЬ',
+    btn_owned:         'У ВАС ЕСТЬ',
+    btn_locked:        'СКОРО',
+    not_for_sale:      'Маркет ещё не открыт',
+  },
+  en: {
+    empty_my_title:    'COLLECTION EMPTY',
+    empty_my_sub:      'NFTs will appear here after rewards, events or wins.',
+    empty_market_title:'MARKET CLOSED',
+    empty_market_sub:  'Will open in one of the next updates.',
+    err_load:          'Load error',
+    err_network:       'No connection',
+    rarity_label:      'Rarity',
+    weapon_label:      'Weapon',
+    obtained_label:    'Obtained',
+    price_label:       'Price',
+    price_locked:      'Coming soon',
+    btn_close:         'Close',
+    btn_buy:           'BUY',
+    btn_owned:         'OWNED',
+    btn_locked:        'SOON',
+    not_for_sale:      'Market not open yet',
+  }
+};
+const t = (k) => (T[LANG] && T[LANG][k]) || T.ru[k] || k;
+
+const RARITY_LABEL = {
+  common:    'COMMON',
+  rare:      'RARE',
+  epic:      'EPIC',
+  legendary: 'LEGENDARY',
+};
+
+// ═══════════════════════════════════════════════════════════
+// API
+// ═══════════════════════════════════════════════════════════
+async function api(path) {
+  const url = `${API_BASE}${path}${path.includes('?') ? '&' : '?'}uid=${UID}&secret=${encodeURIComponent(SECRET)}`;
+  try {
+    const r = await fetch(url, {
+      headers: { 'ngrok-skip-browser-warning': '1' },
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.json();
+  } catch (e) {
+    console.error('API error', path, e);
+    return { ok: false, error: 'network' };
+  }
+}
+
+async function apiPost(path, body) {
+  const url = `${API_BASE}${path}`;
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
+      body: JSON.stringify({ uid: UID, secret: SECRET, ...body }),
+    });
+    return await r.json();
+  } catch (e) {
+    console.error('API POST error', path, e);
+    return { ok: false, error: 'network' };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// State + render
+// ═══════════════════════════════════════════════════════════
+let state = {
+  tab: 'my',           // 'my' | 'market'
+  myItems: null,
+  marketItems: null,
+  ownedIds: new Set(),  // быстрый lookup для маркета
+};
+
+function renderEmpty(titleKey, subKey, icon = '🎴') {
+  return `
+    <div class="empty">
+      <div class="empty-icon">${icon}</div>
+      <div class="empty-title">${t(titleKey)}</div>
+      <div class="empty-sub">${t(subKey)}</div>
+    </div>
+  `;
+}
+
+function renderError() {
+  return `
+    <div class="empty">
+      <div class="empty-icon">⚠️</div>
+      <div class="empty-title">${t('err_load')}</div>
+      <div class="empty-sub">${t('err_network')}</div>
+    </div>
+  `;
+}
+
+function fmtName(item) {
+  return LANG === 'en' ? item.name_en : item.name_ru;
+}
+function fmtTagline(item) {
+  return LANG === 'en' ? item.tagline_en : item.tagline_ru;
+}
+function fmtLore(item) {
+  return LANG === 'en' ? item.lore_en : item.lore_ru;
+}
+
+function renderCard(item, opts = {}) {
+  const r = item.rarity || 'common';
+  const isHolo = (r === 'epic' || r === 'legendary');
+  const date = item.obtained_at || '';
+  const owned = state.ownedIds.has(item.id);
+
+  let priceHtml = '';
+  if (opts.market) {
+    if (item.price === null || item.price === undefined) {
+      priceHtml = `<div class="card-price locked">${t('price_locked')}</div>`;
+    } else if (owned) {
+      priceHtml = `<div class="card-price">✓ ${t('btn_owned')}</div>`;
+    } else {
+      priceHtml = `<div class="card-price">${item.price.toLocaleString()} 💰</div>`;
+    }
+  }
+
+  return `
+    <div class="card-wrap" data-id="${item.id}">
+      <div class="card ${isHolo ? 'holo' : ''}" data-rarity="${r}" data-id="${item.id}">
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+        <div class="card-inner">
+          <div class="card-rarity-tag">${RARITY_LABEL[r] || r.toUpperCase()}</div>
+          ${date ? `<div class="card-date">${date}</div>` : ''}
+          <div class="card-emoji">${item.emoji || '🎴'}</div>
+          <div class="card-name">${fmtName(item)}</div>
+          <div class="card-weapon">${item.weapon || ''}</div>
+          ${priceHtml}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderGrid(items, opts) {
+  if (!items || items.length === 0) {
+    if (opts.market) return renderEmpty('empty_market_title', 'empty_market_sub', '🛒');
+    return renderEmpty('empty_my_title', 'empty_my_sub');
+  }
+  return `<div class="grid">${items.map(it => renderCard(it, opts)).join('')}</div>`;
+}
+
+function setContent(html) {
+  document.getElementById('content').innerHTML = html;
+  attachCardHandlers();
+}
+
+// ═══════════════════════════════════════════════════════════
+// 3D-эффект на карты + клик → modal
+// ═══════════════════════════════════════════════════════════
+function attachCardHandlers() {
+  const wraps = document.querySelectorAll('.card-wrap');
+  wraps.forEach(wrap => {
+    const card = wrap.querySelector('.card');
+    if (!card) return;
+
+    let raf = null;
+    let pending = null;
+
+    const apply = () => {
+      raf = null;
+      if (!pending) return;
+      const { rect, x, y } = pending;
+      const px = (x - rect.left) / rect.width;
+      const py = (y - rect.top) / rect.height;
+      const rotY = (px - 0.5) * 22;   // макс 11° в каждую сторону
+      const rotX = (0.5 - py) * 22;
+      card.style.setProperty('--rx', rotY + 'deg');
+      card.style.setProperty('--ry', rotX + 'deg');
+      card.style.setProperty('--mx', (px * 100) + '%');
+      card.style.setProperty('--my', (py * 100) + '%');
+      // Голограмма-фон смещается
+      card.style.setProperty('--holo-x', (px * 100) + '%');
+      card.style.setProperty('--holo-y', (py * 100) + '%');
+    };
+
+    const move = (e) => {
+      const rect = card.getBoundingClientRect();
+      let x, y;
+      if (e.touches && e.touches[0]) {
+        x = e.touches[0].clientX;
+        y = e.touches[0].clientY;
+      } else {
+        x = e.clientX;
+        y = e.clientY;
+      }
+      pending = { rect, x, y };
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+
+    const reset = () => {
+      pending = null;
+      card.style.setProperty('--rx', '0deg');
+      card.style.setProperty('--ry', '0deg');
+      card.style.setProperty('--mx', '50%');
+      card.style.setProperty('--my', '50%');
+    };
+
+    card.addEventListener('mousemove', move);
+    card.addEventListener('mouseleave', reset);
+    card.addEventListener('touchmove', move, { passive: true });
+    card.addEventListener('touchend', reset);
+    card.addEventListener('touchcancel', reset);
+
+    // Клик/тап → modal
+    let downX = 0, downY = 0, downT = 0;
+    const onDown = (e) => {
+      const t = e.touches && e.touches[0] ? e.touches[0] : e;
+      downX = t.clientX; downY = t.clientY; downT = Date.now();
+    };
+    const onUp = (e) => {
+      const t = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0] : e;
+      const dx = Math.abs(t.clientX - downX);
+      const dy = Math.abs(t.clientY - downY);
+      const dt = Date.now() - downT;
+      if (dx < 10 && dy < 10 && dt < 400) {
+        const id = card.dataset.id;
+        try { tg.HapticFeedback.impactOccurred('light'); } catch(e) {}
+        openCardModal(id);
+      }
+    };
+    card.addEventListener('mousedown', onDown);
+    card.addEventListener('mouseup', onUp);
+    card.addEventListener('touchstart', onDown, { passive: true });
+    card.addEventListener('touchend', onUp);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// Modal
+// ═══════════════════════════════════════════════════════════
+function findItem(id) {
+  if (state.tab === 'my') {
+    return (state.myItems || []).find(x => x.id === id);
+  } else {
+    return (state.marketItems || []).find(x => x.id === id);
+  }
+}
+
+function openCardModal(id) {
+  const item = findItem(id);
+  if (!item) return;
+  const r = item.rarity || 'common';
+  const owned = state.ownedIds.has(item.id);
+
+  let priceText, btnLabel, btnDisabled, btnAction;
+  if (state.tab === 'market') {
+    if (item.price === null || item.price === undefined) {
+      priceText = t('price_locked');
+      btnLabel  = t('btn_locked');
+      btnDisabled = true;
+      btnAction = null;
+    } else if (owned) {
+      priceText = `${item.price.toLocaleString()} 💰`;
+      btnLabel  = `✓ ${t('btn_owned')}`;
+      btnDisabled = true;
+      btnAction = null;
+    } else {
+      priceText = `${item.price.toLocaleString()} 💰`;
+      btnLabel  = `${t('btn_buy')} — ${item.price.toLocaleString()}`;
+      btnDisabled = false;
+      btnAction = () => buyNft(item.id);
+    }
+  } else {
+    priceText = item.price !== null && item.price !== undefined
+      ? `${item.price.toLocaleString()} 💰`
+      : '—';
+    btnLabel = t('btn_close');
+    btnDisabled = false;
+    btnAction = () => closeModal();
+  }
+
+  const modalEl = document.getElementById('modalCard');
+  modalEl.style.setProperty('--card-rarity', `var(--rarity-${r})`);
+  modalEl.style.setProperty('--card-rarity-glow', `var(--rarity-${r}-glow)`);
+
+  modalEl.innerHTML = `
+    <div class="modal-header">
+      <div class="modal-rarity">${RARITY_LABEL[r] || r}</div>
+      <button class="modal-close" id="modalCloseBtn">✕</button>
+    </div>
+    <div class="modal-emoji">${item.emoji || '🎴'}</div>
+    <div class="modal-name">${fmtName(item)}</div>
+    <div class="modal-tag">«${fmtTagline(item)}»</div>
+    <dl class="modal-info-grid">
+      <dt>${t('weapon_label')}</dt><dd>${item.weapon || '—'}</dd>
+      <dt>${t('rarity_label')}</dt><dd style="color: var(--rarity-${r})">${RARITY_LABEL[r] || r}</dd>
+      ${item.obtained_at ? `<dt>${t('obtained_label')}</dt><dd>${item.obtained_at}</dd>` : ''}
+      <dt>${t('price_label')}</dt><dd>${priceText}</dd>
+    </dl>
+    <div class="modal-lore">${fmtLore(item)}</div>
+    <button class="modal-action" id="modalActionBtn" ${btnDisabled ? 'disabled' : ''}>${btnLabel}</button>
+  `;
+
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('modalCloseBtn').onclick = closeModal;
+  if (btnAction) document.getElementById('modalActionBtn').onclick = btnAction;
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+document.getElementById('modal').addEventListener('click', (e) => {
+  if (e.target.id === 'modal') closeModal();
+});
+
+// ═══════════════════════════════════════════════════════════
+// Buy (заглушка пока цены = null)
+// ═══════════════════════════════════════════════════════════
+async function buyNft(id) {
+  try { tg.HapticFeedback.impactOccurred('medium'); } catch(e) {}
+  const r = await apiPost('/casino/nft/buy', { nft_id: id });
+  if (r.ok) {
+    showToast('✓ Куплено!');
+    closeModal();
+    loadMy();
+    loadMarket();
+  } else if (r.error === 'not_for_sale') {
+    showToast(t('not_for_sale'));
+  } else if (r.error === 'insufficient_funds') {
+    showToast('Недостаточно токенов');
+  } else if (r.error === 'already_owned') {
+    showToast('Уже куплено');
+  } else {
+    showToast(r.message || r.error || 'Ошибка');
+  }
+}
+
+let toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════════════════════════════════
+// Tabs
+// ═══════════════════════════════════════════════════════════
+document.querySelectorAll('.tab').forEach(tabEl => {
+  tabEl.addEventListener('click', () => {
+    if (tabEl.classList.contains('active')) return;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+    state.tab = tabEl.dataset.tab;
+    try { tg.HapticFeedback.selectionChanged(); } catch(e) {}
+    if (state.tab === 'my') showMy();
+    else                     showMarket();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════
+// Loaders
+// ═══════════════════════════════════════════════════════════
+async function loadMy() {
+  if (state.myItems) { showMy(); return; }
+  setContent(`<div class="grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`);
+  const r = await api('/casino/nft/list');
+  if (!r.ok) {
+    if (state.tab === 'my') setContent(renderError());
+    return;
+  }
+  state.myItems = r.nfts || [];
+  state.ownedIds = new Set(state.myItems.map(x => x.id));
+  document.getElementById('nftCount').textContent = state.myItems.length;
+  if (state.tab === 'my') showMy();
+}
+
+async function loadMarket() {
+  if (state.marketItems) { if (state.tab === 'market') showMarket(); return; }
+  if (state.tab === 'market') {
+    setContent(`<div class="grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`);
+  }
+  const r = await api('/casino/nft/market');
+  if (!r.ok) {
+    if (state.tab === 'market') setContent(renderError());
+    return;
+  }
+  state.marketItems = r.items || [];
+  if (state.tab === 'market') showMarket();
+}
+
+function showMy() {
+  setContent(renderGrid(state.myItems, { market: false }));
+}
+function showMarket() {
+  setContent(renderGrid(state.marketItems, { market: true }));
+}
+
+// Старт: грузим обе пачки параллельно (маркет в фоне, чтобы при свитче он уже был)
+loadMy();
+loadMarket();
+
+</script>
+</body>
+</html>
