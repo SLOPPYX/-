@@ -476,6 +476,44 @@ body::after {
 .corner.bl { bottom: 6px; left: 6px; border-right: none; border-top: none; }
 .corner.br { bottom: 6px; right: 6px; border-left: none; border-top: none; }
 
+/* Светящаяся полоса внизу карты — индикатор редкости */
+.card::before,
+.card .glow-bar {
+  pointer-events: none;
+}
+.card .glow-bar {
+  position: absolute;
+  bottom: 0; left: 8%; right: 8%;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--card-rarity) 20%,
+    var(--card-rarity) 80%,
+    transparent 100%);
+  filter: blur(0.5px) drop-shadow(0 0 6px var(--card-rarity-glow));
+  z-index: 2;
+  opacity: 0.85;
+}
+.card[data-rarity="legendary"] .glow-bar,
+.card[data-rarity="epic"] .glow-bar {
+  animation: glowBarPulse 2.4s ease-in-out infinite;
+}
+@keyframes glowBarPulse {
+  0%, 100% { opacity: 0.7; transform: scaleX(0.92); }
+  50%      { opacity: 1.0; transform: scaleX(1); }
+}
+
+/* Внутренняя двойная рамка — современный военно-HUD стиль */
+.card .inner-frame {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid var(--card-rarity);
+  border-radius: 11px;
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* Рарити-цвета на карты */
 .card[data-rarity="common"] {
   --card-rarity: var(--rarity-common);
@@ -883,164 +921,303 @@ function fmtLore(item) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// SVG-силуэты оружия (inline, currentColor подхватывает редкость)
+// SVG-силуэты оружия (с градиентами, заливками, объёмом)
 // ═══════════════════════════════════════════════════════════
-const WEAPON_SVG = {
-  // M1014 — помповый дробовик
-  M1014: `<svg viewBox="-10 195 240 70" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="125" y="218" width="85" height="10" rx="1.5"/>
-    <line x1="135" y1="218" x2="135" y2="228"/>
-    <line x1="145" y1="218" x2="145" y2="228"/>
-    <line x1="155" y1="218" x2="155" y2="228"/>
-    <line x1="165" y1="218" x2="165" y2="228"/>
-    <line x1="175" y1="218" x2="175" y2="228"/>
-    <line x1="185" y1="218" x2="185" y2="228"/>
-    <circle cx="208" cy="223" r="2"/>
-    <rect x="125" y="230" width="65" height="4" rx="1"/>
-    <rect x="95" y="228" width="35" height="14" rx="2"/>
-    <line x1="100" y1="230" x2="100" y2="240"/>
-    <line x1="105" y1="230" x2="105" y2="240"/>
-    <line x1="110" y1="230" x2="110" y2="240"/>
-    <line x1="115" y1="230" x2="115" y2="240"/>
-    <line x1="120" y1="230" x2="120" y2="240"/>
-    <rect x="65" y="218" width="35" height="22" rx="2"/>
-    <rect x="70" y="223" width="22" height="6" rx="1"/>
-    <rect x="74" y="232" width="14" height="4" rx="1"/>
-    <rect x="68" y="212" width="32" height="3" rx="0.5"/>
-    <path d="M 195 214 L 198 208 L 201 214 Z"/>
-    <rect x="72" y="212" width="6" height="6"/>
-    <ellipse cx="55" cy="246" rx="9" ry="6"/>
-    <path d="M 53 243 Q 53 248 56 248"/>
-    <path d="M 65 226 L 30 240 L 22 255 L 28 260 L 60 246 Z"/>
-    <circle cx="28" cy="252" r="2"/>
-  </svg>`,
+// Шаблонные функции возвращают SVG, в котором цвета задаются
+// через переданный цвет редкости (col) и более тёмный/светлый оттенки.
+// На вход: { col, colDark, colLight }
 
-  // Groza — буллпап АР
-  Groza: `<svg viewBox="0 195 240 80" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="155" y="222" width="55" height="6" rx="1"/>
-    <rect x="205" y="219" width="14" height="12" rx="1"/>
-    <line x1="208" y1="222" x2="208" y2="228"/>
-    <line x1="212" y1="222" x2="212" y2="228"/>
-    <line x1="216" y1="222" x2="216" y2="228"/>
-    <rect x="135" y="216" width="55" height="3" rx="0.5"/>
-    <rect x="80" y="204" width="25" height="10" rx="1.5"/>
-    <rect x="90" y="200" width="6" height="4"/>
-    <line x1="83" y1="214" x2="83" y2="218"/>
-    <line x1="103" y1="214" x2="103" y2="218"/>
-    <rect x="50" y="216" width="80" height="4" rx="0.5"/>
-    <line x1="55" y1="216" x2="55" y2="220"/>
-    <line x1="60" y1="216" x2="60" y2="220"/>
-    <line x1="65" y1="216" x2="65" y2="220"/>
-    <line x1="70" y1="216" x2="70" y2="220"/>
-    <line x1="115" y1="216" x2="115" y2="220"/>
-    <line x1="120" y1="216" x2="120" y2="220"/>
-    <line x1="125" y1="216" x2="125" y2="220"/>
-    <rect x="20" y="220" width="130" height="22" rx="2"/>
-    <rect x="14" y="222" width="6" height="18" rx="2"/>
-    <line x1="14" y1="226" x2="20" y2="226"/>
-    <line x1="14" y1="230" x2="20" y2="230"/>
-    <line x1="14" y1="234" x2="20" y2="234"/>
-    <path d="M 80 242 L 82 265 L 100 265 L 102 242 Z"/>
-    <line x1="83" y1="248" x2="100" y2="248"/>
-    <line x1="84" y1="254" x2="100" y2="254"/>
-    <line x1="85" y1="260" x2="100" y2="260"/>
-    <path d="M 50 242 L 45 265 L 60 265 L 60 242 Z"/>
-    <line x1="48" y1="248" x2="58" y2="248"/>
-    <line x1="48" y1="254" x2="58" y2="254"/>
-    <ellipse cx="55" cy="246" rx="6" ry="4"/>
-    <circle cx="35" cy="230" r="2.5"/>
-    <line x1="35" y1="230" x2="40" y2="230"/>
-  </svg>`,
+function svgM1014(c) {
+  return `<svg viewBox="-10 195 240 75" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="m1014-bar" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/>
+        <stop offset="50%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <linearGradient id="m1014-rec" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+    </defs>
+    <!-- Тень снизу -->
+    <ellipse cx="115" cy="265" rx="100" ry="3" fill="${c.colDark}" opacity="0.4"/>
+    <!-- Ствол с градиентом -->
+    <rect x="125" y="218" width="85" height="10" rx="2" fill="url(#m1014-bar)" stroke="${c.col}" stroke-width="1.2"/>
+    <!-- Вентиляция -->
+    <line x1="135" y1="220" x2="135" y2="226" stroke="${c.colDark}" stroke-width="1"/>
+    <line x1="145" y1="220" x2="145" y2="226" stroke="${c.colDark}" stroke-width="1"/>
+    <line x1="155" y1="220" x2="155" y2="226" stroke="${c.colDark}" stroke-width="1"/>
+    <line x1="165" y1="220" x2="165" y2="226" stroke="${c.colDark}" stroke-width="1"/>
+    <line x1="175" y1="220" x2="175" y2="226" stroke="${c.colDark}" stroke-width="1"/>
+    <line x1="185" y1="220" x2="185" y2="226" stroke="${c.colDark}" stroke-width="1"/>
+    <!-- Дульный срез -->
+    <circle cx="208" cy="223" r="2.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <!-- Газовая трубка -->
+    <rect x="125" y="230" width="65" height="4" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <!-- Помпа с насечками -->
+    <rect x="95" y="228" width="35" height="14" rx="2" fill="url(#m1014-rec)" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="100" y1="230" x2="100" y2="240" stroke="${c.colLight}" stroke-width="0.8"/>
+    <line x1="105" y1="230" x2="105" y2="240" stroke="${c.colLight}" stroke-width="0.8"/>
+    <line x1="110" y1="230" x2="110" y2="240" stroke="${c.colLight}" stroke-width="0.8"/>
+    <line x1="115" y1="230" x2="115" y2="240" stroke="${c.colLight}" stroke-width="0.8"/>
+    <line x1="120" y1="230" x2="120" y2="240" stroke="${c.colLight}" stroke-width="0.8"/>
+    <!-- Блик на помпе -->
+    <line x1="97" y1="229" x2="129" y2="229" stroke="${c.colLight}" stroke-width="0.6" opacity="0.7"/>
+    <!-- Ресивер -->
+    <rect x="65" y="218" width="35" height="22" rx="2" fill="url(#m1014-rec)" stroke="${c.col}" stroke-width="1.2"/>
+    <!-- Окно выброса гильз -->
+    <rect x="74" y="232" width="14" height="4" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <!-- Маркировка ресивера -->
+    <line x1="68" y1="223" x2="92" y2="223" stroke="${c.colLight}" stroke-width="0.5" opacity="0.5"/>
+    <line x1="68" y1="226" x2="86" y2="226" stroke="${c.colLight}" stroke-width="0.5" opacity="0.5"/>
+    <!-- Прицельная планка -->
+    <rect x="68" y="212" width="32" height="3" rx="0.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.8"/>
+    <!-- Мушка -->
+    <path d="M 195 214 L 198 208 L 201 214 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.8"/>
+    <!-- Целик -->
+    <rect x="72" y="212" width="6" height="6" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <!-- Спусковая скоба -->
+    <ellipse cx="55" cy="246" rx="9" ry="6" fill="none" stroke="${c.col}" stroke-width="2"/>
+    <!-- Спусковой крючок -->
+    <path d="M 53 243 Q 53 248 56 248" fill="none" stroke="${c.colLight}" stroke-width="2" stroke-linecap="round"/>
+    <!-- Приклад -->
+    <path d="M 65 226 L 30 240 L 22 255 L 28 260 L 60 246 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.4" stroke-linejoin="round"/>
+    <!-- Блик на прикладе -->
+    <path d="M 65 226 L 30 240 L 35 242 L 64 230 Z" fill="${c.col}" opacity="0.5"/>
+    <!-- Антабка -->
+    <circle cx="28" cy="252" r="2.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+  </svg>`;
+}
 
-  // M1887 — рычажный дробовик
-  M1887: `<svg viewBox="0 195 240 80" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="105" y="218" width="105" height="8" rx="1"/>
-    <rect x="105" y="228" width="90" height="6" rx="2"/>
-    <rect x="120" y="226" width="4" height="10" rx="0.5"/>
-    <rect x="155" y="226" width="4" height="10" rx="0.5"/>
-    <circle cx="208" cy="222" r="1.5"/>
-    <line x1="205" y1="219" x2="205" y2="225"/>
-    <rect x="80" y="226" width="30" height="12" rx="2"/>
-    <line x1="85" y1="228" x2="85" y2="236"/>
-    <line x1="90" y1="228" x2="90" y2="236"/>
-    <line x1="95" y1="228" x2="95" y2="236"/>
-    <line x1="100" y1="228" x2="100" y2="236"/>
-    <line x1="105" y1="228" x2="105" y2="236"/>
-    <rect x="50" y="218" width="35" height="22" rx="2"/>
-    <line x1="55" y1="224" x2="80" y2="224"/>
-    <line x1="55" y1="228" x2="80" y2="228"/>
-    <line x1="55" y1="232" x2="75" y2="232"/>
-    <path d="M 56 218 L 54 212 L 60 214 Z"/>
-    <path d="M 55 240 Q 55 260 65 260 L 78 260 Q 90 260 90 246" stroke-width="2.8"/>
-    <path d="M 65 246 Q 65 254 70 254"/>
-    <path d="M 50 226 Q 30 228 18 240 L 12 255 L 18 260 L 45 242 Z"/>
-    <line x1="12" y1="252" x2="20" y2="258"/>
-    <line x1="14" y1="248" x2="22" y2="254"/>
-    <circle cx="20" cy="252" r="1.5"/>
-    <path d="M 195 214 L 198 208 L 201 214"/>
-    <line x1="194" y1="216" x2="202" y2="216"/>
-  </svg>`,
+function svgGroza(c) {
+  return `<svg viewBox="0 195 240 80" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="grz-body" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/>
+        <stop offset="40%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <linearGradient id="grz-mag" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="115" cy="270" rx="105" ry="3" fill="${c.colDark}" opacity="0.4"/>
+    <!-- Ствол -->
+    <rect x="155" y="222" width="55" height="6" rx="1" fill="url(#grz-body)" stroke="${c.col}" stroke-width="1"/>
+    <!-- Дульный тормоз -->
+    <rect x="205" y="219" width="14" height="12" rx="1.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="208" y1="222" x2="208" y2="228" stroke="${c.col}" stroke-width="1"/>
+    <line x1="212" y1="222" x2="212" y2="228" stroke="${c.col}" stroke-width="1"/>
+    <line x1="216" y1="222" x2="216" y2="228" stroke="${c.col}" stroke-width="1"/>
+    <!-- Газовая трубка -->
+    <rect x="135" y="216" width="55" height="3" rx="0.5" fill="${c.colDark}"/>
+    <!-- Прицел коллиматор -->
+    <rect x="80" y="204" width="25" height="10" rx="1.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2"/>
+    <rect x="90" y="200" width="6" height="4" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="83" y1="214" x2="83" y2="218" stroke="${c.col}" stroke-width="1"/>
+    <line x1="103" y1="214" x2="103" y2="218" stroke="${c.col}" stroke-width="1"/>
+    <!-- Линза прицела (блик) -->
+    <circle cx="92" cy="209" r="2" fill="${c.colLight}" opacity="0.8"/>
+    <!-- Планка пикатинни -->
+    <rect x="50" y="216" width="80" height="4" rx="0.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="55" y1="216" x2="55" y2="220" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="60" y1="216" x2="60" y2="220" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="65" y1="216" x2="65" y2="220" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="70" y1="216" x2="70" y2="220" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="115" y1="216" x2="115" y2="220" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="120" y1="216" x2="120" y2="220" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="125" y1="216" x2="125" y2="220" stroke="${c.colDark}" stroke-width="0.6"/>
+    <!-- Корпус буллпап -->
+    <rect x="20" y="220" width="130" height="22" rx="2.5" fill="url(#grz-body)" stroke="${c.col}" stroke-width="1.2"/>
+    <!-- Блик сверху -->
+    <line x1="22" y1="222" x2="148" y2="222" stroke="${c.colLight}" stroke-width="0.8" opacity="0.6"/>
+    <!-- Затыльник -->
+    <rect x="14" y="222" width="6" height="18" rx="2" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <line x1="14" y1="226" x2="20" y2="226" stroke="${c.col}" stroke-width="0.6"/>
+    <line x1="14" y1="230" x2="20" y2="230" stroke="${c.col}" stroke-width="0.6"/>
+    <line x1="14" y1="234" x2="20" y2="234" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Магазин с патронами -->
+    <path d="M 80 242 L 82 265 L 100 265 L 102 242 Z" fill="url(#grz-mag)" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="83" y1="248" x2="100" y2="248" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="84" y1="254" x2="100" y2="254" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="85" y1="260" x2="100" y2="260" stroke="${c.colDark}" stroke-width="0.6"/>
+    <!-- Рукоятка -->
+    <path d="M 50 242 L 45 265 L 60 265 L 60 242 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2"/>
+    <!-- Спусковая скоба -->
+    <ellipse cx="55" cy="246" rx="6" ry="4" fill="none" stroke="${c.col}" stroke-width="1.5"/>
+    <!-- Селектор -->
+    <circle cx="35" cy="230" r="2.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <line x1="35" y1="230" x2="40" y2="230" stroke="${c.col}" stroke-width="1.2"/>
+  </svg>`;
+}
 
-  // AWM — снайперка
-  AWM: `<svg viewBox="0 195 245 85" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="135" y="230" width="85" height="6" rx="1"/>
-    <line x1="140" y1="230" x2="140" y2="236"/>
-    <line x1="150" y1="230" x2="150" y2="236"/>
-    <line x1="160" y1="230" x2="160" y2="236"/>
-    <line x1="170" y1="230" x2="170" y2="236"/>
-    <line x1="180" y1="230" x2="180" y2="236"/>
-    <line x1="190" y1="230" x2="190" y2="236"/>
-    <rect x="218" y="226" width="20" height="14" rx="1.5"/>
-    <line x1="221" y1="223" x2="221" y2="243"/>
-    <line x1="226" y1="223" x2="226" y2="243"/>
-    <line x1="231" y1="223" x2="231" y2="243"/>
-    <line x1="235" y1="223" x2="235" y2="243"/>
-    <rect x="60" y="204" width="65" height="14" rx="3"/>
-    <rect x="80" y="196" width="10" height="10" rx="1"/>
-    <line x1="82" y1="199" x2="88" y2="199"/>
-    <line x1="82" y1="202" x2="88" y2="202"/>
-    <rect x="92" y="196" width="8" height="10" rx="1"/>
-    <rect x="55" y="206" width="8" height="10" rx="2"/>
-    <rect x="120" y="203" width="12" height="16" rx="2"/>
-    <line x1="123" y1="203" x2="123" y2="219"/>
-    <line x1="68" y1="218" x2="68" y2="224"/>
-    <line x1="118" y1="218" x2="118" y2="224"/>
-    <rect x="65" y="222" width="8" height="4" rx="0.5"/>
-    <rect x="115" y="222" width="8" height="4" rx="0.5"/>
-    <rect x="55" y="224" width="80" height="14" rx="2"/>
-    <rect x="100" y="220" width="20" height="6" rx="1"/>
-    <circle cx="118" cy="223" r="2"/>
-    <line x1="118" y1="223" x2="124" y2="219"/>
-    <rect x="80" y="238" width="22" height="20" rx="1"/>
-    <line x1="82" y1="244" x2="100" y2="244"/>
-    <line x1="82" y1="250" x2="100" y2="250"/>
-    <path d="M 55 238 L 47 260 L 58 262 L 62 238 Z"/>
-    <line x1="50" y1="246" x2="60" y2="248"/>
-    <line x1="50" y1="252" x2="60" y2="254"/>
-    <ellipse cx="63" cy="242" rx="7" ry="4"/>
-    <path d="M 55 228 L 18 230 L 12 250 L 50 240 Z"/>
-    <ellipse cx="32" cy="234" rx="8" ry="4"/>
-    <rect x="22" y="224" width="20" height="5" rx="1"/>
-    <rect x="10" y="242" width="6" height="14" rx="1"/>
-    <line x1="10" y1="246" x2="16" y2="246"/>
-    <line x1="10" y1="250" x2="16" y2="250"/>
-    <line x1="135" y1="238" x2="128" y2="258"/>
-    <line x1="145" y1="238" x2="152" y2="258"/>
-    <circle cx="128" cy="258" r="1.5"/>
-    <circle cx="152" cy="258" r="1.5"/>
-  </svg>`,
+function svgM1887(c) {
+  return `<svg viewBox="0 195 240 80" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="m87-bar" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/>
+        <stop offset="50%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <linearGradient id="m87-wood" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <linearGradient id="m87-rec" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="115" cy="270" rx="110" ry="3" fill="${c.colDark}" opacity="0.4"/>
+    <!-- Ствол -->
+    <rect x="105" y="218" width="105" height="8" rx="1" fill="url(#m87-bar)" stroke="${c.col}" stroke-width="1.2"/>
+    <!-- Магазинная трубка -->
+    <rect x="105" y="228" width="90" height="6" rx="2" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <!-- Кольца магазина -->
+    <rect x="120" y="226" width="4" height="10" rx="0.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.6"/>
+    <rect x="155" y="226" width="4" height="10" rx="0.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.6"/>
+    <!-- Дульный срез -->
+    <circle cx="208" cy="222" r="2" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <line x1="205" y1="219" x2="205" y2="225" stroke="${c.col}" stroke-width="1.2"/>
+    <!-- Цевьё деревянное -->
+    <rect x="80" y="226" width="30" height="12" rx="2" fill="url(#m87-wood)" stroke="${c.colDark}" stroke-width="1.2"/>
+    <line x1="85" y1="228" x2="85" y2="236" stroke="${c.colLight}" stroke-width="0.5" opacity="0.7"/>
+    <line x1="90" y1="228" x2="90" y2="236" stroke="${c.colLight}" stroke-width="0.5" opacity="0.7"/>
+    <line x1="95" y1="228" x2="95" y2="236" stroke="${c.colLight}" stroke-width="0.5" opacity="0.7"/>
+    <line x1="100" y1="228" x2="100" y2="236" stroke="${c.colLight}" stroke-width="0.5" opacity="0.7"/>
+    <line x1="105" y1="228" x2="105" y2="236" stroke="${c.colLight}" stroke-width="0.5" opacity="0.7"/>
+    <!-- Ресивер -->
+    <rect x="50" y="218" width="35" height="22" rx="2" fill="url(#m87-rec)" stroke="${c.col}" stroke-width="1.2"/>
+    <!-- Гравировка -->
+    <line x1="55" y1="224" x2="80" y2="224" stroke="${c.colLight}" stroke-width="0.5" opacity="0.6"/>
+    <line x1="55" y1="228" x2="80" y2="228" stroke="${c.colLight}" stroke-width="0.5" opacity="0.6"/>
+    <line x1="55" y1="232" x2="75" y2="232" stroke="${c.colLight}" stroke-width="0.5" opacity="0.6"/>
+    <!-- Курок -->
+    <path d="M 56 218 L 54 212 L 60 214 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <!-- Скоба Генри (рычаг) — характерная для M1887 -->
+    <path d="M 55 240 Q 55 260 65 260 L 78 260 Q 90 260 90 246" fill="none" stroke="${c.col}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 55 240 Q 55 260 65 260 L 78 260 Q 90 260 90 246" fill="none" stroke="${c.colLight}" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+    <!-- Спусковой крючок -->
+    <path d="M 65 246 Q 65 254 70 254" fill="none" stroke="${c.col}" stroke-width="1.6" stroke-linecap="round"/>
+    <!-- Приклад изогнутый деревянный -->
+    <path d="M 50 226 Q 30 228 18 240 L 12 255 L 18 260 L 45 242 Z" fill="url(#m87-wood)" stroke="${c.col}" stroke-width="1.4" stroke-linejoin="round"/>
+    <!-- Текстура дерева -->
+    <line x1="20" y1="240" x2="42" y2="234" stroke="${c.colLight}" stroke-width="0.5" opacity="0.4"/>
+    <line x1="22" y1="246" x2="44" y2="240" stroke="${c.colLight}" stroke-width="0.5" opacity="0.4"/>
+    <!-- Затыльник -->
+    <line x1="12" y1="252" x2="20" y2="258" stroke="${c.colDark}" stroke-width="1.2"/>
+    <line x1="14" y1="248" x2="22" y2="254" stroke="${c.colDark}" stroke-width="1.2"/>
+    <!-- Антабка -->
+    <circle cx="20" cy="252" r="1.8" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <!-- Мушка с защитой -->
+    <path d="M 195 214 L 198 208 L 201 214" fill="none" stroke="${c.col}" stroke-width="1.5"/>
+    <line x1="194" y1="216" x2="202" y2="216" stroke="${c.col}" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function svgAWM(c) {
+  return `<svg viewBox="0 195 245 85" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="awm-bar" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/>
+        <stop offset="40%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <linearGradient id="awm-rec" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <radialGradient id="awm-scope" cx="50%" cy="40%" r="60%">
+        <stop offset="0%" stop-color="${c.colLight}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="115" cy="275" rx="115" ry="3.5" fill="${c.colDark}" opacity="0.4"/>
+    <!-- Длинный флютированный ствол -->
+    <rect x="135" y="230" width="85" height="6" rx="1" fill="url(#awm-bar)" stroke="${c.col}" stroke-width="1"/>
+    <line x1="140" y1="231" x2="140" y2="235" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="150" y1="231" x2="150" y2="235" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="160" y1="231" x2="160" y2="235" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="170" y1="231" x2="170" y2="235" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="180" y1="231" x2="180" y2="235" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="190" y1="231" x2="190" y2="235" stroke="${c.colDark}" stroke-width="0.5"/>
+    <!-- Дульный тормоз -->
+    <rect x="218" y="226" width="20" height="14" rx="1.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="221" y1="224" x2="221" y2="242" stroke="${c.col}" stroke-width="1"/>
+    <line x1="226" y1="224" x2="226" y2="242" stroke="${c.col}" stroke-width="1"/>
+    <line x1="231" y1="224" x2="231" y2="242" stroke="${c.col}" stroke-width="1"/>
+    <line x1="235" y1="224" x2="235" y2="242" stroke="${c.col}" stroke-width="1"/>
+    <!-- Оптический прицел корпус -->
+    <rect x="60" y="204" width="65" height="14" rx="3" fill="url(#awm-scope)" stroke="${c.col}" stroke-width="1.2"/>
+    <!-- Барабанчики прицела -->
+    <rect x="80" y="196" width="10" height="10" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <line x1="82" y1="199" x2="88" y2="199" stroke="${c.col}" stroke-width="0.6"/>
+    <line x1="82" y1="202" x2="88" y2="202" stroke="${c.col}" stroke-width="0.6"/>
+    <rect x="92" y="196" width="8" height="10" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <!-- Окуляр -->
+    <rect x="55" y="206" width="8" height="10" rx="2" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <!-- Объектив (крупнее) -->
+    <rect x="120" y="203" width="12" height="16" rx="2" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <!-- Линза объектива (блик) -->
+    <ellipse cx="126" cy="208" rx="3.5" ry="2" fill="${c.colLight}" opacity="0.7"/>
+    <line x1="123" y1="203" x2="123" y2="219" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Кольца крепления -->
+    <line x1="68" y1="218" x2="68" y2="224" stroke="${c.col}" stroke-width="1"/>
+    <line x1="118" y1="218" x2="118" y2="224" stroke="${c.col}" stroke-width="1"/>
+    <rect x="65" y="222" width="8" height="4" rx="0.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+    <rect x="115" y="222" width="8" height="4" rx="0.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Ствольная коробка -->
+    <rect x="55" y="224" width="80" height="14" rx="2" fill="url(#awm-rec)" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="56" y1="226" x2="134" y2="226" stroke="${c.colLight}" stroke-width="0.5" opacity="0.6"/>
+    <!-- Затвор -->
+    <rect x="100" y="220" width="20" height="6" rx="1" fill="${c.col}" stroke="${c.colDark}" stroke-width="1"/>
+    <circle cx="118" cy="223" r="2.2" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <line x1="118" y1="223" x2="124" y2="219" stroke="${c.col}" stroke-width="1.4"/>
+    <!-- Магазин -->
+    <rect x="80" y="238" width="22" height="20" rx="1" fill="url(#awm-rec)" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="82" y1="244" x2="100" y2="244" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="82" y1="250" x2="100" y2="250" stroke="${c.colDark}" stroke-width="0.6"/>
+    <!-- Рукоятка -->
+    <path d="M 55 238 L 47 260 L 58 262 L 62 238 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="50" y1="246" x2="60" y2="248" stroke="${c.colLight}" stroke-width="0.5" opacity="0.4"/>
+    <line x1="50" y1="252" x2="60" y2="254" stroke="${c.colLight}" stroke-width="0.5" opacity="0.4"/>
+    <!-- Спусковая скоба -->
+    <ellipse cx="63" cy="242" rx="7" ry="4" fill="none" stroke="${c.col}" stroke-width="1.6"/>
+    <!-- Скелетный приклад -->
+    <path d="M 55 228 L 18 230 L 12 250 L 50 240 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.4"/>
+    <ellipse cx="32" cy="234" rx="8" ry="4" fill="${c.col}" stroke="${c.colLight}" stroke-width="0.8"/>
+    <!-- Регулируемая щека -->
+    <rect x="22" y="224" width="20" height="5" rx="1" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.8"/>
+    <!-- Затыльник -->
+    <rect x="10" y="242" width="6" height="14" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <line x1="10" y1="246" x2="16" y2="246" stroke="${c.col}" stroke-width="0.6"/>
+    <line x1="10" y1="250" x2="16" y2="250" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Сошки -->
+    <line x1="135" y1="238" x2="128" y2="258" stroke="${c.col}" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="145" y1="238" x2="152" y2="258" stroke="${c.col}" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="128" cy="258" r="1.8" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <circle cx="152" cy="258" r="1.8" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+  </svg>`;
+}
+
+// Палитры по редкостям (для градиентов)
+const RARITY_PALETTE = {
+  common:    { col: '#c8ccd1', colLight: '#f0f1f3', colDark: '#7a7d82' },
+  rare:      { col: '#5BA9FF', colLight: '#a8d2ff', colDark: '#2c5d9e' },
+  epic:      { col: '#B96FFF', colLight: '#e0b8ff', colDark: '#6a2faf' },
+  legendary: { col: '#FFA940', colLight: '#ffd089', colDark: '#a36500' },
 };
 
 function getWeaponSVG(weaponName, rarity) {
-  // Цвет силуэта = цвет редкости (CSS-переменная)
-  const color = `var(--rarity-${rarity}, var(--rarity-common))`;
-  const svg = WEAPON_SVG[weaponName];
-  if (!svg) {
-    // Fallback — просто пустой квадрат
-    return `<svg viewBox="0 0 100 100" stroke="${color}" stroke-width="2" fill="none"><rect x="10" y="10" width="80" height="80" rx="6"/></svg>`;
+  const palette = RARITY_PALETTE[rarity] || RARITY_PALETTE.common;
+  const builders = { M1014: svgM1014, Groza: svgGroza, M1887: svgM1887, AWM: svgAWM };
+  const fn = builders[weaponName];
+  if (!fn) {
+    return `<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="6" fill="none" stroke="${palette.col}" stroke-width="2"/></svg>`;
   }
-  // Подменим currentColor на конкретный цвет редкости
-  return svg.replace('stroke="currentColor"', `stroke="${color}"`);
+  return fn(palette);
 }
 
 
@@ -1064,6 +1241,7 @@ function renderCard(item, opts = {}) {
   return `
     <div class="card-wrap" data-id="${item.id}">
       <div class="card ${isHolo ? 'holo' : ''}" data-rarity="${r}" data-id="${item.id}">
+        <div class="inner-frame"></div>
         <div class="corner tl"></div>
         <div class="corner tr"></div>
         <div class="corner bl"></div>
@@ -1076,6 +1254,7 @@ function renderCard(item, opts = {}) {
           <div class="card-weapon">${item.weapon || ''}</div>
           ${priceHtml}
         </div>
+        <div class="glow-bar"></div>
       </div>
     </div>
   `;
