@@ -173,15 +173,16 @@ body::after {
 }
 .tab {
   flex: 1;
-  padding: 12px 6px;
+  padding: 12px 4px;
   text-align: center;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 15px;
-  letter-spacing: 0.10em;
+  font-size: 13px;
+  letter-spacing: 0.06em;
   color: var(--text-2);
   cursor: pointer;
   transition: all 0.18s ease;
   position: relative;
+  white-space: nowrap;
 }
 .tab:not(:last-child) { border-right: 1px solid var(--line); }
 .tab.active {
@@ -195,6 +196,271 @@ body::after {
   background: var(--accent);
   box-shadow: 0 0 12px var(--accent);
 }
+
+/* ─────────── P2P NFT (v133) ─────────── */
+.p2p-container {
+  padding: 0 16px 80px;
+}
+.p2p-stats {
+  display: flex; gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.p2p-stat {
+  flex: 1;
+  text-align: center;
+}
+.p2p-stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  color: var(--accent);
+  line-height: 1;
+}
+.p2p-stat-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  color: var(--text-2);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.p2p-stat.warning .p2p-stat-num { color: #FF6B6B; }
+
+.p2p-empty {
+  text-align: center;
+  padding: 40px 24px;
+  color: var(--text-2);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.p2p-empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+
+/* Карточка листинга (отличается от обычной — есть продавец и кнопка) */
+.p2p-card-wrap { padding: 12px 0; }
+.p2p-listing {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  position: relative;
+}
+.p2p-listing[data-rarity="rare"]      { border-color: rgba(91,169,255,0.4); }
+.p2p-listing[data-rarity="epic"]      { border-color: rgba(185,111,255,0.4); }
+.p2p-listing[data-rarity="legendary"] { border-color: rgba(255,169,64,0.5); }
+.p2p-listing[data-rarity="ultralegendary"] {
+  border-color: rgba(255,58,85,0.6);
+  background: linear-gradient(180deg, var(--bg-1), rgba(255,58,85,0.05));
+}
+
+.p2p-listing-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.p2p-listing-vis {
+  width: 80px; height: 64px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  padding: 4px;
+}
+.p2p-listing-vis svg {
+  width: 100%; height: 100%;
+  filter: drop-shadow(0 0 4px var(--card-rarity-glow, transparent));
+}
+.p2p-listing-info { flex: 1; min-width: 0; }
+.p2p-listing-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--text-1);
+  margin-bottom: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.p2p-listing-meta {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  color: var(--text-2);
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.p2p-listing-rarity {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.06em;
+  background: var(--card-rarity, var(--text-2));
+  color: #000;
+}
+.p2p-listing[data-rarity="ultralegendary"] .p2p-listing-rarity {
+  background: #FF3A55; color: #fff;
+}
+.p2p-listing-serial {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+.p2p-listing-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.p2p-listing-price-block { flex: 1; }
+.p2p-listing-price {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.p2p-listing-catalog {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  color: var(--text-2);
+}
+.p2p-listing-btn {
+  padding: 9px 14px;
+  border-radius: 8px;
+  border: none;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.p2p-listing-btn.buy {
+  background: var(--accent);
+  color: #1a1a1a;
+}
+.p2p-listing-btn.buy:active { transform: scale(0.96); }
+.p2p-listing-btn.cancel {
+  background: rgba(255,107,107,0.15);
+  color: #FF6B6B;
+  border: 1px solid rgba(255,107,107,0.3);
+}
+.p2p-listing-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.p2p-seller-badge {
+  position: absolute;
+  top: 8px; right: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-2);
+  background: rgba(0,0,0,0.4);
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+.p2p-seller-badge.is-mine {
+  background: rgba(255,169,64,0.2);
+  color: var(--accent);
+}
+
+/* Кнопка «продать» в модалке NFT */
+.sell-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px;
+  background: linear-gradient(135deg, #FFA940, #FF6B40);
+  color: #1a1a1a;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.10em;
+  cursor: pointer;
+}
+.sell-btn:active { transform: scale(0.98); }
+.sell-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Модалка ввода цены при выставлении */
+.sell-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 250;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.sell-modal-overlay.show { opacity: 1; pointer-events: auto; }
+.sell-modal-content {
+  width: 100%; max-width: 400px;
+  background: var(--bg-0);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+}
+.sell-modal-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.10em;
+  color: var(--text-1);
+  margin-bottom: 4px;
+}
+.sell-modal-sub {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  color: var(--text-2);
+  margin-bottom: 16px;
+}
+.price-input-row {
+  display: flex; gap: 8px; margin-bottom: 12px;
+}
+.price-input {
+  flex: 1;
+  padding: 14px;
+  background: var(--bg-1);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  color: var(--text-1);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.price-input:focus { border-color: var(--accent); }
+.price-input.invalid { border-color: #FF6B6B; }
+.price-hint {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  color: var(--text-2);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.price-hint .num { color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+.price-hint .err { color: #FF6B6B; }
+
+.sell-modal-actions {
+  display: flex; gap: 10px;
+}
+.sell-modal-actions button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.btn-confirm { background: var(--accent); color: #1a1a1a; }
+.btn-cancel { background: var(--bg-1); color: var(--text-2); border: 1px solid var(--line) !important; }
+.btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ─────────── Профиль (v131) ─────────── */
 .profile-container {
@@ -1204,6 +1470,7 @@ body::after {
   <div class="tabs">
     <div class="tab active" data-tab="my">МОИ</div>
     <div class="tab" data-tab="market">МАРКЕТ</div>
+    <div class="tab" data-tab="p2p">P2P</div>
     <div class="tab" data-tab="profile">ПРОФИЛЬ</div>
   </div>
 
@@ -1217,6 +1484,23 @@ body::after {
     </div>
   </div>
 
+</div>
+
+<!-- Sell-модалка (ввод цены при выставлении на P2P) -->
+<div class="sell-modal-overlay" id="sell-modal">
+  <div class="sell-modal-content">
+    <div class="sell-modal-title">ВЫСТАВИТЬ НА P2P</div>
+    <div class="sell-modal-sub" id="sell-modal-nft-name">—</div>
+    <div class="price-input-row">
+      <input type="number" class="price-input" id="sell-price"
+             placeholder="Цена в токенах" inputmode="numeric"/>
+    </div>
+    <div class="price-hint" id="sell-hint">—</div>
+    <div class="sell-modal-actions">
+      <button class="btn-cancel" id="sell-modal-cancel">ОТМЕНА</button>
+      <button class="btn-confirm" id="sell-modal-confirm">ВЫСТАВИТЬ</button>
+    </div>
+  </div>
 </div>
 
 <!-- Picker модалка — выбор NFT для showcase слота -->
@@ -1358,12 +1642,13 @@ async function apiPost(path, body) {
 // State + render
 // ═══════════════════════════════════════════════════════════
 let state = {
-  tab: 'my',           // 'my' | 'market' | 'profile'
+  tab: 'my',           // 'my' | 'market' | 'p2p' | 'profile'
   myItems: null,
   marketItems: null,
   ownedIds: new Set(),  // быстрый lookup для маркета
   me: null,             // /casino/me ответ
   profile: null,        // /casino/profile/me ответ
+  p2pData: null,        // /casino/p2p/list ответ
 };
 
 function renderEmpty(titleKey, subKey, icon = '🎴') {
@@ -2234,6 +2519,7 @@ function openCardModal(id) {
   const owned = state.ownedIds.has(item.id);
 
   let priceText, btnLabel, btnDisabled, btnAction;
+  let extraBtn = '';  // дополнительная кнопка (продать)
   if (state.tab === 'market') {
     if (item.price === null || item.price === undefined) {
       priceText = t('price_locked');
@@ -2252,12 +2538,17 @@ function openCardModal(id) {
       btnAction = () => buyNft(item.id);
     }
   } else {
+    // МОИ — кнопка «Продать» + «Закрыть»
     priceText = item.price !== null && item.price !== undefined
       ? `${item.price.toLocaleString()} 💰`
       : '—';
     btnLabel = t('btn_close');
     btnDisabled = false;
     btnAction = () => closeModal();
+    // Кнопка продажи — только если у NFT есть цена
+    if (item.price && item.serial) {
+      extraBtn = `<button class="sell-btn" id="modalSellBtn">💰 ПРОДАТЬ НА P2P</button>`;
+    }
   }
 
   const modalEl = document.getElementById('modalCard');
@@ -2282,11 +2573,20 @@ function openCardModal(id) {
     </dl>
     <div class="modal-lore">${fmtLore(item)}</div>
     <button class="modal-action" id="modalActionBtn" ${btnDisabled ? 'disabled' : ''}>${btnLabel}</button>
+    ${extraBtn}
   `;
 
   document.getElementById('modal').classList.add('open');
   document.getElementById('modalCloseBtn').onclick = closeModal;
   if (btnAction) document.getElementById('modalActionBtn').onclick = btnAction;
+  // Кнопка «Продать» — если есть
+  const sellBtn = document.getElementById('modalSellBtn');
+  if (sellBtn) {
+    sellBtn.onclick = () => {
+      closeModal();
+      openSellModal(item);
+    };
+  }
 }
 
 function closeModal() {
@@ -2339,6 +2639,7 @@ document.querySelectorAll('.tab').forEach(tabEl => {
     try { tg.HapticFeedback.selectionChanged(); } catch(e) {}
     if      (state.tab === 'my')      showMy();
     else if (state.tab === 'market')  showMarket();
+    else if (state.tab === 'p2p')     showP2P();
     else if (state.tab === 'profile') showProfile();
   });
 });
@@ -2701,6 +3002,248 @@ function renderForeignProfile(p, container) {
     ${slotsHtml}
   `;
 }
+
+// ═══════════════════════════════════════════════════════════
+// P2P NFT (v133)
+// ═══════════════════════════════════════════════════════════
+async function loadP2P() {
+  const r = await api('/casino/p2p/list');
+  if (!r.ok) return null;
+  state.p2pData = r;
+  return r;
+}
+
+async function showP2P() {
+  setContent(`<div class="p2p-container">
+    <div class="skel" style="height: 60px; border-radius: 10px; margin-bottom: 16px;"></div>
+    <div class="skel" style="height: 110px; border-radius: 12px; margin-bottom: 12px;"></div>
+    <div class="skel" style="height: 110px; border-radius: 12px;"></div>
+  </div>`);
+  await loadP2P();
+  if (state.tab === 'p2p') renderP2P();
+}
+
+function renderP2P() {
+  const d = state.p2pData || {};
+  const items = d.items || [];
+  const myUid = (state.me && state.me.uid) || 0;
+
+  // Шапка со статистикой моих лимитов
+  const listingsLeft = (d.limit_listings || 3) - (d.my_listings_today || 0);
+  const salesLeft    = (d.limit_sales || 3)    - (d.my_sales_today || 0);
+  let header = `
+    <div class="p2p-stats">
+      <div class="p2p-stat ${listingsLeft <= 0 ? 'warning' : ''}">
+        <div class="p2p-stat-num">${listingsLeft}</div>
+        <div class="p2p-stat-label">Выставлений<br/>осталось</div>
+      </div>
+      <div class="p2p-stat ${salesLeft <= 0 ? 'warning' : ''}">
+        <div class="p2p-stat-num">${salesLeft}</div>
+        <div class="p2p-stat-label">Продаж<br/>осталось</div>
+      </div>
+      <div class="p2p-stat">
+        <div class="p2p-stat-num">${items.length}</div>
+        <div class="p2p-stat-label">Активных<br/>листингов</div>
+      </div>
+    </div>`;
+
+  // Информер про комиссию
+  const commission = d.commission_percent || 7;
+  const minPct = d.price_min_pct || 5;
+  const maxPct = d.price_max_pct || 500;
+  header += `<div class="price-hint" style="margin-bottom: 16px;">
+    Комиссия маркета: <span class="num">${commission}%</span> с продавца.
+    Диапазон цен: от <span class="num">${minPct}%</span> до <span class="num">${maxPct}%</span> цены каталога.
+    Лимиты: ${d.limit_listings} листингов и ${d.limit_sales} продаж в сутки.
+  </div>`;
+
+  // Список листингов
+  let body = '';
+  if (items.length === 0) {
+    body = `<div class="p2p-empty">
+      <div class="p2p-empty-icon">🤝</div>
+      Пока нет листингов от игроков.<br/>
+      Выстави свою NFT — открой её во вкладке МОИ и нажми «Продать».
+    </div>`;
+  } else {
+    body = items.map(it => renderP2PListing(it, myUid)).join('');
+  }
+
+  setContent(`<div class="p2p-container">${header}${body}</div>`);
+
+  // Обработчики кнопок
+  document.querySelectorAll('[data-buy-listing]').forEach(b => {
+    b.addEventListener('click', () => buyListing(b.dataset.buyListing));
+  });
+  document.querySelectorAll('[data-cancel-listing]').forEach(b => {
+    b.addEventListener('click', () => cancelMyListing(b.dataset.cancelListing));
+  });
+}
+
+function renderP2PListing(it, myUid) {
+  const palette = RARITY_PALETTE[it.rarity] || RARITY_PALETTE.common;
+  const svg = getWeaponSVG(it.weapon, it.rarity);
+  const name = it.name_ru || it.name_en || it.weapon || it.nft_id;
+  const rarityLabel = (RARITY_LABEL[it.rarity] || it.rarity || '').toUpperCase();
+  const isMy = it.is_my;
+  const supplyTag = it.max_supply ? `#${it.serial}/${it.max_supply}` : `#${it.serial}`;
+
+  // Сравнение с ценой каталога
+  const cat = it.catalog_price || 0;
+  let priceDiff = '';
+  if (cat) {
+    const ratio = it.price / cat;
+    if (ratio < 0.9)      priceDiff = `<span style="color:#5BE6A9;">↓ ${Math.round((1-ratio)*100)}% дешевле</span>`;
+    else if (ratio > 1.1) priceDiff = `<span style="color:#FF6B6B;">↑ ${Math.round((ratio-1)*100)}% дороже</span>`;
+    else                  priceDiff = `<span>~ цена каталога</span>`;
+  }
+
+  return `<div class="p2p-listing" data-rarity="${it.rarity}"
+                style="--card-rarity: ${palette.col}; --card-rarity-glow: ${palette.col}55;">
+    <div class="p2p-seller-badge ${isMy ? 'is-mine' : ''}">${isMy ? 'МОЁ' : 'ID ' + it.seller_uid}</div>
+    <div class="p2p-listing-top">
+      <div class="p2p-listing-vis">${svg}</div>
+      <div class="p2p-listing-info">
+        <div class="p2p-listing-name">${escapeHtml(name)}</div>
+        <div class="p2p-listing-meta">
+          <span class="p2p-listing-rarity">${rarityLabel}</span>
+          <span class="p2p-listing-serial">${supplyTag}</span>
+        </div>
+      </div>
+    </div>
+    <div class="p2p-listing-bottom">
+      <div class="p2p-listing-price-block">
+        <div class="p2p-listing-price">${fmtTokens(it.price)} 💰</div>
+        <div class="p2p-listing-catalog">${priceDiff}</div>
+      </div>
+      ${isMy
+        ? `<button class="p2p-listing-btn cancel" data-cancel-listing="${it.listing_id}">СНЯТЬ</button>`
+        : `<button class="p2p-listing-btn buy" data-buy-listing="${it.listing_id}">КУПИТЬ</button>`
+      }
+    </div>
+  </div>`;
+}
+
+async function buyListing(listingId) {
+  if (!confirm('Купить эту NFT?')) return;
+  try { tg.HapticFeedback.impactOccurred('medium'); } catch(e) {}
+  const r = await apiPost('/casino/p2p/buy', { listing_id: listingId });
+  if (r.ok) {
+    showToast('✓ Куплено! NFT в твоей коллекции');
+    // Обновляем баланс
+    if (state.me) state.me.balance = r.buyer_new_balance;
+    document.getElementById('balanceVal').textContent = fmtTokens(r.buyer_new_balance);
+    // Сбрасываем кэши и обновляем
+    state.myItems = null;
+    state.p2pData = null;
+    await loadMy();
+    await loadP2P();
+    if (state.tab === 'p2p') renderP2P();
+  } else {
+    showToast(r.message || r.error || 'Ошибка');
+  }
+}
+
+async function cancelMyListing(listingId) {
+  if (!confirm('Снять с продажи?')) return;
+  try { tg.HapticFeedback.impactOccurred('light'); } catch(e) {}
+  const r = await apiPost('/casino/p2p/cancel', { listing_id: listingId });
+  if (r.ok) {
+    showToast('Листинг снят');
+    state.p2pData = null;
+    await loadP2P();
+    if (state.tab === 'p2p') renderP2P();
+  } else {
+    showToast(r.message || r.error || 'Ошибка');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// Sell-модалка (выставление NFT на продажу)
+// ═══════════════════════════════════════════════════════════
+let sellModalNft = null;
+
+function openSellModal(nft) {
+  sellModalNft = nft;
+  const catalogPrice = nft.price || 0;
+  document.getElementById('sell-modal-nft-name').textContent =
+    `${nft.name_ru || nft.weapon} · #${nft.serial}`;
+  document.getElementById('sell-price').value = catalogPrice;
+  updateSellHint();
+  document.getElementById('sell-modal').classList.add('show');
+  setTimeout(() => document.getElementById('sell-price').focus(), 100);
+}
+
+function closeSellModal() {
+  document.getElementById('sell-modal').classList.remove('show');
+  sellModalNft = null;
+}
+
+function updateSellHint() {
+  if (!sellModalNft) return;
+  const catalogPrice = sellModalNft.price || 0;
+  if (!catalogPrice) {
+    document.getElementById('sell-hint').innerHTML =
+      `<span class="err">Эта NFT не имеет цены каталога</span>`;
+    return;
+  }
+  const minP = Math.floor(catalogPrice * 0.05);
+  const maxP = Math.floor(catalogPrice * 5);
+  const price = parseInt(document.getElementById('sell-price').value) || 0;
+  let warning = '';
+  const inp = document.getElementById('sell-price');
+  inp.classList.remove('invalid');
+  if (price > 0 && price < minP) {
+    warning = `<span class="err">Слишком дёшево (минимум ${fmtTokens(minP)})</span>`;
+    inp.classList.add('invalid');
+  } else if (price > maxP) {
+    warning = `<span class="err">Слишком дорого (максимум ${fmtTokens(maxP)})</span>`;
+    inp.classList.add('invalid');
+  } else if (price > 0) {
+    const commission = Math.floor(price * 0.07);
+    const payout = price - commission;
+    warning = `Цена каталога: <span class="num">${fmtTokens(catalogPrice)}</span><br/>
+               Получишь после комиссии 7%: <span class="num">${fmtTokens(payout)}</span> (комиссия ${fmtTokens(commission)})`;
+  }
+  const limits = `Диапазон: <span class="num">${fmtTokens(minP)}</span> — <span class="num">${fmtTokens(maxP)}</span>`;
+  document.getElementById('sell-hint').innerHTML = warning ? `${warning}<br/>${limits}` : limits;
+}
+
+async function confirmSell() {
+  if (!sellModalNft) return;
+  const price = parseInt(document.getElementById('sell-price').value) || 0;
+  if (price <= 0) { showToast('Введите цену'); return; }
+  try { tg.HapticFeedback.impactOccurred('medium'); } catch(e) {}
+  const btn = document.getElementById('sell-modal-confirm');
+  btn.disabled = true; btn.textContent = '...';
+  const r = await apiPost('/casino/p2p/create', {
+    nft_id: sellModalNft.id,
+    serial: sellModalNft.serial,
+    price: price,
+  });
+  btn.disabled = false; btn.textContent = 'ВЫСТАВИТЬ';
+  if (r.ok) {
+    showToast(`✓ Выставлено за ${fmtTokens(price)}`);
+    closeSellModal();
+    closeModal();
+    // Сбросим кэш P2P
+    state.p2pData = null;
+    if (state.tab === 'p2p') {
+      await loadP2P();
+      renderP2P();
+    }
+  } else {
+    showToast(r.message || r.error || 'Ошибка');
+  }
+}
+
+// Хендлеры sell-модалки
+document.getElementById('sell-price').addEventListener('input', updateSellHint);
+document.getElementById('sell-modal-cancel').addEventListener('click', closeSellModal);
+document.getElementById('sell-modal-confirm').addEventListener('click', confirmSell);
+document.getElementById('sell-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'sell-modal') closeSellModal();
+});
 
 // Старт: грузим профиль + обе пачки параллельно
 loadMe();
