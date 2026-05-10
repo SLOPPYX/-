@@ -173,11 +173,11 @@ body::after {
 }
 .tab {
   flex: 1;
-  padding: 12px;
+  padding: 12px 6px;
   text-align: center;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 16px;
-  letter-spacing: 0.12em;
+  font-size: 15px;
+  letter-spacing: 0.10em;
   color: var(--text-2);
   cursor: pointer;
   transition: all 0.18s ease;
@@ -194,6 +194,332 @@ body::after {
   width: 28px; height: 2px;
   background: var(--accent);
   box-shadow: 0 0 12px var(--accent);
+}
+
+/* ─────────── Профиль (v131) ─────────── */
+.profile-container {
+  padding: 0 16px 80px;
+}
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 16px;
+  background: linear-gradient(180deg, rgba(255, 169, 64, 0.08), rgba(255, 169, 64, 0.02));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  margin-bottom: 16px;
+}
+.profile-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FFA940, #B96FFF);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 0 18px rgba(255, 169, 64, 0.3);
+}
+.profile-info-flex { flex: 1; min-width: 0; }
+.profile-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  color: var(--text-1);
+  margin-bottom: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.profile-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-2);
+  letter-spacing: 0.04em;
+}
+.profile-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.profile-stat {
+  padding: 14px 12px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  text-align: center;
+}
+.profile-stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  color: var(--accent);
+  line-height: 1;
+}
+.profile-stat-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  color: var(--text-2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.12em;
+  color: var(--text-1);
+  margin: 8px 4px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.section-hint {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  color: var(--text-2);
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+/* Showcase 3 слота */
+.showcase-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.showcase-slot {
+  aspect-ratio: 3 / 4;
+  background: var(--bg-1);
+  border: 1.5px dashed var(--line);
+  border-radius: 12px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.showcase-slot:hover, .showcase-slot:active {
+  border-color: var(--accent);
+  background: rgba(255, 169, 64, 0.05);
+}
+.showcase-slot-plus {
+  font-size: 32px;
+  color: var(--text-2);
+  font-weight: 200;
+  margin-bottom: 4px;
+}
+.showcase-slot-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  color: var(--text-2);
+  letter-spacing: 0.04em;
+  padding: 0 8px;
+  text-align: center;
+}
+/* Занятый слот — рендерим миниатюру */
+.showcase-slot.filled {
+  border-style: solid;
+  border-color: var(--card-rarity, var(--line));
+  background: linear-gradient(180deg, var(--bg-1) 0%, color-mix(in srgb, var(--card-rarity, var(--bg-1)) 8%, var(--bg-1)) 100%);
+  padding: 6px;
+}
+.showcase-slot.filled .mini-weapon {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  width: 100%;
+}
+.showcase-slot.filled .mini-weapon svg {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto; height: auto;
+  filter: drop-shadow(0 0 6px var(--card-rarity-glow, transparent));
+}
+.showcase-slot.filled .mini-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 10px;
+  color: var(--card-rarity, var(--text-1));
+  text-align: center;
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+  line-height: 1.2;
+  overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.showcase-slot.filled .mini-remove {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+}
+
+/* Переключатель публичности */
+.privacy-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+.privacy-text { flex: 1; min-width: 0; }
+.privacy-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  color: var(--text-1);
+}
+.privacy-desc {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+.toggle {
+  width: 44px; height: 24px;
+  background: var(--bg-2);
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+}
+.toggle.on { background: var(--accent); border-color: var(--accent); }
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  top: 2px; left: 3px;
+  transition: left 0.2s ease;
+}
+.toggle.on::after { left: 21px; }
+
+/* Поиск чужих профилей */
+.search-row {
+  display: flex; gap: 8px;
+  margin-bottom: 12px;
+}
+.search-input {
+  flex: 1;
+  padding: 12px 14px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text-1);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--text-2); }
+.search-btn {
+  padding: 12px 20px;
+  background: var(--accent);
+  color: #1a1a1a;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.10em;
+  cursor: pointer;
+}
+.search-btn:disabled { opacity: 0.4; }
+
+.profile-empty-hint {
+  text-align: center;
+  padding: 28px 16px;
+  color: var(--text-2);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Модалка выбора NFT для слота showcase */
+.picker-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.picker-overlay.show { opacity: 1; pointer-events: auto; }
+.picker-content {
+  width: 100%; max-width: 400px; max-height: 80vh;
+  background: var(--bg-0);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  overflow-y: auto;
+}
+.picker-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.10em;
+  color: var(--text-1);
+  margin-bottom: 14px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.picker-close {
+  width: 28px; height: 28px; cursor: pointer;
+  background: var(--bg-1);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-2); font-size: 16px;
+}
+.picker-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+.picker-item {
+  aspect-ratio: 3 / 4;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 6px;
+  display: flex; flex-direction: column;
+  transition: all 0.15s ease;
+}
+.picker-item:active { transform: scale(0.96); }
+.picker-item.picked {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(255, 169, 64, 0.3);
+}
+.picker-item-vis {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.picker-item-vis svg {
+  max-width: 100%; max-height: 100%;
+  width: auto; height: auto;
+}
+.picker-item-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 9px;
+  text-align: center;
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.picker-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-2);
+  font-family: 'Rajdhani', sans-serif;
 }
 
 /* ─────────── Сетка карт ─────────── */
@@ -878,6 +1204,7 @@ body::after {
   <div class="tabs">
     <div class="tab active" data-tab="my">МОИ</div>
     <div class="tab" data-tab="market">МАРКЕТ</div>
+    <div class="tab" data-tab="profile">ПРОФИЛЬ</div>
   </div>
 
   <!-- Контейнер для карт (рендерится через JS) -->
@@ -890,6 +1217,19 @@ body::after {
     </div>
   </div>
 
+</div>
+
+<!-- Picker модалка — выбор NFT для showcase слота -->
+<div class="picker-overlay" id="picker">
+  <div class="picker-content">
+    <div class="picker-title">
+      <span>ВЫБЕРИ NFT</span>
+      <div class="picker-close" id="picker-close">×</div>
+    </div>
+    <div id="picker-body">
+      <div class="picker-empty">Загрузка…</div>
+    </div>
+  </div>
 </div>
 
 <!-- Modal с подробностями -->
@@ -1018,10 +1358,12 @@ async function apiPost(path, body) {
 // State + render
 // ═══════════════════════════════════════════════════════════
 let state = {
-  tab: 'my',           // 'my' | 'market'
+  tab: 'my',           // 'my' | 'market' | 'profile'
   myItems: null,
   marketItems: null,
   ownedIds: new Set(),  // быстрый lookup для маркета
+  me: null,             // /casino/me ответ
+  profile: null,        // /casino/profile/me ответ
 };
 
 function renderEmpty(titleKey, subKey, icon = '🎴') {
@@ -1995,8 +2337,9 @@ document.querySelectorAll('.tab').forEach(tabEl => {
     tabEl.classList.add('active');
     state.tab = tabEl.dataset.tab;
     try { tg.HapticFeedback.selectionChanged(); } catch(e) {}
-    if (state.tab === 'my') showMy();
-    else                     showMarket();
+    if      (state.tab === 'my')      showMy();
+    else if (state.tab === 'market')  showMarket();
+    else if (state.tab === 'profile') showProfile();
   });
 });
 
@@ -2005,23 +2348,19 @@ document.querySelectorAll('.tab').forEach(tabEl => {
 // ═══════════════════════════════════════════════════════════
 function fmtTokens(n) {
   if (typeof n !== 'number') return '—';
-  // Полный баланс с разделителями тысяч (узкий неразрывный пробел U+202F)
   return n.toLocaleString('ru-RU').replace(/\s/g, '\u202F');
 }
 
 async function loadMe() {
   const r = await api('/casino/me');
   if (!r.ok) return;
-  // Имя
   const nick = r.nick || `user_${r.uid}`;
   document.getElementById('hdrUsername').textContent = '@' + nick;
-  // Аватарка — первая буква ника
   const initial = (nick.replace('@','').trim()[0] || '⬢').toUpperCase();
   document.getElementById('hdrAvatarText').textContent = initial;
-  // Баланс
   document.getElementById('balanceVal').textContent = fmtTokens(r.balance);
-  // NFT count (запасной путь — позже обновится из loadMy)
   document.getElementById('nftCount').textContent = r.nft_count;
+  state.me = r;
 }
 
 async function loadMy() {
@@ -2057,6 +2396,310 @@ function showMy() {
 }
 function showMarket() {
   setContent(renderGrid(state.marketItems, { market: true }));
+}
+
+// ═══════════════════════════════════════════════════════════
+// Профиль (v131)
+// ═══════════════════════════════════════════════════════════
+async function loadProfile() {
+  const r = await api('/casino/profile/me');
+  if (!r.ok) return null;
+  state.profile = r;
+  return r;
+}
+
+async function showProfile() {
+  // Сначала покажем скелетон
+  setContent(`<div class="profile-container">
+    <div class="skel" style="height: 100px; border-radius: 14px; margin-bottom: 16px;"></div>
+    <div class="skel" style="height: 70px; border-radius: 10px; margin-bottom: 16px;"></div>
+    <div class="skel" style="height: 200px; border-radius: 12px;"></div>
+  </div>`);
+
+  // Загружаем профиль и список моих NFT (если ещё не)
+  if (!state.profile) await loadProfile();
+  if (!state.myItems)  await loadMy();
+  const p = state.profile;
+  if (!p) { setContent(renderError()); return; }
+
+  renderProfile();
+}
+
+function renderProfile() {
+  const p   = state.profile || {};
+  const me  = state.me || {};
+  const myItems = state.myItems || [];
+  const showcase = p.showcase || [];
+  const nick = me.nick || `user_${me.uid || ''}`;
+  const initial = (nick.replace('@','').trim()[0] || '⬢').toUpperCase();
+
+  // 3 слота
+  let slotsHtml = '';
+  for (let i = 0; i < 3; i++) {
+    const nftId = showcase[i];
+    if (nftId) {
+      const card = myItems.find(c => c.id === nftId);
+      if (card) {
+        const palette = RARITY_PALETTE[card.rarity] || RARITY_PALETTE.common;
+        const svg = getWeaponSVG(card.weapon, card.rarity);
+        const name = card.name_ru || card.name_en || card.weapon || nftId;
+        slotsHtml += `
+          <div class="showcase-slot filled" data-rarity="${card.rarity}"
+               style="--card-rarity: ${palette.col}; --card-rarity-glow: ${palette.col}40;"
+               data-slot="${i}">
+            <div class="mini-remove" data-slot-remove="${i}">×</div>
+            <div class="mini-weapon">${svg}</div>
+            <div class="mini-name">${escapeHtml(name)}</div>
+          </div>`;
+      } else {
+        slotsHtml += slotEmpty(i);
+      }
+    } else {
+      slotsHtml += slotEmpty(i);
+    }
+  }
+
+  const isPub = !!p.is_public;
+  const html = `
+  <div class="profile-container">
+    <!-- Шапка профиля -->
+    <div class="profile-header">
+      <div class="profile-avatar">${escapeHtml(initial)}</div>
+      <div class="profile-info-flex">
+        <div class="profile-name">${escapeHtml(nick.startsWith('@') ? nick : '@'+nick)}</div>
+        <div class="profile-id">ID: ${p.user_id}</div>
+      </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="profile-stats">
+      <div class="profile-stat">
+        <div class="profile-stat-num">${p.nft_count || 0}</div>
+        <div class="profile-stat-label">NFT</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-num">${escapeHtml(p.reg_date || '—')}</div>
+        <div class="profile-stat-label">В ИГРЕ С</div>
+      </div>
+    </div>
+
+    <!-- Showcase -->
+    <div class="section-title">
+      <span>ВИТРИНА</span>
+      <span class="section-hint">тапни слот чтобы выбрать NFT</span>
+    </div>
+    <div class="showcase-grid">${slotsHtml}</div>
+
+    <!-- Переключатель публичности -->
+    <div class="privacy-row">
+      <div class="privacy-text">
+        <div class="privacy-title">ПУБЛИЧНЫЙ ПРОФИЛЬ</div>
+        <div class="privacy-desc">${isPub ? 'Другие могут найти тебя по ID' : 'Твой профиль скрыт от других'}</div>
+      </div>
+      <div class="toggle ${isPub ? 'on' : ''}" id="privacy-toggle"></div>
+    </div>
+
+    <!-- Поиск чужих профилей -->
+    <div class="section-title">
+      <span>НАЙТИ ИГРОКА</span>
+      <span class="section-hint">введи user_id</span>
+    </div>
+    <div class="search-row">
+      <input type="number" class="search-input" id="search-uid" placeholder="например, 123456789" inputmode="numeric"/>
+      <button class="search-btn" id="search-btn">НАЙТИ</button>
+    </div>
+    <div id="search-result"></div>
+
+  </div>`;
+
+  setContent(html);
+
+  // Хендлеры
+  document.querySelectorAll('.showcase-slot').forEach(slot => {
+    slot.addEventListener('click', (e) => {
+      // если клик на крестик — снимаем
+      if (e.target.dataset.slotRemove !== undefined) {
+        e.stopPropagation();
+        removeFromShowcase(parseInt(e.target.dataset.slotRemove));
+        return;
+      }
+      const idx = parseInt(slot.dataset.slot);
+      openPicker(idx);
+    });
+  });
+  document.getElementById('privacy-toggle').addEventListener('click', togglePrivacy);
+  document.getElementById('search-btn').addEventListener('click', doSearch);
+  document.getElementById('search-uid').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') doSearch();
+  });
+}
+
+function slotEmpty(i) {
+  return `<div class="showcase-slot" data-slot="${i}">
+    <div class="showcase-slot-plus">+</div>
+    <div class="showcase-slot-label">Слот ${i+1}</div>
+  </div>`;
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ── Picker модалка ──
+let pickerCurrentSlot = -1;
+function openPicker(slotIdx) {
+  pickerCurrentSlot = slotIdx;
+  const myItems = state.myItems || [];
+  const showcase = (state.profile && state.profile.showcase) || [];
+  const taken = new Set(showcase);
+  // Текущий выбор этого слота можно показывать как picked, но позволяем выбрать другую
+  let body = '';
+  if (myItems.length === 0) {
+    body = `<div class="picker-empty">У тебя пока нет NFT.<br/>Получи их сначала :)</div>`;
+  } else {
+    body = `<div class="picker-grid">` + myItems.map(card => {
+      const palette = RARITY_PALETTE[card.rarity] || RARITY_PALETTE.common;
+      const svg = getWeaponSVG(card.weapon, card.rarity);
+      const name = card.name_ru || card.name_en || card.weapon || card.id;
+      const isPicked = showcase[slotIdx] === card.id;
+      const inOther = taken.has(card.id) && !isPicked;
+      return `<div class="picker-item ${isPicked ? 'picked' : ''}"
+                   data-pick="${escapeHtml(card.id)}"
+                   style="${inOther ? 'opacity:0.4;' : ''}">
+        <div class="picker-item-vis">${svg}</div>
+        <div class="picker-item-name" style="color: ${palette.col};">${escapeHtml(name)}</div>
+      </div>`;
+    }).join('') + `</div>`;
+  }
+  document.getElementById('picker-body').innerHTML = body;
+  document.getElementById('picker').classList.add('show');
+  // Хендлеры на айтемы
+  document.querySelectorAll('.picker-item[data-pick]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.pick;
+      pickForSlot(id);
+    });
+  });
+}
+
+function closePicker() {
+  document.getElementById('picker').classList.remove('show');
+}
+document.getElementById('picker-close').addEventListener('click', closePicker);
+document.getElementById('picker').addEventListener('click', (e) => {
+  if (e.target.id === 'picker') closePicker();
+});
+
+async function pickForSlot(nftId) {
+  if (pickerCurrentSlot < 0) return;
+  const showcase = ((state.profile && state.profile.showcase) || []).slice();
+  // Если этот NFT уже в другом слоте — поменяем местами
+  const existingIdx = showcase.indexOf(nftId);
+  if (existingIdx >= 0 && existingIdx !== pickerCurrentSlot) {
+    // Swap: то что было в нашем слоте, отправим на existingIdx
+    const oldInOurSlot = showcase[pickerCurrentSlot];
+    showcase[existingIdx] = oldInOurSlot || null;
+  }
+  // Расширяем массив если короткий
+  while (showcase.length <= pickerCurrentSlot) showcase.push(null);
+  showcase[pickerCurrentSlot] = nftId;
+  // Убираем null'ы (отрицательная позиция)
+  const cleaned = showcase.filter(x => x);
+  await saveShowcase(cleaned);
+  closePicker();
+}
+
+async function removeFromShowcase(slotIdx) {
+  const showcase = ((state.profile && state.profile.showcase) || []).slice();
+  showcase.splice(slotIdx, 1);
+  await saveShowcase(showcase);
+}
+
+async function saveShowcase(nftIds) {
+  const r = await apiPost('/casino/profile/showcase', { nft_ids: nftIds });
+  if (r.ok) {
+    state.profile.showcase = r.showcase;
+    try { tg.HapticFeedback.impactOccurred('light'); } catch(e) {}
+    renderProfile();
+  } else {
+    showToast(r.message || r.error || 'Ошибка');
+  }
+}
+
+async function togglePrivacy() {
+  const isPub = !(state.profile && state.profile.is_public);
+  const r = await apiPost('/casino/profile/privacy', { is_public: isPub });
+  if (r.ok) {
+    state.profile.is_public = r.is_public;
+    try { tg.HapticFeedback.impactOccurred('light'); } catch(e) {}
+    renderProfile();
+  } else {
+    showToast(r.message || r.error || 'Ошибка');
+  }
+}
+
+async function doSearch() {
+  const inp = document.getElementById('search-uid');
+  const targetStr = (inp.value || '').trim();
+  if (!targetStr) return;
+  const target = parseInt(targetStr);
+  if (!target || target < 1) {
+    showToast('Введи корректный ID');
+    return;
+  }
+  const btn = document.getElementById('search-btn');
+  btn.disabled = true; btn.textContent = '…';
+  const resultEl = document.getElementById('search-result');
+  resultEl.innerHTML = '';
+  const r = await api(`/casino/profile/view?target=${target}`);
+  btn.disabled = false; btn.textContent = 'НАЙТИ';
+  if (!r.ok) {
+    if (r.error === 'user_not_found') {
+      resultEl.innerHTML = `<div class="profile-empty-hint">Игрок с ID ${target} не найден</div>`;
+    } else {
+      resultEl.innerHTML = `<div class="profile-empty-hint">${escapeHtml(r.message || r.error || 'Ошибка')}</div>`;
+    }
+    return;
+  }
+  if (r.is_private) {
+    resultEl.innerHTML = `<div class="profile-empty-hint">🔒 Профиль игрока ${target} скрыт</div>`;
+    return;
+  }
+  renderForeignProfile(r, resultEl);
+}
+
+function renderForeignProfile(p, container) {
+  const showcase = p.showcase || [];
+  let slotsHtml = '';
+  if (showcase.length === 0) {
+    slotsHtml = `<div class="profile-empty-hint">Игрок не выбрал NFT для витрины</div>`;
+  } else {
+    slotsHtml = `<div class="showcase-grid">` + showcase.map(card => {
+      const palette = RARITY_PALETTE[card.rarity] || RARITY_PALETTE.common;
+      const svg = getWeaponSVG(card.weapon, card.rarity);
+      const name = card.name_ru || card.name_en || card.weapon || card.id;
+      const supply = card.max_supply ? `#${card.serial || '?'}/${card.max_supply}` : '';
+      return `<div class="showcase-slot filled" data-rarity="${card.rarity}"
+                   style="--card-rarity: ${palette.col}; --card-rarity-glow: ${palette.col}40; cursor: default;">
+        <div class="mini-weapon">${svg}</div>
+        <div class="mini-name">${escapeHtml(name)}</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-2); margin-top: 2px;">${supply}</div>
+      </div>`;
+    }).join('') + `</div>`;
+  }
+  const initial = String(p.user_id).slice(-1).toUpperCase();
+  container.innerHTML = `
+    <div class="profile-header" style="margin-top: 16px;">
+      <div class="profile-avatar" style="background: linear-gradient(135deg, #5BA9FF, #B96FFF);">${initial}</div>
+      <div class="profile-info-flex">
+        <div class="profile-name">Игрок ${p.user_id}</div>
+        <div class="profile-id">ID: ${p.user_id} · ${p.nft_count || 0} NFT</div>
+      </div>
+    </div>
+    <div class="section-title"><span>ВИТРИНА ИГРОКА</span></div>
+    ${slotsHtml}
+  `;
 }
 
 // Старт: грузим профиль + обе пачки параллельно
