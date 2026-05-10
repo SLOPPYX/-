@@ -464,6 +464,34 @@ body::after {
 }
 .card-price.locked::before { content: '🔒 '; }
 
+/* Серийник #42 / 100 — нижний правый угол карты, в моноширинном стиле */
+.card-serial {
+  position: absolute;
+  bottom: 10px;
+  right: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--card-rarity);
+  border-radius: 4px;
+  padding: 2px 6px;
+  z-index: 4;
+  backdrop-filter: blur(4px);
+}
+.card-serial.owned {
+  color: var(--card-rarity);
+  text-shadow: 0 0 8px var(--card-rarity-glow);
+  font-weight: 600;
+}
+.card-serial.sold-out {
+  color: #ff5555;
+  border-color: #ff5555;
+  letter-spacing: 0.1em;
+}
+
 /* Декоративные углы — зачем стандартные рамки когда есть это */
 .corner {
   position: absolute;
@@ -811,6 +839,8 @@ const T = {
     err_network:       'Нет соединения',
     rarity_label:      'Редкость',
     weapon_label:      'Оружие',
+    edition_label:     'Эдишн',
+    supply_label:      'Тираж',
     obtained_label:    'Получено',
     price_label:       'Цена',
     price_locked:      'Скоро в маркете',
@@ -829,6 +859,8 @@ const T = {
     err_network:       'No connection',
     rarity_label:      'Rarity',
     weapon_label:      'Weapon',
+    edition_label:     'Edition',
+    supply_label:      'Supply',
     obtained_label:    'Obtained',
     price_label:       'Price',
     price_locked:      'Coming soon',
@@ -1226,6 +1258,23 @@ function renderCard(item, opts = {}) {
   const isHolo = (r === 'epic' || r === 'legendary');
   const date = item.obtained_at || '';
   const owned = state.ownedIds.has(item.id);
+  const lang = LANG;
+
+  // Серийник — для МОИХ карт показываем #42 / 100, для маркета — общий тираж
+  let serialHtml = '';
+  if (opts.market) {
+    if (item.sold_out) {
+      serialHtml = `<div class="card-serial sold-out">${lang === 'en' ? 'SOLD OUT' : 'РАСКУПЛЕНО'}</div>`;
+    } else if (item.max_supply) {
+      serialHtml = `<div class="card-serial">${item.issued || 0}/${item.max_supply}</div>`;
+    }
+  } else {
+    if (item.serial && item.max_supply) {
+      serialHtml = `<div class="card-serial owned">#${item.serial}/${item.max_supply}</div>`;
+    } else if (item.serial) {
+      serialHtml = `<div class="card-serial owned">#${item.serial}</div>`;
+    }
+  }
 
   let priceHtml = '';
   if (opts.market) {
@@ -1252,6 +1301,7 @@ function renderCard(item, opts = {}) {
           <div class="card-weapon-vis">${getWeaponSVG(item.weapon, r)}</div>
           <div class="card-name">${fmtName(item)}</div>
           <div class="card-weapon">${item.weapon || ''}</div>
+          ${serialHtml}
           ${priceHtml}
         </div>
         <div class="glow-bar"></div>
@@ -1413,6 +1463,8 @@ function openCardModal(id) {
     <dl class="modal-info-grid">
       <dt>${t('weapon_label')}</dt><dd>${item.weapon || '—'}</dd>
       <dt>${t('rarity_label')}</dt><dd style="color: var(--rarity-${r})">${RARITY_LABEL[r] || r}</dd>
+      ${item.serial ? `<dt>${t('edition_label')}</dt><dd style="color: var(--rarity-${r}); font-weight: 600">#${item.serial}${item.max_supply ? ' / ' + item.max_supply : ''}</dd>` : ''}
+      ${(!item.serial && item.max_supply) ? `<dt>${t('supply_label')}</dt><dd>${item.issued || 0} / ${item.max_supply}</dd>` : ''}
       ${item.obtained_at ? `<dt>${t('obtained_label')}</dt><dd>${item.obtained_at}</dd>` : ''}
       <dt>${t('price_label')}</dt><dd>${priceText}</dd>
     </dl>
