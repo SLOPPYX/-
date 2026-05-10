@@ -1400,51 +1400,70 @@ function svgSCAR(c) {
         <stop offset="50%" stop-color="${c.col}"/>
         <stop offset="100%" stop-color="${c.colDark}"/>
       </linearGradient>
+      <linearGradient id="scar-stock" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
     </defs>
     <ellipse cx="120" cy="272" rx="115" ry="3" fill="${c.colDark}" opacity="0.4"/>
-    <!-- Ствол с компенсатором -->
-    <rect x="155" y="222" width="60" height="6" rx="1" fill="url(#scar-body)" stroke="${c.col}" stroke-width="1"/>
-    <rect x="213" y="219" width="14" height="12" rx="1.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2"/>
-    <line x1="216" y1="221" x2="216" y2="229" stroke="${c.col}" stroke-width="0.8"/>
-    <line x1="220" y1="221" x2="220" y2="229" stroke="${c.col}" stroke-width="0.8"/>
-    <line x1="224" y1="221" x2="224" y2="229" stroke="${c.col}" stroke-width="0.8"/>
-    <!-- Длинная пикатинни-планка сверху (характерно для SCAR) -->
-    <rect x="55" y="214" width="105" height="5" rx="0.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.5"/>
-    <line x1="60" y1="214" x2="60" y2="219" stroke="${c.colDark}" stroke-width="0.5"/>
-    <line x1="68" y1="214" x2="68" y2="219" stroke="${c.colDark}" stroke-width="0.5"/>
-    <line x1="76" y1="214" x2="76" y2="219" stroke="${c.colDark}" stroke-width="0.5"/>
-    <line x1="84" y1="214" x2="84" y2="219" stroke="${c.colDark}" stroke-width="0.5"/>
-    <line x1="100" y1="214" x2="100" y2="219" stroke="${c.colDark}" stroke-width="0.5"/>
-    <line x1="120" y1="214" x2="120" y2="219" stroke="${c.colDark}" stroke-width="0.5"/>
-    <line x1="140" y1="214" x2="140" y2="219" stroke="${c.colDark}" stroke-width="0.5"/>
-    <line x1="155" y1="214" x2="155" y2="219" stroke="${c.colDark}" stroke-width="0.5"/>
-    <!-- Цевьё -->
-    <rect x="100" y="219" width="55" height="13" rx="2" fill="url(#scar-body)" stroke="${c.col}" stroke-width="1.2"/>
-    <!-- Боковая пикатинни на цевье -->
-    <line x1="105" y1="225" x2="150" y2="225" stroke="${c.colDark}" stroke-width="0.6"/>
-    <line x1="105" y1="228" x2="150" y2="228" stroke="${c.colDark}" stroke-width="0.6"/>
-    <!-- Ресивер -->
-    <rect x="55" y="219" width="48" height="22" rx="2" fill="url(#scar-body)" stroke="${c.col}" stroke-width="1.2"/>
-    <line x1="58" y1="223" x2="100" y2="223" stroke="${c.colLight}" stroke-width="0.5" opacity="0.6"/>
-    <!-- Селектор -->
-    <circle cx="68" cy="234" r="2" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <!-- Длинный ствол с компенсатором -->
+    <rect x="170" y="221" width="48" height="6" rx="1" fill="url(#scar-body)" stroke="${c.col}" stroke-width="1"/>
+    <!-- Дульный тормоз с прорезями (характерный для SCAR — короткий цилиндрический) -->
+    <rect x="216" y="218" width="14" height="12" rx="2" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="219" y1="220" x2="219" y2="228" stroke="${c.col}" stroke-width="0.7"/>
+    <line x1="223" y1="220" x2="223" y2="228" stroke="${c.col}" stroke-width="0.7"/>
+    <line x1="227" y1="220" x2="227" y2="228" stroke="${c.col}" stroke-width="0.7"/>
+    <!-- Верхняя пикатинни-планка (характерно длинная для SCAR — от прицела до ствола) -->
+    <rect x="55" y="213" width="115" height="5" rx="0.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="60" y1="213" x2="60" y2="218" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="68" y1="213" x2="68" y2="218" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="76" y1="213" x2="76" y2="218" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="84" y1="213" x2="84" y2="218" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="100" y1="213" x2="100" y2="218" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="120" y1="213" x2="120" y2="218" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="135" y1="213" x2="135" y2="218" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="155" y1="213" x2="155" y2="218" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="165" y1="213" x2="165" y2="218" stroke="${c.colDark}" stroke-width="0.5"/>
+    <!-- Цевьё с характерными вентиляционными овалами (узнаваемая фишка SCAR) -->
+    <rect x="105" y="218" width="65" height="14" rx="2" fill="url(#scar-body)" stroke="${c.col}" stroke-width="1.2"/>
+    <ellipse cx="115" cy="225" rx="3" ry="1.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.5"/>
+    <ellipse cx="125" cy="225" rx="3" ry="1.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.5"/>
+    <ellipse cx="135" cy="225" rx="3" ry="1.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.5"/>
+    <ellipse cx="145" cy="225" rx="3" ry="1.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.5"/>
+    <ellipse cx="155" cy="225" rx="3" ry="1.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.5"/>
+    <!-- Ствольная коробка с характерным профилем -->
+    <rect x="60" y="218" width="48" height="22" rx="2" fill="url(#scar-body)" stroke="${c.col}" stroke-width="1.2"/>
+    <!-- Прорези затвора -->
+    <line x1="63" y1="222" x2="103" y2="222" stroke="${c.colLight}" stroke-width="0.4" opacity="0.7"/>
+    <!-- Селектор (характерный круглый сбоку) -->
+    <circle cx="72" cy="234" r="2.2" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <line x1="72" y1="234" x2="76" y2="234" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Защёлка магазина -->
+    <rect x="86" y="237" width="3" height="3" fill="${c.colDark}"/>
     <!-- Магазин -->
-    <rect x="85" y="241" width="20" height="22" rx="1" fill="url(#scar-body)" stroke="${c.col}" stroke-width="1.2"/>
-    <line x1="87" y1="248" x2="103" y2="248" stroke="${c.colDark}" stroke-width="0.5"/>
-    <line x1="87" y1="254" x2="103" y2="254" stroke="${c.colDark}" stroke-width="0.5"/>
-    <!-- Рукоятка -->
-    <path d="M 60 241 L 56 264 L 70 266 L 72 241 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2"/>
-    <ellipse cx="65" cy="246" rx="6" ry="3.5" fill="none" stroke="${c.col}" stroke-width="1.4"/>
-    <!-- Складной приклад -->
-    <rect x="20" y="222" width="38" height="14" rx="2" fill="url(#scar-body)" stroke="${c.col}" stroke-width="1.4"/>
-    <!-- Шарнир -->
-    <circle cx="56" cy="229" r="2.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
-    <!-- Затыльник -->
-    <rect x="12" y="220" width="8" height="18" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
-    <line x1="12" y1="225" x2="20" y2="225" stroke="${c.col}" stroke-width="0.6"/>
-    <line x1="12" y1="230" x2="20" y2="230" stroke="${c.col}" stroke-width="0.6"/>
+    <rect x="85" y="240" width="22" height="22" rx="1" fill="url(#scar-body)" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="87" y1="247" x2="105" y2="247" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="87" y1="253" x2="105" y2="253" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="87" y1="259" x2="105" y2="259" stroke="${c.colDark}" stroke-width="0.5"/>
+    <!-- Пистолетная рукоятка с насечками -->
+    <path d="M 65 240 L 60 264 L 73 266 L 75 240 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="62" y1="248" x2="74" y2="250" stroke="${c.col}" stroke-width="0.4"/>
+    <line x1="61" y1="254" x2="74" y2="256" stroke="${c.col}" stroke-width="0.4"/>
+    <line x1="60" y1="260" x2="73" y2="262" stroke="${c.col}" stroke-width="0.4"/>
+    <ellipse cx="68" cy="244" rx="6" ry="3.5" fill="none" stroke="${c.col}" stroke-width="1.4"/>
+    <!-- Скошенный складной приклад (характерный треугольный профиль SCAR) -->
+    <path d="M 60 220 L 18 224 L 12 248 L 50 244 L 60 232 Z" fill="url(#scar-stock)" stroke="${c.col}" stroke-width="1.4" stroke-linejoin="round"/>
     <!-- Регулировочная щека приклада -->
-    <rect x="22" y="218" width="22" height="3" rx="1" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.5"/>
+    <rect x="22" y="216" width="22" height="5" rx="1.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.6"/>
+    <!-- Шарнир складного приклада -->
+    <circle cx="58" cy="226" r="2.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <circle cx="58" cy="226" r="1" fill="${c.col}"/>
+    <!-- Затыльник приклада с резиновым покрытием -->
+    <rect x="10" y="232" width="6" height="14" rx="1.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <line x1="10" y1="236" x2="16" y2="236" stroke="${c.col}" stroke-width="0.5"/>
+    <line x1="10" y1="240" x2="16" y2="240" stroke="${c.col}" stroke-width="0.5"/>
+    <!-- Антабка для ремня -->
+    <circle cx="48" cy="237" r="1.5" fill="none" stroke="${c.col}" stroke-width="0.8"/>
   </svg>`;
 }
 
@@ -1456,40 +1475,59 @@ function svgMP40(c) {
         <stop offset="50%" stop-color="${c.col}"/>
         <stop offset="100%" stop-color="${c.colDark}"/>
       </linearGradient>
+      <linearGradient id="mp40-bake" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
     </defs>
     <ellipse cx="120" cy="272" rx="100" ry="3" fill="${c.colDark}" opacity="0.4"/>
-    <!-- Тонкий длинный ствол -->
-    <rect x="160" y="225" width="55" height="4" rx="1" fill="url(#mp40-body)" stroke="${c.col}" stroke-width="0.8"/>
-    <!-- Защита мушки (кольцо вокруг мушки — характерно для MP40) -->
-    <circle cx="210" cy="227" r="3.5" fill="none" stroke="${c.col}" stroke-width="1.2"/>
-    <line x1="210" y1="223.5" x2="210" y2="230.5" stroke="${c.col}" stroke-width="0.8"/>
-    <!-- Перфорированный кожух ствола -->
-    <rect x="125" y="222" width="40" height="10" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
-    <circle cx="132" cy="227" r="1.5" fill="none" stroke="${c.col}" stroke-width="0.6"/>
-    <circle cx="140" cy="227" r="1.5" fill="none" stroke="${c.col}" stroke-width="0.6"/>
-    <circle cx="148" cy="227" r="1.5" fill="none" stroke="${c.col}" stroke-width="0.6"/>
-    <circle cx="156" cy="227" r="1.5" fill="none" stroke="${c.col}" stroke-width="0.6"/>
-    <!-- Ресивер -->
-    <rect x="60" y="222" width="65" height="14" rx="2" fill="url(#mp40-body)" stroke="${c.col}" stroke-width="1.2"/>
-    <!-- Целик -->
-    <rect x="68" y="217" width="6" height="5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
-    <!-- Магазин длинный прямой -->
-    <rect x="92" y="236" width="14" height="32" rx="0.5" fill="url(#mp40-body)" stroke="${c.col}" stroke-width="1.2"/>
-    <line x1="94" y1="244" x2="104" y2="244" stroke="${c.colDark}" stroke-width="0.5"/>
-    <line x1="94" y1="252" x2="104" y2="252" stroke="${c.colDark}" stroke-width="0.5"/>
-    <line x1="94" y1="260" x2="104" y2="260" stroke="${c.colDark}" stroke-width="0.5"/>
-    <!-- Передняя рукоятка/упор -->
-    <rect x="115" y="236" width="8" height="14" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
-    <!-- Пистолетная рукоятка -->
-    <path d="M 65 236 L 60 258 L 74 260 L 76 236 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2"/>
-    <ellipse cx="70" cy="240" rx="5" ry="3" fill="none" stroke="${c.col}" stroke-width="1.2"/>
-    <!-- Складной приклад (металлические скобы вместо обычного приклада) -->
-    <line x1="60" y1="226" x2="20" y2="234" stroke="${c.col}" stroke-width="2" stroke-linecap="round"/>
-    <line x1="60" y1="232" x2="20" y2="240" stroke="${c.col}" stroke-width="2" stroke-linecap="round"/>
-    <!-- Шарнир приклада -->
-    <circle cx="60" cy="229" r="3" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
-    <!-- Затыльник -->
-    <rect x="15" y="232" width="8" height="10" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <!-- Длинный тонкий ствол -->
+    <rect x="160" y="226" width="55" height="3" rx="0.5" fill="url(#mp40-body)" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Защитное кольцо мушки (характерное для MP-40) -->
+    <circle cx="208" cy="227.5" r="4" fill="none" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="208" y1="223.5" x2="208" y2="231.5" stroke="${c.col}" stroke-width="0.8"/>
+    <!-- Резьбовое соединение ствола с коробкой -->
+    <rect x="155" y="224" width="6" height="7" rx="0.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <!-- Ствольная коробка (узкая трубка — главная фишка MP-40) -->
+    <rect x="68" y="223" width="90" height="11" rx="1" fill="url(#mp40-body)" stroke="${c.col}" stroke-width="1.2"/>
+    <!-- Прорезь рукоятки заряжания (характерная щель сверху) -->
+    <rect x="78" y="220" width="40" height="3" rx="0.3" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.5"/>
+    <rect x="115" y="218" width="3" height="6" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.5"/>
+    <!-- Целик задний (открытый, не диоптр) -->
+    <path d="M 73 222 L 73 218 L 78 218 L 78 222" fill="none" stroke="${c.col}" stroke-width="1"/>
+    <!-- Магазин длинный, слегка сужающийся (характерный профиль MP-40) -->
+    <path d="M 88 234 L 86 268 Q 86 270 88 270 L 102 270 Q 104 270 104 268 L 104 234 Z"
+          fill="url(#mp40-body)" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="88" y1="240" x2="103" y2="240" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="88" y1="248" x2="103" y2="248" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="88" y1="256" x2="103" y2="256" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="88" y1="264" x2="103" y2="264" stroke="${c.colDark}" stroke-width="0.5"/>
+    <!-- Бакелитовое цевьё-захват (ниже коробки, перед магазином — фишка MP-40) -->
+    <path d="M 110 234 Q 110 256 120 256 L 138 256 Q 148 256 148 234 Z"
+          fill="url(#mp40-bake)" stroke="${c.colDark}" stroke-width="1.2"/>
+    <line x1="115" y1="240" x2="143" y2="240" stroke="${c.colDark}" stroke-width="0.4" opacity="0.6"/>
+    <line x1="116" y1="246" x2="142" y2="246" stroke="${c.colDark}" stroke-width="0.4" opacity="0.6"/>
+    <line x1="118" y1="252" x2="140" y2="252" stroke="${c.colDark}" stroke-width="0.4" opacity="0.6"/>
+    <!-- Пистолетная рукоятка с бакелитовыми накладками -->
+    <path d="M 70 234 L 65 260 L 80 263 L 82 234 Z" fill="url(#mp40-bake)" stroke="${c.colDark}" stroke-width="1.2"/>
+    <line x1="68" y1="242" x2="80" y2="244" stroke="${c.colDark}" stroke-width="0.4"/>
+    <line x1="67" y1="248" x2="80" y2="250" stroke="${c.colDark}" stroke-width="0.4"/>
+    <line x1="66" y1="254" x2="80" y2="256" stroke="${c.colDark}" stroke-width="0.4"/>
+    <!-- Спусковая скоба -->
+    <ellipse cx="73" cy="238" rx="5" ry="3.5" fill="none" stroke="${c.col}" stroke-width="1.4"/>
+    <!-- Складной проволочный приклад (две тонкие петли) -->
+    <!-- Верхняя петля -->
+    <path d="M 68 226 Q 50 224 28 230 Q 18 232 14 240 L 16 244 Q 22 240 30 238 Q 50 234 68 232"
+          fill="none" stroke="${c.col}" stroke-width="1.6" stroke-linecap="round"/>
+    <!-- Нижняя петля -->
+    <path d="M 68 232 Q 50 232 32 238 Q 22 240 18 246"
+          fill="none" stroke="${c.col}" stroke-width="1.6" stroke-linecap="round"/>
+    <!-- Шарнир складного приклада -->
+    <circle cx="68" cy="229" r="3" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <circle cx="68" cy="229" r="1" fill="${c.col}"/>
+    <!-- Затыльник проволочного приклада (накладка на плечо) -->
+    <rect x="13" y="237" width="6" height="11" rx="1.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <line x1="13" y1="241" x2="19" y2="241" stroke="${c.col}" stroke-width="0.5"/>
   </svg>`;
 }
 
@@ -1594,51 +1632,70 @@ function svgUMP(c) {
         <stop offset="50%" stop-color="${c.col}"/>
         <stop offset="100%" stop-color="${c.colDark}"/>
       </linearGradient>
+      <linearGradient id="ump-stock" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
     </defs>
     <ellipse cx="115" cy="272" rx="105" ry="3" fill="${c.colDark}" opacity="0.4"/>
-    <!-- Длинный глушитель — характерная деталь UMP -->
-    <rect x="155" y="221" width="65" height="10" rx="2" fill="url(#ump-body)" stroke="${c.col}" stroke-width="1.2"/>
+    <!-- Длинный глушитель (характерный цилиндр) -->
+    <rect x="170" y="222" width="55" height="9" rx="3" fill="url(#ump-body)" stroke="${c.col}" stroke-width="1.2"/>
     <!-- Перфорация на глушителе -->
-    <line x1="160" y1="223" x2="160" y2="229" stroke="${c.colDark}" stroke-width="0.6"/>
-    <line x1="167" y1="223" x2="167" y2="229" stroke="${c.colDark}" stroke-width="0.6"/>
-    <line x1="174" y1="223" x2="174" y2="229" stroke="${c.colDark}" stroke-width="0.6"/>
-    <line x1="181" y1="223" x2="181" y2="229" stroke="${c.colDark}" stroke-width="0.6"/>
-    <line x1="188" y1="223" x2="188" y2="229" stroke="${c.colDark}" stroke-width="0.6"/>
-    <line x1="195" y1="223" x2="195" y2="229" stroke="${c.colDark}" stroke-width="0.6"/>
-    <line x1="202" y1="223" x2="202" y2="229" stroke="${c.colDark}" stroke-width="0.6"/>
-    <line x1="209" y1="223" x2="209" y2="229" stroke="${c.colDark}" stroke-width="0.6"/>
-    <!-- Конец глушителя -->
-    <circle cx="218" cy="226" r="2.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
-    <!-- Корпус со встроенной планкой -->
-    <rect x="50" y="217" width="105" height="20" rx="3" fill="url(#ump-body)" stroke="${c.col}" stroke-width="1.2"/>
-    <!-- Верхняя пикатинни -->
-    <rect x="55" y="213" width="100" height="4" rx="0.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.5"/>
-    <line x1="60" y1="213" x2="60" y2="217" stroke="${c.colDark}" stroke-width="0.4"/>
-    <line x1="70" y1="213" x2="70" y2="217" stroke="${c.colDark}" stroke-width="0.4"/>
-    <line x1="80" y1="213" x2="80" y2="217" stroke="${c.colDark}" stroke-width="0.4"/>
-    <line x1="90" y1="213" x2="90" y2="217" stroke="${c.colDark}" stroke-width="0.4"/>
-    <line x1="105" y1="213" x2="105" y2="217" stroke="${c.colDark}" stroke-width="0.4"/>
-    <line x1="120" y1="213" x2="120" y2="217" stroke="${c.colDark}" stroke-width="0.4"/>
-    <line x1="135" y1="213" x2="135" y2="217" stroke="${c.colDark}" stroke-width="0.4"/>
-    <line x1="148" y1="213" x2="148" y2="217" stroke="${c.colDark}" stroke-width="0.4"/>
-    <!-- Магазин -->
-    <rect x="78" y="237" width="18" height="22" rx="1" fill="url(#ump-body)" stroke="${c.col}" stroke-width="1.2"/>
-    <line x1="80" y1="244" x2="94" y2="244" stroke="${c.colDark}" stroke-width="0.5"/>
-    <line x1="80" y1="250" x2="94" y2="250" stroke="${c.colDark}" stroke-width="0.5"/>
-    <!-- Передняя рукоятка -->
-    <rect x="105" y="237" width="8" height="14" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
-    <line x1="106" y1="240" x2="112" y2="240" stroke="${c.col}" stroke-width="0.4"/>
-    <line x1="106" y1="244" x2="112" y2="244" stroke="${c.col}" stroke-width="0.4"/>
-    <line x1="106" y1="248" x2="112" y2="248" stroke="${c.col}" stroke-width="0.4"/>
+    <line x1="175" y1="224" x2="175" y2="229" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="183" y1="224" x2="183" y2="229" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="191" y1="224" x2="191" y2="229" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="199" y1="224" x2="199" y2="229" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="207" y1="224" x2="207" y2="229" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="215" y1="224" x2="215" y2="229" stroke="${c.colDark}" stroke-width="0.6"/>
+    <!-- Конец глушителя (выходное отверстие) -->
+    <circle cx="223" cy="226.5" r="2.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <!-- Резьбовое соединение с корпусом -->
+    <rect x="166" y="221" width="5" height="11" rx="0.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Полимерный угловатый корпус (главная фишка UMP — широкий блочный профиль) -->
+    <path d="M 60 218 L 165 218 L 165 240 L 110 240 L 110 248 L 60 248 Z"
+          fill="url(#ump-body)" stroke="${c.col}" stroke-width="1.2" stroke-linejoin="round"/>
+    <!-- Текстура полимера (мелкие линии) -->
+    <line x1="65" y1="222" x2="160" y2="222" stroke="${c.colLight}" stroke-width="0.3" opacity="0.4"/>
+    <line x1="65" y1="225" x2="160" y2="225" stroke="${c.colDark}" stroke-width="0.3" opacity="0.5"/>
+    <line x1="65" y1="234" x2="105" y2="234" stroke="${c.colDark}" stroke-width="0.3" opacity="0.5"/>
+    <!-- Прицельный блок (выступ сверху коробки) -->
+    <path d="M 70 218 L 70 213 L 90 213 L 90 218" fill="${c.col}" stroke="${c.colDark}" stroke-width="1"/>
+    <!-- Целик диоптрический (характерное круглое отверстие) -->
+    <circle cx="80" cy="215.5" r="2" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <circle cx="80" cy="215.5" r="0.8" fill="${c.col}"/>
+    <!-- Мушка передняя -->
+    <rect x="148" y="213" width="4" height="5" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.6"/>
+    <!-- Селектор режимов -->
+    <circle cx="105" cy="232" r="2" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <line x1="105" y1="232" x2="108" y2="232" stroke="${c.col}" stroke-width="0.8"/>
+    <!-- Магазин (наклонный, характерный для UMP под .45 ACP) -->
+    <path d="M 88 248 L 86 270 Q 86 272 88 272 L 102 272 Q 104 272 104 270 L 102 248 Z"
+          fill="url(#ump-body)" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="88" y1="254" x2="102" y2="254" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="88" y1="262" x2="102" y2="262" stroke="${c.colDark}" stroke-width="0.5"/>
+    <line x1="88" y1="268" x2="102" y2="268" stroke="${c.colDark}" stroke-width="0.5"/>
+    <!-- Передняя рукоятка с гранями -->
+    <rect x="118" y="240" width="8" height="14" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <line x1="120" y1="244" x2="124" y2="244" stroke="${c.col}" stroke-width="0.4"/>
+    <line x1="120" y1="248" x2="124" y2="248" stroke="${c.col}" stroke-width="0.4"/>
+    <line x1="120" y1="252" x2="124" y2="252" stroke="${c.col}" stroke-width="0.4"/>
     <!-- Пистолетная рукоятка -->
-    <path d="M 55 237 L 51 263 L 68 265 L 70 237 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2"/>
-    <ellipse cx="60" cy="241" rx="5" ry="3.5" fill="none" stroke="${c.col}" stroke-width="1.4"/>
-    <!-- Складной приклад -->
-    <line x1="50" y1="221" x2="20" y2="226" stroke="${c.col}" stroke-width="2" stroke-linecap="round"/>
-    <line x1="50" y1="232" x2="20" y2="237" stroke="${c.col}" stroke-width="2" stroke-linecap="round"/>
-    <line x1="20" y1="226" x2="20" y2="237" stroke="${c.col}" stroke-width="2" stroke-linecap="round"/>
-    <!-- Шарнир -->
-    <circle cx="50" cy="226" r="2.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <path d="M 65 248 L 61 270 L 78 272 L 80 248 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="63" y1="255" x2="79" y2="257" stroke="${c.col}" stroke-width="0.4"/>
+    <line x1="62" y1="261" x2="79" y2="263" stroke="${c.col}" stroke-width="0.4"/>
+    <ellipse cx="70" cy="252" rx="5" ry="3" fill="none" stroke="${c.col}" stroke-width="1.4"/>
+    <!-- Складной приклад (характерный — складывается на правую сторону) -->
+    <!-- Шарнир складного приклада -->
+    <circle cx="60" cy="232" r="3.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2"/>
+    <circle cx="60" cy="232" r="1.2" fill="${c.col}"/>
+    <!-- Складной приклад (треугольная скоба с округлыми элементами) -->
+    <path d="M 60 226 L 24 226 L 18 232 L 24 238 L 60 238" fill="url(#ump-stock)"
+          stroke="${c.col}" stroke-width="1.4" stroke-linejoin="round"/>
+    <!-- Регулировочные точки на прикладе -->
+    <circle cx="40" cy="228" r="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.4"/>
+    <circle cx="40" cy="236" r="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.4"/>
+    <!-- Затыльник (резиновый накладок) -->
+    <rect x="14" y="227" width="5" height="10" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
   </svg>`;
 }
 
