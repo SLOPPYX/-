@@ -1525,29 +1525,6 @@ body::after {
 
 </div>
 
-<!-- Custom ID модалка — задать или изменить -->
-<div class="sell-modal-overlay" id="custom-id-modal">
-  <div class="sell-modal-content">
-    <div class="sell-modal-title">ИГРОВОЙ ID</div>
-    <div class="sell-modal-sub">Уникальный никнейм для поиска тебя другими игроками</div>
-    <div class="price-input-row">
-      <input type="text" class="price-input" id="custom-id-input"
-             placeholder="например: SLOPPYX"
-             autocapitalize="off" autocomplete="off"
-             maxlength="20"/>
-    </div>
-    <div class="price-hint" id="custom-id-hint">
-      3-20 символов: латинские буквы, цифры, _<br/>
-      <span style="color: var(--text-2);">Можно поменять в любой момент</span>
-    </div>
-    <div class="sell-modal-actions">
-      <button class="btn-cancel" id="custom-id-cancel">ОТМЕНА</button>
-      <button class="btn-cancel" id="custom-id-clear" style="background: rgba(255,107,107,0.15); color: #FF6B6B; border-color: rgba(255,107,107,0.3);">УБРАТЬ</button>
-      <button class="btn-confirm" id="custom-id-confirm">СОХРАНИТЬ</button>
-    </div>
-  </div>
-</div>
-
 <!-- Sell-модалка (ввод цены при выставлении на P2P) -->
 <div class="sell-modal-overlay" id="sell-modal">
   <div class="sell-modal-content">
@@ -2796,10 +2773,11 @@ function renderProfile() {
   const nick = me.nick || `user_${me.uid || ''}`;
   const initial = (nick.replace('@','').trim()[0] || '⬢').toUpperCase();
 
-  // v136: если есть кастомный ID — показываем его как основное имя
-  const displayName = p.custom_id ? p.custom_id : (nick.startsWith('@') ? nick : '@'+nick);
-  const profileSubText = p.custom_id
-    ? `@${nick.replace('@','')} · TG ID: ${p.user_id}`
+  // v137: Custom ID — это 6-значное число из бота (user_custom_id), read-only
+  const cid = p.custom_id;
+  const displayName = nick.startsWith('@') ? nick : '@'+nick;
+  const profileSubText = cid
+    ? `Custom ID: ${cid} · TG ID: ${p.user_id}`
     : `TG ID: ${p.user_id}`;
 
   // 3 слота
@@ -2852,14 +2830,14 @@ function renderProfile() {
       </div>
     </div>
 
-    <!-- Кастомный ID -->
+    <!-- Custom ID — read-only, генерится автоматически при регистрации в боте -->
     <div class="section-title">
       <span>МОЙ ИГРОВОЙ ID</span>
-      <span class="section-hint">${p.custom_id ? 'другие найдут тебя по нему' : 'необязательно'}</span>
+      <span class="section-hint">по нему тебя найдут</span>
     </div>
     <div class="custom-id-row">
-      <div class="custom-id-display">${p.custom_id ? escapeHtml(p.custom_id) : '<span class="placeholder">не задан</span>'}</div>
-      <button class="custom-id-btn" id="custom-id-btn">${p.custom_id ? 'ИЗМЕНИТЬ' : 'ЗАДАТЬ'}</button>
+      <div class="custom-id-display">${cid ? escapeHtml(String(cid)) : '<span class="placeholder">пройди /start в боте</span>'}</div>
+      <button class="custom-id-btn" id="copy-id-btn" ${cid ? '' : 'disabled'}>${cid ? 'КОПИРОВАТЬ' : '—'}</button>
     </div>
 
     <!-- Showcase -->
@@ -2881,10 +2859,10 @@ function renderProfile() {
     <!-- Поиск чужих профилей -->
     <div class="section-title">
       <span>НАЙТИ ИГРОКА</span>
-      <span class="section-hint">по ID или игровому нику</span>
+      <span class="section-hint">по Custom ID (6 цифр) или TG ID</span>
     </div>
     <div class="search-row">
-      <input type="text" class="search-input" id="search-uid" placeholder="ID или ник" autocapitalize="off" autocomplete="off"/>
+      <input type="number" class="search-input" id="search-uid" placeholder="например: 324790" inputmode="numeric"/>
       <button class="search-btn" id="search-btn">НАЙТИ</button>
     </div>
     <div id="search-result"></div>
@@ -2908,9 +2886,28 @@ function renderProfile() {
   });
   document.getElementById('privacy-toggle').addEventListener('click', togglePrivacy);
   document.getElementById('search-btn').addEventListener('click', doSearch);
-  // v136: кастомный ID
-  const cidBtn = document.getElementById('custom-id-btn');
-  if (cidBtn) cidBtn.addEventListener('click', openCustomIdModal);
+  // v137: кнопка копировать Custom ID
+  const copyBtn = document.getElementById('copy-id-btn');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      const cid = (state.profile && state.profile.custom_id);
+      if (!cid) return;
+      const txt = String(cid);
+      // Пробуем clipboard API, fallback на старый способ
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(() => showToast(`✓ ID ${txt} скопирован`));
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = txt;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); showToast(`✓ ID ${txt} скопирован`); }
+        catch(e) { showToast('Не удалось скопировать'); }
+        document.body.removeChild(ta);
+      }
+      try { tg.HapticFeedback.impactOccurred('light'); } catch(e) {}
+    });
+  }
   document.getElementById('search-uid').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') doSearch();
   });
@@ -3050,113 +3047,6 @@ async function doSearch() {
   renderForeignProfile(r, resultEl);
 }
 
-// ═══════════════════════════════════════════════════════════
-// Custom ID модалка (v136)
-// ═══════════════════════════════════════════════════════════
-function openCustomIdModal() {
-  const current = (state.profile && state.profile.custom_id) || '';
-  const inp = document.getElementById('custom-id-input');
-  inp.value = current;
-  updateCustomIdHint();
-  document.getElementById('custom-id-modal').classList.add('show');
-  setTimeout(() => inp.focus(), 100);
-  // Кнопка УБРАТЬ видна только если ID уже задан
-  const clearBtn = document.getElementById('custom-id-clear');
-  clearBtn.style.display = current ? '' : 'none';
-}
-
-function closeCustomIdModal() {
-  document.getElementById('custom-id-modal').classList.remove('show');
-}
-
-let customIdCheckTimeout = null;
-async function updateCustomIdHint() {
-  const val = (document.getElementById('custom-id-input').value || '').trim();
-  const hintEl = document.getElementById('custom-id-hint');
-  const inp = document.getElementById('custom-id-input');
-  inp.classList.remove('invalid');
-  if (!val) {
-    hintEl.innerHTML = `3-20 символов: латинские буквы, цифры, _<br/>
-                        <span style="color: var(--text-2);">Можно поменять в любой момент</span>`;
-    return;
-  }
-  // Локальная валидация формата
-  if (val.length < 3) {
-    hintEl.innerHTML = `<span class="err">Минимум 3 символа</span>`;
-    inp.classList.add('invalid'); return;
-  }
-  if (val.length > 20) {
-    hintEl.innerHTML = `<span class="err">Максимум 20 символов</span>`;
-    inp.classList.add('invalid'); return;
-  }
-  if (!/^[A-Za-z0-9_]+$/.test(val)) {
-    hintEl.innerHTML = `<span class="err">Только латинские буквы, цифры и _</span>`;
-    inp.classList.add('invalid'); return;
-  }
-  if (/^\d+$/.test(val)) {
-    hintEl.innerHTML = `<span class="err">Должен содержать хотя бы одну букву</span>`;
-    inp.classList.add('invalid'); return;
-  }
-  // Если совпадает с текущим — это валидно
-  const currentCid = (state.profile && state.profile.custom_id) || '';
-  if (val === currentCid) {
-    hintEl.innerHTML = `<span style="color: var(--text-2);">Это твой текущий ID</span>`;
-    return;
-  }
-  // Дебаунс проверки доступности через сервер
-  hintEl.innerHTML = `<span style="color: var(--text-2);">Проверяю доступность...</span>`;
-  if (customIdCheckTimeout) clearTimeout(customIdCheckTimeout);
-  customIdCheckTimeout = setTimeout(async () => {
-    const r = await api(`/casino/profile/check_id?id=${encodeURIComponent(val)}`);
-    if (r.ok && r.available) {
-      hintEl.innerHTML = `<span style="color: #5BE6A9;">✓ Свободен — можно сохранить</span>`;
-    } else {
-      hintEl.innerHTML = `<span class="err">${escapeHtml(r.message || 'Недоступен')}</span>`;
-      inp.classList.add('invalid');
-    }
-  }, 350);
-}
-
-async function confirmCustomId() {
-  const val = (document.getElementById('custom-id-input').value || '').trim();
-  if (!val) { showToast('Введите ID'); return; }
-  const btn = document.getElementById('custom-id-confirm');
-  btn.disabled = true; btn.textContent = '...';
-  const r = await apiPost('/casino/profile/custom_id', { custom_id: val });
-  btn.disabled = false; btn.textContent = 'СОХРАНИТЬ';
-  if (r.ok) {
-    showToast(`✓ Игровой ID: ${val}`);
-    state.profile.custom_id = r.custom_id;
-    try { tg.HapticFeedback.impactOccurred('light'); } catch(e) {}
-    closeCustomIdModal();
-    renderProfile();
-  } else {
-    showToast(r.message || r.error || 'Ошибка');
-  }
-}
-
-async function clearCustomId() {
-  if (!confirm('Убрать игровой ID? Тебя смогут найти только по числовому ID.')) return;
-  const r = await apiPost('/casino/profile/custom_id', { custom_id: '' });
-  if (r.ok) {
-    showToast('Игровой ID убран');
-    state.profile.custom_id = null;
-    closeCustomIdModal();
-    renderProfile();
-  } else {
-    showToast(r.message || r.error || 'Ошибка');
-  }
-}
-
-// Подключаем хендлеры модалки кастомного ID (один раз при загрузке)
-document.getElementById('custom-id-input').addEventListener('input', updateCustomIdHint);
-document.getElementById('custom-id-confirm').addEventListener('click', confirmCustomId);
-document.getElementById('custom-id-cancel').addEventListener('click', closeCustomIdModal);
-document.getElementById('custom-id-clear').addEventListener('click', clearCustomId);
-document.getElementById('custom-id-modal').addEventListener('click', (e) => {
-  if (e.target.id === 'custom-id-modal') closeCustomIdModal();
-});
-
 function renderForeignProfile(p, container) {
   const showcase = p.showcase || [];
   let slotsHtml = '';
@@ -3176,11 +3066,13 @@ function renderForeignProfile(p, container) {
       </div>`;
     }).join('') + `</div>`;
   }
-  const displayName = p.custom_id ? p.custom_id : `Игрок ${p.user_id}`;
-  const subText = p.custom_id
-    ? `TG ID: ${p.user_id} · ${p.nft_count || 0} NFT`
-    : `ID: ${p.user_id} · ${p.nft_count || 0} NFT`;
-  const initial = (p.custom_id || String(p.user_id))[0].toUpperCase();
+  // v137: custom_id это 6-значное число (или null)
+  const cid = p.custom_id;
+  const displayName = cid ? `Игрок ${cid}` : `Игрок ${p.user_id}`;
+  const subText = cid
+    ? `Custom ID: ${cid} · ${p.nft_count || 0} NFT`
+    : `TG ID: ${p.user_id} · ${p.nft_count || 0} NFT`;
+  const initial = String(cid || p.user_id || '?')[0].toUpperCase();
   container.innerHTML = `
     <div class="profile-header" style="margin-top: 16px;">
       <div class="profile-avatar" style="background: linear-gradient(135deg, #5BA9FF, #B96FFF);">${escapeHtml(initial)}</div>
