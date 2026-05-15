@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<title>FF SLOPPYX — NFT</title>
+<title>FF SLOPPYX NFT</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
@@ -195,6 +195,220 @@ body::after {
   width: 28px; height: 2px;
   background: var(--accent);
   box-shadow: 0 0 12px var(--accent);
+  animation: tabUnderlineSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* v138: новые анимации интерфейса */
+@keyframes tabUnderlineSlide {
+  from { transform: translateX(-50%) scaleX(0); opacity: 0; }
+  to   { transform: translateX(-50%) scaleX(1); opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseScale {
+  0%, 100% { transform: scale(1); }
+  30%      { transform: scale(1.12); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes balanceFlash {
+  0%   { color: var(--accent); text-shadow: 0 0 12px var(--accent); }
+  100% { color: inherit; text-shadow: none; }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes spinnerRing {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes bgGradient {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+@keyframes rippleEffect {
+  to {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* Тап-эффект на табах */
+.tab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255,169,64,0.18), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+.tab:active::before { opacity: 1; }
+
+/* Stagger-эффект для карточек в гриде — каждая появляется чуть позже */
+.grid .card-wrap {
+  animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.grid .card-wrap:nth-child(1) { animation-delay: 0.02s; }
+.grid .card-wrap:nth-child(2) { animation-delay: 0.08s; }
+.grid .card-wrap:nth-child(3) { animation-delay: 0.14s; }
+.grid .card-wrap:nth-child(4) { animation-delay: 0.20s; }
+.grid .card-wrap:nth-child(5) { animation-delay: 0.26s; }
+.grid .card-wrap:nth-child(6) { animation-delay: 0.32s; }
+.grid .card-wrap:nth-child(7) { animation-delay: 0.38s; }
+.grid .card-wrap:nth-child(8) { animation-delay: 0.44s; }
+.grid .card-wrap:nth-child(n+9) { animation-delay: 0.50s; }
+
+/* Stagger для P2P-листингов */
+.p2p-listing { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+.p2p-listing:nth-child(1) { animation-delay: 0.05s; }
+.p2p-listing:nth-child(2) { animation-delay: 0.12s; }
+.p2p-listing:nth-child(3) { animation-delay: 0.19s; }
+.p2p-listing:nth-child(4) { animation-delay: 0.26s; }
+.p2p-listing:nth-child(n+5) { animation-delay: 0.33s; }
+
+/* Stagger для блоков профиля */
+.profile-header,
+.profile-stats,
+.section-title,
+.custom-id-row,
+.showcase-grid,
+.privacy-row,
+.search-row {
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.profile-stats { animation-delay: 0.06s; }
+.section-title:nth-of-type(1) { animation-delay: 0.10s; }
+.custom-id-row { animation-delay: 0.14s; }
+.section-title:nth-of-type(2) { animation-delay: 0.18s; }
+.showcase-grid { animation-delay: 0.22s; }
+.privacy-row { animation-delay: 0.26s; }
+.section-title:nth-of-type(3) { animation-delay: 0.30s; }
+.search-row { animation-delay: 0.34s; }
+
+/* Анимация баланса при изменении */
+.balance-flash { animation: balanceFlash 1.2s ease-out; }
+
+/* Skeleton-shimmer (улучшенный) */
+.skel {
+  background: linear-gradient(
+    90deg,
+    var(--bg-1) 0%,
+    rgba(255,255,255,0.06) 50%,
+    var(--bg-1) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Кастомный спиннер вместо «...» */
+.spinner-ring {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid var(--text-2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spinnerRing 0.7s linear infinite;
+  vertical-align: middle;
+}
+
+/* Тост с анимацией */
+.toast {
+  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Анимированный градиент фона на хедере */
+.app-header {
+  background: linear-gradient(
+    135deg,
+    var(--bg-1) 0%,
+    rgba(255,169,64,0.04) 50%,
+    var(--bg-1) 100%
+  );
+  background-size: 200% 200%;
+  animation: bgGradient 18s ease-in-out infinite;
+}
+
+/* Hover/press на кнопках */
+.search-btn,
+.custom-id-btn,
+.p2p-listing-btn,
+.sell-btn,
+.btn-confirm,
+.btn-cancel,
+.modal-action {
+  transition: transform 0.12s ease, box-shadow 0.18s ease;
+  position: relative;
+  overflow: hidden;
+}
+.search-btn:active,
+.custom-id-btn:active,
+.p2p-listing-btn:active,
+.btn-confirm:active,
+.btn-cancel:active {
+  transform: scale(0.95);
+}
+
+/* Pulse на кнопке КУПИТЬ если она доступна */
+.modal-action:not([disabled]) {
+  animation: actionPulse 2.2s ease-in-out infinite;
+}
+@keyframes actionPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,169,64,0.4); }
+  50%      { box-shadow: 0 0 0 10px rgba(255,169,64,0); }
+}
+
+/* Подсветка активного слота showcase при наведении */
+.showcase-slot:not(.filled) {
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+.showcase-slot:not(.filled):hover {
+  transform: translateY(-2px);
+}
+
+/* Анимированный outline для модалки при открытии */
+.modal-back.open .modal {
+  animation: modalEntrance 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalEntrance {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Бэкдроп тоже плавно */
+.modal-back {
+  transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
 }
 
 /* ─────────── P2P NFT (v133) ─────────── */
@@ -940,19 +1154,31 @@ body::after {
   animation: weaponBreathe 3.4s ease-in-out infinite;
 }
 
-/* Большая версия для модалки */
+/* Большая версия для модалки — v138: фиксированное соотношение */
 .modal-weapon-vis {
-  margin: 8px 0 12px;
+  margin: 8px 0 16px;
   display: flex;
   justify-content: center;
+  align-items: center;
   position: relative;
-  min-height: 90px;
+  /* Фиксированное соотношение 3:1 — оружие всегда выглядит пропорционально */
+  aspect-ratio: 3 / 1;
+  width: 100%;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.02) 0%, transparent 70%);
+  border-radius: 12px;
+  padding: 12px;
+  overflow: hidden;
 }
 .modal-weapon-big svg {
-  width: 75%;
-  max-width: 240px;
-  height: auto;
+  width: 100%;
+  height: 100%;
+  max-height: 140px;
+  /* preserveAspectRatio="xMidYMid meet" — SVG сам сохраняет пропорции */
   filter: drop-shadow(0 0 18px var(--card-rarity-glow));
+  display: block;
 }
 
 /* Дыхание — лёгкое масштабирование */
@@ -1490,7 +1716,7 @@ body::after {
       <span id="hdrAvatarText">⬢</span>
     </div>
     <div class="hdr-name-block">
-      <div class="hdr-logo">FF<span> SLOPPYX</span></div>
+      <div class="hdr-logo">FF<span> SLOPPYX NFT</span></div>
       <div class="hdr-username" id="hdrUsername">@&hellip;</div>
     </div>
     <div class="hdr-spacer"></div>
@@ -2691,6 +2917,16 @@ function fmtTokens(n) {
   return n.toLocaleString('ru-RU').replace(/\s/g, '\u202F');
 }
 
+// v138: визуальная мигалка баланса при изменении
+function flashBalance() {
+  const el = document.getElementById('balanceVal');
+  if (!el) return;
+  el.classList.remove('balance-flash');
+  // force reflow чтобы анимация перезапустилась
+  void el.offsetWidth;
+  el.classList.add('balance-flash');
+}
+
 async function loadMe() {
   const r = await api('/casino/me');
   if (!r.ok) return;
@@ -2699,6 +2935,8 @@ async function loadMe() {
   const initial = (nick.replace('@','').trim()[0] || '⬢').toUpperCase();
   document.getElementById('hdrAvatarText').textContent = initial;
   document.getElementById('balanceVal').textContent = fmtTokens(r.balance);
+  // v138: мигалка при изменении
+  flashBalance();
   document.getElementById('nftCount').textContent = r.nft_count;
   state.me = r;
 }
@@ -3025,7 +3263,7 @@ async function doSearch() {
   // Убираем @ если есть
   targetStr = targetStr.replace(/^@/, '');
   const btn = document.getElementById('search-btn');
-  btn.disabled = true; btn.textContent = '…';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-ring"></span>';
   const resultEl = document.getElementById('search-result');
   resultEl.innerHTML = '';
   // encodeURIComponent для безопасности (кириллица не пройдёт, латиница пройдёт)
@@ -3066,13 +3304,14 @@ function renderForeignProfile(p, container) {
       </div>`;
     }).join('') + `</div>`;
   }
-  // v137: custom_id это 6-значное число (или null)
+  // v138: показываем имя игрока вместо "Игрок 324790"
   const cid = p.custom_id;
-  const displayName = cid ? `Игрок ${cid}` : `Игрок ${p.user_id}`;
+  const nickName = (p.nick || '').trim();
+  const displayName = nickName || (cid ? `Игрок ${cid}` : `Игрок ${p.user_id}`);
   const subText = cid
     ? `Custom ID: ${cid} · ${p.nft_count || 0} NFT`
     : `TG ID: ${p.user_id} · ${p.nft_count || 0} NFT`;
-  const initial = String(cid || p.user_id || '?')[0].toUpperCase();
+  const initial = (nickName || String(cid || p.user_id || '?'))[0].toUpperCase();
   container.innerHTML = `
     <div class="profile-header" style="margin-top: 16px;">
       <div class="profile-avatar" style="background: linear-gradient(135deg, #5BA9FF, #B96FFF);">${escapeHtml(initial)}</div>
@@ -3216,6 +3455,7 @@ async function buyListing(listingId) {
     // Обновляем баланс
     if (state.me) state.me.balance = r.buyer_new_balance;
     document.getElementById('balanceVal').textContent = fmtTokens(r.buyer_new_balance);
+    flashBalance();
     // Сбрасываем кэши и обновляем
     state.myItems = null;
     state.p2pData = null;
@@ -3298,7 +3538,7 @@ async function confirmSell() {
   if (price <= 0) { showToast('Введите цену'); return; }
   try { tg.HapticFeedback.impactOccurred('medium'); } catch(e) {}
   const btn = document.getElementById('sell-modal-confirm');
-  btn.disabled = true; btn.textContent = '...';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-ring"></span>';
   const r = await apiPost('/casino/p2p/create', {
     nft_id: sellModalNft.id,
     serial: sellModalNft.serial,
