@@ -2133,6 +2133,123 @@ body::after {
   z-index: 4;
   backdrop-filter: blur(4px);
 }
+
+/* v146: список серийников в стак-модалке */
+.stack-list-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+  margin: 16px 0 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.stack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  margin-bottom: 14px;
+  padding-right: 4px;
+}
+.stack-list::-webkit-scrollbar { width: 4px; }
+.stack-list::-webkit-scrollbar-thumb { background: var(--card-rarity, var(--text-2)); border-radius: 2px; }
+.stack-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.stack-row:hover {
+  border-color: var(--card-rarity, var(--accent));
+  background: var(--bg-2);
+}
+.stack-row:active { transform: scale(0.98); }
+.stack-row-info { flex: 1; }
+.stack-row-serial {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--card-rarity, var(--accent));
+}
+.stack-row-date {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+.stack-row-actions {
+  display: flex;
+  gap: 6px;
+}
+.stack-row-sell {
+  padding: 6px 12px;
+  background: var(--accent);
+  color: #1a1a1a;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  cursor: pointer;
+}
+.stack-row-sell:active { transform: scale(0.94); }
+
+/* v146: Бейдж количества копий в стаке (×5, ×7, etc.) */
+.card-stack-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, var(--accent), #ff7600);
+  color: #1a1a1a;
+  padding: 4px 10px;
+  border-radius: 8px;
+  z-index: 6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4),
+              0 0 16px rgba(255, 169, 64, 0.5);
+  border: 1.5px solid rgba(255, 215, 130, 0.6);
+  animation: stackBadgePulse 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes stackBadgePulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 16px rgba(255,169,64,0.5); }
+  50%      { transform: scale(1.06); box-shadow: 0 2px 12px rgba(0,0,0,0.5), 0 0 24px rgba(255,169,64,0.8); }
+}
+
+/* Тонкий эффект "слоистости" для стаков — карты будто 2-3 слоя */
+.card-wrap[data-stack] {
+  position: relative;
+}
+.card-wrap[data-stack]::before,
+.card-wrap[data-stack]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  border: 1px solid var(--card-rarity, var(--line));
+  background: var(--bg-1);
+  z-index: -1;
+  pointer-events: none;
+}
+.card-wrap[data-stack]::before {
+  transform: translate(4px, 4px);
+  opacity: 0.5;
+}
+.card-wrap[data-stack]::after {
+  transform: translate(8px, 8px);
+  opacity: 0.25;
+}
 .card-serial.owned {
   color: var(--card-rarity);
   text-shadow: 0 0 8px var(--card-rarity-glow);
@@ -4122,6 +4239,9 @@ function renderCard(item, opts = {}) {
   const date = item.obtained_at || '';
   const owned = state.ownedIds.has(item.id);
   const lang = LANG;
+  // v146: проверка на стак (только в МОИХ)
+  const isStack = item._is_stack && item._stack_count > 1;
+  const stackCount = item._stack_count || 1;
 
   // Серийник — для МОИХ карт показываем #42 / 100, для маркета — общий тираж
   let serialHtml = '';
@@ -4132,7 +4252,16 @@ function renderCard(item, opts = {}) {
       serialHtml = `<div class="card-serial">${item.issued || 0}/${item.max_supply}</div>`;
     }
   } else {
-    if (item.serial && item.max_supply) {
+    if (isStack && item.max_supply) {
+      // Для стака показываем диапазон серийников
+      const minS = item._stack_serials[0];
+      const maxS = item._stack_serials[item._stack_serials.length - 1];
+      if (minS === maxS) {
+        serialHtml = `<div class="card-serial owned">#${minS}/${item.max_supply}</div>`;
+      } else {
+        serialHtml = `<div class="card-serial owned">#${minS}–${maxS}/${item.max_supply}</div>`;
+      }
+    } else if (item.serial && item.max_supply) {
       serialHtml = `<div class="card-serial owned">#${item.serial}/${item.max_supply}</div>`;
     } else if (item.serial) {
       serialHtml = `<div class="card-serial owned">#${item.serial}</div>`;
@@ -4143,21 +4272,26 @@ function renderCard(item, opts = {}) {
   if (opts.market) {
     if (item.price === null || item.price === undefined) {
       priceHtml = `<div class="card-price locked">${t('price_locked')}</div>`;
-    } else if (owned) {
-      priceHtml = `<div class="card-price">✓ ${t('btn_owned')}</div>`;
     } else {
+      // v146: убрана проверка "owned" — можно покупать несколько копий
       priceHtml = `<div class="card-price">${item.price.toLocaleString()} 💰</div>`;
     }
   }
 
+  // v146: бейдж количества в стаке
+  const stackBadge = isStack
+    ? `<div class="card-stack-badge">×${stackCount}</div>`
+    : '';
+
   return `
-    <div class="card-wrap" data-id="${item.id}">
+    <div class="card-wrap" data-id="${item.id}" ${isStack ? `data-stack="${stackCount}"` : ''}>
       <div class="card ${isHolo ? 'holo' : ''}" data-rarity="${r}" data-id="${item.id}">
         <div class="inner-frame"></div>
         <div class="corner tl"></div>
         <div class="corner tr"></div>
         <div class="corner bl"></div>
         <div class="corner br"></div>
+        ${stackBadge}
         <div class="card-inner">
           <div class="card-rarity-tag">${RARITY_LABEL[r] || r.toUpperCase()}</div>
           ${date ? `<div class="card-date">${date}</div>` : ''}
@@ -4173,12 +4307,51 @@ function renderCard(item, opts = {}) {
   `;
 }
 
+// v146: группировка одинаковых NFT в один стак для МОИХ.
+// Возвращает массив "сгруппированных" объектов где каждый объект:
+// { ...первой_карточки, _stack_count, _stack_serials, _is_stack }
+function groupMyNfts(items) {
+  if (!items || items.length === 0) return [];
+  const groups = {};
+  for (const it of items) {
+    const key = it.id;
+    if (!groups[key]) {
+      groups[key] = {
+        ...it,
+        _stack_count: 0,
+        _stack_serials: [],
+        _stack_items: [],
+      };
+    }
+    groups[key]._stack_count++;
+    groups[key]._stack_serials.push(it.serial);
+    groups[key]._stack_items.push(it);
+  }
+  // Возвращаем массив, сортируя серийники внутри стака по возрастанию
+  const result = [];
+  for (const key in groups) {
+    const g = groups[key];
+    g._stack_serials.sort((a, b) => a - b);
+    g._stack_items.sort((a, b) => (a.serial || 0) - (b.serial || 0));
+    // Для отображения используем первый серийник (минимальный)
+    g.serial = g._stack_serials[0];
+    g._is_stack = (g._stack_count > 1);
+    result.push(g);
+  }
+  return result;
+}
+
 function renderGrid(items, opts) {
   if (!items || items.length === 0) {
     if (opts.market) return renderEmpty('empty_market_title', 'empty_market_sub', '🛒');
     return renderEmpty('empty_my_title', 'empty_my_sub');
   }
-  return `<div class="grid">${items.map(it => renderCard(it, opts)).join('')}</div>`;
+  // v146: для МОИХ — группируем одинаковые в стаки
+  let displayItems = items;
+  if (!opts.market) {
+    displayItems = groupMyNfts(items);
+  }
+  return `<div class="grid">${displayItems.map(it => renderCard(it, opts)).join('')}</div>`;
 }
 
 function setContent(html) {
@@ -4272,7 +4445,19 @@ function attachCardHandlers() {
 // ═══════════════════════════════════════════════════════════
 function findItem(id) {
   if (state.tab === 'my') {
-    return (state.myItems || []).find(x => x.id === id);
+    // v146: возвращаем стак-объект если несколько копий, иначе одну карту
+    const allCopies = (state.myItems || []).filter(x => x.id === id);
+    if (allCopies.length === 0) return null;
+    if (allCopies.length === 1) return allCopies[0];
+    // Несколько копий — собираем стак как в groupMyNfts
+    const stack = {
+      ...allCopies[0],
+      _stack_count: allCopies.length,
+      _stack_serials: allCopies.map(c => c.serial).sort((a, b) => a - b),
+      _stack_items: [...allCopies].sort((a, b) => (a.serial || 0) - (b.serial || 0)),
+      _is_stack: true,
+    };
+    return stack;
   } else {
     return (state.marketItems || []).find(x => x.id === id);
   }
@@ -4281,6 +4466,13 @@ function findItem(id) {
 function openCardModal(id) {
   const item = findItem(id);
   if (!item) return;
+
+  // v146: если это стак (несколько копий одной NFT в МОИХ) — открываем спец-модалку
+  if (item._is_stack && state.tab === 'my') {
+    openStackModal(item);
+    return;
+  }
+
   const r = item.rarity || 'common';
   const owned = state.ownedIds.has(item.id);
 
@@ -4292,14 +4484,16 @@ function openCardModal(id) {
       btnLabel  = t('btn_locked');
       btnDisabled = true;
       btnAction = null;
-    } else if (owned) {
-      priceText = `${item.price.toLocaleString()} 💰`;
-      btnLabel  = `✓ ${t('btn_owned')}`;
-      btnDisabled = true;
-      btnAction = null;
     } else {
+      // v146: разрешаем покупать несколько копий
+      const ownedCount = (state.myItems || []).filter(x => x.id === item.id).length;
       priceText = `${item.price.toLocaleString()} 💰`;
-      btnLabel  = `${t('btn_buy')} — ${item.price.toLocaleString()}`;
+      if (ownedCount > 0) {
+        // У юзера уже есть N копий — кнопка с подсказкой
+        btnLabel = `${t('btn_buy')} — ${item.price.toLocaleString()} (×${ownedCount} есть)`;
+      } else {
+        btnLabel = `${t('btn_buy')} — ${item.price.toLocaleString()}`;
+      }
       btnDisabled = false;
       btnAction = () => buyNft(item.id);
     }
@@ -4357,6 +4551,129 @@ function openCardModal(id) {
 
 function closeModal() {
   document.getElementById('modal').classList.remove('open');
+}
+
+// v146: модалка для стака — список всех копий с возможностью открыть каждую
+function openStackModal(stackItem) {
+  const r = stackItem.rarity || 'common';
+  const items = stackItem._stack_items || [];
+  const lang = LANG;
+
+  const modalEl = document.getElementById('modalCard');
+  modalEl.style.setProperty('--card-rarity', `var(--rarity-${r})`);
+  modalEl.style.setProperty('--card-rarity-glow', `var(--rarity-${r}-glow)`);
+
+  // Список серийников в виде кликабельных строк
+  const list = items.map((c, idx) => {
+    const supplyText = c.max_supply ? `#${c.serial}/${c.max_supply}` : `#${c.serial}`;
+    const date = c.obtained_at || '';
+    const canSell = c.price && c.serial;
+    return `
+      <div class="stack-row" data-stack-item="${idx}">
+        <div class="stack-row-info">
+          <div class="stack-row-serial">${supplyText}</div>
+          ${date ? `<div class="stack-row-date">${date}</div>` : ''}
+        </div>
+        <div class="stack-row-actions">
+          ${canSell ? `<button class="stack-row-sell" data-sell-idx="${idx}">P2P</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  modalEl.innerHTML = `
+    <div class="modal-header">
+      <div class="modal-rarity">${RARITY_LABEL[r] || r}</div>
+      <button class="modal-close" id="modalCloseBtn">✕</button>
+    </div>
+    <div class="modal-weapon-vis modal-weapon-big" data-rarity="${r}" data-id="${stackItem.id}">${getWeaponSVG(stackItem.weapon, r)}</div>
+    <div class="modal-name">${fmtName(stackItem)}</div>
+    <div class="modal-tag">×${stackItem._stack_count} копий в коллекции</div>
+    <dl class="modal-info-grid">
+      <dt>${t('weapon_label')}</dt><dd>${stackItem.weapon || '—'}</dd>
+      <dt>${t('rarity_label')}</dt><dd style="color: var(--rarity-${r})">${RARITY_LABEL[r] || r}</dd>
+      <dt>${lang === 'en' ? 'COPIES' : 'КОПИЙ'}</dt><dd style="color: var(--rarity-${r}); font-weight: 600">×${stackItem._stack_count}</dd>
+      ${stackItem.max_supply ? `<dt>${t('supply_label')}</dt><dd>тираж ${stackItem.max_supply}</dd>` : ''}
+    </dl>
+    <div class="stack-list-title">${lang === 'en' ? 'Your serials:' : 'Твои серийники:'}</div>
+    <div class="stack-list">${list}</div>
+    <button class="modal-action" id="modalActionBtn">${t('btn_close')}</button>
+  `;
+
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('modalCloseBtn').onclick = closeModal;
+  document.getElementById('modalActionBtn').onclick = () => closeModal();
+
+  // Хендлеры на каждую строку — открыть конкретную копию
+  document.querySelectorAll('[data-stack-item]').forEach(row => {
+    row.addEventListener('click', (e) => {
+      // Если кликнули на кнопку P2P внутри — не открываем детали
+      if (e.target.closest('[data-sell-idx]')) return;
+      const idx = parseInt(row.dataset.stackItem);
+      const single = items[idx];
+      if (!single) return;
+      closeModal();
+      // Открываем модалку отдельной копии (псевдо-предмет с serial)
+      setTimeout(() => openSingleCardModal(single), 220);
+    });
+  });
+  // Кнопки P2P
+  document.querySelectorAll('[data-sell-idx]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.sellIdx);
+      const single = items[idx];
+      if (!single) return;
+      closeModal();
+      openSellModal(single);
+    });
+  });
+}
+
+// v146: открыть одиночную копию из стака
+function openSingleCardModal(item) {
+  const r = item.rarity || 'common';
+  const modalEl = document.getElementById('modalCard');
+  modalEl.style.setProperty('--card-rarity', `var(--rarity-${r})`);
+  modalEl.style.setProperty('--card-rarity-glow', `var(--rarity-${r}-glow)`);
+
+  const priceText = item.price !== null && item.price !== undefined
+    ? `${item.price.toLocaleString()} 💰` : '—';
+  const canSell = item.price && item.serial;
+  const extraBtn = canSell
+    ? `<button class="sell-btn" id="modalSellBtn">💰 ПРОДАТЬ НА P2P</button>`
+    : '';
+
+  modalEl.innerHTML = `
+    <div class="modal-header">
+      <div class="modal-rarity">${RARITY_LABEL[r] || r}</div>
+      <button class="modal-close" id="modalCloseBtn">✕</button>
+    </div>
+    <div class="modal-weapon-vis modal-weapon-big" data-rarity="${r}" data-id="${item.id}">${getWeaponSVG(item.weapon, r)}</div>
+    <div class="modal-name">${fmtName(item)}</div>
+    <div class="modal-tag">«${fmtTagline(item)}»</div>
+    <dl class="modal-info-grid">
+      <dt>${t('weapon_label')}</dt><dd>${item.weapon || '—'}</dd>
+      <dt>${t('rarity_label')}</dt><dd style="color: var(--rarity-${r})">${RARITY_LABEL[r] || r}</dd>
+      ${item.serial ? `<dt>${t('edition_label')}</dt><dd style="color: var(--rarity-${r}); font-weight: 600">#${item.serial}${item.max_supply ? ' / ' + item.max_supply : ''}</dd>` : ''}
+      ${item.obtained_at ? `<dt>${t('obtained_label')}</dt><dd>${item.obtained_at}</dd>` : ''}
+      <dt>${t('price_label')}</dt><dd>${priceText}</dd>
+    </dl>
+    <div class="modal-lore">${fmtLore(item)}</div>
+    <button class="modal-action" id="modalActionBtn">${t('btn_close')}</button>
+    ${extraBtn}
+  `;
+
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('modalCloseBtn').onclick = closeModal;
+  document.getElementById('modalActionBtn').onclick = closeModal;
+  const sellBtn = document.getElementById('modalSellBtn');
+  if (sellBtn) {
+    sellBtn.onclick = () => {
+      closeModal();
+      openSellModal(item);
+    };
+  }
 }
 document.getElementById('modal').addEventListener('click', (e) => {
   if (e.target.id === 'modal') closeModal();
