@@ -50,6 +50,177 @@ html, body {
   min-height: 100vh;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   v142 — Загрузочный экран
+   ═══════════════════════════════════════════════════════════ */
+#boot-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: radial-gradient(ellipse at center, #1a1408 0%, var(--bg-0) 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+#boot-screen.hide {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+#boot-screen::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle 1px at 15% 25%, rgba(255,169,64,0.6) 0%, transparent 100%),
+    radial-gradient(circle 1px at 75% 15%, rgba(255,169,64,0.4) 0%, transparent 100%),
+    radial-gradient(circle 1px at 85% 75%, rgba(255,169,64,0.5) 0%, transparent 100%),
+    radial-gradient(circle 1px at 25% 85%, rgba(255,169,64,0.3) 0%, transparent 100%),
+    radial-gradient(circle 1px at 50% 50%, rgba(255,169,64,0.6) 0%, transparent 100%),
+    radial-gradient(circle 1px at 35% 60%, rgba(255,169,64,0.4) 0%, transparent 100%),
+    radial-gradient(circle 1px at 90% 40%, rgba(255,169,64,0.5) 0%, transparent 100%),
+    radial-gradient(circle 1px at 10% 70%, rgba(255,169,64,0.3) 0%, transparent 100%);
+  animation: bootParticles 4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes bootParticles {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
+
+.boot-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  z-index: 1;
+}
+
+/* Гексагон-логотип */
+.boot-hex-wrap {
+  width: 130px; height: 130px;
+  position: relative;
+  filter: drop-shadow(0 0 30px rgba(255,169,64,0.5));
+}
+.boot-hex {
+  width: 100%; height: 100%;
+}
+.boot-hex-outer {
+  animation: bootHexOuter 2.5s ease-in-out infinite;
+  transform-origin: center;
+}
+.boot-hex-mid {
+  animation: bootHexMid 4s linear infinite;
+  transform-origin: center;
+  opacity: 0.6;
+}
+.boot-hex-inner {
+  animation: bootHexInner 1.8s ease-in-out infinite;
+  transform-origin: center;
+}
+.boot-crosshair {
+  animation: bootCrosshair 2s ease-in-out infinite;
+}
+@keyframes bootHexOuter {
+  0%, 100% { opacity: 0.9; transform: scale(1) rotate(0deg); }
+  50%      { opacity: 0.4; transform: scale(1.08) rotate(15deg); }
+}
+@keyframes bootHexMid {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes bootHexInner {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(0.85); }
+}
+@keyframes bootCrosshair {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 1; }
+}
+
+/* Логотип-текст */
+.boot-logo {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.12em;
+}
+.boot-logo-ff {
+  font-size: 38px;
+  color: var(--accent);
+  text-shadow: 0 0 16px rgba(255,169,64,0.7);
+  animation: bootTextFade 1.5s ease-out 0.1s both;
+}
+.boot-logo-sloppyx {
+  font-size: 38px;
+  color: var(--text-0);
+  text-shadow: 0 0 10px rgba(255,255,255,0.3);
+  animation: bootTextFade 1.5s ease-out 0.4s both;
+}
+.boot-logo-nft {
+  font-size: 38px;
+  color: var(--accent);
+  text-shadow: 0 0 16px rgba(255,169,64,0.7);
+  animation: bootTextFade 1.5s ease-out 0.7s both;
+}
+@keyframes bootTextFade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    letter-spacing: 0.4em;
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    letter-spacing: 0.12em;
+    filter: blur(0);
+  }
+}
+
+/* Прогресс-бар */
+.boot-progress {
+  width: 200px;
+  height: 3px;
+  background: rgba(255,169,64,0.15);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.boot-progress-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--accent) 50%,
+    transparent 100%
+  );
+  width: 50%;
+  animation: bootProgress 1.5s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(255,169,64,0.7);
+}
+@keyframes bootProgress {
+  0%   { left: -50%; }
+  100% { left: 100%; }
+}
+
+/* Статус-текст */
+.boot-status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--text-2);
+  text-transform: uppercase;
+  animation: bootStatusFlick 1.4s ease-in-out infinite;
+}
+@keyframes bootStatusFlick {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+
+
 /* Атмосферный фон — носитель силы NFT */
 body::before {
   content: '';
@@ -152,17 +323,29 @@ body::after {
 }
 .hdr-stat-label {
   color: var(--text-2);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
 }
 .hdr-stat-val {
   color: var(--text-0);
   font-weight: 500;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 13px;
-  letter-spacing: 0.01em;
+  font-size: 16px;
+  letter-spacing: 0.02em;
 }
-#balanceVal { font-size: 12px; }
+/* v142: баланс — крупнее, акцентный цвет, моноширинный для лучшей читаемости */
+#balanceVal {
+  font-size: 17px;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+#nftCount {
+  font-size: 17px;
+  color: var(--accent);
+  font-weight: 600;
+}
 
 /* ─────────── Tabs ─────────── */
 .tabs {
@@ -1638,11 +1821,12 @@ body::after {
 }
 
 /* ───────────────────────────────────────────────────────────
-   Desert Eagle — КОРОЛЬ: золотой дождь + 3 короны + блики
-   v141: переделано — теперь действительно ощущается как премиум
+   Desert Eagle — КОРОЛЬ ПУСТЫНИ
+   v142: убрал корону. Оружие покачивается + стреляет с вспышкой.
+         + золотой дождь монет + аура
    ─────────────────────────────────────────────────────────── */
 
-/* Слой 1: золотой дождь монет/частиц по фону */
+/* Слой 1 (фон, ::before): золотой дождь монет/частиц */
 .card[data-id="ff_deagle"] .card-weapon-vis::before,
 .modal-weapon-vis[data-id="ff_deagle"]::before,
 .showcase-slot[data-id="ff_deagle"] .mini-weapon::before {
@@ -1666,37 +1850,39 @@ body::after {
   100% { transform: translateY(115%); opacity: 0; }
 }
 
-/* Слой 2: 3 короны с разной задержкой — анимированная корона-королевство */
+/* Слой 2 (поверх, ::after): ВСПЫШКА ВЫСТРЕЛА у ствола */
 .card[data-id="ff_deagle"] .card-weapon-vis::after,
 .modal-weapon-vis[data-id="ff_deagle"]::after,
 .showcase-slot[data-id="ff_deagle"] .mini-weapon::after {
-  content: '👑';
+  content: '';
   position: absolute;
-  top: 10%; left: 50%;
-  transform: translateX(-50%);
-  font-size: 22px;
-  filter: drop-shadow(0 0 14px rgba(255, 215, 0, 1))
-          drop-shadow(0 0 28px rgba(255, 180, 0, 0.7))
-          drop-shadow(0 0 48px rgba(255, 215, 0, 0.4));
-  animation: deagleCrowns 1.6s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+  /* Позиция у дула — справа на уровне ствола */
+  top: 45%;
+  right: 5%;
+  width: 30%;
+  height: 35%;
+  background:
+    radial-gradient(ellipse 60% 50% at 0% 50%,
+      rgba(255, 250, 200, 1) 0%,
+      rgba(255, 200, 80, 0.85) 20%,
+      rgba(255, 140, 30, 0.5) 45%,
+      transparent 75%
+    );
+  filter: blur(1px);
+  opacity: 0;
+  animation: deagleMuzzleFlash 3.5s ease-out infinite;
   pointer-events: none;
   z-index: 3;
+  mix-blend-mode: screen;
 }
-@keyframes deagleCrowns {
-  0%, 100% {
-    transform: translateX(-50%) translateY(0) scale(1) rotate(-3deg);
-    filter: drop-shadow(0 0 14px rgba(255, 215, 0, 1))
-            drop-shadow(0 0 28px rgba(255, 180, 0, 0.7));
-  }
-  50% {
-    transform: translateX(-50%) translateY(-8px) scale(1.2) rotate(3deg);
-    filter: drop-shadow(0 0 28px rgba(255, 215, 0, 1))
-            drop-shadow(0 0 56px rgba(255, 180, 0, 0.9))
-            drop-shadow(0 0 90px rgba(255, 215, 0, 0.5));
-  }
+@keyframes deagleMuzzleFlash {
+  0%, 60%, 100% { opacity: 0; transform: scale(0.5); }
+  62%           { opacity: 1; transform: scale(1.2); }
+  68%           { opacity: 0.7; transform: scale(1.4); }
+  74%           { opacity: 0; transform: scale(1.8); }
 }
 
-/* Контейнер: золотой круговой gradient-фон с дышащей аурой */
+/* Контейнер: золотая аура + box-shadow дышит */
 .card[data-id="ff_deagle"] .card-weapon-vis,
 .modal-weapon-vis[data-id="ff_deagle"],
 .showcase-slot[data-id="ff_deagle"] .mini-weapon {
@@ -1714,16 +1900,49 @@ body::after {
                          inset 0 0 100px rgba(255, 180, 0, 0.15); }
 }
 
-/* SVG оружия получает золотое свечение */
+/* SVG оружия: ПОКАЧИВАНИЕ + ОТДАЧА ПРИ ВЫСТРЕЛЕ + золотой shine */
 .card[data-id="ff_deagle"] .card-weapon-vis svg,
 .modal-weapon-vis[data-id="ff_deagle"] svg,
 .showcase-slot[data-id="ff_deagle"] .mini-weapon svg {
   position: relative;
   z-index: 1;
-  animation: deagleGoldShine 2.5s ease-in-out infinite,
-             weaponBreathe 3.4s ease-in-out infinite,
-             ultraLegGlow 1.5s ease-in-out infinite;
+  animation:
+    deagleSway 4s ease-in-out infinite,
+    deagleRecoil 3.5s ease-out infinite,
+    deagleGoldShine 2.5s ease-in-out infinite;
+  transform-origin: center center;
 }
+
+/* Покачивание влево-вправо как будто игрок держит и поворачивает */
+@keyframes deagleSway {
+  0%, 100% { transform: rotate(-3deg) translateY(0); }
+  25%      { transform: rotate(0deg) translateY(-2px); }
+  50%      { transform: rotate(3deg) translateY(0); }
+  75%      { transform: rotate(0deg) translateY(-2px); }
+}
+
+/* Отдача — раз в 3.5с резкий рывок назад + возврат с упругостью */
+@keyframes deagleRecoil {
+  0%, 55%, 80%, 100% {
+    /* Без отдачи большую часть времени */
+    margin-left: 0;
+  }
+  60% {
+    /* Резкая отдача — оружие "прыгает" вправо (назад относительно ствола слева) */
+    margin-left: 8px;
+  }
+  65% {
+    margin-left: 6px;
+  }
+  72% {
+    /* Возврат с лёгким overshoot */
+    margin-left: -2px;
+  }
+  76% {
+    margin-left: 0;
+  }
+}
+
 @keyframes deagleGoldShine {
   0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.7))
                      drop-shadow(0 0 20px rgba(255, 180, 0, 0.4)); }
@@ -2178,6 +2397,44 @@ body::after {
 </style>
 </head>
 <body>
+
+<!-- v142: загрузочный экран — скрывается после загрузки данных -->
+<div id="boot-screen">
+  <div class="boot-content">
+    <!-- Анимированный гексагон-логотип -->
+    <div class="boot-hex-wrap">
+      <svg class="boot-hex" viewBox="0 0 100 100">
+        <!-- Внешний гекс — пульсирует -->
+        <polygon class="boot-hex-outer" points="50,5 90,27 90,73 50,95 10,73 10,27"
+                 fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <!-- Средний гекс — крутится -->
+        <polygon class="boot-hex-mid" points="50,18 80,34 80,66 50,82 20,66 20,34"
+                 fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+        <!-- Внутренний гекс — заполненный -->
+        <polygon class="boot-hex-inner" points="50,32 70,42 70,58 50,68 30,58 30,42"
+                 fill="var(--accent)"/>
+        <!-- Прицельный crosshair -->
+        <line class="boot-crosshair" x1="50" y1="0" x2="50" y2="20" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2 2"/>
+        <line class="boot-crosshair" x1="50" y1="80" x2="50" y2="100" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2 2"/>
+        <line class="boot-crosshair" x1="0" y1="50" x2="20" y2="50" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2 2"/>
+        <line class="boot-crosshair" x1="80" y1="50" x2="100" y2="50" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2 2"/>
+      </svg>
+    </div>
+    <!-- Текст логотипа -->
+    <div class="boot-logo">
+      <span class="boot-logo-ff">FF</span>
+      <span class="boot-logo-sloppyx">SLOPPYX</span>
+      <span class="boot-logo-nft">NFT</span>
+    </div>
+    <!-- Прогресс-бар -->
+    <div class="boot-progress">
+      <div class="boot-progress-fill"></div>
+    </div>
+    <!-- Статус -->
+    <div class="boot-status" id="bootStatus">ИНИЦИАЛИЗАЦИЯ</div>
+  </div>
+</div>
+
 <div id="app">
 
   <header class="hdr">
@@ -3339,8 +3596,19 @@ async function buyNft(id) {
   if (r.ok) {
     showToast('✓ Куплено!');
     closeModal();
-    loadMy();
-    loadMarket();
+    // v142: сразу обновляем баланс из ответа сервера
+    if (typeof r.new_balance === 'number') {
+      if (state.me) state.me.balance = r.new_balance;
+      document.getElementById('balanceVal').textContent = fmtTokens(r.new_balance);
+      flashBalance();
+    }
+    // v142: сбрасываем кэш и перезагружаем — карта должна появиться сразу
+    state.myItems = null;
+    state.marketItems = null;
+    await loadMy();      // карта появится в МОИ
+    await loadMarket();  // тираж обновится в МАРКЕТЕ
+    if (state.tab === 'my')     showMy();
+    if (state.tab === 'market') showMarket();
   } else if (r.error === 'not_for_sale') {
     showToast(t('not_for_sale'));
   } else if (r.error === 'insufficient_funds') {
@@ -4018,8 +4286,11 @@ async function confirmSell() {
     showToast(`✓ Выставлено за ${fmtTokens(price)}`);
     closeSellModal();
     closeModal();
-    // Сбросим кэш P2P
+    // v142: после выставления — карта переходит в P2P, нужно убрать её из МОИХ
+    state.myItems = null;
     state.p2pData = null;
+    await loadMy();
+    if (state.tab === 'my')  showMy();
     if (state.tab === 'p2p') {
       await loadP2P();
       renderP2P();
@@ -4037,10 +4308,43 @@ document.getElementById('sell-modal').addEventListener('click', (e) => {
   if (e.target.id === 'sell-modal') closeSellModal();
 });
 
-// Старт: грузим профиль + обе пачки параллельно
-loadMe();
-loadMy();
-loadMarket();
+// v142: Загрузочный экран с этапами + плавное скрытие
+async function bootSequence() {
+  const statusEl = document.getElementById('bootStatus');
+  const setStatus = (txt) => { if (statusEl) statusEl.textContent = txt; };
+
+  // Минимальное время лоадера — 1.2с чтобы анимация была видна
+  const minBootTime = 1200;
+  const startTime = Date.now();
+
+  try {
+    setStatus('АВТОРИЗАЦИЯ');
+    await loadMe();
+    setStatus('ЗАГРУЗКА КОЛЛЕКЦИИ');
+    await loadMy();
+    setStatus('ЗАГРУЗКА МАРКЕТА');
+    await loadMarket();
+    setStatus('ГОТОВО');
+  } catch (e) {
+    console.error('boot error', e);
+    setStatus('ОШИБКА — ПОПРОБУЙ ПЕРЕОТКРЫТЬ');
+  }
+
+  // Ждём минимум 1.2с чтобы лоадер не мелькал моментально
+  const elapsed = Date.now() - startTime;
+  if (elapsed < minBootTime) {
+    await new Promise(r => setTimeout(r, minBootTime - elapsed));
+  }
+
+  // Скрываем загрузочный экран
+  const boot = document.getElementById('boot-screen');
+  if (boot) {
+    boot.classList.add('hide');
+    setTimeout(() => boot.remove(), 700);
+  }
+}
+
+bootSequence();
 
 </script>
 </body>
