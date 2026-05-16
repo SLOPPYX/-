@@ -2392,6 +2392,193 @@ body::after {
   transform: translateX(-50%) translateY(0);
 }
 
+/* ═══════════════════════════════════════════════════════════
+   v143 — Поздравительная модалка (Legendary/Ultra покупки)
+   ═══════════════════════════════════════════════════════════ */
+.congrats-overlay {
+  position: fixed; inset: 0;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.congrats-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Фоновые частицы — золотые/красные */
+.congrats-bg-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle 2px at 15% 20%, var(--congrats-color, #FFA940) 0%, transparent 100%),
+    radial-gradient(circle 2px at 85% 25%, var(--congrats-color, #FFA940) 0%, transparent 100%),
+    radial-gradient(circle 1.5px at 25% 70%, var(--congrats-color, #FFA940) 0%, transparent 100%),
+    radial-gradient(circle 2px at 75% 75%, var(--congrats-color, #FFA940) 0%, transparent 100%),
+    radial-gradient(circle 1.5px at 50% 15%, var(--congrats-color, #FFA940) 0%, transparent 100%),
+    radial-gradient(circle 2px at 50% 85%, var(--congrats-color, #FFA940) 0%, transparent 100%),
+    radial-gradient(circle 1px at 35% 45%, var(--congrats-color, #FFA940) 0%, transparent 100%),
+    radial-gradient(circle 1.5px at 65% 55%, var(--congrats-color, #FFA940) 0%, transparent 100%),
+    radial-gradient(circle 1px at 90% 50%, var(--congrats-color, #FFA940) 0%, transparent 100%),
+    radial-gradient(circle 1px at 10% 60%, var(--congrats-color, #FFA940) 0%, transparent 100%);
+  animation: congratsParticles 3s ease-in-out infinite;
+}
+@keyframes congratsParticles {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.15); }
+}
+
+/* Главный блок контента — выезжает с upscale */
+.congrats-content {
+  position: relative;
+  max-width: 420px;
+  width: 100%;
+  background: linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+  border: 2px solid var(--congrats-color, #FFA940);
+  border-radius: 20px;
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow:
+    0 0 40px var(--congrats-glow, rgba(255, 169, 64, 0.5)),
+    inset 0 0 30px rgba(255, 169, 64, 0.08);
+  transform: scale(0.5) rotate(-3deg);
+  opacity: 0;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity 0.4s ease;
+}
+.congrats-overlay.show .congrats-content {
+  transform: scale(1) rotate(0deg);
+  opacity: 1;
+}
+
+/* Ультра — красная рамка */
+.congrats-overlay[data-rarity="ultralegendary"] .congrats-content {
+  border-color: #FF3A55;
+}
+
+/* Заголовок */
+.congrats-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  letter-spacing: 0.10em;
+  color: var(--congrats-color, #FFA940);
+  text-shadow: 0 0 20px var(--congrats-glow, rgba(255, 169, 64, 0.7));
+  margin-bottom: 6px;
+  animation: congratsTitlePulse 1.5s ease-in-out infinite;
+}
+@keyframes congratsTitlePulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+
+.congrats-subtitle {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  color: var(--text-2);
+  letter-spacing: 0.04em;
+  margin-bottom: 20px;
+}
+
+/* Карточка в центре */
+.congrats-card-wrap {
+  position: relative;
+  width: 220px;
+  height: 110px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.congrats-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+.congrats-card svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 24px var(--congrats-glow, rgba(255, 169, 64, 0.8)));
+  animation: congratsCardFloat 3s ease-in-out infinite;
+}
+@keyframes congratsCardFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+/* Расходящиеся лучи за карточкой */
+.congrats-rays {
+  position: absolute;
+  inset: -30px;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    var(--congrats-glow, rgba(255, 169, 64, 0.35)) 20deg,
+    transparent 60deg,
+    transparent 120deg,
+    var(--congrats-glow, rgba(255, 169, 64, 0.35)) 140deg,
+    transparent 180deg,
+    transparent 240deg,
+    var(--congrats-glow, rgba(255, 169, 64, 0.35)) 260deg,
+    transparent 300deg,
+    transparent 360deg
+  );
+  filter: blur(8px);
+  animation: congratsRays 8s linear infinite;
+  z-index: 1;
+  opacity: 0.7;
+}
+@keyframes congratsRays {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.congrats-nft-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  color: var(--text-0);
+  margin-bottom: 12px;
+}
+
+.congrats-message {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.4;
+  margin-bottom: 22px;
+}
+
+.congrats-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--congrats-color, #FFA940), var(--congrats-color-dark, #FF7600));
+  color: #1a1a1a;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 17px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+.congrats-btn:active {
+  transform: scale(0.97);
+}
+.congrats-btn:hover {
+  box-shadow: 0 0 24px var(--congrats-glow, rgba(255, 169, 64, 0.6));
+}
+
 /* ─────────── Утилитки ─────────── */
 .hidden { display: none !important; }
 </style>
@@ -2510,6 +2697,22 @@ body::after {
 <!-- Modal с подробностями -->
 <div class="modal-back" id="modal">
   <div class="modal" id="modalCard"></div>
+</div>
+
+<!-- v143: Поздравительная модалка для Legendary/Ultra покупок -->
+<div class="congrats-overlay" id="congrats-modal">
+  <div class="congrats-bg-particles"></div>
+  <div class="congrats-content">
+    <div class="congrats-title">🎉 ПОЗДРАВЛЯЕМ!</div>
+    <div class="congrats-subtitle" id="congratsSubtitle">Ты получил легендарную NFT</div>
+    <div class="congrats-card-wrap">
+      <div class="congrats-card" id="congratsCardVis"></div>
+      <div class="congrats-rays"></div>
+    </div>
+    <div class="congrats-nft-name" id="congratsNftName">—</div>
+    <div class="congrats-message">Продолжай играть дальше и развиваться!</div>
+    <button class="congrats-btn" id="congratsBtn">ОК</button>
+  </div>
 </div>
 
 <!-- Toast для уведомлений -->
@@ -3609,6 +3812,15 @@ async function buyNft(id) {
     await loadMarket();  // тираж обновится в МАРКЕТЕ
     if (state.tab === 'my')     showMy();
     if (state.tab === 'market') showMarket();
+    // v143: поздравительная модалка для Legendary/Ultra
+    if (r.rarity === 'legendary' || r.rarity === 'ultralegendary') {
+      // Найдём max_supply из каталога-маркета
+      const catItem = (state.marketItems || []).find(x => x.id === r.nft_id);
+      const maxSupply = catItem ? catItem.max_supply : null;
+      setTimeout(() => {
+        showCongratsModal(r.rarity, r.weapon, r.serial, maxSupply);
+      }, 400);
+    }
   } else if (r.error === 'not_for_sale') {
     showToast(t('not_for_sale'));
   } else if (r.error === 'insufficient_funds') {
@@ -3628,6 +3840,60 @@ function showToast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
 }
+
+// v143: Поздравительная модалка для Legendary/Ultra покупок
+function showCongratsModal(rarity, weapon, serial, max_supply) {
+  if (rarity !== 'legendary' && rarity !== 'ultralegendary') return;
+
+  const overlay = document.getElementById('congrats-modal');
+  if (!overlay) return;
+
+  // Палитра по редкости
+  const isUltra = rarity === 'ultralegendary';
+  const palette = isUltra
+    ? { col: '#FF3A55', dark: '#CC2040', glow: 'rgba(255, 58, 85, 0.7)' }
+    : { col: '#FFA940', dark: '#FF7600', glow: 'rgba(255, 169, 64, 0.7)' };
+
+  // Устанавливаем CSS-переменные
+  overlay.style.setProperty('--congrats-color', palette.col);
+  overlay.style.setProperty('--congrats-color-dark', palette.dark);
+  overlay.style.setProperty('--congrats-glow', palette.glow);
+  overlay.setAttribute('data-rarity', rarity);
+
+  // Подзаголовок
+  const subtitle = isUltra
+    ? 'Ты получил УЛЬТРА ЛЕГЕНДАРНУЮ NFT'
+    : 'Ты получил легендарную NFT';
+  document.getElementById('congratsSubtitle').textContent = subtitle;
+
+  // Имя NFT
+  const supply = max_supply ? `#${serial}/${max_supply}` : `#${serial}`;
+  document.getElementById('congratsNftName').textContent = `${weapon || '—'} ${supply}`;
+
+  // SVG оружия в центре
+  const svg = getWeaponSVG(weapon, rarity);
+  document.getElementById('congratsCardVis').innerHTML = svg;
+
+  // Показываем
+  overlay.classList.add('show');
+
+  // Хаптика
+  try {
+    if (isUltra) tg.HapticFeedback.notificationOccurred('success');
+    else         tg.HapticFeedback.impactOccurred('heavy');
+  } catch(e) {}
+}
+
+function closeCongratsModal() {
+  const overlay = document.getElementById('congrats-modal');
+  if (overlay) overlay.classList.remove('show');
+}
+
+// Хендлеры закрытия
+document.getElementById('congratsBtn').addEventListener('click', closeCongratsModal);
+document.getElementById('congrats-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'congrats-modal') closeCongratsModal();
+});
 
 // ═══════════════════════════════════════════════════════════
 // Tabs
@@ -4199,6 +4465,16 @@ async function buyListing(listingId) {
     await loadMy();
     await loadP2P();
     if (state.tab === 'p2p') renderP2P();
+    // v143: поздравительная модалка для Legendary/Ultra
+    if (r.rarity === 'legendary' || r.rarity === 'ultralegendary') {
+      // Найдём max_supply из листингов или из marketItems
+      const m = (state.p2pData && state.p2pData.items || []).find(x => x.nft_id === r.nft_id);
+      const catItem = (state.marketItems || []).find(x => x.id === r.nft_id);
+      const maxSupply = (m && m.max_supply) || (catItem && catItem.max_supply) || null;
+      setTimeout(() => {
+        showCongratsModal(r.rarity, r.weapon, r.serial, maxSupply);
+      }, 400);
+    }
   } else {
     showToast(r.message || r.error || 'Ошибка');
   }
