@@ -365,21 +365,53 @@ body::after {
 }
 .tab {
   flex: 1;
-  padding: 12px 4px;
+  padding: 9px 2px 7px;
   text-align: center;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 13px;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   color: var(--text-2);
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.22s ease;
   position: relative;
   white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-height: 56px;
+}
+.tab-icon {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  transition: all 0.22s ease;
+  filter: drop-shadow(0 0 0 transparent);
+  pointer-events: none;
+}
+.tab-label {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  opacity: 0.85;
+  transition: all 0.22s ease;
+  pointer-events: none;
 }
 .tab:not(:last-child) { border-right: 1px solid var(--line); }
+.tab:hover {
+  color: var(--text-1);
+}
 .tab.active {
   color: var(--accent);
-  background: linear-gradient(180deg, rgba(255, 169, 64, 0.12), rgba(255, 169, 64, 0.04));
+  background: linear-gradient(180deg, rgba(255, 169, 64, 0.14), rgba(255, 169, 64, 0.04));
+}
+.tab.active .tab-icon {
+  filter: drop-shadow(0 0 8px var(--accent));
+  stroke-width: 2;
+  transform: scale(1.08);
+}
+.tab.active .tab-label {
+  opacity: 1;
+  text-shadow: 0 0 6px rgba(255, 169, 64, 0.5);
 }
 .tab.active::after {
   content: '';
@@ -2579,8 +2611,486 @@ body::after {
   box-shadow: 0 0 24px var(--congrats-glow, rgba(255, 169, 64, 0.6));
 }
 
-/* ─────────── Утилитки ─────────── */
-.hidden { display: none !important; }
+/* ═══════════════════════════════════════════════════════════
+   v144 — Вкладка КРАФТ
+   ═══════════════════════════════════════════════════════════ */
+.craft-container {
+  padding: 0 16px 80px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.craft-header {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.craft-header-info { flex: 1; }
+.craft-header-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  color: var(--text-0);
+  margin-bottom: 4px;
+}
+.craft-header-sub {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.craft-limit-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  background: var(--accent);
+  color: #1a1a1a;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.craft-limit-badge.warning {
+  background: rgba(255, 107, 107, 0.2);
+  color: #FF6B6B;
+}
+
+/* Осколки */
+.shards-block {
+  background: linear-gradient(135deg, rgba(91,169,255,0.08), rgba(185,111,255,0.08));
+  border: 1px solid rgba(91, 169, 255, 0.3);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.shards-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  color: var(--text-0);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.shards-row {
+  display: flex;
+  gap: 8px;
+}
+.shard-item {
+  flex: 1;
+  text-align: center;
+  background: rgba(0,0,0,0.3);
+  padding: 10px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+.shard-item[data-tier="common"] { border-color: rgba(200,204,209,0.4); }
+.shard-item[data-tier="rare"]   { border-color: rgba(91,169,255,0.5); }
+.shard-item[data-tier="legendary"] { border-color: rgba(255,169,64,0.6); }
+.shard-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  color: var(--accent);
+  font-weight: 600;
+  line-height: 1;
+}
+.shard-item[data-tier="common"] .shard-count { color: #c8ccd1; }
+.shard-item[data-tier="rare"] .shard-count { color: #5BA9FF; }
+.shard-item[data-tier="legendary"] .shard-count { color: #FFA940; }
+.shard-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  color: var(--text-2);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Карточки рецептов */
+.recipe-card {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s ease, transform 0.15s ease;
+}
+.recipe-card[data-target="epic"]      { border-color: rgba(185,111,255,0.4); }
+.recipe-card[data-target="legendary"] { border-color: rgba(255,169,64,0.5); }
+.recipe-card[data-target="ultralegendary"] {
+  border-color: rgba(255,58,85,0.6);
+  background: linear-gradient(180deg, var(--bg-1), rgba(255,58,85,0.04));
+}
+
+.recipe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.recipe-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  color: var(--text-0);
+}
+.recipe-chance {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+.recipe-chance[data-tier="epic"]      { background: rgba(185,111,255,0.2); color: #B96FFF; }
+.recipe-chance[data-tier="legendary"] { background: rgba(255,169,64,0.2); color: #FFA940; }
+.recipe-chance[data-tier="ultralegendary"] { background: rgba(255,58,85,0.25); color: #FF6B7E; }
+
+.recipe-ingredients {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  color: var(--text-2);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+.recipe-ingredients .ing {
+  display: inline-block;
+  padding: 2px 8px;
+  margin: 2px 4px 2px 0;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 12px;
+}
+.ing[data-rarity="common"]    { background: rgba(200,204,209,0.15); color: #c8ccd1; }
+.ing[data-rarity="rare"]      { background: rgba(91,169,255,0.15); color: #5BA9FF; }
+.ing[data-rarity="epic"]      { background: rgba(185,111,255,0.15); color: #B96FFF; }
+.ing[data-rarity="legendary"] { background: rgba(255,169,64,0.15); color: #FFA940; }
+
+.recipe-cost {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-2);
+  margin-bottom: 12px;
+}
+.recipe-cost .num { color: var(--accent); }
+
+.recipe-actions {
+  display: flex;
+  gap: 8px;
+}
+.recipe-btn {
+  flex: 1;
+  padding: 11px 14px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+  white-space: nowrap;
+}
+.recipe-btn:active { transform: scale(0.96); }
+.recipe-btn.primary {
+  background: var(--accent);
+  color: #1a1a1a;
+  font-weight: 600;
+}
+.recipe-btn.secondary {
+  background: var(--bg-2);
+  color: var(--text-1);
+  border: 1px solid var(--line);
+}
+.recipe-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(50%);
+}
+
+/* Модалка выбора NFT для крафта */
+.craft-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  z-index: 400;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px 16px;
+  overflow-y: auto;
+}
+.craft-modal-overlay.show {
+  display: flex;
+}
+.craft-modal {
+  width: 100%;
+  max-width: 500px;
+  background: var(--bg-1);
+  border: 1.5px solid var(--accent);
+  border-radius: 16px;
+  padding: 20px;
+  margin: auto 0;
+}
+.craft-modal-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+  color: var(--accent);
+}
+.craft-modal-sub {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  color: var(--text-2);
+  margin-bottom: 16px;
+}
+.craft-pick-group {
+  margin-bottom: 14px;
+}
+.craft-pick-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 12px;
+  color: var(--text-1);
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  letter-spacing: 0.04em;
+}
+.craft-pick-label .picked {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent);
+}
+.craft-pick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 6px;
+}
+.craft-pick-item {
+  position: relative;
+  background: var(--bg-2);
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  padding: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.12s ease;
+  text-align: center;
+  aspect-ratio: 1.2 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.craft-pick-item:active { transform: scale(0.94); }
+.craft-pick-item.selected {
+  border-color: var(--accent);
+  background: rgba(255,169,64,0.12);
+  box-shadow: 0 0 12px rgba(255,169,64,0.3);
+}
+.craft-pick-item.selected::before {
+  content: '✓';
+  position: absolute;
+  top: 2px; right: 4px;
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 700;
+}
+.craft-pick-item.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+.craft-pick-item svg {
+  width: 100%;
+  height: 36px;
+  max-height: 36px;
+}
+.craft-pick-item .pick-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+  margin-top: 2px;
+}
+.craft-pick-item .pick-serial {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: var(--text-2);
+}
+.craft-pick-empty {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  color: var(--text-2);
+  padding: 12px;
+  text-align: center;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+}
+
+.craft-modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+.craft-modal-actions button {
+  flex: 1;
+  padding: 13px;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.craft-confirm {
+  background: var(--accent);
+  color: #1a1a1a;
+  font-weight: 600;
+}
+.craft-confirm:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.craft-cancel-btn {
+  background: var(--bg-2);
+  color: var(--text-1);
+  border: 1px solid var(--line) !important;
+}
+
+/* Результат крафта — модалка */
+.craft-result-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  backdrop-filter: blur(10px);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.craft-result-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.craft-result {
+  max-width: 380px;
+  width: 100%;
+  background: var(--bg-1);
+  border: 2px solid var(--accent);
+  border-radius: 16px;
+  padding: 26px 22px;
+  text-align: center;
+  transform: scale(0.7);
+  opacity: 0;
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+}
+.craft-result-overlay.show .craft-result {
+  transform: scale(1);
+  opacity: 1;
+}
+.craft-result.fail {
+  border-color: #FF6B6B;
+}
+.craft-result-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  color: var(--accent);
+}
+.craft-result.fail .craft-result-title {
+  color: #FF6B6B;
+}
+.craft-result-svg {
+  width: 200px;
+  height: 100px;
+  margin: 14px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.craft-result-svg svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 18px var(--card-rarity-glow, rgba(255,169,64,0.7)));
+  animation: weaponBreathe 2.5s ease-in-out infinite;
+}
+.craft-result-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 17px;
+  color: var(--text-0);
+  margin-bottom: 6px;
+}
+.craft-result-meta {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  color: var(--text-2);
+  margin-bottom: 16px;
+}
+.craft-result-shards {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  color: #5BA9FF;
+  padding: 12px;
+  background: rgba(91,169,255,0.1);
+  border-radius: 10px;
+  margin: 12px 0;
+}
+.craft-result-btn {
+  width: 100%;
+  padding: 13px;
+  background: var(--accent);
+  color: #1a1a1a;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  font-weight: 600;
+}
+.craft-result-roll {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-2);
+  margin-top: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   v144 — Эффекты для всех редкостей (улучшение existing)
+   ═══════════════════════════════════════════════════════════ */
+/* Common — лёгкое мерцание уже есть, добавим серый flick на фоне */
+.card[data-rarity="common"] .card-weapon-vis::after,
+.modal-weapon-vis[data-rarity="common"]::after,
+.showcase-slot[data-rarity="common"] .mini-weapon::after {
+  /* Скиплем — у common уже есть индивидуальный data-id эффект для M1014/G18 */
+}
+
+/* Эффект для всех epic-карт (M1887 уже имеет flash) — добавим фиолетовый shimmer */
+.card[data-rarity="epic"][data-id="ff_m1887"]::before,
+.modal-weapon-vis[data-rarity="epic"][data-id="ff_m1887"]::before,
+.showcase-slot[data-rarity="epic"][data-id="ff_m1887"] .mini-weapon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 40%, rgba(185,111,255,0.18) 50%, transparent 60%);
+  background-size: 250% 100%;
+  animation: epicShimmer 4s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes epicShimmer {
+  0%   { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+
 </style>
 </head>
 <body>
@@ -2646,10 +3156,45 @@ body::after {
   </header>
 
   <div class="tabs">
-    <div class="tab active" data-tab="my">МОИ</div>
-    <div class="tab" data-tab="market">МАРКЕТ</div>
-    <div class="tab" data-tab="p2p">P2P</div>
-    <div class="tab" data-tab="profile">ПРОФИЛЬ</div>
+    <div class="tab active" data-tab="my">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+      </svg>
+      <span class="tab-label">МОИ</span>
+    </div>
+    <div class="tab" data-tab="market">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17"/>
+        <circle cx="9" cy="20" r="1.5"/>
+        <circle cx="17" cy="20" r="1.5"/>
+      </svg>
+      <span class="tab-label">МАРКЕТ</span>
+    </div>
+    <div class="tab" data-tab="p2p">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 7h13l-3-3"/>
+        <path d="M17 17H4l3 3"/>
+      </svg>
+      <span class="tab-label">P2P</span>
+    </div>
+    <div class="tab" data-tab="craft">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 3h6"/>
+        <path d="M10 3v6.5L4.5 18a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 9.5V3"/>
+        <path d="M7 14h10"/>
+      </svg>
+      <span class="tab-label">КРАФТ</span>
+    </div>
+    <div class="tab" data-tab="profile">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+      </svg>
+      <span class="tab-label">ПРОФИЛЬ</span>
+    </div>
   </div>
 
   <!-- Контейнер для карт (рендерится через JS) -->
@@ -2697,6 +3242,31 @@ body::after {
 <!-- Modal с подробностями -->
 <div class="modal-back" id="modal">
   <div class="modal" id="modalCard"></div>
+</div>
+
+<!-- v144: Модалка выбора NFT для крафта -->
+<div class="craft-modal-overlay" id="craft-modal">
+  <div class="craft-modal">
+    <div class="craft-modal-title" id="craftModalTitle">КРАФТ</div>
+    <div class="craft-modal-sub" id="craftModalSub">Выбери NFT для крафта</div>
+    <div id="craftPickGroups"></div>
+    <div class="craft-modal-actions">
+      <button class="craft-cancel-btn" id="craftCancelBtn">ОТМЕНА</button>
+      <button class="craft-confirm" id="craftConfirmBtn">КРАФТИТЬ</button>
+    </div>
+  </div>
+</div>
+
+<!-- v144: Модалка результата крафта -->
+<div class="craft-result-overlay" id="craft-result-modal">
+  <div class="craft-result" id="craftResultCard">
+    <div class="craft-result-title" id="craftResultTitle">УСПЕХ!</div>
+    <div class="craft-result-svg" id="craftResultSvg"></div>
+    <div class="craft-result-name" id="craftResultName">—</div>
+    <div class="craft-result-meta" id="craftResultMeta">—</div>
+    <div class="craft-result-roll" id="craftResultRoll"></div>
+    <button class="craft-result-btn" id="craftResultBtn">ОК</button>
+  </div>
 </div>
 
 <!-- v143: Поздравительная модалка для Legendary/Ultra покупок -->
@@ -2836,13 +3406,15 @@ async function apiPost(path, body) {
 // State + render
 // ═══════════════════════════════════════════════════════════
 let state = {
-  tab: 'my',           // 'my' | 'market' | 'p2p' | 'profile'
+  tab: 'my',           // 'my' | 'market' | 'p2p' | 'craft' | 'profile'
   myItems: null,
   marketItems: null,
   ownedIds: new Set(),  // быстрый lookup для маркета
   me: null,             // /casino/me ответ
   profile: null,        // /casino/profile/me ответ
   p2pData: null,        // /casino/p2p/list ответ
+  craftData: null,      // /casino/craft/info ответ
+  craftSelection: null, // { target_tier, selected: [...] }
 };
 
 function renderEmpty(titleKey, subKey, icon = '🎴') {
@@ -3908,6 +4480,7 @@ document.querySelectorAll('.tab').forEach(tabEl => {
     if      (state.tab === 'my')      showMy();
     else if (state.tab === 'market')  showMarket();
     else if (state.tab === 'p2p')     showP2P();
+    else if (state.tab === 'craft')   showCraft();
     else if (state.tab === 'profile') showProfile();
   });
 });
@@ -4585,6 +5158,395 @@ document.getElementById('sell-modal').addEventListener('click', (e) => {
 });
 
 // v142: Загрузочный экран с этапами + плавное скрытие
+// ═══════════════════════════════════════════════════════════
+// v144 — КРАФТ NFT
+// ═══════════════════════════════════════════════════════════
+const RARITY_LABEL_RU = {
+  common: 'Common', rare: 'Rare', epic: 'Epic',
+  legendary: 'Legendary', ultralegendary: 'Ultra Legendary',
+};
+
+async function loadCraft() {
+  const r = await api('/casino/craft/info');
+  if (!r.ok) return null;
+  state.craftData = r;
+  return r;
+}
+
+async function showCraft() {
+  setContent(`<div class="craft-container">
+    <div class="skel" style="height: 70px; border-radius: 12px; margin-bottom: 16px;"></div>
+    <div class="skel" style="height: 90px; border-radius: 12px; margin-bottom: 12px;"></div>
+    <div class="skel" style="height: 140px; border-radius: 12px; margin-bottom: 12px;"></div>
+    <div class="skel" style="height: 140px; border-radius: 12px; margin-bottom: 12px;"></div>
+    <div class="skel" style="height: 140px; border-radius: 12px;"></div>
+  </div>`);
+  await loadCraft();
+  if (state.tab === 'craft') renderCraft();
+}
+
+function renderCraft() {
+  const d = state.craftData || {};
+  const recipes = d.recipes || {};
+  const totals = d.shards_totals || { common: 0, rare: 0, legendary: 0 };
+  const craftsLeft = (d.daily_limit || 5) - (d.crafts_today || 0);
+
+  // Шапка
+  let header = `
+    <div class="craft-header">
+      <div class="craft-header-info">
+        <div class="craft-header-title">⚗️ ФАБРИКА КРАФТА</div>
+        <div class="craft-header-sub">Объединяй NFT для шанса получить более редкие</div>
+      </div>
+      <div class="craft-limit-badge ${craftsLeft <= 0 ? 'warning' : ''}">${craftsLeft}/${d.daily_limit}</div>
+    </div>`;
+
+  // Блок осколков
+  header += `
+    <div class="shards-block">
+      <div class="shards-title">💎 Осколки <span style="font-weight: 400; font-size: 10px; color: var(--text-2); letter-spacing: 0; font-family: 'Rajdhani', sans-serif;">(истекают через 30 дней)</span></div>
+      <div class="shards-row">
+        <div class="shard-item" data-tier="common">
+          <div class="shard-count">${totals.common || 0}</div>
+          <div class="shard-label">Common</div>
+        </div>
+        <div class="shard-item" data-tier="rare">
+          <div class="shard-count">${totals.rare || 0}</div>
+          <div class="shard-label">Rare</div>
+        </div>
+        <div class="shard-item" data-tier="legendary">
+          <div class="shard-count">${totals.legendary || 0}</div>
+          <div class="shard-label">Legendary</div>
+        </div>
+      </div>
+    </div>`;
+
+  // 3 рецепта
+  let body = '';
+  for (const targetTier of ['epic', 'legendary', 'ultralegendary']) {
+    const r = recipes[targetTier];
+    if (!r) continue;
+    body += renderRecipe(targetTier, r, d, totals);
+  }
+
+  setContent(`<div class="craft-container">${header}${body}</div>`);
+
+  // Хендлеры кнопок
+  document.querySelectorAll('[data-craft-start]').forEach(b => {
+    b.addEventListener('click', () => openCraftPicker(b.dataset.craftStart));
+  });
+  document.querySelectorAll('[data-craft-guaranteed]').forEach(b => {
+    b.addEventListener('click', () => doGuaranteedCraft(b.dataset.craftGuaranteed));
+  });
+}
+
+function renderRecipe(targetTier, r, d, totals) {
+  const labelTarget = RARITY_LABEL_RU[targetTier] || targetTier;
+  const chance = Math.round((r.success_chance || 0) * 100);
+  const costTokens = (r.cost_tokens || 0).toLocaleString('ru-RU').replace(/\s/g, '\u202F');
+
+  // Проверка достаточно ли NFT у юзера
+  const nfts = d.nfts_by_rarity || {};
+  const hasCommon    = (nfts.common || []).length >= (r.requires_common || 0);
+  const hasRare      = (nfts.rare || []).length >= (r.requires_rare || 0);
+  const hasEpic      = (nfts.epic || []).length >= (r.requires_epic || 0);
+  const hasLegendary = (nfts.legendary || []).length >= (r.requires_legendary || 0);
+  const hasMaterials = hasCommon && hasRare && hasEpic && hasLegendary;
+  const hasTokens = (d.balance || 0) >= (r.cost_tokens || 0);
+  const craftsLeft = (d.daily_limit || 5) - (d.crafts_today || 0);
+  const canCraft = hasMaterials && hasTokens && craftsLeft > 0;
+
+  // Осколки для гарантии
+  const shardTier = r.shards_tier;
+  const shardsHave = totals[shardTier] || 0;
+  const shardsNeed = r.guaranteed_cost || 0;
+  const canGuarantee = shardsHave >= shardsNeed && craftsLeft > 0;
+
+  // Ингредиенты
+  let ing = '';
+  if (r.requires_common)    ing += `<span class="ing" data-rarity="common">${r.requires_common}× Common</span>`;
+  if (r.requires_rare)      ing += `<span class="ing" data-rarity="rare">${r.requires_rare}× Rare</span>`;
+  if (r.requires_epic)      ing += `<span class="ing" data-rarity="epic">${r.requires_epic}× Epic</span>`;
+  if (r.requires_legendary) ing += `<span class="ing" data-rarity="legendary">${r.requires_legendary}× Legendary</span>`;
+
+  // Сколько у юзера сейчас
+  let userHas = `Есть у тебя: `;
+  if (r.requires_common)    userHas += `Common ${nfts.common?.length || 0}/${r.requires_common} · `;
+  if (r.requires_rare)      userHas += `Rare ${nfts.rare?.length || 0}/${r.requires_rare} · `;
+  if (r.requires_epic)      userHas += `Epic ${nfts.epic?.length || 0}/${r.requires_epic} · `;
+  if (r.requires_legendary) userHas += `Legendary ${nfts.legendary?.length || 0}/${r.requires_legendary} · `;
+  userHas = userHas.replace(/ · $/, '');
+
+  return `
+    <div class="recipe-card" data-target="${targetTier}">
+      <div class="recipe-header">
+        <div class="recipe-title">→ ${labelTarget.toUpperCase()}</div>
+        <div class="recipe-chance" data-tier="${targetTier}">${chance}%</div>
+      </div>
+      <div class="recipe-ingredients">${ing}</div>
+      <div class="recipe-cost">
+        Комиссия: <span class="num">${costTokens}</span> токенов<br/>
+        ${userHas}
+      </div>
+      <div class="recipe-actions">
+        <button class="recipe-btn primary" data-craft-start="${targetTier}" ${canCraft ? '' : 'disabled'}>
+          КРАФТИТЬ
+        </button>
+        <button class="recipe-btn secondary" data-craft-guaranteed="${targetTier}" ${canGuarantee ? '' : 'disabled'}>
+          💎 ${shardsHave}/${shardsNeed}
+        </button>
+      </div>
+    </div>`;
+}
+
+// Picker модалка
+let craftPickerState = null;
+
+function openCraftPicker(targetTier) {
+  const d = state.craftData || {};
+  const recipe = (d.recipes || {})[targetTier];
+  if (!recipe) return;
+
+  craftPickerState = {
+    target_tier: targetTier,
+    needed: {
+      common:    recipe.requires_common || 0,
+      rare:      recipe.requires_rare || 0,
+      epic:      recipe.requires_epic || 0,
+      legendary: recipe.requires_legendary || 0,
+    },
+    selected: {
+      common: [], rare: [], epic: [], legendary: []
+    },
+  };
+
+  const labelTarget = RARITY_LABEL_RU[targetTier] || targetTier;
+  document.getElementById('craftModalTitle').textContent = `КРАФТ → ${labelTarget.toUpperCase()}`;
+  document.getElementById('craftModalSub').textContent =
+    `Шанс успеха: ${Math.round((recipe.success_chance || 0) * 100)}% · комиссия: ${(recipe.cost_tokens || 0).toLocaleString('ru-RU')} токенов`;
+
+  renderCraftPickGroups();
+  document.getElementById('craft-modal').classList.add('show');
+}
+
+function renderCraftPickGroups() {
+  if (!craftPickerState) return;
+  const d = state.craftData || {};
+  const nfts = d.nfts_by_rarity || {};
+  let html = '';
+
+  for (const rarity of ['common', 'rare', 'epic', 'legendary']) {
+    const needed = craftPickerState.needed[rarity] || 0;
+    if (needed === 0) continue;
+    const cards = nfts[rarity] || [];
+    const picked = craftPickerState.selected[rarity].length;
+    const labelRarity = RARITY_LABEL_RU[rarity];
+    html += `
+      <div class="craft-pick-group" data-rarity="${rarity}">
+        <div class="craft-pick-label">
+          <span>${labelRarity.toUpperCase()} — выбери ${needed}</span>
+          <span class="picked">${picked}/${needed}</span>
+        </div>`;
+    if (cards.length === 0) {
+      html += `<div class="craft-pick-empty">Нет NFT этой редкости</div>`;
+    } else {
+      html += `<div class="craft-pick-grid">`;
+      for (const card of cards) {
+        const svg = getWeaponSVG(card.weapon, card.rarity);
+        const key = `${card.id}-${card.serial}`;
+        const isSelected = craftPickerState.selected[rarity].some(s => s.nft_id === card.id && s.serial === card.serial);
+        const isLimit = !isSelected && picked >= needed;
+        const cls = `craft-pick-item ${isSelected ? 'selected' : ''} ${isLimit ? 'disabled' : ''}`;
+        html += `
+          <div class="${cls}" data-pick="${rarity}|${card.id}|${card.serial}">
+            ${svg}
+            <div class="pick-name">${escapeHtml(card.weapon)}</div>
+            <div class="pick-serial">#${card.serial}</div>
+          </div>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+
+  document.getElementById('craftPickGroups').innerHTML = html;
+
+  // Хендлеры тапа
+  document.querySelectorAll('[data-pick]').forEach(el => {
+    el.addEventListener('click', () => {
+      const [rarity, nftId, serial] = el.dataset.pick.split('|');
+      toggleCraftPick(rarity, nftId, parseInt(serial));
+    });
+  });
+
+  // Обновляем кнопку подтверждения
+  const totalNeeded = Object.values(craftPickerState.needed).reduce((a, b) => a + b, 0);
+  const totalPicked = Object.values(craftPickerState.selected).reduce((a, arr) => a + arr.length, 0);
+  const confirmBtn = document.getElementById('craftConfirmBtn');
+  confirmBtn.disabled = (totalNeeded !== totalPicked);
+}
+
+function toggleCraftPick(rarity, nftId, serial) {
+  if (!craftPickerState) return;
+  const needed = craftPickerState.needed[rarity] || 0;
+  const idx = craftPickerState.selected[rarity].findIndex(s => s.nft_id === nftId && s.serial === serial);
+  if (idx >= 0) {
+    craftPickerState.selected[rarity].splice(idx, 1);
+  } else {
+    if (craftPickerState.selected[rarity].length >= needed) {
+      showToast(`Уже выбрано ${needed} ${rarity}`);
+      return;
+    }
+    craftPickerState.selected[rarity].push({ nft_id: nftId, serial });
+  }
+  try { tg.HapticFeedback.selectionChanged(); } catch(e) {}
+  renderCraftPickGroups();
+}
+
+function closeCraftPicker() {
+  document.getElementById('craft-modal').classList.remove('show');
+  craftPickerState = null;
+}
+
+async function doCraft() {
+  if (!craftPickerState) return;
+  const totalNeeded = Object.values(craftPickerState.needed).reduce((a, b) => a + b, 0);
+  const totalPicked = Object.values(craftPickerState.selected).reduce((a, arr) => a + arr.length, 0);
+  if (totalNeeded !== totalPicked) {
+    showToast('Выбери все нужные NFT');
+    return;
+  }
+
+  // Собираем плоский список
+  const flat = [];
+  for (const rarity of ['common', 'rare', 'epic', 'legendary']) {
+    for (const s of craftPickerState.selected[rarity]) {
+      flat.push({ nft_id: s.nft_id, serial: s.serial });
+    }
+  }
+
+  if (!confirm(`Запустить крафт? NFT сгорят независимо от результата.`)) return;
+
+  const btn = document.getElementById('craftConfirmBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-ring"></span>';
+
+  try { tg.HapticFeedback.impactOccurred('heavy'); } catch(e) {}
+
+  const r = await apiPost('/casino/craft/do', {
+    target_tier: craftPickerState.target_tier,
+    selected: flat,
+  });
+
+  btn.disabled = false; btn.textContent = 'КРАФТИТЬ';
+
+  if (!r.ok) {
+    showToast(r.message || r.error || 'Ошибка');
+    return;
+  }
+
+  closeCraftPicker();
+
+  // Обновляем баланс
+  if (typeof r.new_balance === 'number') {
+    if (state.me) state.me.balance = r.new_balance;
+    document.getElementById('balanceVal').textContent = fmtTokens(r.new_balance);
+    flashBalance();
+  }
+
+  // Сброс кэшей
+  state.myItems = null;
+  state.craftData = null;
+
+  // Показываем результат
+  showCraftResult(r);
+
+  // Обновляем коллекцию и крафт-вкладку
+  await loadMy();
+  await loadCraft();
+  if (state.tab === 'craft') renderCraft();
+}
+
+async function doGuaranteedCraft(targetTier) {
+  const d = state.craftData || {};
+  const recipe = (d.recipes || {})[targetTier];
+  if (!recipe) return;
+  if (!confirm(`Использовать ${recipe.guaranteed_cost} осколков для гарантированного крафта?`)) return;
+
+  try { tg.HapticFeedback.impactOccurred('medium'); } catch(e) {}
+
+  const r = await apiPost('/casino/craft/guaranteed', { target_tier: targetTier });
+  if (!r.ok) {
+    showToast(r.message || r.error || 'Ошибка');
+    return;
+  }
+  state.myItems = null;
+  state.craftData = null;
+  showCraftResult(r);
+  await loadMy();
+  await loadCraft();
+  if (state.tab === 'craft') renderCraft();
+}
+
+function showCraftResult(r) {
+  const overlay = document.getElementById('craft-result-modal');
+  const card = document.getElementById('craftResultCard');
+
+  if (r.result === 'success' || r.result === 'guaranteed') {
+    const rarity = r.rarity || 'common';
+    const isUltra = rarity === 'ultralegendary';
+    const palette = RARITY_PALETTE[rarity] || RARITY_PALETTE.common;
+
+    card.classList.remove('fail');
+    card.style.borderColor = palette.col;
+    card.style.setProperty('--card-rarity-glow', palette.col + 'b3');
+
+    document.getElementById('craftResultTitle').textContent = r.result === 'guaranteed' ? '💎 ГАРАНТИЯ!' : '🎉 УСПЕХ!';
+    document.getElementById('craftResultTitle').style.color = palette.col;
+
+    document.getElementById('craftResultSvg').innerHTML = getWeaponSVG(r.weapon, rarity);
+
+    const supply = r.max_supply ? `#${r.serial}/${r.max_supply}` : `#${r.serial}`;
+    document.getElementById('craftResultName').textContent = `${r.weapon} ${supply}`;
+    document.getElementById('craftResultMeta').textContent = RARITY_LABEL_RU[rarity] || rarity;
+
+    if (r.result === 'success') {
+      document.getElementById('craftResultRoll').textContent = `Бросок: ${r.roll} < ${r.chance}`;
+    } else {
+      document.getElementById('craftResultRoll').textContent = `Потрачено осколков: ${r.shards_spent} × ${r.shards_tier}`;
+    }
+
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+  } else if (r.result === 'fail' || r.result === 'fail_no_supply') {
+    card.classList.add('fail');
+    document.getElementById('craftResultTitle').textContent = '💔 ПРОВАЛ';
+    document.getElementById('craftResultTitle').style.color = '#FF6B6B';
+
+    document.getElementById('craftResultSvg').innerHTML = `<div style="font-size: 64px; opacity: 0.5;">💎</div>`;
+    document.getElementById('craftResultName').textContent = `+${r.shards} осколков`;
+    document.getElementById('craftResultMeta').textContent = `${r.shards_tier} · копи на гарантированный крафт`;
+    document.getElementById('craftResultRoll').textContent = `Бросок: ${r.roll} ≥ ${r.chance}`;
+
+    try { tg.HapticFeedback.notificationOccurred('error'); } catch(e) {}
+  }
+
+  overlay.classList.add('show');
+}
+
+function closeCraftResult() {
+  document.getElementById('craft-result-modal').classList.remove('show');
+}
+
+// Хендлеры модалок крафта
+document.getElementById('craftCancelBtn').addEventListener('click', closeCraftPicker);
+document.getElementById('craftConfirmBtn').addEventListener('click', doCraft);
+document.getElementById('craftResultBtn').addEventListener('click', closeCraftResult);
+document.getElementById('craft-result-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'craft-result-modal') closeCraftResult();
+});
+document.getElementById('craft-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'craft-modal') closeCraftPicker();
+});
+
 async function bootSequence() {
   const statusEl = document.getElementById('bootStatus');
   const setStatus = (txt) => { if (statusEl) statusEl.textContent = txt; };
