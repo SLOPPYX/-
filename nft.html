@@ -315,6 +315,46 @@ body::after {
   flex-direction: column;
   gap: 2px;
 }
+
+/* v149: Кнопка-вопрос в шапке (вызов гайда) */
+.hdr-help-btn {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  margin-left: 8px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--text-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+.hdr-help-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255, 169, 64, 0.08);
+}
+.hdr-help-btn:active {
+  transform: scale(0.92);
+}
+.hdr-help-btn svg {
+  width: 18px;
+  height: 18px;
+}
+@keyframes helpBtnPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 169, 64, 0.5); }
+  50%      { box-shadow: 0 0 0 8px rgba(255, 169, 64, 0); }
+}
+/* Первый раз — мигает чтобы юзер заметил */
+.hdr-help-btn.pulse {
+  animation: helpBtnPulse 2s ease-out 3;  /* 3 цикла */
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .hdr-stat-row {
   display: flex;
   align-items: baseline;
@@ -2542,6 +2582,321 @@ body::after {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   v149 — Модалка гайда / инструкции
+   ═══════════════════════════════════════════════════════════ */
+.guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 450;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.guide-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.guide-content {
+  max-width: 560px;
+  width: 100%;
+  background: linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+  border: 2px solid var(--accent);
+  border-radius: 16px;
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 32px);
+  transform: scale(0.92) translateY(20px);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 40px rgba(255, 169, 64, 0.3);
+}
+.guide-overlay.show .guide-content {
+  transform: scale(1) translateY(0);
+}
+
+.guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.guide-header-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.guide-header-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--accent);
+}
+.guide-close {
+  width: 32px;
+  height: 32px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.guide-close:hover {
+  color: var(--text-0);
+  border-color: var(--accent);
+}
+.guide-close:active {
+  transform: scale(0.92);
+}
+
+.guide-body {
+  padding: 12px 20px 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+.guide-body::-webkit-scrollbar { width: 4px; }
+.guide-body::-webkit-scrollbar-thumb { background: var(--text-2); border-radius: 2px; }
+
+/* Раскрывающиеся секции */
+.guide-section {
+  margin: 10px 0;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+.guide-section[open] {
+  border-color: rgba(255, 169, 64, 0.4);
+}
+.guide-section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--text-0);
+  padding: 12px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  list-style: none;
+  transition: background 0.15s ease;
+  user-select: none;
+}
+.guide-section-title::-webkit-details-marker { display: none; }
+.guide-section-title:hover {
+  background: rgba(255, 169, 64, 0.06);
+}
+.guide-section-title::after {
+  content: '⌃';
+  margin-left: auto;
+  font-size: 18px;
+  color: var(--text-2);
+  transform: rotate(180deg);
+  transition: transform 0.25s ease;
+  font-family: 'Bebas Neue', sans-serif;
+}
+.guide-section[open] .guide-section-title::after {
+  transform: rotate(0deg);
+  color: var(--accent);
+}
+.guide-section-icon {
+  font-size: 16px;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.guide-section-content {
+  padding: 4px 14px 14px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-1);
+}
+.guide-section-content p {
+  margin: 6px 0;
+}
+.guide-section-content b {
+  color: var(--text-0);
+  font-weight: 600;
+}
+.guide-section-content ul,
+.guide-section-content ol {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+.guide-section-content li {
+  margin: 5px 0;
+}
+
+/* Сетка редкостей */
+.guide-rarity-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 10px;
+}
+.guide-rarity-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg-2);
+  border-radius: 6px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  color: var(--text-1);
+}
+.guide-rarity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+
+/* Сравнение МАРКЕТ/P2P */
+.guide-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.guide-compare-col {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+}
+.guide-compare-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.guide-compare-col ul {
+  font-size: 11px;
+  padding-left: 14px;
+}
+
+/* Рецепты крафта */
+.guide-recipe {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+.guide-recipe-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  color: var(--text-0);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.guide-chance {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 2px 8px;
+  background: rgba(255, 169, 64, 0.18);
+  color: var(--accent);
+  border-radius: 4px;
+}
+.guide-recipe-line {
+  font-size: 12px;
+  color: var(--text-1);
+  line-height: 1.4;
+}
+.guide-recipe-line.guide-fail {
+  color: #5BA9FF;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+/* Таблица осколков */
+.guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 12px;
+  font-family: 'Rajdhani', sans-serif;
+}
+.guide-table th,
+.guide-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.guide-table th {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+  font-size: 11px;
+}
+.guide-table td {
+  color: var(--text-1);
+}
+.guide-table td:last-child {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Подсказки */
+.guide-tips li {
+  margin: 6px 0;
+}
+
+/* Примечания */
+.guide-note {
+  background: rgba(91, 169, 255, 0.08);
+  border-left: 3px solid #5BA9FF;
+  padding: 10px 12px;
+  margin: 10px 0;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.guide-note.guide-warn {
+  background: rgba(255, 107, 107, 0.08);
+  border-left-color: #FF6B6B;
+}
+
+.guide-footer-note {
+  text-align: center;
+  padding: 16px 0 4px;
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  color: var(--text-1);
+}
+
+/* ═══════════════════════════════════════════════════════════
    v143 — Поздравительная модалка (Legendary/Ultra покупки)
    ═══════════════════════════════════════════════════════════ */
 .congrats-overlay {
@@ -3270,6 +3625,13 @@ body::after {
         <span class="hdr-stat-val" id="balanceVal">—</span>
       </div>
     </div>
+    <button class="hdr-help-btn" id="hdrHelpBtn" title="Гайд / Инструкция">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </button>
   </header>
 
   <div class="tabs">
@@ -3352,6 +3714,206 @@ body::after {
     </div>
     <div id="picker-body">
       <div class="picker-empty">Загрузка…</div>
+    </div>
+  </div>
+</div>
+
+<!-- v149: Модалка с гайдом / инструкцией -->
+<div class="guide-overlay" id="guide-modal">
+  <div class="guide-content">
+    <div class="guide-header">
+      <div class="guide-header-title">
+        <svg class="guide-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+        ГАЙД ПО NFT
+      </div>
+      <button class="guide-close" id="guideCloseBtn">✕</button>
+    </div>
+
+    <div class="guide-body" id="guideBody">
+
+      <!-- Раздел 1: Что такое NFT -->
+      <details class="guide-section" open>
+        <summary class="guide-section-title">
+          <span class="guide-section-icon">⬢</span>
+          <span>Что такое NFT в боте</span>
+        </summary>
+        <div class="guide-section-content">
+          <p>FF SLOPPYX NFT — это коллекция из <b>10 уникальных скинов оружия</b> из Free Fire. Каждая NFT имеет:</p>
+          <ul>
+            <li><b>Серийный номер</b> (#1, #2, ...) — эксклюзивный в рамках тиража</li>
+            <li><b>Редкость</b> — определяет ценность и эффекты</li>
+            <li><b>Тираж</b> — ограниченное количество (от 20 до 10000)</li>
+          </ul>
+          <div class="guide-rarity-grid">
+            <div class="guide-rarity-item" data-r="common">
+              <span class="guide-rarity-dot" style="background:#c8ccd1"></span>
+              <span>Common — 10 000 шт</span>
+            </div>
+            <div class="guide-rarity-item" data-r="rare">
+              <span class="guide-rarity-dot" style="background:#5BA9FF"></span>
+              <span>Rare — 5 000 шт</span>
+            </div>
+            <div class="guide-rarity-item" data-r="epic">
+              <span class="guide-rarity-dot" style="background:#B96FFF"></span>
+              <span>Epic — 1 000 шт</span>
+            </div>
+            <div class="guide-rarity-item" data-r="legendary">
+              <span class="guide-rarity-dot" style="background:#FFA940"></span>
+              <span>Legendary — 50 шт</span>
+            </div>
+            <div class="guide-rarity-item" data-r="ultra">
+              <span class="guide-rarity-dot" style="background:#FF3A55"></span>
+              <span>Ultra Legendary — 20 шт</span>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- Раздел 2: Как получить -->
+      <details class="guide-section">
+        <summary class="guide-section-title">
+          <span class="guide-section-icon">🎁</span>
+          <span>Как получить NFT</span>
+        </summary>
+        <div class="guide-section-content">
+          <p>4 способа получить новую NFT:</p>
+          <ol>
+            <li><b>Купить в МАРКЕТЕ</b> — официальный каталог. Цена растёт с тиражом</li>
+            <li><b>Купить у игроков</b> — вкладка P2P, цены определяют сами продавцы</li>
+            <li><b>Скрафтить</b> — объединить менее редкие NFT в более редкие</li>
+            <li><b>Накопить осколки</b> — при провалах крафта, обменять на гарантированную NFT</li>
+          </ol>
+        </div>
+      </details>
+
+      <!-- Раздел 3: Маркет vs P2P -->
+      <details class="guide-section">
+        <summary class="guide-section-title">
+          <span class="guide-section-icon">🛒</span>
+          <span>МАРКЕТ vs P2P — в чём разница</span>
+        </summary>
+        <div class="guide-section-content">
+          <div class="guide-compare">
+            <div class="guide-compare-col">
+              <div class="guide-compare-title">МАРКЕТ (каталог)</div>
+              <ul>
+                <li>Покупка <b>напрямую у бота</b></li>
+                <li>Цена <b>динамическая</b>: чем больше тираж распродан, тем дороже</li>
+                <li>Без комиссии</li>
+                <li>Можно купить <b>несколько копий</b> одной NFT (с разными серийниками)</li>
+              </ul>
+            </div>
+            <div class="guide-compare-col">
+              <div class="guide-compare-title">P2P (игроки)</div>
+              <ul>
+                <li>Покупка <b>у других юзеров</b></li>
+                <li>Цена <b>устанавливается продавцом</b> (в пределах 30%–500% от базовой)</li>
+                <li>Комиссия <b>7%</b> с продажи (берёт маркетплейс)</li>
+                <li>Лимит: <b>3 листинга в сутки</b> на юзера</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- Раздел 4: Крафт -->
+      <details class="guide-section">
+        <summary class="guide-section-title">
+          <span class="guide-section-icon">⚗️</span>
+          <span>Крафт NFT — рецепты и шансы</span>
+        </summary>
+        <div class="guide-section-content">
+          <p>Объединяй NFT для шанса получить более редкие. Все материалы <b>сгорают</b> независимо от результата.</p>
+
+          <div class="guide-recipe">
+            <div class="guide-recipe-title">→ EPIC <span class="guide-chance">30%</span></div>
+            <div class="guide-recipe-line">5 Common + 1 Rare · комиссия <b>500 000</b> токенов</div>
+            <div class="guide-recipe-line guide-fail">При провале: +1 Common-осколок</div>
+          </div>
+
+          <div class="guide-recipe">
+            <div class="guide-recipe-title">→ LEGENDARY <span class="guide-chance">20%</span></div>
+            <div class="guide-recipe-line">3 Rare + 1 Epic · комиссия <b>5 000 000</b> токенов</div>
+            <div class="guide-recipe-line guide-fail">При провале: +5 Rare-осколков</div>
+          </div>
+
+          <div class="guide-recipe">
+            <div class="guide-recipe-title">→ ULTRA LEGENDARY <span class="guide-chance">10%</span></div>
+            <div class="guide-recipe-line">2 Legendary · комиссия <b>50 000 000</b> токенов</div>
+            <div class="guide-recipe-line guide-fail">При провале: +20 Legendary-осколков</div>
+          </div>
+
+          <div class="guide-note">
+            <b>Лимит:</b> 5 крафтов в сутки.<br/>
+            <b>Осколки гниют через 30 дней</b> — успей их потратить!
+          </div>
+        </div>
+      </details>
+
+      <!-- Раздел 5: Осколки -->
+      <details class="guide-section">
+        <summary class="guide-section-title">
+          <span class="guide-section-icon">💎</span>
+          <span>Осколки и гарантированный крафт</span>
+        </summary>
+        <div class="guide-section-content">
+          <p>Осколки — это <b>компенсация за провалы крафта</b>. Их можно <b>накопить</b> и обменять на гарантированный крафт без RNG.</p>
+          <table class="guide-table">
+            <tr><th>Цель</th><th>Тип осколков</th><th>Нужно</th></tr>
+            <tr><td>Epic</td><td>Common</td><td>30</td></tr>
+            <tr><td>Legendary</td><td>Rare</td><td>100</td></tr>
+            <tr><td>Ultra</td><td>Legendary</td><td>200</td></tr>
+          </table>
+          <div class="guide-note guide-warn">
+            ⚠️ Осколки <b>сгорают через 30 дней</b> с момента получения. Самые старые расходуются первыми.
+          </div>
+        </div>
+      </details>
+
+      <!-- Раздел 6: Подсказки -->
+      <details class="guide-section">
+        <summary class="guide-section-title">
+          <span class="guide-section-icon">💡</span>
+          <span>Подсказки и фишки</span>
+        </summary>
+        <div class="guide-section-content">
+          <ul class="guide-tips">
+            <li><b>Стаки:</b> если у тебя несколько копий одной NFT — они группируются в один стак с бейджем ×N в МОИХ</li>
+            <li><b>Витрина:</b> в Профиле можно выставить 3 любимых NFT на витрину (видна другим игрокам)</li>
+            <li><b>Поиск по ID:</b> можно искать чужие профили по 6-значному Custom ID</li>
+            <li><b>Уведомления:</b> при покупке/продаже NFT приходят в личку бота</li>
+            <li><b>Поздравления:</b> при покупке Legendary/Ultra появляется торжественная модалка</li>
+            <li><b>P2P-cooldown:</b> после отмены листинга — 1 час нельзя выставить ту же NFT снова</li>
+          </ul>
+        </div>
+      </details>
+
+      <!-- Раздел 7: Лимиты -->
+      <details class="guide-section">
+        <summary class="guide-section-title">
+          <span class="guide-section-icon">⚖️</span>
+          <span>Лимиты и правила</span>
+        </summary>
+        <div class="guide-section-content">
+          <ul>
+            <li><b>3 листинга P2P</b> в сутки на пользователя</li>
+            <li><b>5 крафтов</b> в сутки</li>
+            <li><b>1 час cooldown</b> на повторное выставление NFT после отмены</li>
+            <li><b>Цена P2P:</b> от 30% до 500% от базовой цены каталога</li>
+            <li><b>Комиссия P2P:</b> 7% берётся с продажи</li>
+            <li><b>Анти-отмывание:</b> запрет повторных сделок между двумя юзерами с одной NFT в течение 30 дней</li>
+          </ul>
+        </div>
+      </details>
+
+      <div class="guide-footer-note">
+        Вопросы и баги? Пиши админу.<br/>
+        <span style="color: var(--text-2); font-size: 11px;">FF SLOPPYX NFT · v149</span>
+      </div>
+
     </div>
   </div>
 </div>
@@ -5863,6 +6425,49 @@ document.getElementById('craft-result-modal').addEventListener('click', (e) => {
 document.getElementById('craft-modal').addEventListener('click', (e) => {
   if (e.target.id === 'craft-modal') closeCraftPicker();
 });
+
+// v149: Логика модалки-гайда
+function openGuideModal() {
+  const overlay = document.getElementById('guide-modal');
+  if (!overlay) return;
+  overlay.classList.add('show');
+  try { tg.HapticFeedback.impactOccurred('light'); } catch(e) {}
+  // Запомним что юзер открыл — больше не пульсируем
+  try { localStorage.setItem('ff_nft_guide_seen', '1'); } catch(e) {}
+  const btn = document.getElementById('hdrHelpBtn');
+  if (btn) btn.classList.remove('pulse');
+}
+
+function closeGuideModal() {
+  const overlay = document.getElementById('guide-modal');
+  if (overlay) overlay.classList.remove('show');
+}
+
+// Хендлеры
+const _hdrHelpBtn = document.getElementById('hdrHelpBtn');
+if (_hdrHelpBtn) _hdrHelpBtn.addEventListener('click', openGuideModal);
+
+const _guideCloseBtn = document.getElementById('guideCloseBtn');
+if (_guideCloseBtn) _guideCloseBtn.addEventListener('click', closeGuideModal);
+
+// Клик по фону вне content — закрывает
+const _guideOverlay = document.getElementById('guide-modal');
+if (_guideOverlay) {
+  _guideOverlay.addEventListener('click', (e) => {
+    if (e.target.id === 'guide-modal') closeGuideModal();
+  });
+}
+
+// При первом запуске — пульсируем кнопку чтобы юзер заметил
+try {
+  const seen = localStorage.getItem('ff_nft_guide_seen');
+  if (!seen && _hdrHelpBtn) {
+    // Запустим пульсацию после загрузки данных (когда boot-screen уйдёт)
+    setTimeout(() => {
+      _hdrHelpBtn.classList.add('pulse');
+    }, 1500);
+  }
+} catch(e) {}
 
 async function bootSequence() {
   const statusEl = document.getElementById('bootStatus');
