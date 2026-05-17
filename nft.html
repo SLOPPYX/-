@@ -68,20 +68,9 @@ html, body {
   visibility: hidden;
   pointer-events: none;
 }
+/* v150: фоновые частицы убраны — лагали из-за анимации opacity на сложном фоне */
 #boot-screen::before {
-  content: '';
-  position: absolute; inset: 0;
-  background:
-    radial-gradient(circle 1px at 15% 25%, rgba(255,169,64,0.6) 0%, transparent 100%),
-    radial-gradient(circle 1px at 75% 15%, rgba(255,169,64,0.4) 0%, transparent 100%),
-    radial-gradient(circle 1px at 85% 75%, rgba(255,169,64,0.5) 0%, transparent 100%),
-    radial-gradient(circle 1px at 25% 85%, rgba(255,169,64,0.3) 0%, transparent 100%),
-    radial-gradient(circle 1px at 50% 50%, rgba(255,169,64,0.6) 0%, transparent 100%),
-    radial-gradient(circle 1px at 35% 60%, rgba(255,169,64,0.4) 0%, transparent 100%),
-    radial-gradient(circle 1px at 90% 40%, rgba(255,169,64,0.5) 0%, transparent 100%),
-    radial-gradient(circle 1px at 10% 70%, rgba(255,169,64,0.3) 0%, transparent 100%);
-  animation: bootParticles 4s ease-in-out infinite;
-  pointer-events: none;
+  display: none;
 }
 @keyframes bootParticles {
   0%, 100% { opacity: 0.6; }
@@ -101,41 +90,42 @@ html, body {
   width: 130px; height: 130px;
   position: relative;
   filter: drop-shadow(0 0 30px rgba(255,169,64,0.5));
+  will-change: filter;
 }
 .boot-hex {
   width: 100%; height: 100%;
 }
+/* v150: оставляем только 2 анимации вместо 4 — outer крутится, inner пульсирует */
 .boot-hex-outer {
-  animation: bootHexOuter 2.5s ease-in-out infinite;
+  animation: bootHexRotate 8s linear infinite;
   transform-origin: center;
+  transform-box: fill-box;
+  will-change: transform;
 }
 .boot-hex-mid {
-  animation: bootHexMid 4s linear infinite;
+  animation: bootHexRotate 4s linear infinite reverse;
   transform-origin: center;
+  transform-box: fill-box;
   opacity: 0.6;
+  will-change: transform;
 }
 .boot-hex-inner {
-  animation: bootHexInner 1.8s ease-in-out infinite;
+  animation: bootHexPulse 1.8s ease-in-out infinite;
   transform-origin: center;
+  transform-box: fill-box;
+  will-change: opacity;
 }
+/* Crosshair — статичные (без анимации) */
 .boot-crosshair {
-  animation: bootCrosshair 2s ease-in-out infinite;
+  opacity: 0.5;
 }
-@keyframes bootHexOuter {
-  0%, 100% { opacity: 0.9; transform: scale(1) rotate(0deg); }
-  50%      { opacity: 0.4; transform: scale(1.08) rotate(15deg); }
-}
-@keyframes bootHexMid {
+@keyframes bootHexRotate {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
-@keyframes bootHexInner {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%      { opacity: 0.5; transform: scale(0.85); }
-}
-@keyframes bootCrosshair {
-  0%, 100% { opacity: 0.3; }
-  50%      { opacity: 1; }
+@keyframes bootHexPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
 }
 
 /* Логотип-текст */
@@ -167,13 +157,13 @@ html, body {
 @keyframes bootTextFade {
   from {
     opacity: 0;
-    transform: translate3d(0, 10px, 0);
+    transform: translateY(10px);
     letter-spacing: 0.4em;
     filter: blur(8px);
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
+    transform: translateY(0);
     letter-spacing: 0.12em;
     filter: blur(0);
   }
@@ -464,18 +454,18 @@ body::after {
 
 /* v138: новые анимации интерфейса */
 @keyframes tabUnderlineSlide {
-  from { transform: translate3d(-50%, 0, 0) scaleX(0); opacity: 0; }
-  to   { transform: translate3d(-50%, 0, 0) scaleX(1); opacity: 1; }
+  from { transform: translateX(-50%) scaleX(0); opacity: 0; }
+  to   { transform: translateX(-50%) scaleX(1); opacity: 1; }
 }
 
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translate3d(0, 16px, 0);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
+    transform: translateY(0);
   }
 }
 
@@ -496,11 +486,11 @@ body::after {
 
 @keyframes slideInRight {
   from {
-    transform: translate3d(120%, 0, 0);
+    transform: translateX(120%);
     opacity: 0;
   }
   to {
-    transform: translate3d(0, 0, 0);
+    transform: translateX(0);
     opacity: 1;
   }
 }
@@ -662,11 +652,11 @@ body::after {
 @keyframes modalEntrance {
   from {
     opacity: 0;
-    transform: scale(0.85) translate3d(0, 40px, 0);
+    transform: scale(0.85) translateY(40px);
   }
   to {
     opacity: 1;
-    transform: scale(1) translate3d(0, 0, 0);
+    transform: scale(1) translateY(0);
   }
 }
 
@@ -1470,66 +1460,64 @@ body::after {
   display: block;
 }
 
-/* v150: Оптимизация анимаций для 60 FPS
-   Принципы:
-   - Анимируем только transform/opacity (GPU-friendly)
-   - filter:drop-shadow — статичное (вне keyframes), пульсация через transform/opacity на overlay
-   - will-change подсказывает браузеру композитировать на GPU
-   - translateZ(0) форсирует слой
-*/
-
-/* Базовое свечение — СТАТИЧНОЕ (не в keyframes). Дешёвое для GPU. */
-.card .card-weapon-vis svg,
-.modal-weapon-vis svg,
-.showcase-slot .mini-weapon svg {
-  filter: drop-shadow(0 0 14px var(--card-rarity-glow));
-  will-change: transform;
-  transform: translateZ(0);  /* форсируем GPU-слой */
-}
-
-/* Дыхание — лёгкое масштабирование (GPU-оптимизировано) */
+/* Дыхание — лёгкое масштабирование */
 @keyframes weaponBreathe {
-  0%, 100% { transform: scale(1) translateZ(0); }
-  50%      { transform: scale(1.04) translateZ(0); }
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.04); }
 }
 
-/* COMMON — мерцание opacity (GPU) */
-.card[data-rarity="common"] .card-weapon-vis svg,
-.showcase-slot[data-rarity="common"] .mini-weapon svg {
-  animation: commonFlickerFast 4s ease-in-out infinite;
-  will-change: opacity;
+/* COMMON — лёгкое мерцание контура */
+.card[data-rarity="common"] .card-weapon-vis svg path,
+.card[data-rarity="common"] .card-weapon-vis svg rect,
+.card[data-rarity="common"] .card-weapon-vis svg line,
+.card[data-rarity="common"] .card-weapon-vis svg circle,
+.showcase-slot[data-rarity="common"] .mini-weapon svg path,
+.showcase-slot[data-rarity="common"] .mini-weapon svg rect,
+.showcase-slot[data-rarity="common"] .mini-weapon svg line,
+.showcase-slot[data-rarity="common"] .mini-weapon svg circle {
+  animation: commonFlicker 4s ease-in-out infinite;
 }
-@keyframes commonFlickerFast {
+@keyframes commonFlicker {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.78; }
 }
 
-/* RARE — пульс через scale + opacity overlay (GPU) */
+/* RARE — пульс свечения */
 .card[data-rarity="rare"] .card-weapon-vis svg,
 .showcase-slot[data-rarity="rare"] .mini-weapon svg {
-  animation: weaponBreathe 3.4s ease-in-out infinite;
+  animation: weaponBreathe 3.4s ease-in-out infinite,
+             rarePulse 2.2s ease-in-out infinite;
+  will-change: transform, filter;
 }
-/* Свечение редкости делается через ::after с opacity-анимацией — без drop-shadow в keyframes */
-.card[data-rarity="rare"] .card-weapon-vis::before,
-.showcase-slot[data-rarity="rare"] .mini-weapon::before {
-  /* Только статичный glow через box-shadow на контейнере; не анимируем */
-}
-@keyframes rarePulseOpt {
-  0%, 100% { opacity: 0.6; }
-  50%      { opacity: 1; }
+@keyframes rarePulse {
+  0%, 100% { filter: drop-shadow(0 0 6px var(--card-rarity-glow)); }
+  50%      { filter: drop-shadow(0 0 22px var(--card-rarity-glow))
+                     drop-shadow(0 0 30px var(--card-rarity-glow)); }
 }
 
-/* EPIC — лёгкое дыхание + opacity-пульсация glow (GPU-friendly).
-   v150: убрал tremble (конфликтовал с breathe) и filter-анимацию.
-   Свечение остаётся статичным; пульсацию делает overlay через ::after уже в индивидуальных эффектах. */
+/* EPIC — дрожь + цветовая пульсация */
 .card[data-rarity="epic"] .card-weapon-vis svg,
 .showcase-slot[data-rarity="epic"] .mini-weapon svg {
-  animation: weaponBreathe 3.4s ease-in-out infinite;
-  will-change: transform;
+  animation: weaponBreathe 3.4s ease-in-out infinite,
+             epicTremble 0.18s steps(2) infinite,
+             epicGlow 1.6s ease-in-out infinite;
+}
+@keyframes epicTremble {
+  0%   { transform: translate(0px, 0px); }
+  25%  { transform: translate(0.6px, -0.4px); }
+  50%  { transform: translate(-0.5px, 0.5px); }
+  75%  { transform: translate(0.4px, 0.5px); }
+  100% { transform: translate(0px, 0px); }
+}
+@keyframes epicGlow {
+  0%, 100% { filter: drop-shadow(0 0 8px var(--card-rarity-glow))
+                     drop-shadow(0 0 14px var(--card-rarity-glow)); }
+  50%      { filter: drop-shadow(0 0 18px var(--card-rarity-glow))
+                     drop-shadow(0 0 32px rgba(185, 111, 255, 0.7))
+                     drop-shadow(0 0 50px rgba(91, 169, 255, 0.4)); }
 }
 
-/* LEGENDARY — лучи (transform:rotate — GPU) + статичное свечение.
-   v150: убрана анимация filter:drop-shadow которая ела CPU. */
+/* LEGENDARY — вращение + золотые лучи + сильное свечение */
 .card[data-rarity="legendary"] .card-weapon-vis {
   position: relative;
 }
@@ -1558,28 +1546,31 @@ body::after {
   border-radius: 50%;
   animation: legendaryRays 12s linear infinite;
   z-index: 0;
-  filter: blur(4px);  /* статичный blur, не в keyframes — не тормозит */
+  filter: blur(4px);
   opacity: 0.6;
   will-change: transform;
-  transform: translateZ(0);
 }
 .card[data-rarity="legendary"] .card-weapon-vis svg,
 .showcase-slot[data-rarity="legendary"] .mini-weapon svg {
   position: relative;
   z-index: 1;
-  /* Свечение СТАТИЧНОЕ + дыхание через transform */
-  filter: drop-shadow(0 0 16px var(--card-rarity-glow))
-          drop-shadow(0 0 30px rgba(255, 169, 64, 0.5));
-  animation: weaponBreathe 3.4s ease-in-out infinite;
-  will-change: transform;
+  animation: weaponBreathe 3.4s ease-in-out infinite,
+             legendaryPulseGlow 2.0s ease-in-out infinite;
+  will-change: transform, filter;
 }
 @keyframes legendaryRays {
-  from { transform: rotate(0deg) translateZ(0); }
-  to   { transform: rotate(360deg) translateZ(0); }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes legendaryPulseGlow {
+  0%, 100% { filter: drop-shadow(0 0 12px var(--card-rarity-glow))
+                     drop-shadow(0 0 22px rgba(255, 169, 64, 0.5)); }
+  50%      { filter: drop-shadow(0 0 22px var(--card-rarity-glow))
+                     drop-shadow(0 0 40px rgba(255, 169, 64, 0.8))
+                     drop-shadow(0 0 60px rgba(255, 169, 64, 0.4)); }
 }
 
-/* ULTRALEGENDARY — красные лучи + двойное вращение + opacity-пульсация overlay.
-   v150: убрана filter-анимация. Пульсация теперь через ::after с opacity (cheap). */
+/* ULTRALEGENDARY — красные лучи + двойное вращение + intense pulse */
 .card[data-rarity="ultralegendary"] .card-weapon-vis {
   position: relative;
 }
@@ -1611,31 +1602,49 @@ body::after {
   filter: blur(5px);
   opacity: 0.75;
   will-change: transform;
-  transform: translateZ(0);
+}
+.card[data-rarity="ultralegendary"] .card-weapon-vis::after {
+  /* Второй слой лучей, медленнее, создаёт двойное вращение */
+  content: '';
+  position: absolute;
+  inset: -8%;
+  background:
+    conic-gradient(
+      from 90deg,
+      transparent 0deg,
+      rgba(255, 200, 100, 0.18) 60deg,
+      transparent 120deg,
+      rgba(255, 100, 100, 0.20) 180deg,
+      transparent 240deg,
+      rgba(255, 200, 100, 0.18) 300deg,
+      transparent 360deg
+    );
+  border-radius: 50%;
+  animation: ultraLegRays 14s linear infinite;
+  z-index: 0;
+  filter: blur(3px);
+  opacity: 0.5;
+  pointer-events: none;
+  will-change: transform;
 }
 .card[data-rarity="ultralegendary"] .card-weapon-vis svg,
 .showcase-slot[data-rarity="ultralegendary"] .mini-weapon svg {
   position: relative;
   z-index: 1;
-  /* СТАТИЧНОЕ ультра-свечение */
-  filter: drop-shadow(0 0 18px var(--card-rarity-glow))
-          drop-shadow(0 0 36px rgba(255, 58, 85, 0.7));
   animation: weaponBreathe 3.4s ease-in-out infinite,
-             ultraOpacityPulse 1.5s ease-in-out infinite;
-  will-change: transform, opacity;
+             ultraLegGlow 1.5s ease-in-out infinite;
+  will-change: transform, filter;
 }
 @keyframes ultraLegRays {
-  from { transform: rotate(0deg) translateZ(0); }
-  to   { transform: rotate(360deg) translateZ(0); }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
-@keyframes ultraOpacityPulse {
-  0%, 100% { opacity: 0.92; }
-  50%      { opacity: 1; }
-}
-/* Оставляем имя ultraLegGlow для совместимости с индивидуальными эффектами UMP/Deagle */
 @keyframes ultraLegGlow {
-  0%, 100% { opacity: 0.92; }
-  50%      { opacity: 1; }
+  0%, 100% { filter: drop-shadow(0 0 14px var(--card-rarity-glow))
+                     drop-shadow(0 0 28px rgba(255, 58, 85, 0.6)); }
+  50%      { filter: drop-shadow(0 0 28px var(--card-rarity-glow))
+                     drop-shadow(0 0 50px rgba(255, 58, 85, 0.9))
+                     drop-shadow(0 0 80px rgba(255, 100, 100, 0.5)); }
 }
 
 /* В модалке — те же эффекты, лучи только для legendary */
@@ -1687,9 +1696,9 @@ body::after {
   opacity: 0.9;
 }
 @keyframes m1014Sparks {
-  0%   { transform: translate3d(0,0, 0) scale(1); opacity: 0.95; }
-  60%  { transform: translate3d(-25px, -18px, 0) scale(1.6); opacity: 0.5; }
-  100% { transform: translate3d(-50px, -40px, 0) scale(2); opacity: 0; }
+  0%   { transform: translate(0,0) scale(1); opacity: 0.95; }
+  60%  { transform: translate(-25px, -18px) scale(1.6); opacity: 0.5; }
+  100% { transform: translate(-50px, -40px) scale(2); opacity: 0; }
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -1709,10 +1718,10 @@ body::after {
   opacity: 0.85;
 }
 @keyframes g18Casings {
-  0%   { transform: translate3d(0, -10%, 0) rotate(0deg); opacity: 0; }
+  0%   { transform: translateY(-10%) rotate(0deg); opacity: 0; }
   10%  { opacity: 0.9; }
   90%  { opacity: 0.9; }
-  100% { transform: translate3d(0, 110%, 0) rotate(180deg); opacity: 0; }
+  100% { transform: translateY(110%) rotate(180deg); opacity: 0; }
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -1809,8 +1818,8 @@ body::after {
   background: radial-gradient(circle at center, rgba(220, 30, 30, 0.08), transparent 60%);
 }
 @keyframes ak47Star {
-  from { transform: translate3d(-50%, -50%, 0) rotate(0deg); }
-  to   { transform: translate3d(-50%, -50%, 0) rotate(360deg); }
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
 }
 /* Для AK свечу SVG должно быть над звездой */
 .card[data-id="ff_ak47"] .card-weapon-vis svg,
@@ -1844,10 +1853,10 @@ body::after {
   opacity: 0;
 }
 @keyframes scarLaser {
-  0%, 100% { opacity: 0; transform: translate3d(0, -30px, 0) rotate(-2deg); }
-  20%      { opacity: 1; transform: translate3d(0, -15px, 0) rotate(-1deg); }
-  50%      { opacity: 1; transform: translate3d(0, 15px, 0) rotate(1deg); }
-  80%      { opacity: 0; transform: translate3d(0, 30px, 0) rotate(2deg); }
+  0%, 100% { opacity: 0; transform: translateY(-30px) rotate(-2deg); }
+  20%      { opacity: 1; transform: translateY(-15px) rotate(-1deg); }
+  50%      { opacity: 1; transform: translateY(15px) rotate(1deg); }
+  80%      { opacity: 0; transform: translateY(30px) rotate(2deg); }
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -1871,8 +1880,8 @@ body::after {
   pointer-events: none;
 }
 @keyframes awmScope {
-  from { transform: translate3d(-50%, -50%, 0) rotate(0deg); }
-  to   { transform: translate3d(-50%, -50%, 0) rotate(360deg); }
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
 }
 @keyframes awmZoom {
   0%, 100% { width: 50%; height: 50%; opacity: 0.4; }
@@ -1903,10 +1912,10 @@ body::after {
   pointer-events: none;
 }
 @keyframes deagleGoldRain {
-  0%   { transform: translate3d(0, -15%, 0); opacity: 0; }
+  0%   { transform: translateY(-15%); opacity: 0; }
   10%  { opacity: 1; }
   90%  { opacity: 1; }
-  100% { transform: translate3d(0, 115%, 0); opacity: 0; }
+  100% { transform: translateY(115%); opacity: 0; }
 }
 
 /* Слой 2 (поверх, ::after): ВСПЫШКА ВЫСТРЕЛА у ствола */
@@ -1935,13 +1944,13 @@ body::after {
   mix-blend-mode: screen;
 }
 @keyframes deagleMuzzleFlash {
-  0%, 60%, 100% { opacity: 0; transform: scale(0.5) translateZ(0); }
-  62%           { opacity: 1; transform: scale(1.2) translateZ(0); }
-  68%           { opacity: 0.7; transform: scale(1.4) translateZ(0); }
-  74%           { opacity: 0; transform: scale(1.8) translateZ(0); }
+  0%, 60%, 100% { opacity: 0; transform: scale(0.5); }
+  62%           { opacity: 1; transform: scale(1.2); }
+  68%           { opacity: 0.7; transform: scale(1.4); }
+  74%           { opacity: 0; transform: scale(1.8); }
 }
 
-/* Контейнер: золотая аура — СТАТИЧНАЯ (v150: убрана анимация box-shadow которая тормозила) */
+/* Контейнер: золотая аура + box-shadow дышит */
 .card[data-id="ff_deagle"] .card-weapon-vis,
 .modal-weapon-vis[data-id="ff_deagle"],
 .showcase-slot[data-id="ff_deagle"] .mini-weapon {
@@ -1951,42 +1960,51 @@ body::after {
       rgba(255, 180, 0, 0.10) 35%,
       transparent 70%
     );
-  box-shadow: inset 0 0 40px rgba(255, 215, 0, 0.2);
+  animation: deagleAura 4s ease-in-out infinite;
+}
+@keyframes deagleAura {
+  0%, 100% { box-shadow: inset 0 0 30px rgba(255, 215, 0, 0.15); }
+  50%      { box-shadow: inset 0 0 60px rgba(255, 215, 0, 0.35),
+                         inset 0 0 100px rgba(255, 180, 0, 0.15); }
 }
 
-/* SVG оружия: ПОКАЧИВАНИЕ + ОТДАЧА ПРИ ВЫСТРЕЛЕ + золотой shine */
+/* SVG оружия: ПОКАЧИВАНИЕ + ОТДАЧА ПРИ ВЫСТРЕЛЕ + золотой shine
+   v150: sway + recoil объединены в один transform-keyframe (избегаем конфликт),
+         margin-left заменён на translateX (нет layout thrash). */
 .card[data-id="ff_deagle"] .card-weapon-vis svg,
 .modal-weapon-vis[data-id="ff_deagle"] svg,
 .showcase-slot[data-id="ff_deagle"] .mini-weapon svg {
   position: relative;
   z-index: 1;
-  /* СТАТИЧНОЕ золотое свечение (не в keyframes) */
-  filter: drop-shadow(0 0 16px rgba(255, 215, 0, 0.85))
-          drop-shadow(0 0 32px rgba(255, 180, 0, 0.5));
-  /* v150: одна композитная анимация комбинирующая sway + recoil через transform.
-     Раньше было 3 animation которые конфликтовали и triggered layout. */
-  animation: deagleComposite 7s linear infinite;
+  animation:
+    deagleMotion 7s ease-in-out infinite,
+    deagleGoldShine 2.5s ease-in-out infinite;
   transform-origin: center center;
-  will-change: transform;
+  will-change: transform, filter;
 }
 
-/* v150: единая анимация — покачивание + отдача в одном keyframe.
-   Цикл 7с: 4с покачивание, на 5й секунде — выстрел/recoil. */
-@keyframes deagleComposite {
+/* Единая анимация движения: 0-57% покачивание, 60-76% выстрел с отдачей */
+@keyframes deagleMotion {
   0%   { transform: rotate(-3deg) translate3d(0, 0, 0); }
   14%  { transform: rotate(0deg)  translate3d(0, -2px, 0); }
   28%  { transform: rotate(3deg)  translate3d(0, 0, 0); }
   42%  { transform: rotate(0deg)  translate3d(0, -2px, 0); }
   57%  { transform: rotate(-3deg) translate3d(0, 0, 0); }
-  /* Выстрел: резкий толчок назад */
+  /* Выстрел */
   60%  { transform: rotate(-3deg) translate3d(8px, 0, 0); }
   64%  { transform: rotate(-2deg) translate3d(6px, -1px, 0); }
-  71%  { transform: rotate(-3deg) translate3d(-2px, 0, 0) scale(1.02); }
+  72%  { transform: rotate(-3deg) translate3d(-2px, 0, 0) scale(1.02); }
   76%  { transform: rotate(-3deg) translate3d(0, 0, 0) scale(1); }
   100% { transform: rotate(-3deg) translate3d(0, 0, 0); }
 }
 
-/* @keyframes deagleSway, deagleRecoil, deagleGoldShine — удалены в v150 как заменённые */
+@keyframes deagleGoldShine {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.7))
+                     drop-shadow(0 0 20px rgba(255, 180, 0, 0.4)); }
+  50%      { filter: drop-shadow(0 0 24px rgba(255, 215, 0, 1))
+                     drop-shadow(0 0 48px rgba(255, 195, 0, 0.8))
+                     drop-shadow(0 0 80px rgba(255, 215, 0, 0.4)); }
+}
 
 
 /* ───────────────────────────────────────────────────────────
@@ -2011,9 +2029,9 @@ body::after {
   mix-blend-mode: screen;
 }
 @keyframes umpFog {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.85; }
-  33%      { transform: translate3d(-15px, -8px, 0) scale(1.05); opacity: 1; }
-  66%      { transform: translate3d(10px, 5px, 0) scale(0.95); opacity: 0.7; }
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.85; }
+  33%      { transform: translate(-15px, -8px) scale(1.05); opacity: 1; }
+  66%      { transform: translate(10px, 5px) scale(0.95); opacity: 0.7; }
 }
 
 /* Слой 2: глитч-полосы (как помехи на ТВ) */
@@ -2037,46 +2055,51 @@ body::after {
   mix-blend-mode: screen;
 }
 @keyframes umpGlitch {
-  0%, 100% { opacity: 0.4; transform: translate3d(0, 0, 0); }
-  20%      { opacity: 0.8; transform: translate3d(0, -2px, 0); }
-  40%      { opacity: 0.3; transform: translate3d(0, 1px, 0); }
-  60%      { opacity: 0.9; transform: translate3d(0, -1px, 0); }
-  80%      { opacity: 0.5; transform: translate3d(0, 0, 0); }
+  0%, 100% { opacity: 0.4; transform: translateY(0); }
+  20%      { opacity: 0.8; transform: translateY(-2px); }
+  40%      { opacity: 0.3; transform: translateY(1px); }
+  60%      { opacity: 0.9; transform: translateY(-1px); }
+  80%      { opacity: 0.5; transform: translateY(0); }
 }
 
 /* SVG оружия — стелс-флик с шифт-перебоями
-   v150: одна композитная анимация вместо 3 (избегаем transform-конфликт).
-   filter:drop-shadow — СТАТИЧНЫЙ (вне keyframes). RGB-сдвиг убран — слишком тяжёлый
-   для 60 FPS на мобильных. */
+   v150: было 3 конфликтующих анимации с transform. Теперь одна — все эффекты в umpPhantom. */
 .card[data-id="ff_ump"] .card-weapon-vis svg,
 .modal-weapon-vis[data-id="ff_ump"] svg,
 .showcase-slot[data-id="ff_ump"] .mini-weapon svg {
   position: relative;
   z-index: 1;
-  filter: drop-shadow(0 0 14px rgba(255, 58, 85, 0.6));
-  animation: umpPhantomOpt 3.5s ease-in-out infinite;
-  will-change: transform, opacity;
+  animation: umpPhantom 3.5s ease-in-out infinite;
+  will-change: transform, opacity, filter;
 }
-@keyframes umpPhantomOpt {
+@keyframes umpPhantom {
   0%, 100% {
     opacity: 1;
-    transform: scale(1) translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: drop-shadow(0 0 14px rgba(255, 58, 85, 0.7));
   }
   20% {
     opacity: 0.92;
-    transform: scale(1.02) translate3d(-1px, 0, 0);
+    transform: translate3d(-1px, 0, 0) scale(1.02);
+    filter: drop-shadow(2px 0 0 rgba(91, 230, 169, 0.5))
+            drop-shadow(0 0 8px rgba(255, 58, 85, 0.5));
   }
   40% {
     opacity: 0.6;
-    transform: scale(1) translate3d(1px, 0, 0);
+    transform: translate3d(1px, 0, 0) scale(1);
+    filter: drop-shadow(-2px 0 0 rgba(255, 100, 100, 0.5))
+            drop-shadow(0 0 4px rgba(150, 150, 170, 0.4));
   }
   60% {
     opacity: 0.9;
-    transform: scale(1.04) translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0) scale(1.03);
+    filter: drop-shadow(0 0 6px rgba(150, 150, 170, 0.5));
   }
   80% {
     opacity: 0.95;
-    transform: scale(1) translate3d(-0.5px, 0, 0);
+    transform: translate3d(-0.5px, 0, 0) scale(1);
+    filter: drop-shadow(1px 0 0 rgba(255, 58, 85, 0.4))
+            drop-shadow(0 0 12px rgba(255, 58, 85, 0.7));
   }
 }
 
@@ -2975,8 +2998,8 @@ body::after {
   animation: congratsCardFloat 3s ease-in-out infinite;
 }
 @keyframes congratsCardFloat {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50%      { transform: translate3d(0, -6px, 0); }
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
 }
 
 /* Расходящиеся лучи за карточкой */
@@ -3521,29 +3544,6 @@ body::after {
 @keyframes epicShimmer {
   0%   { background-position: -100% 0; }
   100% { background-position: 200% 0; }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   v150 — Уважаем системные настройки уменьшения анимаций.
-   Если юзер включил в системе "Reduce motion" — выключаем тяжёлые анимации.
-   ═══════════════════════════════════════════════════════════ */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-  /* Оставляем только некоторые важные анимации */
-  .boot-progress-fill,
-  .toast,
-  .modal-back,
-  .craft-modal-overlay,
-  .craft-result-overlay,
-  .guide-overlay,
-  .congrats-overlay {
-    animation-duration: 0.3s !important;
-    transition-duration: 0.3s !important;
-  }
 }
 
 </style>
@@ -6457,7 +6457,7 @@ async function bootSequence() {
   const setStatus = (txt) => { if (statusEl) statusEl.textContent = txt; };
 
   // Минимальное время лоадера — 1.2с чтобы анимация была видна
-  const minBootTime = 1200;
+  const minBootTime = 600;
   const startTime = Date.now();
 
   try {
