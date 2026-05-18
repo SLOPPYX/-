@@ -6060,7 +6060,22 @@ function flashBalance() {
 async function loadMe() {
   const r = await api('/casino/me');
   if (!r.ok) return;
-  const nick = r.nick || `user_${r.uid}`;
+  // v152: приоритет имени:
+  // 1) Telegram username (@nick)
+  // 2) Telegram first_name + last_name
+  // 3) ник из бэкенда (казино/регистрация)
+  // 4) "user_XXX" fallback
+  let nick = '';
+  try {
+    const tgUser = tg.initDataUnsafe.user || {};
+    if (tgUser.username) {
+      nick = tgUser.username;
+    } else if (tgUser.first_name) {
+      nick = tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '');
+    }
+  } catch(e) {}
+  if (!nick) nick = r.nick || `user_${r.uid}`;
+
   document.getElementById('hdrUsername').textContent = '@' + nick;
   const initial = (nick.replace('@','').trim()[0] || '⬢').toUpperCase();
   document.getElementById('hdrAvatarText').textContent = initial;
