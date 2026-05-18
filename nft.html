@@ -2103,6 +2103,129 @@ body::after {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   v151 — Индивидуальные эффекты для новых NFT (партия 1)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ───────────────────────────────────────────────────────────
+   M79 — Граната летит по дуге снизу вверх и взрывается
+   ─────────────────────────────────────────────────────────── */
+.card[data-id="ff_m79"] .card-weapon-vis::after,
+.modal-weapon-vis[data-id="ff_m79"]::after,
+.showcase-slot[data-id="ff_m79"] .mini-weapon::after {
+  content: '';
+  position: absolute;
+  /* Стартовая позиция — у дула справа */
+  top: 50%;
+  left: 70%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(255, 240, 180, 1) 0%,
+    rgba(255, 140, 50, 0.9) 40%,
+    rgba(255, 60, 30, 0.6) 70%,
+    transparent 100%
+  );
+  box-shadow: 0 0 8px rgba(255, 140, 50, 0.8);
+  animation: m79Grenade 3.5s ease-out infinite;
+  pointer-events: none;
+  z-index: 3;
+  will-change: transform, opacity;
+  opacity: 0;
+}
+@keyframes m79Grenade {
+  0%   { opacity: 0; transform: translate3d(0, 0, 0) scale(0.5); }
+  5%   { opacity: 1; transform: translate3d(5px, -3px, 0) scale(0.7); }
+  /* Полёт по дуге вверх-вправо */
+  30%  { opacity: 1; transform: translate3d(30px, -25px, 0) scale(0.9); }
+  55%  { opacity: 1; transform: translate3d(50px, -35px, 0) scale(1); }
+  /* Взрыв */
+  70%  { opacity: 1; transform: translate3d(50px, -35px, 0) scale(3); background: radial-gradient(circle, rgba(255,255,200,1) 0%, rgba(255,100,30,0.8) 50%, transparent 80%); }
+  80%  { opacity: 0; transform: translate3d(50px, -35px, 0) scale(5); }
+  100% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.5); }
+}
+
+/* ───────────────────────────────────────────────────────────
+   M500 — Барабан крутится (револьвер)
+   ─────────────────────────────────────────────────────────── */
+.card[data-id="ff_m500"] .card-weapon-vis::after,
+.modal-weapon-vis[data-id="ff_m500"]::after,
+.showcase-slot[data-id="ff_m500"] .mini-weapon::after {
+  content: '';
+  position: absolute;
+  /* Поверх барабана — примерно левая часть оружия */
+  top: 50%;
+  left: 38%;
+  width: 60px;
+  height: 60px;
+  margin-top: -30px;
+  margin-left: -30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 169, 64, 0.5);
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(255, 169, 64, 0.18) 50deg,
+      transparent 100deg,
+      rgba(255, 169, 64, 0.12) 150deg,
+      transparent 200deg,
+      rgba(255, 169, 64, 0.15) 250deg,
+      transparent 300deg,
+      rgba(255, 169, 64, 0.18) 350deg,
+      transparent 360deg
+    );
+  filter: blur(2px);
+  animation: m500Drum 4s linear infinite;
+  pointer-events: none;
+  z-index: 2;
+  will-change: transform;
+  opacity: 0.55;
+}
+@keyframes m500Drum {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ───────────────────────────────────────────────────────────
+   AN-94 — Двойной flash (характерный двойной выстрел АН-94)
+   ─────────────────────────────────────────────────────────── */
+.card[data-id="ff_an94"] .card-weapon-vis::after,
+.modal-weapon-vis[data-id="ff_an94"]::after,
+.showcase-slot[data-id="ff_an94"] .mini-weapon::after {
+  content: '';
+  position: absolute;
+  /* У дула — справа на уровне ствола */
+  top: 40%;
+  right: 3%;
+  width: 22%;
+  height: 30%;
+  background:
+    radial-gradient(ellipse 60% 50% at 0% 50%,
+      rgba(91, 169, 255, 0.95) 0%,
+      rgba(91, 169, 255, 0.55) 30%,
+      rgba(120, 200, 255, 0.3) 55%,
+      transparent 80%
+    );
+  filter: blur(1px);
+  opacity: 0;
+  animation: an94DoubleFlash 2.8s ease-out infinite;
+  pointer-events: none;
+  z-index: 3;
+  mix-blend-mode: screen;
+  will-change: opacity, transform;
+}
+@keyframes an94DoubleFlash {
+  0%, 40%, 100% { opacity: 0; transform: scale(0.5); }
+  /* Первая пуля */
+  42% { opacity: 1; transform: scale(1.1); }
+  46% { opacity: 0; transform: scale(1.4); }
+  /* Вторая пуля — почти сразу за первой (фишка АН-94) */
+  50% { opacity: 1; transform: scale(1.1); }
+  54% { opacity: 0; transform: scale(1.5); }
+}
+
 .card-name {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 15px;
@@ -4763,12 +4886,213 @@ const RARITY_PALETTE = {
   ultralegendary: { col: '#FF3A55', colLight: '#ff8b9c', colDark: '#a01525' },
 };
 
+// ═══════════════════════════════════════════════════════════
+// v151 — Новые SVG (партия 1: M79, M500, AN-94)
+// Стиль: viewBox ~240x75, градиенты, тень снизу, детализация как у M1014/AWM
+// ═══════════════════════════════════════════════════════════
+
+// M79 — однозарядный гранатомёт "переломка"
+function svgM79(c) {
+  return `<svg viewBox="-10 195 240 75" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="m79-barrel" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/>
+        <stop offset="50%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <linearGradient id="m79-stock" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+    </defs>
+    <!-- Тень снизу -->
+    <ellipse cx="115" cy="265" rx="100" ry="3" fill="${c.colDark}" opacity="0.4"/>
+    <!-- Толстый ствол (40mm) -->
+    <rect x="115" y="215" width="95" height="16" rx="3" fill="url(#m79-barrel)" stroke="${c.col}" stroke-width="1.3"/>
+    <!-- Кольца на стволе -->
+    <line x1="135" y1="215" x2="135" y2="231" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="165" y1="215" x2="165" y2="231" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="190" y1="215" x2="190" y2="231" stroke="${c.colDark}" stroke-width="0.6"/>
+    <!-- Дульное отверстие (широкое 40мм) -->
+    <circle cx="210" cy="223" r="7" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.3"/>
+    <circle cx="210" cy="223" r="4" fill="none" stroke="${c.colDark}" stroke-width="0.6"/>
+    <circle cx="210" cy="223" r="1" fill="${c.colDark}"/>
+    <!-- Блик на стволе -->
+    <line x1="118" y1="217" x2="205" y2="217" stroke="${c.colLight}" stroke-width="0.6" opacity="0.6"/>
+    <!-- Прицельная планка -->
+    <rect x="140" y="208" width="35" height="3" rx="0.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.6"/>
+    <!-- Прицельная мушка -->
+    <path d="M 160 208 L 163 202 L 166 208 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Целик задний -->
+    <rect x="142" y="206" width="6" height="6" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Цевьё с шарниром (переломка) -->
+    <rect x="98" y="227" width="22" height="11" rx="2" fill="url(#m79-stock)" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="103" y1="229" x2="103" y2="236" stroke="${c.colLight}" stroke-width="0.5" opacity="0.7"/>
+    <line x1="108" y1="229" x2="108" y2="236" stroke="${c.colLight}" stroke-width="0.5" opacity="0.7"/>
+    <line x1="113" y1="229" x2="113" y2="236" stroke="${c.colLight}" stroke-width="0.5" opacity="0.7"/>
+    <!-- Шарнир переламывания -->
+    <circle cx="98" cy="232" r="3" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.8"/>
+    <circle cx="98" cy="232" r="1.2" fill="${c.colDark}"/>
+    <!-- Спусковая скоба -->
+    <ellipse cx="82" cy="244" rx="9" ry="6" fill="none" stroke="${c.col}" stroke-width="2"/>
+    <path d="M 80 240 Q 80 246 84 246" fill="none" stroke="${c.colLight}" stroke-width="2" stroke-linecap="round"/>
+    <!-- Ресивер -->
+    <rect x="75" y="225" width="25" height="14" rx="1.5" fill="url(#m79-stock)" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="78" y1="228" x2="98" y2="228" stroke="${c.colLight}" stroke-width="0.4" opacity="0.6"/>
+    <!-- Приклад (деревянный, скошенный вниз) -->
+    <path d="M 75 232 L 30 244 L 22 258 L 28 263 L 65 252 L 75 244 Z" fill="url(#m79-stock)" stroke="${c.col}" stroke-width="1.4" stroke-linejoin="round"/>
+    <!-- Блик на прикладе -->
+    <path d="M 75 232 L 32 244 L 35 246 L 73 234 Z" fill="${c.col}" opacity="0.5"/>
+    <!-- Затыльник -->
+    <rect x="22" y="254" width="8" height="10" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <!-- Антабка -->
+    <circle cx="48" cy="251" r="2" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+  </svg>`;
+}
+
+// M500 — револьвер 6-зарядный
+function svgM500(c) {
+  return `<svg viewBox="-10 195 240 75" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="m500-barrel" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/>
+        <stop offset="50%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <radialGradient id="m500-cyl" cx="0.35" cy="0.35" r="0.75">
+        <stop offset="0%" stop-color="${c.colLight}"/>
+        <stop offset="60%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </radialGradient>
+      <linearGradient id="m500-grip" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+    </defs>
+    <!-- Тень снизу -->
+    <ellipse cx="115" cy="265" rx="85" ry="3" fill="${c.colDark}" opacity="0.4"/>
+    <!-- Длинный ствол -->
+    <rect x="138" y="221" width="75" height="8" rx="1.5" fill="url(#m500-barrel)" stroke="${c.col}" stroke-width="1.2"/>
+    <!-- Прицельная планка сверху ствола -->
+    <rect x="140" y="218" width="70" height="3" rx="0.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.6"/>
+    <!-- Прицельная мушка -->
+    <path d="M 204 218 L 207 212 L 210 218 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Блик на стволе -->
+    <line x1="142" y1="223" x2="210" y2="223" stroke="${c.colLight}" stroke-width="0.5" opacity="0.7"/>
+    <!-- Дульное отверстие -->
+    <circle cx="212" cy="225" r="2.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <!-- Барабан (большой, виден сбоку, с 6 камерами) -->
+    <circle cx="118" cy="232" r="16" fill="url(#m500-cyl)" stroke="${c.col}" stroke-width="1.5"/>
+    <circle cx="118" cy="232" r="13" fill="none" stroke="${c.colDark}" stroke-width="0.4" opacity="0.7"/>
+    <!-- 6 камер барабана (по периметру) -->
+    <circle cx="118" cy="222" r="2.3" fill="${c.colDark}" stroke="${c.colLight}" stroke-width="0.6"/>
+    <circle cx="126" cy="227" r="2.3" fill="${c.colDark}" stroke="${c.colLight}" stroke-width="0.6"/>
+    <circle cx="126" cy="237" r="2.3" fill="${c.colDark}" stroke="${c.colLight}" stroke-width="0.6"/>
+    <circle cx="118" cy="242" r="2.3" fill="${c.colDark}" stroke="${c.colLight}" stroke-width="0.6"/>
+    <circle cx="110" cy="237" r="2.3" fill="${c.colDark}" stroke="${c.colLight}" stroke-width="0.6"/>
+    <circle cx="110" cy="227" r="2.3" fill="${c.colDark}" stroke="${c.colLight}" stroke-width="0.6"/>
+    <!-- Центральный штифт барабана -->
+    <circle cx="118" cy="232" r="2.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <circle cx="118" cy="232" r="1" fill="${c.col}"/>
+    <!-- Рамка ресивера над/под барабаном -->
+    <rect x="105" y="222" width="36" height="9" fill="url(#m500-barrel)" stroke="${c.col}" stroke-width="1" opacity="0.85"/>
+    <rect x="105" y="232" width="36" height="9" fill="url(#m500-barrel)" stroke="${c.col}" stroke-width="1" opacity="0.85"/>
+    <!-- Курок (взведённый) -->
+    <path d="M 102 220 L 100 215 L 105 215 L 105 222 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.8"/>
+    <!-- Спусковая скоба -->
+    <path d="M 96 240 L 116 240 L 116 250 L 108 256 L 96 254 Z" fill="none" stroke="${c.col}" stroke-width="2"/>
+    <path d="M 103 244 Q 103 250 107 250" fill="none" stroke="${c.colLight}" stroke-width="2" stroke-linecap="round"/>
+    <!-- Рукоять (характерная револьверная) -->
+    <path d="M 84 234 L 102 234 L 108 258 L 92 262 Z" fill="url(#m500-grip)" stroke="${c.colDark}" stroke-width="1.2" stroke-linejoin="round"/>
+    <!-- Текстура на рукояти -->
+    <line x1="89" y1="240" x2="105" y2="240" stroke="${c.colDark}" stroke-width="0.4" opacity="0.5"/>
+    <line x1="89" y1="246" x2="106" y2="246" stroke="${c.colDark}" stroke-width="0.4" opacity="0.5"/>
+    <line x1="89" y1="252" x2="107" y2="252" stroke="${c.colDark}" stroke-width="0.4" opacity="0.5"/>
+    <!-- Блик на рукояти -->
+    <path d="M 84 234 L 102 234 L 102 237 L 86 238 Z" fill="${c.colLight}" opacity="0.4"/>
+    <!-- Антабка снизу рукояти -->
+    <circle cx="100" cy="260" r="1.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+  </svg>`;
+}
+
+// AN-94 — российская AR с двойным выстрелом, изогнутый магазин
+function svgAN94(c) {
+  return `<svg viewBox="-10 195 240 75" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="an94-body" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/>
+        <stop offset="50%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <linearGradient id="an94-mag" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+    </defs>
+    <!-- Тень снизу -->
+    <ellipse cx="115" cy="265" rx="105" ry="3" fill="${c.colDark}" opacity="0.4"/>
+    <!-- Ствол (длинный, тонкий) -->
+    <rect x="138" y="222" width="72" height="6" rx="1" fill="url(#an94-body)" stroke="${c.col}" stroke-width="1"/>
+    <!-- Дульный компенсатор -->
+    <rect x="205" y="219" width="10" height="12" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <line x1="207" y1="221" x2="207" y2="229" stroke="${c.colLight}" stroke-width="0.5"/>
+    <line x1="210" y1="221" x2="210" y2="229" stroke="${c.colLight}" stroke-width="0.5"/>
+    <line x1="213" y1="221" x2="213" y2="229" stroke="${c.colLight}" stroke-width="0.5"/>
+    <!-- Газовая трубка над стволом -->
+    <rect x="138" y="217" width="60" height="4" rx="0.8" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <!-- Прицельная планка -->
+    <rect x="105" y="213" width="38" height="3" rx="0.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.6"/>
+    <!-- Целик -->
+    <rect x="108" y="210" width="5" height="6" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Мушка -->
+    <path d="M 168 217 L 171 211 L 174 217 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Передняя рукоять / цевьё -->
+    <rect x="138" y="228" width="22" height="10" rx="1.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="1"/>
+    <line x1="142" y1="230" x2="142" y2="236" stroke="${c.colLight}" stroke-width="0.5" opacity="0.6"/>
+    <line x1="146" y1="230" x2="146" y2="236" stroke="${c.colLight}" stroke-width="0.5" opacity="0.6"/>
+    <line x1="150" y1="230" x2="150" y2="236" stroke="${c.colLight}" stroke-width="0.5" opacity="0.6"/>
+    <line x1="154" y1="230" x2="154" y2="236" stroke="${c.colLight}" stroke-width="0.5" opacity="0.6"/>
+    <!-- Ствольная коробка -->
+    <rect x="92" y="218" width="48" height="22" rx="2" fill="url(#an94-body)" stroke="${c.col}" stroke-width="1.3"/>
+    <!-- Окно выброса гильз -->
+    <rect x="100" y="222" width="20" height="5" rx="0.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Маркировки -->
+    <line x1="98" y1="232" x2="125" y2="232" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <line x1="98" y1="235" x2="120" y2="235" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <!-- Магазин (характерный изогнутый, как у Калашникова) -->
+    <path d="M 105 240 L 130 240 L 134 262 L 116 264 Z" fill="url(#an94-mag)" stroke="${c.col}" stroke-width="1.2"/>
+    <!-- Рёбра магазина -->
+    <line x1="110" y1="245" x2="130" y2="245" stroke="${c.colLight}" stroke-width="0.5" opacity="0.6"/>
+    <line x1="112" y1="250" x2="132" y2="250" stroke="${c.colLight}" stroke-width="0.5" opacity="0.6"/>
+    <line x1="114" y1="255" x2="133" y2="255" stroke="${c.colLight}" stroke-width="0.5" opacity="0.6"/>
+    <!-- Блик на магазине -->
+    <path d="M 105 240 L 130 240 L 130 243 L 106 243 Z" fill="${c.colLight}" opacity="0.4"/>
+    <!-- Пистолетная рукоять -->
+    <path d="M 75 234 L 93 234 L 90 260 L 72 258 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2" stroke-linejoin="round"/>
+    <line x1="78" y1="240" x2="89" y2="240" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <line x1="77" y1="246" x2="88" y2="246" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <line x1="76" y1="252" x2="87" y2="252" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <!-- Спусковая скоба -->
+    <ellipse cx="83" cy="245" rx="8" ry="5" fill="none" stroke="${c.col}" stroke-width="1.8"/>
+    <path d="M 81 242 Q 81 247 85 247" fill="none" stroke="${c.colLight}" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Приклад (складной, тонкий — характерный для АН-94) -->
+    <rect x="35" y="226" width="58" height="5" rx="1" fill="url(#an94-body)" stroke="${c.col}" stroke-width="1.2"/>
+    <rect x="35" y="231" width="58" height="3" rx="0.6" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Затыльник приклада -->
+    <path d="M 35 224 L 22 228 L 22 236 L 35 234 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2" stroke-linejoin="round"/>
+    <!-- Антабка на прикладе -->
+    <circle cx="55" cy="232" r="1.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+  </svg>`;
+}
+
 function getWeaponSVG(weaponName, rarity) {
   const palette = RARITY_PALETTE[rarity] || RARITY_PALETTE.common;
   const builders = {
     M1014: svgM1014, Groza: svgGroza, M1887: svgM1887, AWM: svgAWM,
     'AK-47': svgAK47, SCAR: svgSCAR, 'MP-40': svgMP40,
     G18: svgG18, 'Desert Eagle': svgDeagle, UMP: svgUMP,
+    // v151: партия 1
+    M79: svgM79, M500: svgM500, 'AN-94': svgAN94,
   };
   const fn = builders[weaponName];
   if (!fn) {
