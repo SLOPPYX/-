@@ -2394,6 +2394,147 @@ body::after {
   50%      { opacity: 1; }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   v153 — Индивидуальные эффекты (партия 3 финал)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ───────────────────────────────────────────────────────────
+   XM8 — Голографический сканнер (синий луч сверху вниз) +
+          красная точка коллиматорного прицела
+   ─────────────────────────────────────────────────────────── */
+.card[data-id="ff_xm8"] .card-weapon-vis::after,
+.modal-weapon-vis[data-id="ff_xm8"]::after,
+.showcase-slot[data-id="ff_xm8"] .mini-weapon::after {
+  content: '';
+  position: absolute;
+  /* Сканнер проходит сверху вниз по всему оружию */
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 8%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(91, 169, 255, 0.7) 40%,
+    rgba(180, 220, 255, 0.95) 50%,
+    rgba(91, 169, 255, 0.7) 60%,
+    transparent 100%
+  );
+  filter: blur(1px);
+  box-shadow: 0 0 12px rgba(91, 169, 255, 0.7);
+  animation: xm8Scanner 3.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 3;
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+  opacity: 0;
+}
+@keyframes xm8Scanner {
+  0%   { opacity: 0; transform: translate3d(0, 0%, 0); }
+  10%  { opacity: 1; transform: translate3d(0, 0%, 0); }
+  85%  { opacity: 1; transform: translate3d(0, 900%, 0); }
+  95%  { opacity: 0; transform: translate3d(0, 1000%, 0); }
+  100% { opacity: 0; transform: translate3d(0, 0%, 0); }
+}
+
+/* Красная точка коллиматора XM8 — пульсирует */
+.card[data-id="ff_xm8"] .card-weapon-vis::before,
+.modal-weapon-vis[data-id="ff_xm8"]::before,
+.showcase-slot[data-id="ff_xm8"] .mini-weapon::before {
+  content: '';
+  position: absolute;
+  /* Над прицелом — примерно левая четверть оружия */
+  top: 18%;
+  left: 36%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(255, 60, 60, 1) 0%,
+    rgba(255, 30, 30, 0.7) 40%,
+    transparent 80%
+  );
+  box-shadow: 0 0 6px rgba(255, 50, 50, 1),
+              0 0 14px rgba(255, 50, 50, 0.6);
+  animation: xm8DotPulse 1.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 4;
+  will-change: opacity, transform;
+}
+@keyframes xm8DotPulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.85); }
+  50%      { opacity: 1; transform: scale(1.1); }
+}
+
+/* ───────────────────────────────────────────────────────────
+   Katana — Блик отражения света проходит вдоль клинка
+   ─────────────────────────────────────────────────────────── */
+.card[data-id="ff_katana"] .card-weapon-vis::after,
+.modal-weapon-vis[data-id="ff_katana"]::after,
+.showcase-slot[data-id="ff_katana"] .mini-weapon::after {
+  content: '';
+  position: absolute;
+  /* Поверх клинка — клинок занимает примерно от 35% до 90% по горизонтали */
+  top: 36%;
+  left: 35%;
+  right: 5%;
+  height: 10%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 30%,
+    rgba(255, 255, 255, 1) 48%,
+    rgba(255, 240, 240, 1) 50%,
+    rgba(255, 255, 255, 1) 52%,
+    rgba(255, 255, 255, 0.4) 70%,
+    transparent 100%
+  );
+  background-size: 30% 100%;
+  background-repeat: no-repeat;
+  filter: blur(0.4px);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+  animation: katanaShine 3s linear infinite;
+  pointer-events: none;
+  z-index: 3;
+  mix-blend-mode: screen;
+  will-change: background-position;
+}
+@keyframes katanaShine {
+  0%   { background-position: -30% 0; }
+  100% { background-position: 130% 0; }
+}
+
+/* Дополнительный кровавый блик (для ultralegendary) */
+.card[data-id="ff_katana"] .card-weapon-vis::before,
+.modal-weapon-vis[data-id="ff_katana"]::before,
+.showcase-slot[data-id="ff_katana"] .mini-weapon::before {
+  content: '';
+  position: absolute;
+  /* Поверх клинка — слабая красная аура */
+  top: 30%;
+  left: 35%;
+  right: 5%;
+  height: 18%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 58, 85, 0.15) 30%,
+    rgba(255, 100, 100, 0.2) 50%,
+    rgba(255, 58, 85, 0.15) 70%,
+    transparent 100%
+  );
+  filter: blur(2px);
+  animation: katanaBloodGlow 2.4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: screen;
+  will-change: opacity;
+}
+@keyframes katanaBloodGlow {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 0.9; }
+}
+
 .card-name {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 15px;
@@ -5451,6 +5592,397 @@ function svgP90(c) {
   </svg>`;
 }
 
+// ═══════════════════════════════════════════════════════════
+// v153 — Новые SVG (партия 3 финал: XM8, Katana)
+// ═══════════════════════════════════════════════════════════
+
+// XM8 — модульная футуристическая AR (legendary)
+function svgXM8(c) {
+  return `<svg viewBox="-10 195 240 75" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="xm8-body" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/>
+        <stop offset="50%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <linearGradient id="xm8-mag" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <radialGradient id="xm8-scope" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0%" stop-color="${c.colLight}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </radialGradient>
+    </defs>
+    <!-- Тень -->
+    <ellipse cx="115" cy="265" rx="100" ry="3" fill="${c.colDark}" opacity="0.4"/>
+
+    <!-- Ствол с обтекаемым кожухом (футуристический) -->
+    <path d="M 145 222 L 205 222 L 213 226 L 213 232 L 205 236 L 145 236 Z"
+          fill="url(#xm8-body)" stroke="${c.col}" stroke-width="1.2" stroke-linejoin="round"/>
+    <!-- Прорези на стволе (вентиляция) -->
+    <line x1="155" y1="226" x2="170" y2="226" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="155" y1="232" x2="170" y2="232" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="175" y1="226" x2="190" y2="226" stroke="${c.colDark}" stroke-width="0.6"/>
+    <line x1="175" y1="232" x2="190" y2="232" stroke="${c.colDark}" stroke-width="0.6"/>
+    <!-- Блик ствола -->
+    <line x1="148" y1="224" x2="208" y2="224" stroke="${c.colLight}" stroke-width="0.6" opacity="0.6"/>
+    <!-- Дульный компенсатор -->
+    <circle cx="213" cy="229" r="3.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <circle cx="213" cy="229" r="1.5" fill="${c.colDark}"/>
+
+    <!-- Тактическая планка Picatinny сверху на всю длину -->
+    <rect x="80" y="214" width="100" height="4" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Зубцы планки -->
+    <line x1="88" y1="214" x2="88" y2="218" stroke="${c.col}" stroke-width="0.5"/>
+    <line x1="96" y1="214" x2="96" y2="218" stroke="${c.col}" stroke-width="0.5"/>
+    <line x1="104" y1="214" x2="104" y2="218" stroke="${c.col}" stroke-width="0.5"/>
+    <line x1="112" y1="214" x2="112" y2="218" stroke="${c.col}" stroke-width="0.5"/>
+    <line x1="120" y1="214" x2="120" y2="218" stroke="${c.col}" stroke-width="0.5"/>
+    <line x1="128" y1="214" x2="128" y2="218" stroke="${c.col}" stroke-width="0.5"/>
+    <line x1="148" y1="214" x2="148" y2="218" stroke="${c.col}" stroke-width="0.5"/>
+    <line x1="156" y1="214" x2="156" y2="218" stroke="${c.col}" stroke-width="0.5"/>
+    <line x1="164" y1="214" x2="164" y2="218" stroke="${c.col}" stroke-width="0.5"/>
+    <line x1="172" y1="214" x2="172" y2="218" stroke="${c.col}" stroke-width="0.5"/>
+
+    <!-- Тактический прицел / коллиматор сверху -->
+    <rect x="98" y="204" width="32" height="10" rx="2" fill="url(#xm8-body)" stroke="${c.col}" stroke-width="1.2"/>
+    <circle cx="114" cy="209" r="4" fill="url(#xm8-scope)" stroke="${c.col}" stroke-width="1"/>
+    <circle cx="114" cy="209" r="2" fill="${c.colDark}"/>
+    <circle cx="114" cy="209" r="0.8" fill="${c.colLight}"/>
+    <!-- Колесо настройки -->
+    <rect x="130" y="206" width="3" height="6" rx="0.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.4"/>
+
+    <!-- Ствольная коробка (модульная) -->
+    <path d="M 70 218 L 145 218 L 145 240 L 70 240 Z" fill="url(#xm8-body)" stroke="${c.col}" stroke-width="1.3"/>
+    <!-- Блик на коробке -->
+    <path d="M 70 218 L 145 218 L 145 221 L 70 221 Z" fill="${c.colLight}" opacity="0.4"/>
+    <!-- Окно выброса гильз -->
+    <rect x="90" y="222" width="20" height="5" rx="0.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Селектор режима -->
+    <circle cx="80" cy="226" r="2" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+    <line x1="80" y1="226" x2="80" y2="229" stroke="${c.colLight}" stroke-width="1"/>
+    <!-- Маркировки XM8 -->
+    <line x1="118" y1="232" x2="140" y2="232" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <line x1="118" y1="235" x2="135" y2="235" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+
+    <!-- Магазин (полупрозрачный, видны патроны — фишка XM8) -->
+    <rect x="98" y="240" width="22" height="20" rx="2" fill="url(#xm8-mag)" stroke="${c.col}" stroke-width="1.2"/>
+    <!-- Прозрачные секции магазина -->
+    <rect x="101" y="243" width="16" height="2.5" rx="0.3" fill="${c.colDark}" opacity="0.5"/>
+    <rect x="101" y="248" width="16" height="2.5" rx="0.3" fill="${c.colDark}" opacity="0.5"/>
+    <rect x="101" y="253" width="16" height="2.5" rx="0.3" fill="${c.colDark}" opacity="0.5"/>
+    <!-- Видимые патроны -->
+    <line x1="103" y1="244" x2="115" y2="244" stroke="${c.colLight}" stroke-width="1" opacity="0.7"/>
+    <line x1="103" y1="249" x2="115" y2="249" stroke="${c.colLight}" stroke-width="1" opacity="0.7"/>
+    <line x1="103" y1="254" x2="115" y2="254" stroke="${c.colLight}" stroke-width="1" opacity="0.7"/>
+
+    <!-- Пистолетная рукоять (эргономичная) -->
+    <path d="M 60 234 L 78 234 L 75 260 L 55 258 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2" stroke-linejoin="round"/>
+    <line x1="64" y1="240" x2="74" y2="240" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <line x1="63" y1="246" x2="73" y2="246" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <line x1="62" y1="252" x2="72" y2="252" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+
+    <!-- Спусковая скоба -->
+    <ellipse cx="68" cy="246" rx="8" ry="5" fill="none" stroke="${c.col}" stroke-width="1.8"/>
+    <path d="M 66 243 Q 66 248 70 248" fill="none" stroke="${c.colLight}" stroke-width="1.5" stroke-linecap="round"/>
+
+    <!-- Складной приклад (характерный обтекаемый XM8) -->
+    <path d="M 35 222 L 70 222 L 70 236 L 35 236 Z" fill="url(#xm8-body)" stroke="${c.col}" stroke-width="1.2"/>
+    <line x1="40" y1="225" x2="65" y2="225" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <line x1="40" y1="229" x2="65" y2="229" stroke="${c.colDark}" stroke-width="0.4" opacity="0.6"/>
+    <line x1="40" y1="233" x2="65" y2="233" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <!-- Резиновый затыльник -->
+    <path d="M 35 222 L 22 226 L 22 232 L 35 236 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="1" stroke-linejoin="round"/>
+
+    <!-- Антабка -->
+    <circle cx="50" cy="240" r="1.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+  </svg>`;
+}
+
+// Katana — японский меч (ultralegendary)
+function svgKatana(c) {
+  return `<svg viewBox="-10 195 240 75" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="katana-blade" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ffffff"/>
+        <stop offset="30%" stop-color="${c.colLight}"/>
+        <stop offset="70%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <linearGradient id="katana-grip" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colDark}"/>
+        <stop offset="50%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <radialGradient id="katana-tsuba" cx="0.4" cy="0.4" r="0.6">
+        <stop offset="0%" stop-color="${c.colLight}"/>
+        <stop offset="60%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </radialGradient>
+    </defs>
+    <!-- Тень -->
+    <ellipse cx="115" cy="265" rx="105" ry="3" fill="${c.colDark}" opacity="0.4"/>
+
+    <!-- Клинок (длинный, слегка изогнутый — характерная японская форма) -->
+    <!-- Основная заточенная часть клинка -->
+    <path d="M 92 232
+             Q 130 226 170 224
+             Q 200 222 215 222
+             L 215 226
+             Q 200 227 170 229
+             Q 130 232 92 236 Z"
+          fill="url(#katana-blade)" stroke="${c.col}" stroke-width="1.1" stroke-linejoin="round"/>
+
+    <!-- Острый кончик клинка (киссаки) -->
+    <path d="M 215 222 L 222 224 L 215 226 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+
+    <!-- Линия закалки (хамон) — характерная волнистая линия на клинке -->
+    <path d="M 95 234
+             Q 110 230 130 230
+             Q 150 230 170 229
+             Q 190 228 210 227"
+          fill="none" stroke="${c.colLight}" stroke-width="0.7" opacity="0.8" stroke-linecap="round"/>
+    <path d="M 100 235
+             Q 120 232 140 232
+             Q 160 232 180 231
+             Q 200 230 213 230"
+          fill="none" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+
+    <!-- Блик на клинке (отражение света) -->
+    <path d="M 100 230 L 200 225" stroke="#ffffff" stroke-width="0.5" opacity="0.7"/>
+
+    <!-- Хабаки (металлическая муфта между клинком и цубой) -->
+    <rect x="86" y="228" width="8" height="12" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <line x1="88" y1="230" x2="88" y2="238" stroke="${c.colLight}" stroke-width="0.4"/>
+    <line x1="91" y1="230" x2="91" y2="238" stroke="${c.colLight}" stroke-width="0.4"/>
+
+    <!-- Цуба (гарда — круглая, декоративная) -->
+    <circle cx="82" cy="234" r="10" fill="url(#katana-tsuba)" stroke="${c.col}" stroke-width="1.5"/>
+    <circle cx="82" cy="234" r="7" fill="none" stroke="${c.colDark}" stroke-width="0.5" opacity="0.7"/>
+    <!-- Декоративные отверстия на цубе -->
+    <circle cx="78" cy="231" r="1" fill="${c.colDark}"/>
+    <circle cx="86" cy="231" r="1" fill="${c.colDark}"/>
+    <circle cx="78" cy="237" r="1" fill="${c.colDark}"/>
+    <circle cx="86" cy="237" r="1" fill="${c.colDark}"/>
+    <!-- Центр цубы (отверстие для клинка) -->
+    <rect x="79" y="231" width="6" height="6" rx="0.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+
+    <!-- Цука (рукоять, обмотанная цука-ито) -->
+    <path d="M 32 230 L 72 230 L 72 238 L 32 238 Z" fill="url(#katana-grip)" stroke="${c.col}" stroke-width="1.2"/>
+
+    <!-- Обмотка рукояти (диагональные перекрёстные линии) -->
+    <line x1="35" y1="230" x2="40" y2="238" stroke="${c.colDark}" stroke-width="0.8" opacity="0.8"/>
+    <line x1="40" y1="230" x2="35" y2="238" stroke="${c.colDark}" stroke-width="0.8" opacity="0.8"/>
+    <line x1="42" y1="230" x2="47" y2="238" stroke="${c.colDark}" stroke-width="0.8" opacity="0.8"/>
+    <line x1="47" y1="230" x2="42" y2="238" stroke="${c.colDark}" stroke-width="0.8" opacity="0.8"/>
+    <line x1="49" y1="230" x2="54" y2="238" stroke="${c.colDark}" stroke-width="0.8" opacity="0.8"/>
+    <line x1="54" y1="230" x2="49" y2="238" stroke="${c.colDark}" stroke-width="0.8" opacity="0.8"/>
+    <line x1="56" y1="230" x2="61" y2="238" stroke="${c.colDark}" stroke-width="0.8" opacity="0.8"/>
+    <line x1="61" y1="230" x2="56" y2="238" stroke="${c.colDark}" stroke-width="0.8" opacity="0.8"/>
+    <line x1="63" y1="230" x2="68" y2="238" stroke="${c.colDark}" stroke-width="0.8" opacity="0.8"/>
+    <line x1="68" y1="230" x2="63" y2="238" stroke="${c.colDark}" stroke-width="0.8" opacity="0.8"/>
+
+    <!-- Декоративные ромбы между обмоткой (менуки) -->
+    <path d="M 45 232 L 47 234 L 45 236 L 43 234 Z" fill="${c.colLight}" stroke="${c.col}" stroke-width="0.4"/>
+    <path d="M 58 232 L 60 234 L 58 236 L 56 234 Z" fill="${c.colLight}" stroke="${c.col}" stroke-width="0.4"/>
+
+    <!-- Касира (наконечник рукояти) -->
+    <rect x="28" y="228" width="6" height="12" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <circle cx="31" cy="234" r="1.5" fill="${c.colLight}" stroke="${c.col}" stroke-width="0.4"/>
+
+    <!-- Ножны под клинком (сая) — частично виден -->
+    <path d="M 92 245
+             Q 130 248 170 250
+             Q 200 252 215 252
+             L 215 256
+             Q 200 256 170 254
+             Q 130 252 92 249 Z"
+          fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8" opacity="0.5"/>
+  </svg>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// v153 — Новые SVG (партия 3: XM8, Katana)
+// ═══════════════════════════════════════════════════════════
+
+// XM8 — экспериментальная футуристическая AR (legendary)
+function svgXM8(c) {
+  return `<svg viewBox="-10 195 240 75" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="xm8-body" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/>
+        <stop offset="50%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <linearGradient id="xm8-mag" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+    </defs>
+    <!-- Тень -->
+    <ellipse cx="115" cy="265" rx="100" ry="3" fill="${c.colDark}" opacity="0.4"/>
+    <!-- Ствол (тонкий, длинный) -->
+    <rect x="148" y="223" width="65" height="5" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <!-- Дульный компенсатор (тактический, многосекционный) -->
+    <rect x="208" y="218" width="12" height="15" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <line x1="211" y1="220" x2="211" y2="231" stroke="${c.colLight}" stroke-width="0.5"/>
+    <line x1="214" y1="220" x2="214" y2="231" stroke="${c.colLight}" stroke-width="0.5"/>
+    <line x1="217" y1="220" x2="217" y2="231" stroke="${c.colLight}" stroke-width="0.5"/>
+    <!-- Газовая трубка над стволом -->
+    <rect x="148" y="218" width="55" height="4" rx="0.8" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.6"/>
+    <!-- Тактическая планка Picatinny (длинная) -->
+    <rect x="80" y="213" width="68" height="3" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.6"/>
+    <!-- Зубцы на планке (характерные для пикатинни) -->
+    <line x1="85" y1="213" x2="85" y2="216" stroke="${c.colDark}" stroke-width="0.4"/>
+    <line x1="90" y1="213" x2="90" y2="216" stroke="${c.colDark}" stroke-width="0.4"/>
+    <line x1="95" y1="213" x2="95" y2="216" stroke="${c.colDark}" stroke-width="0.4"/>
+    <line x1="100" y1="213" x2="100" y2="216" stroke="${c.colDark}" stroke-width="0.4"/>
+    <line x1="105" y1="213" x2="105" y2="216" stroke="${c.colDark}" stroke-width="0.4"/>
+    <line x1="110" y1="213" x2="110" y2="216" stroke="${c.colDark}" stroke-width="0.4"/>
+    <line x1="115" y1="213" x2="115" y2="216" stroke="${c.colDark}" stroke-width="0.4"/>
+    <line x1="120" y1="213" x2="120" y2="216" stroke="${c.colDark}" stroke-width="0.4"/>
+    <line x1="125" y1="213" x2="125" y2="216" stroke="${c.colDark}" stroke-width="0.4"/>
+    <line x1="130" y1="213" x2="130" y2="216" stroke="${c.colDark}" stroke-width="0.4"/>
+    <line x1="135" y1="213" x2="135" y2="216" stroke="${c.colDark}" stroke-width="0.4"/>
+    <line x1="140" y1="213" x2="140" y2="216" stroke="${c.colDark}" stroke-width="0.4"/>
+    <!-- Голографический прицел на планке -->
+    <rect x="98" y="206" width="20" height="7" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <rect x="100" y="208" width="16" height="4" rx="0.5" fill="${c.col}"/>
+    <!-- Линза прицела (синее свечение — характерное для high-tech) -->
+    <circle cx="108" cy="210" r="2" fill="rgba(91,169,255,0.8)" stroke="${c.colLight}" stroke-width="0.4"/>
+    <!-- Ствольная коробка (обтекаемая, футуристическая) -->
+    <path d="M 65 218 L 80 215 L 150 215 L 155 218 L 155 243 L 150 246 L 80 246 L 65 243 Z"
+          fill="url(#xm8-body)" stroke="${c.col}" stroke-width="1.4" stroke-linejoin="round"/>
+    <!-- Блик на ствольной коробке -->
+    <path d="M 80 215 L 150 215 L 150 218 L 80 218 Z" fill="${c.colLight}" opacity="0.4"/>
+    <!-- Окно выброса гильз -->
+    <rect x="100" y="222" width="20" height="5" rx="0.5" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.6"/>
+    <!-- Тактические маркировки -->
+    <line x1="75" y1="232" x2="148" y2="232" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <line x1="75" y1="236" x2="142" y2="236" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <line x1="75" y1="240" x2="138" y2="240" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <!-- Передняя рукоять под цевьём -->
+    <rect x="135" y="246" width="11" height="13" rx="1.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="1"/>
+    <line x1="137" y1="249" x2="137" y2="257" stroke="${c.colDark}" stroke-width="0.4" opacity="0.6"/>
+    <line x1="141" y1="249" x2="141" y2="257" stroke="${c.colDark}" stroke-width="0.4" opacity="0.6"/>
+    <!-- Магазин (прямой коробчатый, прозрачный с патронами) -->
+    <rect x="92" y="246" width="20" height="18" rx="1.5" fill="url(#xm8-mag)" stroke="${c.col}" stroke-width="1.2"/>
+    <!-- Прозрачные секции с патронами -->
+    <line x1="94" y1="250" x2="110" y2="250" stroke="${c.colLight}" stroke-width="0.6" opacity="0.7"/>
+    <line x1="94" y1="254" x2="110" y2="254" stroke="${c.colLight}" stroke-width="0.6" opacity="0.7"/>
+    <line x1="94" y1="258" x2="110" y2="258" stroke="${c.colLight}" stroke-width="0.6" opacity="0.7"/>
+    <!-- Блик -->
+    <path d="M 92 246 L 112 246 L 112 248 L 93 248 Z" fill="${c.colLight}" opacity="0.5"/>
+    <!-- Пистолетная рукоять (эргономичная, скошенная) -->
+    <path d="M 60 240 L 78 240 L 75 264 L 56 262 Z" fill="${c.colDark}" stroke="${c.col}" stroke-width="1.2" stroke-linejoin="round"/>
+    <line x1="63" y1="244" x2="74" y2="244" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <line x1="62" y1="250" x2="73" y2="250" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <line x1="61" y1="256" x2="72" y2="256" stroke="${c.colLight}" stroke-width="0.4" opacity="0.5"/>
+    <!-- Спусковая скоба -->
+    <ellipse cx="68" cy="248" rx="8" ry="5" fill="none" stroke="${c.col}" stroke-width="1.8"/>
+    <path d="M 66 245 Q 66 250 70 250" fill="none" stroke="${c.colLight}" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Складной/телескопический приклад (модульный, тонкий) -->
+    <rect x="25" y="228" width="40" height="3" rx="0.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.6"/>
+    <rect x="25" y="232" width="40" height="4" rx="0.5" fill="url(#xm8-body)" stroke="${c.col}" stroke-width="1"/>
+    <rect x="25" y="236" width="40" height="3" rx="0.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.6"/>
+    <!-- Затыльник приклада с резиной -->
+    <rect x="20" y="225" width="6" height="17" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="0.8"/>
+    <line x1="22" y1="228" x2="22" y2="239" stroke="${c.colLight}" stroke-width="0.4"/>
+  </svg>`;
+}
+
+// Katana — японский меч (ultralegendary)
+function svgKatana(c) {
+  return `<svg viewBox="-10 195 240 75" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="katana-blade" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#f5f7fa"/>
+        <stop offset="40%" stop-color="${c.colLight}"/>
+        <stop offset="100%" stop-color="${c.col}"/>
+      </linearGradient>
+      <linearGradient id="katana-edge" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ffffff"/>
+        <stop offset="50%" stop-color="${c.colLight}"/>
+        <stop offset="100%" stop-color="${c.col}"/>
+      </linearGradient>
+      <linearGradient id="katana-handle" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <radialGradient id="katana-tsuba" cx="0.4" cy="0.4" r="0.7">
+        <stop offset="0%" stop-color="${c.colLight}"/>
+        <stop offset="60%" stop-color="${c.col}"/>
+        <stop offset="100%" stop-color="${c.colDark}"/>
+      </radialGradient>
+    </defs>
+    <!-- Тень -->
+    <ellipse cx="115" cy="265" rx="105" ry="3" fill="${c.colDark}" opacity="0.4"/>
+
+    <!-- Клинок (длинный, слегка изогнутый, характерная катана-форма) -->
+    <!-- Основное тело клинка -->
+    <path d="M 80 234 Q 130 230 215 220 L 222 226 Q 130 232 80 240 Z"
+          fill="url(#katana-blade)" stroke="${c.colDark}" stroke-width="1.2" stroke-linejoin="round"/>
+
+    <!-- Режущая кромка (нижняя — более светлая, отражающая) -->
+    <path d="M 80 240 Q 130 232 222 226 L 222 228 Q 130 234 80 241 Z"
+          fill="url(#katana-edge)" opacity="0.9"/>
+
+    <!-- Хамон (волнистая линия закалки — священный узор катаны) -->
+    <path d="M 85 237 Q 95 234 105 237 Q 115 234 125 237 Q 135 234 145 237 Q 160 234 175 235 Q 195 234 215 226"
+          stroke="${c.colLight}" stroke-width="0.6" fill="none" opacity="0.7"/>
+
+    <!-- Кисаки (острие — характерная японская заточка) -->
+    <path d="M 215 220 L 224 224 L 222 228 L 218 226 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.8"/>
+
+    <!-- Блик на клинке (отражение света) -->
+    <line x1="90" y1="233" x2="210" y2="221" stroke="#ffffff" stroke-width="0.6" opacity="0.7"/>
+    <line x1="95" y1="235" x2="200" y2="226" stroke="#ffffff" stroke-width="0.3" opacity="0.5"/>
+
+    <!-- Хабаки (металлическая муфта между клинком и цубой) -->
+    <rect x="74" y="231" width="8" height="12" rx="0.5" fill="${c.colLight}" stroke="${c.colDark}" stroke-width="1"/>
+    <line x1="78" y1="231" x2="78" y2="243" stroke="${c.colDark}" stroke-width="0.4"/>
+
+    <!-- Цуба (гарда — круглая, японский стиль) -->
+    <circle cx="68" cy="237" r="11" fill="url(#katana-tsuba)" stroke="${c.colDark}" stroke-width="1.4"/>
+    <!-- Узор на цубе (4 отверстия по бокам) -->
+    <circle cx="68" cy="230" r="1.2" fill="${c.colDark}"/>
+    <circle cx="68" cy="244" r="1.2" fill="${c.colDark}"/>
+    <circle cx="61" cy="237" r="1.2" fill="${c.colDark}"/>
+    <circle cx="75" cy="237" r="1.2" fill="${c.colDark}"/>
+    <!-- Прорезь для клинка через цубу -->
+    <rect x="64" y="235" width="8" height="4" rx="0.5" fill="${c.colDark}"/>
+    <!-- Блик на цубе -->
+    <path d="M 62 232 Q 68 228 74 232 L 72 234 Q 68 230 64 234 Z" fill="${c.colLight}" opacity="0.6"/>
+
+    <!-- Цука (рукоять с обмоткой ромбами) -->
+    <path d="M 56 232 L 57 242 L 30 246 L 28 236 Z"
+          fill="url(#katana-handle)" stroke="${c.colDark}" stroke-width="1.2" stroke-linejoin="round"/>
+
+    <!-- Обмотка ромбами (характерная для японских мечей) -->
+    <!-- Ряд 1 -->
+    <line x1="52" y1="234" x2="50" y2="244" stroke="${c.colLight}" stroke-width="0.5"/>
+    <line x1="48" y1="234" x2="46" y2="244" stroke="${c.colLight}" stroke-width="0.5"/>
+    <line x1="44" y1="235" x2="42" y2="245" stroke="${c.colLight}" stroke-width="0.5"/>
+    <line x1="40" y1="235" x2="38" y2="245" stroke="${c.colLight}" stroke-width="0.5"/>
+    <line x1="36" y1="236" x2="34" y2="246" stroke="${c.colLight}" stroke-width="0.5"/>
+    <line x1="32" y1="236" x2="30" y2="246" stroke="${c.colLight}" stroke-width="0.5"/>
+    <!-- Ряд 2 (диагонали в другую сторону для ромбиков) -->
+    <line x1="50" y1="234" x2="52" y2="244" stroke="${c.colDark}" stroke-width="0.4" opacity="0.7"/>
+    <line x1="46" y1="234" x2="48" y2="244" stroke="${c.colDark}" stroke-width="0.4" opacity="0.7"/>
+    <line x1="42" y1="235" x2="44" y2="245" stroke="${c.colDark}" stroke-width="0.4" opacity="0.7"/>
+    <line x1="38" y1="235" x2="40" y2="245" stroke="${c.colDark}" stroke-width="0.4" opacity="0.7"/>
+    <line x1="34" y1="236" x2="36" y2="246" stroke="${c.colDark}" stroke-width="0.4" opacity="0.7"/>
+
+    <!-- Касира (наконечник рукояти) -->
+    <rect x="22" y="236" width="8" height="11" rx="1" fill="${c.colDark}" stroke="${c.col}" stroke-width="1"/>
+    <circle cx="26" cy="241" r="1.5" fill="${c.col}" stroke="${c.colDark}" stroke-width="0.4"/>
+
+    <!-- Менуки (декоративная вставка по центру рукояти) -->
+    <circle cx="43" cy="240" r="2" fill="${c.colLight}" stroke="${c.colDark}" stroke-width="0.6" opacity="0.8"/>
+  </svg>`;
+}
+
 function getWeaponSVG(weaponName, rarity) {
   const palette = RARITY_PALETTE[rarity] || RARITY_PALETTE.common;
   const builders = {
@@ -5461,6 +5993,8 @@ function getWeaponSVG(weaponName, rarity) {
     M79: svgM79, M500: svgM500, 'AN-94': svgAN94,
     // v152: партия 2
     'MAG-7': svgMAG7, 'SPAS-12': svgSPAS12, P90: svgP90,
+    // v153: партия 3 (финал)
+    XM8: svgXM8, Katana: svgKatana,
   };
   const fn = builders[weaponName];
   if (!fn) {
