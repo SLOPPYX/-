@@ -1620,6 +1620,67 @@ body::after {
              armorGlowLegendary 3.2s ease-in-out infinite !important;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   v156 — ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ (60 fps, особенно iOS Safari)
+   Анимированный filter:drop-shadow — главный убийца fps на iPhone.
+   GPU-композитинг + изоляция перерисовки + упрощение на тач.
+   ═══════════════════════════════════════════════════════════ */
+.card,
+.card-weapon-vis,
+.card-weapon-vis svg {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.card {
+  contain: layout style paint;
+}
+.card-weapon-vis svg.helmet-svg,
+.card-weapon-vis svg.armor-svg {
+  will-change: transform;
+}
+
+/* ТАЧ-УСТРОЙСТВА (iPhone/Android): глушим дорогие filter-анимации,
+   ПК сюда НЕ попадает. Свечение становится статичным, движение остаётся. */
+@media (hover: none) and (pointer: coarse) {
+  .card[data-rarity="legendary"] .card-weapon-vis svg.helmet-svg,
+  .card[data-rarity="legendary"] .card-weapon-vis svg.armor-svg,
+  .card[data-rarity="epic"] .card-weapon-vis svg,
+  .card[data-rarity="legendary"] .card-weapon-vis svg,
+  .card[data-rarity="ultralegendary"] .card-weapon-vis svg {
+    filter: drop-shadow(0 0 8px var(--card-rarity-glow)) !important;
+  }
+  .card[data-rarity="legendary"] .card-weapon-vis svg.helmet-svg {
+    animation: helmetRockLegendary 2.6s ease-in-out infinite !important;
+  }
+  .card[data-rarity="legendary"] .card-weapon-vis svg.armor-svg {
+    animation: armorFloat 3.4s ease-in-out infinite !important;
+  }
+  .card[data-rarity="epic"] .card-weapon-vis svg.helmet-svg {
+    animation: helmetRockEpic 2.4s ease-in-out infinite !important;
+  }
+  .card[data-rarity="epic"] .card-weapon-vis svg.armor-svg {
+    animation: armorFloat 3.2s ease-in-out infinite !important;
+  }
+  .card-weapon-vis::before,
+  .card-weapon-vis::after {
+    animation: none !important;
+  }
+  .card-weapon-vis:has(svg.armor-svg)::after,
+  .card-weapon-vis:has(svg.helmet-svg)::after {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-weapon-vis svg,
+  .card-weapon-vis::before,
+  .card-weapon-vis::after {
+    animation: none !important;
+  }
+}
+
 /* COMMON — лёгкое мерцание контура */
 .card[data-rarity="common"] .card-weapon-vis svg path,
 .card[data-rarity="common"] .card-weapon-vis svg rect,
