@@ -1466,6 +1466,160 @@ body::after {
   50%      { transform: scale(1.04); }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   v154 — АНИМАЦИЯ КАЧАНИЯ ШЛЕМОВ (helmet-svg)
+   Шлем покачивается из стороны в сторону, как предмет в превью.
+   Чем выше редкость — тем «живее» и амплитуднее качание + свечение.
+   ═══════════════════════════════════════════════════════════ */
+.card-weapon-vis svg.helmet-svg,
+.modal-weapon-big svg.helmet-svg,
+.mini-weapon svg.helmet-svg {
+  transform-origin: 50% 88%; /* точка опоры — низ шлема */
+}
+
+/* COMMON — медленное, едва заметное покачивание */
+@keyframes helmetRockCommon {
+  0%, 100% { transform: rotate(-3deg); }
+  50%      { transform: rotate(3deg); }
+}
+.card[data-rarity="common"] .card-weapon-vis svg.helmet-svg,
+.modal-weapon-vis[data-rarity="common"] .modal-weapon-big svg.helmet-svg,
+.showcase-slot[data-rarity="common"] .mini-weapon svg.helmet-svg {
+  animation: helmetRockCommon 3.2s ease-in-out infinite !important;
+}
+
+/* RARE — качание чуть шире и с лёгким подскоком */
+@keyframes helmetRockRare {
+  0%, 100% { transform: rotate(-5deg) translateY(0); }
+  50%      { transform: rotate(5deg) translateY(-3px); }
+}
+.card[data-rarity="rare"] .card-weapon-vis svg.helmet-svg,
+.modal-weapon-vis[data-rarity="rare"] .modal-weapon-big svg.helmet-svg,
+.showcase-slot[data-rarity="rare"] .mini-weapon svg.helmet-svg {
+  animation: helmetRockRare 2.6s ease-in-out infinite !important;
+}
+
+/* EPIC — энергичное качание + пульс масштаба */
+@keyframes helmetRockEpic {
+  0%, 100% { transform: rotate(-7deg) scale(1) translateY(0); }
+  25%      { transform: rotate(0deg) scale(1.05) translateY(-4px); }
+  50%      { transform: rotate(7deg) scale(1) translateY(0); }
+  75%      { transform: rotate(0deg) scale(1.05) translateY(-4px); }
+}
+.card[data-rarity="epic"] .card-weapon-vis svg.helmet-svg,
+.modal-weapon-vis[data-rarity="epic"] .modal-weapon-big svg.helmet-svg,
+.showcase-slot[data-rarity="epic"] .mini-weapon svg.helmet-svg {
+  animation: helmetRockEpic 2.2s ease-in-out infinite !important;
+}
+
+/* LEGENDARY — мощное «парящее» качание с подскоком и пульсацией свечения */
+@keyframes helmetRockLegendary {
+  0%, 100% { transform: rotate(-9deg) scale(1) translateY(0); }
+  20%      { transform: rotate(-3deg) scale(1.07) translateY(-6px); }
+  50%      { transform: rotate(9deg) scale(1.03) translateY(-2px); }
+  80%      { transform: rotate(3deg) scale(1.07) translateY(-6px); }
+}
+@keyframes helmetGlowLegendary {
+  0%, 100% { filter: drop-shadow(0 0 10px var(--card-rarity-glow)); }
+  50%      { filter: drop-shadow(0 0 22px var(--card-rarity-glow)); }
+}
+.card[data-rarity="legendary"] .card-weapon-vis svg.helmet-svg,
+.modal-weapon-vis[data-rarity="legendary"] .modal-weapon-big svg.helmet-svg,
+.showcase-slot[data-rarity="legendary"] .mini-weapon svg.helmet-svg {
+  animation: helmetRockLegendary 2.4s ease-in-out infinite,
+             helmetGlowLegendary 2.4s ease-in-out infinite !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   v155 — ФОН ДЛЯ ЭКИПИРОВКИ + АНИМАЦИЯ БРОНИ
+   ═══════════════════════════════════════════════════════════ */
+
+/* Мягкое радиальное свечение-фон под предметом экипировки.
+   Цвет берётся из --card-rarity-glow (своё для каждой редкости). */
+.card-weapon-vis:has(svg.armor-svg)::before,
+.card-weapon-vis:has(svg.helmet-svg)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 55%, var(--card-rarity-glow) 0%, transparent 68%),
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 60%);
+  opacity: 0.5;
+  border-radius: 14px;
+  pointer-events: none;
+  animation: equipBgPulse 4s ease-in-out infinite;
+}
+.card-weapon-vis:has(svg.armor-svg),
+.card-weapon-vis:has(svg.helmet-svg) {
+  position: relative;
+}
+.card-weapon-vis svg.armor-svg,
+.card-weapon-vis svg.helmet-svg {
+  position: relative;
+  z-index: 1;
+}
+/* Тонкая решётка-сетка для тактического вайба (поверх свечения, под предметом) */
+.card-weapon-vis:has(svg.armor-svg)::after,
+.card-weapon-vis:has(svg.helmet-svg)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(var(--card-rarity-glow) 1px, transparent 1px),
+    linear-gradient(90deg, var(--card-rarity-glow) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.06;
+  border-radius: 14px;
+  pointer-events: none;
+}
+
+@keyframes equipBgPulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 0.62; }
+}
+
+/* ── Минималистичная анимация бронежилета ──
+   Спокойное «дыхание» + едва заметное парение. Сдержанно по всем редкостям,
+   чуть живее к легендарке. */
+.card-weapon-vis svg.armor-svg,
+.modal-weapon-big svg.armor-svg,
+.mini-weapon svg.armor-svg {
+  transform-origin: 50% 50%;
+}
+
+@keyframes armorFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-4px) scale(1.025); }
+}
+.card[data-rarity="common"] .card-weapon-vis svg.armor-svg,
+.modal-weapon-vis[data-rarity="common"] .modal-weapon-big svg.armor-svg,
+.showcase-slot[data-rarity="common"] .mini-weapon svg.armor-svg {
+  animation: armorFloat 4s ease-in-out infinite !important;
+}
+.card[data-rarity="rare"] .card-weapon-vis svg.armor-svg,
+.modal-weapon-vis[data-rarity="rare"] .modal-weapon-big svg.armor-svg,
+.showcase-slot[data-rarity="rare"] .mini-weapon svg.armor-svg {
+  animation: armorFloat 3.4s ease-in-out infinite !important;
+}
+.card[data-rarity="epic"] .card-weapon-vis svg.armor-svg,
+.modal-weapon-vis[data-rarity="epic"] .modal-weapon-big svg.armor-svg,
+.showcase-slot[data-rarity="epic"] .mini-weapon svg.armor-svg {
+  animation: armorFloat 3s ease-in-out infinite !important;
+}
+/* Легендарка — то же парение + мягкая пульсация свечения */
+@keyframes armorGlowLegendary {
+  0%, 100% { filter: drop-shadow(0 0 10px var(--card-rarity-glow)); }
+  50%      { filter: drop-shadow(0 0 20px var(--card-rarity-glow)); }
+}
+.card[data-rarity="legendary"] .card-weapon-vis svg.armor-svg,
+.modal-weapon-vis[data-rarity="legendary"] .modal-weapon-big svg.armor-svg,
+.showcase-slot[data-rarity="legendary"] .mini-weapon svg.armor-svg {
+  animation: armorFloat 3.2s ease-in-out infinite,
+             armorGlowLegendary 3.2s ease-in-out infinite !important;
+}
+
 /* COMMON — лёгкое мерцание контура */
 .card[data-rarity="common"] .card-weapon-vis svg path,
 .card[data-rarity="common"] .card-weapon-vis svg rect,
@@ -5983,6 +6137,202 @@ function svgKatana(c) {
   </svg>`;
 }
 
+// ═══════════════════════════════════════════════════════════
+// v154 — СЕРИЯ «ЭКИПИРОВКА»: броня и шлемы по уровням
+// Чем выше уровень — тем массивнее и детальнее модель.
+// ═══════════════════════════════════════════════════════════
+
+// ── БРОНЯ Lvl 1 (common) — лёгкий жилет ──
+function svgArmor1(c) {
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="armor-svg">
+    <defs>
+      <linearGradient id="ar1-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/><stop offset="55%" stop-color="${c.col}"/><stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="100" cy="180" rx="55" ry="6" fill="${c.colDark}" opacity="0.35"/>
+    <path d="M60 55 L100 45 L140 55 L140 150 Q100 165 60 150 Z" fill="url(#ar1-g)" stroke="${c.colDark}" stroke-width="2"/>
+    <path d="M70 56 L80 40 L95 46 L90 60 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="1.5"/>
+    <path d="M130 56 L120 40 L105 46 L110 60 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="1.5"/>
+    <line x1="100" y1="55" x2="100" y2="150" stroke="${c.colDark}" stroke-width="2"/>
+    <rect x="56" y="95" width="10" height="8" rx="2" fill="${c.colDark}"/>
+    <rect x="134" y="95" width="10" height="8" rx="2" fill="${c.colDark}"/>
+    <path d="M68 60 L84 56 L82 140 Q74 144 68 140 Z" fill="${c.colLight}" opacity="0.3"/>
+    <text x="100" y="115" font-family="Oxanium,sans-serif" font-size="22" font-weight="800" fill="${c.colLight}" text-anchor="middle" opacity="0.85">I</text>
+  </svg>`;
+}
+
+// ── БРОНЯ Lvl 2 (rare) — усиленные пластины ──
+function svgArmor2(c) {
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="armor-svg">
+    <defs>
+      <linearGradient id="ar2-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/><stop offset="55%" stop-color="${c.col}"/><stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="100" cy="182" rx="60" ry="6" fill="${c.colDark}" opacity="0.35"/>
+    <path d="M55 52 L100 40 L145 52 L145 152 Q100 170 55 152 Z" fill="url(#ar2-g)" stroke="${c.colDark}" stroke-width="2.2"/>
+    <path d="M66 53 L78 36 L96 43 L90 58 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="1.6"/>
+    <path d="M134 53 L122 36 L104 43 L110 58 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="1.6"/>
+    <rect x="66" y="70" width="28" height="34" rx="4" fill="${c.colDark}" opacity="0.55" stroke="${c.colLight}" stroke-width="1"/>
+    <rect x="106" y="70" width="28" height="34" rx="4" fill="${c.colDark}" opacity="0.55" stroke="${c.colLight}" stroke-width="1"/>
+    <rect x="78" y="112" width="44" height="26" rx="4" fill="${c.colDark}" opacity="0.5" stroke="${c.colLight}" stroke-width="1"/>
+    <line x1="100" y1="52" x2="100" y2="152" stroke="${c.colDark}" stroke-width="2.2"/>
+    <rect x="51" y="92" width="11" height="10" rx="2" fill="${c.colDark}"/>
+    <rect x="138" y="92" width="11" height="10" rx="2" fill="${c.colDark}"/>
+    <path d="M64 58 L80 53 L78 145 Q70 149 64 144 Z" fill="${c.colLight}" opacity="0.25"/>
+    <text x="100" y="160" font-family="Oxanium,sans-serif" font-size="20" font-weight="800" fill="${c.colLight}" text-anchor="middle" opacity="0.9">II</text>
+  </svg>`;
+}
+
+// ── БРОНЯ Lvl 3 (epic) — тяжёлый бронежилет ──
+function svgArmor3(c) {
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="armor-svg">
+    <defs>
+      <linearGradient id="ar3-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/><stop offset="50%" stop-color="${c.col}"/><stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="100" cy="184" rx="66" ry="7" fill="${c.colDark}" opacity="0.4"/>
+    <path d="M48 50 L100 36 L152 50 L152 156 Q100 176 48 156 Z" fill="url(#ar3-g)" stroke="${c.colDark}" stroke-width="2.5"/>
+    <path d="M48 52 Q40 60 44 78 L62 72 L60 54 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="2"/>
+    <path d="M152 52 Q160 60 156 78 L138 72 L140 54 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="2"/>
+    <path d="M62 50 L76 32 L96 40 L90 56 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="1.8"/>
+    <path d="M138 50 L124 32 L104 40 L110 56 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="1.8"/>
+    <rect x="60" y="66" width="32" height="40" rx="5" fill="${c.colDark}" opacity="0.6" stroke="${c.colLight}" stroke-width="1.2"/>
+    <rect x="108" y="66" width="32" height="40" rx="5" fill="${c.colDark}" opacity="0.6" stroke="${c.colLight}" stroke-width="1.2"/>
+    <rect x="70" y="114" width="60" height="30" rx="5" fill="${c.colDark}" opacity="0.55" stroke="${c.colLight}" stroke-width="1.2"/>
+    <line x1="70" y1="124" x2="130" y2="124" stroke="${c.colLight}" stroke-width="0.8" opacity="0.5"/>
+    <line x1="70" y1="134" x2="130" y2="134" stroke="${c.colLight}" stroke-width="0.8" opacity="0.5"/>
+    <line x1="100" y1="50" x2="100" y2="156" stroke="${c.colDark}" stroke-width="2.5"/>
+    <rect x="44" y="96" width="12" height="11" rx="2" fill="${c.colDark}"/>
+    <rect x="144" y="96" width="12" height="11" rx="2" fill="${c.colDark}"/>
+    <path d="M58 56 L74 50 L72 150 Q64 154 58 148 Z" fill="${c.colLight}" opacity="0.22"/>
+    <text x="100" y="164" font-family="Oxanium,sans-serif" font-size="19" font-weight="800" fill="${c.colLight}" text-anchor="middle" opacity="0.9">III</text>
+  </svg>`;
+}
+
+// ── БРОНЯ Lvl 4 (legendary) — топовый бронекостюм ──
+function svgArmor4(c) {
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="armor-svg">
+    <defs>
+      <linearGradient id="ar4-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/><stop offset="48%" stop-color="${c.col}"/><stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <radialGradient id="ar4-core" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0%" stop-color="${c.colLight}"/><stop offset="100%" stop-color="${c.col}"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="100" cy="186" rx="72" ry="7" fill="${c.colDark}" opacity="0.45"/>
+    <path d="M42 48 L100 32 L158 48 L158 160 Q100 182 42 160 Z" fill="url(#ar4-g)" stroke="${c.colDark}" stroke-width="2.8"/>
+    <path d="M42 50 Q30 60 36 84 L58 76 L56 52 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="2.2"/>
+    <path d="M158 50 Q170 60 164 84 L142 76 L144 52 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="2.2"/>
+    <path d="M36 60 L48 64 L46 78 L36 80 Z" fill="${c.colLight}" opacity="0.4"/>
+    <path d="M164 60 L152 64 L154 78 L164 80 Z" fill="${c.colLight}" opacity="0.4"/>
+    <path d="M58 48 L74 28 L96 38 L88 56 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="2"/>
+    <path d="M142 48 L126 28 L104 38 L112 56 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="2"/>
+    <rect x="56" y="62" width="34" height="44" rx="6" fill="${c.colDark}" opacity="0.6" stroke="${c.colLight}" stroke-width="1.4"/>
+    <rect x="110" y="62" width="34" height="44" rx="6" fill="${c.colDark}" opacity="0.6" stroke="${c.colLight}" stroke-width="1.4"/>
+    <circle cx="100" cy="92" r="11" fill="url(#ar4-core)" stroke="${c.colDark}" stroke-width="1.5"/>
+    <circle cx="100" cy="92" r="5" fill="${c.colLight}"/>
+    <rect x="66" y="116" width="68" height="34" rx="6" fill="${c.colDark}" opacity="0.55" stroke="${c.colLight}" stroke-width="1.4"/>
+    <line x1="66" y1="127" x2="134" y2="127" stroke="${c.colLight}" stroke-width="1" opacity="0.5"/>
+    <line x1="66" y1="138" x2="134" y2="138" stroke="${c.colLight}" stroke-width="1" opacity="0.5"/>
+    <rect x="38" y="98" width="13" height="12" rx="2" fill="${c.colDark}"/>
+    <rect x="149" y="98" width="13" height="12" rx="2" fill="${c.colDark}"/>
+    <path d="M52 54 L70 48 L68 154 Q60 158 52 152 Z" fill="${c.colLight}" opacity="0.2"/>
+    <text x="100" y="168" font-family="Oxanium,sans-serif" font-size="18" font-weight="800" fill="${c.colLight}" text-anchor="middle" opacity="0.95">IV</text>
+  </svg>`;
+}
+
+// ── ШЛЕМ Lvl 1 (common) — простая каска ──
+function svgHelmet1(c) {
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="helmet-svg">
+    <defs>
+      <linearGradient id="hl1-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/><stop offset="55%" stop-color="${c.col}"/><stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="100" cy="170" rx="48" ry="6" fill="${c.colDark}" opacity="0.35"/>
+    <path d="M55 120 Q55 60 100 58 Q145 60 145 120 Z" fill="url(#hl1-g)" stroke="${c.colDark}" stroke-width="2.2"/>
+    <path d="M52 120 L148 120 L142 130 L58 130 Z" fill="${c.colDark}" stroke="${c.colDark}" stroke-width="1.5"/>
+    <path d="M70 110 Q70 72 96 68 Q86 74 84 110 Z" fill="${c.colLight}" opacity="0.4"/>
+    <text x="100" y="106" font-family="Oxanium,sans-serif" font-size="22" font-weight="800" fill="${c.colLight}" text-anchor="middle" opacity="0.85">I</text>
+  </svg>`;
+}
+
+// ── ШЛЕМ Lvl 2 (rare) — укреплённая каска ──
+function svgHelmet2(c) {
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="helmet-svg">
+    <defs>
+      <linearGradient id="hl2-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/><stop offset="55%" stop-color="${c.col}"/><stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="100" cy="172" rx="52" ry="6" fill="${c.colDark}" opacity="0.35"/>
+    <path d="M50 124 Q50 54 100 52 Q150 54 150 124 Z" fill="url(#hl2-g)" stroke="${c.colDark}" stroke-width="2.4"/>
+    <path d="M100 52 Q100 90 100 124" stroke="${c.colDark}" stroke-width="2.2" fill="none"/>
+    <path d="M68 60 Q66 92 70 124" stroke="${c.colDark}" stroke-width="1.4" fill="none" opacity="0.6"/>
+    <path d="M132 60 Q134 92 130 124" stroke="${c.colDark}" stroke-width="1.4" fill="none" opacity="0.6"/>
+    <ellipse cx="62" cy="104" rx="8" ry="14" fill="${c.colDark}" opacity="0.5" stroke="${c.colLight}" stroke-width="1"/>
+    <ellipse cx="138" cy="104" rx="8" ry="14" fill="${c.colDark}" opacity="0.5" stroke="${c.colLight}" stroke-width="1"/>
+    <path d="M48 124 L152 124 L145 134 L55 134 Z" fill="${c.colDark}" stroke="${c.colDark}" stroke-width="1.5"/>
+    <path d="M66 112 Q66 66 92 62 Q82 70 80 112 Z" fill="${c.colLight}" opacity="0.35"/>
+    <text x="100" y="146" font-family="Oxanium,sans-serif" font-size="20" font-weight="800" fill="${c.colLight}" text-anchor="middle" opacity="0.9">II</text>
+  </svg>`;
+}
+
+// ── ШЛЕМ Lvl 3 (epic) — боевой шлем ──
+function svgHelmet3(c) {
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="helmet-svg">
+    <defs>
+      <linearGradient id="hl3-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/><stop offset="50%" stop-color="${c.col}"/><stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="100" cy="176" rx="56" ry="7" fill="${c.colDark}" opacity="0.4"/>
+    <path d="M46 130 Q46 48 100 46 Q154 48 154 130 L150 142 Q100 152 50 142 Z" fill="url(#hl3-g)" stroke="${c.colDark}" stroke-width="2.6"/>
+    <path d="M100 46 L100 130" stroke="${c.colDark}" stroke-width="2.6" fill="none"/>
+    <path d="M88 50 L88 130 M112 50 L112 130" stroke="${c.colDark}" stroke-width="1.4" opacity="0.5"/>
+    <rect x="44" y="98" width="16" height="34" rx="6" fill="${c.colDark}" opacity="0.6" stroke="${c.colLight}" stroke-width="1.2"/>
+    <rect x="140" y="98" width="16" height="34" rx="6" fill="${c.colDark}" opacity="0.6" stroke="${c.colLight}" stroke-width="1.2"/>
+    <rect x="70" y="60" width="60" height="6" rx="2" fill="${c.colDark}" opacity="0.7"/>
+    <line x1="76" y1="61" x2="76" y2="65" stroke="${c.colLight}" stroke-width="0.8"/>
+    <line x1="86" y1="61" x2="86" y2="65" stroke="${c.colLight}" stroke-width="0.8"/>
+    <line x1="114" y1="61" x2="114" y2="65" stroke="${c.colLight}" stroke-width="0.8"/>
+    <line x1="124" y1="61" x2="124" y2="65" stroke="${c.colLight}" stroke-width="0.8"/>
+    <path d="M62 118 Q62 60 90 54 Q78 64 76 118 Z" fill="${c.colLight}" opacity="0.3"/>
+    <text x="100" y="166" font-family="Oxanium,sans-serif" font-size="19" font-weight="800" fill="${c.colLight}" text-anchor="middle" opacity="0.92">III</text>
+  </svg>`;
+}
+
+// ── ШЛЕМ Lvl 4 (legendary) — полный боевой шлем с забралом ──
+function svgHelmet4(c) {
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="helmet-svg">
+    <defs>
+      <linearGradient id="hl4-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/><stop offset="48%" stop-color="${c.col}"/><stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+      <linearGradient id="hl4-visor" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c.colLight}"/><stop offset="100%" stop-color="${c.colDark}"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="100" cy="180" rx="62" ry="7" fill="${c.colDark}" opacity="0.45"/>
+    <path d="M42 132 Q42 42 100 40 Q158 42 158 132 L154 150 Q100 162 46 150 Z" fill="url(#hl4-g)" stroke="${c.colDark}" stroke-width="2.8"/>
+    <path d="M100 40 L100 88" stroke="${c.colLight}" stroke-width="3" fill="none"/>
+    <path d="M100 88 L100 132" stroke="${c.colDark}" stroke-width="2.8" fill="none"/>
+    <path d="M58 96 L142 96 L138 124 L62 124 Z" fill="url(#hl4-visor)" stroke="${c.colDark}" stroke-width="2"/>
+    <rect x="64" y="104" width="72" height="8" rx="4" fill="${c.colLight}"/>
+    <rect x="64" y="106" width="72" height="3" rx="1.5" fill="#ffffff" opacity="0.7"/>
+    <path d="M42 100 Q34 110 40 138 L58 130 L56 102 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="2"/>
+    <path d="M158 100 Q166 110 160 138 L142 130 L144 102 Z" fill="${c.col}" stroke="${c.colDark}" stroke-width="2"/>
+    <line x1="70" y1="58" x2="130" y2="58" stroke="${c.colDark}" stroke-width="2" opacity="0.6"/>
+    <line x1="74" y1="68" x2="126" y2="68" stroke="${c.colDark}" stroke-width="1.6" opacity="0.5"/>
+    <path d="M56 92 Q56 52 86 46 Q74 56 72 90 Z" fill="${c.colLight}" opacity="0.28"/>
+    <text x="100" y="166" font-family="Oxanium,sans-serif" font-size="18" font-weight="800" fill="${c.colLight}" text-anchor="middle" opacity="0.95">IV</text>
+  </svg>`;
+}
+
 function getWeaponSVG(weaponName, rarity) {
   const palette = RARITY_PALETTE[rarity] || RARITY_PALETTE.common;
   const builders = {
@@ -5995,6 +6345,11 @@ function getWeaponSVG(weaponName, rarity) {
     'MAG-7': svgMAG7, 'SPAS-12': svgSPAS12, P90: svgP90,
     // v153: партия 3 (финал)
     XM8: svgXM8, Katana: svgKatana,
+    // v154: серия «Экипировка» — броня и шлемы
+    'Armor Lvl 1': svgArmor1, 'Armor Lvl 2': svgArmor2,
+    'Armor Lvl 3': svgArmor3, 'Armor Lvl 4': svgArmor4,
+    'Helmet Lvl 1': svgHelmet1, 'Helmet Lvl 2': svgHelmet2,
+    'Helmet Lvl 3': svgHelmet3, 'Helmet Lvl 4': svgHelmet4,
   };
   const fn = builders[weaponName];
   if (!fn) {
