@@ -1657,7 +1657,7 @@ body::after {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   КЕЙСЫ — v160
+   NFT-КЕЙСЫ — v162
    ═══════════════════════════════════════════════════════════ */
 .cases-wrap { padding: 4px 2px 24px; }
 .cases-balance {
@@ -1669,7 +1669,6 @@ body::after {
 .cases-balance-val { font-weight: 800; font-size: 18px; color: var(--text); }
 .cases-balance-val .tok { font-size: 12px; color: var(--muted); font-weight: 600; }
 .cases-hint { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin-bottom: 18px; padding: 0 4px; }
-
 .case-card {
   position: relative; overflow: hidden;
   background: linear-gradient(135deg, color-mix(in srgb, var(--case-col) 12%, var(--card)) 0%, var(--card) 60%);
@@ -1705,11 +1704,7 @@ body::after {
   box-shadow: 0 4px 16px -4px var(--case-glow); transition: transform .12s, filter .12s;
 }
 .case-open-btn:active { transform: scale(0.97); filter: brightness(1.1); }
-.case-open-btn.disabled {
-  background: var(--line); color: var(--muted); cursor: not-allowed; box-shadow: none;
-}
-
-/* ── Оверлей открытия с рулеткой ── */
+.case-open-btn.disabled { background: var(--line); color: var(--muted); cursor: not-allowed; box-shadow: none; }
 .case-overlay {
   position: fixed; inset: 0; z-index: 9999;
   background: rgba(6,9,14,0.92); backdrop-filter: blur(6px);
@@ -1727,8 +1722,7 @@ body::after {
 }
 .case-reel-marker {
   position: absolute; left: 50%; top: 0; bottom: 0; width: 3px; z-index: 3;
-  transform: translateX(-50%); background: #fff;
-  box-shadow: 0 0 12px 2px #fff;
+  transform: translateX(-50%); background: #fff; box-shadow: 0 0 12px 2px #fff;
 }
 .case-reel { display: flex; gap: 8px; padding: 11px 0; height: 100%; align-items: center; will-change: transform; }
 .reel-item {
@@ -1740,8 +1734,6 @@ body::after {
 .reel-item-inner { width: 78px; height: 78px; display: flex; align-items: center; justify-content: center; }
 .reel-item-inner svg { max-width: 100%; max-height: 100%; }
 .reel-item.reel-win { box-shadow: 0 0 18px 2px var(--ri); }
-
-/* ── Карта выигрыша ── */
 .case-result-area { margin-top: 22px; opacity: 0; transform: translateY(14px); transition: opacity .4s, transform .4s; }
 .case-result-area.show { opacity: 1; transform: translateY(0); }
 .case-won-card {
@@ -1762,9 +1754,6 @@ body::after {
   box-shadow: 0 4px 16px -4px var(--wcg); transition: transform .12s;
 }
 .case-won-btn:active { transform: scale(0.97); }
-
-/* Тач-оптимизация кейсов: анимации идут везде, только GPU-композитинг */
-.case-emoji, .case-shine { will-change: transform; }
 
 /* COMMON — лёгкое мерцание контура */
 .card[data-rarity="common"] .card-weapon-vis svg path,
@@ -8168,7 +8157,7 @@ function closeCraftResult() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// КЕЙСЫ — v160
+// NFT-КЕЙСЫ — v162 (выдают NFT-карты; путь /casino/nftcases/)
 // ═══════════════════════════════════════════════════════════
 async function showCases() {
   setContent(`<div class="cases-wrap">
@@ -8178,10 +8167,13 @@ async function showCases() {
     <div class="skel" style="height:200px;border-radius:16px;"></div>
   </div>`);
   try {
-    const d = await api('/casino/cases/list');
+    const d = await api('/casino/nftcases/list');
     if (!d || !d.ok) { if (state.tab==='cases') setContent(renderError()); return; }
     state.cases = d.cases;
-    if (typeof d.balance === 'number') state.balance = d.balance;
+    if (typeof d.balance === 'number') {
+      if (!state.me) state.me = {};
+      state.me.balance = d.balance;
+    }
     if (state.tab === 'cases') renderCases();
   } catch(e) {
     if (state.tab === 'cases') setContent(renderError());
@@ -8190,18 +8182,16 @@ async function showCases() {
 
 function renderCases() {
   const cases = state.cases || [];
-  const bal = state.balance || 0;
+  const bal = (state.me && typeof state.me.balance === 'number') ? state.me.balance : 0;
   let html = `<div class="cases-wrap">
     <div class="cases-balance">
       <span class="cases-balance-label">Баланс</span>
       <span class="cases-balance-val">${fmtTokens(bal)} <span class="tok">токенов</span></span>
     </div>
     <div class="cases-hint">Открой кейс — выпадет случайная NFT. Чем дороже кейс, тем выше шанс на редкое.</div>`;
-
   for (const c of cases) {
     const pal = RARITY_PALETTE[c.accent] || RARITY_PALETTE.common;
     const canAfford = bal >= c.price;
-    // строка шансов
     const chanceRows = Object.entries(c.chances)
       .filter(([r,w]) => w > 0)
       .map(([r,w]) => {
@@ -8223,7 +8213,6 @@ function renderCases() {
   }
   html += `</div>`;
   setContent(html);
-
   document.querySelectorAll('.case-open-btn:not(.disabled)').forEach(btn => {
     btn.addEventListener('click', () => openCase(btn.dataset.case));
   });
@@ -8235,13 +8224,9 @@ async function openCase(caseId) {
   _caseOpening = true;
   const caseObj = (state.cases || []).find(c => c.id === caseId);
   try { tg.HapticFeedback.impactOccurred('medium'); } catch(e) {}
-
-  // Строим оверлей с рулеткой
   const reelRarities = [];
   const possible = (caseObj && caseObj.rarities && caseObj.rarities.length) ? caseObj.rarities : ['common','rare','epic','legendary'];
-  // длинная лента случайных карточек для прокрутки
   for (let i=0;i<40;i++){ reelRarities.push(possible[Math.floor(Math.random()*possible.length)]); }
-
   const ov = document.createElement('div');
   ov.className = 'case-overlay show';
   ov.id = 'case-overlay';
@@ -8255,19 +8240,14 @@ async function openCase(caseId) {
       <div class="case-result-area" id="caseResultArea"></div>
     </div>`;
   document.body.appendChild(ov);
-
   const reel = ov.querySelector('#caseReel');
   reel.innerHTML = reelRarities.map(r => {
     const p = RARITY_PALETTE[r] || RARITY_PALETTE.common;
     return `<div class="reel-item" style="--ri:${p.col};--rig:${p.col}55"><div class="reel-item-inner"></div></div>`;
   }).join('');
-
-  // Запрос на сервер (параллельно с началом анимации)
   let res = null;
-  try {
-    res = await apiPost('/casino/cases/open', { case_id: caseId });
-  } catch(e) { res = { ok:false, error:'network' }; }
-
+  try { res = await apiPost('/casino/nftcases/open', { case_id: caseId }); }
+  catch(e) { res = { ok:false, error:'network' }; }
   if (!res || !res.ok) {
     _caseOpening = false;
     closeCaseOverlay();
@@ -8277,8 +8257,6 @@ async function openCase(caseId) {
     try { tg.showAlert ? tg.showAlert(msg) : alert(msg); } catch(e){ alert(msg); }
     return;
   }
-
-  // Подставим выпавшую карту в позицию остановки (например item #32)
   const stopIndex = 32;
   const won = res.nft;
   const wonPal = RARITY_PALETTE[won.rarity] || RARITY_PALETTE.common;
@@ -8288,21 +8266,13 @@ async function openCase(caseId) {
     items[stopIndex].querySelector('.reel-item-inner').innerHTML = getWeaponSVG(won.weapon, won.rarity);
     items[stopIndex].classList.add('reel-win');
   }
-
-  // Запускаем прокрутку: ширина item = 96px (88 + 8 gap)
   const itemW = 96;
-  const winRect = 0;
-  // центрируем stopIndex под маркером
   const offset = stopIndex * itemW - (reel.parentElement.offsetWidth/2) + (88/2);
   reel.style.transition = 'transform 3.6s cubic-bezier(0.12, 0.7, 0.12, 1)';
-  requestAnimationFrame(() => {
-    reel.style.transform = `translateX(${-offset}px)`;
-  });
-
-  // По завершении прокрутки — показываем результат
+  requestAnimationFrame(() => { reel.style.transform = `translateX(${-offset}px)`; });
   setTimeout(() => {
     try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-    if (typeof res.balance === 'number') state.balance = res.balance;
+    if (typeof res.balance === 'number') { if (!state.me) state.me = {}; state.me.balance = res.balance; }
     const supply = won.max_supply ? `#${won.serial}/${won.max_supply}` : `#${won.serial}`;
     const area = ov.querySelector('#caseResultArea');
     if (area) {
@@ -8319,7 +8289,8 @@ async function openCase(caseId) {
       if (wb) wb.addEventListener('click', () => {
         closeCaseOverlay();
         _caseOpening = false;
-        showCases(); // обновим баланс и кнопки
+        state.myItems = null;
+        showCases();
       });
     }
   }, 3700);
@@ -8329,7 +8300,6 @@ function closeCaseOverlay() {
   const ov = document.getElementById('case-overlay');
   if (ov) ov.remove();
 }
-
 
 // Хендлеры модалок крафта
 document.getElementById('craftCancelBtn').addEventListener('click', closeCraftPicker);
