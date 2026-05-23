@@ -1621,9 +1621,9 @@ body::after {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   v156 — ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ (60 fps, особенно iOS Safari)
-   Анимированный filter:drop-shadow — главный убийца fps на iPhone.
-   GPU-композитинг + изоляция перерисовки + упрощение на тач.
+   v161 — ПЛАВНОСТЬ 60 FPS (анимации НЕ отключаются нигде)
+   Раньше на тач-устройствах анимации глушились — теперь они идут
+   везде, но через GPU-композитинг, чтобы было плавно даже на телефоне.
    ═══════════════════════════════════════════════════════════ */
 .card,
 .card-weapon-vis,
@@ -1636,43 +1636,18 @@ body::after {
 .card {
   contain: layout style paint;
 }
-.card-weapon-vis svg.helmet-svg,
-.card-weapon-vis svg.armor-svg {
+/* will-change только на трансформируемых слоях — не злоупотребляем,
+   чтобы не съесть память на больших списках */
+.card-weapon-vis svg {
   will-change: transform;
 }
-
-/* ТАЧ-УСТРОЙСТВА (iPhone/Android): глушим дорогие filter-анимации,
-   ПК сюда НЕ попадает. Свечение становится статичным, движение остаётся. */
-@media (hover: none) and (pointer: coarse) {
-  .card[data-rarity="legendary"] .card-weapon-vis svg.helmet-svg,
-  .card[data-rarity="legendary"] .card-weapon-vis svg.armor-svg,
-  .card[data-rarity="epic"] .card-weapon-vis svg,
-  .card[data-rarity="legendary"] .card-weapon-vis svg,
-  .card[data-rarity="ultralegendary"] .card-weapon-vis svg {
-    filter: drop-shadow(0 0 8px var(--card-rarity-glow)) !important;
-  }
-  .card[data-rarity="legendary"] .card-weapon-vis svg.helmet-svg {
-    animation: helmetRockLegendary 2.6s ease-in-out infinite !important;
-  }
-  .card[data-rarity="legendary"] .card-weapon-vis svg.armor-svg {
-    animation: armorFloat 3.4s ease-in-out infinite !important;
-  }
-  .card[data-rarity="epic"] .card-weapon-vis svg.helmet-svg {
-    animation: helmetRockEpic 2.4s ease-in-out infinite !important;
-  }
-  .card[data-rarity="epic"] .card-weapon-vis svg.armor-svg {
-    animation: armorFloat 3.2s ease-in-out infinite !important;
-  }
-  .card-weapon-vis::before,
-  .card-weapon-vis::after {
-    animation: none !important;
-  }
-  .card-weapon-vis:has(svg.armor-svg)::after,
-  .card-weapon-vis:has(svg.helmet-svg)::after {
-    display: none !important;
-  }
+/* Плавный скролл списка карт на тач */
+#content {
+  -webkit-overflow-scrolling: touch;
 }
 
+/* Уважаем системную «уменьшить движение» — это выбор пользователя ОС,
+   а не наш форс. На обычных устройствах анимации работают всегда. */
 @media (prefers-reduced-motion: reduce) {
   .card-weapon-vis svg,
   .card-weapon-vis::before,
@@ -1680,6 +1655,116 @@ body::after {
     animation: none !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   КЕЙСЫ — v160
+   ═══════════════════════════════════════════════════════════ */
+.cases-wrap { padding: 4px 2px 24px; }
+.cases-balance {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px 18px; margin-bottom: 14px;
+}
+.cases-balance-label { color: var(--muted); font-size: 13px; }
+.cases-balance-val { font-weight: 800; font-size: 18px; color: var(--text); }
+.cases-balance-val .tok { font-size: 12px; color: var(--muted); font-weight: 600; }
+.cases-hint { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin-bottom: 18px; padding: 0 4px; }
+
+.case-card {
+  position: relative; overflow: hidden;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--case-col) 12%, var(--card)) 0%, var(--card) 60%);
+  border: 1px solid color-mix(in srgb, var(--case-col) 45%, var(--line));
+  border-radius: 18px; padding: 18px; margin-bottom: 14px;
+  box-shadow: 0 0 18px -6px var(--case-glow);
+}
+.case-shine {
+  position: absolute; top: 0; left: -60%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+  transform: skewX(-20deg); animation: caseShine 4.5s ease-in-out infinite; pointer-events: none;
+}
+@keyframes caseShine { 0%,70%{left:-60%;} 100%{left:140%;} }
+.case-emoji {
+  font-size: 52px; text-align: center; margin-bottom: 8px;
+  filter: drop-shadow(0 0 14px var(--case-glow));
+  animation: caseFloat 3s ease-in-out infinite;
+}
+@keyframes caseFloat { 0%,100%{transform:translateY(0) rotate(-2deg);} 50%{transform:translateY(-6px) rotate(2deg);} }
+.case-info { text-align: center; }
+.case-name { font-weight: 800; font-size: 18px; color: var(--text); margin-bottom: 10px; }
+.case-chances { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 12px; }
+.chance-pill {
+  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px;
+  color: var(--cp); border: 1px solid color-mix(in srgb, var(--cp) 50%, transparent);
+  background: color-mix(in srgb, var(--cp) 12%, transparent);
+}
+.case-price { font-weight: 800; font-size: 16px; color: var(--text); margin-bottom: 14px; }
+.case-open-btn {
+  width: 100%; padding: 13px; border: none; border-radius: 12px;
+  font-weight: 800; font-size: 15px; letter-spacing: 0.5px; cursor: pointer;
+  color: #0a0e16; background: var(--case-col);
+  box-shadow: 0 4px 16px -4px var(--case-glow); transition: transform .12s, filter .12s;
+}
+.case-open-btn:active { transform: scale(0.97); filter: brightness(1.1); }
+.case-open-btn.disabled {
+  background: var(--line); color: var(--muted); cursor: not-allowed; box-shadow: none;
+}
+
+/* ── Оверлей открытия с рулеткой ── */
+.case-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(6,9,14,0.92); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .25s;
+}
+.case-overlay.show { opacity: 1; }
+.case-roll-box { width: 92%; max-width: 440px; text-align: center; }
+.case-roll-title { color: var(--text); font-weight: 800; font-size: 18px; margin-bottom: 18px; }
+.case-reel-window {
+  position: relative; width: 100%; height: 110px; overflow: hidden;
+  border-radius: 14px; border: 1px solid var(--line); background: var(--card);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.case-reel-marker {
+  position: absolute; left: 50%; top: 0; bottom: 0; width: 3px; z-index: 3;
+  transform: translateX(-50%); background: #fff;
+  box-shadow: 0 0 12px 2px #fff;
+}
+.case-reel { display: flex; gap: 8px; padding: 11px 0; height: 100%; align-items: center; will-change: transform; }
+.reel-item {
+  flex: 0 0 88px; width: 88px; height: 88px; border-radius: 10px;
+  background: radial-gradient(circle at 50% 40%, var(--rig), transparent 70%), var(--card);
+  border: 1px solid color-mix(in srgb, var(--ri) 50%, var(--line));
+  display: flex; align-items: center; justify-content: center;
+}
+.reel-item-inner { width: 78px; height: 78px; display: flex; align-items: center; justify-content: center; }
+.reel-item-inner svg { max-width: 100%; max-height: 100%; }
+.reel-item.reel-win { box-shadow: 0 0 18px 2px var(--ri); }
+
+/* ── Карта выигрыша ── */
+.case-result-area { margin-top: 22px; opacity: 0; transform: translateY(14px); transition: opacity .4s, transform .4s; }
+.case-result-area.show { opacity: 1; transform: translateY(0); }
+.case-won-card {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--wc) 16%, var(--card)), var(--card));
+  border: 2px solid var(--wc); border-radius: 18px; padding: 20px 18px;
+  box-shadow: 0 0 32px -4px var(--wcg); animation: wonPop .45s cubic-bezier(.2,1.3,.4,1);
+}
+@keyframes wonPop { 0%{transform:scale(.7);opacity:0;} 100%{transform:scale(1);opacity:1;} }
+.case-won-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.case-won-vis { height: 120px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.case-won-vis svg { max-height: 116px; width: auto; filter: drop-shadow(0 0 14px var(--wcg)); }
+.case-won-name { font-weight: 800; font-size: 18px; color: var(--text); }
+.case-won-serial { font-size: 13px; color: var(--muted); font-weight: 600; }
+.case-won-rarity { font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin: 4px 0 16px; }
+.case-won-btn {
+  width: 100%; padding: 13px; border: none; border-radius: 12px;
+  font-weight: 800; font-size: 15px; cursor: pointer; color: #0a0e16; background: var(--wc);
+  box-shadow: 0 4px 16px -4px var(--wcg); transition: transform .12s;
+}
+.case-won-btn:active { transform: scale(0.97); }
+
+/* Тач-оптимизация кейсов: анимации идут везде, только GPU-композитинг */
+.case-emoji, .case-shine { will-change: transform; }
 
 /* COMMON — лёгкое мерцание контура */
 .card[data-rarity="common"] .card-weapon-vis svg path,
@@ -4297,6 +4382,14 @@ body::after {
       </svg>
       <span class="tab-label">КРАФТ</span>
     </div>
+    <div class="tab" data-tab="cases">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 8l9-5 9 5v8l-9 5-9-5V8z"/>
+        <path d="M3 8l9 5 9-5"/>
+        <path d="M12 13v8"/>
+      </svg>
+      <span class="tab-label">КЕЙСЫ</span>
+    </div>
     <div class="tab" data-tab="profile">
       <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="8" r="4"/>
@@ -6675,14 +6768,23 @@ function openCardModal(id) {
       // v146: разрешаем покупать несколько копий
       const ownedCount = (state.myItems || []).filter(x => x.id === item.id).length;
       priceText = `${item.price.toLocaleString()} 💰`;
-      if (ownedCount > 0) {
+      // v161: реальная проверка баланса — берём актуальный из state.me
+      const myBal = (state.me && typeof state.me.balance === 'number') ? state.me.balance : 0;
+      const canAfford = myBal >= item.price;
+      if (!canAfford) {
+        btnLabel = `Недостаточно токенов`;
+        btnDisabled = true;
+        btnAction = null;
+      } else if (ownedCount > 0) {
         // У юзера уже есть N копий — кнопка с подсказкой
         btnLabel = `${t('btn_buy')} — ${item.price.toLocaleString()} (×${ownedCount} есть)`;
+        btnDisabled = false;
+        btnAction = () => buyNft(item.id);
       } else {
         btnLabel = `${t('btn_buy')} — ${item.price.toLocaleString()}`;
+        btnDisabled = false;
+        btnAction = () => buyNft(item.id);
       }
-      btnDisabled = false;
-      btnAction = () => buyNft(item.id);
     }
   } else {
     // МОИ — кнопка «Продать» + «Закрыть»
@@ -6985,6 +7087,7 @@ document.querySelectorAll('.tab').forEach(tabEl => {
     else if (state.tab === 'market')  showMarket();
     else if (state.tab === 'p2p')     showP2P();
     else if (state.tab === 'craft')   showCraft();
+    else if (state.tab === 'cases')   showCases();
     else if (state.tab === 'profile') showProfile();
   });
 });
@@ -7069,6 +7172,15 @@ function showMy() {
 }
 function showMarket() {
   setContent(renderGrid(state.marketItems, { market: true }));
+  // v161: освежаем реальный баланс, чтобы проверка кнопки покупки была точной
+  api('/casino/me').then(r => {
+    if (r && r.ok && typeof r.balance === 'number') {
+      if (!state.me) state.me = {};
+      state.me.balance = r.balance;
+      const bv = document.getElementById('balanceVal');
+      if (bv) bv.textContent = fmtTokens(r.balance);
+    }
+  }).catch(()=>{});
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -8054,6 +8166,170 @@ function showCraftResult(r) {
 function closeCraftResult() {
   document.getElementById('craft-result-modal').classList.remove('show');
 }
+
+// ═══════════════════════════════════════════════════════════
+// КЕЙСЫ — v160
+// ═══════════════════════════════════════════════════════════
+async function showCases() {
+  setContent(`<div class="cases-wrap">
+    <div class="skel" style="height:60px;border-radius:14px;margin-bottom:16px;"></div>
+    <div class="skel" style="height:200px;border-radius:16px;margin-bottom:14px;"></div>
+    <div class="skel" style="height:200px;border-radius:16px;margin-bottom:14px;"></div>
+    <div class="skel" style="height:200px;border-radius:16px;"></div>
+  </div>`);
+  try {
+    const d = await api('/casino/cases/list');
+    if (!d || !d.ok) { if (state.tab==='cases') setContent(renderError()); return; }
+    state.cases = d.cases;
+    if (typeof d.balance === 'number') state.balance = d.balance;
+    if (state.tab === 'cases') renderCases();
+  } catch(e) {
+    if (state.tab === 'cases') setContent(renderError());
+  }
+}
+
+function renderCases() {
+  const cases = state.cases || [];
+  const bal = state.balance || 0;
+  let html = `<div class="cases-wrap">
+    <div class="cases-balance">
+      <span class="cases-balance-label">Баланс</span>
+      <span class="cases-balance-val">${fmtTokens(bal)} <span class="tok">токенов</span></span>
+    </div>
+    <div class="cases-hint">Открой кейс — выпадет случайная NFT. Чем дороже кейс, тем выше шанс на редкое.</div>`;
+
+  for (const c of cases) {
+    const pal = RARITY_PALETTE[c.accent] || RARITY_PALETTE.common;
+    const canAfford = bal >= c.price;
+    // строка шансов
+    const chanceRows = Object.entries(c.chances)
+      .filter(([r,w]) => w > 0)
+      .map(([r,w]) => {
+        const p = RARITY_PALETTE[r] || RARITY_PALETTE.common;
+        return `<span class="chance-pill" style="--cp:${p.col}">${RARITY_LABEL_RU[r]||r} ${w}%</span>`;
+      }).join('');
+    html += `<div class="case-card" style="--case-col:${pal.col};--case-glow:${pal.col}b3">
+      <div class="case-shine"></div>
+      <div class="case-emoji">${c.emoji}</div>
+      <div class="case-info">
+        <div class="case-name">${c.name_ru}</div>
+        <div class="case-chances">${chanceRows}</div>
+        <div class="case-price">💰 ${fmtTokens(c.price)}</div>
+      </div>
+      <button class="case-open-btn ${canAfford?'':'disabled'}" data-case="${c.id}" ${canAfford?'':'disabled'}>
+        ${canAfford ? 'ОТКРЫТЬ' : 'Мало токенов'}
+      </button>
+    </div>`;
+  }
+  html += `</div>`;
+  setContent(html);
+
+  document.querySelectorAll('.case-open-btn:not(.disabled)').forEach(btn => {
+    btn.addEventListener('click', () => openCase(btn.dataset.case));
+  });
+}
+
+let _caseOpening = false;
+async function openCase(caseId) {
+  if (_caseOpening) return;
+  _caseOpening = true;
+  const caseObj = (state.cases || []).find(c => c.id === caseId);
+  try { tg.HapticFeedback.impactOccurred('medium'); } catch(e) {}
+
+  // Строим оверлей с рулеткой
+  const reelRarities = [];
+  const possible = (caseObj && caseObj.rarities && caseObj.rarities.length) ? caseObj.rarities : ['common','rare','epic','legendary'];
+  // длинная лента случайных карточек для прокрутки
+  for (let i=0;i<40;i++){ reelRarities.push(possible[Math.floor(Math.random()*possible.length)]); }
+
+  const ov = document.createElement('div');
+  ov.className = 'case-overlay show';
+  ov.id = 'case-overlay';
+  ov.innerHTML = `
+    <div class="case-roll-box">
+      <div class="case-roll-title">${caseObj? caseObj.emoji+' '+caseObj.name_ru : 'Открытие...'}</div>
+      <div class="case-reel-window">
+        <div class="case-reel-marker"></div>
+        <div class="case-reel" id="caseReel"></div>
+      </div>
+      <div class="case-result-area" id="caseResultArea"></div>
+    </div>`;
+  document.body.appendChild(ov);
+
+  const reel = ov.querySelector('#caseReel');
+  reel.innerHTML = reelRarities.map(r => {
+    const p = RARITY_PALETTE[r] || RARITY_PALETTE.common;
+    return `<div class="reel-item" style="--ri:${p.col};--rig:${p.col}55"><div class="reel-item-inner"></div></div>`;
+  }).join('');
+
+  // Запрос на сервер (параллельно с началом анимации)
+  let res = null;
+  try {
+    res = await apiPost('/casino/cases/open', { case_id: caseId });
+  } catch(e) { res = { ok:false, error:'network' }; }
+
+  if (!res || !res.ok) {
+    _caseOpening = false;
+    closeCaseOverlay();
+    let msg = 'Не удалось открыть кейс';
+    if (res && res.error === 'not_enough') msg = 'Недостаточно токенов';
+    else if (res && res.error === 'pool_empty') msg = 'Нет доступных NFT для этого кейса';
+    try { tg.showAlert ? tg.showAlert(msg) : alert(msg); } catch(e){ alert(msg); }
+    return;
+  }
+
+  // Подставим выпавшую карту в позицию остановки (например item #32)
+  const stopIndex = 32;
+  const won = res.nft;
+  const wonPal = RARITY_PALETTE[won.rarity] || RARITY_PALETTE.common;
+  const items = reel.querySelectorAll('.reel-item');
+  if (items[stopIndex]) {
+    items[stopIndex].style.setProperty('--ri', wonPal.col);
+    items[stopIndex].querySelector('.reel-item-inner').innerHTML = getWeaponSVG(won.weapon, won.rarity);
+    items[stopIndex].classList.add('reel-win');
+  }
+
+  // Запускаем прокрутку: ширина item = 96px (88 + 8 gap)
+  const itemW = 96;
+  const winRect = 0;
+  // центрируем stopIndex под маркером
+  const offset = stopIndex * itemW - (reel.parentElement.offsetWidth/2) + (88/2);
+  reel.style.transition = 'transform 3.6s cubic-bezier(0.12, 0.7, 0.12, 1)';
+  requestAnimationFrame(() => {
+    reel.style.transform = `translateX(${-offset}px)`;
+  });
+
+  // По завершении прокрутки — показываем результат
+  setTimeout(() => {
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+    if (typeof res.balance === 'number') state.balance = res.balance;
+    const supply = won.max_supply ? `#${won.serial}/${won.max_supply}` : `#${won.serial}`;
+    const area = ov.querySelector('#caseResultArea');
+    if (area) {
+      area.innerHTML = `
+        <div class="case-won-card" style="--wc:${wonPal.col};--wcg:${wonPal.col}cc">
+          <div class="case-won-label">Тебе выпало</div>
+          <div class="case-won-vis">${getWeaponSVG(won.weapon, won.rarity)}</div>
+          <div class="case-won-name">${won.name_ru} <span class="case-won-serial">${supply}</span></div>
+          <div class="case-won-rarity" style="color:${wonPal.col}">${RARITY_LABEL_RU[won.rarity]||won.rarity}</div>
+          <button class="case-won-btn" id="caseWonBtn">Забрать</button>
+        </div>`;
+      area.classList.add('show');
+      const wb = area.querySelector('#caseWonBtn');
+      if (wb) wb.addEventListener('click', () => {
+        closeCaseOverlay();
+        _caseOpening = false;
+        showCases(); // обновим баланс и кнопки
+      });
+    }
+  }, 3700);
+}
+
+function closeCaseOverlay() {
+  const ov = document.getElementById('case-overlay');
+  if (ov) ov.remove();
+}
+
 
 // Хендлеры модалок крафта
 document.getElementById('craftCancelBtn').addEventListener('click', closeCraftPicker);
