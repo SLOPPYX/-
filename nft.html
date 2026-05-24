@@ -1668,41 +1668,38 @@ body::after {
 .cases-balance-label { color: var(--muted); font-size: 13px; }
 .cases-balance-val { font-weight: 800; font-size: 18px; color: var(--text); }
 .cases-balance-val .tok { font-size: 12px; color: var(--muted); font-weight: 600; }
-.cases-hint { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin-bottom: 18px; padding: 0 4px; }
+.cases-hint { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin-bottom: 16px; padding: 0 4px; }
+.cases-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+}
 .case-card {
   position: relative; overflow: hidden;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--case-col) 12%, var(--card)) 0%, var(--card) 60%);
+  background: linear-gradient(150deg, color-mix(in srgb, var(--case-col) 14%, var(--card)) 0%, var(--card) 65%);
   border: 1px solid color-mix(in srgb, var(--case-col) 45%, var(--line));
-  border-radius: 18px; padding: 18px; margin-bottom: 14px;
-  box-shadow: 0 0 18px -6px var(--case-glow);
+  border-radius: 14px; padding: 14px 12px; text-align: center;
+  box-shadow: 0 0 14px -6px var(--case-glow);
 }
-.case-shine {
-  position: absolute; top: 0; left: -60%; width: 50%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
-  transform: skewX(-20deg); animation: caseShine 4.5s ease-in-out infinite; pointer-events: none;
+.case-box {
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 8px;
 }
-@keyframes caseShine { 0%,70%{left:-60%;} 100%{left:140%;} }
-.case-emoji {
-  font-size: 52px; text-align: center; margin-bottom: 8px;
-  filter: drop-shadow(0 0 14px var(--case-glow));
+.case-box-svg {
+  width: 64px; height: 64px;
+  filter: drop-shadow(0 0 8px var(--case-glow));
   animation: caseFloat 3s ease-in-out infinite;
 }
-@keyframes caseFloat { 0%,100%{transform:translateY(0) rotate(-2deg);} 50%{transform:translateY(-6px) rotate(2deg);} }
-.case-info { text-align: center; }
-.case-name { font-weight: 800; font-size: 18px; color: var(--text); margin-bottom: 10px; }
-.case-chances { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 12px; }
-.chance-pill {
-  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px;
-  color: var(--cp); border: 1px solid color-mix(in srgb, var(--cp) 50%, transparent);
-  background: color-mix(in srgb, var(--cp) 12%, transparent);
-}
-.case-price { font-weight: 800; font-size: 16px; color: var(--text); margin-bottom: 14px; }
+@keyframes caseFloat { 0%,100%{transform:translateY(0) rotate(-2deg);} 50%{transform:translateY(-5px) rotate(2deg);} }
+.case-name { font-weight: 800; font-size: 14px; color: var(--text); margin-bottom: 4px; }
+.case-price { font-weight: 700; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
 .case-open-btn {
-  width: 100%; padding: 13px; border: none; border-radius: 12px;
-  font-weight: 800; font-size: 15px; letter-spacing: 0.5px; cursor: pointer;
+  width: 100%; padding: 9px; border: none; border-radius: 10px;
+  font-weight: 800; font-size: 13px; letter-spacing: 0.4px; cursor: pointer;
   color: #0a0e16; background: var(--case-col);
-  box-shadow: 0 4px 16px -4px var(--case-glow); transition: transform .12s, filter .12s;
+  box-shadow: 0 3px 12px -4px var(--case-glow); transition: transform .12s, filter .12s;
 }
+.case-open-btn:active { transform: scale(0.96); filter: brightness(1.1); }
+.case-open-btn.disabled { background: var(--line); color: var(--muted); cursor: not-allowed; box-shadow: none; }
+.case-price-old-unused { display: none; }
 .case-open-btn:active { transform: scale(0.97); filter: brightness(1.1); }
 .case-open-btn.disabled { background: var(--line); color: var(--muted); cursor: not-allowed; box-shadow: none; }
 .case-overlay {
@@ -7128,6 +7125,36 @@ async function loadMe() {
   state.me = r;
 }
 
+// v163: тихое обновление только баланса (без перерисовки всего)
+async function refreshBalance() {
+  try {
+    const r = await api('/casino/me');
+    if (!r || !r.ok || typeof r.balance !== 'number') return;
+    if (!state.me) state.me = {};
+    const prev = state.me.balance;
+    state.me.balance = r.balance;
+    const bv = document.getElementById('balanceVal');
+    if (bv) {
+      bv.textContent = fmtTokens(r.balance);
+      if (prev !== undefined && prev !== r.balance) flashBalance();
+    }
+    // если открыта вкладка кейсов — обновим и там кнопки
+    const cbv = document.getElementById('casesBalVal');
+    if (cbv) cbv.innerHTML = `${fmtTokens(r.balance)} <span class="tok">токенов</span>`;
+  } catch(e) {}
+}
+
+let _balanceTimer = null;
+function startBalanceAutoRefresh() {
+  if (_balanceTimer) clearInterval(_balanceTimer);
+  // каждые 8 сек тихо тянем баланс
+  _balanceTimer = setInterval(refreshBalance, 8000);
+  // и при возврате во вкладку приложения (Telegram сворачивали) — сразу
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refreshBalance();
+  });
+}
+
 async function loadMy() {
   if (state.myItems) { showMy(); return; }
   setContent(`<div class="grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`);
@@ -8161,23 +8188,43 @@ function closeCraftResult() {
 // ═══════════════════════════════════════════════════════════
 async function showCases() {
   setContent(`<div class="cases-wrap">
-    <div class="skel" style="height:60px;border-radius:14px;margin-bottom:16px;"></div>
-    <div class="skel" style="height:200px;border-radius:16px;margin-bottom:14px;"></div>
-    <div class="skel" style="height:200px;border-radius:16px;margin-bottom:14px;"></div>
-    <div class="skel" style="height:200px;border-radius:16px;"></div>
+    <div class="skel" style="height:54px;border-radius:12px;margin-bottom:14px;"></div>
+    <div class="skel" style="height:120px;border-radius:14px;margin-bottom:10px;"></div>
+    <div class="skel" style="height:120px;border-radius:14px;margin-bottom:10px;"></div>
+    <div class="skel" style="height:120px;border-radius:14px;"></div>
   </div>`);
   try {
     const d = await api('/casino/nftcases/list');
     if (!d || !d.ok) { if (state.tab==='cases') setContent(renderError()); return; }
     state.cases = d.cases;
+    state.caseSamples = d.samples || {};
     if (typeof d.balance === 'number') {
       if (!state.me) state.me = {};
       state.me.balance = d.balance;
+      const bv = document.getElementById('balanceVal');
+      if (bv) bv.textContent = fmtTokens(d.balance);
     }
     if (state.tab === 'cases') renderCases();
   } catch(e) {
     if (state.tab === 'cases') setContent(renderError());
   }
+}
+
+// SVG-иконка кейса по акценту редкости (компактная, для карточек)
+function caseBoxSvg(pal) {
+  return `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" class="case-box-svg">
+    <defs>
+      <linearGradient id="cb-${pal.col.replace('#','')}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${pal.colLight}"/><stop offset="55%" stop-color="${pal.col}"/><stop offset="100%" stop-color="${pal.colDark}"/>
+      </linearGradient>
+    </defs>
+    <path d="M32 6 L56 18 L56 46 L32 58 L8 46 L8 18 Z" fill="url(#cb-${pal.col.replace('#','')})" stroke="${pal.colDark}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M8 18 L32 30 L56 18" fill="none" stroke="${pal.colDark}" stroke-width="2"/>
+    <path d="M32 30 L32 58" stroke="${pal.colDark}" stroke-width="2"/>
+    <path d="M8 18 L32 6 L56 18 L32 30 Z" fill="${pal.colLight}" opacity="0.25"/>
+    <rect x="26" y="20" width="12" height="9" rx="1.5" fill="${pal.colDark}" stroke="${pal.colLight}" stroke-width="1"/>
+    <circle cx="32" cy="24.5" r="1.6" fill="${pal.colLight}"/>
+  </svg>`;
 }
 
 function renderCases() {
@@ -8186,32 +8233,23 @@ function renderCases() {
   let html = `<div class="cases-wrap">
     <div class="cases-balance">
       <span class="cases-balance-label">Баланс</span>
-      <span class="cases-balance-val">${fmtTokens(bal)} <span class="tok">токенов</span></span>
+      <span class="cases-balance-val" id="casesBalVal">${fmtTokens(bal)} <span class="tok">токенов</span></span>
     </div>
-    <div class="cases-hint">Открой кейс — выпадет случайная NFT. Чем дороже кейс, тем выше шанс на редкое.</div>`;
+    <div class="cases-hint">Открой кейс — выпадет случайная NFT. Чем дороже кейс, тем выше шанс на редкое.</div>
+    <div class="cases-grid">`;
   for (const c of cases) {
     const pal = RARITY_PALETTE[c.accent] || RARITY_PALETTE.common;
     const canAfford = bal >= c.price;
-    const chanceRows = Object.entries(c.chances)
-      .filter(([r,w]) => w > 0)
-      .map(([r,w]) => {
-        const p = RARITY_PALETTE[r] || RARITY_PALETTE.common;
-        return `<span class="chance-pill" style="--cp:${p.col}">${RARITY_LABEL_RU[r]||r} ${w}%</span>`;
-      }).join('');
     html += `<div class="case-card" style="--case-col:${pal.col};--case-glow:${pal.col}b3">
-      <div class="case-shine"></div>
-      <div class="case-emoji">${c.emoji}</div>
-      <div class="case-info">
-        <div class="case-name">${c.name_ru}</div>
-        <div class="case-chances">${chanceRows}</div>
-        <div class="case-price">💰 ${fmtTokens(c.price)}</div>
-      </div>
+      <div class="case-box">${caseBoxSvg(pal)}</div>
+      <div class="case-name">${c.name_ru}</div>
+      <div class="case-price">💰 ${fmtTokens(c.price)}</div>
       <button class="case-open-btn ${canAfford?'':'disabled'}" data-case="${c.id}" ${canAfford?'':'disabled'}>
-        ${canAfford ? 'ОТКРЫТЬ' : 'Мало токенов'}
+        ${canAfford ? 'ОТКРЫТЬ' : 'Мало'}
       </button>
     </div>`;
   }
-  html += `</div>`;
+  html += `</div></div>`;
   setContent(html);
   document.querySelectorAll('.case-open-btn:not(.disabled)').forEach(btn => {
     btn.addEventListener('click', () => openCase(btn.dataset.case));
@@ -8223,10 +8261,20 @@ async function openCase(caseId) {
   if (_caseOpening) return;
   _caseOpening = true;
   const caseObj = (state.cases || []).find(c => c.id === caseId);
+  const samples = state.caseSamples || {};
   try { tg.HapticFeedback.impactOccurred('medium'); } catch(e) {}
-  const reelRarities = [];
+
+  // Лента: случайные РЕАЛЬНЫЕ NFT тех редкостей, что возможны в кейсе
   const possible = (caseObj && caseObj.rarities && caseObj.rarities.length) ? caseObj.rarities : ['common','rare','epic','legendary'];
-  for (let i=0;i<40;i++){ reelRarities.push(possible[Math.floor(Math.random()*possible.length)]); }
+  function randCard() {
+    const r = possible[Math.floor(Math.random()*possible.length)];
+    const arr = samples[r] || [];
+    if (!arr.length) return { weapon:'', rarity:r };
+    return arr[Math.floor(Math.random()*arr.length)];
+  }
+  const reelCards = [];
+  for (let i=0;i<44;i++){ reelCards.push(randCard()); }
+
   const ov = document.createElement('div');
   ov.className = 'case-overlay show';
   ov.id = 'case-overlay';
@@ -8240,14 +8288,18 @@ async function openCase(caseId) {
       <div class="case-result-area" id="caseResultArea"></div>
     </div>`;
   document.body.appendChild(ov);
+
   const reel = ov.querySelector('#caseReel');
-  reel.innerHTML = reelRarities.map(r => {
-    const p = RARITY_PALETTE[r] || RARITY_PALETTE.common;
-    return `<div class="reel-item" style="--ri:${p.col};--rig:${p.col}55"><div class="reel-item-inner"></div></div>`;
+  reel.innerHTML = reelCards.map(card => {
+    const p = RARITY_PALETTE[card.rarity] || RARITY_PALETTE.common;
+    const svg = card.weapon ? getWeaponSVG(card.weapon, card.rarity) : '';
+    return `<div class="reel-item" style="--ri:${p.col};--rig:${p.col}55"><div class="reel-item-inner">${svg}</div></div>`;
   }).join('');
+
   let res = null;
   try { res = await apiPost('/casino/nftcases/open', { case_id: caseId }); }
   catch(e) { res = { ok:false, error:'network' }; }
+
   if (!res || !res.ok) {
     _caseOpening = false;
     closeCaseOverlay();
@@ -8257,12 +8309,14 @@ async function openCase(caseId) {
     try { tg.showAlert ? tg.showAlert(msg) : alert(msg); } catch(e){ alert(msg); }
     return;
   }
-  const stopIndex = 32;
+
+  const stopIndex = 38;
   const won = res.nft;
   const wonPal = RARITY_PALETTE[won.rarity] || RARITY_PALETTE.common;
   const items = reel.querySelectorAll('.reel-item');
   if (items[stopIndex]) {
     items[stopIndex].style.setProperty('--ri', wonPal.col);
+    items[stopIndex].style.setProperty('--rig', wonPal.col+'55');
     items[stopIndex].querySelector('.reel-item-inner').innerHTML = getWeaponSVG(won.weapon, won.rarity);
     items[stopIndex].classList.add('reel-win');
   }
@@ -8270,9 +8324,17 @@ async function openCase(caseId) {
   const offset = stopIndex * itemW - (reel.parentElement.offsetWidth/2) + (88/2);
   reel.style.transition = 'transform 3.6s cubic-bezier(0.12, 0.7, 0.12, 1)';
   requestAnimationFrame(() => { reel.style.transform = `translateX(${-offset}px)`; });
+
   setTimeout(() => {
     try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-    if (typeof res.balance === 'number') { if (!state.me) state.me = {}; state.me.balance = res.balance; }
+    if (typeof res.balance === 'number') {
+      if (!state.me) state.me = {};
+      state.me.balance = res.balance;
+      const bv = document.getElementById('balanceVal');
+      if (bv) bv.textContent = fmtTokens(res.balance);
+    }
+    // v163: уведомление в боте — ПОСЛЕ показа карты
+    try { apiPost('/casino/nftcases/notify', { nft_id: won.id, case_id: won.case_id, serial: won.serial }); } catch(e){}
     const supply = won.max_supply ? `#${won.serial}/${won.max_supply}` : `#${won.serial}`;
     const area = ov.querySelector('#caseResultArea');
     if (area) {
@@ -8371,6 +8433,7 @@ async function bootSequence() {
     setStatus('ЗАГРУЗКА МАРКЕТА');
     await loadMarket();
     setStatus('ГОТОВО');
+    startBalanceAutoRefresh();
   } catch (e) {
     console.error('boot error', e);
     setStatus('ОШИБКА — ПОПРОБУЙ ПЕРЕОТКРЫТЬ');
