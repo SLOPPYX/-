@@ -1534,10 +1534,9 @@ body::after {
    v155 — ФОН ДЛЯ ЭКИПИРОВКИ + АНИМАЦИЯ БРОНИ
    ═══════════════════════════════════════════════════════════ */
 
-/* Мягкое радиальное свечение-фон под предметом экипировки.
+/* Мягкое радиальное свечение-фон под ЛЮБЫМ предметом карты (v164).
    Цвет берётся из --card-rarity-glow (своё для каждой редкости). */
-.card-weapon-vis:has(svg.armor-svg)::before,
-.card-weapon-vis:has(svg.helmet-svg)::before {
+.card-weapon-vis::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -1550,18 +1549,15 @@ body::after {
   pointer-events: none;
   animation: equipBgPulse 4s ease-in-out infinite;
 }
-.card-weapon-vis:has(svg.armor-svg),
-.card-weapon-vis:has(svg.helmet-svg) {
+.card-weapon-vis {
   position: relative;
 }
-.card-weapon-vis svg.armor-svg,
-.card-weapon-vis svg.helmet-svg {
+.card-weapon-vis svg {
   position: relative;
   z-index: 1;
 }
-/* Тонкая решётка-сетка для тактического вайба (поверх свечения, под предметом) */
-.card-weapon-vis:has(svg.armor-svg)::after,
-.card-weapon-vis:has(svg.helmet-svg)::after {
+/* Тонкая решётка-сетка для тактического вайба (на всех картах) */
+.card-weapon-vis::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -1652,7 +1648,10 @@ body::after {
   .card-weapon-vis svg,
   .card-weapon-vis::before,
   .card-weapon-vis::after {
-    animation: none !important;
+    /* v164: анимации НЕ отключаем — пользователь хочет их везде.
+       Производительность держим через GPU-композитинг (translateZ/will-change),
+       а не через отключение. */
+    will-change: transform;
   }
 }
 
@@ -7156,11 +7155,16 @@ function startBalanceAutoRefresh() {
 }
 
 async function loadMy() {
-  if (state.myItems) { showMy(); return; }
-  setContent(`<div class="grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`);
+  // v164: показываем кэш сразу (без мигания), но ВСЕГДА обновляем с сервера.
+  // Это чинит «пустая коллекция до перезагрузки» и баг витрины «нет этой NFT».
+  if (state.myItems) {
+    showMy();
+  } else {
+    setContent(`<div class="grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`);
+  }
   const r = await api('/casino/nft/list');
   if (!r.ok) {
-    if (state.tab === 'my') setContent(renderError());
+    if (state.tab === 'my' && !state.myItems) setContent(renderError());
     return;
   }
   state.myItems = r.nfts || [];
@@ -7206,6 +7210,15 @@ async function loadProfile() {
   const r = await api('/casino/profile/me');
   if (!r.ok) return null;
   state.profile = r;
+  // v164: освежаем коллекцию, чтобы витрина видела актуальные NFT
+  // (иначе баг «у тебя нет этой NFT» при выставлении после кейса/покупки)
+  try {
+    const rl = await api('/casino/nft/list');
+    if (rl && rl.ok) {
+      state.myItems = rl.nfts || [];
+      state.ownedIds = new Set(state.myItems.map(x => x.id));
+    }
+  } catch(e) {}
   return r;
 }
 
