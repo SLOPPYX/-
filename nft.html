@@ -1551,26 +1551,21 @@ body::after {
 }
 .card-weapon-vis {
   position: relative;
+  /* v166: сетка-фон ПРЯМО на контейнере (не на ::after, т.к. он занят
+     спецэффектами оружия типа искр/гильз). Так сетка есть на ВСЕХ картах. */
+  background-image:
+    linear-gradient(var(--card-rarity-glow) 1.2px, transparent 1.2px),
+    linear-gradient(90deg, var(--card-rarity-glow) 1.2px, transparent 1.2px);
+  background-size: 20px 20px;
+  background-position: center;
 }
 .card-weapon-vis svg {
   position: relative;
   z-index: 1;
 }
-/* Тонкая решётка-сетка для тактического вайба (на всех картах, как у Шлема IV) */
+/* (сетка убрана с ::after — теперь она в background контейнера выше) */
 .card-weapon-vis::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background-image:
-    linear-gradient(var(--card-rarity-glow) 1.2px, transparent 1.2px),
-    linear-gradient(90deg, var(--card-rarity-glow) 1.2px, transparent 1.2px);
-  background-size: 20px 20px;
-  opacity: 0.32;
-  border-radius: 14px;
   pointer-events: none;
-  -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, #000 35%, transparent 80%);
-          mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, #000 35%, transparent 80%);
 }
 
 @keyframes equipBgPulse {
@@ -7457,19 +7452,18 @@ document.getElementById('picker').addEventListener('click', (e) => {
 
 async function pickForSlot(nftId) {
   if (pickerCurrentSlot < 0) return;
-  const showcase = ((state.profile && state.profile.showcase) || []).slice();
-  // Если этот NFT уже в другом слоте — поменяем местами
-  const existingIdx = showcase.indexOf(nftId);
-  if (existingIdx >= 0 && existingIdx !== pickerCurrentSlot) {
-    // Swap: то что было в нашем слоте, отправим на existingIdx
-    const oldInOurSlot = showcase[pickerCurrentSlot];
-    showcase[existingIdx] = oldInOurSlot || null;
-  }
-  // Расширяем массив если короткий
-  while (showcase.length <= pickerCurrentSlot) showcase.push(null);
+  // v166: простая и надёжная логика — без багового swap.
+  // Берём текущую витрину, убираем эту карту если уже где-то стоит,
+  // ставим её в выбранный слот, чистим пустые.
+  let showcase = ((state.profile && state.profile.showcase) || []).slice();
+  // нормализуем до 3 слотов
+  while (showcase.length < 3) showcase.push(null);
+  // если карта уже в витрине — уберём со старого места
+  showcase = showcase.map(x => (x === nftId ? null : x));
+  // ставим в выбранный слот
   showcase[pickerCurrentSlot] = nftId;
-  // Убираем null'ы (отрицательная позиция)
-  const cleaned = showcase.filter(x => x);
+  // оставляем только реальные id, максимум 3
+  const cleaned = showcase.filter(x => x && typeof x === 'string').slice(0, 3);
   await saveShowcase(cleaned);
   closePicker();
 }
