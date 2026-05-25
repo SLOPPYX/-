@@ -33,7 +33,8 @@
   --rarity-ultralegendary-glow: rgba(255, 58, 85, 0.75);
 
   --accent: #FFA940;
-  --safe-top: env(safe-area-inset-top, 0px);
+  --tg-top-inset: 0px;
+  --safe-top: max(env(safe-area-inset-top, 0px), var(--tg-top-inset, 0px));
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
@@ -4286,52 +4287,23 @@ html, body, #content {
   overscroll-behavior: contain;
 }
 
-/* ── АДАПТИВНЫЕ РАЗМЕРЫ КАРТОЧЕК (v169) ──
-   Считаем по фактической ширине окна. */
-/* Узкий телефон: 2 колонки, но карты КОМПАКТНЕЕ (ниже), видно больше за раз */
-@media (max-width: 480px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 9px !important;
-    padding: 0 10px 90px !important;
-    max-width: 100% !important;
-    margin: 0 auto !important;
-  }
-  .card-wrap {
-    max-width: 100% !important;
-    aspect-ratio: 5 / 6 !important;  /* было 3/4 — теперь ниже, компактнее */
-  }
+/* ── РАЗМЕРЫ КАРТОЧЕК (v171, полноэкранный режим) ──
+   Одна авто-сетка: карты ~155px, сами раскладываются по ширине экрана.
+   Телефон → 2 колонки, шире → 3-4-5 автоматически. Пропорция 3/4 у всех. */
+.grid {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+  gap: 12px !important;
+  padding: 0 14px 100px !important;
+  max-width: 1100px !important;
+  margin: 0 auto !important;
 }
-/* Широкий телефон / узкое окно ПК: 3 колонки */
-@media (min-width: 481px) and (max-width: 760px) {
-  .grid {
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 10px !important;
-    padding: 0 12px 90px !important;
-    max-width: 640px !important;
-    margin: 0 auto !important;
-  }
-  .card-wrap { max-width: 100% !important; aspect-ratio: 5 / 6 !important; }
+.card-wrap {
+  max-width: 100% !important;
+  aspect-ratio: 3 / 4 !important;
 }
-/* Средние окна: 3 колонки */
-@media (min-width: 761px) and (max-width: 1040px) {
-  .grid {
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 14px !important;
-    max-width: 840px !important;
-    margin: 0 auto !important;
-  }
-  .card-wrap { max-width: 100% !important; }
-}
-/* Широкие окна: 4 колонки */
-@media (min-width: 1041px) {
-  .grid {
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 16px !important;
-    max-width: 1000px !important;
-    margin: 0 auto !important;
-  }
-  .card-wrap { max-width: 100% !important; }
+/* совсем узкие телефоны — чуть меньше минимум, чтобы всегда было 2 колонки */
+@media (max-width: 380px) {
+  .grid { grid-template-columns: repeat(2, 1fr) !important; gap: 9px !important; padding: 0 10px 100px !important; }
 }
 /* v169: панель фильтра по редкости */
 .rarity-filter {
@@ -4806,6 +4778,24 @@ const tg = (window.Telegram && window.Telegram.WebApp) || {
 };
 try { tg.expand(); } catch(e) {}
 try { tg.ready(); } catch(e) {}
+// v171: ПОЛНОЭКРАННЫЙ режим (Bot API 8.0) — раскрываем на весь экран, как казино
+try { if (tg.requestFullscreen) tg.requestFullscreen(); } catch(e) {}
+// не закрывать приложение случайным свайпом вниз при прокрутке списка
+try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch(e) {}
+// учитываем «чёлку»/статус-бар телефона в полноэкранном режиме
+try {
+  const applyInset = () => {
+    const top = (tg.contentSafeAreaInset && tg.contentSafeAreaInset.top)
+             || (tg.safeAreaInset && tg.safeAreaInset.top) || 0;
+    document.documentElement.style.setProperty('--tg-top-inset', top + 'px');
+  };
+  applyInset();
+  if (tg.onEvent) {
+    tg.onEvent('safeAreaChanged', applyInset);
+    tg.onEvent('contentSafeAreaChanged', applyInset);
+    tg.onEvent('fullscreenChanged', applyInset);
+  }
+} catch(e) {}
 // Тема: предпочитаем тёмную (даже если у юзера светлая в TG — наш дизайн под dark)
 try { tg.setHeaderColor('#050608'); } catch(e) {}
 try { tg.setBackgroundColor('#050608'); } catch(e) {}
