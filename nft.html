@@ -4286,32 +4286,62 @@ html, body, #content {
   overscroll-behavior: contain;
 }
 
-/* ── АДАПТИВНЫЕ РАЗМЕРЫ КАРТОЧЕК ── */
-/* Телефон: 2 колонки, компактно */
-@media (max-width: 600px) {
+/* ── АДАПТИВНЫЕ РАЗМЕРЫ КАРТОЧЕК (v169) ──
+   Считаем по фактической ширине окна. Telegram WebApp на ПК узкий (~600-700px),
+   поэтому держим 2 колонки до 760px — карты не разъезжаются по размеру. */
+@media (max-width: 760px) {
   .grid {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 10px !important;
     padding: 0 12px 90px !important;
+    max-width: 560px !important;
+    margin: 0 auto !important;
   }
   .card-wrap { max-width: 100% !important; }
 }
-/* Планшет: 3 колонки */
-@media (min-width: 601px) and (max-width: 900px) {
+/* Средние окна: 3 колонки */
+@media (min-width: 761px) and (max-width: 1040px) {
   .grid {
     grid-template-columns: repeat(3, 1fr) !important;
     gap: 14px !important;
+    max-width: 840px !important;
+    margin: 0 auto !important;
   }
-  .card-wrap { max-width: 240px !important; }
+  .card-wrap { max-width: 100% !important; }
 }
-/* ПК: 4 колонки, аккуратный центр */
-@media (min-width: 901px) {
+/* Широкие окна: 4 колонки */
+@media (min-width: 1041px) {
   .grid {
     grid-template-columns: repeat(4, 1fr) !important;
     gap: 16px !important;
     max-width: 1000px !important;
+    margin: 0 auto !important;
   }
-  .card-wrap { max-width: 230px !important; }
+  .card-wrap { max-width: 100% !important; }
+}
+/* v169: панель фильтра по редкости */
+.rarity-filter {
+  display: flex; gap: 8px; padding: 0 16px 14px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.rarity-filter::-webkit-scrollbar { display: none; }
+.rarity-chip {
+  flex: 0 0 auto; padding: 7px 14px; border-radius: 20px;
+  font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.04em; font-size: 14px;
+  background: var(--card); color: var(--text-2);
+  border: 1px solid var(--line); cursor: pointer;
+  transition: all 0.18s ease; white-space: nowrap;
+}
+.rarity-chip:active { transform: scale(0.95); }
+.rarity-chip.active {
+  color: #0a0e16; font-weight: 700;
+  background: var(--chip, var(--accent, #FFA940));
+  border-color: var(--chip, var(--accent, #FFA940));
+  box-shadow: 0 0 12px -2px var(--chip, var(--accent, #FFA940));
+}
+.filter-empty {
+  text-align: center; color: var(--text-2); padding: 50px 20px; font-size: 15px;
 }
 </style>
 </head>
@@ -6666,12 +6696,47 @@ function renderGrid(items, opts) {
   if (!opts.market) {
     displayItems = groupMyNfts(items);
   }
-  return `<div class="grid">${displayItems.map(it => renderCard(it, opts)).join('')}</div>`;
+  // v169: фильтр по редкости (категории)
+  const filter = state.rarityFilter || 'all';
+  const rarityOrder = ['ultralegendary','legendary','epic','rare','common'];
+  const rarityLabels = {
+    all: 'Все', ultralegendary: 'Ультра', legendary: 'Легендарные',
+    epic: 'Эпические', rare: 'Редкие', common: 'Обычные'
+  };
+  // какие редкости реально есть среди карт
+  const present = new Set(displayItems.map(x => x.rarity));
+  const chips = ['all', ...rarityOrder.filter(r => present.has(r))];
+  const filterBar = `<div class="rarity-filter">` + chips.map(r => {
+    const pal = r === 'all' ? null : (RARITY_PALETTE[r] || RARITY_PALETTE.common);
+    const active = filter === r ? 'active' : '';
+    const style = pal ? `style="--chip:${pal.col}"` : '';
+    return `<button class="rarity-chip ${active}" data-rarity="${r}" ${style}>${rarityLabels[r]}</button>`;
+  }).join('') + `</div>`;
+  // применяем фильтр
+  let shown = displayItems;
+  if (filter !== 'all') shown = displayItems.filter(x => x.rarity === filter);
+  const gridHtml = shown.length
+    ? `<div class="grid">${shown.map(it => renderCard(it, opts)).join('')}</div>`
+    : `<div class="filter-empty">В этой категории пока нет NFT</div>`;
+  return filterBar + gridHtml;
 }
 
 function setContent(html) {
   document.getElementById('content').innerHTML = html;
   attachCardHandlers();
+  attachRarityFilter();
+}
+
+// v169: клики по фильтру редкости
+function attachRarityFilter() {
+  document.querySelectorAll('.rarity-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      state.rarityFilter = chip.dataset.rarity;
+      // перерисовываем текущую вкладку
+      if (state.tab === 'my') showMy();
+      else if (state.tab === 'market') showMarket();
+    });
+  });
 }
 
 // ═══════════════════════════════════════════════════════════
