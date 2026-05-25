@@ -33,8 +33,7 @@
   --rarity-ultralegendary-glow: rgba(255, 58, 85, 0.75);
 
   --accent: #FFA940;
-  --tg-top-inset: 0px;
-  --safe-top: max(env(safe-area-inset-top, 0px), var(--tg-top-inset, 0px));
+  --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
@@ -1659,7 +1658,7 @@ body::after {
 /* ═══════════════════════════════════════════════════════════
    NFT-КЕЙСЫ — v162
    ═══════════════════════════════════════════════════════════ */
-.cases-wrap { padding: 4px 2px 24px; }
+.cases-wrap { padding: 4px 2px 24px; max-width: 560px; margin: 0 auto; }
 .cases-balance {
   display: flex; justify-content: space-between; align-items: center;
   background: var(--card); border: 1px solid var(--line); border-radius: 14px;
@@ -4287,29 +4286,63 @@ html, body, #content {
   overscroll-behavior: contain;
 }
 
-/* ── РАЗМЕРЫ КАРТОЧЕК (v171, полноэкранный режим) ──
-   Одна авто-сетка: карты ~155px, сами раскладываются по ширине экрана.
-   Телефон → 2 колонки, шире → 3-4-5 автоматически. Пропорция 3/4 у всех. */
-.grid {
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
-  gap: 12px !important;
-  padding: 0 14px 100px !important;
-  max-width: 1100px !important;
-  margin: 0 auto !important;
+/* ── АДАПТИВНЫЕ РАЗМЕРЫ КАРТОЧЕК (v169) ──
+   Считаем по фактической ширине окна. */
+/* Узкий телефон: 2 колонки, но карты КОМПАКТНЕЕ (ниже), видно больше за раз */
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 9px !important;
+    padding: 0 10px 90px !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+  }
+  .card-wrap {
+    max-width: 100% !important;
+    aspect-ratio: 5 / 6 !important;  /* было 3/4 — теперь ниже, компактнее */
+  }
 }
-.card-wrap {
-  max-width: 100% !important;
-  aspect-ratio: 3 / 4 !important;
+/* Широкий телефон / узкое окно ПК: 3 колонки */
+@media (min-width: 481px) and (max-width: 760px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 10px !important;
+    padding: 0 12px 90px !important;
+    max-width: 640px !important;
+    margin: 0 auto !important;
+  }
+  .card-wrap { max-width: 100% !important; aspect-ratio: 5 / 6 !important; }
 }
-/* совсем узкие телефоны — чуть меньше минимум, чтобы всегда было 2 колонки */
-@media (max-width: 380px) {
-  .grid { grid-template-columns: repeat(2, 1fr) !important; gap: 9px !important; padding: 0 10px 100px !important; }
+/* Средние окна: 3 колонки */
+@media (min-width: 761px) and (max-width: 1040px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 14px !important;
+    max-width: 840px !important;
+    margin: 0 auto !important;
+  }
+  .card-wrap { max-width: 100% !important; }
+}
+/* Широкие окна: 4 колонки */
+@media (min-width: 1041px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 16px !important;
+    max-width: 1000px !important;
+    margin: 0 auto !important;
+  }
+  .card-wrap { max-width: 100% !important; }
 }
 /* v169: панель фильтра по редкости */
 .rarity-filter {
   display: flex; gap: 8px; padding: 0 16px 14px;
   overflow-x: auto; -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  max-width: 1100px; margin: 0 auto;
+}
+/* на широком экране — фильтр по центру, без скролла */
+@media (min-width: 761px) {
+  .rarity-filter { justify-content: center; flex-wrap: wrap; overflow-x: visible; }
 }
 .rarity-filter::-webkit-scrollbar { display: none; }
 .rarity-chip {
@@ -4778,24 +4811,6 @@ const tg = (window.Telegram && window.Telegram.WebApp) || {
 };
 try { tg.expand(); } catch(e) {}
 try { tg.ready(); } catch(e) {}
-// v171: ПОЛНОЭКРАННЫЙ режим (Bot API 8.0) — раскрываем на весь экран, как казино
-try { if (tg.requestFullscreen) tg.requestFullscreen(); } catch(e) {}
-// не закрывать приложение случайным свайпом вниз при прокрутке списка
-try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch(e) {}
-// учитываем «чёлку»/статус-бар телефона в полноэкранном режиме
-try {
-  const applyInset = () => {
-    const top = (tg.contentSafeAreaInset && tg.contentSafeAreaInset.top)
-             || (tg.safeAreaInset && tg.safeAreaInset.top) || 0;
-    document.documentElement.style.setProperty('--tg-top-inset', top + 'px');
-  };
-  applyInset();
-  if (tg.onEvent) {
-    tg.onEvent('safeAreaChanged', applyInset);
-    tg.onEvent('contentSafeAreaChanged', applyInset);
-    tg.onEvent('fullscreenChanged', applyInset);
-  }
-} catch(e) {}
 // Тема: предпочитаем тёмную (даже если у юзера светлая в TG — наш дизайн под dark)
 try { tg.setHeaderColor('#050608'); } catch(e) {}
 try { tg.setBackgroundColor('#050608'); } catch(e) {}
@@ -8402,18 +8417,60 @@ async function showCases() {
 
 // SVG-иконка кейса по акценту редкости (компактная, для карточек)
 function caseBoxSvg(pal) {
-  return `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" class="case-box-svg">
+  const u = pal.col.replace('#','');
+  return `<svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" class="case-box-svg">
     <defs>
-      <linearGradient id="cb-${pal.col.replace('#','')}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${pal.colLight}"/><stop offset="55%" stop-color="${pal.col}"/><stop offset="100%" stop-color="${pal.colDark}"/>
+      <linearGradient id="cb-top-${u}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="${pal.colLight}"/><stop offset="100%" stop-color="${pal.col}"/>
       </linearGradient>
+      <linearGradient id="cb-left-${u}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${pal.col}"/><stop offset="100%" stop-color="${pal.colDark}"/>
+      </linearGradient>
+      <linearGradient id="cb-right-${u}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${pal.colDark}"/><stop offset="100%" stop-color="${pal.col}"/>
+      </linearGradient>
+      <radialGradient id="cb-core2-${u}" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0%" stop-color="#fff"/><stop offset="35%" stop-color="${pal.colLight}"/><stop offset="100%" stop-color="${pal.col}" stop-opacity="0"/>
+      </radialGradient>
     </defs>
-    <path d="M32 6 L56 18 L56 46 L32 58 L8 46 L8 18 Z" fill="url(#cb-${pal.col.replace('#','')})" stroke="${pal.colDark}" stroke-width="2" stroke-linejoin="round"/>
-    <path d="M8 18 L32 30 L56 18" fill="none" stroke="${pal.colDark}" stroke-width="2"/>
-    <path d="M32 30 L32 58" stroke="${pal.colDark}" stroke-width="2"/>
-    <path d="M8 18 L32 6 L56 18 L32 30 Z" fill="${pal.colLight}" opacity="0.25"/>
-    <rect x="26" y="20" width="12" height="9" rx="1.5" fill="${pal.colDark}" stroke="${pal.colLight}" stroke-width="1"/>
-    <circle cx="32" cy="24.5" r="1.6" fill="${pal.colLight}"/>
+    <!-- свечение под объектом -->
+    <ellipse cx="36" cy="64" rx="24" ry="4" fill="${pal.col}" opacity="0.45"/>
+    <!-- парящие частицы вокруг -->
+    <g fill="${pal.colLight}" opacity="0.8">
+      <circle cx="14" cy="30" r="1.2"/><circle cx="60" cy="26" r="1"/>
+      <circle cx="18" cy="50" r="0.9"/><circle cx="56" cy="48" r="1.3"/>
+      <circle cx="36" cy="8" r="1"/>
+    </g>
+    <!-- ИЗОМЕТРИЧЕСКИЙ КРИСТАЛЛ-КОНТЕЙНЕР -->
+    <!-- верхняя грань (ромб) -->
+    <path d="M36 12 L58 24 L36 36 L14 24 Z" fill="url(#cb-top-${u})" stroke="${pal.colLight}" stroke-width="1.5" stroke-linejoin="round"/>
+    <!-- левая грань -->
+    <path d="M14 24 L36 36 L36 60 L14 48 Z" fill="url(#cb-left-${u})" stroke="${pal.colDark}" stroke-width="1.5" stroke-linejoin="round"/>
+    <!-- правая грань -->
+    <path d="M58 24 L36 36 L36 60 L58 48 Z" fill="url(#cb-right-${u})" stroke="${pal.colDark}" stroke-width="1.5" stroke-linejoin="round"/>
+    <!-- неоновые рёбра (подсветка граней) -->
+    <g stroke="${pal.colLight}" stroke-width="1.8" stroke-linecap="round" opacity="0.9">
+      <path d="M36 12 L58 24" fill="none"/>
+      <path d="M36 12 L14 24" fill="none"/>
+      <path d="M36 36 L36 60" fill="none" opacity="0.6"/>
+    </g>
+    <!-- голографические линии на гранях -->
+    <g stroke="${pal.colLight}" stroke-width="0.8" opacity="0.4">
+      <path d="M20 30 L34 38" fill="none"/>
+      <path d="M52 30 L38 38" fill="none"/>
+      <path d="M18 38 L34 46" fill="none"/>
+      <path d="M54 38 L38 46" fill="none"/>
+    </g>
+    <!-- светящееся ядро в центре верхней грани -->
+    <circle cx="36" cy="24" r="8" fill="url(#cb-core2-${u})"/>
+    <!-- ромб-кристалл в ядре -->
+    <path d="M36 19 L40 24 L36 29 L32 24 Z" fill="#fff" opacity="0.95"/>
+    <path d="M36 21 L38.5 24 L36 27 L33.5 24 Z" fill="${pal.col}"/>
+    <!-- блик на верхней грани -->
+    <path d="M22 23 L33 17 L36 19 L26 25 Z" fill="#fff" opacity="0.25"/>
+    <!-- вертикальный луч света вверх -->
+    <path d="M36 12 L36 2" stroke="${pal.colLight}" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    <path d="M33 6 L36 2 L39 6" fill="none" stroke="${pal.colLight}" stroke-width="1.4" stroke-linecap="round" opacity="0.5"/>
   </svg>`;
 }
 
