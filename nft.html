@@ -4287,17 +4287,31 @@ html, body, #content {
 }
 
 /* ── АДАПТИВНЫЕ РАЗМЕРЫ КАРТОЧЕК (v169) ──
-   Считаем по фактической ширине окна. Telegram WebApp на ПК узкий (~600-700px),
-   поэтому держим 2 колонки до 760px — карты не разъезжаются по размеру. */
-@media (max-width: 760px) {
+   Считаем по фактической ширине окна. */
+/* Узкий телефон: 2 колонки, но карты КОМПАКТНЕЕ (ниже), видно больше за раз */
+@media (max-width: 480px) {
   .grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
-    padding: 0 12px 90px !important;
-    max-width: 560px !important;
+    gap: 9px !important;
+    padding: 0 10px 90px !important;
+    max-width: 100% !important;
     margin: 0 auto !important;
   }
-  .card-wrap { max-width: 100% !important; }
+  .card-wrap {
+    max-width: 100% !important;
+    aspect-ratio: 5 / 6 !important;  /* было 3/4 — теперь ниже, компактнее */
+  }
+}
+/* Широкий телефон / узкое окно ПК: 3 колонки */
+@media (min-width: 481px) and (max-width: 760px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 10px !important;
+    padding: 0 12px 90px !important;
+    max-width: 640px !important;
+    margin: 0 auto !important;
+  }
+  .card-wrap { max-width: 100% !important; aspect-ratio: 5 / 6 !important; }
 }
 /* Средние окна: 3 колонки */
 @media (min-width: 761px) and (max-width: 1040px) {
@@ -4342,6 +4356,32 @@ html, body, #content {
 }
 .filter-empty {
   text-align: center; color: var(--text-2); padding: 50px 20px; font-size: 15px;
+}
+/* ═══════════════════════════════════════════════════════════
+   v170 — 60 FPS НА ТЕЛЕФОНЕ
+   Тройные drop-shadow в пульсациях — главный тормоз на iPhone GPU.
+   На тач-устройствах упрощаем их до 1-2 слоёв (визуально почти то же,
+   но в 2-3 раза легче). Движение, частицы, эффекты — НЕ трогаем.
+   ═══════════════════════════════════════════════════════════ */
+@media (hover: none) and (pointer: coarse) {
+  @keyframes legendaryPulseGlow {
+    0%, 100% { filter: drop-shadow(0 0 10px var(--card-rarity-glow)); }
+    50%      { filter: drop-shadow(0 0 20px var(--card-rarity-glow)); }
+  }
+  @keyframes epicGlow {
+    0%, 100% { filter: drop-shadow(0 0 8px var(--card-rarity-glow)); }
+    50%      { filter: drop-shadow(0 0 18px var(--card-rarity-glow)); }
+  }
+  @keyframes ultraPulse {
+    0%, 100% { filter: drop-shadow(0 0 12px var(--card-rarity-glow)); }
+    50%      { filter: drop-shadow(0 0 24px var(--card-rarity-glow)); }
+  }
+  @keyframes legendaryPulse {
+    0%, 100% { filter: drop-shadow(0 0 10px var(--card-rarity-glow)); }
+    50%      { filter: drop-shadow(0 0 20px var(--card-rarity-glow)); }
+  }
+  /* SVG-слои гарантированно на GPU */
+  .card-weapon-vis svg { transform: translateZ(0); }
 }
 </style>
 </head>
