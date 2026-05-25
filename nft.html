@@ -1551,12 +1551,11 @@ body::after {
 }
 .card-weapon-vis {
   position: relative;
-  /* v166: сетка-фон ПРЯМО на контейнере (не на ::after, т.к. он занят
-     спецэффектами оружия типа искр/гильз). Так сетка есть на ВСЕХ картах. */
+  /* v167: МИНИМАЛИСТИЧНАЯ сетка — еле заметные тонкие линии на всех картах */
   background-image:
-    linear-gradient(var(--card-rarity-glow) 1.2px, transparent 1.2px),
-    linear-gradient(90deg, var(--card-rarity-glow) 1.2px, transparent 1.2px);
-  background-size: 20px 20px;
+    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 22px 22px;
   background-position: center;
 }
 .card-weapon-vis svg {
@@ -2237,11 +2236,15 @@ body::after {
 .modal-weapon-vis[data-id="ff_deagle"],
 .showcase-slot[data-id="ff_deagle"] .mini-weapon {
   background:
+    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
     radial-gradient(circle at 50% 50%,
       rgba(255, 215, 0, 0.22) 0%,
       rgba(255, 180, 0, 0.10) 35%,
       transparent 70%
     );
+  background-size: 22px 22px, 22px 22px, 100% 100%;
+  background-position: center, center, center;
   animation: deagleAura 4s ease-in-out infinite;
 }
 @keyframes deagleAura {
