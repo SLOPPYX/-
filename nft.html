@@ -7773,7 +7773,7 @@ function openGiftModal() {
       </div>
       <div class="gift-step" id="gift-step2" style="display:none;">
         <div class="gift-label">2. ID друга (Custom ID или TG ID)</div>
-        <input type="number" class="gift-input" id="gift-target" placeholder="например: 324790" inputmode="numeric"/>
+        <input type="text" class="gift-input" id="gift-target" placeholder="например: 324790" inputmode="numeric" pattern="[0-9]*" autocomplete="off"/>
         <div class="gift-summary" id="gift-summary"></div>
         <button class="gift-send-btn" id="gift-send">ПОДАРИТЬ</button>
         <button class="gift-back" id="gift-back">← назад к выбору</button>
@@ -7797,8 +7797,14 @@ function openGiftModal() {
       ov.querySelector('#gift-step2').style.display = 'block';
       ov.querySelector('#gift-summary').innerHTML =
         `Карта: <b>${escapeHtml(_giftSelected.name)}</b><br>Комиссия за отправку: <b>${fmtTokens(fee)}</b> токенов`;
+      // v177: даём фокус полю ввода (иначе в Telegram клавиатура не всплывает)
+      const inp = ov.querySelector('#gift-target');
+      if (inp) { setTimeout(() => { inp.focus(); inp.click(); }, 50); }
     });
   });
+
+  // клик внутри модалки не должен закрывать оверлей
+  ov.querySelector('.gift-modal').addEventListener('click', (e) => e.stopPropagation());
 
   ov.querySelector('#gift-back').addEventListener('click', () => {
     ov.querySelector('#gift-step2').style.display = 'none';
@@ -8484,13 +8490,18 @@ async function doCraft() {
   state.myItems = null;
   state.craftData = null;
 
-  // Показываем результат
+  // Показываем результат СРАЗУ
   showCraftResult(r);
 
-  // Обновляем коллекцию и крафт-вкладку
-  await loadMy();
-  await loadCraft();
-  if (state.tab === 'craft') renderCraft();
+  // v177: обновление коллекции/крафта — В ФОНЕ (без await), чтобы интерфейс
+  // не висел 2-4 сек на медленном телефоне после крафта.
+  Promise.resolve().then(async () => {
+    try {
+      await loadMy();
+      await loadCraft();
+      if (state.tab === 'craft') renderCraft();
+    } catch(e) {}
+  });
 }
 
 async function doGuaranteedCraft(targetTier) {
@@ -8509,9 +8520,14 @@ async function doGuaranteedCraft(targetTier) {
   state.myItems = null;
   state.craftData = null;
   showCraftResult(r);
-  await loadMy();
-  await loadCraft();
-  if (state.tab === 'craft') renderCraft();
+  // v177: обновление в фоне, не блокируем интерфейс
+  Promise.resolve().then(async () => {
+    try {
+      await loadMy();
+      await loadCraft();
+      if (state.tab === 'craft') renderCraft();
+    } catch(e) {}
+  });
 }
 
 function showCraftResult(r) {
