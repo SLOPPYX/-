@@ -4267,6 +4267,52 @@ body::after {
   100% { background-position: 200% 0; }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   v168 — ПРОИЗВОДИТЕЛЬНОСТЬ 60/120 FPS + АДАПТИВ
+   ═══════════════════════════════════════════════════════════ */
+/* Карта вне экрана — все её анимации на паузе (огромная экономия на iPhone).
+   JS-наблюдатель (IntersectionObserver) вешает/снимает класс .offscreen. */
+.card-wrap.offscreen .card *,
+.card-wrap.offscreen .card::before,
+.card-wrap.offscreen .card::after,
+.card-wrap.offscreen .card-weapon-vis::before,
+.card-wrap.offscreen .card-weapon-vis::after {
+  animation-play-state: paused !important;
+}
+/* Плавная инерционная прокрутка на всех устройствах */
+html, body, #content {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+/* ── АДАПТИВНЫЕ РАЗМЕРЫ КАРТОЧЕК ── */
+/* Телефон: 2 колонки, компактно */
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    padding: 0 12px 90px !important;
+  }
+  .card-wrap { max-width: 100% !important; }
+}
+/* Планшет: 3 колонки */
+@media (min-width: 601px) and (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 14px !important;
+  }
+  .card-wrap { max-width: 240px !important; }
+}
+/* ПК: 4 колонки, аккуратный центр */
+@media (min-width: 901px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 16px !important;
+    max-width: 1000px !important;
+  }
+  .card-wrap { max-width: 230px !important; }
+}
 </style>
 </head>
 <body>
@@ -6707,6 +6753,30 @@ function attachCardHandlers() {
     card.addEventListener('touchstart', onDown, { passive: true });
     card.addEventListener('touchend', onUp);
   });
+  setupCardVisibility();
+}
+
+// v168: пауза анимаций для карт вне экрана — главный буст fps на iPhone.
+let _cardObserver = null;
+function setupCardVisibility() {
+  const wraps = document.querySelectorAll('.card-wrap');
+  if (!wraps.length) return;
+  if (!('IntersectionObserver' in window)) return;
+  // пересоздаём наблюдатель под текущий набор карт
+  if (_cardObserver) _cardObserver.disconnect();
+  _cardObserver = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      // карта на экране (или рядом) — анимации идут; ушла — пауза
+      e.target.classList.toggle('offscreen', !e.isIntersecting);
+    }
+  }, {
+    root: null,
+    // запас 200px сверху/снизу — анимация стартует чуть раньше появления
+    rootMargin: '200px 0px 200px 0px',
+    threshold: 0,
+  });
+  // изначально все вне экрана (на паузе), наблюдатель включит видимые
+  wraps.forEach(w => { w.classList.add('offscreen'); _cardObserver.observe(w); });
 }
 
 // ═══════════════════════════════════════════════════════════
