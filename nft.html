@@ -4379,6 +4379,62 @@ html, body, #content {
   /* SVG-слои гарантированно на GPU */
   .card-weapon-vis svg { transform: translateZ(0); }
 }
+/* v175: дарение NFT */
+.gift-open-btn {
+  width: 100%; padding: 13px; border: none; border-radius: 12px; margin-bottom: 8px;
+  font-weight: 800; font-size: 15px; cursor: pointer; color: #0a0e16;
+  background: linear-gradient(135deg, #FFA940, #ff7a40);
+  box-shadow: 0 4px 16px -4px rgba(255,150,60,0.5); transition: transform .12s;
+}
+.gift-open-btn:active { transform: scale(0.97); }
+.gift-overlay {
+  position: fixed; inset: 0; z-index: 9998; background: rgba(6,9,14,0.9);
+  backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.gift-modal {
+  width: 100%; max-width: 440px; max-height: 84vh; overflow-y: auto;
+  background: var(--card, #161c28); border: 1px solid var(--line, #2a3346);
+  border-radius: 18px; padding: 18px;
+}
+.gift-modal-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 800; font-size: 18px; color: var(--text, #fff); margin-bottom: 16px;
+}
+.gift-close {
+  width: 32px; height: 32px; border: none; border-radius: 50%; cursor: pointer;
+  background: var(--line, #2a3346); color: var(--text, #fff); font-size: 20px; line-height: 1;
+}
+.gift-label { color: var(--muted, #8a93a6); font-size: 13px; margin-bottom: 12px; }
+.gift-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.gift-pick {
+  background: linear-gradient(150deg, color-mix(in srgb, var(--gc) 14%, var(--card)), var(--card));
+  border: 1px solid color-mix(in srgb, var(--gc) 45%, var(--line));
+  border-radius: 12px; padding: 10px; cursor: pointer; text-align: center; transition: transform .12s;
+}
+.gift-pick:active { transform: scale(0.96); }
+.gift-pick-vis { height: 64px; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
+.gift-pick-vis svg { max-height: 60px; width: auto; }
+.gift-pick-name { font-size: 12px; font-weight: 700; color: var(--text, #fff); }
+.gift-pick-serial { color: var(--muted, #8a93a6); font-weight: 600; }
+.gift-pick-fee { font-size: 10.5px; color: var(--muted, #8a93a6); margin-top: 3px; }
+.gift-input {
+  width: 100%; padding: 13px; border-radius: 12px; border: 1px solid var(--line, #2a3346);
+  background: var(--bg-2, #10141c); color: var(--text, #fff); font-size: 16px; margin-bottom: 12px;
+}
+.gift-summary {
+  background: var(--bg-2, #10141c); border-radius: 10px; padding: 12px;
+  color: var(--text, #fff); font-size: 13px; line-height: 1.6; margin-bottom: 14px;
+}
+.gift-send-btn {
+  width: 100%; padding: 14px; border: none; border-radius: 12px;
+  font-weight: 800; font-size: 15px; cursor: pointer; color: #0a0e16;
+  background: linear-gradient(135deg, #FFA940, #ff7a40); margin-bottom: 8px;
+}
+.gift-send-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.gift-back {
+  width: 100%; padding: 8px; border: none; background: transparent;
+  color: var(--muted, #8a93a6); font-size: 13px; cursor: pointer;
+}
 </style>
 </head>
 <body>
@@ -7496,6 +7552,13 @@ function renderProfile() {
     </div>
     <div class="showcase-grid">${slotsHtml}</div>
 
+    <!-- v175: Подарить NFT другу -->
+    <div class="section-title">
+      <span>ПОДАРИТЬ NFT</span>
+      <span class="section-hint">отправь карту другу по ID</span>
+    </div>
+    <button class="gift-open-btn" id="gift-open-btn">🎁 Подарить NFT другу</button>
+
     <!-- Переключатель публичности -->
     <div class="privacy-row">
       <div class="privacy-text">
@@ -7535,6 +7598,8 @@ function renderProfile() {
   });
   document.getElementById('privacy-toggle').addEventListener('click', togglePrivacy);
   document.getElementById('search-btn').addEventListener('click', doSearch);
+  const giftBtn = document.getElementById('gift-open-btn');
+  if (giftBtn) giftBtn.addEventListener('click', openGiftModal);
   // v137: кнопка копировать Custom ID
   const copyBtn = document.getElementById('copy-id-btn');
   if (copyBtn) {
@@ -7660,6 +7725,125 @@ async function saveShowcase(nftIds) {
     renderProfile();
   } else {
     showToast(r.message || r.error || 'Ошибка');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// ДАРЕНИЕ NFT — v175
+// ═══════════════════════════════════════════════════════════
+const GIFT_FEE = {
+  common: 300000, rare: 1000000, epic: 3000000,
+  legendary: 5000000, ultralegendary: 10000000,
+};
+let _giftSelected = null;
+
+function openGiftModal() {
+  const items = state.myItems || [];
+  if (!items.length) {
+    try { tg.showAlert('У тебя пока нет NFT для подарка'); } catch(e){ alert('Нет NFT'); }
+    return;
+  }
+  _giftSelected = null;
+  // карточки коллекции для выбора
+  const cardsHtml = items.map(c => {
+    const pal = RARITY_PALETTE[c.rarity] || RARITY_PALETTE.common;
+    const fee = GIFT_FEE[c.rarity] || 300000;
+    const svg = getWeaponSVG(c.weapon, c.rarity);
+    const serial = c.serial != null ? `#${c.serial}` : '';
+    return `<div class="gift-pick" data-id="${c.id}" data-serial="${c.serial != null ? c.serial : ''}" data-rarity="${c.rarity}"
+      style="--gc:${pal.col}">
+      <div class="gift-pick-vis">${svg}</div>
+      <div class="gift-pick-name">${escapeHtml(c.name_ru || c.weapon || c.id)} <span class="gift-pick-serial">${serial}</span></div>
+      <div class="gift-pick-fee">отправка: ${fmtTokens(fee)} 💰</div>
+    </div>`;
+  }).join('');
+
+  const ov = document.createElement('div');
+  ov.className = 'gift-overlay';
+  ov.id = 'gift-overlay';
+  ov.innerHTML = `
+    <div class="gift-modal">
+      <div class="gift-modal-head">
+        <span>🎁 Подарить NFT</span>
+        <button class="gift-close" id="gift-close">×</button>
+      </div>
+      <div class="gift-step" id="gift-step1">
+        <div class="gift-label">1. Выбери карту</div>
+        <div class="gift-grid">${cardsHtml}</div>
+      </div>
+      <div class="gift-step" id="gift-step2" style="display:none;">
+        <div class="gift-label">2. ID друга (Custom ID или TG ID)</div>
+        <input type="number" class="gift-input" id="gift-target" placeholder="например: 324790" inputmode="numeric"/>
+        <div class="gift-summary" id="gift-summary"></div>
+        <button class="gift-send-btn" id="gift-send">ПОДАРИТЬ</button>
+        <button class="gift-back" id="gift-back">← назад к выбору</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+
+  ov.querySelector('#gift-close').addEventListener('click', closeGiftModal);
+  ov.addEventListener('click', (e) => { if (e.target === ov) closeGiftModal(); });
+
+  ov.querySelectorAll('.gift-pick').forEach(el => {
+    el.addEventListener('click', () => {
+      _giftSelected = {
+        id: el.dataset.id,
+        serial: el.dataset.serial !== '' ? el.dataset.serial : null,
+        rarity: el.dataset.rarity,
+        name: el.querySelector('.gift-pick-name').textContent.trim(),
+      };
+      const fee = GIFT_FEE[_giftSelected.rarity] || 300000;
+      ov.querySelector('#gift-step1').style.display = 'none';
+      ov.querySelector('#gift-step2').style.display = 'block';
+      ov.querySelector('#gift-summary').innerHTML =
+        `Карта: <b>${escapeHtml(_giftSelected.name)}</b><br>Комиссия за отправку: <b>${fmtTokens(fee)}</b> токенов`;
+    });
+  });
+
+  ov.querySelector('#gift-back').addEventListener('click', () => {
+    ov.querySelector('#gift-step2').style.display = 'none';
+    ov.querySelector('#gift-step1').style.display = 'block';
+  });
+
+  ov.querySelector('#gift-send').addEventListener('click', doGift);
+}
+
+function closeGiftModal() {
+  const ov = document.getElementById('gift-overlay');
+  if (ov) ov.remove();
+}
+
+async function doGift() {
+  if (!_giftSelected) return;
+  const targetEl = document.getElementById('gift-target');
+  const targetId = (targetEl.value || '').trim();
+  if (!targetId) { try { tg.showAlert('Введи ID друга'); } catch(e){ alert('Введи ID'); } return; }
+
+  const btn = document.getElementById('gift-send');
+  btn.disabled = true; btn.textContent = 'ОТПРАВКА...';
+  try {
+    const r = await apiPost('/casino/profile/gift', {
+      target_id: targetId, nft_id: _giftSelected.id, serial: _giftSelected.serial,
+    });
+    if (r && r.ok) {
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e){}
+      if (typeof r.balance === 'number') {
+        state.me.balance = r.balance;
+        const bv = document.getElementById('balanceVal');
+        if (bv) bv.textContent = fmtTokens(r.balance);
+      }
+      state.myItems = null;
+      closeGiftModal();
+      try { tg.showAlert(`🎁 Подарок отправлен! «${r.nft_name}» теперь у друга.`); } catch(e){ alert('Отправлено!'); }
+      loadProfile().then(() => { if (state.tab === 'profile') renderProfile(); });
+    } else {
+      const msg = (r && r.message) || 'Не удалось отправить';
+      try { tg.showAlert(msg); } catch(e){ alert(msg); }
+      btn.disabled = false; btn.textContent = 'ПОДАРИТЬ';
+    }
+  } catch(e) {
+    try { tg.showAlert('Ошибка сети'); } catch(_){}
+    btn.disabled = false; btn.textContent = 'ПОДАРИТЬ';
   }
 }
 
@@ -8552,16 +8736,23 @@ async function openCase(caseId) {
   const won = res.nft;
   const wonPal = RARITY_PALETTE[won.rarity] || RARITY_PALETTE.common;
   const items = reel.querySelectorAll('.reel-item');
-  if (items[stopIndex]) {
-    items[stopIndex].style.setProperty('--ri', wonPal.col);
-    items[stopIndex].style.setProperty('--rig', wonPal.col+'55');
-    items[stopIndex].querySelector('.reel-item-inner').innerHTML = getWeaponSVG(won.weapon, won.rarity);
-    items[stopIndex].classList.add('reel-win');
+  const winItem = items[stopIndex];
+  if (winItem) {
+    winItem.style.setProperty('--ri', wonPal.col);
+    winItem.style.setProperty('--rig', wonPal.col+'55');
+    winItem.querySelector('.reel-item-inner').innerHTML = getWeaponSVG(won.weapon, won.rarity);
+    winItem.classList.add('reel-win');
   }
-  const itemW = 96;
-  const offset = stopIndex * itemW - (reel.parentElement.offsetWidth/2) + (88/2);
+  // v174: считаем смещение из РЕАЛЬНОГО DOM (а не из жёстких 96/88),
+  // иначе на телефоне с другой шириной ячейки лента промахивается мимо карты.
   reel.style.transition = 'transform 3.6s cubic-bezier(0.12, 0.7, 0.12, 1)';
-  requestAnimationFrame(() => { reel.style.transform = `translateX(${-offset}px)`; });
+  requestAnimationFrame(() => {
+    if (!winItem) return;
+    const winCenter = winItem.offsetLeft + winItem.offsetWidth / 2;  // центр выпавшей ячейки внутри ленты
+    const windowCenter = reel.parentElement.offsetWidth / 2;          // центр окна рулетки
+    const offset = winCenter - windowCenter;
+    reel.style.transform = `translateX(${-offset}px)`;
+  });
 
   setTimeout(() => {
     try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
