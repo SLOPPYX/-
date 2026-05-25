@@ -1627,6 +1627,10 @@ body::after {
 }
 .card {
   contain: layout style paint;
+  /* v167: браузер пропускает отрисовку/анимацию карт за пределами экрана —
+     главный буст fps на длинных списках (60/120 fps). */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 280px;
 }
 /* will-change только на трансформируемых слоях — не злоупотребляем,
    чтобы не съесть память на больших списках */
