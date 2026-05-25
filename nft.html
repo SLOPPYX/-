@@ -1551,12 +1551,8 @@ body::after {
 }
 .card-weapon-vis {
   position: relative;
-  /* v167: МИНИМАЛИСТИЧНАЯ сетка — еле заметные тонкие линии на всех картах */
-  background-image:
-    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-  background-size: 22px 22px;
-  background-position: center;
+  /* v173: сетка-фон УБРАНА — на телефоне её линии выглядели как
+     тёмные полоски. Фон карты теперь чистый. */
 }
 .card-weapon-vis svg {
   position: relative;
@@ -1627,10 +1623,9 @@ body::after {
 }
 .card {
   contain: layout style paint;
-  /* v167: браузер пропускает отрисовку/анимацию карт за пределами экрана —
-     главный буст fps на длинных списках (60/120 fps). */
-  content-visibility: auto;
-  contain-intrinsic-size: auto 280px;
+  /* v173: content-visibility УБРАН — он выгружал карты за экраном, из-за чего
+     при быстром скролле они мелькали пустотой. Fps держим через
+     IntersectionObserver (пауза анимаций), который карты НЕ выгружает. */
 }
 /* will-change только на трансформируемых слоях — не злоупотребляем,
    чтобы не съесть память на больших списках */
@@ -2240,15 +2235,11 @@ body::after {
 .modal-weapon-vis[data-id="ff_deagle"],
 .showcase-slot[data-id="ff_deagle"] .mini-weapon {
   background:
-    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
     radial-gradient(circle at 50% 50%,
       rgba(255, 215, 0, 0.22) 0%,
       rgba(255, 180, 0, 0.10) 35%,
       transparent 70%
     );
-  background-size: 22px 22px, 22px 22px, 100% 100%;
-  background-position: center, center, center;
   animation: deagleAura 4s ease-in-out infinite;
 }
 @keyframes deagleAura {
