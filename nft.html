@@ -4435,7 +4435,66 @@ html, body, #content {
   width: 100%; padding: 8px; border: none; background: transparent;
   color: var(--muted, #8a93a6); font-size: 13px; cursor: pointer;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   v181: ОБЛЕГЧЁННЫЙ РЕЖИМ ДЛЯ ТЕЛЕФОНА (.mobile-lite на <html>)
+   Цель: убрать всё, что роняет FPS при скролле и вызывает «чернеющие»
+   карты. ПК сюда не попадает — у него остаётся полный визуал.
+   Частицы НФТ намеренно НЕ трогаем (просьба пользователя).
+   ═══════════════════════════════════════════════════════════ */
+
+/* 1. Карточки: убираем 3D-сцену — самый дорогой эффект (слой на каждую карту) */
+.mobile-lite .card-wrap {
+  perspective: none;
+}
+.mobile-lite .card {
+  transform-style: flat;
+  transform: none !important;     /* отменяем rotateX/rotateY от касания */
+  transition: box-shadow 0.2s ease;
+}
+.mobile-lite .card-inner,
+.mobile-lite .card-weapon-vis {
+  transform: none;                /* было translateZ(20px) — в 2D не нужно */
+}
+
+/* 2. mix-blend-mode — главный виновник «черноты» при скролле. Убираем блик. */
+.mobile-lite .card::before {
+  display: none;
+}
+.mobile-lite .card.holo::after {
+  mix-blend-mode: normal;
+  opacity: 0.35;                  /* лёгкий статичный отлив вместо блендинга */
+}
+
+/* 3. Бесконечная анимация «дыхания» оружия на каждой карте — выключаем.
+   Десятки вечных анимаций = постоянная перерисовка даже вне экрана. */
+.mobile-lite .card-weapon-vis svg {
+  animation: none !important;
+}
+
+/* 4. Тяжёлые drop-shadow на SVG → лёгкая статичная тень (дешевле для GPU) */
+.mobile-lite .card-weapon-vis svg {
+  filter: drop-shadow(0 0 3px var(--card-rarity-glow));
+}
+
+/* 5. Анимация появления карт (fadeInUp с задержками) — мгновенный показ.
+   Это и есть «сразу загружены, не проявляются по одной». */
+.mobile-lite .grid .card-wrap {
+  animation: none !important;
+}
+
+/* 6. На телефоне отрисовку карт вне экрана уже разруливает
+   IntersectionObserver (.offscreen) — он ставит анимации на паузу.
+   content-visibility тут не добавляем: при адаптивной высоте карт
+   он может вызывать прыжки скролла. */
+
+/* 7. Фоновый анимированный градиент body — статичный на телефоне */
+.mobile-lite body::before,
+.mobile-lite .bg-anim {
+  animation: none !important;
+}
 </style>
+
 </head>
 <body>
 
@@ -4861,6 +4920,24 @@ try { tg.ready(); } catch(e) {}
 // Тема: предпочитаем тёмную (даже если у юзера светлая в TG — наш дизайн под dark)
 try { tg.setHeaderColor('#050608'); } catch(e) {}
 try { tg.setBackgroundColor('#050608'); } catch(e) {}
+
+// v181: ОБЛЕГЧЁННЫЙ РЕЖИМ ДЛЯ ТЕЛЕФОНА
+// На мобильных тяжёлые эффекты (3D-наклон, mix-blend-mode, бесконечные
+// анимации, drop-shadow) роняют FPS и вызывают «чернеющие» карты при скролле.
+// Вешаем класс mobile-lite на <html> как можно раньше (до первого рендера),
+// чтобы CSS сразу применил лёгкую версию. ПК остаётся в полной красоте.
+const IS_MOBILE = (() => {
+  try {
+    const ua = navigator.userAgent || '';
+    const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    const narrow = window.innerWidth <= 820;
+    const uaMobile = /Android|iPhone|iPad|iPod|Mobile|Telegram/i.test(ua);
+    return uaMobile || (coarse && narrow);
+  } catch(e) { return false; }
+})();
+if (IS_MOBILE) {
+  document.documentElement.classList.add('mobile-lite');
+}
 
 // ═══════════════════════════════════════════════════════════
 // Параметры из URL (формат как у casino — api_url, api_secret)
@@ -6913,13 +6990,18 @@ function attachCardHandlers() {
       card.style.setProperty('--my', '50%');
     };
 
-    card.addEventListener('mousemove', move);
-    card.addEventListener('mouseleave', reset);
-    card.addEventListener('touchmove', move, { passive: true });
-    card.addEventListener('touchend', reset);
-    card.addEventListener('touchcancel', reset);
+    // v181: 3D-наклон (mousemove/touchmove) — только на ПК.
+    // На телефоне touchmove + getBoundingClientRect на каждой карте при
+    // скольжении пальца роняет FPS, поэтому вешаем только на десктопе.
+    if (!IS_MOBILE) {
+      card.addEventListener('mousemove', move);
+      card.addEventListener('mouseleave', reset);
+      card.addEventListener('touchmove', move, { passive: true });
+      card.addEventListener('touchend', reset);
+      card.addEventListener('touchcancel', reset);
+    }
 
-    // Клик/тап → modal
+    // Клик/тап → modal (нужно на всех устройствах)
     let downX = 0, downY = 0, downT = 0;
     const onDown = (e) => {
       const t = e.touches && e.touches[0] ? e.touches[0] : e;
@@ -7224,11 +7306,9 @@ async function buyNft(id) {
   if (r.ok) {
     showToast('✓ Куплено!');
     closeModal();
-    // v142: сразу обновляем баланс из ответа сервера
+    // v181: баланс из ответа сервера — авторитетный, фон не откатит
     if (typeof r.new_balance === 'number') {
-      if (state.me) state.me.balance = r.new_balance;
-      document.getElementById('balanceVal').textContent = fmtTokens(r.new_balance);
-      flashBalance();
+      setBalance(r.new_balance, { authoritative: true });
     }
     // v142: сбрасываем кэш и перезагружаем — карта должна появиться сразу
     state.myItems = null;
@@ -7350,6 +7430,51 @@ function fmtTokens(n) {
 }
 
 // v138: визуальная мигалка баланса при изменении
+// ═══════════════════════════════════════════════════════════
+// v181: ЕДИНЫЙ ИСТОЧНИК БАЛАНСА + защита от «отката»
+// Баг был: после покупки баланс ставился из ответа сервера (верно),
+// но фоновые обновления (/casino/me, авто-refresh, long-poll) могли
+// прийти со СТАРЫМ значением (сервер ещё не записал транзакцию / push
+// в казино отстаёт) и визуально «вернуть» деньги, а потом снова списать.
+// Решение: после действия игрока баланс на 4 сек становится «авторитетным»
+// и фоновые апдейты не могут перебить его БОЛЬШИМ значением (откатом).
+let _balAuthoritative = null;   // последнее авторитетное значение
+let _balAuthoritativeAt = 0;    // когда оно установлено (Date.now)
+const BAL_LOCK_MS = 4000;
+
+function setBalance(value, opts = {}) {
+  if (typeof value !== 'number' || isNaN(value)) return;
+  const now = Date.now();
+
+  if (opts.authoritative) {
+    // Прямой ответ сервера на действие игрока — всегда применяем и фиксируем
+    _balAuthoritative = value;
+    _balAuthoritativeAt = now;
+  } else {
+    // Фоновое обновление. Если недавно было авторитетное значение —
+    // не даём «откатить» баланс вверх (вернуть потраченное).
+    const locked = (now - _balAuthoritativeAt) < BAL_LOCK_MS;
+    if (locked && _balAuthoritative !== null && value > _balAuthoritative) {
+      return; // игнорируем устаревший «возврат» денег
+    }
+    // иначе принимаем фоновое значение как новую истину
+    _balAuthoritative = value;
+    _balAuthoritativeAt = now;
+  }
+
+  if (!state.me) state.me = {};
+  const prev = state.me.balance;
+  state.me.balance = value;
+  const bv = document.getElementById('balanceVal');
+  if (bv) {
+    bv.textContent = fmtTokens(value);
+    if (prev !== undefined && prev !== value) flashBalance();
+  }
+  // если открыта вкладка кейсов — синхроним и там
+  const cbv = document.getElementById('casesBalVal');
+  if (cbv) cbv.innerHTML = `${fmtTokens(value)} <span class="tok">токенов</span>`;
+}
+
 function flashBalance() {
   const el = document.getElementById('balanceVal');
   if (!el) return;
@@ -7381,11 +7506,9 @@ async function loadMe() {
   document.getElementById('hdrUsername').textContent = '@' + nick;
   const initial = (nick.replace('@','').trim()[0] || '⬢').toUpperCase();
   document.getElementById('hdrAvatarText').textContent = initial;
-  document.getElementById('balanceVal').textContent = fmtTokens(r.balance);
-  // v138: мигалка при изменении
-  flashBalance();
-  document.getElementById('nftCount').textContent = r.nft_count;
   state.me = r;
+  setBalance(r.balance);  // v181
+  document.getElementById('nftCount').textContent = r.nft_count;
 }
 
 // v163: тихое обновление только баланса (без перерисовки всего)
@@ -7393,17 +7516,7 @@ async function refreshBalance() {
   try {
     const r = await api('/casino/me');
     if (!r || !r.ok || typeof r.balance !== 'number') return;
-    if (!state.me) state.me = {};
-    const prev = state.me.balance;
-    state.me.balance = r.balance;
-    const bv = document.getElementById('balanceVal');
-    if (bv) {
-      bv.textContent = fmtTokens(r.balance);
-      if (prev !== undefined && prev !== r.balance) flashBalance();
-    }
-    // если открыта вкладка кейсов — обновим и там кнопки
-    const cbv = document.getElementById('casesBalVal');
-    if (cbv) cbv.innerHTML = `${fmtTokens(r.balance)} <span class="tok">токенов</span>`;
+    setBalance(r.balance);  // v181: фоновое — защита от отката внутри
   } catch(e) {}
 }
 
@@ -7459,10 +7572,7 @@ function showMarket() {
   // v161: освежаем реальный баланс, чтобы проверка кнопки покупки была точной
   api('/casino/me').then(r => {
     if (r && r.ok && typeof r.balance === 'number') {
-      if (!state.me) state.me = {};
-      state.me.balance = r.balance;
-      const bv = document.getElementById('balanceVal');
-      if (bv) bv.textContent = fmtTokens(r.balance);
+      setBalance(r.balance);  // v181: фоновое — не перебьёт свежую покупку
     }
   }).catch(()=>{});
 }
@@ -7871,9 +7981,7 @@ async function doGift() {
     if (r && r.ok) {
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e){}
       if (typeof r.balance === 'number') {
-        state.me.balance = r.balance;
-        const bv = document.getElementById('balanceVal');
-        if (bv) bv.textContent = fmtTokens(r.balance);
+        setBalance(r.balance, { authoritative: true });  // v181
       }
       state.myItems = null;
       closeGiftModal();
@@ -8098,10 +8206,10 @@ async function buyListing(listingId) {
   const r = await apiPost('/casino/p2p/buy', { listing_id: listingId });
   if (r.ok) {
     showToast('✓ Куплено! NFT в твоей коллекции');
-    // Обновляем баланс
-    if (state.me) state.me.balance = r.buyer_new_balance;
-    document.getElementById('balanceVal').textContent = fmtTokens(r.buyer_new_balance);
-    flashBalance();
+    // v181: баланс покупателя из ответа — авторитетный
+    if (typeof r.buyer_new_balance === 'number') {
+      setBalance(r.buyer_new_balance, { authoritative: true });
+    }
     // Сбрасываем кэши и обновляем
     state.myItems = null;
     state.p2pData = null;
@@ -8519,11 +8627,9 @@ async function doCraft() {
 
   closeCraftPicker();
 
-  // Обновляем баланс
+  // v181: баланс из ответа — авторитетный
   if (typeof r.new_balance === 'number') {
-    if (state.me) state.me.balance = r.new_balance;
-    document.getElementById('balanceVal').textContent = fmtTokens(r.new_balance);
-    flashBalance();
+    setBalance(r.new_balance, { authoritative: true });
   }
 
   // Сброс кэшей
@@ -8635,10 +8741,7 @@ async function showCases() {
     state.cases = d.cases;
     state.caseSamples = d.samples || {};
     if (typeof d.balance === 'number') {
-      if (!state.me) state.me = {};
-      state.me.balance = d.balance;
-      const bv = document.getElementById('balanceVal');
-      if (bv) bv.textContent = fmtTokens(d.balance);
+      setBalance(d.balance);  // v181: фоновое
     }
     if (state.tab === 'cases') renderCases();
   } catch(e) {
@@ -8814,10 +8917,7 @@ async function openCase(caseId) {
   setTimeout(() => {
     try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
     if (typeof res.balance === 'number') {
-      if (!state.me) state.me = {};
-      state.me.balance = res.balance;
-      const bv = document.getElementById('balanceVal');
-      if (bv) bv.textContent = fmtTokens(res.balance);
+      setBalance(res.balance, { authoritative: true });  // v181
     }
     // v163: уведомление в боте — ПОСЛЕ показа карты
     try { apiPost('/casino/nftcases/notify', { nft_id: won.id, case_id: won.case_id, serial: won.serial }); } catch(e){}
@@ -8929,6 +9029,13 @@ async function bootSequence() {
     await loadMy();
     setStatus('ЗАГРУЗКА МАРКЕТА');
     await loadMarket();
+    // v181: пред-рендерим активную вкладку (МОИ) В DOM ещё под лоадером,
+    // чтобы при скрытии экрана карты уже были отрисованы — без мигания/черноты.
+    setStatus('ПОДГОТОВКА');
+    if (state.tab === 'my') showMy();
+    else if (state.tab === 'market') showMarket();
+    // даём браузеру 2 кадра реально отрисовать карты перед тем как уберём лоадер
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     setStatus('ГОТОВО');
     startBalanceAutoRefresh();
   } catch (e) {
@@ -8936,7 +9043,7 @@ async function bootSequence() {
     setStatus('ОШИБКА — ПОПРОБУЙ ПЕРЕОТКРЫТЬ');
   }
 
-  // Ждём минимум 1.2с чтобы лоадер не мелькал моментально
+  // Ждём минимум времени, чтобы лоадер не мелькал моментально
   const elapsed = Date.now() - startTime;
   if (elapsed < minBootTime) {
     await new Promise(r => setTimeout(r, minBootTime - elapsed));
