@@ -4954,11 +4954,42 @@ async function apiPost(path, body) {
       headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
       body: JSON.stringify({ uid: UID, secret: SECRET, ...body }),
     });
-    return await r.json();
+    const data = await r.json().catch(() => ({ ok: false, error: 'bad_json' }));
+    // v180: сервер вернул кулдаун — прокидываем retry_after наверх
+    if (r.status === 429) {
+      return { ok: false, error: 'rate_limited',
+               retry_after: (data && data.retry_after) || 2,
+               message: (data && data.message) || 'Слишком часто, подожди' };
+    }
+    return data;
   } catch (e) {
     console.error('API POST error', path, e);
     return { ok: false, error: 'network' };
   }
+}
+
+// v180: блокирует кнопку на N секунд с обратным отсчётом — игроку видно, что
+// это кулдаун, а не сломанная кнопка. Возвращает Promise, который ресолвится
+// когда отсчёт закончился (на случай если нужно дождаться).
+function cooldownButton(btn, seconds, labelBusy) {
+  if (!btn) return;
+  const original = btn._cdOriginal || btn.textContent;
+  btn._cdOriginal = original;
+  btn.disabled = true;
+  let left = Math.ceil(seconds);
+  btn.textContent = `${labelBusy || 'Подожди'} ${left}с`;
+  if (btn._cdTimer) clearInterval(btn._cdTimer);
+  btn._cdTimer = setInterval(() => {
+    left -= 1;
+    if (left <= 0) {
+      clearInterval(btn._cdTimer);
+      btn._cdTimer = null;
+      btn.disabled = false;
+      btn.textContent = original;
+    } else {
+      btn.textContent = `${labelBusy || 'Подожди'} ${left}с`;
+    }
+  }, 1000);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -7215,6 +7246,8 @@ async function buyNft(id) {
         showCongratsModal(r.rarity, r.weapon, r.serial, maxSupply);
       }, 400);
     }
+  } else if (r.error === 'rate_limited') {
+    showToast(r.message || `Подожди ${r.retry_after||2} сек`);
   } else if (r.error === 'not_for_sale') {
     showToast(t('not_for_sale'));
   } else if (r.error === 'insufficient_funds') {
@@ -7831,6 +7864,10 @@ async function doGift() {
     const r = await apiPost('/casino/profile/gift', {
       target_id: targetId, nft_id: _giftSelected.id, serial: _giftSelected.serial,
     });
+    if (r && r.error === 'rate_limited') {
+      cooldownButton(btn, r.retry_after, 'Подожди');
+      return;
+    }
     if (r && r.ok) {
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e){}
       if (typeof r.balance === 'number') {
@@ -8081,10 +8118,13 @@ async function buyListing(listingId) {
         showCongratsModal(r.rarity, r.weapon, r.serial, maxSupply);
       }, 400);
     }
+  } else if (r.error === 'rate_limited') {
+    showToast(r.message || `Подожди ${r.retry_after||2} сек`);
   } else {
     showToast(r.message || r.error || 'Ошибка');
   }
 }
+
 
 async function cancelMyListing(listingId) {
   if (!confirm('Снять с продажи?')) return;
@@ -8742,7 +8782,8 @@ async function openCase(caseId) {
     _caseOpening = false;
     closeCaseOverlay();
     let msg = 'Не удалось открыть кейс';
-    if (res && res.error === 'not_enough') msg = 'Недостаточно токенов';
+    if (res && res.error === 'rate_limited') msg = res.message || `Подожди ${res.retry_after||2} сек`;
+    else if (res && res.error === 'not_enough') msg = 'Недостаточно токенов';
     else if (res && res.error === 'pool_empty') msg = 'Нет доступных NFT для этого кейса';
     try { tg.showAlert ? tg.showAlert(msg) : alert(msg); } catch(e){ alert(msg); }
     return;
