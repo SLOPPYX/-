@@ -948,16 +948,88 @@ body::after {
   border-radius: 14px;
   margin-bottom: 16px;
 }
+/* v187: СОВРЕМЕННЫЙ АВАТАР ПРОФИЛЯ
+   - Внешнее вращающееся градиент-кольцо (как у NFT-профилей)
+   - Внутренний стеклянный круг с буквой
+   - Мягкое свечение, тонкая блик-точка
+   - Лёгкое pulse при наведении/тапе */
 .profile-avatar {
-  width: 64px; height: 64px;
+  position: relative;
+  width: 72px; height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #FFA940, #B96FFF);
+  flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 28px;
+  font-size: 30px;
   color: #fff;
-  flex-shrink: 0;
-  box-shadow: 0 0 18px rgba(255, 169, 64, 0.3);
+  letter-spacing: 0.02em;
+  /* стеклянный фон с blur — реальный градиент будет на ::after внутри */
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,0.18), transparent 55%),
+    linear-gradient(135deg, #FFA940 0%, #ff6b6b 45%, #B96FFF 100%);
+  box-shadow:
+    0 0 24px rgba(255, 169, 64, 0.25),
+    0 0 0 1px rgba(255,255,255,0.08) inset,
+    0 4px 18px rgba(0,0,0,0.35);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  z-index: 1;
+  isolation: isolate;
+}
+/* Анимированное кольцо вокруг аватара */
+.profile-avatar::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  padding: 2px;
+  background: conic-gradient(
+    from 0deg,
+    #FFA940, #ff6b6b, #B96FFF, #5BA9FF, #FFA940
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: avatarRingSpin 8s linear infinite;
+  z-index: -1;
+  opacity: 0.85;
+}
+/* Бликовое пятно сверху */
+.profile-avatar::after {
+  content: '';
+  position: absolute;
+  top: 6px; left: 14px;
+  width: 22px; height: 14px;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.55), transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+}
+@keyframes avatarRingSpin {
+  to { transform: rotate(360deg); }
+}
+/* На телефоне (mobile-lite) — анимация кольца отключается ради FPS,
+   но градиент-кольцо остаётся статичным красивым */
+.mobile-lite .profile-avatar::before {
+  animation: none;
+  opacity: 0.7;
+}
+/* Публичный профиль чужого игрока — холодная палитра, чтобы отличать от своего */
+.profile-avatar.profile-avatar-public {
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,0.18), transparent 55%),
+    linear-gradient(135deg, #5BA9FF 0%, #6FE5FF 45%, #B96FFF 100%);
+  box-shadow:
+    0 0 24px rgba(91, 169, 255, 0.25),
+    0 0 0 1px rgba(255,255,255,0.08) inset,
+    0 4px 18px rgba(0,0,0,0.35);
+}
+.profile-avatar.profile-avatar-public::before {
+  background: conic-gradient(
+    from 0deg,
+    #5BA9FF, #6FE5FF, #B96FFF, #FFA940, #5BA9FF
+  );
 }
 .profile-info-flex { flex: 1; min-width: 0; }
 .profile-name {
@@ -2918,6 +2990,34 @@ body::after {
   padding: 2px 6px;
   z-index: 4;
   backdrop-filter: blur(4px);
+}
+
+/* v187: ВОДЯНОЙ ЗНАК С НОМЕРОМ — крупный полупрозрачный «штамп»
+   на скине, подчёркивает уникальность каждой NFT ненавязчиво.
+   Цвет в тон редкости карты, лёгкий контур, перекрыт скином. */
+.card-serial-watermark {
+  position: absolute;
+  top: 38px;
+  left: 12px;
+  font-family: 'Oxanium', 'Bebas Neue', sans-serif;
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--card-rarity, #ffffff);
+  opacity: 0.14;
+  pointer-events: none;
+  z-index: 2;
+  text-shadow:
+    0 0 1px var(--card-rarity, #ffffff),
+    0 2px 0 rgba(0,0,0,0.25);
+  -webkit-text-stroke: 0.6px var(--card-rarity-glow, transparent);
+  user-select: none;
+  transform: rotate(-4deg);
+  line-height: 1;
+}
+/* На ПК holo-карты — водяной знак чуть ярче (на тёмной голограмме теряется) */
+.card.holo .card-serial-watermark {
+  opacity: 0.22;
 }
 
 /* v146: список серийников в стак-модалке */
@@ -5141,7 +5241,7 @@ try { tg.setHeaderColor('#050608'); } catch(e) {}
 try { tg.setBackgroundColor('#050608'); } catch(e) {}
 
 // v182: версия клиента — для проверки что загрузилась новая сборка
-const NFT_CLIENT_VERSION = 'v185';
+const NFT_CLIENT_VERSION = 'v187';
 console.log('%c🎴 NFT Mini App ' + NFT_CLIENT_VERSION + ' загружен', 'color:#FFA940;font-weight:bold');
 
 // v181: ОБЛЕГЧЁННЫЙ РЕЖИМ ДЛЯ ТЕЛЕФОНА
@@ -7120,6 +7220,16 @@ function renderCard(item, opts = {}) {
     ? `<div class="card-stack-badge">×${stackCount}</div>`
     : '';
 
+  // v187: КРУПНЫЙ ПОЛУПРОЗРАЧНЫЙ ВОДЯНОЙ ЗНАК С НОМЕРОМ СЕРИИ
+  // Стилистическая «гравировка» на скине — показывает уникальность карты
+  // ненавязчиво (полупрозрачно, в углу области скина). Только для МОИХ карт,
+  // не для маркета (там у тебя нет конкретного серийника).
+  let watermarkHtml = '';
+  if (!opts.market && item.serial && !isStack) {
+    const padded = String(item.serial).padStart(2, '0');
+    watermarkHtml = `<div class="card-serial-watermark">№${padded}</div>`;
+  }
+
   return `
     <div class="card-wrap" data-id="${item.id}" ${isStack ? `data-stack="${stackCount}"` : ''}>
       <div class="card ${isHolo ? 'holo' : ''}" data-rarity="${r}" data-id="${item.id}">
@@ -7129,6 +7239,7 @@ function renderCard(item, opts = {}) {
         <div class="corner bl"></div>
         <div class="corner br"></div>
         ${stackBadge}
+        ${watermarkHtml}
         <div class="card-inner">
           <div class="card-rarity-tag">${RARITY_LABEL[r] || r.toUpperCase()}</div>
           ${date ? `<div class="card-date">${date}</div>` : ''}
@@ -8361,7 +8472,7 @@ function renderForeignProfile(p, container) {
   const initial = (nickName || String(cid || p.user_id || '?'))[0].toUpperCase();
   container.innerHTML = `
     <div class="profile-header" style="margin-top: 16px;">
-      <div class="profile-avatar" style="background: linear-gradient(135deg, #5BA9FF, #B96FFF);">${escapeHtml(initial)}</div>
+      <div class="profile-avatar profile-avatar-public">${escapeHtml(initial)}</div>
       <div class="profile-info-flex">
         <div class="profile-name">${escapeHtml(displayName)}</div>
         <div class="profile-id">${escapeHtml(subText)}</div>
@@ -9479,21 +9590,33 @@ async function openCase(caseId) {
     winItem.style.setProperty('--ri', wonPal.col);
     winItem.style.setProperty('--rig', wonPal.col+'55');
     winItem.querySelector('.reel-item-inner').innerHTML = getWeaponSVG(won.weapon, won.rarity);
-    winItem.classList.add('reel-win');
+    // v187: НЕ добавляем класс reel-win заранее — иначе игрок видит подсветку
+    // победной ячейки до остановки и заранее понимает что выпадет.
+    // Подсветка ставится ниже, ПОСЛЕ полной остановки ленты.
   }
-  // v174: считаем смещение из РЕАЛЬНОГО DOM (а не из жёстких 96/88),
-  // иначе на телефоне с другой шириной ячейки лента промахивается мимо карты.
-  reel.style.transition = 'transform 3.6s cubic-bezier(0.12, 0.7, 0.12, 1)';
+  // v187: случайное смещение остановки (стрелка не точно по центру, а чуть
+  // в сторону) — добавляет азарта, до последней секунды не понятно
+  // на какой именно ячейке остановится.
+  reel.style.transition = 'transform 4.6s cubic-bezier(0.05, 0.65, 0.05, 1)';
   requestAnimationFrame(() => {
     if (!winItem) return;
-    const winCenter = winItem.offsetLeft + winItem.offsetWidth / 2;  // центр выпавшей ячейки внутри ленты
-    const windowCenter = reel.parentElement.offsetWidth / 2;          // центр окна рулетки
-    const offset = winCenter - windowCenter;
+    const winCenter = winItem.offsetLeft + winItem.offsetWidth / 2;
+    const windowCenter = reel.parentElement.offsetWidth / 2;
+    // случайное смещение в пределах ±40% ширины ячейки — стрелка может
+    // оказаться у края победной ячейки, а не строго по центру
+    const jitter = (Math.random() - 0.5) * winItem.offsetWidth * 0.8;
+    const offset = winCenter - windowCenter + jitter;
     reel.style.transform = `translateX(${-offset}px)`;
   });
 
+  // v187: ждём ПОЛНУЮ остановку (4.6с + 0.4с пауза драматизма), потом
+  // подсвечиваем выигрышную ячейку и показываем результат.
   setTimeout(() => {
+    if (winItem) winItem.classList.add('reel-win');
     try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+  }, 4700);
+
+  setTimeout(() => {
     if (typeof res.balance === 'number') {
       setBalance(res.balance, { authoritative: true });  // v181
     }
@@ -9530,7 +9653,7 @@ async function openCase(caseId) {
         showCases();
       });
     }
-  }, 3700);
+  }, 5200);  // v187: подняли с 3700, ждём полную остановку (4.6с) + паузу (0.6с)
 }
 
 function closeCaseOverlay() {
