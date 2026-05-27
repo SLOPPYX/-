@@ -1469,33 +1469,6 @@ body::after {
   flex-direction: column;
   z-index: 2;
 }
-/* v188: едва заметный геометрический SVG-фон (сетка/соты) — добавляет
-   «техно» текстуру без шума. Применяется ко всем карточкам, цвет идёт
-   от редкости, поэтому редкие карты смотрятся ещё богаче. */
-.card-inner::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='52' viewBox='0 0 60 52'><g fill='none' stroke='%23ffffff' stroke-width='0.6' opacity='0.5'><polygon points='30,2 56,17 56,37 30,52 4,37 4,17'/><polygon points='30,16 44,24 44,38 30,46 16,38 16,24'/></g></svg>");
-  background-size: 60px 52px;
-  background-repeat: repeat;
-  opacity: 0.08;
-  mix-blend-mode: screen;
-}
-/* На редких картах паттерн чуть ярче (тонкая «фирменная» отделка) */
-.card[data-rarity="epic"] .card-inner::before,
-.card[data-rarity="legendary"] .card-inner::before,
-.card[data-rarity="ultralegendary"] .card-inner::before {
-  opacity: 0.12;
-}
-/* На телефоне (mobile-lite) — без mix-blend-mode (он дорог),
-   просто тонкая прозрачность */
-.mobile-lite .card-inner::before {
-  mix-blend-mode: normal;
-  opacity: 0.05;
-}
 .card-rarity-tag {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 10px;
@@ -3022,27 +2995,29 @@ body::after {
 /* v187: ВОДЯНОЙ ЗНАК С НОМЕРОМ — крупный полупрозрачный «штамп»
    на скине, подчёркивает уникальность каждой NFT ненавязчиво.
    Цвет в тон редкости карты, лёгкий контур, перекрыт скином. */
-/* v188: компактный #02 в правом верхнем углу — маленький, ненавязчивый,
-   подчёркивает уникальность экземпляра. Не путать с .card-serial внизу
-   (#X/Y — серийник + тираж). */
 .card-serial-watermark {
   position: absolute;
-  top: 8px;
-  right: 10px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--card-rarity, #c4ccd8);
-  opacity: 0.7;
+  top: 38px;
+  left: 12px;
+  font-family: 'Oxanium', 'Bebas Neue', sans-serif;
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--card-rarity, #ffffff);
+  opacity: 0.14;
   pointer-events: none;
-  z-index: 3;
+  z-index: 2;
+  text-shadow:
+    0 0 1px var(--card-rarity, #ffffff),
+    0 2px 0 rgba(0,0,0,0.25);
+  -webkit-text-stroke: 0.6px var(--card-rarity-glow, transparent);
   user-select: none;
+  transform: rotate(-4deg);
   line-height: 1;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
+/* На ПК holo-карты — водяной знак чуть ярче (на тёмной голограмме теряется) */
 .card.holo .card-serial-watermark {
-  opacity: 0.85;
+  opacity: 0.22;
 }
 
 /* v146: список серийников в стак-модалке */
@@ -4637,9 +4612,13 @@ html, body, #content {
 .mobile-lite .card::before {
   display: none;
 }
+/* v189: ПОЛНОСТЬЮ убираем голографический градиент на телефоне.
+   Раньше оставлял с opacity 0.35 как «лёгкий отлив», но даже статичный
+   градиент 300% размера + mix-blend всё равно грузит GPU при скролле.
+   Редкие карты на телефоне теперь отличаются только цветом рамки и тегом
+   редкости — этого достаточно для понимания, а телефон не лагает. */
 .mobile-lite .card.holo::after {
-  mix-blend-mode: normal;
-  opacity: 0.35;                  /* лёгкий статичный отлив вместо блендинга */
+  display: none;
 }
 
 /* 3. Бесконечная анимация «дыхания» оружия на каждой карте — выключаем.
@@ -5266,7 +5245,7 @@ try { tg.setHeaderColor('#050608'); } catch(e) {}
 try { tg.setBackgroundColor('#050608'); } catch(e) {}
 
 // v182: версия клиента — для проверки что загрузилась новая сборка
-const NFT_CLIENT_VERSION = 'v188';
+const NFT_CLIENT_VERSION = 'v189';
 console.log('%c🎴 NFT Mini App ' + NFT_CLIENT_VERSION + ' загружен', 'color:#FFA940;font-weight:bold');
 
 // v181: ОБЛЕГЧЁННЫЙ РЕЖИМ ДЛЯ ТЕЛЕФОНА
@@ -5368,11 +5347,18 @@ function _fetchWithTimeout(url, opts, ms) {
     .finally(() => clearTimeout(id));
 }
 
+// v189: HMAC initData — Telegram даёт подписанную строку с настоящим uid.
+// Сервер проверяет подпись по токену бота (которого нет ни у кого больше).
+// Шлём её во всех запросах. В гибриде сервер принимает либо HMAC, либо
+// старый secret — поэтому переход безопасный.
+const TG_INIT_DATA = (tg && tg.initData) ? tg.initData : '';
+
 async function api(path) {
-  const url = `${API_BASE}${path}${path.includes('?') ? '&' : '?'}uid=${UID}&secret=${encodeURIComponent(SECRET)}`;
+  let url = `${API_BASE}${path}${path.includes('?') ? '&' : '?'}uid=${UID}&secret=${encodeURIComponent(SECRET)}`;
+  if (TG_INIT_DATA) url += `&init_data=${encodeURIComponent(TG_INIT_DATA)}`;
   try {
     const r = await _fetchWithTimeout(url, {
-      headers: { 'ngrok-skip-browser-warning': '1' },
+      headers: {},
     }, 12000);
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return await r.json();
@@ -5388,8 +5374,12 @@ async function apiPost(path, body) {
   try {
     const r = await _fetchWithTimeout(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
-      body: JSON.stringify({ uid: UID, secret: SECRET, ...body }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid: UID, secret: SECRET,
+        init_data: TG_INIT_DATA,  // v189: HMAC-подпись Telegram (если есть)
+        ...body
+      }),
     }, 15000);
     const data = await r.json().catch(() => ({ ok: false, error: 'bad_json' }));
     // v180: сервер вернул кулдаун — прокидываем retry_after наверх
@@ -7252,7 +7242,7 @@ function renderCard(item, opts = {}) {
   let watermarkHtml = '';
   if (!opts.market && item.serial && !isStack) {
     const padded = String(item.serial).padStart(2, '0');
-    watermarkHtml = `<div class="card-serial-watermark">#${padded}</div>`;
+    watermarkHtml = `<div class="card-serial-watermark">№${padded}</div>`;
   }
 
   return `
