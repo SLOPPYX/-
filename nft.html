@@ -1432,6 +1432,19 @@ body::after {
   /* по умолчанию — общая лёгкая жизнь */
   animation: weaponBreathe 3.4s ease-in-out infinite;
 }
+/* v182: растровая картинка скина (телефон) — вписываем так же, как SVG */
+.card-weapon-vis .skin-img {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  /* лёгкая тень вместо дорогого drop-shadow на каждый кадр */
+  filter: drop-shadow(0 0 4px var(--card-rarity-glow));
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
 
 /* Большая версия для модалки — v138: фиксированное соотношение */
 .modal-weapon-vis {
@@ -4921,6 +4934,10 @@ try { tg.ready(); } catch(e) {}
 try { tg.setHeaderColor('#050608'); } catch(e) {}
 try { tg.setBackgroundColor('#050608'); } catch(e) {}
 
+// v182: версия клиента — для проверки что загрузилась новая сборка
+const NFT_CLIENT_VERSION = 'v182';
+console.log('%c🎴 NFT Mini App ' + NFT_CLIENT_VERSION + ' загружен', 'color:#FFA940;font-weight:bold');
+
 // v181: ОБЛЕГЧЁННЫЙ РЕЖИМ ДЛЯ ТЕЛЕФОНА
 // На мобильных тяжёлые эффекты (3D-наклон, mix-blend-mode, бесконечные
 // анимации, drop-shadow) роняют FPS и вызывают «чернеющие» карты при скролле.
@@ -6752,19 +6769,24 @@ function svgHelmet4(c) {
   </svg>`;
 }
 
-function getWeaponSVG(weaponName, rarity) {
+// v182: КЭШ СКИНОВ КАК КАРТИНОК (телефон)
+// Каждый скин — тяжёлый процедурный SVG (десятки векторов + градиенты).
+// На телефоне сотни таких SVG растеризуются заново при каждом скролле →
+// лаги и «чернеющие» карты. Решение: один раз превращаем SVG в <img> с
+// data-URL (браузер растеризует ОДНОКРАТНО и держит в кэше изображений),
+// дальше карты переиспользуют готовую картинку. Ключ — weapon|rarity,
+// поэтому реально уникальных картинок всего ~130, а не сотни.
+const _skinImgCache = {};   // 'weapon|rarity' -> data:image/svg+xml,...
+
+function _rawWeaponSVG(weaponName, rarity) {
   const palette = RARITY_PALETTE[rarity] || RARITY_PALETTE.common;
   const builders = {
     M1014: svgM1014, Groza: svgGroza, M1887: svgM1887, AWM: svgAWM,
     'AK-47': svgAK47, SCAR: svgSCAR, 'MP-40': svgMP40,
     G18: svgG18, 'Desert Eagle': svgDeagle, UMP: svgUMP,
-    // v151: партия 1
     M79: svgM79, M500: svgM500, 'AN-94': svgAN94,
-    // v152: партия 2
     'MAG-7': svgMAG7, 'SPAS-12': svgSPAS12, P90: svgP90,
-    // v153: партия 3 (финал)
     XM8: svgXM8, Katana: svgKatana,
-    // v154: серия «Экипировка» — броня и шлемы
     'Armor Lvl 1': svgArmor1, 'Armor Lvl 2': svgArmor2,
     'Armor Lvl 3': svgArmor3, 'Armor Lvl 4': svgArmor4,
     'Helmet Lvl 1': svgHelmet1, 'Helmet Lvl 2': svgHelmet2,
@@ -6775,6 +6797,51 @@ function getWeaponSVG(weaponName, rarity) {
     return `<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="6" fill="none" stroke="${palette.col}" stroke-width="2"/></svg>`;
   }
   return fn(palette);
+}
+
+function getWeaponSVG(weaponName, rarity) {
+  // ПК: живой SVG (красиво, GPU справляется)
+  if (!IS_MOBILE) {
+    return _rawWeaponSVG(weaponName, rarity);
+  }
+  // Телефон: отдаём кэшированную картинку
+  const key = (weaponName || '?') + '|' + (rarity || 'common');
+  let dataUrl = _skinImgCache[key];
+  if (!dataUrl) {
+    let svg = _rawWeaponSVG(weaponName, rarity);
+    // гарантируем xmlns (нужно для data-URL) и viewBox
+    if (!/xmlns=/.test(svg)) {
+      svg = svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+    dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    _skinImgCache[key] = dataUrl;
+  }
+  // decoding=async + loading=eager: браузер декодирует не блокируя поток,
+  // но картинку держит сразу (не лениво — иначе чернеет при скролле).
+  return `<img class="skin-img" src="${dataUrl}" alt="${weaponName||''}" decoding="async" draggable="false">`;
+}
+
+// v182: предрастеризовать все скины коллекции в кэш ДО скрытия лоадера.
+// Возвращает Promise, который ждёт декодирования всех картинок.
+function preloadSkins(items) {
+  if (!IS_MOBILE || !items || !items.length) return Promise.resolve();
+  const seen = new Set();
+  const tasks = [];
+  for (const it of items) {
+    const key = (it.weapon || '?') + '|' + (it.rarity || 'common');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const html = getWeaponSVG(it.weapon, it.rarity); // заполнит кэш
+    const m = html.match(/src="([^"]+)"/);
+    if (!m) continue;
+    const img = new Image();
+    img.src = m[1];
+    // img.decode() гарантирует, что картинка готова к мгновенной отрисовке
+    if (img.decode) {
+      tasks.push(img.decode().catch(() => {}));
+    }
+  }
+  return Promise.all(tasks);
 }
 
 
@@ -7485,7 +7552,7 @@ function flashBalance() {
 }
 
 async function loadMe() {
-  const r = await api('/casino/me');
+  const r = await api('/casino/me?client_ver=' + NFT_CLIENT_VERSION);
   if (!r.ok) return;
   // v152: приоритет имени:
   // 1) Telegram username (@nick)
@@ -9029,8 +9096,16 @@ async function bootSequence() {
     await loadMy();
     setStatus('ЗАГРУЗКА МАРКЕТА');
     await loadMarket();
-    // v181: пред-рендерим активную вкладку (МОИ) В DOM ещё под лоадером,
-    // чтобы при скрытии экрана карты уже были отрисованы — без мигания/черноты.
+    // v182: предрастеризуем ВСЕ скины (коллекция + маркет) в кэш картинок
+    // ещё под лоадером. После этого листание идёт по готовым картинкам —
+    // без лагов и «черноты». Это и есть «загрузка данных пользователя».
+    setStatus('ПОДГОТОВКА СКИНОВ');
+    try {
+      const allItems = [].concat(state.myItems || [], state.marketItems || []);
+      await preloadSkins(allItems);
+    } catch(e) { console.warn('preload skins', e); }
+    // v181: пред-рендерим активную вкладку В DOM ещё под лоадером,
+    // чтобы при скрытии экрана карты уже были отрисованы — без мигания.
     setStatus('ПОДГОТОВКА');
     if (state.tab === 'my') showMy();
     else if (state.tab === 'market') showMarket();
