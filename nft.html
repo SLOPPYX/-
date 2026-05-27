@@ -1445,6 +1445,44 @@ body::after {
   user-select: none;
   -webkit-touch-callout: none;
 }
+/* v183: ФИКС РАЗМЕРОВ — картинка скина НИКОГДА не вылезает за контейнер.
+   Базовое правило для ВСЕХ мест где используется .skin-img: вписать внутрь,
+   сохраняя пропорции. Это чинит «гигантский шлем/оружие» в P2P и витрине. */
+.skin-img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+/* P2P-листинг: скин в фиксированном окошке 80×64 */
+.p2p-listing-vis .skin-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 4px var(--card-rarity-glow, transparent));
+}
+/* Витрина профиля: мини-скин в слоте */
+.showcase-slot.filled .mini-weapon .skin-img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px var(--card-rarity-glow, transparent));
+}
+/* Модалка: большой скин */
+.modal-weapon-big .skin-img {
+  width: 100%;
+  height: 100%;
+  max-height: 140px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 18px var(--card-rarity-glow));
+}
 
 /* Большая версия для модалки — v138: фиксированное соотношение */
 .modal-weapon-vis {
@@ -4506,6 +4544,164 @@ html, body, #content {
 .mobile-lite .bg-anim {
   animation: none !important;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   v184: РОЗЫГРЫШИ
+   ═══════════════════════════════════════════════════════════ */
+.raffles-wrap { padding: 4px 0 80px; }
+.raffle-admin-btn {
+  width: 100%; padding: 14px; margin-bottom: 14px;
+  border: none; border-radius: 12px; cursor: pointer;
+  background: linear-gradient(135deg, #FFA940, #ff7a40);
+  color: #0a0e16; font-weight: 800; font-size: 15px;
+  font-family: 'Rajdhani', sans-serif; letter-spacing: 0.03em;
+}
+.raffles-empty {
+  text-align: center; padding: 60px 20px; color: var(--muted, #8a93a6);
+}
+.raffles-empty-icon { font-size: 48px; margin-bottom: 12px; }
+.raffles-empty-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 22px;
+  color: var(--text-1, #e8ecf4); letter-spacing: 0.05em;
+}
+.raffles-empty-sub { font-size: 13px; margin-top: 6px; }
+.raffles-section-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 16px;
+  color: var(--muted, #8a93a6); letter-spacing: 0.08em;
+  margin: 20px 0 10px;
+}
+.raffle-card {
+  background: rgba(20, 24, 34, 0.7);
+  border: 1.5px solid rgba(255,255,255,0.08);
+  border-radius: 16px; padding: 16px; margin-bottom: 14px;
+  position: relative;
+}
+.raffle-card[data-rarity="legendary"] { border-color: rgba(255,169,64,0.5); }
+.raffle-card[data-rarity="epic"]      { border-color: rgba(185,111,255,0.45); }
+.raffle-card[data-rarity="ultralegendary"] { border-color: rgba(255,90,90,0.5); }
+.raffle-card.finished { opacity: 0.75; }
+.raffle-card-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px; gap: 8px;
+}
+.raffle-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 19px;
+  color: var(--text-1, #e8ecf4); letter-spacing: 0.04em;
+}
+.raffle-timer {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  color: #FFA940; background: rgba(255,169,64,0.12);
+  padding: 4px 8px; border-radius: 6px; white-space: nowrap; flex-shrink: 0;
+}
+.raffle-prizes {
+  display: flex; gap: 10px; overflow-x: auto; padding: 4px 0 8px;
+  -webkit-overflow-scrolling: touch;
+}
+.raffle-prize {
+  flex-shrink: 0; width: 92px; text-align: center;
+  background: rgba(0,0,0,0.25); border-radius: 10px; padding: 8px;
+}
+.raffle-prize-vis {
+  height: 56px; display: flex; align-items: center; justify-content: center;
+}
+.raffle-prize-vis svg, .raffle-prize-vis .skin-img {
+  max-width: 100%; max-height: 100%; width: auto; height: auto;
+  object-fit: contain;
+}
+.raffle-prize-name {
+  font-size: 10px; color: var(--text-2, #c4ccd8); margin-top: 4px;
+  font-family: 'Rajdhani', sans-serif; line-height: 1.2;
+}
+.raffle-stats {
+  display: flex; justify-content: space-around; margin: 10px 0;
+  font-size: 11px; color: var(--muted, #8a93a6); text-align: center;
+}
+.raffle-stats span {
+  display: block; font-size: 18px; font-weight: 700;
+  color: var(--text-1, #e8ecf4); font-family: 'JetBrains Mono', monospace;
+}
+.raffle-price {
+  font-size: 13px; color: var(--text-2, #c4ccd8); text-align: center;
+  margin-bottom: 12px;
+}
+.raffle-price b { color: #FFA940; }
+.raffle-buy-btn {
+  width: 100%; padding: 13px; border: none; border-radius: 11px;
+  background: linear-gradient(135deg, #FFA940, #ff7a40);
+  color: #0a0e16; font-weight: 800; font-size: 15px; cursor: pointer;
+  font-family: 'Rajdhani', sans-serif; letter-spacing: 0.03em;
+}
+.raffle-buy-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.raffle-admin-actions {
+  display: flex; gap: 8px; margin-top: 10px;
+}
+.raffle-admin-actions button {
+  flex: 1; padding: 9px; border: 1px solid rgba(255,255,255,0.15);
+  background: transparent; color: var(--text-2, #c4ccd8);
+  border-radius: 8px; font-size: 12px; cursor: pointer;
+}
+.raffle-admin-actions button.danger { color: #ff6b6b; border-color: rgba(255,107,107,0.3); }
+.raffle-winners {
+  font-size: 12px; color: #FFA940; margin-top: 8px;
+  font-family: 'JetBrains Mono', monospace; line-height: 1.5;
+}
+/* Админ-модалка */
+.raffle-admin-modal {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,0,0,0.85); display: none;
+  align-items: flex-start; justify-content: center;
+  padding: 40px 16px; overflow-y: auto;
+}
+.raffle-admin-modal.open { display: flex; }
+.raffle-admin-modal-inner {
+  background: #12161f; border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px; padding: 20px; width: 100%; max-width: 440px;
+}
+.raffle-admin-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 22px;
+  color: var(--text-1, #e8ecf4); margin-bottom: 16px; letter-spacing: 0.04em;
+}
+.raffle-admin-label {
+  display: block; font-size: 12px; color: var(--muted, #8a93a6);
+  margin: 12px 0 5px; font-family: 'Rajdhani', sans-serif;
+}
+.raffle-admin-input {
+  width: 100%; padding: 11px; border-radius: 9px;
+  background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text-1, #e8ecf4); font-size: 15px; box-sizing: border-box;
+  font-family: 'JetBrains Mono', monospace;
+}
+.raffle-admin-nfts {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  margin-top: 8px; max-height: 280px; overflow-y: auto;
+}
+.raffle-admin-nft {
+  background: rgba(0,0,0,0.3); border: 2px solid transparent;
+  border-radius: 10px; padding: 8px; cursor: pointer; position: relative;
+  text-align: center;
+}
+.raffle-admin-nft.selected { border-color: #FFA940; background: rgba(255,169,64,0.1); }
+.raffle-admin-nft-vis { height: 48px; display: flex; align-items: center; justify-content: center; }
+.raffle-admin-nft-vis svg, .raffle-admin-nft-vis .skin-img {
+  max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;
+}
+.raffle-admin-nft-name { font-size: 9px; color: var(--text-2, #c4ccd8); margin-top: 4px; line-height: 1.2; }
+.raffle-admin-nft-check {
+  position: absolute; top: 4px; right: 4px;
+  background: #FFA940; color: #0a0e16; border-radius: 50%;
+  width: 18px; height: 18px; font-size: 12px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.raffle-admin-empty { grid-column: 1/-1; text-align: center; color: var(--muted); padding: 20px; font-size: 13px; }
+.raffle-admin-create {
+  width: 100%; padding: 14px; margin-top: 16px; border: none; border-radius: 11px;
+  background: linear-gradient(135deg, #FFA940, #ff7a40); color: #0a0e16;
+  font-weight: 800; font-size: 15px; cursor: pointer; font-family: 'Rajdhani', sans-serif;
+}
+.raffle-admin-close {
+  width: 100%; padding: 10px; margin-top: 8px; border: none; background: transparent;
+  color: var(--muted, #8a93a6); font-size: 13px; cursor: pointer;
+}
 </style>
 
 </head>
@@ -4618,6 +4814,16 @@ html, body, #content {
         <path d="M12 13v8"/>
       </svg>
       <span class="tab-label">КЕЙСЫ</span>
+    </div>
+    <div class="tab" data-tab="raffles">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 12 20 22 4 22 4 12"/>
+        <rect x="2" y="7" width="20" height="5"/>
+        <line x1="12" y1="22" x2="12" y2="7"/>
+        <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+        <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+      </svg>
+      <span class="tab-label">РОЗЫГРЫШ</span>
     </div>
     <div class="tab" data-tab="profile">
       <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -4935,7 +5141,7 @@ try { tg.setHeaderColor('#050608'); } catch(e) {}
 try { tg.setBackgroundColor('#050608'); } catch(e) {}
 
 // v182: версия клиента — для проверки что загрузилась новая сборка
-const NFT_CLIENT_VERSION = 'v182';
+const NFT_CLIENT_VERSION = 'v184';
 console.log('%c🎴 NFT Mini App ' + NFT_CLIENT_VERSION + ' загружен', 'color:#FFA940;font-weight:bold');
 
 // v181: ОБЛЕГЧЁННЫЙ РЕЖИМ ДЛЯ ТЕЛЕФОНА
@@ -6809,9 +7015,14 @@ function getWeaponSVG(weaponName, rarity) {
   let dataUrl = _skinImgCache[key];
   if (!dataUrl) {
     let svg = _rawWeaponSVG(weaponName, rarity);
-    // гарантируем xmlns (нужно для data-URL) и viewBox
+    // v183: гарантируем корректное масштабирование картинки:
+    //  - xmlns обязателен для data-URL
+    //  - preserveAspectRatio чтобы скин вписывался по контейнеру (не вылезал)
     if (!/xmlns=/.test(svg)) {
       svg = svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+    if (!/preserveAspectRatio=/.test(svg)) {
+      svg = svg.replace('<svg', '<svg preserveAspectRatio="xMidYMid meet"');
     }
     dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     _skinImgCache[key] = dataUrl;
@@ -7484,6 +7695,7 @@ document.querySelectorAll('.tab').forEach(tabEl => {
     else if (state.tab === 'p2p')     showP2P();
     else if (state.tab === 'craft')   showCraft();
     else if (state.tab === 'cases')   showCases();
+    else if (state.tab === 'raffles') showRaffles();
     else if (state.tab === 'profile') showProfile();
   });
 });
@@ -8814,6 +9026,291 @@ async function showCases() {
   } catch(e) {
     if (state.tab === 'cases') setContent(renderError());
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+// v184: РОЗЫГРЫШИ
+// ═══════════════════════════════════════════════════════════
+let _raffleTimers = [];
+function _clearRaffleTimers() {
+  _raffleTimers.forEach(t => clearInterval(t));
+  _raffleTimers = [];
+}
+
+function fmtCountdown(sec) {
+  if (sec <= 0) return 'Завершается...';
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (d > 0) return `${d}д ${h}ч ${m}м`;
+  if (h > 0) return `${h}ч ${m}м ${s}с`;
+  if (m > 0) return `${m}м ${s}с`;
+  return `${s}с`;
+}
+
+async function showRaffles() {
+  _clearRaffleTimers();
+  setContent(`<div class="raffles-wrap">
+    <div class="skel" style="height:60px;border-radius:14px;margin-bottom:12px;"></div>
+    <div class="skel" style="height:160px;border-radius:16px;margin-bottom:12px;"></div>
+    <div class="skel" style="height:160px;border-radius:16px;"></div>
+  </div>`);
+  try {
+    const d = await api('/casino/raffles/list');
+    if (!d || !d.ok) { if (state.tab === 'raffles') setContent(renderError()); return; }
+    state.raffles = d;
+    if (state.tab === 'raffles') renderRaffles();
+  } catch(e) {
+    if (state.tab === 'raffles') setContent(renderError());
+  }
+}
+
+function renderRaffles() {
+  _clearRaffleTimers();
+  const d = state.raffles || {};
+  const isAdmin = d.is_admin;
+  const active = d.active || [];
+  const finished = d.finished || [];
+
+  let html = '<div class="raffles-wrap">';
+
+  // Кнопка админ-панели
+  if (isAdmin) {
+    html += `<button class="raffle-admin-btn" onclick="openRaffleAdmin()">
+      ⚙️ Создать розыгрыш</button>`;
+  }
+
+  if (active.length === 0 && finished.length === 0) {
+    html += `<div class="raffles-empty">
+      <div class="raffles-empty-icon">🎁</div>
+      <div class="raffles-empty-title">Розыгрышей пока нет</div>
+      <div class="raffles-empty-sub">Следи за обновлениями — скоро здесь появятся призы!</div>
+    </div>`;
+  }
+
+  // Активные
+  for (const rf of active) {
+    const prizeNames = rf.prizes.map(p => p.name).join(', ');
+    const palClass = rf.prizes[0] ? `data-rarity="${rf.prizes[0].rarity}"` : '';
+    const myT = rf.my_tickets || 0;
+    const limit = rf.max_tickets_per_user;
+    const canBuy = !limit || myT < limit;
+    html += `
+      <div class="raffle-card" ${palClass} data-raffle="${rf.id}">
+        <div class="raffle-card-head">
+          <div class="raffle-title">${rf.title}</div>
+          <div class="raffle-timer" data-ends="${rf.ends_at}">⏳ ${fmtCountdown(rf.seconds_left)}</div>
+        </div>
+        <div class="raffle-prizes">
+          ${rf.prizes.map(p => `
+            <div class="raffle-prize" data-rarity="${p.rarity}">
+              <div class="raffle-prize-vis">${getWeaponSVG(p.weapon || p.nft_id, p.rarity)}</div>
+              <div class="raffle-prize-name">${p.name} #${p.serial}</div>
+            </div>`).join('')}
+        </div>
+        <div class="raffle-stats">
+          <div><span>${rf.total_tickets}</span> билетов</div>
+          <div><span>${rf.participants}</span> участников</div>
+          <div><span>${myT}</span> твоих</div>
+        </div>
+        <div class="raffle-price">Билет: <b>${rf.ticket_price.toLocaleString()}</b> 💰${limit ? ` · лимит ${limit}` : ''}</div>
+        <button class="raffle-buy-btn" onclick="buyRaffleTicket('${rf.id}', ${rf.ticket_price})"
+          ${canBuy ? '' : 'disabled'}>${canBuy ? '🎟 Купить билет' : 'Лимит достигнут'}</button>
+        ${isAdmin ? `<div class="raffle-admin-actions">
+          <button onclick="finishRaffle('${rf.id}')">Разыграть сейчас</button>
+          <button onclick="cancelRaffle('${rf.id}')" class="danger">Отменить</button>
+        </div>` : ''}
+      </div>`;
+  }
+
+  // Завершённые (победители)
+  if (finished.length > 0) {
+    html += `<div class="raffles-section-title">Завершённые</div>`;
+    for (const rf of finished) {
+      const winnersText = (rf.winners && rf.winners.length)
+        ? rf.winners.map(w => `${w.name} #${w.serial} → ID ${w.uid}`).join('<br>')
+        : 'Участников не было';
+      html += `
+        <div class="raffle-card finished">
+          <div class="raffle-title">${rf.title}</div>
+          <div class="raffle-winners">🏆 ${winnersText}</div>
+        </div>`;
+    }
+  }
+
+  html += '</div>';
+  setContent(html);
+
+  // Запускаем тикающие таймеры
+  document.querySelectorAll('.raffle-timer').forEach(el => {
+    const endsAt = parseInt(el.dataset.ends);
+    const tick = () => {
+      const left = endsAt - Math.floor(Date.now() / 1000);
+      el.textContent = '⏳ ' + fmtCountdown(left);
+      if (left <= 0) {
+        el.textContent = '⏳ Завершается...';
+        // подтянем результат через пару секунд
+        setTimeout(() => { if (state.tab === 'raffles') showRaffles(); }, 4000);
+      }
+    };
+    tick();
+    _raffleTimers.push(setInterval(tick, 1000));
+  });
+}
+
+async function buyRaffleTicket(raffleId, price) {
+  const bal = (state.me && state.me.balance) || 0;
+  if (bal < price) { showToast('Недостаточно токенов'); return; }
+  try { tg.HapticFeedback.impactOccurred('medium'); } catch(e){}
+  const r = await apiPost('/casino/raffles/buy', { raffle_id: raffleId, qty: 1 });
+  if (r.ok) {
+    showToast(`🎟 Билет куплен! У тебя ${r.tickets}`);
+    setBalance(r.balance, { authoritative: true });
+    showRaffles(); // обновить счётчики
+  } else if (r.error === 'rate_limited') {
+    showToast(r.message || 'Подожди немного');
+  } else if (r.error === 'not_enough') {
+    showToast('Недостаточно токенов');
+  } else if (r.error === 'limit') {
+    showToast(r.message || 'Лимит билетов достигнут');
+  } else if (r.error === 'admin_cant_play') {
+    showToast('Админ не участвует в своём розыгрыше');
+  } else {
+    showToast(r.message || 'Не удалось купить билет');
+  }
+}
+
+// ─── АДМИН-ПАНЕЛЬ ───
+async function openRaffleAdmin() {
+  const d = await api('/casino/raffles/admin/mynfts');
+  if (!d || !d.ok) { showToast('Ошибка загрузки NFT'); return; }
+  state.adminNfts = d.cards || [];
+  state.adminSelectedPrizes = [];
+  renderRaffleAdminModal();
+}
+
+function renderRaffleAdminModal() {
+  const cards = state.adminNfts || [];
+  const selected = state.adminSelectedPrizes || [];
+  const selKey = (c) => `${c.nft_id}|${c.serial}`;
+  let html = `
+    <div class="raffle-admin-modal-inner">
+      <div class="raffle-admin-title">Создать розыгрыш</div>
+      <label class="raffle-admin-label">Название</label>
+      <input class="raffle-admin-input" id="rfTitle" placeholder="Розыгрыш AWM" maxlength="40">
+      <label class="raffle-admin-label">Цена билета (токены)</label>
+      <input class="raffle-admin-input" id="rfPrice" type="number" placeholder="10000000" inputmode="numeric">
+      <label class="raffle-admin-label">Длительность (минуты)</label>
+      <input class="raffle-admin-input" id="rfDuration" type="number" placeholder="1440 (сутки)" inputmode="numeric">
+      <label class="raffle-admin-label">Лимит билетов на игрока (0 = без лимита)</label>
+      <input class="raffle-admin-input" id="rfLimit" type="number" placeholder="0" inputmode="numeric" value="0">
+      <label class="raffle-admin-label">Призы (тапни чтобы выбрать)</label>
+      <div class="raffle-admin-nfts">`;
+  if (cards.length === 0) {
+    html += `<div class="raffle-admin-empty">У тебя нет NFT для розыгрыша</div>`;
+  } else {
+    for (const c of cards) {
+      const isSel = selected.some(s => selKey(s) === selKey(c));
+      html += `
+        <div class="raffle-admin-nft ${isSel ? 'selected' : ''}" data-rarity="${c.rarity}"
+          onclick="toggleRafflePrize('${c.nft_id}', ${c.serial})">
+          <div class="raffle-admin-nft-vis">${getWeaponSVG(c.weapon || c.nft_id, c.rarity)}</div>
+          <div class="raffle-admin-nft-name">${c.name} #${c.serial}</div>
+          ${isSel ? '<div class="raffle-admin-nft-check">✓</div>' : ''}
+        </div>`;
+    }
+  }
+  html += `
+      </div>
+      <button class="raffle-admin-create" onclick="submitRaffle()">Создать розыгрыш (${selected.length} призов)</button>
+      <button class="raffle-admin-close" onclick="closeRaffleAdmin()">Отмена</button>
+    </div>`;
+
+  let modal = document.getElementById('raffle-admin-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'raffle-admin-modal';
+    modal.className = 'raffle-admin-modal';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+      if (e.target.id === 'raffle-admin-modal') closeRaffleAdmin();
+    });
+  }
+  modal.innerHTML = html;
+  modal.classList.add('open');
+}
+
+function toggleRafflePrize(nftId, serial) {
+  const selected = state.adminSelectedPrizes || [];
+  const key = `${nftId}|${serial}`;
+  const idx = selected.findIndex(s => `${s.nft_id}|${s.serial}` === key);
+  if (idx >= 0) selected.splice(idx, 1);
+  else selected.push({ nft_id: nftId, serial: serial });
+  state.adminSelectedPrizes = selected;
+  // сохраняем введённые поля перед перерисовкой
+  _preserveRaffleInputs();
+  renderRaffleAdminModal();
+  _restoreRaffleInputs();
+}
+
+let _rfInputCache = {};
+function _preserveRaffleInputs() {
+  ['rfTitle','rfPrice','rfDuration','rfLimit'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) _rfInputCache[id] = el.value;
+  });
+}
+function _restoreRaffleInputs() {
+  Object.keys(_rfInputCache).forEach(id => {
+    const el = document.getElementById(id);
+    if (el && _rfInputCache[id] !== undefined) el.value = _rfInputCache[id];
+  });
+}
+
+function closeRaffleAdmin() {
+  const modal = document.getElementById('raffle-admin-modal');
+  if (modal) modal.classList.remove('open');
+  _rfInputCache = {};
+}
+
+async function submitRaffle() {
+  const title = (document.getElementById('rfTitle').value || '').trim();
+  const price = parseInt(document.getElementById('rfPrice').value || '0');
+  const duration = parseInt(document.getElementById('rfDuration').value || '0');
+  const limit = parseInt(document.getElementById('rfLimit').value || '0');
+  const prizes = state.adminSelectedPrizes || [];
+  if (!price || price <= 0) { showToast('Введи цену билета'); return; }
+  if (!duration || duration <= 0) { showToast('Введи длительность'); return; }
+  if (prizes.length === 0) { showToast('Выбери хотя бы один приз'); return; }
+  const r = await apiPost('/casino/raffles/admin/create', {
+    title, prizes, ticket_price: price, duration_minutes: duration, max_per_user: limit,
+  });
+  if (r.ok) {
+    showToast('✅ Розыгрыш создан!');
+    closeRaffleAdmin();
+    showRaffles();
+  } else if (r.error === 'prize_not_owned') {
+    showToast(r.message || 'Приз не найден в твоей коллекции');
+  } else {
+    showToast(r.message || r.error || 'Ошибка создания');
+  }
+}
+
+async function finishRaffle(raffleId) {
+  const r = await apiPost('/casino/raffles/admin/finish', { raffle_id: raffleId });
+  if (r.ok) {
+    showToast(r.no_participants ? 'Завершён (без участников)' : '🏆 Победитель выбран!');
+    showRaffles();
+  } else {
+    showToast(r.error || 'Ошибка');
+  }
+}
+
+async function cancelRaffle(raffleId) {
+  const r = await apiPost('/casino/raffles/admin/cancel', { raffle_id: raffleId });
+  if (r.ok) { showToast('Розыгрыш отменён, возвраты сделаны'); showRaffles(); }
+  else showToast(r.error || 'Ошибка');
 }
 
 // SVG-иконка кейса по акценту редкости (компактная, для карточек)
