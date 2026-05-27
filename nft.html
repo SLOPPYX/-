@@ -1469,6 +1469,33 @@ body::after {
   flex-direction: column;
   z-index: 2;
 }
+/* v188: едва заметный геометрический SVG-фон (сетка/соты) — добавляет
+   «техно» текстуру без шума. Применяется ко всем карточкам, цвет идёт
+   от редкости, поэтому редкие карты смотрятся ещё богаче. */
+.card-inner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='52' viewBox='0 0 60 52'><g fill='none' stroke='%23ffffff' stroke-width='0.6' opacity='0.5'><polygon points='30,2 56,17 56,37 30,52 4,37 4,17'/><polygon points='30,16 44,24 44,38 30,46 16,38 16,24'/></g></svg>");
+  background-size: 60px 52px;
+  background-repeat: repeat;
+  opacity: 0.08;
+  mix-blend-mode: screen;
+}
+/* На редких картах паттерн чуть ярче (тонкая «фирменная» отделка) */
+.card[data-rarity="epic"] .card-inner::before,
+.card[data-rarity="legendary"] .card-inner::before,
+.card[data-rarity="ultralegendary"] .card-inner::before {
+  opacity: 0.12;
+}
+/* На телефоне (mobile-lite) — без mix-blend-mode (он дорог),
+   просто тонкая прозрачность */
+.mobile-lite .card-inner::before {
+  mix-blend-mode: normal;
+  opacity: 0.05;
+}
 .card-rarity-tag {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 10px;
@@ -2995,29 +3022,27 @@ body::after {
 /* v187: ВОДЯНОЙ ЗНАК С НОМЕРОМ — крупный полупрозрачный «штамп»
    на скине, подчёркивает уникальность каждой NFT ненавязчиво.
    Цвет в тон редкости карты, лёгкий контур, перекрыт скином. */
+/* v188: компактный #02 в правом верхнем углу — маленький, ненавязчивый,
+   подчёркивает уникальность экземпляра. Не путать с .card-serial внизу
+   (#X/Y — серийник + тираж). */
 .card-serial-watermark {
   position: absolute;
-  top: 38px;
-  left: 12px;
-  font-family: 'Oxanium', 'Bebas Neue', sans-serif;
-  font-size: 38px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--card-rarity, #ffffff);
-  opacity: 0.14;
+  top: 8px;
+  right: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--card-rarity, #c4ccd8);
+  opacity: 0.7;
   pointer-events: none;
-  z-index: 2;
-  text-shadow:
-    0 0 1px var(--card-rarity, #ffffff),
-    0 2px 0 rgba(0,0,0,0.25);
-  -webkit-text-stroke: 0.6px var(--card-rarity-glow, transparent);
+  z-index: 3;
   user-select: none;
-  transform: rotate(-4deg);
   line-height: 1;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
-/* На ПК holo-карты — водяной знак чуть ярче (на тёмной голограмме теряется) */
 .card.holo .card-serial-watermark {
-  opacity: 0.22;
+  opacity: 0.85;
 }
 
 /* v146: список серийников в стак-модалке */
@@ -5241,7 +5266,7 @@ try { tg.setHeaderColor('#050608'); } catch(e) {}
 try { tg.setBackgroundColor('#050608'); } catch(e) {}
 
 // v182: версия клиента — для проверки что загрузилась новая сборка
-const NFT_CLIENT_VERSION = 'v187';
+const NFT_CLIENT_VERSION = 'v188';
 console.log('%c🎴 NFT Mini App ' + NFT_CLIENT_VERSION + ' загружен', 'color:#FFA940;font-weight:bold');
 
 // v181: ОБЛЕГЧЁННЫЙ РЕЖИМ ДЛЯ ТЕЛЕФОНА
@@ -7227,7 +7252,7 @@ function renderCard(item, opts = {}) {
   let watermarkHtml = '';
   if (!opts.market && item.serial && !isStack) {
     const padded = String(item.serial).padStart(2, '0');
-    watermarkHtml = `<div class="card-serial-watermark">№${padded}</div>`;
+    watermarkHtml = `<div class="card-serial-watermark">#${padded}</div>`;
   }
 
   return `
