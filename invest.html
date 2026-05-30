@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SLX Биржа</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #000;
+    --card: #060708;
+    --card2: #0a0c0f;
+    --border: #14171c;
+    --border2: #1d2229;
+    --accent: #3aa0ff;
+    --accent-light: #6fc0ff;
+    --accent-dark: #1877d6;
+    --up: #1fc885;
+    --down: #e24b4a;
+    --text: #f0f3f7;
+    --text2: #8a94a0;
+    --text3: #5a6470;
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  body { padding: 14px 14px 84px; max-width: 480px; margin: 0 auto; }
+
+  /* ─── Шапка ─── */
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .coin-id { display: flex; align-items: center; gap: 11px; }
+  .coin-logo {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #cfeaff, #3aa0ff 42%, #0a4d8c 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 20px rgba(58,160,255,0.45);
+    border: 1px solid #9fd4ff;
+    flex-shrink: 0;
+  }
+  .coin-logo span {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 800; color: #03203d; font-size: 26px; font-style: italic;
+  }
+  .coin-name { font-weight: 700; font-size: 17px; }
+  .coin-sub { color: var(--text3); font-size: 11px; }
+  .price-box { text-align: right; }
+  .price-val { font-weight: 800; font-size: 21px; letter-spacing: -0.02em; }
+  .price-chg { font-size: 13px; font-weight: 600; margin-top: 1px; }
+
+  /* ─── Статистика ─── */
+  .stats-row {
+    display: flex; justify-content: space-between;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 6px; margin-bottom: 12px;
+  }
+  .stat { text-align: center; flex: 1; }
+  .stat-label { color: var(--text3); font-size: 9px; letter-spacing: 0.03em; }
+  .stat-val { color: #cdd4dc; font-size: 12px; font-weight: 600; margin-top: 2px; }
+
+  /* ─── Переключатель периода ─── */
+  .periods { display: flex; gap: 6px; margin-bottom: 12px; }
+  .period {
+    font-size: 11px; color: var(--text2); background: var(--card2);
+    padding: 5px 13px; border-radius: 8px; font-weight: 600;
+    border: 1px solid transparent; transition: all 0.15s;
+  }
+  .period.active { color: #001a33; background: var(--accent); }
+
+  /* ─── График ─── */
+  .chart-wrap {
+    background: #040506; border: 1px solid var(--border);
+    border-radius: 16px; padding: 8px; margin-bottom: 12px;
+  }
+  .chart-inner { position: relative; width: 100%; height: 210px; }
+
+  /* ─── Настроение рынка ─── */
+  .mood {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px; margin-bottom: 12px;
+  }
+  .mood-top { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 7px; }
+  .mood-buy { color: var(--up); font-weight: 600; }
+  .mood-sell { color: var(--down); font-weight: 600; }
+  .mood-bar { height: 8px; border-radius: 4px; background: var(--down); overflow: hidden; }
+  .mood-fill { height: 100%; background: linear-gradient(90deg, #22d18a, #1fc885); border-radius: 4px; transition: width 0.4s; }
+  .mood-note { text-align: center; color: var(--text2); font-size: 10px; margin-top: 7px; }
+
+  /* ─── Мини-портфель ─── */
+  .mini-port {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #06101a; border: 1px solid #11283d;
+    border-radius: 12px; padding: 10px 14px; margin-bottom: 12px;
+  }
+  .mini-port-left { color: #7a96b2; font-size: 12px; }
+  .mini-port-left b { color: #eaf4ff; }
+  .mini-port-pnl { font-size: 12px; font-weight: 600; }
+
+  /* ─── Кнопки купить/продать ─── */
+  .actions { display: flex; gap: 10px; margin-bottom: 10px; }
+  .btn {
+    flex: 1; border: none; border-radius: 14px; padding: 13px;
+    font-weight: 800; font-size: 15px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+    transition: transform 0.1s, opacity 0.15s; font-family: inherit;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.5; }
+  .btn-buy { background: linear-gradient(135deg, #22d18a, #11a86a); color: #fff; box-shadow: 0 4px 16px rgba(31,200,133,0.3); }
+  .btn-sell { background: linear-gradient(135deg, #f0605f, #c93b3a); color: #fff; box-shadow: 0 4px 16px rgba(226,75,74,0.25); }
+  .btn-sub { font-size: 10px; font-weight: 500; opacity: 0.85; }
+  .foot-note { text-align: center; color: var(--text3); font-size: 10px; margin-top: 4px; }
+
+  /* ─── Нижняя навигация ─── */
+  .navbar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.92); backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    display: flex; max-width: 480px; margin: 0 auto;
+    padding: 10px 0 calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+  .nav-item {
+    flex: 1; text-align: center; color: var(--text3);
+    font-size: 11px; font-weight: 600; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-icon { font-size: 19px; }
+
+  /* ─── Вкладка портфеля ─── */
+  .port-hero {
+    background: linear-gradient(135deg, #02141f, #040506);
+    border: 1px solid #103048; border-radius: 16px;
+    padding: 20px; margin-bottom: 14px; text-align: center;
+  }
+  .port-hero-label { color: #4a7ba8; font-size: 12px; margin-bottom: 6px; }
+  .port-hero-val { color: #eaf4ff; font-weight: 800; font-size: 32px; letter-spacing: -0.02em; }
+  .port-hero-pnl { font-size: 13px; font-weight: 600; margin-top: 5px; }
+  .position-card, .trades-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px; margin-bottom: 11px;
+  }
+  .pos-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .pos-coin { display: flex; align-items: center; gap: 10px; }
+  .pos-logo {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #cfeaff, #3aa0ff 42%, #0a4d8c 100%);
+    display: flex; align-items: center; justify-content: center; border: 1px solid #9fd4ff;
+  }
+  .pos-logo span { font-family: Georgia, serif; font-weight: 800; color: #03203d; font-size: 21px; font-style: italic; }
+  .pos-rows { border-top: 1px solid var(--border); padding-top: 10px; font-size: 12px; }
+  .pos-row { display: flex; justify-content: space-between; padding: 3px 0; }
+  .pos-row .k { color: var(--text3); }
+  .pos-row .v { color: #bbc4ce; }
+  .trades-title { color: var(--accent-dark); font-size: 11px; margin-bottom: 8px; letter-spacing: 0.04em; }
+  .trade { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; }
+  .trade.buy span:first-child { color: var(--up); }
+  .trade.sell span:first-child { color: var(--down); }
+  .trade .amt { color: var(--text2); }
+  .empty-port { text-align: center; color: var(--text3); font-size: 13px; padding: 30px 10px; }
+
+  /* ─── Модалка покупки/продажи ─── */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px); z-index: 100;
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: #0a0c0f; border: 1px solid var(--border2);
+    border-radius: 20px 20px 0 0; width: 100%; max-width: 480px;
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom, 0px));
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+  .modal-sub { color: var(--text3); font-size: 12px; margin-bottom: 16px; }
+  .qty-input {
+    width: 100%; background: #050607; border: 1px solid var(--border2);
+    border-radius: 12px; padding: 14px; color: var(--text);
+    font-size: 22px; font-weight: 700; text-align: center; font-family: inherit;
+    margin-bottom: 12px; outline: none;
+  }
+  .qty-input:focus { border-color: var(--accent); }
+  .quick-row { display: flex; gap: 7px; margin-bottom: 14px; }
+  .quick {
+    flex: 1; text-align: center; background: var(--card2);
+    border: 1px solid var(--border2); color: var(--accent-light);
+    font-size: 12px; font-weight: 600; padding: 9px 0; border-radius: 9px; cursor: pointer;
+  }
+  .quick:active { background: #11161c; }
+  .modal-calc {
+    background: #050607; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 13px;
+  }
+  .calc-row { display: flex; justify-content: space-between; padding: 3px 0; }
+  .calc-row .k { color: var(--text3); }
+  .calc-row .v { color: #dfe6ee; font-weight: 600; }
+  .calc-row.total .v { color: var(--accent-light); font-size: 15px; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-cancel {
+    flex: 1; background: transparent; border: 1px solid var(--border2);
+    color: var(--text2); border-radius: 12px; padding: 14px; font-weight: 700;
+    font-size: 14px; cursor: pointer; font-family: inherit;
+  }
+  .modal-confirm {
+    flex: 2; border: none; border-radius: 12px; padding: 14px;
+    font-weight: 800; font-size: 15px; cursor: pointer; color: #fff; font-family: inherit;
+  }
+  .modal-confirm.buy { background: linear-gradient(135deg, #22d18a, #11a86a); }
+  .modal-confirm.sell { background: linear-gradient(135deg, #f0605f, #c93b3a); }
+
+  /* ─── Toast ─── */
+  .toast {
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+    background: #0f1318; border: 1px solid var(--border2); color: var(--text);
+    padding: 12px 18px; border-radius: 12px; font-size: 13px; z-index: 200;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; max-width: 90%;
+  }
+  .toast.show { opacity: 1; }
+  .toast.ok { border-color: #1a6b4d; }
+  .toast.err { border-color: #7a2a2a; }
+
+  .tab-page { display: none; }
+  .tab-page.active { display: block; }
+  .loading { text-align: center; color: var(--text3); padding: 40px; font-size: 13px; }
+
+  .spinner {
+    width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff; border-radius: 50%; display: inline-block;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- ═══ ВКЛАДКА: ГРАФИК ═══ -->
+<div class="tab-page active" id="tab-chart">
+  <div class="header">
+    <div class="coin-id">
+      <div class="coin-logo"><span>S</span></div>
+      <div>
+        <div class="coin-name">SLX</div>
+        <div class="coin-sub">SloppyX Coin</div>
+      </div>
+    </div>
+    <div class="price-box">
+      <div class="price-val" id="px">—</div>
+      <div class="price-chg" id="chg">—</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat"><div class="stat-label">МАКС</div><div class="stat-val" id="st-high">—</div></div>
+    <div class="stat"><div class="stat-label">МИН</div><div class="stat-val" id="st-low">—</div></div>
+    <div class="stat"><div class="stat-label">ОБЪЁМ</div><div class="stat-val" id="st-vol">—</div></div>
+    <div class="stat"><div class="stat-label">КАП.</div><div class="stat-val" id="st-cap">—</div></div>
+  </div>
+
+  <div class="periods">
+    <div class="period active">1Ч</div>
+    <div class="period">1Д</div>
+    <div class="period">1Н</div>
+    <div class="period">МЕС</div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-inner"><canvas id="chart"></canvas></div>
+  </div>
+
+  <div class="mood">
+    <div class="mood-top">
+      <span class="mood-buy">Покупают <span id="mood-buy-pct">50</span>%</span>
+      <span class="mood-sell">Продают <span id="mood-sell-pct">50</span>%</span>
+    </div>
+    <div class="mood-bar"><div class="mood-fill" id="mood-fill" style="width:50%"></div></div>
+    <div class="mood-note" id="mood-note">Рынок в равновесии</div>
+  </div>
+
+  <div class="mini-port">
+    <span class="mini-port-left">В портфеле: <b id="mp-qty">0 SLX</b></span>
+    <span class="mini-port-pnl" id="mp-pnl">—</span>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-buy" id="btn-buy">↑ КУПИТЬ<span class="btn-sub" id="buy-sub">—</span></button>
+    <button class="btn btn-sell" id="btn-sell">↓ ПРОДАТЬ<span class="btn-sub" id="sell-sub">—</span></button>
+  </div>
+  <div class="foot-note" id="foot">Комиссия 3% · Баланс: — токенов</div>
+</div>
+
+<!-- ═══ ВКЛАДКА: ПОРТФЕЛЬ ═══ -->
+<div class="tab-page" id="tab-port">
+  <div class="port-hero">
+    <div class="port-hero-label">Стоимость портфеля</div>
+    <div class="port-hero-val" id="ph-val">—</div>
+    <div class="port-hero-pnl" id="ph-pnl">—</div>
+  </div>
+  <div id="port-body"></div>
+</div>
+
+<!-- ═══ Нижняя навигация ═══ -->
+<div class="navbar">
+  <div class="nav-item active" data-tab="chart"><span class="nav-icon">📈</span>График</div>
+  <div class="nav-item" data-tab="port"><span class="nav-icon">💼</span>Портфель</div>
+</div>
+
+<!-- ═══ Модалка ═══ -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <div class="modal-title" id="m-title">Купить SLX</div>
+    <div class="modal-sub" id="m-sub">Курс: — токенов за 1 SLX</div>
+    <input type="number" class="qty-input" id="m-qty" placeholder="0" min="0" step="0.1" inputmode="decimal">
+    <div class="quick-row" id="m-quick"></div>
+    <div class="modal-calc">
+      <div class="calc-row"><span class="k">Стоимость</span><span class="v" id="c-gross">—</span></div>
+      <div class="calc-row"><span class="k">Комиссия 3%</span><span class="v" id="c-fee">—</span></div>
+      <div class="calc-row total"><span class="k" id="c-total-k">Итого спишется</span><span class="v" id="c-total">—</span></div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" id="m-cancel">Отмена</button>
+      <button class="modal-confirm buy" id="m-confirm">Купить</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// SLX EXCHANGE — Mini App (Этап 1)
+// ═══════════════════════════════════════════════════════════
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+if (tg) { tg.ready(); tg.expand(); }
+
+const params = new URLSearchParams(location.search);
+const UID    = params.get('user_id') || params.get('uid')
+             || (tg && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) || '0';
+const SECRET = params.get('api_secret') || params.get('secret') || '';
+const API_BASE = decodeURIComponent(params.get('api_url') || params.get('api') || '');
+const TG_INIT_DATA = (tg && tg.initData) ? tg.initData : '';
+
+let state = { price: 0, fee: 3, portfolio: null, balance: 0, mode: 'buy' };
+let chart = null;
+
+// ─── API ───
+function _timeout(p, ms) {
+  return Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error('timeout')), ms))]);
+}
+async function api(path) {
+  let url = `${API_BASE}${path}${path.includes('?') ? '&' : '?'}uid=${UID}&secret=${encodeURIComponent(SECRET)}`;
+  if (TG_INIT_DATA) url += `&init_data=${encodeURIComponent(TG_INIT_DATA)}`;
+  try {
+    const r = await _timeout(fetch(url), 12000);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  } catch (e) { return { ok: false, error: 'network' }; }
+}
+async function apiPost(path, body) {
+  try {
+    const r = await _timeout(fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: UID, secret: SECRET, init_data: TG_INIT_DATA, ...body }),
+    }), 15000);
+    return await r.json().catch(() => ({ ok: false, error: 'bad_json' }));
+  } catch (e) { return { ok: false, error: 'network' }; }
+}
+
+function fmt(n) { return Math.round(n).toLocaleString('ru-RU'); }
+function fmtShort(n) {
+  if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1) + 'k';
+  return Math.round(n).toString();
+}
+function toast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || '');
+  setTimeout(() => { t.className = 'toast ' + (type || ''); }, 2600);
+}
+function haptic(kind) {
+  try {
+    if (kind === 'ok') tg.HapticFeedback.notificationOccurred('success');
+    else if (kind === 'err') tg.HapticFeedback.notificationOccurred('error');
+    else tg.HapticFeedback.impactOccurred('light');
+  } catch (e) {}
+}
+
+// ─── Рендер графика (кастомные свечи на Chart.js) ───
+function renderChart(candles) {
+  if (!candles || !candles.length) return;
+  const ctx = document.getElementById('chart');
+  const lows = candles.map(c => c.l), highs = candles.map(c => c.h);
+  const minY = Math.min(...lows), maxY = Math.max(...highs);
+  const pad = (maxY - minY) * 0.08 || 100;
+
+  const candlePlugin = {
+    id: 'candles',
+    afterDatasetsDraw(ch) {
+      const { ctx, scales: { x, y } } = ch;
+      const step = candles.length > 1 ? (x.getPixelForValue(1) - x.getPixelForValue(0)) : 10;
+      const bw = Math.max(2, Math.abs(step) * 0.6);
+      candles.forEach((cd, i) => {
+        const cx = x.getPixelForValue(i);
+        const col = cd.c >= cd.o ? '#1fc885' : '#e24b4a';
+        ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(cx, y.getPixelForValue(cd.h));
+        ctx.lineTo(cx, y.getPixelForValue(cd.l));
+        ctx.stroke();
+        const yo = y.getPixelForValue(cd.o), yc = y.getPixelForValue(cd.c);
+        ctx.fillRect(cx - bw/2, Math.min(yo, yc), bw, Math.max(2, Math.abs(yc - yo)));
+      });
+    }
+  };
+
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: candles.map((_, i) => i), datasets: [{ data: candles.map(c => c.c), backgroundColor: 'rgba(0,0,0,0)' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: { ticks: { display: false }, grid: { color: '#0f1216' } },
+        y: { position: 'right', min: minY - pad, max: maxY + pad,
+             ticks: { color: '#4a525c', font: { size: 10 }, callback: v => fmtShort(v) },
+             grid: { color: '#0f1216' } }
+      }
+    },
+    plugins: [candlePlugin]
+  });
+}
+
+// ─── Применить состояние биржи к UI ───
+function applyState(s) {
+  state.price = s.price;
+  state.fee = s.fee_percent;
+  state.portfolio = s.portfolio;
+  state.balance = s.balance;
+
+  // цена + изменение
+  document.getElementById('px').textContent = fmt(s.price);
+  const chgEl = document.getElementById('chg');
+  const up = s.change_pct >= 0;
+  chgEl.textContent = (up ? '▲ +' : '▼ ') + s.change_pct + '%';
+  chgEl.style.color = up ? 'var(--up)' : 'var(--down)';
+
+  // статистика
+  document.getElementById('st-high').textContent = fmtShort(s.high_24h);
+  document.getElementById('st-low').textContent = fmtShort(s.low_24h);
+  document.getElementById('st-vol').textContent = fmtShort(s.volume);
+  document.getElementById('st-cap').textContent = fmtShort(s.market_cap);
+
+  // настроение
+  document.getElementById('mood-buy-pct').textContent = s.buy_ratio;
+  document.getElementById('mood-sell-pct').textContent = s.sell_ratio;
+  document.getElementById('mood-fill').style.width = s.buy_ratio + '%';
+  const note = document.getElementById('mood-note');
+  if (s.buy_ratio >= 65) note.textContent = '📈 Рынок настроен оптимистично';
+  else if (s.buy_ratio <= 35) note.textContent = '📉 Рынок настроен пессимистично';
+  else note.textContent = 'Рынок в равновесии';
+
+  // мини-портфель
+  const p = s.portfolio || {};
+  document.getElementById('mp-qty').textContent = (p.qty || 0) + ' SLX';
+  const mpPnl = document.getElementById('mp-pnl');
+  if (p.qty > 0) {
+    const pup = p.pnl >= 0;
+    mpPnl.textContent = (pup ? '+' : '') + fmt(p.pnl) + ' (' + p.pnl_pct + '%)';
+    mpPnl.style.color = pup ? 'var(--up)' : 'var(--down)';
+  } else { mpPnl.textContent = '—'; mpPnl.style.color = 'var(--text3)'; }
+
+  // подписи кнопок + футер
+  document.getElementById('buy-sub').textContent = 'по ' + fmt(s.price);
+  document.getElementById('sell-sub').textContent = 'по ' + fmt(s.price);
+  document.getElementById('foot').textContent = 'Комиссия ' + s.fee_percent + '% · Баланс: ' + fmt(s.balance) + ' токенов';
+
+  renderChart(s.candles);
+  renderPortfolio(s.portfolio, s.price);
+}
+
+// ─── Рендер вкладки портфеля ───
+function renderPortfolio(p, price) {
+  p = p || { qty: 0 };
+  const val = p.cur_value || 0;
+  document.getElementById('ph-val').textContent = fmt(val);
+  const phPnl = document.getElementById('ph-pnl');
+  if (p.qty > 0) {
+    const up = p.pnl >= 0;
+    phPnl.textContent = (up ? '▲ +' : '▼ ') + fmt(p.pnl) + ' (' + p.pnl_pct + '%)';
+    phPnl.style.color = up ? 'var(--up)' : 'var(--down)';
+  } else { phPnl.textContent = '—'; phPnl.style.color = 'var(--text3)'; }
+
+  const body = document.getElementById('port-body');
+  if (!p.qty || p.qty <= 0) {
+    body.innerHTML = '<div class="empty-port">У тебя пока нет SLX.<br>Купи на вкладке «График», чтобы начать инвестировать.</div>';
+    return;
+  }
+  const up = p.pnl >= 0;
+  let html = `
+    <div class="position-card">
+      <div class="pos-head">
+        <div class="pos-coin">
+          <div class="pos-logo"><span>S</span></div>
+          <div><div style="font-weight:700;font-size:14px;">SLX</div>
+          <div style="color:var(--text3);font-size:11px;">${p.qty} монет</div></div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-weight:700;font-size:14px;">${fmt(p.cur_value)}</div>
+          <div style="color:${up?'var(--up)':'var(--down)'};font-size:11px;">${up?'+':''}${p.pnl_pct}%</div>
+        </div>
+      </div>
+      <div class="pos-rows">
+        <div class="pos-row"><span class="k">Средняя цена покупки</span><span class="v">${fmt(p.avg_price)}</span></div>
+        <div class="pos-row"><span class="k">Текущая цена</span><span class="v">${fmt(p.cur_price)}</span></div>
+        <div class="pos-row"><span class="k">Вложено</span><span class="v">${fmt(p.invested)}</span></div>
+        <div class="pos-row"><span class="k">Прибыль/убыток</span><span class="v" style="color:${up?'var(--up)':'var(--down)'}">${up?'+':''}${fmt(p.pnl)}</span></div>
+      </div>
+    </div>`;
+
+  const trades = (p.trades || []).slice().reverse();
+  if (trades.length) {
+    html += '<div class="trades-card"><div class="trades-title">ПОСЛЕДНИЕ СДЕЛКИ</div>';
+    trades.forEach(t => {
+      const isBuy = t.type === 'buy';
+      html += `<div class="trade ${isBuy?'buy':'sell'}">
+        <span>${isBuy?'▲ Куплено':'▼ Продано'} ${t.qty} SLX</span>
+        <span class="amt">${isBuy?'-':'+'}${fmt(t.total)}</span></div>`;
+    });
+    html += '</div>';
+  }
+  body.innerHTML = html;
+}
+
+// ─── Загрузка состояния ───
+async function loadState() {
+  const s = await api('/casino/slx/state');
+  if (s && s.ok) applyState(s);
+  else toast('Биржа недоступна, обнови позже', 'err');
+}
+
+// ─── Навигация вкладок ───
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const tab = item.dataset.tab;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n === item));
+    document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    haptic();
+  });
+});
+
+// ─── Модалка покупки/продажи ───
+function openModal(mode) {
+  state.mode = mode;
+  const isBuy = mode === 'buy';
+  document.getElementById('m-title').textContent = isBuy ? 'Купить SLX' : 'Продать SLX';
+  document.getElementById('m-sub').textContent = 'Курс: ' + fmt(state.price) + ' токенов за 1 SLX';
+  document.getElementById('c-total-k').textContent = isBuy ? 'Итого спишется' : 'Итого получишь';
+  const confirm = document.getElementById('m-confirm');
+  confirm.textContent = isBuy ? 'Купить' : 'Продать';
+  confirm.className = 'modal-confirm ' + (isBuy ? 'buy' : 'sell');
+  document.getElementById('m-qty').value = '';
+
+  // быстрые кнопки
+  const quick = document.getElementById('m-quick');
+  if (isBuy) {
+    quick.innerHTML = ['1','5','10','25'].map(q => `<div class="quick" data-q="${q}">${q}</div>`).join('');
+  } else {
+    const have = (state.portfolio && state.portfolio.qty) || 0;
+    quick.innerHTML = [['25%',have*0.25],['50%',have*0.5],['75%',have*0.75],['Все',have]]
+      .map(([lbl,v]) => `<div class="quick" data-q="${Math.floor(v*10000)/10000}">${lbl}</div>`).join('');
+  }
+  quick.querySelectorAll('.quick').forEach(q => q.addEventListener('click', () => {
+    document.getElementById('m-qty').value = q.dataset.q;
+    updateCalc(); haptic();
+  }));
+
+  updateCalc();
+  document.getElementById('modal-bg').classList.add('show');
+}
+function closeModal() { document.getElementById('modal-bg').classList.remove('show'); }
+
+function updateCalc() {
+  const qty = parseFloat(document.getElementById('m-qty').value) || 0;
+  const gross = qty * state.price;
+  const fee = Math.round(gross * state.fee / 100);
+  const isBuy = state.mode === 'buy';
+  document.getElementById('c-gross').textContent = fmt(gross);
+  document.getElementById('c-fee').textContent = fmt(fee);
+  document.getElementById('c-total').textContent = fmt(isBuy ? gross + fee : gross - fee);
+}
+document.getElementById('m-qty').addEventListener('input', updateCalc);
+
+document.getElementById('btn-buy').addEventListener('click', () => { openModal('buy'); haptic(); });
+document.getElementById('btn-sell').addEventListener('click', () => {
+  if (!state.portfolio || state.portfolio.qty <= 0) { toast('У тебя нет SLX для продажи', 'err'); return; }
+  openModal('sell'); haptic();
+});
+document.getElementById('m-cancel').addEventListener('click', closeModal);
+document.getElementById('modal-bg').addEventListener('click', (e) => { if (e.target.id === 'modal-bg') closeModal(); });
+
+document.getElementById('m-confirm').addEventListener('click', async () => {
+  const qty = parseFloat(document.getElementById('m-qty').value) || 0;
+  if (qty <= 0) { toast('Введи количество', 'err'); return; }
+  const btn = document.getElementById('m-confirm');
+  btn.disabled = true; const oldTxt = btn.textContent; btn.innerHTML = '<span class="spinner"></span>';
+  const path = state.mode === 'buy' ? '/casino/slx/buy' : '/casino/slx/sell';
+  const r = await apiPost(path, { qty });
+  btn.disabled = false; btn.textContent = oldTxt;
+  if (r && r.ok) {
+    haptic('ok');
+    if (state.mode === 'buy') toast('Куплено ' + r.bought + ' SLX за ' + fmt(r.total), 'ok');
+    else toast('Продано ' + r.sold + ' SLX, получено ' + fmt(r.payout), 'ok');
+    closeModal();
+    loadState();
+  } else {
+    haptic('err');
+    toast(r.message || 'Ошибка сделки', 'err');
+  }
+});
+
+// ─── Старт + автообновление ───
+loadState();
+setInterval(loadState, 15000);  // обновляем состояние каждые 15 сек
+</script>
+
+</body>
+</html>
