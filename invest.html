@@ -141,6 +141,26 @@
   .port-hero-label { color: #4a7ba8; font-size: 12px; margin-bottom: 6px; }
   .port-hero-val { color: #eaf4ff; font-weight: 800; font-size: 32px; letter-spacing: -0.02em; }
   .port-hero-pnl { font-size: 13px; font-weight: 600; margin-top: 5px; }
+  /* Trust Wallet стиль: список активов */
+  .assets-title { color: var(--text3); font-size: 11px; margin: 0 0 8px 2px; letter-spacing: 0.05em; }
+  .asset {
+    display: flex; align-items: center; gap: 12px; padding: 12px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; margin-bottom: 9px;
+  }
+  .asset-icon {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .asset-icon.tok { background: radial-gradient(circle at 35% 30%, #ffe9a8, #f5c542 45%, #a8780f 100%); font-size: 22px; }
+  .asset-icon.slx { background: radial-gradient(circle at 35% 30%, #cfeaff, #3aa0ff 42%, #0a4d8c 100%); border: 1px solid #9fd4ff; }
+  .asset-icon.slx span { font-family: Georgia, serif; font-weight: 800; color: #03203d; font-size: 21px; font-style: italic; }
+  .asset-mid { flex: 1; }
+  .asset-name { color: var(--text); font-weight: 700; font-size: 15px; }
+  .asset-sub { color: var(--text3); font-size: 12px; margin-top: 1px; }
+  .asset-right { text-align: right; }
+  .asset-val { color: var(--text); font-weight: 700; font-size: 15px; }
+  .asset-chg { font-size: 11px; margin-top: 1px; }
   .position-card, .trades-card {
     background: var(--card); border: 1px solid var(--border);
     border-radius: 14px; padding: 14px; margin-bottom: 11px;
@@ -235,6 +255,29 @@
     animation: spin 0.7s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── Эффекты (v199) ─── */
+  /* Свечение сверху за логотипом */
+  body::before {
+    content: ''; position: fixed; top: -70px; left: 50%;
+    transform: translateX(-50%); width: 280px; height: 180px;
+    background: radial-gradient(ellipse, rgba(58,160,255,0.18), transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  .header, .tab-page { position: relative; z-index: 1; }
+  /* Вспышка цены при изменении */
+  @keyframes flashUp { 0% { color: var(--up); text-shadow: 0 0 12px rgba(31,200,133,0.7); } 100% { color: var(--text); text-shadow: none; } }
+  @keyframes flashDown { 0% { color: var(--down); text-shadow: 0 0 12px rgba(226,75,74,0.7); } 100% { color: var(--text); text-shadow: none; } }
+  .flash-up { animation: flashUp 0.7s ease; }
+  .flash-down { animation: flashDown 0.7s ease; }
+  /* Волна при нажатии кнопок */
+  .btn { position: relative; overflow: hidden; }
+  .btn::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.4), transparent 60%);
+    opacity: 0; transition: opacity 0.4s;
+  }
+  .btn:active::after { opacity: 1; transition: opacity 0s; }
 </style>
 </head>
 <body>
@@ -263,10 +306,10 @@
   </div>
 
   <div class="periods">
-    <div class="period active">1Ч</div>
-    <div class="period">1Д</div>
-    <div class="period">1Н</div>
-    <div class="period">МЕС</div>
+    <div class="period active" data-period="1h">1Ч</div>
+    <div class="period" data-period="1d">1Д</div>
+    <div class="period" data-period="1w">1Н</div>
+    <div class="period" data-period="1m">МЕС</div>
   </div>
 
   <div class="chart-wrap">
@@ -297,7 +340,7 @@
 <!-- ═══ ВКЛАДКА: ПОРТФЕЛЬ ═══ -->
 <div class="tab-page" id="tab-port">
   <div class="port-hero">
-    <div class="port-hero-label">Стоимость портфеля</div>
+    <div class="port-hero-label">Общий баланс</div>
     <div class="port-hero-val" id="ph-val">—</div>
     <div class="port-hero-pnl" id="ph-pnl">—</div>
   </div>
@@ -338,6 +381,9 @@
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
+const SLX_CLIENT_VERSION = 'v200';
+console.log('%c💹 SLX Exchange ' + SLX_CLIENT_VERSION, 'color:#3aa0ff;font-weight:bold');
+
 const params = new URLSearchParams(location.search);
 const UID    = params.get('user_id') || params.get('uid')
              || (tg && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) || '0';
@@ -345,7 +391,7 @@ const SECRET = params.get('api_secret') || params.get('secret') || '';
 const API_BASE = decodeURIComponent(params.get('api_url') || params.get('api') || '');
 const TG_INIT_DATA = (tg && tg.initData) ? tg.initData : '';
 
-let state = { price: 0, fee: 3, portfolio: null, balance: 0, mode: 'buy' };
+let state = { price: 0, fee: 3, portfolio: null, balance: 0, mode: 'buy', period: '1h' };
 let chart = null;
 
 // ─── API ───
@@ -422,12 +468,14 @@ function renderChart(candles) {
   };
 
   if (chart) chart.destroy();
+  const firstRender = !window._slxChartShown;
+  window._slxChartShown = true;
   chart = new Chart(ctx, {
     type: 'bar',
     data: { labels: candles.map((_, i) => i), datasets: [{ data: candles.map(c => c.c), backgroundColor: 'rgba(0,0,0,0)' }] },
     options: {
       responsive: true, maintainAspectRatio: false,
-      animation: false,
+      animation: firstRender ? { duration: 500, easing: 'easeOutQuart' } : false,
       plugins: { legend: { display: false }, tooltip: { enabled: false } },
       scales: {
         x: { ticks: { display: false }, grid: { color: '#0f1216' } },
@@ -442,13 +490,20 @@ function renderChart(candles) {
 
 // ─── Применить состояние биржи к UI ───
 function applyState(s) {
+  const prevPrice = state.price;
   state.price = s.price;
   state.fee = s.fee_percent;
   state.portfolio = s.portfolio;
   state.balance = s.balance;
 
-  // цена + изменение
-  document.getElementById('px').textContent = fmt(s.price);
+  // цена + изменение (с вспышкой при изменении)
+  const pxEl = document.getElementById('px');
+  pxEl.textContent = fmt(s.price);
+  if (prevPrice && s.price !== prevPrice) {
+    pxEl.classList.remove('flash-up', 'flash-down');
+    void pxEl.offsetWidth;  // перезапуск анимации
+    pxEl.classList.add(s.price > prevPrice ? 'flash-up' : 'flash-down');
+  }
   const chgEl = document.getElementById('chg');
   const up = s.change_pct >= 0;
   chgEl.textContent = (up ? '▲ +' : '▼ ') + s.change_pct + '%';
@@ -491,42 +546,67 @@ function applyState(s) {
 // ─── Рендер вкладки портфеля ───
 function renderPortfolio(p, price) {
   p = p || { qty: 0 };
-  const val = p.cur_value || 0;
-  document.getElementById('ph-val').textContent = fmt(val);
+  const slxValue = p.cur_value || 0;
+  const tokens = state.balance || 0;
+  const totalBalance = tokens + slxValue;   // общий капитал
+
+  // общий баланс сверху
+  document.getElementById('ph-val').textContent = fmt(totalBalance);
   const phPnl = document.getElementById('ph-pnl');
   if (p.qty > 0) {
     const up = p.pnl >= 0;
     phPnl.textContent = (up ? '▲ +' : '▼ ') + fmt(p.pnl) + ' (' + p.pnl_pct + '%)';
     phPnl.style.color = up ? 'var(--up)' : 'var(--down)';
-  } else { phPnl.textContent = '—'; phPnl.style.color = 'var(--text3)'; }
+  } else { phPnl.textContent = 'Инвестируй в SLX, чтобы получать доход'; phPnl.style.color = 'var(--text3)'; phPnl.style.fontSize = '12px'; }
 
   const body = document.getElementById('port-body');
-  if (!p.qty || p.qty <= 0) {
-    body.innerHTML = '<div class="empty-port">У тебя пока нет SLX.<br>Купи на вкладке «График», чтобы начать инвестировать.</div>';
-    return;
-  }
   const up = p.pnl >= 0;
-  let html = `
-    <div class="position-card">
-      <div class="pos-head">
-        <div class="pos-coin">
-          <div class="pos-logo"><span>S</span></div>
-          <div><div style="font-weight:700;font-size:14px;">SLX</div>
-          <div style="color:var(--text3);font-size:11px;">${p.qty} монет</div></div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-weight:700;font-size:14px;">${fmt(p.cur_value)}</div>
-          <div style="color:${up?'var(--up)':'var(--down)'};font-size:11px;">${up?'+':''}${p.pnl_pct}%</div>
-        </div>
+  const hasSlx = p.qty > 0;
+
+  let html = '<div class="assets-title">АКТИВЫ</div>';
+
+  // Актив 1: Токены (валюта из бота)
+  html += `
+    <div class="asset">
+      <div class="asset-icon tok">🪙</div>
+      <div class="asset-mid">
+        <div class="asset-name">Токены</div>
+        <div class="asset-sub">Игровая валюта</div>
       </div>
-      <div class="pos-rows">
-        <div class="pos-row"><span class="k">Средняя цена покупки</span><span class="v">${fmt(p.avg_price)}</span></div>
-        <div class="pos-row"><span class="k">Текущая цена</span><span class="v">${fmt(p.cur_price)}</span></div>
-        <div class="pos-row"><span class="k">Вложено</span><span class="v">${fmt(p.invested)}</span></div>
-        <div class="pos-row"><span class="k">Прибыль/убыток</span><span class="v" style="color:${up?'var(--up)':'var(--down)'}">${up?'+':''}${fmt(p.pnl)}</span></div>
+      <div class="asset-right">
+        <div class="asset-val">${fmt(tokens)}</div>
+        <div class="asset-chg" style="color:var(--text3)">баланс</div>
       </div>
     </div>`;
 
+  // Актив 2: SLX (если есть)
+  if (hasSlx) {
+    html += `
+      <div class="asset">
+        <div class="asset-icon slx"><span>S</span></div>
+        <div class="asset-mid">
+          <div class="asset-name">SLX</div>
+          <div class="asset-sub">${p.qty} монет · ${fmt(p.cur_price)} за шт</div>
+        </div>
+        <div class="asset-right">
+          <div class="asset-val">${fmt(slxValue)}</div>
+          <div class="asset-chg" style="color:${up?'var(--up)':'var(--down)'}">${up?'+':''}${p.pnl_pct}%</div>
+        </div>
+      </div>`;
+
+    // Детали позиции SLX
+    html += `
+      <div class="trades-card" style="margin-top:9px;">
+        <div class="trades-title">ПОЗИЦИЯ SLX</div>
+        <div class="pos-row"><span class="k">Средняя цена</span><span class="v">${fmt(p.avg_price)}</span></div>
+        <div class="pos-row"><span class="k">Вложено</span><span class="v">${fmt(p.invested)}</span></div>
+        <div class="pos-row"><span class="k">Прибыль/убыток</span><span class="v" style="color:${up?'var(--up)':'var(--down)'}">${up?'+':''}${fmt(p.pnl)}</span></div>
+      </div>`;
+  } else {
+    html += '<div class="empty-port" style="padding:20px 10px;">SLX пока нет.<br>Купи на вкладке «График», чтобы начать инвестировать.</div>';
+  }
+
+  // Последние сделки
   const trades = (p.trades || []).slice().reverse();
   if (trades.length) {
     html += '<div class="trades-card"><div class="trades-title">ПОСЛЕДНИЕ СДЕЛКИ</div>';
@@ -543,10 +623,21 @@ function renderPortfolio(p, price) {
 
 // ─── Загрузка состояния ───
 async function loadState() {
-  const s = await api('/casino/slx/state');
+  const s = await api('/casino/slx/state?period=' + state.period);
   if (s && s.ok) applyState(s);
   else toast('Биржа недоступна, обнови позже', 'err');
 }
+
+// ─── Переключение периодов ───
+document.querySelectorAll('.period').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.period').forEach(p => p.classList.toggle('active', p === el));
+    state.period = el.dataset.period;
+    window._slxChartShown = false;  // дать анимацию при смене периода
+    haptic();
+    loadState();
+  });
+});
 
 // ─── Навигация вкладок ───
 document.querySelectorAll('.nav-item').forEach(item => {
