@@ -103,6 +103,25 @@
   .mood-bar { height: 8px; border-radius: 4px; background: var(--down); overflow: hidden; }
   .mood-fill { height: 100%; background: linear-gradient(90deg, #22d18a, #1fc885); border-radius: 4px; transition: width 0.4s; }
   .mood-note { text-align: center; color: var(--text2); font-size: 10px; margin-top: 7px; }
+  /* Метка «мало данных» на графике */
+  .low-data-badge {
+    position: absolute; top: 14px; left: 14px; z-index: 5;
+    font-size: 10px; color: #c9a24a;
+    background: rgba(40,32,8,0.85); border: 1px solid rgba(201,162,74,0.4);
+    padding: 3px 8px; border-radius: 6px; font-weight: 600; backdrop-filter: blur(4px);
+  }
+  /* Баннер новости */
+  .news-banner {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 11px 13px; margin-bottom: 12px;
+    animation: newsIn 0.4s ease;
+  }
+  .news-banner.up { border-color: rgba(31,200,133,0.4); background: rgba(31,200,133,0.06); }
+  .news-banner.down { border-color: rgba(226,75,74,0.4); background: rgba(226,75,74,0.06); }
+  @keyframes newsIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  .news-icon { font-size: 18px; flex-shrink: 0; }
+  .news-text { font-size: 12px; color: #c5cdd6; line-height: 1.3; }
 
   /* ─── Мини-портфель ─── */
   .mini-port {
@@ -329,7 +348,13 @@
 
   <div class="chart-wrap">
     <div class="candle-timer" id="candle-timer">⏱ 1:00</div>
+    <div class="low-data-badge" id="low-data" style="display:none;">мало данных</div>
     <div class="chart-inner"><canvas id="chart"></canvas></div>
+  </div>
+
+  <div class="news-banner" id="news-banner" style="display:none;">
+    <span class="news-icon" id="news-icon">📰</span>
+    <span class="news-text" id="news-text"></span>
   </div>
 
   <div class="mood">
@@ -405,7 +430,7 @@
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
-const SLX_CLIENT_VERSION = 'v202';
+const SLX_CLIENT_VERSION = 'v204';
 console.log('%c💹 SLX Exchange ' + SLX_CLIENT_VERSION, 'color:#3aa0ff;font-weight:bold');
 
 const params = new URLSearchParams(location.search);
@@ -509,17 +534,34 @@ function drawWindow() {
       const { ctx, scales: { x, y } } = ch;
       const cs = _slxCandles;
       const step = cs.length > 1 ? (x.getPixelForValue(1) - x.getPixelForValue(0)) : 10;
-      const bw = Math.max(2, Math.abs(step) * 0.62);
+      const bw = Math.max(2.5, Math.abs(step) * 0.66);
+      const UP = '#26e0a0', DOWN = '#ff5560';        // ярче
+      const UP_G = 'rgba(38,224,160,0.55)', DOWN_G = 'rgba(255,85,96,0.5)';
       cs.forEach((cd, i) => {
         const cx = x.getPixelForValue(i);
-        const col = cd.c >= cd.o ? '#1fc885' : '#e24b4a';
-        ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1.4;
+        const isUp = cd.c >= cd.o;
+        const col = isUp ? UP : DOWN;
+        const isLast = i === cs.length - 1;
+        ctx.save();
+        // свечение
+        ctx.shadowColor = isUp ? UP_G : DOWN_G;
+        ctx.shadowBlur = isLast ? 12 : 6;
+        ctx.strokeStyle = col; ctx.fillStyle = col;
+        ctx.lineWidth = Math.max(1.4, bw * 0.16);
+        // фитиль
         ctx.beginPath();
         ctx.moveTo(cx, y.getPixelForValue(cd.h));
         ctx.lineTo(cx, y.getPixelForValue(cd.l));
         ctx.stroke();
+        // тело (со скруглением)
         const yo = y.getPixelForValue(cd.o), yc = y.getPixelForValue(cd.c);
-        ctx.fillRect(cx - bw/2, Math.min(yo, yc), bw, Math.max(2, Math.abs(yc - yo)));
+        const top = Math.min(yo, yc), h = Math.max(2, Math.abs(yc - yo));
+        const r = Math.min(2.5, bw * 0.2);
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(cx - bw/2, top, bw, h, r);
+        else ctx.rect(cx - bw/2, top, bw, h);
+        ctx.fill();
+        ctx.restore();
       });
     }
   };
@@ -616,6 +658,22 @@ function applyState(s) {
   else if (s.buy_ratio <= 35) note.textContent = '📉 Рынок настроен пессимистично';
   else note.textContent = 'Рынок в равновесии';
 
+  // метка «мало данных» на графике
+  const lowEl = document.getElementById('low-data');
+  if (lowEl) lowEl.style.display = s.low_data ? 'block' : 'none';
+
+  // баннер новости (показываем если новость свежая — младше 90 сек)
+  const nb = document.getElementById('news-banner');
+  if (s.last_news && (Date.now()/1000 - s.last_news.t) < 90) {
+    const up = s.last_news.effect >= 0;
+    document.getElementById('news-text').textContent = s.last_news.text;
+    document.getElementById('news-icon').textContent = up ? '📈' : '📉';
+    nb.className = 'news-banner ' + (up ? 'up' : 'down');
+    nb.style.display = 'flex';
+  } else if (nb) {
+    nb.style.display = 'none';
+  }
+
   // мини-портфель
   const p = s.portfolio || {};
   document.getElementById('mp-qty').textContent = (p.qty || 0) + ' SLX';
@@ -634,27 +692,38 @@ function applyState(s) {
   renderChart(s.candles);
   renderPortfolio(s.portfolio, s.price);
 
-  // таймер до новой свечи
+  // таймер до новой свечи (под выбранный таймфрейм)
   if (typeof s.next_candle_sec === 'number') {
     slxTimerLeft = s.next_candle_sec;
+  }
+  if (typeof s.tf_total_sec === 'number') {
+    slxTfTotal = s.tf_total_sec;
   }
 }
 
 // ─── Таймер обратного отсчёта до новой свечи ───
-let slxTimerLeft = 60;
+let slxTimerLeft = 900;
+let slxTfTotal = 900;
+function fmtTimer(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  const pad = n => (n < 10 ? '0' : '') + n;
+  if (h > 0) return h + ':' + pad(m) + ':' + pad(s);
+  return m + ':' + pad(s);
+}
 function tickTimer() {
   const el = document.getElementById('candle-timer');
   if (!el) return;
   slxTimerLeft--;
   if (slxTimerLeft <= 0) {
-    slxTimerLeft = 60;
-    el.textContent = '⏱ 0:00';
-    loadState();  // свеча закрылась — подтянуть свежие данные
+    slxTimerLeft = slxTfTotal;   // сброс на полную длину текущего таймфрейма
+    el.textContent = '⏱ ' + fmtTimer(0);
+    loadState();
     return;
   }
-  const m = Math.floor(slxTimerLeft / 60);
-  const sec = slxTimerLeft % 60;
-  el.textContent = '⏱ ' + m + ':' + (sec < 10 ? '0' : '') + sec;
+  el.textContent = '⏱ ' + fmtTimer(slxTimerLeft);
 }
 setInterval(tickTimer, 1000);
 
