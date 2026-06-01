@@ -49,9 +49,12 @@
   }
   .coin-name { font-weight: 700; font-size: 17px; }
   .coin-sub { color: var(--text3); font-size: 11px; }
-  .price-box { text-align: right; }
-  .price-val { font-weight: 800; font-size: 21px; letter-spacing: -0.02em; }
-  .price-chg { font-size: 13px; font-weight: 600; margin-top: 1px; }
+  .price-box { text-align: right; min-width: 0; flex-shrink: 1; }
+  .price-val { font-weight: 800; font-size: 20px; letter-spacing: -0.03em; white-space: nowrap; }
+  .price-chg { font-size: 13px; font-weight: 600; margin-top: 1px; white-space: nowrap; }
+  .header { gap: 8px; }
+  .coin-id { min-width: 0; flex-shrink: 1; }
+  .coin-name, .coin-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* ─── Статистика ─── */
   .stats-row {
@@ -71,6 +74,12 @@
     border: 1px solid transparent; transition: all 0.15s;
   }
   .period.active { color: #001a33; background: var(--accent); }
+  .candle-timer {
+    margin-left: auto; font-size: 11px; color: var(--accent-light);
+    background: rgba(58,160,255,0.1); border: 1px solid rgba(58,160,255,0.25);
+    padding: 5px 10px; border-radius: 8px; font-weight: 600;
+    font-variant-numeric: tabular-nums; align-self: center;
+  }
 
   /* ─── График ─── */
   .chart-wrap {
@@ -310,6 +319,7 @@
     <div class="period" data-period="1d">1Д</div>
     <div class="period" data-period="1w">1Н</div>
     <div class="period" data-period="1m">МЕС</div>
+    <div class="candle-timer" id="candle-timer">⏱ 1:00</div>
   </div>
 
   <div class="chart-wrap">
@@ -347,10 +357,18 @@
   <div id="port-body"></div>
 </div>
 
+<!-- ═══ ВКЛАДКА: ИСТОРИЯ ═══ -->
+<div class="tab-page" id="tab-history">
+  <div style="font-size:18px;font-weight:800;margin-bottom:4px;">История сделок</div>
+  <div style="color:var(--text3);font-size:12px;margin-bottom:16px;">Все твои покупки и продажи SLX</div>
+  <div id="history-body"></div>
+</div>
+
 <!-- ═══ Нижняя навигация ═══ -->
 <div class="navbar">
   <div class="nav-item active" data-tab="chart"><span class="nav-icon">📈</span>График</div>
   <div class="nav-item" data-tab="port"><span class="nav-icon">💼</span>Портфель</div>
+  <div class="nav-item" data-tab="history"><span class="nav-icon">🧾</span>История</div>
 </div>
 
 <!-- ═══ Модалка ═══ -->
@@ -381,7 +399,7 @@
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
-const SLX_CLIENT_VERSION = 'v200';
+const SLX_CLIENT_VERSION = 'v201';
 console.log('%c💹 SLX Exchange ' + SLX_CLIENT_VERSION, 'color:#3aa0ff;font-weight:bold');
 
 const params = new URLSearchParams(location.search);
@@ -420,10 +438,17 @@ async function apiPost(path, body) {
 
 function fmt(n) { return Math.round(n).toLocaleString('ru-RU'); }
 function fmtShort(n) {
-  if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
-  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
-  if (n >= 1e3) return (n/1e3).toFixed(1) + 'k';
+  n = Number(n) || 0;
+  const abs = Math.abs(n);
+  if (abs >= 1e12) return (n/1e12).toFixed(2) + 'T';
+  if (abs >= 1e9)  return (n/1e9).toFixed(2) + 'B';
+  if (abs >= 1e6)  return (n/1e6).toFixed(2) + 'M';
+  if (abs >= 1e3)  return (n/1e3).toFixed(1) + 'k';
   return Math.round(n).toString();
+}
+// Умный формат для тесных мест: маленькие числа целиком, большие — кратко
+function fmtFit(n) {
+  return (Math.abs(n) >= 1e6) ? fmtShort(n) : fmt(n);
 }
 function toast(msg, type) {
   const t = document.getElementById('toast');
@@ -498,7 +523,7 @@ function applyState(s) {
 
   // цена + изменение (с вспышкой при изменении)
   const pxEl = document.getElementById('px');
-  pxEl.textContent = fmt(s.price);
+  pxEl.textContent = fmtFit(s.price);
   if (prevPrice && s.price !== prevPrice) {
     pxEl.classList.remove('flash-up', 'flash-down');
     void pxEl.offsetWidth;  // перезапуск анимации
@@ -535,13 +560,36 @@ function applyState(s) {
   } else { mpPnl.textContent = '—'; mpPnl.style.color = 'var(--text3)'; }
 
   // подписи кнопок + футер
-  document.getElementById('buy-sub').textContent = 'по ' + fmt(s.price);
-  document.getElementById('sell-sub').textContent = 'по ' + fmt(s.price);
-  document.getElementById('foot').textContent = 'Комиссия ' + s.fee_percent + '% · Баланс: ' + fmt(s.balance) + ' токенов';
+  document.getElementById('buy-sub').textContent = 'по ' + fmtFit(s.price);
+  document.getElementById('sell-sub').textContent = 'по ' + fmtFit(s.price);
+  document.getElementById('foot').textContent = 'Комиссия ' + s.fee_percent + '% · Баланс: ' + fmtFit(s.balance) + ' токенов';
 
   renderChart(s.candles);
   renderPortfolio(s.portfolio, s.price);
+
+  // таймер до новой свечи
+  if (typeof s.next_candle_sec === 'number') {
+    slxTimerLeft = s.next_candle_sec;
+  }
 }
+
+// ─── Таймер обратного отсчёта до новой свечи ───
+let slxTimerLeft = 60;
+function tickTimer() {
+  const el = document.getElementById('candle-timer');
+  if (!el) return;
+  slxTimerLeft--;
+  if (slxTimerLeft <= 0) {
+    slxTimerLeft = 60;
+    el.textContent = '⏱ 0:00';
+    loadState();  // свеча закрылась — подтянуть свежие данные
+    return;
+  }
+  const m = Math.floor(slxTimerLeft / 60);
+  const sec = slxTimerLeft % 60;
+  el.textContent = '⏱ ' + m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+setInterval(tickTimer, 1000);
 
 // ─── Рендер вкладки портфеля ───
 function renderPortfolio(p, price) {
@@ -551,7 +599,7 @@ function renderPortfolio(p, price) {
   const totalBalance = tokens + slxValue;   // общий капитал
 
   // общий баланс сверху
-  document.getElementById('ph-val').textContent = fmt(totalBalance);
+  document.getElementById('ph-val').textContent = fmtFit(totalBalance);
   const phPnl = document.getElementById('ph-pnl');
   if (p.qty > 0) {
     const up = p.pnl >= 0;
@@ -606,18 +654,33 @@ function renderPortfolio(p, price) {
     html += '<div class="empty-port" style="padding:20px 10px;">SLX пока нет.<br>Купи на вкладке «График», чтобы начать инвестировать.</div>';
   }
 
-  // Последние сделки
-  const trades = (p.trades || []).slice().reverse();
-  if (trades.length) {
-    html += '<div class="trades-card"><div class="trades-title">ПОСЛЕДНИЕ СДЕЛКИ</div>';
-    trades.forEach(t => {
-      const isBuy = t.type === 'buy';
-      html += `<div class="trade ${isBuy?'buy':'sell'}">
-        <span>${isBuy?'▲ Куплено':'▼ Продано'} ${t.qty} SLX</span>
-        <span class="amt">${isBuy?'-':'+'}${fmt(t.total)}</span></div>`;
-    });
-    html += '</div>';
+  body.innerHTML = html;
+  renderHistory(p.trades || []);
+}
+
+// ─── Вкладка История ───
+function renderHistory(trades) {
+  const body = document.getElementById('history-body');
+  if (!body) return;
+  const list = (trades || []).slice().reverse();
+  if (!list.length) {
+    body.innerHTML = '<div class="empty-port" style="padding:30px 10px;">Сделок пока нет.<br>Соверши первую покупку SLX.</div>';
+    return;
   }
+  let html = '';
+  list.forEach(t => {
+    const isBuy = t.type === 'buy';
+    html += `<div class="asset" style="padding:11px 13px;">
+      <div class="asset-icon ${isBuy?'':''}" style="width:34px;height:34px;background:${isBuy?'rgba(31,200,133,0.15)':'rgba(226,75,74,0.15)'};font-size:15px;">${isBuy?'▲':'▼'}</div>
+      <div class="asset-mid">
+        <div class="asset-name" style="font-size:14px;">${isBuy?'Покупка':'Продажа'} ${t.qty} SLX</div>
+        <div class="asset-sub">по ${fmt(t.price)} за шт</div>
+      </div>
+      <div class="asset-right">
+        <div class="asset-val" style="font-size:14px;color:${isBuy?'var(--down)':'var(--up)'}">${isBuy?'-':'+'}${fmtFit(t.total)}</div>
+      </div>
+    </div>`;
+  });
   body.innerHTML = html;
 }
 
