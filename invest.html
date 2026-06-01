@@ -67,18 +67,22 @@
   .stat-val { color: #cdd4dc; font-size: 12px; font-weight: 600; margin-top: 2px; }
 
   /* ─── Переключатель периода ─── */
-  .periods { display: flex; gap: 6px; margin-bottom: 12px; }
+  .periods { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .periods::-webkit-scrollbar { display: none; }
   .period {
     font-size: 11px; color: var(--text2); background: var(--card2);
-    padding: 5px 13px; border-radius: 8px; font-weight: 600;
-    border: 1px solid transparent; transition: all 0.15s;
+    padding: 5px 13px; border-radius: 8px; font-weight: 600; flex-shrink: 0;
+    border: 1px solid transparent; transition: all 0.15s; white-space: nowrap;
   }
   .period.active { color: #001a33; background: var(--accent); }
+  /* Таймер в углу графика (Binance-стиль) */
+  .chart-wrap { position: relative; }
   .candle-timer {
-    margin-left: auto; font-size: 11px; color: var(--accent-light);
-    background: rgba(58,160,255,0.1); border: 1px solid rgba(58,160,255,0.25);
-    padding: 5px 10px; border-radius: 8px; font-weight: 600;
-    font-variant-numeric: tabular-nums; align-self: center;
+    position: absolute; top: 14px; right: 14px; z-index: 5;
+    font-size: 11px; color: var(--accent-light);
+    background: rgba(10,12,16,0.85); border: 1px solid rgba(58,160,255,0.3);
+    padding: 4px 9px; border-radius: 7px; font-weight: 700;
+    font-variant-numeric: tabular-nums; backdrop-filter: blur(4px);
   }
 
   /* ─── График ─── */
@@ -315,14 +319,16 @@
   </div>
 
   <div class="periods">
-    <div class="period active" data-period="1h">1Ч</div>
+    <div class="period active" data-period="15m">15М</div>
+    <div class="period" data-period="1h">1Ч</div>
+    <div class="period" data-period="4h">4Ч</div>
     <div class="period" data-period="1d">1Д</div>
     <div class="period" data-period="1w">1Н</div>
-    <div class="period" data-period="1m">МЕС</div>
-    <div class="candle-timer" id="candle-timer">⏱ 1:00</div>
+    <div class="period" data-period="1mo">МЕС</div>
   </div>
 
   <div class="chart-wrap">
+    <div class="candle-timer" id="candle-timer">⏱ 1:00</div>
     <div class="chart-inner"><canvas id="chart"></canvas></div>
   </div>
 
@@ -399,7 +405,7 @@
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
-const SLX_CLIENT_VERSION = 'v201';
+const SLX_CLIENT_VERSION = 'v202';
 console.log('%c💹 SLX Exchange ' + SLX_CLIENT_VERSION, 'color:#3aa0ff;font-weight:bold');
 
 const params = new URLSearchParams(location.search);
@@ -409,7 +415,7 @@ const SECRET = params.get('api_secret') || params.get('secret') || '';
 const API_BASE = decodeURIComponent(params.get('api_url') || params.get('api') || '');
 const TG_INIT_DATA = (tg && tg.initData) ? tg.initData : '';
 
-let state = { price: 0, fee: 3, portfolio: null, balance: 0, mode: 'buy', period: '1h' };
+let state = { price: 0, fee: 3, portfolio: null, balance: 0, mode: 'buy', period: '15m' };
 let chart = null;
 
 // ─── API ───
@@ -464,21 +470,47 @@ function haptic(kind) {
   } catch (e) {}
 }
 
-// ─── Рендер графика (кастомные свечи на Chart.js) ───
-function renderChart(candles) {
-  if (!candles || !candles.length) return;
-  const ctx = document.getElementById('chart');
+// ─── Рендер графика (кастомные свечи + прокрутка окна) ───
+let _slxAllCandles = [];   // ВСЕ свечи от сервера
+let _slxCandles = [];      // видимое окно (плагин рисует это)
+let _slxOffset = 0;        // сдвиг от правого края (0 = свежие справа)
+const SLX_WINDOW = 40;     // сколько свечей видно одновременно
+
+function _visibleWindow() {
+  const all = _slxAllCandles;
+  if (all.length <= SLX_WINDOW) { _slxOffset = 0; return all; }
+  const maxOff = all.length - SLX_WINDOW;
+  _slxOffset = Math.max(0, Math.min(_slxOffset, maxOff));
+  const end = all.length - _slxOffset;
+  const start = Math.max(0, end - SLX_WINDOW);
+  return all.slice(start, end);
+}
+
+function drawWindow() {
+  const candles = _visibleWindow();
+  if (!candles.length) return;
+  _slxCandles = candles;
   const lows = candles.map(c => c.l), highs = candles.map(c => c.h);
   const minY = Math.min(...lows), maxY = Math.max(...highs);
   const pad = (maxY - minY) * 0.08 || 100;
+
+  if (chart && chart._slxCount === candles.length) {
+    chart.data.labels = candles.map((_, i) => i);
+    chart.data.datasets[0].data = candles.map(c => c.c);
+    chart.options.scales.y.min = minY - pad;
+    chart.options.scales.y.max = maxY + pad;
+    chart.update('none');
+    return;
+  }
 
   const candlePlugin = {
     id: 'candles',
     afterDatasetsDraw(ch) {
       const { ctx, scales: { x, y } } = ch;
-      const step = candles.length > 1 ? (x.getPixelForValue(1) - x.getPixelForValue(0)) : 10;
-      const bw = Math.max(2, Math.abs(step) * 0.6);
-      candles.forEach((cd, i) => {
+      const cs = _slxCandles;
+      const step = cs.length > 1 ? (x.getPixelForValue(1) - x.getPixelForValue(0)) : 10;
+      const bw = Math.max(2, Math.abs(step) * 0.62);
+      cs.forEach((cd, i) => {
         const cx = x.getPixelForValue(i);
         const col = cd.c >= cd.o ? '#1fc885' : '#e24b4a';
         ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1.4;
@@ -495,7 +527,7 @@ function renderChart(candles) {
   if (chart) chart.destroy();
   const firstRender = !window._slxChartShown;
   window._slxChartShown = true;
-  chart = new Chart(ctx, {
+  chart = new Chart(document.getElementById('chart'), {
     type: 'bar',
     data: { labels: candles.map((_, i) => i), datasets: [{ data: candles.map(c => c.c), backgroundColor: 'rgba(0,0,0,0)' }] },
     options: {
@@ -511,7 +543,42 @@ function renderChart(candles) {
     },
     plugins: [candlePlugin]
   });
+  chart._slxCount = candles.length;
 }
+
+function renderChart(candles) {
+  if (!candles || !candles.length) return;
+  _slxAllCandles = candles;
+  drawWindow();
+}
+
+// ─── Прокрутка графика свайпом ───
+(function initChartSwipe() {
+  const wrap = document.querySelector('.chart-wrap');
+  if (!wrap) return;
+  let startX = 0, startOff = 0, dragging = false;
+  const candleW = () => Math.max(6, wrap.clientWidth / SLX_WINDOW);
+
+  function onStart(x) { startX = x; startOff = _slxOffset; dragging = true; }
+  function onMove(x) {
+    if (!dragging) return;
+    const dx = x - startX;
+    // свайп вправо (dx>0) — к старой истории (увеличиваем offset)
+    const deltaCandles = Math.round(dx / candleW());
+    _slxOffset = startOff + deltaCandles;
+    drawWindow();
+  }
+  function onEnd() { dragging = false; }
+
+  wrap.addEventListener('touchstart', e => onStart(e.touches[0].clientX), { passive: true });
+  wrap.addEventListener('touchmove', e => { onMove(e.touches[0].clientX); }, { passive: true });
+  wrap.addEventListener('touchend', onEnd);
+  // мышь (для теста на десктопе)
+  wrap.addEventListener('mousedown', e => onStart(e.clientX));
+  wrap.addEventListener('mousemove', e => onMove(e.clientX));
+  wrap.addEventListener('mouseup', onEnd);
+  wrap.addEventListener('mouseleave', onEnd);
+})();
 
 // ─── Применить состояние биржи к UI ───
 function applyState(s) {
@@ -697,6 +764,7 @@ document.querySelectorAll('.period').forEach(el => {
     document.querySelectorAll('.period').forEach(p => p.classList.toggle('active', p === el));
     state.period = el.dataset.period;
     window._slxChartShown = false;  // дать анимацию при смене периода
+    _slxOffset = 0;                  // сброс прокрутки к свежим свечам
     haptic();
     loadState();
   });
@@ -785,7 +853,7 @@ document.getElementById('m-confirm').addEventListener('click', async () => {
 
 // ─── Старт + автообновление ───
 loadState();
-setInterval(loadState, 15000);  // обновляем состояние каждые 15 сек
+setInterval(loadState, 5000);  // живой график: обновляем каждые 5 сек (в такт тикам сервера)
 </script>
 
 </body>
