@@ -487,7 +487,7 @@
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
-const SLX_CLIENT_VERSION = 'v209';
+const SLX_CLIENT_VERSION = 'v210';
 
 // ─── Логотип SLX (B6 голографик) — единый SVG для всех мест ───
 let _slxLogoSeq = 0;
@@ -609,18 +609,28 @@ function _robustRange(candles) {
 }
 
 function drawWindow() {
-  const candles = _visibleWindow();
+  let candles = _visibleWindow();
   if (!candles.length) return;
+
+  // Если свечей мало — дополняем пустыми слотами слева, чтобы свечи были
+  // нормальной ширины и шли от правого края (как на реальных биржах).
+  const MIN_SLOTS = 14;
+  let padLeft = 0;
+  if (candles.length < MIN_SLOTS) {
+    padLeft = MIN_SLOTS - candles.length;
+    const filler = Array.from({ length: padLeft }, () => null);
+    candles = filler.concat(candles);
+  }
   _slxCandles = candles;
 
-  // Умный масштаб: устойчив к выбросам (одна гигантская свеча не ломает вид).
-  // Берём перцентили 2%..98% вместо чистых min/max.
-  const { minY, maxY } = _robustRange(candles);
+  // Умный масштаб: только по реальным свечам (не по пустым слотам)
+  const real = candles.filter(c => c);
+  const { minY, maxY } = _robustRange(real);
   const pad = (maxY - minY) * 0.1 || 100;
 
   if (chart && chart._slxCount === candles.length) {
     chart.data.labels = candles.map((_, i) => i);
-    chart.data.datasets[0].data = candles.map(c => c.c);
+    chart.data.datasets[0].data = candles.map(c => c ? c.c : null);
     chart.options.scales.y.min = minY - pad;
     chart.options.scales.y.max = maxY + pad;
     chart.update('none');
@@ -637,6 +647,7 @@ function drawWindow() {
       const UP = '#26e0a0', DOWN = '#ff5560';        // ярче
       const UP_G = 'rgba(38,224,160,0.55)', DOWN_G = 'rgba(255,85,96,0.5)';
       cs.forEach((cd, i) => {
+        if (!cd) return;   // пустой слот — не рисуем
         const cx = x.getPixelForValue(i);
         const isUp = cd.c >= cd.o;
         const col = isUp ? UP : DOWN;
@@ -664,8 +675,9 @@ function drawWindow() {
       });
 
       // Пунктирная линия текущей цены (как на Binance)
-      if (cs.length) {
-        const last = cs[cs.length - 1];
+      const realCs = cs.filter(c => c);
+      if (realCs.length) {
+        const last = realCs[realCs.length - 1];
         const py = y.getPixelForValue(last.c);
         const lastUp = last.c >= last.o;
         ctx.save();
