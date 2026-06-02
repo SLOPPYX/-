@@ -288,6 +288,50 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ─── Загрузочный экран (v206) ─── */
+  .splash {
+    position: fixed; inset: 0; z-index: 1000;
+    background: radial-gradient(ellipse at 50% 38%, #0a1622, #000 70%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0; transition: opacity 0.5s ease, visibility 0.5s;
+  }
+  .splash.hide { opacity: 0; visibility: hidden; }
+  .splash-glow {
+    position: absolute; top: 32%; left: 50%; transform: translate(-50%,-50%);
+    width: 260px; height: 260px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(58,160,255,0.35), transparent 65%);
+    animation: splashGlow 2.5s ease-in-out infinite;
+  }
+  @keyframes splashGlow { 0%,100% { opacity: 0.5; transform: translate(-50%,-50%) scale(1); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.15); } }
+  .splash-logo { position: relative; width: 110px; height: 110px; margin-bottom: 26px; }
+  .splash-ring {
+    position: absolute; inset: -8px; border-radius: 50%;
+    border: 2px solid transparent; border-top-color: #3aa0ff; border-right-color: #6fc0ff;
+    animation: spin 1.1s linear infinite;
+  }
+  .splash-coin {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #cfeaff, #3aa0ff 42%, #0a4d8c 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 40px rgba(58,160,255,0.6); border: 1px solid #9fd4ff;
+    animation: splashCoin 2s ease-in-out infinite;
+  }
+  @keyframes splashCoin { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+  .splash-coin span { font-family: Georgia, serif; font-weight: 800; color: #03203d; font-size: 58px; font-style: italic; }
+  .splash-title { font-size: 26px; font-weight: 700; color: #eaf2fb; letter-spacing: 0.02em; position: relative; }
+  .splash-title b { color: #3aa0ff; }
+  .splash-sub { font-size: 12px; color: #5a6470; letter-spacing: 0.35em; margin-top: 6px; text-transform: uppercase; position: relative; }
+  .splash-bar {
+    width: 160px; height: 3px; background: #14171c; border-radius: 3px;
+    margin-top: 28px; overflow: hidden; position: relative;
+  }
+  .splash-bar-fill {
+    height: 100%; width: 40%; border-radius: 3px;
+    background: linear-gradient(90deg, transparent, #3aa0ff, transparent);
+    animation: splashBar 1.2s ease-in-out infinite;
+  }
+  @keyframes splashBar { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+
   /* ─── Эффекты (v199) ─── */
   /* Свечение сверху за логотипом */
   body::before {
@@ -313,6 +357,18 @@
 </style>
 </head>
 <body>
+
+<!-- ═══ ЗАГРУЗОЧНЫЙ ЭКРАН ═══ -->
+<div class="splash" id="splash">
+  <div class="splash-glow"></div>
+  <div class="splash-logo">
+    <div class="splash-ring"></div>
+    <div class="splash-coin"><span>S</span></div>
+  </div>
+  <div class="splash-title">Биржа <b>SloppyX</b></div>
+  <div class="splash-sub">SLX Exchange</div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
 
 <!-- ═══ ВКЛАДКА: ГРАФИК ═══ -->
 <div class="tab-page active" id="tab-chart">
@@ -430,7 +486,7 @@
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
-const SLX_CLIENT_VERSION = 'v204';
+const SLX_CLIENT_VERSION = 'v206';
 console.log('%c💹 SLX Exchange ' + SLX_CLIENT_VERSION, 'color:#3aa0ff;font-weight:bold');
 
 const params = new URLSearchParams(location.search);
@@ -499,10 +555,12 @@ function haptic(kind) {
 let _slxAllCandles = [];   // ВСЕ свечи от сервера
 let _slxCandles = [];      // видимое окно (плагин рисует это)
 let _slxOffset = 0;        // сдвиг от правого края (0 = свежие справа)
-const SLX_WINDOW = 40;     // сколько свечей видно одновременно
+let SLX_WINDOW = 40;       // сколько свечей видно (меняется зумом: 10..120)
+const SLX_WIN_MIN = 12, SLX_WIN_MAX = 120;
 
 function _visibleWindow() {
   const all = _slxAllCandles;
+  SLX_WINDOW = Math.max(SLX_WIN_MIN, Math.min(SLX_WIN_MAX, SLX_WINDOW));
   if (all.length <= SLX_WINDOW) { _slxOffset = 0; return all; }
   const maxOff = all.length - SLX_WINDOW;
   _slxOffset = Math.max(0, Math.min(_slxOffset, maxOff));
@@ -594,32 +652,68 @@ function renderChart(candles) {
   drawWindow();
 }
 
-// ─── Прокрутка графика свайпом ───
+// ─── Прокрутка + зум графика ───
 (function initChartSwipe() {
   const wrap = document.querySelector('.chart-wrap');
   if (!wrap) return;
   let startX = 0, startOff = 0, dragging = false;
-  const candleW = () => Math.max(6, wrap.clientWidth / SLX_WINDOW);
+  let pinchStart = 0, winStart = 0, pinching = false;
+  const candleW = () => Math.max(4, wrap.clientWidth / SLX_WINDOW);
+
+  function dist(t) {
+    const dx = t[0].clientX - t[1].clientX;
+    const dy = t[0].clientY - t[1].clientY;
+    return Math.hypot(dx, dy);
+  }
 
   function onStart(x) { startX = x; startOff = _slxOffset; dragging = true; }
   function onMove(x) {
     if (!dragging) return;
     const dx = x - startX;
-    // свайп вправо (dx>0) — к старой истории (увеличиваем offset)
     const deltaCandles = Math.round(dx / candleW());
     _slxOffset = startOff + deltaCandles;
     drawWindow();
   }
   function onEnd() { dragging = false; }
 
-  wrap.addEventListener('touchstart', e => onStart(e.touches[0].clientX), { passive: true });
-  wrap.addEventListener('touchmove', e => { onMove(e.touches[0].clientX); }, { passive: true });
-  wrap.addEventListener('touchend', onEnd);
-  // мышь (для теста на десктопе)
+  wrap.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {           // щипок — зум
+      pinching = true; dragging = false;
+      pinchStart = dist(e.touches); winStart = SLX_WINDOW;
+    } else {
+      onStart(e.touches[0].clientX);
+    }
+  }, { passive: true });
+  wrap.addEventListener('touchmove', e => {
+    if (pinching && e.touches.length === 2) {
+      const ratio = dist(e.touches) / (pinchStart || 1);
+      // разводим пальцы (ratio>1) → меньше свечей (приближаем)
+      SLX_WINDOW = Math.round(winStart / ratio);
+      drawWindow();
+    } else if (!pinching) {
+      onMove(e.touches[0].clientX);
+    }
+  }, { passive: true });
+  wrap.addEventListener('touchend', e => {
+    if (e.touches.length === 0) { pinching = false; onEnd(); }
+  });
+  // двойной тап — сброс зума к 40 свечам и к свежим
+  let lastTap = 0;
+  wrap.addEventListener('touchend', () => {
+    const now = Date.now();
+    if (now - lastTap < 300) { SLX_WINDOW = 40; _slxOffset = 0; drawWindow(); }
+    lastTap = now;
+  });
+  // мышь + колесо (десктоп)
   wrap.addEventListener('mousedown', e => onStart(e.clientX));
   wrap.addEventListener('mousemove', e => onMove(e.clientX));
   wrap.addEventListener('mouseup', onEnd);
   wrap.addEventListener('mouseleave', onEnd);
+  wrap.addEventListener('wheel', e => {
+    e.preventDefault();
+    SLX_WINDOW = Math.round(SLX_WINDOW * (e.deltaY > 0 ? 1.15 : 0.87));
+    drawWindow();
+  }, { passive: false });
 })();
 
 // ─── Применить состояние биржи к UI ───
@@ -921,8 +1015,20 @@ document.getElementById('m-confirm').addEventListener('click', async () => {
 });
 
 // ─── Старт + автообновление ───
-loadState();
-setInterval(loadState, 5000);  // живой график: обновляем каждые 5 сек (в такт тикам сервера)
+// ─── Старт: загрузка + скрытие сплеша ───
+const _splashStart = Date.now();
+async function _boot() {
+  await loadState();
+  // показываем сплеш минимум 1.6 сек (чтобы анимация ощущалась)
+  const elapsed = Date.now() - _splashStart;
+  const wait = Math.max(0, 1600 - elapsed);
+  setTimeout(() => {
+    const sp = document.getElementById('splash');
+    if (sp) sp.classList.add('hide');
+  }, wait);
+}
+_boot();
+setInterval(loadState, 5000);  // живой график: обновляем каждые 5 сек
 </script>
 
 </body>
