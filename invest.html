@@ -487,7 +487,7 @@
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
-const SLX_CLIENT_VERSION = 'v208';
+const SLX_CLIENT_VERSION = 'v209';
 
 // ─── Логотип SLX (B6 голографик) — единый SVG для всех мест ───
 let _slxLogoSeq = 0;
@@ -633,7 +633,7 @@ function drawWindow() {
       const { ctx, scales: { x, y } } = ch;
       const cs = _slxCandles;
       const step = cs.length > 1 ? (x.getPixelForValue(1) - x.getPixelForValue(0)) : 10;
-      const bw = Math.max(2.5, Math.abs(step) * 0.66);
+      const bw = Math.min(22, Math.max(2.5, Math.abs(step) * 0.66));
       const UP = '#26e0a0', DOWN = '#ff5560';        // ярче
       const UP_G = 'rgba(38,224,160,0.55)', DOWN_G = 'rgba(255,85,96,0.5)';
       cs.forEach((cd, i) => {
@@ -662,6 +662,22 @@ function drawWindow() {
         ctx.fill();
         ctx.restore();
       });
+
+      // Пунктирная линия текущей цены (как на Binance)
+      if (cs.length) {
+        const last = cs[cs.length - 1];
+        const py = y.getPixelForValue(last.c);
+        const lastUp = last.c >= last.o;
+        ctx.save();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = lastUp ? 'rgba(38,224,160,0.5)' : 'rgba(255,85,96,0.5)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x.left, py);
+        ctx.lineTo(x.right, py);
+        ctx.stroke();
+        ctx.restore();
+      }
     }
   };
 
