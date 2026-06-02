@@ -487,7 +487,7 @@
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
-const SLX_CLIENT_VERSION = 'v210';
+const SLX_CLIENT_VERSION = 'v212';
 
 // ─── Логотип SLX (B6 голографик) — единый SVG для всех мест ───
 let _slxLogoSeq = 0;
@@ -609,28 +609,16 @@ function _robustRange(candles) {
 }
 
 function drawWindow() {
-  let candles = _visibleWindow();
+  const candles = _visibleWindow();
   if (!candles.length) return;
-
-  // Если свечей мало — дополняем пустыми слотами слева, чтобы свечи были
-  // нормальной ширины и шли от правого края (как на реальных биржах).
-  const MIN_SLOTS = 14;
-  let padLeft = 0;
-  if (candles.length < MIN_SLOTS) {
-    padLeft = MIN_SLOTS - candles.length;
-    const filler = Array.from({ length: padLeft }, () => null);
-    candles = filler.concat(candles);
-  }
   _slxCandles = candles;
 
-  // Умный масштаб: только по реальным свечам (не по пустым слотам)
-  const real = candles.filter(c => c);
-  const { minY, maxY } = _robustRange(real);
+  const { minY, maxY } = _robustRange(candles);
   const pad = (maxY - minY) * 0.1 || 100;
 
   if (chart && chart._slxCount === candles.length) {
     chart.data.labels = candles.map((_, i) => i);
-    chart.data.datasets[0].data = candles.map(c => c ? c.c : null);
+    chart.data.datasets[0].data = candles.map(c => c.c);
     chart.options.scales.y.min = minY - pad;
     chart.options.scales.y.max = maxY + pad;
     chart.update('none');
@@ -640,22 +628,68 @@ function drawWindow() {
   const candlePlugin = {
     id: 'candles',
     afterDatasetsDraw(ch) {
-      const { ctx, scales: { x, y } } = ch;
+      const { ctx, scales: { x, y }, chartArea } = ch;
       const cs = _slxCandles;
-      const step = cs.length > 1 ? (x.getPixelForValue(1) - x.getPixelForValue(0)) : 10;
-      const bw = Math.min(22, Math.max(2.5, Math.abs(step) * 0.66));
-      const UP = '#26e0a0', DOWN = '#ff5560';        // ярче
+      // Ширина слота: если свечей мало — фиксируем (свечи идут от правого края),
+      // иначе делим ширину на число свечей.
+      const MIN_SLOTS = 14;
+      const slots = Math.max(cs.length, MIN_SLOTS);
+      const areaW = chartArea.right - chartArea.left;
+      const slotW = areaW / slots;
+      const bw = Math.min(22, Math.max(2.5, slotW * 0.66));
+      const UP = '#26e0a0', DOWN = '#ff5560';
       const UP_G = 'rgba(38,224,160,0.55)', DOWN_G = 'rgba(255,85,96,0.5)';
+
+      const posFor = (i) => chartArea.left + slotW * ((slots - cs.length + i) + 0.5);
+
+      // (3) ЗАЛИВКА под линией закрытий (градиент)
+      const realIdx = cs.map((c, i) => c ? i : -1).filter(i => i >= 0);
+      if (realIdx.length > 1) {
+        ctx.save();
+        const grad = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+        const lastUp0 = cs[realIdx[realIdx.length-1]].c >= cs[realIdx[0]].c;
+        grad.addColorStop(0, lastUp0 ? 'rgba(38,224,160,0.20)' : 'rgba(255,85,96,0.18)');
+        grad.addColorStop(1, 'rgba(38,224,160,0)');
+        ctx.beginPath();
+        ctx.moveTo(posFor(realIdx[0]), chartArea.bottom);
+        realIdx.forEach(i => ctx.lineTo(posFor(i), y.getPixelForValue(cs[i].c)));
+        ctx.lineTo(posFor(realIdx[realIdx.length-1]), chartArea.bottom);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // (4) ОБЪЁМ — полупрозрачные столбики у низа графика
+      const vols = cs.filter(c => c).map(c => c.v || 0);
+      const maxVol = Math.max(...vols, 1);
+      const volZone = 28;  // высота зоны объёма (px) снизу
       cs.forEach((cd, i) => {
-        if (!cd) return;   // пустой слот — не рисуем
-        const cx = x.getPixelForValue(i);
+        if (!cd || !cd.v) return;
+        const cx = posFor(i);
+        const vh = (cd.v / maxVol) * volZone;
+        const isUp = cd.c >= cd.o;
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = isUp ? UP : DOWN;
+        ctx.fillRect(cx - bw/2, chartArea.bottom - vh, bw, vh);
+        ctx.restore();
+      });
+
+      cs.forEach((cd, i) => {
+        if (!cd) return;
+        // позиция: свечи прижаты к правому краю
+        const slotIndex = slots - cs.length + i;
+        const cx = chartArea.left + slotW * (slotIndex + 0.5);
         const isUp = cd.c >= cd.o;
         const col = isUp ? UP : DOWN;
         const isLast = i === cs.length - 1;
         ctx.save();
-        // свечение
-        ctx.shadowColor = isUp ? UP_G : DOWN_G;
-        ctx.shadowBlur = isLast ? 12 : 6;
+        // свечение только на последней (живой) свече — остальные без тени (быстрее)
+        if (isLast) {
+          ctx.shadowColor = isUp ? UP_G : DOWN_G;
+          ctx.shadowBlur = 10;
+        }
         ctx.strokeStyle = col; ctx.fillStyle = col;
         ctx.lineWidth = Math.max(1.4, bw * 0.16);
         // фитиль
@@ -674,20 +708,34 @@ function drawWindow() {
         ctx.restore();
       });
 
-      // Пунктирная линия текущей цены (как на Binance)
+      // Пунктирная линия текущей цены + (1) МЕТКА ЦЕНЫ справа
       const realCs = cs.filter(c => c);
       if (realCs.length) {
         const last = realCs[realCs.length - 1];
         const py = y.getPixelForValue(last.c);
         const lastUp = last.c >= last.o;
+        const lineCol = lastUp ? '#26e0a0' : '#ff5560';
         ctx.save();
         ctx.setLineDash([4, 4]);
         ctx.strokeStyle = lastUp ? 'rgba(38,224,160,0.5)' : 'rgba(255,85,96,0.5)';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(x.left, py);
-        ctx.lineTo(x.right, py);
+        ctx.moveTo(chartArea.left, py);
+        ctx.lineTo(chartArea.right, py);
         ctx.stroke();
+        ctx.restore();
+        // метка-бейдж с ценой справа на линии
+        ctx.save();
+        const label = fmtShort(last.c);
+        ctx.font = '700 10px system-ui, sans-serif';
+        const tw = ctx.measureText(label).width;
+        const bx = chartArea.right - tw - 12, by = py - 8;
+        ctx.fillStyle = lineCol;
+        if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(bx, by, tw + 10, 16, 4); ctx.fill(); }
+        else ctx.fillRect(bx, by, tw + 10, 16);
+        ctx.fillStyle = lastUp ? '#03251a' : '#2a0808';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, bx + 5, by + 8);
         ctx.restore();
       }
     }
