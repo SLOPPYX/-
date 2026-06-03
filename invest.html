@@ -30,7 +30,9 @@
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
   }
-  body { padding: 14px 14px 84px; max-width: 480px; margin: 0 auto; }
+  body { padding: calc(14px + env(safe-area-inset-top, 0px)) 14px 84px; max-width: 480px; margin: 0 auto; }
+  /* в полноэкранном режиме Telegram даёт отступ под свои кнопки сверху */
+  body.tg-fullscreen { padding-top: calc(70px + env(safe-area-inset-top, 0px)); }
 
   /* ─── Шапка ─── */
   .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
@@ -178,6 +180,16 @@
   .port-hero-label { color: #4a7ba8; font-size: 12px; margin-bottom: 6px; }
   .port-hero-val { color: #eaf4ff; font-weight: 800; font-size: 32px; letter-spacing: -0.02em; }
   .port-hero-pnl { font-size: 13px; font-weight: 600; margin-top: 5px; }
+  .pnl-chart-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px; margin-bottom: 12px;
+  }
+  .pnl-chart-head {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; color: var(--text2); font-weight: 600; margin-bottom: 8px;
+  }
+  .pnl-now { font-size: 15px; font-weight: 800; }
+  .pnl-hint { color: var(--text3); font-size: 10px; margin-top: 8px; text-align: center; }
   /* Trust Wallet стиль: список активов */
   .assets-title { color: var(--text3); font-size: 11px; margin: 0 0 8px 2px; letter-spacing: 0.05em; }
   .asset {
@@ -238,6 +250,31 @@
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
   .modal-sub { color: var(--text3); font-size: 12px; margin-bottom: 16px; }
+  .order-type {
+    display: flex; gap: 6px; background: #050607; border-radius: 10px;
+    padding: 4px; margin-bottom: 14px;
+  }
+  .orders-box { margin-top: 14px; }
+  .orders-title { color: var(--text3); font-size: 11px; letter-spacing: 0.05em; margin: 0 0 8px 2px; }
+  .order-item {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 11px 13px; margin-bottom: 8px;
+  }
+  .order-cancel {
+    background: rgba(226,75,74,0.15); border: 1px solid rgba(226,75,74,0.3);
+    color: var(--down); width: 30px; height: 30px; border-radius: 8px;
+    font-size: 14px; cursor: pointer; flex-shrink: 0;
+  }
+  .ot-opt {
+    flex: 1; text-align: center; padding: 8px; border-radius: 7px;
+    font-size: 13px; font-weight: 600; color: var(--text2); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ot-opt.active { background: var(--accent); color: #001a33; }
+  .limit-label { display: block; color: var(--text3); font-size: 11px; margin: 0 0 5px 2px; }
+  .limit-price-wrap { margin-bottom: 12px; }
+  .limit-input { font-size: 18px; margin-bottom: 0; }
   .qty-input {
     width: 100%; background: #050607; border: 1px solid var(--border2);
     border-radius: 12px; padding: 14px; color: var(--text);
@@ -439,6 +476,7 @@
     <button class="btn btn-sell" id="btn-sell">↓ ПРОДАТЬ<span class="btn-sub" id="sell-sub">—</span></button>
   </div>
   <div class="foot-note" id="foot">Комиссия 3% · Баланс: — токенов</div>
+  <div id="orders-box" class="orders-box"></div>
 </div>
 
 <!-- ═══ ВКЛАДКА: ПОРТФЕЛЬ ═══ -->
@@ -447,6 +485,14 @@
     <div class="port-hero-label">Общий баланс</div>
     <div class="port-hero-val" id="ph-val">—</div>
     <div class="port-hero-pnl" id="ph-pnl">—</div>
+  </div>
+  <div class="pnl-chart-card" id="pnl-card" style="display:none;">
+    <div class="pnl-chart-head">
+      <span>Прибыль портфеля</span>
+      <span id="pnl-now" class="pnl-now">—</span>
+    </div>
+    <div style="position:relative;width:100%;height:120px;"><canvas id="pnl-chart"></canvas></div>
+    <div class="pnl-hint">Динамика стоимости твоих SLX (с момента открытия биржи)</div>
   </div>
   <div id="port-body"></div>
 </div>
@@ -470,6 +516,15 @@
   <div class="modal">
     <div class="modal-title" id="m-title">Купить SLX</div>
     <div class="modal-sub" id="m-sub">Курс: — токенов за 1 SLX</div>
+    <div class="order-type" id="order-type">
+      <div class="ot-opt active" data-type="market">По рынку</div>
+      <div class="ot-opt" data-type="limit">Лимит</div>
+    </div>
+    <div class="limit-price-wrap" id="limit-price-wrap" style="display:none;">
+      <label class="limit-label">Цена срабатывания (за 1 SLX)</label>
+      <input type="number" class="qty-input limit-input" id="m-limit-price" placeholder="0" min="0" inputmode="decimal">
+    </div>
+    <label class="limit-label" id="qty-label">Количество SLX</label>
     <input type="number" class="qty-input" id="m-qty" placeholder="0" min="0" step="0.1" inputmode="decimal">
     <div class="quick-row" id="m-quick"></div>
     <div class="modal-calc">
@@ -491,9 +546,19 @@
 // SLX EXCHANGE — Mini App (Этап 1)
 // ═══════════════════════════════════════════════════════════
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-if (tg) { tg.ready(); tg.expand(); }
+if (tg) {
+  tg.ready();
+  tg.expand();
+  // Полноэкранный режим (Telegram Bot API 8.0+)
+  try {
+    if (typeof tg.requestFullscreen === 'function') { tg.requestFullscreen(); document.body.classList.add('tg-fullscreen'); }
+  } catch (e) {}
+  // Отключаем закрытие свайпом вниз (чтобы случайно не закрыть биржу)
+  try { if (typeof tg.disableVerticalSwipes === 'function') tg.disableVerticalSwipes(); } catch (e) {}
+  try { tg.setHeaderColor('#000000'); tg.setBackgroundColor('#000000'); } catch (e) {}
+}
 
-const SLX_CLIENT_VERSION = 'v214';
+const SLX_CLIENT_VERSION = 'v216';
 
 // ─── Логотип SLX (B6 голографик) — единый SVG для всех мест ───
 let _slxLogoSeq = 0;
@@ -523,7 +588,7 @@ const SECRET = params.get('api_secret') || params.get('secret') || '';
 const API_BASE = decodeURIComponent(params.get('api_url') || params.get('api') || '');
 const TG_INIT_DATA = (tg && tg.initData) ? tg.initData : '';
 
-let state = { price: 0, fee: 3, portfolio: null, balance: 0, mode: 'buy', period: '1m' };
+let state = { price: 0, fee: 3, portfolio: null, balance: 0, mode: 'buy', period: '1m', orderType: 'market' };
 let chart = null;
 
 // ─── API ───
@@ -954,11 +1019,68 @@ function tickTimer() {
 setInterval(tickTimer, 1000);
 
 // ─── Рендер вкладки портфеля ───
+let _pnlHistory = [];
+let _pnlChart = null;
+function renderPnlChart(p) {
+  const card = document.getElementById('pnl-card');
+  if (!card) return;
+  if (!p || p.qty <= 0 || _pnlHistory.length < 2) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+  const up = (p.pnl || 0) >= 0;
+  const nowEl = document.getElementById('pnl-now');
+  nowEl.textContent = (up ? '+' : '') + fmt(p.pnl);
+  nowEl.style.color = up ? 'var(--up)' : 'var(--down)';
+
+  const ctx = document.getElementById('pnl-chart');
+  const data = _pnlHistory.slice();
+  const col = up ? '#26e0a0' : '#ff5560';
+  if (_pnlChart) {
+    _pnlChart.data.labels = data.map((_, i) => i);
+    _pnlChart.data.datasets[0].data = data;
+    _pnlChart.data.datasets[0].borderColor = col;
+    _pnlChart.update('none');
+    return;
+  }
+  _pnlChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: data.map((_, i) => i),
+      datasets: [{ data, borderColor: col, borderWidth: 2, fill: true,
+        backgroundColor: (c) => {
+          const { ctx, chartArea } = c.chart;
+          if (!chartArea) return 'rgba(38,224,160,0.1)';
+          const g = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          g.addColorStop(0, 'rgba(38,224,160,0.25)');
+          g.addColorStop(1, 'rgba(38,224,160,0)');
+          return g;
+        }, tension: 0.35, pointRadius: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: { display: false },
+        y: { position: 'right', ticks: { color: '#5a6470', font: { size: 9 },
+             maxTicksLimit: 4, callback: v => fmtShort(v) },
+             grid: { color: 'rgba(255,255,255,0.03)' }, border: { display: false } }
+      }
+    }
+  });
+}
+
 function renderPortfolio(p, price) {
   p = p || { qty: 0 };
   const slxValue = p.cur_value || 0;
   const tokens = state.balance || 0;
   const totalBalance = tokens + slxValue;   // общий капитал
+
+  // снимок P&L для графика прибыли (копим в памяти сессии)
+  if (p.qty > 0) {
+    _pnlHistory.push(p.pnl || 0);
+    if (_pnlHistory.length > 120) _pnlHistory.shift();
+  }
+  renderPnlChart(p);
 
   // общий баланс сверху
   document.getElementById('ph-val').textContent = fmtFit(totalBalance);
@@ -1091,10 +1213,19 @@ function openModal(mode) {
   // быстрые кнопки
   const quick = document.getElementById('m-quick');
   if (isBuy) {
-    quick.innerHTML = ['1','5','10','25'].map(q => `<div class="quick" data-q="${q}">${q}</div>`).join('');
+    // покупка: быстрые суммы в % от баланса токенов (сразу видно сколько SLX)
+    const bal = state.balance || 0;
+    const price = state.price || 1;
+    const feeM = 1 + state.fee / 100;
+    const opts = [['25%', bal*0.25], ['50%', bal*0.5], ['75%', bal*0.75], ['Всё', bal]];
+    quick.innerHTML = opts.map(([lbl, tokens]) => {
+      // сколько SLX можно купить на эти токены (с учётом комиссии)
+      const slx = Math.floor((tokens / (price * feeM)) * 10000) / 10000;
+      return `<div class="quick" data-q="${slx}">${lbl}</div>`;
+    }).join('');
   } else {
     const have = (state.portfolio && state.portfolio.qty) || 0;
-    quick.innerHTML = [['25%',have*0.25],['50%',have*0.5],['75%',have*0.75],['Все',have]]
+    quick.innerHTML = [['25%',have*0.25],['50%',have*0.5],['75%',have*0.75],['Всё',have]]
       .map(([lbl,v]) => `<div class="quick" data-q="${Math.floor(v*10000)/10000}">${lbl}</div>`).join('');
   }
   quick.querySelectorAll('.quick').forEach(q => q.addEventListener('click', () => {
@@ -1104,19 +1235,55 @@ function openModal(mode) {
 
   updateCalc();
   document.getElementById('modal-bg').classList.add('show');
+  // сброс типа на «по рынку» при открытии
+  state.orderType = 'market';
+  document.querySelectorAll('.ot-opt').forEach(o => o.classList.toggle('active', o.dataset.type === 'market'));
+  document.getElementById('limit-price-wrap').style.display = 'none';
+  document.getElementById('m-limit-price').value = '';
 }
+
+// переключатель типа ордера (рынок/лимит)
+document.querySelectorAll('.ot-opt').forEach(opt => {
+  opt.addEventListener('click', () => {
+    state.orderType = opt.dataset.type;
+    document.querySelectorAll('.ot-opt').forEach(o => o.classList.toggle('active', o === opt));
+    document.getElementById('limit-price-wrap').style.display =
+      state.orderType === 'limit' ? 'block' : 'none';
+    // подставим текущую цену как стартовую для лимита
+    if (state.orderType === 'limit') {
+      const lp = document.getElementById('m-limit-price');
+      if (!lp.value) lp.value = state.price;
+    }
+    updateCalc(); haptic();
+  });
+});
 function closeModal() { document.getElementById('modal-bg').classList.remove('show'); }
 
 function updateCalc() {
   const qty = parseFloat(document.getElementById('m-qty').value) || 0;
-  const gross = qty * state.price;
+  // цена: рыночная или из поля лимита
+  const limitPrice = parseFloat(document.getElementById('m-limit-price').value) || 0;
+  const price = (state.orderType === 'limit' && limitPrice > 0) ? limitPrice : state.price;
+  const gross = qty * price;
   const fee = Math.round(gross * state.fee / 100);
   const isBuy = state.mode === 'buy';
   document.getElementById('c-gross').textContent = fmt(gross);
   document.getElementById('c-fee').textContent = fmt(fee);
   document.getElementById('c-total').textContent = fmt(isBuy ? gross + fee : gross - fee);
+  const cb = document.getElementById('m-confirm');
+  if (qty > 0) {
+    const verb = isBuy ? 'Купить' : 'Продать';
+    if (state.orderType === 'limit') {
+      cb.textContent = `${verb} ${qty} SLX по ${fmtFit(price)}`;
+    } else {
+      cb.textContent = `${verb} ${qty} SLX за ${fmtFit(isBuy ? gross + fee : gross - fee)}`;
+    }
+  } else {
+    cb.textContent = isBuy ? 'Купить' : 'Продать';
+  }
 }
 document.getElementById('m-qty').addEventListener('input', updateCalc);
+document.getElementById('m-limit-price').addEventListener('input', updateCalc);
 
 document.getElementById('btn-buy').addEventListener('click', () => { openModal('buy'); haptic(); });
 document.getElementById('btn-sell').addEventListener('click', () => {
@@ -1130,6 +1297,23 @@ document.getElementById('m-confirm').addEventListener('click', async () => {
   const qty = parseFloat(document.getElementById('m-qty').value) || 0;
   if (qty <= 0) { toast('Введи количество', 'err'); return; }
   const btn = document.getElementById('m-confirm');
+
+  // ЛИМИТНЫЙ ОРДЕР
+  if (state.orderType === 'limit') {
+    const price = parseFloat(document.getElementById('m-limit-price').value) || 0;
+    if (price <= 0) { toast('Введи цену срабатывания', 'err'); return; }
+    btn.disabled = true; const ot = btn.textContent; btn.innerHTML = '<span class="spinner"></span>';
+    const r = await apiPost('/casino/slx/order/create', { side: state.mode, qty, price });
+    btn.disabled = false; btn.textContent = ot;
+    if (r && r.ok) {
+      haptic('ok');
+      toast('Ордер создан: ' + (state.mode === 'buy' ? 'купить' : 'продать') + ' ' + qty + ' SLX по ' + fmt(price), 'ok');
+      closeModal(); loadState(); loadOrders();
+    } else { haptic('err'); toast(r.message || 'Ошибка ордера', 'err'); }
+    return;
+  }
+
+  // РЫНОЧНАЯ СДЕЛКА
   btn.disabled = true; const oldTxt = btn.textContent; btn.innerHTML = '<span class="spinner"></span>';
   const path = state.mode === 'buy' ? '/casino/slx/buy' : '/casino/slx/sell';
   const r = await apiPost(path, { qty });
@@ -1145,6 +1329,30 @@ document.getElementById('m-confirm').addEventListener('click', async () => {
     toast(r.message || 'Ошибка сделки', 'err');
   }
 });
+
+// ─── Лимитные ордера: загрузка и отображение ───
+async function loadOrders() {
+  const r = await api('/casino/slx/orders');
+  const box = document.getElementById('orders-box');
+  if (!box) return;
+  if (!r || !r.ok || !r.orders || !r.orders.length) { box.innerHTML = ''; return; }
+  let html = '<div class="orders-title">АКТИВНЫЕ ОРДЕРА</div>';
+  r.orders.forEach(o => {
+    const isBuy = o.side === 'buy';
+    html += `<div class="order-item">
+      <div><span style="color:${isBuy?'var(--up)':'var(--down)'};font-weight:700;">${isBuy?'Покупка':'Продажа'}</span>
+        <span style="color:var(--text2);"> ${o.qty} SLX</span>
+        <div style="color:var(--text3);font-size:11px;">по ${fmt(o.target_price)} токенов</div></div>
+      <button class="order-cancel" data-id="${o.id}">✕</button>
+    </div>`;
+  });
+  box.innerHTML = html;
+  box.querySelectorAll('.order-cancel').forEach(b => b.addEventListener('click', async () => {
+    const r2 = await apiPost('/casino/slx/order/cancel', { order_id: parseInt(b.dataset.id) });
+    if (r2 && r2.ok) { haptic('ok'); toast('Ордер отменён', 'ok'); loadOrders(); }
+    else toast('Не удалось отменить', 'err');
+  }));
+}
 
 // ─── Старт + автообновление ───
 // ─── Старт: загрузка + скрытие сплеша ───
@@ -1167,7 +1375,9 @@ async function _boot() {
   }, wait);
 }
 _boot();
+loadOrders();
 setInterval(loadState, 5000);  // живой график: обновляем каждые 5 сек
+setInterval(loadOrders, 8000); // обновляем список ордеров
 </script>
 
 </body>
