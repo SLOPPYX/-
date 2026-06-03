@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>SLX Биржа</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -30,9 +30,8 @@
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
   }
-  body { padding: calc(14px + env(safe-area-inset-top, 0px)) 14px 84px; max-width: 480px; margin: 0 auto; }
-  /* в полноэкранном режиме Telegram даёт отступ под свои кнопки сверху */
-  body.tg-fullscreen { padding-top: calc(70px + env(safe-area-inset-top, 0px)); }
+  body { padding: calc(14px + var(--tg-top, 0px)) 14px 84px; max-width: 480px; margin: 0 auto; }
+  /* --tg-top задаётся из JS по нативным safe-area Telegram (кнопки в фуллскрине) */
 
   /* ─── Шапка ─── */
   .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
@@ -79,7 +78,7 @@
   /* Таймер в углу графика (Binance-стиль) */
   .chart-wrap { position: relative; }
   .candle-timer {
-    position: absolute; top: 12px; right: 12px; z-index: 5;
+    position: absolute; top: 12px; left: 12px; z-index: 5;
     font-size: 12px; color: var(--accent-light);
     background: rgba(10,14,22,0.9); border: 1px solid rgba(58,160,255,0.35);
     padding: 5px 11px; border-radius: 8px; font-weight: 800;
@@ -97,7 +96,16 @@
     background: #040506; border: 1px solid var(--border);
     border-radius: 16px; padding: 8px; margin-bottom: 12px;
   }
-  .chart-inner { position: relative; width: 100%; height: 210px; }
+  .chart-inner { position: relative; width: 100%; height: 280px; }
+
+  /* ─── Десктоп / широкий экран: шире вся биржа и крупный график ─── */
+  @media (min-width: 600px) {
+    body { max-width: 880px; }
+    .navbar { max-width: 880px; }
+    .chart-inner { height: 480px; }
+    .coin-name { font-size: 19px; }
+    .price-val { font-size: 24px; }
+  }
 
   /* ─── Настроение рынка ─── */
   .mood {
@@ -547,6 +555,20 @@
 // SLX EXCHANGE — Mini App (Этап 1)
 // ═══════════════════════════════════════════════════════════
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+
+// Считает верхний отступ под нативные кнопки Telegram (Закрыть / ⌄ / •••).
+// В фуллскрине кнопки висят поверх контента — поэтому отодвигаем шапку вниз
+// на величину safe-area устройства + safe-area контента (высоту кнопок).
+function applyTgInsets() {
+  if (!tg) return;
+  const sa = tg.safeAreaInset || {};
+  const ca = tg.contentSafeAreaInset || {};
+  let top = (sa.top || 0) + (ca.top || 0);
+  // фуллскрин активен, но клиент не отдал инсеты — страхуемся фиксированным запасом
+  if (document.body.classList.contains('tg-fullscreen') && top < 80) top = 88;
+  document.body.style.setProperty('--tg-top', top + 'px');
+}
+
 if (tg) {
   tg.ready();
   tg.expand();
@@ -557,9 +579,19 @@ if (tg) {
   // Отключаем закрытие свайпом вниз (чтобы случайно не закрыть биржу)
   try { if (typeof tg.disableVerticalSwipes === 'function') tg.disableVerticalSwipes(); } catch (e) {}
   try { tg.setHeaderColor('#000000'); tg.setBackgroundColor('#000000'); } catch (e) {}
+  // отступ под нативные кнопки + реакция на изменения safe-area
+  applyTgInsets();
+  try {
+    tg.onEvent('safeAreaChanged', applyTgInsets);
+    tg.onEvent('contentSafeAreaChanged', applyTgInsets);
+    tg.onEvent('fullscreenChanged', applyTgInsets);
+  } catch (e) {}
+  // инсеты иногда приходят не сразу после requestFullscreen — добиваем повтором
+  setTimeout(applyTgInsets, 200);
+  setTimeout(applyTgInsets, 600);
 }
 
-const SLX_CLIENT_VERSION = 'v217';
+const SLX_CLIENT_VERSION = 'v218';
 
 // ─── Логотип SLX (B6 голографик) — единый SVG для всех мест ───
 let _slxLogoSeq = 0;
@@ -917,7 +949,7 @@ function applyState(s) {
   const prevPrice = state.price;
   state.price = s.price;
   state.fee = s.fee_percent;
-  state.liquidity = s.liquidity || 0;   // v217: глубина рынка для расчёта проскальзывания
+  state.liquidity = s.liquidity || 0;   // v218: глубина рынка для расчёта проскальзывания
   state.slipMax = s.slip_max || 0.40;
   state.portfolio = s.portfolio;
   state.balance = s.balance;
@@ -1270,7 +1302,7 @@ function updateCalc() {
   const price = (isLimit && limitPrice > 0) ? limitPrice : state.price;
   const isBuy = state.mode === 'buy';
 
-  // v217: проскальзывание для рыночных сделок — крупная заявка двигает цену
+  // v218: проскальзывание для рыночных сделок — крупная заявка двигает цену
   // по ходу исполнения, средняя цена хуже стартовой. Для лимита не считаем.
   const L = state.liquidity || 0;
   const slipMax = state.slipMax || 0.40;
