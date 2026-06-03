@@ -30,7 +30,7 @@
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
   }
-  body { padding: calc(14px + var(--tg-top, 0px)) 14px 84px; max-width: 480px; margin: 0 auto; }
+  body { padding: calc(14px + var(--tg-top, 0px)) 14px calc(92px + env(safe-area-inset-bottom, 0px)); max-width: 480px; margin: 0 auto; }
   /* --tg-top задаётся из JS по нативным safe-area Telegram (кнопки в фуллскрине) */
 
   /* ─── Шапка ─── */
@@ -500,7 +500,7 @@
       <span id="pnl-now" class="pnl-now">—</span>
     </div>
     <div style="position:relative;width:100%;height:120px;"><canvas id="pnl-chart"></canvas></div>
-    <div class="pnl-hint">Динамика стоимости твоих SLX (с момента открытия биржи)</div>
+    <div class="pnl-hint">Общая прибыль за всё время — реализованная + бумажная</div>
   </div>
   <div id="port-body"></div>
 </div>
@@ -540,6 +540,7 @@
       <div class="calc-row" id="c-slip-row" style="display:none"><span class="k">Проскальзывание</span><span class="v" id="c-slip" style="color:#ff9a5c">—</span></div>
       <div class="calc-row"><span class="k">Комиссия 3%</span><span class="v" id="c-fee">—</span></div>
       <div class="calc-row total"><span class="k" id="c-total-k">Итого спишется</span><span class="v" id="c-total">—</span></div>
+      <div class="calc-row" id="c-profit-row" style="display:none;border-top:1px solid var(--border);margin-top:6px;padding-top:8px;"><span class="k">Прибыль с продажи</span><span class="v" id="c-profit" style="font-weight:800">—</span></div>
     </div>
     <div class="modal-btns">
       <button class="modal-cancel" id="m-cancel">Отмена</button>
@@ -591,7 +592,7 @@ if (tg) {
   setTimeout(applyTgInsets, 600);
 }
 
-const SLX_CLIENT_VERSION = 'v218';
+const SLX_CLIENT_VERSION = 'v219';
 
 // ─── Логотип SLX (B6 голографик) — единый SVG для всех мест ───
 let _slxLogoSeq = 0;
@@ -982,9 +983,9 @@ function applyState(s) {
   else if (s.buy_ratio <= 35) note.textContent = '📉 Рынок настроен пессимистично';
   else note.textContent = 'Рынок в равновесии';
 
-  // метка «мало данных» на графике
+  // метка «мало данных» — только на минутном ТФ (на старших она лишняя)
   const lowEl = document.getElementById('low-data');
-  if (lowEl) lowEl.style.display = s.low_data ? 'block' : 'none';
+  if (lowEl) lowEl.style.display = (s.low_data && state.period === '1m') ? 'block' : 'none';
 
   // баннер новости (показываем если новость свежая — младше 90 сек)
   const nb = document.getElementById('news-banner');
@@ -1059,23 +1060,26 @@ let _pnlChart = null;
 function renderPnlChart(p) {
   const card = document.getElementById('pnl-card');
   if (!card) return;
-  if (!p || p.qty <= 0 || _pnlHistory.length < 2) {
-    card.style.display = 'none';
-    return;
-  }
+  // v219: история прибыли приходит с сервера и копится всегда (между заходами)
+  const hist = (p && Array.isArray(p.pnl_history)) ? p.pnl_history : [];
+  if (hist.length < 2) { card.style.display = 'none'; return; }
   card.style.display = 'block';
-  const up = (p.pnl || 0) >= 0;
+
+  const total = (p.total_pnl != null) ? p.total_pnl : (p.pnl || 0);
+  const up = total >= 0;
   const nowEl = document.getElementById('pnl-now');
-  nowEl.textContent = (up ? '+' : '') + fmt(p.pnl);
+  nowEl.textContent = (up ? '+' : '') + fmt(total);
   nowEl.style.color = up ? 'var(--up)' : 'var(--down)';
 
   const ctx = document.getElementById('pnl-chart');
-  const data = _pnlHistory.slice();
+  const data = hist.map(pt => pt[1]);
   const col = up ? '#26e0a0' : '#ff5560';
+  const fillTop = up ? 'rgba(38,224,160,0.25)' : 'rgba(255,85,96,0.22)';
+  const fillBot = up ? 'rgba(38,224,160,0)'    : 'rgba(255,85,96,0)';
   if (_pnlChart) {
+    const ds = _pnlChart.data.datasets[0];
     _pnlChart.data.labels = data.map((_, i) => i);
-    _pnlChart.data.datasets[0].data = data;
-    _pnlChart.data.datasets[0].borderColor = col;
+    ds.data = data; ds.borderColor = col; ds._fillTop = fillTop; ds._fillBot = fillBot;
     _pnlChart.update('none');
     return;
   }
@@ -1083,12 +1087,14 @@ function renderPnlChart(p) {
     type: 'line',
     data: { labels: data.map((_, i) => i),
       datasets: [{ data, borderColor: col, borderWidth: 2, fill: true,
+        _fillTop: fillTop, _fillBot: fillBot,
         backgroundColor: (c) => {
           const { ctx, chartArea } = c.chart;
-          if (!chartArea) return 'rgba(38,224,160,0.1)';
+          const ds = c.dataset || {};
+          if (!chartArea) return ds._fillTop || 'rgba(38,224,160,0.1)';
           const g = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-          g.addColorStop(0, 'rgba(38,224,160,0.25)');
-          g.addColorStop(1, 'rgba(38,224,160,0)');
+          g.addColorStop(0, ds._fillTop || 'rgba(38,224,160,0.25)');
+          g.addColorStop(1, ds._fillBot || 'rgba(38,224,160,0)');
           return g;
         }, tension: 0.35, pointRadius: 0 }] },
     options: {
@@ -1110,11 +1116,8 @@ function renderPortfolio(p, price) {
   const tokens = state.balance || 0;
   const totalBalance = tokens + slxValue;   // общий капитал
 
-  // снимок P&L для графика прибыли (копим в памяти сессии)
-  if (p.qty > 0) {
-    _pnlHistory.push(p.pnl || 0);
-    if (_pnlHistory.length > 120) _pnlHistory.shift();
-  }
+  // v219: график прибыли теперь строится из серверной истории (p.pnl_history),
+  // которая копится всегда и переживает перезаходы
   renderPnlChart(p);
 
   // общий баланс сверху
@@ -1327,6 +1330,23 @@ function updateCalc() {
     slipRow.style.display = 'flex';
   } else {
     slipRow.style.display = 'none';
+  }
+
+  // v219: прибыль с продажи — считаем за пользователя (в миллионах на глаз не видно)
+  const profitRow = document.getElementById('c-profit-row');
+  const avgBuy = (state.portfolio && state.portfolio.avg_price) || 0;
+  if (!isBuy && qty > 0 && avgBuy > 0) {
+    const payout = gross - fee;            // сколько реально получит
+    const costBasis = avgBuy * qty;        // во что обошлись эти монеты
+    const profit = payout - costBasis;
+    const pct = costBasis ? (profit / costBasis * 100) : 0;
+    const pUp = profit >= 0;
+    const el = document.getElementById('c-profit');
+    el.textContent = (pUp ? '+' : '−') + fmt(Math.abs(profit)) + '  (' + (pUp ? '+' : '') + pct.toFixed(1) + '%)';
+    el.style.color = pUp ? 'var(--up)' : 'var(--down)';
+    profitRow.style.display = 'flex';
+  } else {
+    profitRow.style.display = 'none';
   }
 
   const cb = document.getElementById('m-confirm');
