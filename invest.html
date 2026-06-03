@@ -529,6 +529,7 @@
     <div class="quick-row" id="m-quick"></div>
     <div class="modal-calc">
       <div class="calc-row"><span class="k">Стоимость</span><span class="v" id="c-gross">—</span></div>
+      <div class="calc-row" id="c-slip-row" style="display:none"><span class="k">Проскальзывание</span><span class="v" id="c-slip" style="color:#ff9a5c">—</span></div>
       <div class="calc-row"><span class="k">Комиссия 3%</span><span class="v" id="c-fee">—</span></div>
       <div class="calc-row total"><span class="k" id="c-total-k">Итого спишется</span><span class="v" id="c-total">—</span></div>
     </div>
@@ -558,7 +559,7 @@ if (tg) {
   try { tg.setHeaderColor('#000000'); tg.setBackgroundColor('#000000'); } catch (e) {}
 }
 
-const SLX_CLIENT_VERSION = 'v216';
+const SLX_CLIENT_VERSION = 'v217';
 
 // ─── Логотип SLX (B6 голографик) — единый SVG для всех мест ───
 let _slxLogoSeq = 0;
@@ -916,6 +917,8 @@ function applyState(s) {
   const prevPrice = state.price;
   state.price = s.price;
   state.fee = s.fee_percent;
+  state.liquidity = s.liquidity || 0;   // v217: глубина рынка для расчёта проскальзывания
+  state.slipMax = s.slip_max || 0.40;
   state.portfolio = s.portfolio;
   state.balance = s.balance;
 
@@ -1263,17 +1266,41 @@ function updateCalc() {
   const qty = parseFloat(document.getElementById('m-qty').value) || 0;
   // цена: рыночная или из поля лимита
   const limitPrice = parseFloat(document.getElementById('m-limit-price').value) || 0;
-  const price = (state.orderType === 'limit' && limitPrice > 0) ? limitPrice : state.price;
-  const gross = qty * price;
-  const fee = Math.round(gross * state.fee / 100);
+  const isLimit = state.orderType === 'limit';
+  const price = (isLimit && limitPrice > 0) ? limitPrice : state.price;
   const isBuy = state.mode === 'buy';
+
+  // v217: проскальзывание для рыночных сделок — крупная заявка двигает цену
+  // по ходу исполнения, средняя цена хуже стартовой. Для лимита не считаем.
+  const L = state.liquidity || 0;
+  const slipMax = state.slipMax || 0.40;
+  let impact = 0, avgPrice = price;
+  if (!isLimit && qty > 0 && L > 0) {
+    impact = Math.min(slipMax, (price * qty) / L);
+    avgPrice = isBuy ? price * (1 + impact / 2) : price * (1 - impact / 2);
+  }
+  const gross = qty * avgPrice;
+  const fee = Math.round(gross * state.fee / 100);
+
   document.getElementById('c-gross').textContent = fmt(gross);
   document.getElementById('c-fee').textContent = fmt(fee);
   document.getElementById('c-total').textContent = fmt(isBuy ? gross + fee : gross - fee);
+
+  // строка проскальзывания (показываем только когда оно заметное)
+  const slipRow = document.getElementById('c-slip-row');
+  if (!isLimit && impact > 0.0001 && qty > 0) {
+    const diff = Math.abs(qty * (avgPrice - price));   // переплата (buy) / недобор (sell)
+    document.getElementById('c-slip').textContent =
+      (impact * 100).toFixed(2) + '%  (' + (isBuy ? '+' : '−') + fmt(diff) + ')';
+    slipRow.style.display = 'flex';
+  } else {
+    slipRow.style.display = 'none';
+  }
+
   const cb = document.getElementById('m-confirm');
   if (qty > 0) {
     const verb = isBuy ? 'Купить' : 'Продать';
-    if (state.orderType === 'limit') {
+    if (isLimit) {
       cb.textContent = `${verb} ${qty} SLX по ${fmtFit(price)}`;
     } else {
       cb.textContent = `${verb} ${qty} SLX за ${fmtFit(isBuy ? gross + fee : gross - fee)}`;
@@ -1320,8 +1347,9 @@ document.getElementById('m-confirm').addEventListener('click', async () => {
   btn.disabled = false; btn.textContent = oldTxt;
   if (r && r.ok) {
     haptic('ok');
-    if (state.mode === 'buy') toast('Куплено ' + r.bought + ' SLX за ' + fmt(r.total), 'ok');
-    else toast('Продано ' + r.sold + ' SLX, получено ' + fmt(r.payout), 'ok');
+    const sl = (r.slippage_pct && r.slippage_pct >= 0.5) ? ' · слип ' + r.slippage_pct + '%' : '';
+    if (state.mode === 'buy') toast('Куплено ' + r.bought + ' SLX за ' + fmt(r.total) + sl, 'ok');
+    else toast('Продано ' + r.sold + ' SLX, получено ' + fmt(r.payout) + sl, 'ok');
     closeModal();
     loadState();
   } else {
