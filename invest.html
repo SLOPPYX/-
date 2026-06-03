@@ -77,12 +77,18 @@
   /* Таймер в углу графика (Binance-стиль) */
   .chart-wrap { position: relative; }
   .candle-timer {
-    position: absolute; top: 14px; right: 14px; z-index: 5;
-    font-size: 11px; color: var(--accent-light);
-    background: rgba(10,12,16,0.85); border: 1px solid rgba(58,160,255,0.3);
-    padding: 4px 9px; border-radius: 7px; font-weight: 700;
-    font-variant-numeric: tabular-nums; backdrop-filter: blur(4px);
+    position: absolute; top: 12px; right: 12px; z-index: 5;
+    font-size: 12px; color: var(--accent-light);
+    background: rgba(10,14,22,0.9); border: 1px solid rgba(58,160,255,0.35);
+    padding: 5px 11px; border-radius: 8px; font-weight: 800;
+    font-variant-numeric: tabular-nums; backdrop-filter: blur(6px);
+    letter-spacing: 0.02em; transition: all 0.2s;
   }
+  .candle-timer.ending {
+    color: #ff9a5c; border-color: rgba(255,120,60,0.5);
+    background: rgba(40,20,10,0.9); animation: timerPulse 1s ease-in-out infinite;
+  }
+  @keyframes timerPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
 
   /* ─── График ─── */
   .chart-wrap {
@@ -487,7 +493,7 @@
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
-const SLX_CLIENT_VERSION = 'v212';
+const SLX_CLIENT_VERSION = 'v214';
 
 // ─── Логотип SLX (B6 голографик) — единый SVG для всех мест ───
 let _slxLogoSeq = 0;
@@ -724,18 +730,21 @@ function drawWindow() {
         ctx.lineTo(chartArea.right, py);
         ctx.stroke();
         ctx.restore();
-        // метка-бейдж с ценой справа на линии
+        // метка-бейдж с ценой на линии (левее оси, чтобы не перекрывать цифры)
         ctx.save();
         const label = fmtShort(last.c);
         ctx.font = '700 10px system-ui, sans-serif';
         const tw = ctx.measureText(label).width;
-        const bx = chartArea.right - tw - 12, by = py - 8;
+        const bx = chartArea.right - tw - 16, by = py - 8;
+        ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 4;
         ctx.fillStyle = lineCol;
-        if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(bx, by, tw + 10, 16, 4); ctx.fill(); }
-        else ctx.fillRect(bx, by, tw + 10, 16);
+        if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(bx, by, tw + 11, 16, 4); ctx.fill(); }
+        else ctx.fillRect(bx, by, tw + 11, 16);
+        ctx.shadowBlur = 0;
         ctx.fillStyle = lastUp ? '#03251a' : '#2a0808';
         ctx.textBaseline = 'middle';
-        ctx.fillText(label, bx + 5, by + 8);
+        ctx.font = '800 10px system-ui, sans-serif';
+        ctx.fillText(label, bx + 6, by + 8);
         ctx.restore();
       }
     }
@@ -750,12 +759,16 @@ function drawWindow() {
     options: {
       responsive: true, maintainAspectRatio: false,
       animation: firstRender ? { duration: 500, easing: 'easeOutQuart' } : false,
+      layout: { padding: { right: 6, left: 2, top: 8, bottom: 2 } },
       plugins: { legend: { display: false }, tooltip: { enabled: false } },
       scales: {
-        x: { ticks: { display: false }, grid: { color: '#0f1216' } },
-        y: { position: 'right', min: minY - pad, max: maxY + pad,
-             ticks: { color: '#4a525c', font: { size: 10 }, callback: v => fmtShort(v) },
-             grid: { color: '#0f1216' } }
+        x: { ticks: { display: false }, grid: { display: false } },
+        y: { position: 'right',
+             min: minY - pad, max: maxY + pad,
+             ticks: { color: '#5a6470', font: { size: 9 }, maxTicksLimit: 6,
+                      callback: v => fmtShort(v), padding: 6 },
+             grid: { color: 'rgba(255,255,255,0.03)', drawTicks: false },
+             border: { display: false } }
       }
     },
     plugins: [candlePlugin]
@@ -935,6 +948,8 @@ function tickTimer() {
     return;
   }
   el.textContent = '⏱ ' + fmtTimer(slxTimerLeft);
+  // подсветка на исходе (последние 10 сек минутной свечи)
+  el.classList.toggle('ending', slxTfTotal <= 60 && slxTimerLeft <= 10);
 }
 setInterval(tickTimer, 1000);
 
