@@ -372,16 +372,124 @@
   .splash-title { font-size: 26px; font-weight: 700; color: #eaf2fb; letter-spacing: 0.02em; position: relative; }
   .splash-title b { color: #3aa0ff; }
   .splash-sub { font-size: 12px; color: #5a6470; letter-spacing: 0.35em; margin-top: 6px; text-transform: uppercase; position: relative; }
+  .splash-progress { display: flex; align-items: center; justify-content: center; gap: 11px; margin-top: 26px; position: relative; z-index: 2; }
   .splash-bar {
-    width: 160px; height: 3px; background: #14171c; border-radius: 3px;
-    margin-top: 28px; overflow: hidden; position: relative;
+    width: 180px; height: 4px; background: #14171c; border-radius: 4px;
+    overflow: hidden; position: relative;
   }
   .splash-bar-fill {
-    height: 100%; width: 40%; border-radius: 3px;
-    background: linear-gradient(90deg, transparent, #3aa0ff, transparent);
-    animation: splashBar 1.2s ease-in-out infinite;
+    height: 100%; width: 0%; border-radius: 4px; position: relative;
+    background: linear-gradient(90deg, #3aa0ff, #6fc0ff);
+    box-shadow: 0 0 10px rgba(58,160,255,.6);
+    transition: width .35s cubic-bezier(.4,0,.2,1);   /* плавные скачки между этапами */
   }
-  @keyframes splashBar { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+  /* бегущий блик по заполненной части */
+  .splash-bar-fill::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent);
+    transform: translateX(-100%); animation: barSheen 1.3s ease-in-out infinite;
+  }
+  @keyframes barSheen { 0% { transform: translateX(-100%); } 100% { transform: translateX(220%); } }
+  .splash-pct {
+    font-size: 12px; font-weight: 800; color: #6fc0ff; min-width: 36px; text-align: left;
+    letter-spacing: .03em; font-variant-numeric: tabular-nums; text-shadow: 0 0 8px rgba(58,160,255,.5);
+  }
+
+  /* ─── Загрузочный экран: свечи рост/падение + эффекты (v222) ─── */
+  .splash-candles {
+    display: flex; align-items: center; justify-content: center;
+    gap: 18px; height: 108px; margin-bottom: 30px; position: relative; z-index: 2;
+    background: radial-gradient(ellipse 62% 78% at 50% 50%, rgba(58,160,255,.07), transparent 70%);
+  }
+  /* неоновая базовая линия (от неё растут/падают свечи) */
+  .splash-candles::before {
+    content: ''; position: absolute; left: 4%; right: 4%; top: 50%; height: 1px; transform: translateY(-50%);
+    background: linear-gradient(90deg, transparent, rgba(111,192,255,.6), transparent);
+    box-shadow: 0 0 12px rgba(58,160,255,.5);
+  }
+  /* тонкий неоновый скан-луч, проезжающий по свечам */
+  .splash-candles::after {
+    content: ''; position: absolute; top: -8px; bottom: -8px; width: 2px;
+    background: linear-gradient(180deg, transparent, rgba(150,210,255,.9), transparent);
+    box-shadow: 0 0 14px 3px rgba(111,192,255,.55);
+    animation: scanBeam 3s cubic-bezier(.55,0,.45,1) infinite;
+  }
+  @keyframes scanBeam { 0% { left: 2%; opacity: 0; } 12%,80% { opacity: .9; } 100% { left: 98%; opacity: 0; } }
+
+  .s-candle { position: relative; width: 11px; height: 100%; }
+  .s-candle .wick, .s-candle .body {
+    position: absolute; left: 50%; border-radius: 6px; overflow: hidden;
+    animation: candlePop 2.6s cubic-bezier(.34,1.4,.5,1) infinite;     /* пружинное появление */
+  }
+  .s-candle .wick { width: 2px; border-radius: 2px; height: var(--wh, 46px); opacity: .9; }
+  .s-candle .body { width: 11px; height: var(--h, 32px); box-shadow: 0 0 18px var(--glow); }
+  /* стеклянный блик, бегущий по телу свечи */
+  .s-candle .body::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.55) 50%, transparent 62%);
+    background-size: 250% 250%; animation: candleGlint 2.6s ease-in-out infinite;
+  }
+  .s-candle.up   { --glow: rgba(38,224,160,.6); }                      /* растущие — зелёные */
+  .s-candle.down { --glow: rgba(255,85,96,.55); }                      /* падающие — красные */
+  .s-candle.up   .body { background: linear-gradient(180deg, #69ffc8, #16c489); }
+  .s-candle.up   .wick { background: #4df0b4; box-shadow: 0 0 6px #26e0a0; }
+  .s-candle.down .body { background: linear-gradient(180deg, #ff8088, #e2333f); }
+  .s-candle.down .wick { background: #ff6b73; box-shadow: 0 0 6px #ff5560; }
+  .s-candle.up   .wick, .s-candle.up   .body { bottom: 50%; transform-origin: center bottom; }  /* растут ВВЕРХ */
+  .s-candle.down .wick, .s-candle.down .body { top: 50%;    transform-origin: center top;    }  /* падают ВНИЗ */
+  @keyframes candlePop {
+    0%   { transform: translateX(-50%) scaleY(0);    opacity: .25; }
+    10%  { opacity: 1; }
+    50%  { transform: translateX(-50%) scaleY(1.06); opacity: 1; }   /* лёгкий перелёт */
+    66%  { transform: translateX(-50%) scaleY(.78); }
+    100% { transform: translateX(-50%) scaleY(0);    opacity: .25; }
+  }
+  @keyframes candleGlint { 0%,38% { background-position: 120% 0; } 62%,100% { background-position: -20% 0; } }
+
+  /* орбиты с частицами-спутниками вокруг логотипа */
+  .splash-orbit, .splash-orbit2 { position: absolute; inset: -20px; border-radius: 50%; pointer-events: none; }
+  .splash-orbit  { border: 1px solid rgba(58,160,255,.12);  animation: spin 5.5s linear infinite; }
+  .splash-orbit2 { border: 1px solid rgba(111,192,255,.10); animation: spin 3.8s linear infinite reverse; transform: scale(1.16); }
+  .splash-orbit::before, .splash-orbit2::before {
+    content: ''; position: absolute; width: 7px; height: 7px; border-radius: 50%; top: -4px; left: 50%; margin-left: -3.5px;
+  }
+  .splash-orbit::before  { background: #6fc0ff; box-shadow: 0 0 12px 2px #6fc0ff; }
+  .splash-orbit2::before { background: #26e0a0; box-shadow: 0 0 12px 2px #26e0a0; }
+  /* всплывающие частицы */
+  .splash-particles { position: absolute; inset: -34px; pointer-events: none; }
+  .splash-particles i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #6fc0ff; opacity: 0; animation: particleUp 3s ease-in-out infinite; }
+  @keyframes particleUp { 0% { transform: translateY(14px) scale(.4); opacity: 0; } 30% { opacity: .9; } 100% { transform: translateY(-30px) scale(1); opacity: 0; } }
+
+  /* статус-строка под логотипом */
+  .splash-status {
+    margin-top: 18px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em;
+    color: #6f7c8a; min-height: 15px; position: relative; z-index: 2;
+    transition: opacity 0.25s;
+  }
+  .splash-status b { color: #8fb8e8; font-weight: 700; }
+  .splash-status .dots::after { content: ''; animation: splashDots 1.4s steps(4,end) infinite; }
+  @keyframes splashDots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+
+  /* эквалайзер «пульс рынка» снизу */
+  .splash-eq { display: flex; gap: 4px; align-items: flex-end; height: 26px; margin-top: 22px; position: relative; z-index: 2; }
+  .splash-eq i {
+    width: 3px; border-radius: 2px; background: linear-gradient(180deg, #6fc0ff, #26e0a0);
+    box-shadow: 0 0 7px rgba(58,160,255,.5); animation: splashEq 1.1s ease-in-out infinite;
+  }
+  @keyframes splashEq { 0%,100% { height: 5px; opacity: .65; } 50% { height: 26px; opacity: 1; } }
+
+  /* бегущая строка котировок внизу */
+  .splash-ticker {
+    position: absolute; bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+    left: 0; right: 0; overflow: hidden; white-space: nowrap; z-index: 2;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  }
+  .splash-ticker-track { display: inline-block; padding-left: 100%; animation: tickerScroll 22s linear infinite; }
+  .splash-ticker .t-item { display: inline-block; margin: 0 16px; font-size: 11px; font-weight: 700; color: #56616e; letter-spacing: 0.05em; }
+  .splash-ticker .t-up { color: #26e0a0; }
+  .splash-ticker .t-down { color: #ff5560; }
+  @keyframes tickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
   /* ─── Эффекты (v199) ─── */
   /* Свечение сверху за логотипом */
@@ -412,13 +520,49 @@
 <!-- ═══ ЗАГРУЗОЧНЫЙ ЭКРАН ═══ -->
 <div class="splash" id="splash">
   <div class="splash-glow"></div>
+
+  <!-- 4 свечи: зелёные растут вверх, красные падают вниз -->
+  <div class="splash-candles" aria-hidden="true">
+    <div class="s-candle up"   style="animation-delay:0s">   <span class="wick" style="--wh:50px"></span><span class="body" style="--h:34px"></span></div>
+    <div class="s-candle down" style="animation-delay:.32s"> <span class="wick" style="--wh:62px"></span><span class="body" style="--h:46px"></span></div>
+    <div class="s-candle up"   style="animation-delay:.64s"> <span class="wick" style="--wh:42px"></span><span class="body" style="--h:28px"></span></div>
+    <div class="s-candle down" style="animation-delay:.96s"> <span class="wick" style="--wh:56px"></span><span class="body" style="--h:40px"></span></div>
+  </div>
+
   <div class="splash-logo">
+    <div class="splash-orbit"></div>
+    <div class="splash-orbit2"></div>
+    <div class="splash-particles" aria-hidden="true">
+      <i style="left:10%;top:60%;animation-delay:0s"></i>
+      <i style="left:82%;top:50%;animation-delay:.6s;background:#26e0a0"></i>
+      <i style="left:30%;top:75%;animation-delay:1.2s"></i>
+      <i style="left:65%;top:70%;animation-delay:1.8s;background:#26e0a0"></i>
+      <i style="left:48%;top:55%;animation-delay:2.4s"></i>
+    </div>
     <div class="splash-ring"></div>
     <div class="splash-coin" id="logo-splash"></div>
   </div>
   <div class="splash-title">Биржа <b>SloppyX</b></div>
   <div class="splash-sub">SLX Exchange</div>
-  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+  <div class="splash-progress">
+    <div class="splash-bar"><div class="splash-bar-fill" id="splash-bar-fill"></div></div>
+    <div class="splash-pct" id="splash-pct">0%</div>
+  </div>
+
+  <!-- меняющийся статус под логотипом -->
+  <div class="splash-status" id="splash-status"><b>Соединяемся с рынком</b><span class="dots"></span></div>
+
+  <!-- эквалайзер «пульс рынка» -->
+  <div class="splash-eq" aria-hidden="true">
+    <i style="animation-delay:0s"></i><i style="animation-delay:.12s"></i><i style="animation-delay:.24s"></i>
+    <i style="animation-delay:.36s"></i><i style="animation-delay:.48s"></i><i style="animation-delay:.36s"></i>
+    <i style="animation-delay:.24s"></i><i style="animation-delay:.12s"></i><i style="animation-delay:0s"></i>
+  </div>
+
+  <!-- бегущая строка котировок снизу -->
+  <div class="splash-ticker" aria-hidden="true">
+    <div class="splash-ticker-track" id="splash-ticker-track"></div>
+  </div>
 </div>
 
 <!-- ═══ ВКЛАДКА: ГРАФИК ═══ -->
@@ -592,7 +736,7 @@ if (tg) {
   setTimeout(applyTgInsets, 600);
 }
 
-const SLX_CLIENT_VERSION = 'v219';
+const SLX_CLIENT_VERSION = 'v223';
 
 // ─── Логотип SLX (B6 голографик) — единый SVG для всех мест ───
 let _slxLogoSeq = 0;
@@ -1314,10 +1458,13 @@ function updateCalc() {
     impact = Math.min(slipMax, (price * qty) / L);
     avgPrice = isBuy ? price * (1 + impact / 2) : price * (1 - impact / 2);
   }
-  const gross = qty * avgPrice;
+  const gross = qty * avgPrice;          // фактическая сумма сделки (со слипом)
+  const marketGross = qty * price;       // сумма по рыночной цене (без слипа)
   const fee = Math.round(gross * state.fee / 100);
 
-  document.getElementById('c-gross').textContent = fmt(gross);
+  // «Стоимость» показываем по рынку, чтобы Слип и Комиссия читались как реальные
+  // вычеты и строки сходились сверху вниз к «Итого»
+  document.getElementById('c-gross').textContent = fmt(marketGross);
   document.getElementById('c-fee').textContent = fmt(fee);
   document.getElementById('c-total').textContent = fmt(isBuy ? gross + fee : gross - fee);
 
@@ -1443,19 +1590,72 @@ async function loadOrders() {
   if (h) h.innerHTML = slxLogo(46);
   if (sp) sp.innerHTML = slxLogo(110);
 })();
+
+// ─── Анимации загрузочного экрана (v220): бегущая строка + статусы ───
+(function initSplashFx() {
+  const track = document.getElementById('splash-ticker-track');
+  if (track) {
+    const items = [
+      ['SLX', '▲ +8.31%', 'up'], ['ОБЪЁМ', '3.8B', ''], ['ATH', '145.3k', ''],
+      ['КАП.', '108.9M', ''], ['ПОКУПАЮТ', '73%', 'up'], ['SLX / TOKEN', '110 787', ''],
+      ['24Ч', '▲ +12.4%', 'up'], ['ЛИКВИДНОСТЬ', '44.3M', ''], ['МИН', '▼ 41.0k', 'down']
+    ];
+    const html = items.map(([k, v, c]) =>
+      `<span class="t-item">${k} <span class="${c === 'up' ? 't-up' : c === 'down' ? 't-down' : ''}">${v}</span></span>`).join('');
+    track.innerHTML = html + html;   // дублируем — бесшовная прокрутка
+  }
+})();
+
+// ─── РЕАЛЬНЫЙ прогресс загрузки (v223) ───
+// Полоса и проценты заполняются по фактическим этапам: ресурсы (скрипты/шрифты,
+// зависит от интернета пользователя) + запрос котировок с сервера. На медленном
+// соединении экран честно держится дольше, на быстром — улетает мгновенно.
 const _splashStart = Date.now();
-async function _boot() {
-  await loadState();
-  // показываем сплеш минимум 1.6 сек (чтобы анимация ощущалась)
-  const elapsed = Date.now() - _splashStart;
-  const wait = Math.max(0, 1600 - elapsed);
+let _splashProg = 0, _resOk = false, _stateOk = false, _splashDone = false;
+
+function _setProg(pct, label) {
+  _splashProg = Math.min(100, Math.max(_splashProg, pct));
+  const fill = document.getElementById('splash-bar-fill');
+  const num  = document.getElementById('splash-pct');
+  const st   = document.getElementById('splash-status');
+  if (fill) fill.style.width = _splashProg + '%';
+  if (num)  num.textContent = Math.round(_splashProg) + '%';
+  if (st && label) st.innerHTML = '<b>' + label + '</b><span class="dots"></span>';
+}
+
+// мягкий «докрут» между этапами, но не выше 88% пока реально не загрузилось
+let _splashTrickle = setInterval(() => {
+  if (_splashProg < 88 && !_splashDone) _setProg(_splashProg + 0.6);
+}, 120);
+
+function _finishSplash() {
+  if (_splashDone || !(_resOk && _stateOk)) return;   // ждём И ресурсы, И котировки
+  _splashDone = true;
+  clearInterval(_splashTrickle);
+  _setProg(100, 'Готово');
+  const wait = Math.max(0, 550 - (Date.now() - _splashStart));  // даём 100% мелькнуть
   setTimeout(() => {
     const sp = document.getElementById('splash');
     if (sp) sp.classList.add('hide');
   }, wait);
 }
+
+_setProg(15, 'Инициализация');
+
+// ресурсы страницы (скрипты/шрифты/картинки) — зависит от сети пользователя
+function _onResLoaded() { _resOk = true; _setProg(60, 'Ресурсы загружены'); _finishSplash(); }
+if (document.readyState === 'complete') _onResLoaded();
+else window.addEventListener('load', _onResLoaded);
+
+async function _boot() {
+  _setProg(40, 'Подключение к рынку');
+  await loadState();                         // реальный сетевой запрос котировок
+  _stateOk = true;
+  _setProg(85, 'Котировки получены');
+  loadOrders().then(() => _setProg(95)).catch(() => {});
+  _finishSplash();
+}
 _boot();
-loadOrders();
 setInterval(loadState, 5000);  // живой график: обновляем каждые 5 сек
 setInterval(loadOrders, 8000); // обновляем список ордеров
 </script>
