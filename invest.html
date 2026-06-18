@@ -330,6 +330,33 @@
 
   .tab-page { display: none; }
   .tab-page.active { display: block; }
+
+  /* ─── Экран «Рынок» (v225) ─── */
+  .mkt-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:18px; gap:12px; }
+  .mkt-top h1 { font-size:26px; font-weight:800; letter-spacing:-.5px; }
+  .mkt-subt { font-size:13px; color:var(--text3); font-weight:600; margin-top:3px; }
+  .mkt-create { background:linear-gradient(135deg,var(--accent),var(--accent-light)); color:#04101f; font-weight:800; font-size:13.5px; padding:11px 15px; border-radius:14px; border:none; display:flex; align-items:center; gap:6px; box-shadow:0 0 18px rgba(58,160,255,.35); cursor:pointer; white-space:nowrap; flex-shrink:0; }
+  .mkt-create:active { transform:scale(.97); }
+  .mkt-search { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 15px; margin-bottom:18px; display:flex; align-items:center; gap:10px; }
+  .mkt-search input { background:none; border:none; outline:none; color:var(--text); font-size:15px; font-weight:500; width:100%; padding:0; }
+  .mkt-search input::placeholder { color:var(--text3); }
+  .mkt-sec { font-size:12px; color:var(--text3); font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin:8px 2px 11px; }
+  .tok-card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:15px 16px; margin-bottom:11px; display:flex; align-items:center; gap:13px; cursor:pointer; transition:border-color .15s, transform .08s; }
+  .tok-card:active { transform:scale(.99); }
+  .tok-card.feat { background:linear-gradient(135deg, rgba(58,160,255,.10), rgba(10,13,18,.35)); border-color:rgba(58,160,255,.30); }
+  .tok-logo { width:46px; height:46px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; overflow:hidden; }
+  .tok-mid { flex:1; min-width:0; }
+  .tok-tk { font-weight:800; font-size:17px; display:flex; align-items:center; gap:7px; }
+  .tok-badge { font-size:10px; font-weight:700; color:var(--accent-light); background:rgba(58,160,255,.14); padding:2px 7px; border-radius:6px; letter-spacing:.03em; white-space:nowrap; }
+  .tok-by { font-size:12.5px; color:var(--text2); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tok-spark { width:56px; height:30px; flex-shrink:0; }
+  .tok-right { text-align:right; flex-shrink:0; min-width:84px; }
+  .tok-price { font-weight:800; font-size:16px; }
+  .tok-chg { font-size:13px; font-weight:700; margin-top:3px; }
+  .tok-soon { opacity:.5; cursor:default; }
+  .tok-soon:active { transform:none; }
+  .back-btn { display:inline-flex; align-items:center; gap:5px; background:var(--card); border:1px solid var(--border); color:var(--text2); font-size:14px; font-weight:600; padding:8px 13px; border-radius:12px; cursor:pointer; margin-bottom:14px; }
+  .back-btn:active { transform:scale(.97); }
   .loading { text-align: center; color: var(--text3); padding: 40px; font-size: 13px; }
 
   .spinner {
@@ -566,7 +593,46 @@
 </div>
 
 <!-- ═══ ВКЛАДКА: ГРАФИК ═══ -->
-<div class="tab-page active" id="tab-chart">
+<div class="tab-page active" id="tab-market">
+  <div class="mkt-top">
+    <div>
+      <h1>Рынок</h1>
+      <div class="mkt-subt">SloppyX Exchange · 1 токен</div>
+    </div>
+    <button class="mkt-create" id="mkt-create">+ Запустить</button>
+  </div>
+
+  <div class="mkt-search">
+    <span style="color:var(--text3)">🔍</span>
+    <input id="mkt-q" placeholder="Поиск токена…" autocomplete="off">
+  </div>
+
+  <div class="mkt-sec">★ Главный токен</div>
+  <div class="tok-card feat" id="card-slx">
+    <div class="tok-logo" id="logo-mkt"></div>
+    <div class="tok-mid">
+      <div class="tok-tk">SLX <span class="tok-badge">платформа</span></div>
+      <div class="tok-by">SloppyX Coin</div>
+    </div>
+    <div class="tok-spark" id="mkt-spark"></div>
+    <div class="tok-right">
+      <div class="tok-price" id="mkt-price">—</div>
+      <div class="tok-chg" id="mkt-chg">—</div>
+    </div>
+  </div>
+
+  <div class="mkt-sec">🚀 Токены игроков</div>
+  <div class="tok-card tok-soon" id="card-soon">
+    <div class="tok-logo" style="background:var(--card2);color:var(--text3)">🔒</div>
+    <div class="tok-mid">
+      <div class="tok-tk" style="color:var(--text2)">Скоро</div>
+      <div class="tok-by">Игроки смогут запускать свои монеты</div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-page" id="tab-chart">
+  <button class="back-btn" id="chart-back">‹ Рынок</button>
   <div class="header">
     <div class="coin-id">
       <div class="coin-logo" id="logo-header"></div>
@@ -658,7 +724,7 @@
 
 <!-- ═══ Нижняя навигация ═══ -->
 <div class="navbar">
-  <div class="nav-item active" data-tab="chart"><span class="nav-icon">📈</span>График</div>
+  <div class="nav-item active" data-tab="market"><span class="nav-icon">📈</span>Рынок</div>
   <div class="nav-item" data-tab="port"><span class="nav-icon">💼</span>Портфель</div>
   <div class="nav-item" data-tab="history"><span class="nav-icon">🧾</span>История</div>
 </div>
@@ -736,7 +802,7 @@ if (tg) {
   setTimeout(applyTgInsets, 600);
 }
 
-const SLX_CLIENT_VERSION = 'v223';
+const SLX_CLIENT_VERSION = 'v225';
 
 // ─── Логотип SLX (B6 голографик) — единый SVG для всех мест ───
 let _slxLogoSeq = 0;
@@ -768,6 +834,26 @@ const TG_INIT_DATA = (tg && tg.initData) ? tg.initData : '';
 
 let state = { price: 0, fee: 3, portfolio: null, balance: 0, mode: 'buy', period: '1m', orderType: 'market' };
 let chart = null;
+let _lastCandles = null;
+
+// мини-спарклайн для карточки рынка из последних свечей
+function buildSparkline(candles, up) {
+  if (!candles || candles.length < 2) return '';
+  const closes = candles.slice(-30).map(c => c.c);
+  const min = Math.min.apply(null, closes), max = Math.max.apply(null, closes), rng = (max - min) || 1;
+  const W = 56, H = 30, n = closes.length;
+  const pts = closes.map((v, i) => (i / (n - 1) * W).toFixed(1) + ',' + (H - ((v - min) / rng) * (H - 4) - 2).toFixed(1)).join(' ');
+  const col = up ? '#1fc885' : '#e24b4a';
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '"><polyline points="' + pts + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+}
+
+// перерисовка графика при показе торгового экрана (был скрыт → размер 0)
+function redrawChart() {
+  try { if (chart && chart.resize) chart.resize(); } catch (e) {}
+  if (_lastCandles) { try { renderChart(_lastCandles); } catch (e) {} }
+  try { if (chart && chart.resize) chart.resize(); } catch (e) {}
+  try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+}
 
 // ─── API ───
 function _timeout(p, ms) {
@@ -1112,6 +1198,15 @@ function applyState(s) {
   chgEl.textContent = (up ? '▲ +' : '▼ ') + s.change_pct + '%';
   chgEl.style.color = up ? 'var(--up)' : 'var(--down)';
 
+  // карточка на экране «Рынок» — живая цена/изменение/спарклайн
+  _lastCandles = s.candles;
+  const mp = document.getElementById('mkt-price');
+  if (mp) mp.textContent = fmtFit(s.price);
+  const mc = document.getElementById('mkt-chg');
+  if (mc) { mc.textContent = (up ? '▲ +' : '▼ ') + s.change_pct + '%'; mc.style.color = up ? 'var(--up)' : 'var(--down)'; }
+  const ms = document.getElementById('mkt-spark');
+  if (ms) ms.innerHTML = buildSparkline(s.candles, up);
+
   // статистика
   document.getElementById('st-high').textContent = fmtShort(s.high_24h);
   document.getElementById('st-low').textContent = fmtShort(s.low_24h);
@@ -1370,14 +1465,32 @@ document.querySelectorAll('.period').forEach(el => {
 });
 
 // ─── Навигация вкладок ───
+function showPage(id, navTab) {
+  document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('tab-' + id);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === (navTab || id)));
+  if (id === 'chart') setTimeout(redrawChart, 40);   // график был скрыт — пересчитать размер
+  try { window.scrollTo(0, 0); } catch (e) {}
+}
 document.querySelectorAll('.nav-item').forEach(item => {
-  item.addEventListener('click', () => {
-    const tab = item.dataset.tab;
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n === item));
-    document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
-    document.getElementById('tab-' + tab).classList.add('active');
-    haptic();
-  });
+  item.addEventListener('click', () => { showPage(item.dataset.tab); haptic(); });
+});
+// тап по карточке SLX → торговый экран
+const _cardSlx = document.getElementById('card-slx');
+if (_cardSlx) _cardSlx.addEventListener('click', () => { showPage('chart', 'market'); haptic(); });
+// «назад» из торгового экрана к рынку
+const _chartBack = document.getElementById('chart-back');
+if (_chartBack) _chartBack.addEventListener('click', () => { showPage('market'); haptic(); });
+// запуск токенов — этап 2 (только админ), пока заглушка
+const _mktCreate = document.getElementById('mkt-create');
+if (_mktCreate) _mktCreate.addEventListener('click', () => { toast('Запуск токенов скоро', 'ok'); haptic(); });
+// поиск (пока один токен)
+const _mktQ = document.getElementById('mkt-q');
+if (_mktQ) _mktQ.addEventListener('input', function () {
+  const q = this.value.trim().toLowerCase();
+  const show = !q || ('slx sloppyx').indexOf(q) !== -1;
+  const c = document.getElementById('card-slx'); if (c) c.style.display = show ? 'flex' : 'none';
 });
 
 // ─── Модалка покупки/продажи ───
@@ -1587,8 +1700,10 @@ async function loadOrders() {
 (function initLogos() {
   const h = document.getElementById('logo-header');
   const sp = document.getElementById('logo-splash');
+  const mk = document.getElementById('logo-mkt');
   if (h) h.innerHTML = slxLogo(46);
   if (sp) sp.innerHTML = slxLogo(110);
+  if (mk) mk.innerHTML = slxLogo(44);
 })();
 
 // ─── Анимации загрузочного экрана (v220): бегущая строка + статусы ───
