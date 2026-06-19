@@ -305,6 +305,17 @@
   .calc-row .v { color: #dfe6ee; font-weight: 600; }
   .calc-row.total .v { color: var(--accent-light); font-size: 15px; }
   .modal-btns { display: flex; gap: 10px; }
+  .lp-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px 15px; margin-top:12px; }
+  .lp-card-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .lp-card-t { font-weight:800; font-size:15px; }
+  .lp-card-s { color:var(--text2); font-size:12px; margin-top:3px; }
+  .lp-card-btn { background:linear-gradient(135deg,var(--accent),var(--accent-light)); color:#04101f; font-weight:800; font-size:13px; padding:9px 15px; border:none; border-radius:11px; cursor:pointer; white-space:nowrap; }
+  .lp-card-btn:active { transform:scale(.97); }
+  .lp-stats { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:6px 12px; margin-bottom:14px; }
+  .lp-stat { display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border); }
+  .lp-stat:last-child { border-bottom:none; }
+  .lp-stat .k { color:var(--text2); font-size:13px; }
+  .lp-stat .v { font-weight:800; font-size:14px; }
   .modal-cancel {
     flex: 1; background: transparent; border: 1px solid var(--border2);
     color: var(--text2); border-radius: 12px; padding: 14px; font-weight: 700;
@@ -758,6 +769,17 @@
     <button class="btn btn-sell" id="btn-sell">↓ ПРОДАТЬ<span class="btn-sub" id="sell-sub">—</span></button>
   </div>
   <div class="foot-note" id="foot">Комиссия 3% · Баланс: — токенов</div>
+
+  <div class="lp-card" id="lp-card">
+    <div class="lp-card-row">
+      <div>
+        <div class="lp-card-t">💧 Ликвидность</div>
+        <div class="lp-card-s" id="lp-card-sub">Заблокируй токены — получай долю комиссии 3%</div>
+      </div>
+      <button class="lp-card-btn" id="lp-open">Управлять</button>
+    </div>
+  </div>
+
   <div id="orders-box" class="orders-box"></div>
 </div>
 
@@ -823,6 +845,34 @@
   </div>
 </div>
 
+<!-- ═══ Модалка ликвидности ═══ -->
+<div class="modal-bg" id="lp-modal-bg">
+  <div class="modal">
+    <div class="modal-title">💧 Ликвидность SLX</div>
+    <div class="modal-sub">Заблокируй токены — зарабатывай долю комиссии 3% и углубляй рынок</div>
+    <div class="lp-stats">
+      <div class="lp-stat"><span class="k">Пул (глубина рынка)</span><span class="v" id="lp-pool">—</span></div>
+      <div class="lp-stat"><span class="k">Ваш вклад</span><span class="v" id="lp-mine">—</span></div>
+      <div class="lp-stat"><span class="k">Ваша доля</span><span class="v" id="lp-share">—</span></div>
+      <div class="lp-stat"><span class="k">Накоплено комиссии</span><span class="v" id="lp-pending" style="color:var(--up)">—</span></div>
+    </div>
+    <label class="limit-label">Сумма (токенов)</label>
+    <input type="number" class="qty-input" id="lp-amount" placeholder="0" min="0" inputmode="numeric">
+    <div class="quick-row" id="lp-quick">
+      <button class="quick-btn" data-lp="balance">Макс баланс</button>
+      <button class="quick-btn" data-lp="stake">Весь вклад</button>
+    </div>
+    <div class="modal-btns" style="flex-direction:column;gap:8px;">
+      <div style="display:flex;gap:10px;width:100%;">
+        <button class="modal-confirm buy" id="lp-add" style="flex:1;">Добавить</button>
+        <button class="modal-confirm sell" id="lp-remove" style="flex:1;">Вывести</button>
+      </div>
+      <button class="modal-confirm" id="lp-claim" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent-light));color:#04101f;">Забрать комиссию</button>
+      <button class="modal-cancel" id="lp-cancel" style="width:100%;">Закрыть</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -866,7 +916,7 @@ if (tg) {
   setTimeout(applyTgInsets, 600);
 }
 
-const SLX_CLIENT_VERSION = 'v227';
+const SLX_CLIENT_VERSION = 'v228';
 
 // ─── Логотип SLX (B6 голографик) — единый SVG для всех мест ───
 let _slxLogoSeq = 0;
@@ -1282,6 +1332,19 @@ function applyState(s) {
   state.slipMax = s.slip_max || 0.40;
   state.portfolio = s.portfolio;
   state.balance = s.balance;
+  state.lp = s.lp || { amount: 0, pending: 0, share: 0 };
+  state.liquidityPool = s.liquidity_pool || s.liquidity || 0;
+  // подпись карточки ликвидности на экране монеты
+  const lpSub = document.getElementById('lp-card-sub');
+  if (lpSub) {
+    if (state.lp.amount > 0) {
+      lpSub.innerHTML = 'Ваш вклад: <b>' + fmtFit(state.lp.amount) + '</b> · доход: <b style="color:var(--up)">+' + fmtFit(state.lp.pending) + '</b>';
+    } else {
+      lpSub.textContent = 'Заблокируй токены — получай долю комиссии 3%';
+    }
+  }
+  // если модалка ликвидности открыта — обновим её цифры вживую
+  if (document.getElementById('lp-modal-bg').classList.contains('show')) fillLpModal();
 
   // цена + изменение (с вспышкой при изменении)
   const pxEl = document.getElementById('px');
@@ -1672,6 +1735,53 @@ document.querySelectorAll('.ot-opt').forEach(opt => {
   });
 });
 function closeModal() { document.getElementById('modal-bg').classList.remove('show'); }
+
+// ─── Ликвидность (LP): модалка добавить/вывести/забрать (v228) ───
+function fillLpModal() {
+  const lp = state.lp || { amount: 0, pending: 0, share: 0 };
+  document.getElementById('lp-pool').textContent = fmtFit(state.liquidityPool || 0);
+  document.getElementById('lp-mine').textContent = fmtFit(lp.amount || 0);
+  document.getElementById('lp-share').textContent = (lp.share || 0) + '%';
+  document.getElementById('lp-pending').textContent = '+' + fmtFit(lp.pending || 0);
+}
+function openLpModal() { fillLpModal(); document.getElementById('lp-amount').value = ''; document.getElementById('lp-modal-bg').classList.add('show'); }
+function closeLpModal() { document.getElementById('lp-modal-bg').classList.remove('show'); }
+
+async function lpAction(path, amount) {
+  try {
+    const body = (amount != null) ? { amount: amount } : {};
+    const r = await apiPost(path, body);
+    if (!r || r.ok === false) { toast((r && r.message) || 'Ошибка', 'err'); return; }
+    if (typeof r.fees === 'number' && r.fees > 0) toast('Забрано комиссии: ' + fmtFit(r.fees), 'ok');
+    else toast('Готово', 'ok');
+    haptic('success');
+    await loadState();        // обновит state.lp / баланс
+    fillLpModal();
+  } catch (e) { toast('Ошибка сети', 'err'); }
+}
+
+document.getElementById('lp-open').addEventListener('click', () => { openLpModal(); haptic(); });
+document.getElementById('lp-cancel').addEventListener('click', closeLpModal);
+document.getElementById('lp-modal-bg').addEventListener('click', (e) => { if (e.target.id === 'lp-modal-bg') closeLpModal(); });
+document.querySelectorAll('#lp-quick .quick-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    const which = b.dataset.lp;
+    const v = which === 'stake' ? (state.lp && state.lp.amount || 0) : (state.balance || 0);
+    document.getElementById('lp-amount').value = Math.floor(v) || '';
+    haptic();
+  });
+});
+document.getElementById('lp-add').addEventListener('click', () => {
+  const a = Math.floor(parseFloat(document.getElementById('lp-amount').value) || 0);
+  if (a <= 0) { toast('Введите сумму', 'err'); return; }
+  lpAction('/casino/slx/lp/add', a);
+});
+document.getElementById('lp-remove').addEventListener('click', () => {
+  const a = Math.floor(parseFloat(document.getElementById('lp-amount').value) || 0);
+  lpAction('/casino/slx/lp/remove', a > 0 ? a : 0);   // 0 → вывести всё (сервер так трактует)
+});
+document.getElementById('lp-claim').addEventListener('click', () => { lpAction('/casino/slx/lp/claim', null); });
+
 
 function updateCalc() {
   const qty = parseFloat(document.getElementById('m-qty').value) || 0;
