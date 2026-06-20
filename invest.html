@@ -399,6 +399,23 @@
   .hero-range .r-track { flex:1; height:5px; border-radius:4px; background:var(--border2); position:relative; }
   .hero-range .r-track i { position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:linear-gradient(90deg, var(--accent), var(--accent-light)); }
   .hero-range .r-dot { position:absolute; top:50%; width:10px; height:10px; border-radius:50%; background:#fff; transform:translate(-50%,-50%); box-shadow:0 0 8px rgba(255,255,255,.6); }
+
+  /* переливающаяся подсветка hero-карточки */
+  .tok-card.hero { animation: heroGlow 7s ease-in-out infinite; }
+  @keyframes heroGlow {
+    0%,100% { box-shadow: 0 0 0 1px rgba(58,160,255,.30), 0 8px 34px -12px rgba(58,160,255,.55); }
+    33%     { box-shadow: 0 0 0 1px rgba(38,224,160,.30), 0 8px 34px -12px rgba(38,224,160,.55); }
+    66%     { box-shadow: 0 0 0 1px rgba(177,76,255,.30), 0 8px 34px -12px rgba(177,76,255,.55); }
+  }
+  /* бегущий блик по hero-карточке */
+  .hero-sheen { position:absolute; inset:0; pointer-events:none; z-index:0; background:linear-gradient(115deg, transparent 42%, rgba(255,255,255,.07) 50%, transparent 58%); transform:translateX(-130%); animation: heroSheen 5.5s ease-in-out infinite; }
+  @keyframes heroSheen { 0%,100% { transform:translateX(-130%); } 55% { transform:translateX(130%); } }
+  /* анимированный SVG-индикатор LIVE */
+  .live-badge { display:inline-flex; align-items:center; gap:6px; font-size:10px; font-weight:800; letter-spacing:.08em; color:var(--up); }
+  .live-badge .lv { position:relative; width:16px; height:16px; }
+  .live-badge .lv svg { width:16px; height:16px; overflow:visible; }
+  .live-badge .lv .ring { transform-origin:center; transform-box:fill-box; animation: liveRing 1.7s ease-out infinite; }
+  @keyframes liveRing { 0% { transform:scale(.5); opacity:.9; } 100% { transform:scale(2.6); opacity:0; } }
   .loading { text-align: center; color: var(--text3); padding: 40px; font-size: 13px; }
 
   .spinner {
@@ -670,8 +687,12 @@
     </div>
   </div>
 
-  <div class="mkt-sec" id="sec-main"><svg class="svgi fill" viewBox="0 0 24 24"><polygon points="12 2 15 9 22 9.2 16.5 14 18.5 21.5 12 17.3 5.5 21.5 7.5 14 2 9.2 9 9"/></svg>Главный токен</div>
+  <div class="mkt-sec" id="sec-main" style="justify-content:space-between;">
+    <span style="display:inline-flex;align-items:center;"><svg class="svgi fill" viewBox="0 0 24 24"><polygon points="12 2 15 9 22 9.2 16.5 14 18.5 21.5 12 17.3 5.5 21.5 7.5 14 2 9.2 9 9"/></svg>Главный токен</span>
+    <span class="live-badge"><span class="lv"><svg viewBox="0 0 16 16"><circle class="ring" cx="8" cy="8" r="3.5" fill="none" stroke="#26e0a0" stroke-width="1.5"/><circle cx="8" cy="8" r="3" fill="#26e0a0"/></svg></span>LIVE</span>
+  </div>
   <div class="tok-card feat hero" id="card-slx">
+    <i class="hero-sheen"></i>
     <div class="hero-top">
       <div class="tok-rank">#1</div>
       <div class="tok-logo" id="logo-mkt"></div>
@@ -916,7 +937,7 @@ if (tg) {
   setTimeout(applyTgInsets, 600);
 }
 
-const SLX_CLIENT_VERSION = 'v228';
+const SLX_CLIENT_VERSION = 'v229';
 
 // ─── Логотип SLX (B6 голографик) — единый SVG для всех мест ───
 let _slxLogoSeq = 0;
@@ -1031,6 +1052,8 @@ function fmt(n) { return Math.round(n).toLocaleString('ru-RU'); }
 function fmtShort(n) {
   n = Number(n) || 0;
   const abs = Math.abs(n);
+  if (abs >= 1e18) return (n/1e18).toFixed(2) + 'E';   // квинтиллион
+  if (abs >= 1e15) return (n/1e15).toFixed(2) + 'Q';   // квадриллион
   if (abs >= 1e12) return (n/1e12).toFixed(2) + 'T';
   if (abs >= 1e9)  return (n/1e9).toFixed(2) + 'B';
   if (abs >= 1e6)  return (n/1e6).toFixed(2) + 'M';
@@ -1771,16 +1794,28 @@ document.querySelectorAll('#lp-quick .quick-btn').forEach(b => {
     haptic();
   });
 });
+// подтверждение действия (нативное окно Telegram, с запасным window.confirm)
+function askConfirm(msg, cb) {
+  if (tg && tg.showConfirm) { try { tg.showConfirm(msg, (ok) => { if (ok) cb(); }); return; } catch (e) {} }
+  if (window.confirm(msg)) cb();
+}
+
 document.getElementById('lp-add').addEventListener('click', () => {
   const a = Math.floor(parseFloat(document.getElementById('lp-amount').value) || 0);
   if (a <= 0) { toast('Введите сумму', 'err'); return; }
-  lpAction('/casino/slx/lp/add', a);
+  if (a > (state.balance || 0)) { toast('Недостаточно токенов', 'err'); return; }
+  haptic();
+  askConfirm('Заблокировать ' + fmtFit(a) + ' токенов в ликвидности?\nТокены будут заморожены, пока не выведешь.', () => lpAction('/casino/slx/lp/add', a));
 });
 document.getElementById('lp-remove').addEventListener('click', () => {
   const a = Math.floor(parseFloat(document.getElementById('lp-amount').value) || 0);
-  lpAction('/casino/slx/lp/remove', a > 0 ? a : 0);   // 0 → вывести всё (сервер так трактует)
+  const stake = (state.lp && state.lp.amount) || 0;
+  if (stake <= 0) { toast('У вас нет вклада', 'err'); return; }
+  const amt = (a > 0 && a < stake) ? a : stake;   // пусто/всё → вывести весь вклад
+  haptic();
+  askConfirm('Вывести ' + fmtFit(amt) + ' токенов из ликвидности?\nНакопленная комиссия придёт вместе с выводом.', () => lpAction('/casino/slx/lp/remove', amt));
 });
-document.getElementById('lp-claim').addEventListener('click', () => { lpAction('/casino/slx/lp/claim', null); });
+document.getElementById('lp-claim').addEventListener('click', () => { haptic(); lpAction('/casino/slx/lp/claim', null); });
 
 
 function updateCalc() {
