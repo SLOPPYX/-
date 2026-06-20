@@ -281,6 +281,11 @@
   }
   .ot-opt.active { background: var(--accent); color: #001a33; }
   .limit-label { display: block; color: var(--text3); font-size: 11px; margin: 0 0 5px 2px; }
+  .qty-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
+  .qty-head .limit-label { margin:0 0 0 2px; }
+  .unit-tog { display:inline-flex; background:var(--card2); border:1px solid var(--border2); border-radius:9px; padding:2px; gap:2px; }
+  .unit-tog .ut-opt { font-size:11px; font-weight:700; color:var(--text3); padding:4px 11px; border-radius:7px; cursor:pointer; transition:.15s; }
+  .unit-tog .ut-opt.active { background:var(--accent); color:#04101f; }
   .limit-price-wrap { margin-bottom: 12px; }
   .limit-input { font-size: 18px; margin-bottom: 0; }
   .qty-input {
@@ -345,6 +350,7 @@
   /* ─── Экран «Рынок» (v225) ─── */
   .mkt-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:18px; gap:12px; }
   .mkt-top h1 { font-size:26px; font-weight:800; letter-spacing:-.5px; }
+  .mkt-title-svg { display:block; height:40px; width:auto; margin:-3px 0 2px -1px; overflow:visible; }
   .mkt-subt { font-size:13px; color:var(--text3); font-weight:600; margin-top:3px; }
   .mkt-create { background:linear-gradient(135deg,var(--accent),var(--accent-light)); color:#04101f; font-weight:800; font-size:13.5px; padding:11px 15px; border-radius:14px; border:none; display:flex; align-items:center; gap:6px; box-shadow:0 0 18px rgba(58,160,255,.35); cursor:pointer; white-space:nowrap; flex-shrink:0; }
   .mkt-create:active { transform:scale(.97); }
@@ -410,12 +416,6 @@
   /* бегущий блик по hero-карточке */
   .hero-sheen { position:absolute; inset:0; pointer-events:none; z-index:0; background:linear-gradient(115deg, transparent 42%, rgba(255,255,255,.07) 50%, transparent 58%); transform:translateX(-130%); animation: heroSheen 5.5s ease-in-out infinite; }
   @keyframes heroSheen { 0%,100% { transform:translateX(-130%); } 55% { transform:translateX(130%); } }
-  /* анимированный SVG-индикатор LIVE */
-  .live-badge { display:inline-flex; align-items:center; gap:6px; font-size:10px; font-weight:800; letter-spacing:.08em; color:var(--up); }
-  .live-badge .lv { position:relative; width:16px; height:16px; }
-  .live-badge .lv svg { width:16px; height:16px; overflow:visible; }
-  .live-badge .lv .ring { transform-origin:center; transform-box:fill-box; animation: liveRing 1.7s ease-out infinite; }
-  @keyframes liveRing { 0% { transform:scale(.5); opacity:.9; } 100% { transform:scale(2.6); opacity:0; } }
   .loading { text-align: center; color: var(--text3); padding: 40px; font-size: 13px; }
 
   .spinner {
@@ -655,7 +655,20 @@
 <div class="tab-page active" id="tab-market">
   <div class="mkt-top">
     <div>
-      <h1>Рынок</h1>
+      <svg class="mkt-title-svg" viewBox="0 0 168 46" height="40" role="img" aria-label="Рынок">
+        <defs>
+          <linearGradient id="rynok-grad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#6fc0ff"><animate attributeName="stop-color" values="#6fc0ff;#5fffe8;#c89bff;#6fc0ff" dur="6s" repeatCount="indefinite"/></stop>
+            <stop offset="0.5" stop-color="#5fffe8"><animate attributeName="stop-color" values="#5fffe8;#c89bff;#6fc0ff;#5fffe8" dur="6s" repeatCount="indefinite"/></stop>
+            <stop offset="1" stop-color="#c89bff"><animate attributeName="stop-color" values="#c89bff;#6fc0ff;#5fffe8;#c89bff" dur="6s" repeatCount="indefinite"/></stop>
+          </linearGradient>
+          <filter id="rynok-glow" x="-25%" y="-50%" width="150%" height="200%">
+            <feGaussianBlur stdDeviation="3.2" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <text x="1" y="36" font-family="-apple-system, Arial, sans-serif" font-size="36" font-weight="800" letter-spacing="-1" fill="url(#rynok-grad)" filter="url(#rynok-glow)">Рынок</text>
+      </svg>
       <div class="mkt-subt">SloppyX Exchange · 1 токен</div>
     </div>
     <button class="mkt-create" id="mkt-create" style="display:none">
@@ -687,10 +700,7 @@
     </div>
   </div>
 
-  <div class="mkt-sec" id="sec-main" style="justify-content:space-between;">
-    <span style="display:inline-flex;align-items:center;"><svg class="svgi fill" viewBox="0 0 24 24"><polygon points="12 2 15 9 22 9.2 16.5 14 18.5 21.5 12 17.3 5.5 21.5 7.5 14 2 9.2 9 9"/></svg>Главный токен</span>
-    <span class="live-badge"><span class="lv"><svg viewBox="0 0 16 16"><circle class="ring" cx="8" cy="8" r="3.5" fill="none" stroke="#26e0a0" stroke-width="1.5"/><circle cx="8" cy="8" r="3" fill="#26e0a0"/></svg></span>LIVE</span>
-  </div>
+  <div class="mkt-sec" id="sec-main"><svg class="svgi fill" viewBox="0 0 24 24"><polygon points="12 2 15 9 22 9.2 16.5 14 18.5 21.5 12 17.3 5.5 21.5 7.5 14 2 9.2 9 9"/></svg>Главный токен</div>
   <div class="tok-card feat hero" id="card-slx">
     <i class="hero-sheen"></i>
     <div class="hero-top">
@@ -849,7 +859,13 @@
       <label class="limit-label">Цена срабатывания (за 1 SLX)</label>
       <input type="number" class="qty-input limit-input" id="m-limit-price" placeholder="0" min="0" inputmode="decimal">
     </div>
-    <label class="limit-label" id="qty-label">Количество SLX</label>
+    <div class="qty-head">
+      <label class="limit-label" id="qty-label">Количество SLX</label>
+      <div class="unit-tog" id="unit-tog">
+        <div class="ut-opt active" data-unit="slx">SLX</div>
+        <div class="ut-opt" data-unit="tokens">Токены</div>
+      </div>
+    </div>
     <input type="number" class="qty-input" id="m-qty" placeholder="0" min="0" step="0.1" inputmode="decimal">
     <div class="quick-row" id="m-quick"></div>
     <div class="modal-calc">
@@ -937,7 +953,7 @@ if (tg) {
   setTimeout(applyTgInsets, 600);
 }
 
-const SLX_CLIENT_VERSION = 'v229';
+const SLX_CLIENT_VERSION = 'v231';
 
 // ─── Логотип SLX (B6 голографик) — единый SVG для всех мест ───
 let _slxLogoSeq = 0;
@@ -967,7 +983,7 @@ const SECRET = params.get('api_secret') || params.get('secret') || '';
 const API_BASE = decodeURIComponent(params.get('api_url') || params.get('api') || '');
 const TG_INIT_DATA = (tg && tg.initData) ? tg.initData : '';
 
-let state = { price: 0, fee: 3, portfolio: null, balance: 0, mode: 'buy', period: '1m', orderType: 'market' };
+let state = { price: 0, fee: 3, portfolio: null, balance: 0, mode: 'buy', period: '1m', orderType: 'market', qtyUnit: 'slx' };
 let chart = null;
 let _lastCandles = null;
 let _mktFilter = 'all', _mktChange = 0, _mktQuery = '';
@@ -1710,28 +1726,11 @@ function openModal(mode) {
   confirm.className = 'modal-confirm ' + (isBuy ? 'buy' : 'sell');
   document.getElementById('m-qty').value = '';
 
-  // быстрые кнопки
-  const quick = document.getElementById('m-quick');
-  if (isBuy) {
-    // покупка: быстрые суммы в % от баланса токенов (сразу видно сколько SLX)
-    const bal = state.balance || 0;
-    const price = state.price || 1;
-    const feeM = 1 + state.fee / 100;
-    const opts = [['25%', bal*0.25], ['50%', bal*0.5], ['75%', bal*0.75], ['Всё', bal]];
-    quick.innerHTML = opts.map(([lbl, tokens]) => {
-      // сколько SLX можно купить на эти токены (с учётом комиссии)
-      const slx = Math.floor((tokens / (price * feeM)) * 10000) / 10000;
-      return `<div class="quick" data-q="${slx}">${lbl}</div>`;
-    }).join('');
-  } else {
-    const have = (state.portfolio && state.portfolio.qty) || 0;
-    quick.innerHTML = [['25%',have*0.25],['50%',have*0.5],['75%',have*0.75],['Всё',have]]
-      .map(([lbl,v]) => `<div class="quick" data-q="${Math.floor(v*10000)/10000}">${lbl}</div>`).join('');
-  }
-  quick.querySelectorAll('.quick').forEach(q => q.addEventListener('click', () => {
-    document.getElementById('m-qty').value = q.dataset.q;
-    updateCalc(); haptic();
-  }));
+  // сброс единицы ввода на SLX при каждом открытии
+  state.qtyUnit = 'slx';
+  document.querySelectorAll('#unit-tog .ut-opt').forEach(o => o.classList.toggle('active', o.dataset.unit === 'slx'));
+  applyUnitLabel();
+  buildQuick();
 
   updateCalc();
   document.getElementById('modal-bg').classList.add('show');
@@ -1742,6 +1741,69 @@ function openModal(mode) {
   document.getElementById('m-limit-price').value = '';
 }
 
+// какая надпись у поля количества в зависимости от единицы
+function applyUnitLabel() {
+  const lbl = document.getElementById('qty-label');
+  if (state.orderType === 'limit') { lbl.textContent = 'Количество SLX'; return; }
+  lbl.textContent = state.qtyUnit === 'tokens' ? 'Сумма (токены)' : 'Количество SLX';
+}
+
+// пересчёт введённого значения в количество SLX (сервер принимает SLX)
+function effectiveQty() {
+  const raw = parseFloat(document.getElementById('m-qty').value) || 0;
+  if (raw <= 0) return 0;
+  // в лимитном ордере всегда вводим SLX
+  if (state.qtyUnit === 'tokens' && state.orderType !== 'limit') {
+    const price = state.price || 1;
+    const feeM = state.mode === 'buy' ? (1 + state.fee / 100) : (1 - state.fee / 100);
+    return Math.floor((raw / (price * feeM)) * 10000) / 10000;   // токены → SLX
+  }
+  return raw;
+}
+
+// быстрые кнопки с учётом режима и единицы ввода
+function buildQuick() {
+  const quick = document.getElementById('m-quick');
+  const isBuy = state.mode === 'buy';
+  const price = state.price || 1;
+  const tokenUnit = state.qtyUnit === 'tokens' && state.orderType !== 'limit';
+  let html = '';
+  if (isBuy) {
+    const bal = state.balance || 0;
+    const feeM = 1 + state.fee / 100;
+    html = [['25%', bal*0.25], ['50%', bal*0.5], ['75%', bal*0.75], ['Всё', bal]].map(([lbl, tokens]) => {
+      const val = tokenUnit ? Math.floor(tokens) : Math.floor((tokens / (price * feeM)) * 10000) / 10000;
+      return `<div class="quick" data-q="${val}">${lbl}</div>`;
+    }).join('');
+  } else {
+    const have = (state.portfolio && state.portfolio.qty) || 0;
+    const feeS = 1 - state.fee / 100;
+    html = [['25%', have*0.25], ['50%', have*0.5], ['75%', have*0.75], ['Всё', have]].map(([lbl, slx]) => {
+      const val = tokenUnit ? Math.floor(slx * price * feeS) : Math.floor(slx * 10000) / 10000;
+      return `<div class="quick" data-q="${val}">${lbl}</div>`;
+    }).join('');
+  }
+  quick.innerHTML = html;
+  quick.querySelectorAll('.quick').forEach(q => q.addEventListener('click', () => {
+    document.getElementById('m-qty').value = q.dataset.q;
+    updateCalc(); haptic();
+  }));
+}
+
+// переключатель единиц SLX / Токены
+document.querySelectorAll('#unit-tog .ut-opt').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (state.qtyUnit === opt.dataset.unit) return;
+    state.qtyUnit = opt.dataset.unit;
+    document.querySelectorAll('#unit-tog .ut-opt').forEach(o => o.classList.toggle('active', o === opt));
+    document.getElementById('m-qty').value = '';
+    applyUnitLabel();
+    buildQuick();
+    updateCalc();
+    haptic();
+  });
+});
+
 // переключатель типа ордера (рынок/лимит)
 document.querySelectorAll('.ot-opt').forEach(opt => {
   opt.addEventListener('click', () => {
@@ -1749,6 +1811,17 @@ document.querySelectorAll('.ot-opt').forEach(opt => {
     document.querySelectorAll('.ot-opt').forEach(o => o.classList.toggle('active', o === opt));
     document.getElementById('limit-price-wrap').style.display =
       state.orderType === 'limit' ? 'block' : 'none';
+    // лимит всегда в SLX: прячем переключатель единиц и возвращаем SLX
+    const utog = document.getElementById('unit-tog');
+    if (state.orderType === 'limit') {
+      utog.style.display = 'none';
+      state.qtyUnit = 'slx';
+      document.querySelectorAll('#unit-tog .ut-opt').forEach(o => o.classList.toggle('active', o.dataset.unit === 'slx'));
+    } else {
+      utog.style.display = 'inline-flex';
+    }
+    applyUnitLabel();
+    buildQuick();
     // подставим текущую цену как стартовую для лимита
     if (state.orderType === 'limit') {
       const lp = document.getElementById('m-limit-price');
@@ -1819,7 +1892,7 @@ document.getElementById('lp-claim').addEventListener('click', () => { haptic(); 
 
 
 function updateCalc() {
-  const qty = parseFloat(document.getElementById('m-qty').value) || 0;
+  const qty = effectiveQty();   // SLX (с учётом единицы ввода токены/SLX)
   // цена: рыночная или из поля лимита
   const limitPrice = parseFloat(document.getElementById('m-limit-price').value) || 0;
   const isLimit = state.orderType === 'limit';
@@ -1897,7 +1970,7 @@ document.getElementById('m-cancel').addEventListener('click', closeModal);
 document.getElementById('modal-bg').addEventListener('click', (e) => { if (e.target.id === 'modal-bg') closeModal(); });
 
 document.getElementById('m-confirm').addEventListener('click', async () => {
-  const qty = parseFloat(document.getElementById('m-qty').value) || 0;
+  const qty = effectiveQty();   // SLX (с учётом единицы ввода токены/SLX)
   if (qty <= 0) { toast('Введи количество', 'err'); return; }
   const btn = document.getElementById('m-confirm');
 
