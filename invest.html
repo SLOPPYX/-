@@ -158,10 +158,12 @@
   }
   .btn:active { transform: scale(0.97); }
   .btn:disabled { opacity: 0.5; }
-  .btn-buy { background: linear-gradient(135deg, #22d18a, #11a86a); color: #fff; box-shadow: 0 4px 16px rgba(31,200,133,0.3); }
+  .btn-buy { background: linear-gradient(135deg, #0c8051, #11a86a); color: #fff; box-shadow: 0 4px 16px rgba(31,200,133,0.3); }
   .btn-sell { background: linear-gradient(135deg, #f0605f, #c93b3a); color: #fff; box-shadow: 0 4px 16px rgba(226,75,74,0.25); }
   .btn-sub { font-size: 10px; font-weight: 500; opacity: 0.85; }
   .foot-note { text-align: center; color: var(--text3); font-size: 10px; margin-top: 4px; }
+  
+  
 
   /* ─── Нижняя навигация ─── */
   .navbar {
@@ -281,11 +283,6 @@
   }
   .ot-opt.active { background: var(--accent); color: #001a33; }
   .limit-label { display: block; color: var(--text3); font-size: 11px; margin: 0 0 5px 2px; }
-  .qty-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
-  .qty-head .limit-label { margin:0 0 0 2px; }
-  .unit-tog { display:inline-flex; background:var(--card2); border:1px solid var(--border2); border-radius:9px; padding:2px; gap:2px; }
-  .unit-tog .ut-opt { font-size:11px; font-weight:700; color:var(--text3); padding:4px 11px; border-radius:7px; cursor:pointer; transition:.15s; }
-  .unit-tog .ut-opt.active { background:var(--accent); color:#04101f; }
   .limit-price-wrap { margin-bottom: 12px; }
   .limit-input { font-size: 18px; margin-bottom: 0; }
   .qty-input {
@@ -310,17 +307,6 @@
   .calc-row .v { color: #dfe6ee; font-weight: 600; }
   .calc-row.total .v { color: var(--accent-light); font-size: 15px; }
   .modal-btns { display: flex; gap: 10px; }
-  .lp-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px 15px; margin-top:12px; }
-  .lp-card-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-  .lp-card-t { font-weight:800; font-size:15px; }
-  .lp-card-s { color:var(--text2); font-size:12px; margin-top:3px; }
-  .lp-card-btn { background:linear-gradient(135deg,var(--accent),var(--accent-light)); color:#04101f; font-weight:800; font-size:13px; padding:9px 15px; border:none; border-radius:11px; cursor:pointer; white-space:nowrap; }
-  .lp-card-btn:active { transform:scale(.97); }
-  .lp-stats { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:6px 12px; margin-bottom:14px; }
-  .lp-stat { display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border); }
-  .lp-stat:last-child { border-bottom:none; }
-  .lp-stat .k { color:var(--text2); font-size:13px; }
-  .lp-stat .v { font-weight:800; font-size:14px; }
   .modal-cancel {
     flex: 1; background: transparent; border: 1px solid var(--border2);
     color: var(--text2); border-radius: 12px; padding: 14px; font-weight: 700;
@@ -347,20 +333,51 @@
   .tab-page { display: none; }
   .tab-page.active { display: block; }
 
-  /* ─── Экран «Рынок» (v225) ─── */
-  .mkt-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:18px; gap:12px; }
-  .mkt-top h1 { font-size:26px; font-weight:800; letter-spacing:-.5px; }
-  .mkt-title-svg { display:block; height:40px; width:auto; margin:-3px 0 2px -1px; overflow:visible; }
-  .mkt-subt { font-size:13px; color:var(--text3); font-weight:600; margin-top:3px; }
+  /* ─── Экран «Рынок» (v228 — минималистичный редизайн) ─── */
+  .mkt-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; gap:12px; }
+  .mkt-top h1 {
+    font-size:27px; font-weight:800; letter-spacing:-.03em; line-height:1.1;
+    background:linear-gradient(135deg,#ffffff 20%,#9cc4f5 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .mkt-subt { font-size:12.5px; color:var(--text3); font-weight:600; margin-top:5px; display:flex; align-items:center; gap:7px; }
+  .mkt-subt .live-dot { width:6px; height:6px; border-radius:50%; background:var(--up); box-shadow:0 0 6px rgba(31,200,133,.7); flex-shrink:0; animation:livePulse 1.8s ease-in-out infinite; }
+  .mkt-subt .sep { opacity:.5; }
+  @keyframes livePulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
   .mkt-create { background:linear-gradient(135deg,var(--accent),var(--accent-light)); color:#04101f; font-weight:800; font-size:13.5px; padding:11px 15px; border-radius:14px; border:none; display:flex; align-items:center; gap:6px; box-shadow:0 0 18px rgba(58,160,255,.35); cursor:pointer; white-space:nowrap; flex-shrink:0; }
   .mkt-create:active { transform:scale(.97); }
-  .mkt-search { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 15px; margin-bottom:18px; display:flex; align-items:center; gap:10px; }
-  .mkt-search input { background:none; border:none; outline:none; color:var(--text); font-size:15px; font-weight:500; width:100%; padding:0; }
+
+  /* строка статистики — единая карточка с разделителями */
+  .mkt-stats { display:flex; background:var(--card); border:1px solid var(--border); border-radius:18px; margin-bottom:14px; overflow:hidden; }
+  .mkt-stat { flex:1; padding:13px 14px; min-width:0; position:relative; }
+  .mkt-stat:not(:first-child)::before { content:''; position:absolute; left:0; top:12px; bottom:12px; width:1px; background:var(--border2); }
+  .mkt-stat .l { font-size:10px; color:var(--text3); font-weight:700; letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:5px; }
+  .mkt-stat .l svg { width:11px; height:11px; opacity:.85; flex-shrink:0; }
+  .mkt-stat:nth-child(1) .l svg { color:#6fc0ff; }
+  .mkt-stat:nth-child(2) .l svg { color:#b18cff; }
+  .mkt-stat:nth-child(3) .l svg { color:#26e0a0; }
+  .mkt-stat .v { font-size:17px; font-weight:800; margin-top:7px; letter-spacing:-.01em; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mkt-mood-bar { height:3px; border-radius:3px; background:rgba(226,75,74,.3); margin-top:9px; overflow:hidden; }
+  .mkt-mood-bar i { display:block; height:100%; background:linear-gradient(90deg,#1fc885,#26e0a0); border-radius:3px; transition:width .4s; }
+
+  /* поиск */
+  .mkt-search { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 15px; margin-bottom:12px; display:flex; align-items:center; gap:10px; transition:border-color .15s; }
+  .mkt-search:focus-within { border-color:rgba(58,160,255,.45); }
+  .mkt-search input { background:none; border:none; outline:none; color:var(--text); font-size:14.5px; font-weight:500; width:100%; padding:0; }
   .mkt-search input::placeholder { color:var(--text3); }
-  .mkt-sec { font-size:12px; color:var(--text3); font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin:8px 2px 11px; display:flex; align-items:center; }
-  .tok-card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:15px 16px; margin-bottom:11px; display:flex; align-items:center; gap:13px; cursor:pointer; transition:border-color .15s, transform .08s; }
+
+  /* фильтр-чипы */
+  .mkt-chips { display:flex; gap:7px; margin-bottom:22px; overflow-x:auto; scrollbar-width:none; }
+  .mkt-chips::-webkit-scrollbar { display:none; }
+  .mkt-chip { background:transparent; border:1px solid var(--border2); color:var(--text2); font-size:12.5px; font-weight:600; padding:7px 13px; border-radius:10px; white-space:nowrap; cursor:pointer; flex-shrink:0; transition:.15s; display:inline-flex; align-items:center; gap:6px; }
+  .mkt-chip svg { width:13px; height:13px; }
+  .mkt-chip:active { transform:scale(.96); }
+  .mkt-chip.on { background:var(--accent); color:#04101f; border-color:var(--accent); box-shadow:0 4px 14px rgba(58,160,255,.25); }
+
+  .mkt-sec { font-size:11px; color:var(--text3); font-weight:700; letter-spacing:.08em; text-transform:uppercase; margin:2px 2px 12px; display:flex; align-items:center; gap:6px; }
+
+  .tok-card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:15px 16px; margin-bottom:10px; display:flex; align-items:center; gap:13px; cursor:pointer; transition:border-color .15s, transform .08s; }
   .tok-card:active { transform:scale(.99); }
-  .tok-card.feat { background:linear-gradient(135deg, rgba(58,160,255,.10), rgba(10,13,18,.35)); border-color:rgba(58,160,255,.30); }
   .tok-logo { width:46px; height:46px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; overflow:hidden; }
   .tok-mid { flex:1; min-width:0; }
   .tok-tk { font-weight:800; font-size:17px; display:flex; align-items:center; gap:7px; }
@@ -368,54 +385,72 @@
   .tok-by { font-size:12.5px; color:var(--text2); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .tok-spark { width:56px; height:30px; flex-shrink:0; }
   .tok-right { text-align:right; flex-shrink:0; min-width:84px; }
-  .tok-price { font-weight:800; font-size:16px; }
-  .tok-chg { font-size:13px; font-weight:700; margin-top:3px; }
-  .tok-soon { opacity:.5; cursor:default; }
+  .tok-price { font-weight:800; font-size:16px; font-variant-numeric:tabular-nums; }
+  .tok-chg { font-size:12px; font-weight:700; margin-top:3px; }
+  .tok-soon { opacity:.55; cursor:default; border-style:dashed; }
   .tok-soon:active { transform:none; }
   .back-btn { display:inline-flex; align-items:center; gap:5px; background:var(--card); border:1px solid var(--border); color:var(--text2); font-size:14px; font-weight:600; padding:8px 13px; border-radius:12px; cursor:pointer; margin-bottom:14px; }
   .back-btn:active { transform:scale(.97); }
-
-  .mkt-stats { display:flex; gap:9px; margin-bottom:16px; }
-  .mkt-stat { flex:1; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:11px 12px; min-width:0; }
-  .mkt-stat .l { font-size:10px; color:var(--text3); font-weight:700; letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mkt-stat .v { font-size:16px; font-weight:800; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mkt-mood-bar { height:4px; border-radius:3px; background:var(--down); margin-top:8px; overflow:hidden; }
-  .mkt-mood-bar i { display:block; height:100%; background:var(--up); border-radius:3px; transition:width .4s; }
-  .mkt-chips { display:flex; gap:8px; margin-bottom:16px; overflow-x:auto; scrollbar-width:none; }
-  .mkt-chips::-webkit-scrollbar { display:none; }
-  .mkt-chip { background:var(--card); border:1px solid var(--border); color:var(--text2); font-size:13px; font-weight:700; padding:8px 14px; border-radius:11px; white-space:nowrap; cursor:pointer; flex-shrink:0; transition:.12s; display:inline-flex; align-items:center; gap:6px; }
-  .mkt-chip:active { transform:scale(.96); }
-  .mkt-chip.on { background:var(--accent); color:#04101f; border-color:var(--accent); }
   .mkt-empty { text-align:center; color:var(--text3); font-size:13px; padding:26px 0; }
-  .tok-rank { font-size:13px; font-weight:800; color:var(--text3); width:14px; text-align:center; flex-shrink:0; }
 
   /* SVG-иконки (вместо эмодзи) */
   .svgi { width:1.05em; height:1.05em; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; vertical-align:-3px; flex-shrink:0; }
   .svgi.fill { fill:currentColor; stroke:none; }
   .nav-icon svg { width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; display:block; margin:0 auto; }
-  .mkt-sec .svgi { color:var(--text3); margin-right:5px; }
+  .mkt-sec .svgi { color:var(--text3); opacity:.8; }
 
-  /* hero-карточка главного токена */
-  .tok-card.hero { flex-direction:column; align-items:stretch; gap:0; padding:16px 17px 14px; position:relative; overflow:hidden; }
-  .tok-card.hero::before { content:''; position:absolute; top:-40%; right:-10%; width:60%; height:160%; background:radial-gradient(ellipse at center, rgba(58,160,255,.12), transparent 70%); pointer-events:none; }
-  .hero-top { display:flex; align-items:center; gap:13px; position:relative; z-index:1; }
-  .hero-spark { margin:13px 0 13px; position:relative; z-index:1; }
-  .hero-range { display:flex; align-items:center; gap:10px; position:relative; z-index:1; }
-  .hero-range .r-lab { font-size:11px; color:var(--text3); font-weight:700; white-space:nowrap; }
-  .hero-range .r-track { flex:1; height:5px; border-radius:4px; background:var(--border2); position:relative; }
-  .hero-range .r-track i { position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:linear-gradient(90deg, var(--accent), var(--accent-light)); }
-  .hero-range .r-dot { position:absolute; top:50%; width:10px; height:10px; border-radius:50%; background:#fff; transform:translate(-50%,-50%); box-shadow:0 0 8px rgba(255,255,255,.6); }
-
-  /* переливающаяся подсветка hero-карточки */
-  .tok-card.hero { animation: heroGlow 7s ease-in-out infinite; }
-  @keyframes heroGlow {
-    0%,100% { box-shadow: 0 0 0 1px rgba(58,160,255,.30), 0 8px 34px -12px rgba(58,160,255,.55); }
-    33%     { box-shadow: 0 0 0 1px rgba(38,224,160,.30), 0 8px 34px -12px rgba(38,224,160,.55); }
-    66%     { box-shadow: 0 0 0 1px rgba(177,76,255,.30), 0 8px 34px -12px rgba(177,76,255,.55); }
+  /* hero-карточка главного токена — центр экрана, «живой рынок» */
+  .tok-card.hero {
+    flex-direction:column; align-items:stretch; gap:0; padding:20px 20px 18px; margin-bottom:24px;
+    position:relative; overflow:hidden; border-radius:24px;
+    background:
+      radial-gradient(ellipse 90% 70% at 100% -10%, rgba(58,160,255,.16), transparent 60%),
+      linear-gradient(180deg, #0a0f16, #060809);
+    border:1px solid rgba(58,160,255,.22);
+    box-shadow:0 20px 40px -20px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.02) inset;
+    transition: border-color .5s ease, box-shadow .5s ease;
   }
-  /* бегущий блик по hero-карточке */
-  .hero-sheen { position:absolute; inset:0; pointer-events:none; z-index:0; background:linear-gradient(115deg, transparent 42%, rgba(255,255,255,.07) 50%, transparent 58%); transform:translateX(-130%); animation: heroSheen 5.5s ease-in-out infinite; }
-  @keyframes heroSheen { 0%,100% { transform:translateX(-130%); } 55% { transform:translateX(130%); } }
+  .tok-card.hero::before {
+    content:''; position:absolute; inset:0 0 auto 0; height:1px; z-index:2;
+    background:linear-gradient(90deg, transparent, rgba(143,184,232,.6), transparent);
+  }
+  /* бегущий блик — премиальный «живой» акцент, проходит по карточке раз в 6 сек */
+  .hero-shine {
+    position:absolute; top:0; left:-70%; width:45%; height:100%;
+    background:linear-gradient(115deg, transparent, rgba(255,255,255,.055), transparent);
+    transform:skewX(-15deg); pointer-events:none; z-index:1;
+    animation: heroShine 6.5s ease-in-out infinite;
+  }
+  @keyframes heroShine { 0%,15% { left:-70%; } 55%,100% { left:140%; } }
+  /* рамка/свечение карточки реагируют на текущий тренд (рост/падение) */
+  .tok-card.hero.mkt-up   { border-color: rgba(38,224,160,.30); box-shadow:0 20px 40px -20px rgba(0,0,0,.6), 0 0 26px -6px rgba(38,224,160,.22); }
+  .tok-card.hero.mkt-down { border-color: rgba(255,85,96,.30);  box-shadow:0 20px 40px -20px rgba(0,0,0,.6), 0 0 26px -6px rgba(255,85,96,.22); }
+  .tok-card.hero.mkt-up::before   { background:linear-gradient(90deg, transparent, rgba(38,224,160,.65), transparent); }
+  .tok-card.hero.mkt-down::before { background:linear-gradient(90deg, transparent, rgba(255,85,96,.65), transparent); }
+  .hero-top { display:flex; align-items:center; gap:14px; position:relative; z-index:3; }
+  .tok-card.hero .tok-logo { width:44px; height:44px; box-shadow:0 0 0 1px rgba(58,160,255,.25), 0 0 18px rgba(58,160,255,.25); border-radius:50%; position:relative; }
+  /* пульсирующее «живое» кольцо вокруг лого — как сердцебиение рынка */
+  .tok-card.hero .tok-logo::after {
+    content:''; position:absolute; inset:-5px; border-radius:50%;
+    border:1px solid rgba(58,160,255,.55); pointer-events:none;
+    animation: logoPulseRing 2.4s cubic-bezier(.4,0,.3,1) infinite;
+  }
+  @keyframes logoPulseRing { 0% { transform:scale(.82); opacity:.85; } 70% { transform:scale(1.4); opacity:0; } 100% { opacity:0; } }
+  .tok-card.hero .tok-price { font-size:19px; letter-spacing:-.01em; }
+  .tok-card.hero .tok-chg {
+    display:inline-flex; align-items:center; gap:2px; margin-top:6px;
+    padding:3px 8px; border-radius:7px; background:rgba(255,255,255,.06); font-weight:800;
+    transition: background-color .3s ease;
+  }
+  .tok-card.hero.mkt-up   .tok-chg { background:rgba(38,224,160,.14); }
+  .tok-card.hero.mkt-down .tok-chg { background:rgba(255,85,96,.14); }
+  .hero-spark { margin:18px 0 16px; position:relative; z-index:3; line-height:0; }
+  .hero-spark svg { display:block; width:100%; }
+  .hero-range { display:flex; align-items:center; gap:10px; position:relative; z-index:3; }
+  .hero-range .r-lab { font-size:10.5px; color:var(--text3); font-weight:700; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .hero-range .r-track { flex:1; height:4px; border-radius:4px; background:var(--border2); position:relative; }
+  .hero-range .r-track i { position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:linear-gradient(90deg, var(--accent), var(--accent-light)); box-shadow:0 0 8px rgba(58,160,255,.5); }
+  .hero-range .r-dot { position:absolute; top:50%; width:9px; height:9px; border-radius:50%; background:#fff; transform:translate(-50%,-50%); box-shadow:0 0 0 3px rgba(58,160,255,.22), 0 0 8px rgba(255,255,255,.6); }
   .loading { text-align: center; color: var(--text3); padding: 40px; font-size: 13px; }
 
   .spinner {
@@ -585,6 +620,13 @@
     background: radial-gradient(ellipse, rgba(58,160,255,0.18), transparent 70%);
     pointer-events: none; z-index: 0;
   }
+  /* Второе, тёплое/зелёное свечение снизу — ощущение «живого» рынка */
+  body::after {
+    content: ''; position: fixed; bottom: -140px; left: -60px;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(31,200,133,0.10), transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
   .header, .tab-page { position: relative; z-index: 1; }
   /* Вспышка цены при изменении */
   @keyframes flashUp { 0% { color: var(--up); text-shadow: 0 0 12px rgba(31,200,133,0.7); } 100% { color: var(--text); text-shadow: none; } }
@@ -655,21 +697,8 @@
 <div class="tab-page active" id="tab-market">
   <div class="mkt-top">
     <div>
-      <svg class="mkt-title-svg" viewBox="0 0 168 46" height="40" role="img" aria-label="Рынок">
-        <defs>
-          <linearGradient id="rynok-grad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stop-color="#6fc0ff"><animate attributeName="stop-color" values="#6fc0ff;#5fffe8;#c89bff;#6fc0ff" dur="6s" repeatCount="indefinite"/></stop>
-            <stop offset="0.5" stop-color="#5fffe8"><animate attributeName="stop-color" values="#5fffe8;#c89bff;#6fc0ff;#5fffe8" dur="6s" repeatCount="indefinite"/></stop>
-            <stop offset="1" stop-color="#c89bff"><animate attributeName="stop-color" values="#c89bff;#6fc0ff;#5fffe8;#c89bff" dur="6s" repeatCount="indefinite"/></stop>
-          </linearGradient>
-          <filter id="rynok-glow" x="-25%" y="-50%" width="150%" height="200%">
-            <feGaussianBlur stdDeviation="3.2" result="b"/>
-            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
-        <text x="1" y="36" font-family="-apple-system, Arial, sans-serif" font-size="36" font-weight="800" letter-spacing="-1" fill="url(#rynok-grad)" filter="url(#rynok-glow)">Рынок</text>
-      </svg>
-      <div class="mkt-subt">SloppyX Exchange · 1 токен</div>
+      <h1>Рынок</h1>
+      <div class="mkt-subt"><i class="live-dot"></i>SloppyX Exchange <span class="sep">·</span> 1 токен</div>
     </div>
     <button class="mkt-create" id="mkt-create" style="display:none">
       <svg class="svgi" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -678,9 +707,19 @@
   </div>
 
   <div class="mkt-stats">
-    <div class="mkt-stat"><div class="l">Капитализация</div><div class="v" id="ms-cap">—</div></div>
-    <div class="mkt-stat"><div class="l">Объём 24ч</div><div class="v" id="ms-vol">—</div></div>
-    <div class="mkt-stat"><div class="l">Покупают</div><div class="v" id="ms-mood">—</div><div class="mkt-mood-bar"><i id="ms-mood-bar"></i></div></div>
+    <div class="mkt-stat">
+      <div class="l"><svg class="svgi" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>Капитализация</div>
+      <div class="v" id="ms-cap">—</div>
+    </div>
+    <div class="mkt-stat">
+      <div class="l"><svg class="svgi" viewBox="0 0 24 24"><line x1="5" y1="20" x2="5" y2="11"/><line x1="12" y1="20" x2="12" y2="5"/><line x1="19" y1="20" x2="19" y2="14"/></svg>Объём 24ч</div>
+      <div class="v" id="ms-vol">—</div>
+    </div>
+    <div class="mkt-stat">
+      <div class="l"><svg class="svgi" viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>Покупают</div>
+      <div class="v" id="ms-mood">—</div>
+      <div class="mkt-mood-bar"><i id="ms-mood-bar"></i></div>
+    </div>
   </div>
 
   <div class="mkt-search">
@@ -702,9 +741,8 @@
 
   <div class="mkt-sec" id="sec-main"><svg class="svgi fill" viewBox="0 0 24 24"><polygon points="12 2 15 9 22 9.2 16.5 14 18.5 21.5 12 17.3 5.5 21.5 7.5 14 2 9.2 9 9"/></svg>Главный токен</div>
   <div class="tok-card feat hero" id="card-slx">
-    <i class="hero-sheen"></i>
+    <div class="hero-shine" aria-hidden="true"></div>
     <div class="hero-top">
-      <div class="tok-rank">#1</div>
       <div class="tok-logo" id="logo-mkt"></div>
       <div class="tok-mid">
         <div class="tok-tk">SLX <span class="tok-badge">платформа</span></div>
@@ -800,17 +838,6 @@
     <button class="btn btn-sell" id="btn-sell">↓ ПРОДАТЬ<span class="btn-sub" id="sell-sub">—</span></button>
   </div>
   <div class="foot-note" id="foot">Комиссия 3% · Баланс: — токенов</div>
-
-  <div class="lp-card" id="lp-card">
-    <div class="lp-card-row">
-      <div>
-        <div class="lp-card-t">💧 Ликвидность</div>
-        <div class="lp-card-s" id="lp-card-sub">Заблокируй токены — получай долю комиссии 3%</div>
-      </div>
-      <button class="lp-card-btn" id="lp-open">Управлять</button>
-    </div>
-  </div>
-
   <div id="orders-box" class="orders-box"></div>
 </div>
 
@@ -859,13 +886,7 @@
       <label class="limit-label">Цена срабатывания (за 1 SLX)</label>
       <input type="number" class="qty-input limit-input" id="m-limit-price" placeholder="0" min="0" inputmode="decimal">
     </div>
-    <div class="qty-head">
-      <label class="limit-label" id="qty-label">Количество SLX</label>
-      <div class="unit-tog" id="unit-tog">
-        <div class="ut-opt active" data-unit="slx">SLX</div>
-        <div class="ut-opt" data-unit="tokens">Токены</div>
-      </div>
-    </div>
+    <label class="limit-label" id="qty-label">Количество SLX</label>
     <input type="number" class="qty-input" id="m-qty" placeholder="0" min="0" step="0.1" inputmode="decimal">
     <div class="quick-row" id="m-quick"></div>
     <div class="modal-calc">
@@ -878,34 +899,6 @@
     <div class="modal-btns">
       <button class="modal-cancel" id="m-cancel">Отмена</button>
       <button class="modal-confirm buy" id="m-confirm">Купить</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ Модалка ликвидности ═══ -->
-<div class="modal-bg" id="lp-modal-bg">
-  <div class="modal">
-    <div class="modal-title">💧 Ликвидность SLX</div>
-    <div class="modal-sub">Заблокируй токены — зарабатывай долю комиссии 3% и углубляй рынок</div>
-    <div class="lp-stats">
-      <div class="lp-stat"><span class="k">Пул (глубина рынка)</span><span class="v" id="lp-pool">—</span></div>
-      <div class="lp-stat"><span class="k">Ваш вклад</span><span class="v" id="lp-mine">—</span></div>
-      <div class="lp-stat"><span class="k">Ваша доля</span><span class="v" id="lp-share">—</span></div>
-      <div class="lp-stat"><span class="k">Накоплено комиссии</span><span class="v" id="lp-pending" style="color:var(--up)">—</span></div>
-    </div>
-    <label class="limit-label">Сумма (токенов)</label>
-    <input type="number" class="qty-input" id="lp-amount" placeholder="0" min="0" inputmode="numeric">
-    <div class="quick-row" id="lp-quick">
-      <button class="quick-btn" data-lp="balance">Макс баланс</button>
-      <button class="quick-btn" data-lp="stake">Весь вклад</button>
-    </div>
-    <div class="modal-btns" style="flex-direction:column;gap:8px;">
-      <div style="display:flex;gap:10px;width:100%;">
-        <button class="modal-confirm buy" id="lp-add" style="flex:1;">Добавить</button>
-        <button class="modal-confirm sell" id="lp-remove" style="flex:1;">Вывести</button>
-      </div>
-      <button class="modal-confirm" id="lp-claim" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent-light));color:#04101f;">Забрать комиссию</button>
-      <button class="modal-cancel" id="lp-cancel" style="width:100%;">Закрыть</button>
     </div>
   </div>
 </div>
@@ -953,7 +946,7 @@ if (tg) {
   setTimeout(applyTgInsets, 600);
 }
 
-const SLX_CLIENT_VERSION = 'v231';
+const SLX_CLIENT_VERSION = 'v227';
 
 // ─── Логотип SLX (B6 голографик) — единый SVG для всех мест ───
 let _slxLogoSeq = 0;
@@ -983,7 +976,7 @@ const SECRET = params.get('api_secret') || params.get('secret') || '';
 const API_BASE = decodeURIComponent(params.get('api_url') || params.get('api') || '');
 const TG_INIT_DATA = (tg && tg.initData) ? tg.initData : '';
 
-let state = { price: 0, fee: 3, portfolio: null, balance: 0, mode: 'buy', period: '1m', orderType: 'market', qtyUnit: 'slx' };
+let state = { price: 0, fee: 3, portfolio: null, balance: 0, mode: 'buy', period: '1m', orderType: 'market' };
 let chart = null;
 let _lastCandles = null;
 let _mktFilter = 'all', _mktChange = 0, _mktQuery = '';
@@ -1068,8 +1061,6 @@ function fmt(n) { return Math.round(n).toLocaleString('ru-RU'); }
 function fmtShort(n) {
   n = Number(n) || 0;
   const abs = Math.abs(n);
-  if (abs >= 1e18) return (n/1e18).toFixed(2) + 'E';   // квинтиллион
-  if (abs >= 1e15) return (n/1e15).toFixed(2) + 'Q';   // квадриллион
   if (abs >= 1e12) return (n/1e12).toFixed(2) + 'T';
   if (abs >= 1e9)  return (n/1e9).toFixed(2) + 'B';
   if (abs >= 1e6)  return (n/1e6).toFixed(2) + 'M';
@@ -1371,19 +1362,6 @@ function applyState(s) {
   state.slipMax = s.slip_max || 0.40;
   state.portfolio = s.portfolio;
   state.balance = s.balance;
-  state.lp = s.lp || { amount: 0, pending: 0, share: 0 };
-  state.liquidityPool = s.liquidity_pool || s.liquidity || 0;
-  // подпись карточки ликвидности на экране монеты
-  const lpSub = document.getElementById('lp-card-sub');
-  if (lpSub) {
-    if (state.lp.amount > 0) {
-      lpSub.innerHTML = 'Ваш вклад: <b>' + fmtFit(state.lp.amount) + '</b> · доход: <b style="color:var(--up)">+' + fmtFit(state.lp.pending) + '</b>';
-    } else {
-      lpSub.textContent = 'Заблокируй токены — получай долю комиссии 3%';
-    }
-  }
-  // если модалка ликвидности открыта — обновим её цифры вживую
-  if (document.getElementById('lp-modal-bg').classList.contains('show')) fillLpModal();
 
   // цена + изменение (с вспышкой при изменении)
   const pxEl = document.getElementById('px');
@@ -1401,11 +1379,21 @@ function applyState(s) {
   // карточка на экране «Рынок» — живая цена/изменение/спарклайн
   _lastCandles = s.candles;
   const mp = document.getElementById('mkt-price');
-  if (mp) mp.textContent = fmtFit(s.price);
+  if (mp) {
+    mp.textContent = fmtFit(s.price);
+    if (prevPrice && s.price !== prevPrice) {
+      mp.classList.remove('flash-up', 'flash-down');
+      void mp.offsetWidth;
+      mp.classList.add(s.price > prevPrice ? 'flash-up' : 'flash-down');
+    }
+  }
   const mc = document.getElementById('mkt-chg');
   if (mc) { mc.textContent = (up ? '▲ +' : '▼ ') + s.change_pct + '%'; mc.style.color = up ? 'var(--up)' : 'var(--down)'; }
   const ms = document.getElementById('mkt-spark');
   if (ms) ms.innerHTML = buildAreaSpark(s.candles, up);
+  // подсветка hero-карточки живой реакцией на тренд (рост/падение)
+  const heroCard = document.getElementById('card-slx');
+  if (heroCard) { heroCard.classList.toggle('mkt-up', up); heroCard.classList.toggle('mkt-down', !up); }
   // шкала диапазона 24ч: мин — текущая — макс
   const lo = s.low_24h, hi = s.high_24h;
   let pos = (hi > lo) ? (s.price - lo) / (hi - lo) : 0.5;
@@ -1726,11 +1714,28 @@ function openModal(mode) {
   confirm.className = 'modal-confirm ' + (isBuy ? 'buy' : 'sell');
   document.getElementById('m-qty').value = '';
 
-  // сброс единицы ввода на SLX при каждом открытии
-  state.qtyUnit = 'slx';
-  document.querySelectorAll('#unit-tog .ut-opt').forEach(o => o.classList.toggle('active', o.dataset.unit === 'slx'));
-  applyUnitLabel();
-  buildQuick();
+  // быстрые кнопки
+  const quick = document.getElementById('m-quick');
+  if (isBuy) {
+    // покупка: быстрые суммы в % от баланса токенов (сразу видно сколько SLX)
+    const bal = state.balance || 0;
+    const price = state.price || 1;
+    const feeM = 1 + state.fee / 100;
+    const opts = [['25%', bal*0.25], ['50%', bal*0.5], ['75%', bal*0.75], ['Всё', bal]];
+    quick.innerHTML = opts.map(([lbl, tokens]) => {
+      // сколько SLX можно купить на эти токены (с учётом комиссии)
+      const slx = Math.floor((tokens / (price * feeM)) * 10000) / 10000;
+      return `<div class="quick" data-q="${slx}">${lbl}</div>`;
+    }).join('');
+  } else {
+    const have = (state.portfolio && state.portfolio.qty) || 0;
+    quick.innerHTML = [['25%',have*0.25],['50%',have*0.5],['75%',have*0.75],['Всё',have]]
+      .map(([lbl,v]) => `<div class="quick" data-q="${Math.floor(v*10000)/10000}">${lbl}</div>`).join('');
+  }
+  quick.querySelectorAll('.quick').forEach(q => q.addEventListener('click', () => {
+    document.getElementById('m-qty').value = q.dataset.q;
+    updateCalc(); haptic();
+  }));
 
   updateCalc();
   document.getElementById('modal-bg').classList.add('show');
@@ -1741,69 +1746,6 @@ function openModal(mode) {
   document.getElementById('m-limit-price').value = '';
 }
 
-// какая надпись у поля количества в зависимости от единицы
-function applyUnitLabel() {
-  const lbl = document.getElementById('qty-label');
-  if (state.orderType === 'limit') { lbl.textContent = 'Количество SLX'; return; }
-  lbl.textContent = state.qtyUnit === 'tokens' ? 'Сумма (токены)' : 'Количество SLX';
-}
-
-// пересчёт введённого значения в количество SLX (сервер принимает SLX)
-function effectiveQty() {
-  const raw = parseFloat(document.getElementById('m-qty').value) || 0;
-  if (raw <= 0) return 0;
-  // в лимитном ордере всегда вводим SLX
-  if (state.qtyUnit === 'tokens' && state.orderType !== 'limit') {
-    const price = state.price || 1;
-    const feeM = state.mode === 'buy' ? (1 + state.fee / 100) : (1 - state.fee / 100);
-    return Math.floor((raw / (price * feeM)) * 10000) / 10000;   // токены → SLX
-  }
-  return raw;
-}
-
-// быстрые кнопки с учётом режима и единицы ввода
-function buildQuick() {
-  const quick = document.getElementById('m-quick');
-  const isBuy = state.mode === 'buy';
-  const price = state.price || 1;
-  const tokenUnit = state.qtyUnit === 'tokens' && state.orderType !== 'limit';
-  let html = '';
-  if (isBuy) {
-    const bal = state.balance || 0;
-    const feeM = 1 + state.fee / 100;
-    html = [['25%', bal*0.25], ['50%', bal*0.5], ['75%', bal*0.75], ['Всё', bal]].map(([lbl, tokens]) => {
-      const val = tokenUnit ? Math.floor(tokens) : Math.floor((tokens / (price * feeM)) * 10000) / 10000;
-      return `<div class="quick" data-q="${val}">${lbl}</div>`;
-    }).join('');
-  } else {
-    const have = (state.portfolio && state.portfolio.qty) || 0;
-    const feeS = 1 - state.fee / 100;
-    html = [['25%', have*0.25], ['50%', have*0.5], ['75%', have*0.75], ['Всё', have]].map(([lbl, slx]) => {
-      const val = tokenUnit ? Math.floor(slx * price * feeS) : Math.floor(slx * 10000) / 10000;
-      return `<div class="quick" data-q="${val}">${lbl}</div>`;
-    }).join('');
-  }
-  quick.innerHTML = html;
-  quick.querySelectorAll('.quick').forEach(q => q.addEventListener('click', () => {
-    document.getElementById('m-qty').value = q.dataset.q;
-    updateCalc(); haptic();
-  }));
-}
-
-// переключатель единиц SLX / Токены
-document.querySelectorAll('#unit-tog .ut-opt').forEach(opt => {
-  opt.addEventListener('click', () => {
-    if (state.qtyUnit === opt.dataset.unit) return;
-    state.qtyUnit = opt.dataset.unit;
-    document.querySelectorAll('#unit-tog .ut-opt').forEach(o => o.classList.toggle('active', o === opt));
-    document.getElementById('m-qty').value = '';
-    applyUnitLabel();
-    buildQuick();
-    updateCalc();
-    haptic();
-  });
-});
-
 // переключатель типа ордера (рынок/лимит)
 document.querySelectorAll('.ot-opt').forEach(opt => {
   opt.addEventListener('click', () => {
@@ -1811,17 +1753,6 @@ document.querySelectorAll('.ot-opt').forEach(opt => {
     document.querySelectorAll('.ot-opt').forEach(o => o.classList.toggle('active', o === opt));
     document.getElementById('limit-price-wrap').style.display =
       state.orderType === 'limit' ? 'block' : 'none';
-    // лимит всегда в SLX: прячем переключатель единиц и возвращаем SLX
-    const utog = document.getElementById('unit-tog');
-    if (state.orderType === 'limit') {
-      utog.style.display = 'none';
-      state.qtyUnit = 'slx';
-      document.querySelectorAll('#unit-tog .ut-opt').forEach(o => o.classList.toggle('active', o.dataset.unit === 'slx'));
-    } else {
-      utog.style.display = 'inline-flex';
-    }
-    applyUnitLabel();
-    buildQuick();
     // подставим текущую цену как стартовую для лимита
     if (state.orderType === 'limit') {
       const lp = document.getElementById('m-limit-price');
@@ -1832,67 +1763,8 @@ document.querySelectorAll('.ot-opt').forEach(opt => {
 });
 function closeModal() { document.getElementById('modal-bg').classList.remove('show'); }
 
-// ─── Ликвидность (LP): модалка добавить/вывести/забрать (v228) ───
-function fillLpModal() {
-  const lp = state.lp || { amount: 0, pending: 0, share: 0 };
-  document.getElementById('lp-pool').textContent = fmtFit(state.liquidityPool || 0);
-  document.getElementById('lp-mine').textContent = fmtFit(lp.amount || 0);
-  document.getElementById('lp-share').textContent = (lp.share || 0) + '%';
-  document.getElementById('lp-pending').textContent = '+' + fmtFit(lp.pending || 0);
-}
-function openLpModal() { fillLpModal(); document.getElementById('lp-amount').value = ''; document.getElementById('lp-modal-bg').classList.add('show'); }
-function closeLpModal() { document.getElementById('lp-modal-bg').classList.remove('show'); }
-
-async function lpAction(path, amount) {
-  try {
-    const body = (amount != null) ? { amount: amount } : {};
-    const r = await apiPost(path, body);
-    if (!r || r.ok === false) { toast((r && r.message) || 'Ошибка', 'err'); return; }
-    if (typeof r.fees === 'number' && r.fees > 0) toast('Забрано комиссии: ' + fmtFit(r.fees), 'ok');
-    else toast('Готово', 'ok');
-    haptic('success');
-    await loadState();        // обновит state.lp / баланс
-    fillLpModal();
-  } catch (e) { toast('Ошибка сети', 'err'); }
-}
-
-document.getElementById('lp-open').addEventListener('click', () => { openLpModal(); haptic(); });
-document.getElementById('lp-cancel').addEventListener('click', closeLpModal);
-document.getElementById('lp-modal-bg').addEventListener('click', (e) => { if (e.target.id === 'lp-modal-bg') closeLpModal(); });
-document.querySelectorAll('#lp-quick .quick-btn').forEach(b => {
-  b.addEventListener('click', () => {
-    const which = b.dataset.lp;
-    const v = which === 'stake' ? (state.lp && state.lp.amount || 0) : (state.balance || 0);
-    document.getElementById('lp-amount').value = Math.floor(v) || '';
-    haptic();
-  });
-});
-// подтверждение действия (нативное окно Telegram, с запасным window.confirm)
-function askConfirm(msg, cb) {
-  if (tg && tg.showConfirm) { try { tg.showConfirm(msg, (ok) => { if (ok) cb(); }); return; } catch (e) {} }
-  if (window.confirm(msg)) cb();
-}
-
-document.getElementById('lp-add').addEventListener('click', () => {
-  const a = Math.floor(parseFloat(document.getElementById('lp-amount').value) || 0);
-  if (a <= 0) { toast('Введите сумму', 'err'); return; }
-  if (a > (state.balance || 0)) { toast('Недостаточно токенов', 'err'); return; }
-  haptic();
-  askConfirm('Заблокировать ' + fmtFit(a) + ' токенов в ликвидности?\nТокены будут заморожены, пока не выведешь.', () => lpAction('/casino/slx/lp/add', a));
-});
-document.getElementById('lp-remove').addEventListener('click', () => {
-  const a = Math.floor(parseFloat(document.getElementById('lp-amount').value) || 0);
-  const stake = (state.lp && state.lp.amount) || 0;
-  if (stake <= 0) { toast('У вас нет вклада', 'err'); return; }
-  const amt = (a > 0 && a < stake) ? a : stake;   // пусто/всё → вывести весь вклад
-  haptic();
-  askConfirm('Вывести ' + fmtFit(amt) + ' токенов из ликвидности?\nНакопленная комиссия придёт вместе с выводом.', () => lpAction('/casino/slx/lp/remove', amt));
-});
-document.getElementById('lp-claim').addEventListener('click', () => { haptic(); lpAction('/casino/slx/lp/claim', null); });
-
-
 function updateCalc() {
-  const qty = effectiveQty();   // SLX (с учётом единицы ввода токены/SLX)
+  const qty = parseFloat(document.getElementById('m-qty').value) || 0;
   // цена: рыночная или из поля лимита
   const limitPrice = parseFloat(document.getElementById('m-limit-price').value) || 0;
   const isLimit = state.orderType === 'limit';
@@ -1970,7 +1842,7 @@ document.getElementById('m-cancel').addEventListener('click', closeModal);
 document.getElementById('modal-bg').addEventListener('click', (e) => { if (e.target.id === 'modal-bg') closeModal(); });
 
 document.getElementById('m-confirm').addEventListener('click', async () => {
-  const qty = effectiveQty();   // SLX (с учётом единицы ввода токены/SLX)
+  const qty = parseFloat(document.getElementById('m-qty').value) || 0;
   if (qty <= 0) { toast('Введи количество', 'err'); return; }
   const btn = document.getElementById('m-confirm');
 
