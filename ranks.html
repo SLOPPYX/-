@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Ранги 1vs1</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #000;
+    --border: rgba(139,92,246,.18);
+    --accent: #8b5cf6;
+    --accent-light: #c4b5fd;
+    --accent-dark: #6d28d9;
+    --up: #00e6a0;
+    --down: #ff3b5c;
+    --text: #f5f1ff;
+    --text2: #a79dbd;
+    --text3: #6b6280;
+    --tier-rgb: 139,92,246;
+  }
+  html, body { background: var(--bg); color: var(--text); overflow-x: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased; min-height: 100vh;
+  }
+  body::before {
+    content: ''; position: fixed; top: -90px; left: 50%; transform: translateX(-50%);
+    width: 420px; height: 260px; pointer-events: none; z-index: 0;
+    background: radial-gradient(ellipse, rgba(139,92,246,.22), transparent 70%);
+  }
+  body::after {
+    content: ''; position: fixed; bottom: -150px; left: -70px; width: 340px; height: 340px;
+    pointer-events: none; z-index: 0;
+    background: radial-gradient(circle, rgba(109,40,217,.16), transparent 70%);
+  }
+  .app {
+    position: relative; z-index: 1; max-width: 480px; margin: 0 auto;
+    padding: calc(20px + env(safe-area-inset-top, 0px)) 16px calc(32px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ─── Шапка ─── */
+  .top h1 {
+    font-size: 27px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1;
+    background: linear-gradient(135deg, #fff 20%, var(--accent-light) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    display: inline-block;
+  }
+  .top h1 span { color: var(--accent-light); -webkit-text-fill-color: var(--accent-light); }
+  .sub { margin-top: 6px; display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--text3); min-height: 16px; }
+  .live { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px rgba(139,92,246,.9); flex-shrink: 0; animation: pulse 1.8s ease-in-out infinite; }
+
+  /* ─── Скелетоны ─── */
+  .sk {
+    display: inline-block; min-height: 1em; vertical-align: middle; border-radius: 8px;
+    color: transparent !important; border-color: transparent !important;
+    background: linear-gradient(90deg, rgba(255,255,255,.05), rgba(255,255,255,.13), rgba(255,255,255,.05)) 0 0 / 220% 100% !important;
+    animation: skmove 1.4s linear infinite;
+  }
+  .sub .sk { height: 14px; }
+
+  /* ─── Герой ─── */
+  .hero { text-align: center; padding: 26px 0 22px; }
+  .emblem { position: relative; width: 132px; height: 132px; margin: 0 auto 26px; display: grid; place-items: center; }
+  .emblem .halo {
+    position: absolute; inset: -26px; border-radius: 50%; opacity: .55;
+    background: radial-gradient(circle, rgba(var(--tier-rgb), .55) 0%, transparent 66%);
+    animation: breathe 3.6s ease-in-out infinite;
+  }
+  .emblem .disc {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(circle at 32% 24%, rgba(255,255,255,.16), transparent 46%), linear-gradient(160deg, #1b1032, #07040e);
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: inset 0 0 0 1px rgba(var(--tier-rgb), .3), 0 20px 40px -14px rgba(0,0,0,.9), 0 0 48px -6px rgba(var(--tier-rgb), .55);
+    transition: box-shadow .6s ease;
+  }
+  .emblem .spin {
+    position: absolute; inset: -7px; border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0 62%, rgb(var(--tier-rgb)) 100%);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+            mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+    animation: spin 5s linear infinite; opacity: .95;
+  }
+  .emblem .emoji {
+    position: relative; font-size: 66px; line-height: 1; display: grid; place-items: center;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,.65)); animation: float 4s ease-in-out infinite;
+  }
+  .emblem .emoji svg { width: 54px; height: 54px; stroke: var(--text3); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .emblem .emoji.pop { animation: pop .7s cubic-bezier(.3,1.5,.5,1) both, float 4s ease-in-out .7s infinite; }
+  .tier {
+    font-size: 32px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; min-height: 37px;
+    text-shadow: 0 0 30px rgba(var(--tier-rgb), .55);
+  }
+  .tier.sk { height: 34px; }
+  .tier.muted { font-size: 18px; color: var(--text3); text-shadow: none; }
+  .rp { margin-top: 8px; display: flex; align-items: baseline; justify-content: center; gap: 7px; }
+  .rp #rp-val { font-size: 46px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.05; }
+  .rp #rp-val.empty { color: var(--text3); }
+  .rp small { font-size: 15px; font-weight: 800; letter-spacing: .06em; color: var(--accent-light); }
+
+  /* ─── Карточки ─── */
+  .card {
+    position: relative; margin-bottom: 14px; padding: 18px; border-radius: 22px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(26,15,48,.72), rgba(9,6,16,.78));
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 40px -22px rgba(0,0,0,.8);
+  }
+  .card::before {
+    content: ''; position: absolute; inset: 0 0 auto 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(196,181,253,.55), transparent);
+  }
+
+  /* прогресс */
+  .pg-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px;
+    font-size: 13.5px; font-weight: 700; white-space: nowrap;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07);
+  }
+  .chip.cur { background: rgba(var(--tier-rgb), .14); border-color: rgba(var(--tier-rgb), .4); }
+  .chip.max { background: rgba(139,92,246,.16); border-color: rgba(139,92,246,.45); color: var(--accent-light); }
+  .arr { color: var(--text3); font-weight: 800; }
+  .bar { position: relative; height: 12px; border-radius: 999px; background: rgba(255,255,255,.07); box-shadow: inset 0 1px 3px rgba(0,0,0,.6); }
+  .bar.loading::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent) 0 0 / 220% 100%;
+    animation: skmove 1.4s linear infinite;
+  }
+  .bar i {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: inherit; display: block;
+    background: linear-gradient(90deg, var(--accent-dark), var(--accent) 55%, var(--accent-light));
+    box-shadow: 0 0 16px rgba(139,92,246,.75);
+    transition: width 1.7s cubic-bezier(.22,.9,.24,1);
+  }
+  .bar i::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.5) 50%, transparent 70%) 0 0 / 220% 100%;
+    animation: sheen 2.4s linear infinite;
+  }
+  .bar i::after {
+    content: ''; position: absolute; right: 0; top: 50%; width: 14px; height: 14px; border-radius: 50%;
+    transform: translate(35%, -50%); background: #fff;
+    box-shadow: 0 0 0 4px rgba(139,92,246,.3), 0 0 14px rgba(196,181,253,.9);
+  }
+  .pg-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 12.5px; font-weight: 700; color: var(--text2); font-variant-numeric: tabular-nums; }
+  .pg-foot #pg-pct { color: var(--accent-light); }
+  .pg-note { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.06); font-size: 14px; color: var(--text2); line-height: 1.4; min-height: 20px; }
+  .pg-note b { color: var(--text); font-weight: 800; }
+  .pg-note.sk { display: block; height: 16px; }
+
+  /* статистика */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 0; }
+  .stat {
+    position: relative; padding: 14px 10px 13px; border-radius: 18px; text-align: center; overflow: hidden;
+    background: linear-gradient(180deg, rgba(26,15,48,.6), rgba(9,6,16,.7)); border: 1px solid var(--border);
+  }
+  .stat::before { content: ''; position: absolute; left: 24%; right: 24%; top: 0; height: 2px; border-radius: 2px; background: var(--c, var(--accent)); box-shadow: 0 0 12px var(--c, var(--accent)); }
+  .stat b { display: block; font-size: 26px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--c, var(--text)); min-height: 30px; line-height: 1.15; }
+  .stat b.sk { height: 26px; }
+  .stat span { display: block; margin-top: 4px; font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text3); }
+  .stat.w { --c: var(--up); }
+  .stat.l { --c: var(--down); }
+  .stat.r { --c: var(--accent-light); }
+  .stats-note { margin: 10px 4px 24px; font-size: 11.5px; line-height: 1.4; color: var(--text3); text-align: center; }
+
+  /* лестница */
+  .sec-title { margin: 0 2px 12px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text3); }
+  .ladder { list-style: none; }
+  .rung {
+    position: relative; display: flex; align-items: center; gap: 14px; margin-bottom: 10px; padding: 11px 14px 11px 11px;
+    border-radius: 18px; border: 1px solid transparent;
+    background: rgba(255,255,255,.025);
+    opacity: 0; transform: translateY(8px);
+    animation: rise .5s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: calc(var(--i, 0) * 70ms);
+  }
+  .rung:last-child { margin-bottom: 0; }
+  .rung:not(:last-child)::after {
+    content: ''; position: absolute; left: 32px; top: 100%; width: 2px; height: 10px; background: rgba(255,255,255,.07);
+  }
+  .rung.passed::after, .rung.current::after { background: linear-gradient(180deg, var(--accent), rgba(139,92,246,.35)) !important; }
+  .rung .badge {
+    width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0; display: grid; place-items: center; font-size: 24px;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07);
+  }
+  .rung .meta { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .rung .nm { font-size: 15.5px; font-weight: 800; letter-spacing: -.01em; }
+  .rung .th { font-size: 12px; font-weight: 600; color: var(--text3); font-variant-numeric: tabular-nums; }
+  .rung .st { margin-left: auto; display: flex; align-items: center; flex-shrink: 0; }
+  .rung .st svg { width: 18px; height: 18px; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .rung.passed { --o: .6; }
+  .rung.passed .st svg { stroke: var(--up); }
+  .rung.locked { --o: .5; }
+  .rung.locked .badge { filter: grayscale(1) brightness(.75); }
+  .rung.locked .st svg { stroke: var(--text3); }
+  .rung.current {
+    --o: 1;
+    background: linear-gradient(90deg, rgba(var(--tier-rgb), .18), rgba(139,92,246,.06));
+    border-color: rgba(var(--tier-rgb), .5);
+    box-shadow: 0 0 34px -10px rgba(var(--tier-rgb), .7);
+  }
+  .rung.current .badge { background: rgba(var(--tier-rgb), .18); border-color: rgba(var(--tier-rgb), .5); box-shadow: 0 0 18px -4px rgba(var(--tier-rgb), .8); }
+  .here {
+    padding: 5px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: .03em; white-space: nowrap;
+    background: rgb(var(--tier-rgb)); color: #12081f; animation: pulse 2s ease-in-out infinite;
+  }
+  .rung.ghost { --o: 1; }
+  .rung.ghost .badge.sk { border: 0; }
+  .rung.ghost .nm.sk, .rung.ghost .th.sk { display: block; height: 14px; }
+
+  /* ошибка */
+  .err { display: none; align-items: center; gap: 14px; margin-bottom: 14px; padding: 16px; border-radius: 20px; background: rgba(255,59,92,.07); border: 1px solid rgba(255,59,92,.3); }
+  .err-ic { width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0; display: grid; place-items: center; background: rgba(255,59,92,.14); }
+  .err-ic svg { width: 20px; height: 20px; fill: none; stroke: var(--down); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .err b { display: block; font-size: 14.5px; font-weight: 800; }
+  .err p { margin-top: 3px; font-size: 12.5px; line-height: 1.4; color: var(--text2); }
+  .err button {
+    margin-left: auto; flex-shrink: 0; padding: 10px 14px; border: 0; border-radius: 12px; cursor: pointer;
+    font: inherit; font-size: 13px; font-weight: 800; color: #170b2e;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light)); box-shadow: 0 0 18px rgba(139,92,246,.35);
+  }
+  .err button:active { transform: scale(.96); }
+  .app[data-state="error"] .err { display: flex; }
+  .app[data-state="error"] .data-sec { display: none; }
+
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes breathe { 0%,100% { opacity: .4; transform: scale(.96); } 50% { opacity: .75; transform: scale(1.06); } }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  @keyframes pop { 0% { transform: scale(.55); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes skmove { 0% { background-position: 120% 0; } 100% { background-position: -100% 0; } }
+  @keyframes sheen { 0% { background-position: 120% 0; } 100% { background-position: -100% 0; } }
+  @keyframes rise { to { opacity: var(--o, 1); transform: none; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; }
+    .rung { opacity: var(--o, 1); transform: none; }
+  }
+</style>
+</head>
+<body>
+<main class="app" id="app" data-state="loading">
+
+  <header class="top">
+    <h1>Ранги <span>1vs1</span></h1>
+    <div class="sub"><i class="live"></i><span id="season-text" class="sk" style="width:150px"></span></div>
+  </header>
+
+  <section class="hero">
+    <div class="emblem" id="emblem">
+      <div class="halo"></div>
+      <div class="disc"></div>
+      <div class="spin"></div>
+      <div class="emoji" id="tier-emoji"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg></div>
+    </div>
+    <h2 class="tier sk" id="tier-name" style="width:170px"></h2>
+    <div class="rp"><span id="rp-val" class="empty">—</span><small>RP</small></div>
+  </section>
+
+  <div class="err" id="err" role="alert">
+    <div class="err-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="7.5" x2="12" y2="12.5"/><line x1="12" y1="16" x2="12" y2="16.01"/></svg></div>
+    <div><b id="err-title">Нет связи</b><p id="err-text"></p></div>
+    <button type="button" id="retry">Повторить</button>
+  </div>
+
+  <section class="card data-sec" id="pg-card">
+    <div class="pg-head">
+      <span class="chip sk" id="cur-chip" style="width:112px;height:34px"></span>
+      <span class="arr" id="pg-arr">→</span>
+      <span class="chip sk" id="next-chip" style="width:112px;height:34px"></span>
+    </div>
+    <div class="bar loading" id="bar"><i id="bar-fill"></i></div>
+    <div class="pg-foot"><span id="pg-nums" class="sk" style="width:96px"></span><span id="pg-pct"></span></div>
+    <p class="pg-note sk" id="pg-note" style="width:72%"></p>
+  </section>
+
+  <section class="data-sec">
+    <div class="stats">
+      <div class="stat w"><b id="st-w" class="sk" style="width:44px"></b><span>Победы</span></div>
+      <div class="stat l"><b id="st-l" class="sk" style="width:44px"></b><span>Поражения</span></div>
+      <div class="stat r"><b id="st-wr" class="sk" style="width:52px"></b><span>Винрейт</span></div>
+    </div>
+    <p class="stats-note">Победы и поражения считаются за всё время и не обнуляются со сменой сезона.</p>
+  </section>
+
+  <section class="data-sec">
+    <div class="sec-title">Лестница рангов</div>
+    <ol class="ladder" id="ladder">
+      <li class="rung ghost" style="--i:0"><span class="badge sk"></span><span class="meta"><span class="nm sk" style="width:110px"></span><span class="th sk" style="width:74px"></span></span></li>
+      <li class="rung ghost" style="--i:1"><span class="badge sk"></span><span class="meta"><span class="nm sk" style="width:96px"></span><span class="th sk" style="width:74px"></span></span></li>
+      <li class="rung ghost" style="--i:2"><span class="badge sk"></span><span class="meta"><span class="nm sk" style="width:120px"></span><span class="th sk" style="width:74px"></span></span></li>
+      <li class="rung ghost" style="--i:3"><span class="badge sk"></span><span class="meta"><span class="nm sk" style="width:88px"></span><span class="th sk" style="width:74px"></span></span></li>
+    </ol>
+  </section>
+
+</main>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var reduce = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  // Telegram SDK необязателен — страница работает и в обычном браузере
+  try {
+    var tg = window.Telegram && window.Telegram.WebApp;
+    if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#000000'); tg.setBackgroundColor('#000000'); }
+  } catch (e) {}
+
+  // Параметры из ссылки бота. Секрет живёт только в этой переменной и нигде не логируется.
+  var q = new URLSearchParams(location.search);
+  var UID = q.get('user_id') || q.get('uid') || '';
+  var SECRET = q.get('api_secret') || q.get('secret') || '';
+  var API = (q.get('api_url') || '').trim();
+  var RP0 = parseInt(q.get('rp'), 10);
+  if (API && !/^https?:\/\//i.test(API)) { try { API = decodeURIComponent(API); } catch (e) {} }
+  API = API.replace(/\/+$/, '');
+
+  // Оттенок свечения по позиции ранга в лестнице (только оформление)
+  var PALETTE = ['205,127,79', '196,204,220', '255,201,74', '110,231,255', '96,165,250', '167,139,250', '232,121,249'];
+  var ICON_CHECK = '<svg viewBox="0 0 24 24"><polyline points="4 12.5 9.5 18 20 6.5"/></svg>';
+  var ICON_LOCK = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+
+  var app = $('app');
+  var loaded = false, busy = false, shownRp = null, rafId = 0;
+
+  function fmt(n) { return Number(n).toLocaleString('ru-RU'); }
+  function num(v) { v = Number(v); return isFinite(v) ? v : 0; }
+  function unsk(el) { el.classList.remove('sk'); el.style.width = ''; el.style.height = ''; }
+
+  // Снимок RP из ссылки — показываем сразу, пока идёт запрос
+  if (isFinite(RP0) && RP0 >= 0) { shownRp = RP0; $('rp-val').textContent = fmt(RP0); $('rp-val').classList.remove('empty'); }
+
+  function countTo(to) {
+    var el = $('rp-val');
+    el.classList.remove('empty');
+    var from = shownRp == null ? 0 : shownRp;
+    shownRp = to;
+    cancelAnimationFrame(rafId);
+    if (reduce || from === to) { el.textContent = fmt(to); return; }
+    var t0 = performance.now();
+    var dur = Math.min(1800, 800 + Math.abs(to - from) * 2);
+    (function step(t) {
+      var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(Math.round(from + (to - from) * e));
+      if (p < 1) rafId = requestAnimationFrame(step);
+    })(t0);
+  }
+
+  function setBar(pct) {
+    var fill = $('bar-fill');
+    $('bar').classList.remove('loading');
+    if (reduce) { fill.style.width = pct + '%'; return; }
+    fill.style.width = '0%';
+    requestAnimationFrame(function () { requestAnimationFrame(function () { fill.style.width = pct + '%'; }); });
+  }
+
+  function render(d) {
+    var tiers = Array.isArray(d.all_tiers) ? d.all_tiers : [];
+    var cur = -1;
+    for (var i = 0; i < tiers.length; i++) { if (tiers[i].name === d.tier_name) { cur = i; break; } }
+    var rgb = cur >= 0 ? PALETTE[Math.min(cur, PALETTE.length - 1)] : PALETTE[5];
+    app.style.setProperty('--tier-rgb', rgb);
+
+    // сезон
+    var season = $('season-text'); unsk(season);
+    season.textContent = 'Сезон ' + d.season_number + ' · ' + d.season_name;
+
+    // герой
+    var emoji = $('tier-emoji');
+    emoji.textContent = d.tier_emoji;
+    emoji.classList.remove('pop'); void emoji.offsetWidth; if (!reduce) emoji.classList.add('pop');
+    var tn = $('tier-name'); unsk(tn); tn.classList.remove('muted'); tn.textContent = d.tier_name;
+    countTo(num(d.rp));
+
+    // прогресс до следующего ранга
+    var isMax = !d.next_tier_name;
+    var pct = Math.max(0, Math.min(100, num(d.progress_percent)));
+    var curChip = $('cur-chip'); unsk(curChip); curChip.className = 'chip cur';
+    curChip.textContent = d.tier_emoji + ' ' + d.tier_name;
+    var nextChip = $('next-chip'); unsk(nextChip);
+    var nums = $('pg-nums'); unsk(nums);
+    var note = $('pg-note'); unsk(note); note.textContent = '';
+    if (isMax) {
+      $('pg-arr').style.display = 'none';
+      nextChip.className = 'chip max'; nextChip.textContent = '👑 Максимум';
+      nums.textContent = fmt(num(d.rp)) + ' RP';
+      $('pg-pct').textContent = '100%';
+      note.textContent = 'Ты на вершине лестницы — выше рангов нет.';
+    } else {
+      $('pg-arr').style.display = '';
+      nextChip.className = 'chip'; nextChip.textContent = d.next_tier_emoji + ' ' + d.next_tier_name;
+      nums.textContent = fmt(num(d.rp)) + ' / ' + fmt(num(d.next_tier_threshold)) + ' RP';
+      $('pg-pct').textContent = pct + '%';
+      note.appendChild(document.createTextNode('До ' + d.next_tier_emoji + ' ' + d.next_tier_name + ' осталось '));
+      var b = document.createElement('b'); b.textContent = fmt(num(d.rp_remaining)) + ' RP';
+      note.appendChild(b);
+    }
+    setBar(isMax ? 100 : pct);
+
+    // победы / поражения
+    var w = num(d.wins), l = num(d.losses), games = w + l;
+    var sw = $('st-w'), sl = $('st-l'), sr = $('st-wr');
+    unsk(sw); unsk(sl); unsk(sr);
+    sw.textContent = fmt(w); sl.textContent = fmt(l);
+    sr.textContent = games ? Math.round(w / games * 100) + '%' : '—';
+
+    // лестница: сверху высший ранг
+    var ladder = $('ladder');
+    ladder.textContent = '';
+    for (var k = tiers.length - 1; k >= 0; k--) {
+      var t = tiers[k];
+      var state = cur < 0 ? 'locked' : (k < cur ? 'passed' : (k === cur ? 'current' : 'locked'));
+      var li = document.createElement('li');
+      li.className = 'rung ' + state;
+      li.style.setProperty('--i', String(tiers.length - 1 - k));
+
+      var badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = t.emoji;
+      var meta = document.createElement('span'); meta.className = 'meta';
+      var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = t.name;
+      var th = document.createElement('span'); th.className = 'th'; th.textContent = 'от ' + fmt(num(t.threshold)) + ' RP';
+      meta.appendChild(nm); meta.appendChild(th);
+      var st = document.createElement('span'); st.className = 'st';
+      if (state === 'current') { var here = document.createElement('span'); here.className = 'here'; here.textContent = 'Ты здесь'; st.appendChild(here); }
+      else { st.innerHTML = state === 'passed' ? ICON_CHECK : ICON_LOCK; }
+
+      li.appendChild(badge); li.appendChild(meta); li.appendChild(st);
+      ladder.appendChild(li);
+    }
+  }
+
+  function fail(kind) {
+    var title = 'Не удалось загрузить данные', text;
+    if (kind === 'params') { title = 'Нет данных для подключения'; text = 'Открой рейтинг через кнопку в боте — в ссылке не хватает параметров.'; }
+    else if (kind === 'unauthorized') { title = 'Доступ не подтверждён'; text = 'Открой рейтинг заново из бота, чтобы обновить ссылку.'; }
+    else { text = 'Сервер не отвечает. Проверь соединение и попробуй ещё раз.'; }
+    $('err-title').textContent = title;
+    $('err-text').textContent = text;
+    if (!loaded) {
+      var season = $('season-text'); unsk(season); season.textContent = 'Ранговый сезон';
+      var tn = $('tier-name'); unsk(tn); tn.classList.add('muted'); tn.textContent = 'Ранг недоступен';
+    }
+    app.dataset.state = 'error';
+  }
+
+  function load() {
+    if (busy) return;
+    if (!UID || !SECRET || !/^https?:\/\//i.test(API)) { fail('params'); return; }
+    busy = true;
+    app.dataset.state = 'loading';
+    if (!loaded) {
+      var tn = $('tier-name'); tn.classList.remove('muted'); tn.classList.add('sk'); tn.textContent = ''; tn.style.width = '170px';
+    }
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 12000);
+    var url = API + '/casino/ranks?uid=' + encodeURIComponent(UID) + '&secret=' + encodeURIComponent(SECRET);
+
+    fetch(url, { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) {
+        return r.json().catch(function () { return null; }).then(function (j) { return { status: r.status, ok: r.ok, j: j }; });
+      })
+      .then(function (res) {
+        if (res.status === 401) { fail('unauthorized'); return; }
+        if (!res.ok || !res.j || res.j.ok !== true) { fail('network'); return; }
+        loaded = true;
+        app.dataset.state = 'ready';
+        render(res.j);
+      })
+      .catch(function () { fail('network'); })
+      .then(function () { clearTimeout(timer); busy = false; });
+  }
+
+  $('retry').addEventListener('click', load);
+  load();
+})();
+</script>
+</body>
+</html>
