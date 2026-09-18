@@ -7,6 +7,7 @@
 <title>Ранги 1vs1</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  @property --ang { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
   :root {
     --bg: #000;
     --border: rgba(139,92,246,.18);
@@ -25,27 +26,28 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased; min-height: 100vh;
   }
-  body::before {
-    content: ''; position: fixed; top: -90px; left: 50%; transform: translateX(-50%);
-    width: 420px; height: 260px; pointer-events: none; z-index: 0;
-    background: radial-gradient(ellipse, rgba(139,92,246,.22), transparent 70%);
-  }
-  body::after {
-    content: ''; position: fixed; bottom: -150px; left: -70px; width: 340px; height: 340px;
-    pointer-events: none; z-index: 0;
-    background: radial-gradient(circle, rgba(109,40,217,.16), transparent 70%);
-  }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+  /* ─── Живой фон ─── */
+  .aurora { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .aurora i { position: absolute; border-radius: 50%; will-change: transform; }
+  .aurora i:nth-child(1) { width: 460px; height: 340px; top: -150px; left: 50%; margin-left: -230px; background: radial-gradient(ellipse, rgba(139,92,246,.30), transparent 70%); animation: drift1 16s ease-in-out infinite; }
+  .aurora i:nth-child(2) { width: 380px; height: 380px; bottom: -160px; left: -110px; background: radial-gradient(circle, rgba(109,40,217,.26), transparent 70%); animation: drift2 20s ease-in-out infinite; }
+  .aurora i:nth-child(3) { width: 320px; height: 320px; top: 34%; right: -140px; background: radial-gradient(circle, rgba(var(--tier-rgb),.16), transparent 70%); animation: drift3 24s ease-in-out infinite; transition: background 1s; }
+  .grain { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .5;
+    background-image: radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px); background-size: 26px 26px;
+    -webkit-mask: linear-gradient(180deg, #000, transparent 55%); mask: linear-gradient(180deg, #000, transparent 55%); }
+
   .app {
     position: relative; z-index: 1; max-width: 480px; margin: 0 auto;
-    padding: calc(20px + env(safe-area-inset-top, 0px)) 16px calc(32px + env(safe-area-inset-bottom, 0px));
+    padding: calc(20px + env(safe-area-inset-top, 0px)) 16px calc(104px + env(safe-area-inset-bottom, 0px));
   }
 
   /* ─── Шапка ─── */
   .top h1 {
-    font-size: 27px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1;
+    font-size: 27px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; display: inline-block;
     background: linear-gradient(135deg, #fff 20%, var(--accent-light) 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
-    display: inline-block;
   }
   .top h1 span { color: var(--accent-light); -webkit-text-fill-color: var(--accent-light); }
   .sub { margin-top: 6px; display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--text3); min-height: 16px; }
@@ -60,38 +62,51 @@
   }
   .sub .sk { height: 14px; }
 
+  /* ─── Страницы (вкладки) ─── */
+  .page { display: none; }
+  .page.on { display: block; animation: pageIn .5s cubic-bezier(.2,.8,.2,1); }
+  .page-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 20px 2px 14px; }
+  .page-head h3 { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+  .pill { padding: 6px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 800; letter-spacing: .02em; white-space: nowrap;
+    color: var(--accent-light); background: rgba(139,92,246,.14); border: 1px solid rgba(139,92,246,.35); }
+  .pill.soon { color: #ffd76a; background: rgba(255,201,74,.1); border-color: rgba(255,201,74,.35); }
+
+  /* ─── Эмблемы рангов (SVG) ─── */
+  .rk { display: block; flex-shrink: 0; overflow: visible; filter: drop-shadow(0 2px 5px rgba(0,0,0,.55)); }
+  .rk.in { display: inline-block; vertical-align: -6px; }
+
   /* ─── Герой ─── */
-  .hero { text-align: center; padding: 26px 0 22px; }
-  .emblem { position: relative; width: 132px; height: 132px; margin: 0 auto 26px; display: grid; place-items: center; }
-  .emblem .halo {
-    position: absolute; inset: -26px; border-radius: 50%; opacity: .55;
-    background: radial-gradient(circle, rgba(var(--tier-rgb), .55) 0%, transparent 66%);
-    animation: breathe 3.6s ease-in-out infinite;
-  }
+  .hero { text-align: center; padding: 22px 0 22px; }
+  .stage { position: relative; width: 150px; height: 150px; margin: 0 auto 26px; perspective: 700px; }
+  .emblem { position: absolute; inset: 0; display: grid; place-items: center; transform-style: preserve-3d; transition: transform .25s ease-out; }
+  .emblem .halo { position: absolute; inset: -30px; border-radius: 50%; opacity: .55; background: radial-gradient(circle, rgba(var(--tier-rgb), .6) 0%, transparent 66%); animation: breathe 3.6s ease-in-out infinite; }
   .emblem .disc {
-    position: absolute; inset: 0; border-radius: 50%;
+    position: absolute; inset: 6px; border-radius: 50%;
     background: radial-gradient(circle at 32% 24%, rgba(255,255,255,.16), transparent 46%), linear-gradient(160deg, #1b1032, #07040e);
     border: 1px solid rgba(255,255,255,.08);
-    box-shadow: inset 0 0 0 1px rgba(var(--tier-rgb), .3), 0 20px 40px -14px rgba(0,0,0,.9), 0 0 48px -6px rgba(var(--tier-rgb), .55);
-    transition: box-shadow .6s ease;
+    box-shadow: inset 0 0 0 1px rgba(var(--tier-rgb), .3), 0 20px 40px -14px rgba(0,0,0,.9), 0 0 50px -6px rgba(var(--tier-rgb), .6);
   }
   .emblem .spin {
-    position: absolute; inset: -7px; border-radius: 50%;
-    background: conic-gradient(from 0deg, transparent 0 62%, rgb(var(--tier-rgb)) 100%);
+    position: absolute; inset: -2px; border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0 60%, rgb(var(--tier-rgb)) 100%);
     -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
             mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
     animation: spin 5s linear infinite; opacity: .95;
   }
-  .emblem .emoji {
-    position: relative; font-size: 66px; line-height: 1; display: grid; place-items: center;
-    filter: drop-shadow(0 8px 16px rgba(0,0,0,.65)); animation: float 4s ease-in-out infinite;
+  .emblem .glare { position: absolute; inset: 6px; border-radius: 50%; overflow: hidden; pointer-events: none; }
+  .emblem .glare::after { content: ''; position: absolute; inset: 0; transform: translateX(-130%);
+    background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.30) 50%, transparent 62%); animation: glare 5.5s ease-in-out infinite; }
+  .medal { position: relative; width: 96px; height: 96px; display: grid; place-items: center; transform: translateZ(40px); animation: float 4s ease-in-out infinite; }
+  .medal .rk { filter: drop-shadow(0 10px 18px rgba(0,0,0,.7)) drop-shadow(0 0 16px rgba(var(--tier-rgb), .55)); }
+  .medal.ph svg { width: 56px; height: 56px; stroke: var(--text3); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .medal.pop { animation: pop .8s cubic-bezier(.3,1.5,.5,1) both, float 4s ease-in-out .8s infinite; }
+  .sparks { position: absolute; left: 50%; bottom: 14px; width: 0; height: 0; pointer-events: none; }
+  .sparks i {
+    position: absolute; left: var(--x); bottom: 0; width: var(--s); height: var(--s); border-radius: 50%; opacity: 0;
+    background: rgb(var(--tier-rgb)); box-shadow: 0 0 8px 1px rgba(var(--tier-rgb), .9);
+    animation: spark var(--d) linear var(--dl) infinite;
   }
-  .emblem .emoji svg { width: 54px; height: 54px; stroke: var(--text3); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-  .emblem .emoji.pop { animation: pop .7s cubic-bezier(.3,1.5,.5,1) both, float 4s ease-in-out .7s infinite; }
-  .tier {
-    font-size: 32px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; min-height: 37px;
-    text-shadow: 0 0 30px rgba(var(--tier-rgb), .55);
-  }
+  .tier { font-size: 32px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; min-height: 37px; text-shadow: 0 0 30px rgba(var(--tier-rgb), .6); }
   .tier.sk { height: 34px; }
   .tier.muted { font-size: 18px; color: var(--text3); text-shadow: none; }
   .rp { margin-top: 8px; display: flex; align-items: baseline; justify-content: center; gap: 7px; }
@@ -102,143 +117,226 @@
   /* ─── Карточки ─── */
   .card {
     position: relative; margin-bottom: 14px; padding: 18px; border-radius: 22px; overflow: hidden;
-    background: linear-gradient(180deg, rgba(26,15,48,.72), rgba(9,6,16,.78));
-    border: 1px solid var(--border);
-    box-shadow: 0 20px 40px -22px rgba(0,0,0,.8);
+    background: linear-gradient(180deg, rgba(26,15,48,.72), rgba(9,6,16,.8));
+    border: 1px solid var(--border); box-shadow: 0 20px 40px -22px rgba(0,0,0,.8);
   }
-  .card::before {
-    content: ''; position: absolute; inset: 0 0 auto 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(196,181,253,.55), transparent);
+  .card::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(196,181,253,.55), transparent); }
+  .card.glow::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; pointer-events: none;
+    background: conic-gradient(from var(--ang), transparent 0 70%, rgba(var(--tier-rgb), .95) 86%, #fff 92%, transparent 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+            mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    animation: ang 6s linear infinite;
   }
 
   /* прогресс */
   .pg-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
-  .chip {
-    display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px;
-    font-size: 13.5px; font-weight: 700; white-space: nowrap;
-    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07);
-  }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px 6px 8px; border-radius: 999px; font-size: 13.5px; font-weight: 700; white-space: nowrap;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07); }
   .chip.cur { background: rgba(var(--tier-rgb), .14); border-color: rgba(var(--tier-rgb), .4); }
   .chip.max { background: rgba(139,92,246,.16); border-color: rgba(139,92,246,.45); color: var(--accent-light); }
   .arr { color: var(--text3); font-weight: 800; }
   .bar { position: relative; height: 12px; border-radius: 999px; background: rgba(255,255,255,.07); box-shadow: inset 0 1px 3px rgba(0,0,0,.6); }
-  .bar.loading::after {
-    content: ''; position: absolute; inset: 0; border-radius: inherit;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent) 0 0 / 220% 100%;
-    animation: skmove 1.4s linear infinite;
-  }
-  .bar i {
-    position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: inherit; display: block;
+  .bar.loading::after { content: ''; position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent) 0 0 / 220% 100%; animation: skmove 1.4s linear infinite; }
+  .bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: inherit; display: block;
     background: linear-gradient(90deg, var(--accent-dark), var(--accent) 55%, var(--accent-light));
-    box-shadow: 0 0 16px rgba(139,92,246,.75);
-    transition: width 1.7s cubic-bezier(.22,.9,.24,1);
-  }
-  .bar i::before {
-    content: ''; position: absolute; inset: 0; border-radius: inherit;
-    background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.5) 50%, transparent 70%) 0 0 / 220% 100%;
-    animation: sheen 2.4s linear infinite;
-  }
-  .bar i::after {
-    content: ''; position: absolute; right: 0; top: 50%; width: 14px; height: 14px; border-radius: 50%;
-    transform: translate(35%, -50%); background: #fff;
-    box-shadow: 0 0 0 4px rgba(139,92,246,.3), 0 0 14px rgba(196,181,253,.9);
-  }
+    box-shadow: 0 0 16px rgba(139,92,246,.75); transition: width 1.7s cubic-bezier(.22,.9,.24,1); }
+  .bar i::before { content: ''; position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.5) 50%, transparent 70%) 0 0 / 220% 100%; animation: sheen 2.4s linear infinite; }
+  .bar i::after { content: ''; position: absolute; right: 0; top: 50%; width: 14px; height: 14px; border-radius: 50%; transform: translate(35%, -50%); background: #fff;
+    box-shadow: 0 0 0 4px rgba(139,92,246,.3), 0 0 14px rgba(196,181,253,.9); animation: headpulse 1.8s ease-in-out infinite; }
   .pg-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 12.5px; font-weight: 700; color: var(--text2); font-variant-numeric: tabular-nums; }
   .pg-foot #pg-pct { color: var(--accent-light); }
-  .pg-note { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.06); font-size: 14px; color: var(--text2); line-height: 1.4; min-height: 20px; }
+  .pg-note { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.06); font-size: 14px; color: var(--text2); line-height: 1.5; min-height: 20px; }
   .pg-note b { color: var(--text); font-weight: 800; }
   .pg-note.sk { display: block; height: 16px; }
 
   /* статистика */
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 0; }
-  .stat {
-    position: relative; padding: 14px 10px 13px; border-radius: 18px; text-align: center; overflow: hidden;
-    background: linear-gradient(180deg, rgba(26,15,48,.6), rgba(9,6,16,.7)); border: 1px solid var(--border);
-  }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat { position: relative; padding: 14px 10px 13px; border-radius: 18px; text-align: center; overflow: hidden;
+    background: linear-gradient(180deg, rgba(26,15,48,.6), rgba(9,6,16,.7)); border: 1px solid var(--border); transition: transform .2s, box-shadow .2s; }
+  .stat:active { transform: scale(.97); }
   .stat::before { content: ''; position: absolute; left: 24%; right: 24%; top: 0; height: 2px; border-radius: 2px; background: var(--c, var(--accent)); box-shadow: 0 0 12px var(--c, var(--accent)); }
+  .stat::after { content: ''; position: absolute; left: 50%; top: -30px; width: 90px; height: 60px; transform: translateX(-50%); pointer-events: none;
+    background: radial-gradient(ellipse, var(--c, var(--accent)), transparent 70%); opacity: .13; }
   .stat b { display: block; font-size: 26px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--c, var(--text)); min-height: 30px; line-height: 1.15; }
   .stat b.sk { height: 26px; }
   .stat span { display: block; margin-top: 4px; font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text3); }
-  .stat.w { --c: var(--up); }
-  .stat.l { --c: var(--down); }
-  .stat.r { --c: var(--accent-light); }
+  .stat.w { --c: var(--up); } .stat.l { --c: var(--down); } .stat.r { --c: var(--accent-light); }
   .stats-note { margin: 10px 4px 24px; font-size: 11.5px; line-height: 1.4; color: var(--text3); text-align: center; }
 
   /* лестница */
   .sec-title { margin: 0 2px 12px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text3); }
   .ladder { list-style: none; }
-  .rung {
-    position: relative; display: flex; align-items: center; gap: 14px; margin-bottom: 10px; padding: 11px 14px 11px 11px;
-    border-radius: 18px; border: 1px solid transparent;
-    background: rgba(255,255,255,.025);
-    opacity: 0; transform: translateY(8px);
-    animation: rise .5s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: calc(var(--i, 0) * 70ms);
-  }
+  .rung { position: relative; display: flex; align-items: center; gap: 14px; margin-bottom: 10px; padding: 11px 14px 11px 11px; border-radius: 18px; border: 1px solid transparent;
+    background: rgba(255,255,255,.025); opacity: 0; transform: translateY(8px);
+    animation: rise .5s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: calc(var(--i, 0) * 70ms); }
   .rung:last-child { margin-bottom: 0; }
-  .rung:not(:last-child)::after {
-    content: ''; position: absolute; left: 32px; top: 100%; width: 2px; height: 10px; background: rgba(255,255,255,.07);
-  }
+  .rung:not(:last-child)::after { content: ''; position: absolute; left: 32px; top: 100%; width: 2px; height: 10px; background: rgba(255,255,255,.07); }
   .rung.passed::after, .rung.current::after { background: linear-gradient(180deg, var(--accent), rgba(139,92,246,.35)) !important; }
-  .rung .badge {
-    width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0; display: grid; place-items: center; font-size: 24px;
-    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07);
-  }
+  .rung .badge { width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0; display: grid; place-items: center; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07); }
   .rung .meta { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   .rung .nm { font-size: 15.5px; font-weight: 800; letter-spacing: -.01em; }
   .rung .th { font-size: 12px; font-weight: 600; color: var(--text3); font-variant-numeric: tabular-nums; }
   .rung .st { margin-left: auto; display: flex; align-items: center; flex-shrink: 0; }
   .rung .st svg { width: 18px; height: 18px; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-  .rung.passed { --o: .6; }
-  .rung.passed .st svg { stroke: var(--up); }
-  .rung.locked { --o: .5; }
-  .rung.locked .badge { filter: grayscale(1) brightness(.75); }
-  .rung.locked .st svg { stroke: var(--text3); }
-  .rung.current {
-    --o: 1;
-    background: linear-gradient(90deg, rgba(var(--tier-rgb), .18), rgba(139,92,246,.06));
-    border-color: rgba(var(--tier-rgb), .5);
-    box-shadow: 0 0 34px -10px rgba(var(--tier-rgb), .7);
-  }
+  .rung.passed { --o: .65; } .rung.passed .st svg { stroke: var(--up); }
+  .rung.locked { --o: .55; } .rung.locked .badge .rk { filter: grayscale(1) brightness(.8) drop-shadow(0 2px 5px rgba(0,0,0,.55)); } .rung.locked .st svg { stroke: var(--text3); }
+  .rung.current { --o: 1; background: linear-gradient(90deg, rgba(var(--tier-rgb), .18), rgba(139,92,246,.06)); border-color: rgba(var(--tier-rgb), .5); box-shadow: 0 0 34px -10px rgba(var(--tier-rgb), .7); }
   .rung.current .badge { background: rgba(var(--tier-rgb), .18); border-color: rgba(var(--tier-rgb), .5); box-shadow: 0 0 18px -4px rgba(var(--tier-rgb), .8); }
-  .here {
-    padding: 5px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: .03em; white-space: nowrap;
-    background: rgb(var(--tier-rgb)); color: #12081f; animation: pulse 2s ease-in-out infinite;
-  }
+  .here { padding: 5px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: .03em; white-space: nowrap; background: rgb(var(--tier-rgb)); color: #12081f; animation: pulse 2s ease-in-out infinite; }
   .rung.ghost { --o: 1; }
   .rung.ghost .badge.sk { border: 0; }
   .rung.ghost .nm.sk, .rung.ghost .th.sk { display: block; height: 14px; }
 
+  /* ─── Топ ─── */
+  .youbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 11px 14px; border-radius: 16px; font-size: 13.5px; font-weight: 700;
+    background: linear-gradient(90deg, rgba(139,92,246,.22), rgba(139,92,246,.05)); border: 1px solid rgba(139,92,246,.5); box-shadow: 0 0 30px -12px rgba(139,92,246,.9); }
+  .youbar b { color: var(--accent-light); }
+  .podium { display: grid; grid-template-columns: 1fr 1.18fr 1fr; gap: 10px; align-items: end; margin: 4px 0 18px; }
+  .pod { --c: 196,204,220; --h: 64px; display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; opacity: 0; transform: translateY(14px); animation: rise .6s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: var(--dl, 0s); }
+  .pod.p1 { --c: 255,201,74; --h: 92px; --dl: .05s; } .pod.p2 { --c: 196,204,220; --h: 68px; --dl: .18s; } .pod.p3 { --c: 205,127,79; --h: 54px; --dl: .3s; }
+  .pod .crown { width: 26px; height: 20px; margin-bottom: 4px; filter: drop-shadow(0 0 8px rgba(255,201,74,.8)); animation: float 3.4s ease-in-out infinite; }
+  .pod .av { position: relative; width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 8px;
+    background: radial-gradient(circle at 32% 24%, rgba(255,255,255,.14), transparent 50%), linear-gradient(160deg, #1b1032, #07040e);
+    border: 1.5px solid rgba(var(--c), .75); box-shadow: 0 0 26px -4px rgba(var(--c), .7); }
+  .pod.p1 .av { width: 78px; height: 78px; }
+  .pod .av::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 1px solid rgba(var(--c), .5); animation: ringpulse 2.6s ease-out infinite; }
+  .pod .pn { max-width: 100%; padding: 0 2px; font-size: 13.5px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pod .pp { margin: 2px 0 8px; font-size: 12px; font-weight: 700; color: var(--text2); font-variant-numeric: tabular-nums; }
+  .pod .base { position: relative; width: 100%; height: var(--h); border-radius: 16px 16px 6px 6px; display: grid; place-items: center; overflow: hidden;
+    font-size: 26px; font-weight: 900; color: rgba(var(--c), 1);
+    background: linear-gradient(180deg, rgba(var(--c), .34), rgba(var(--c), .04)); border: 1px solid rgba(var(--c), .4); border-bottom: 0; text-shadow: 0 0 18px rgba(var(--c), .8); }
+  .pod .base::after { content: ''; position: absolute; inset: 0; transform: translateX(-130%); background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.22) 50%, transparent 62%); animation: glare 5s ease-in-out infinite; }
+  .pod.p2 .base::after { animation-delay: .6s; } .pod.p3 .base::after { animation-delay: 1.2s; }
+  .pod.me .av { border-color: var(--accent-light); box-shadow: 0 0 30px -2px rgba(139,92,246,.95); }
+  .pod .you { position: absolute; top: -8px; right: -10px; padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; background: var(--accent); color: #fff; z-index: 2; }
+  .pod.empty .av { border-style: dashed; border-color: rgba(255,255,255,.16); box-shadow: none; background: rgba(255,255,255,.03); }
+  .pod.empty .av::after { display: none; }
+  .pod.empty .av svg { width: 22px; height: 22px; fill: none; stroke: rgba(255,255,255,.28); stroke-width: 2; stroke-linecap: round; }
+  .pod.empty .pn { color: var(--text3); }
+  .pod.empty .base { color: var(--text3); background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.08); text-shadow: none; }
+  .trow { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; padding: 10px 14px 10px 10px; border-radius: 16px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.05);
+    opacity: 0; transform: translateY(8px); animation: rise .5s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: calc(var(--i, 0) * 60ms + .35s); }
+  .trow .pl { width: 28px; text-align: center; font-size: 15px; font-weight: 800; color: var(--text3); font-variant-numeric: tabular-nums; }
+  .trow .who { flex: 1; min-width: 0; }
+  .trow .who b { display: block; font-size: 14.5px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .trow .who small { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 600; color: var(--text3); }
+  .trow .pt { text-align: right; font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .trow .pt small { display: block; font-size: 10.5px; letter-spacing: .06em; color: var(--accent-light); }
+  .trow.me { border-color: rgba(139,92,246,.6); background: linear-gradient(90deg, rgba(139,92,246,.22), rgba(139,92,246,.05)); box-shadow: 0 0 30px -10px rgba(139,92,246,.9); }
+  .trow.me .pl { color: var(--accent-light); }
+  .mycard { display: flex; align-items: center; gap: 14px; margin-top: 8px; }
+  .mycard .big { font-size: 34px; font-weight: 900; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .mycard .of { margin-top: 5px; font-size: 12.5px; font-weight: 600; color: var(--text2); }
+  .mycard .rt { margin-left: auto; text-align: right; font-size: 12.5px; font-weight: 700; color: var(--text2); }
+  .mycard .rt b { display: block; font-size: 18px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .mynote { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.06); font-size: 13px; line-height: 1.45; color: var(--text2); }
+  .mynote b { color: var(--text); }
+
+  /* ─── Сезон ─── */
+  .timer { display: flex; align-items: center; gap: 18px; }
+  .ringbox { position: relative; width: 124px; height: 124px; flex-shrink: 0; }
+  .ringbox svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+  .ringbox .trk { fill: none; stroke: rgba(255,255,255,.07); stroke-width: 9; }
+  .ringbox .prg { fill: none; stroke: url(#ringGrad); stroke-width: 9; stroke-linecap: round; filter: drop-shadow(0 0 7px rgba(139,92,246,.85)); transition: stroke-dashoffset 1.8s cubic-bezier(.22,.9,.24,1); }
+  .ringbox .mid { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .ringbox .mid b { font-size: 34px; font-weight: 900; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .ringbox .mid span { margin-top: 4px; font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text3); }
+  .tinfo { min-width: 0; }
+  .tinfo .k { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text3); }
+  .tinfo .hms { margin: 4px 0 6px; font-size: 26px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .tinfo .dt { font-size: 12.5px; font-weight: 600; color: var(--text2); line-height: 1.4; }
+  .note { margin: 0 2px 14px; font-size: 12.5px; line-height: 1.5; color: var(--text3); }
+  .card .note { margin: 14px 0 0; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.06); }
+  .rules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .rule { position: relative; padding: 14px 10px; border-radius: 18px; text-align: center; overflow: hidden; background: linear-gradient(180deg, rgba(26,15,48,.6), rgba(9,6,16,.7)); border: 1px solid var(--border); }
+  .rule svg { width: 20px; height: 20px; margin-bottom: 6px; fill: none; stroke: var(--c); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 6px var(--c)); }
+  .rule b { display: block; font-size: 20px; font-weight: 900; letter-spacing: -.02em; color: var(--c); font-variant-numeric: tabular-nums; }
+  .rule span { display: block; margin-top: 4px; font-size: 11px; font-weight: 600; line-height: 1.3; color: var(--text3); }
+  .rule.w { --c: var(--up); } .rule.l { --c: var(--down); } .rule.d { --c: var(--accent-light); }
+  .hs { margin-bottom: 10px; padding: 14px 16px; border-radius: 18px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); }
+  .hs .t { display: flex; justify-content: space-between; gap: 10px; font-size: 14.5px; font-weight: 800; }
+  .hs .t span { font-size: 11.5px; font-weight: 600; color: var(--text3); white-space: nowrap; }
+  .hs .w { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .hs .w i { font-style: normal; padding: 4px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; color: var(--text2); background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07); }
+
+  /* ─── Заглушки «в разработке» ─── */
+  .empty-state { text-align: center; padding: 34px 20px; border-radius: 22px; border: 1px dashed rgba(139,92,246,.35); background: rgba(139,92,246,.05); }
+  .empty-state .ic { width: 54px; height: 54px; margin: 0 auto 14px; display: grid; place-items: center; border-radius: 18px; background: rgba(139,92,246,.14); border: 1px solid rgba(139,92,246,.35); animation: float 3.6s ease-in-out infinite; }
+  .empty-state .ic svg { width: 26px; height: 26px; fill: none; stroke: var(--accent-light); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .empty-state b { display: block; font-size: 16px; font-weight: 800; }
+  .empty-state p { margin-top: 6px; font-size: 13px; line-height: 1.5; color: var(--text2); }
+  .rw { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; padding: 12px 14px 12px 12px; border-radius: 18px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06);
+    opacity: 0; transform: translateY(8px); animation: rise .5s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: calc(var(--i, 0) * 60ms); }
+  .rw .badge { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; flex-shrink: 0; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07); }
+  .rw .meta { flex: 1; min-width: 0; }
+  .rw .nm { font-size: 15px; font-weight: 800; }
+  .rw .slot { margin-top: 6px; height: 12px; width: 60%; border-radius: 6px; border: 1px dashed rgba(255,255,255,.16);
+    background: linear-gradient(90deg, rgba(255,255,255,.02), rgba(255,255,255,.08), rgba(255,255,255,.02)) 0 0 / 220% 100%; animation: skmove 2.4s linear infinite; }
+  .rw .lock { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; background: rgba(255,201,74,.08); border: 1px solid rgba(255,201,74,.25); }
+  .rw .lock svg { width: 16px; height: 16px; fill: none; stroke: #ffd76a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .ghostrow { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding: 14px; border-radius: 16px; background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.05); }
+  .ghostrow i { display: block; border-radius: 8px; background: linear-gradient(90deg, rgba(255,255,255,.04), rgba(255,255,255,.11), rgba(255,255,255,.04)) 0 0 / 220% 100%; animation: skmove 1.8s linear infinite; }
+  .ghostrow .a { width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0; }
+  .ghostrow .b { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+  .ghostrow .b i { height: 11px; } .ghostrow .b i:first-child { width: 55%; } .ghostrow .b i:last-child { width: 32%; }
+  .ghostrow .c { width: 46px; height: 18px; }
+
   /* ошибка */
-  .err { display: none; align-items: center; gap: 14px; margin-bottom: 14px; padding: 16px; border-radius: 20px; background: rgba(255,59,92,.07); border: 1px solid rgba(255,59,92,.3); }
+  .err { display: none; align-items: center; gap: 14px; margin: 14px 0; padding: 16px; border-radius: 20px; background: rgba(255,59,92,.07); border: 1px solid rgba(255,59,92,.3); }
   .err-ic { width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0; display: grid; place-items: center; background: rgba(255,59,92,.14); }
   .err-ic svg { width: 20px; height: 20px; fill: none; stroke: var(--down); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .err b { display: block; font-size: 14.5px; font-weight: 800; }
   .err p { margin-top: 3px; font-size: 12.5px; line-height: 1.4; color: var(--text2); }
-  .err button {
-    margin-left: auto; flex-shrink: 0; padding: 10px 14px; border: 0; border-radius: 12px; cursor: pointer;
-    font: inherit; font-size: 13px; font-weight: 800; color: #170b2e;
-    background: linear-gradient(135deg, var(--accent), var(--accent-light)); box-shadow: 0 0 18px rgba(139,92,246,.35);
-  }
+  .err button { margin-left: auto; flex-shrink: 0; padding: 10px 14px; border-radius: 12px; font-size: 13px; font-weight: 800; color: #170b2e; background: linear-gradient(135deg, var(--accent), var(--accent-light)); box-shadow: 0 0 18px rgba(139,92,246,.35); }
   .err button:active { transform: scale(.96); }
   .app[data-state="error"] .err { display: flex; }
   .app[data-state="error"] .data-sec { display: none; }
 
+  /* ─── Нижняя панель вкладок ─── */
+  .tabbar { position: fixed; z-index: 50; left: 12px; right: 12px; max-width: 456px; margin: 0 auto; bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    display: flex; padding: 6px; border-radius: 24px; background: rgba(12,7,22,.82); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+    border: 1px solid rgba(139,92,246,.28); box-shadow: 0 18px 40px -10px rgba(0,0,0,.9), 0 0 40px -14px rgba(139,92,246,.6), inset 0 1px 0 rgba(255,255,255,.06); }
+  .tabpill { position: absolute; top: 6px; bottom: 6px; left: 0; width: 0; border-radius: 18px; pointer-events: none;
+    background: linear-gradient(180deg, rgba(139,92,246,.34), rgba(139,92,246,.12)); border: 1px solid rgba(196,181,253,.4); box-shadow: 0 0 22px -4px rgba(139,92,246,.9);
+    transition: transform .4s cubic-bezier(.3,1.2,.4,1), width .4s cubic-bezier(.3,1.2,.4,1); }
+  .tab { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 0 7px; border-radius: 18px; font-size: 10.5px; font-weight: 700; color: var(--text3); transition: color .25s; }
+  .tab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; transition: transform .3s cubic-bezier(.3,1.5,.5,1); }
+  .tab.on { color: #fff; }
+  .tab.on svg { transform: translateY(-1px) scale(1.12); filter: drop-shadow(0 0 6px rgba(196,181,253,.9)); }
+  .tab:active svg { transform: scale(.88); }
+  .tab .dot { position: absolute; top: 6px; left: calc(50% + 9px); width: 6px; height: 6px; border-radius: 50%; background: #ffc94a; box-shadow: 0 0 8px #ffc94a; }
+
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
   @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes breathe { 0%,100% { opacity: .4; transform: scale(.96); } 50% { opacity: .75; transform: scale(1.06); } }
+  @keyframes ang { to { --ang: 360deg; } }
+  @keyframes breathe { 0%,100% { opacity: .4; transform: scale(.96); } 50% { opacity: .8; transform: scale(1.07); } }
   @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-  @keyframes pop { 0% { transform: scale(.55); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes pop { 0% { transform: scale(.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
   @keyframes skmove { 0% { background-position: 120% 0; } 100% { background-position: -100% 0; } }
   @keyframes sheen { 0% { background-position: 120% 0; } 100% { background-position: -100% 0; } }
   @keyframes rise { to { opacity: var(--o, 1); transform: none; } }
+  @keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes glare { 0%,55% { transform: translateX(-130%); } 85%,100% { transform: translateX(130%); } }
+  @keyframes headpulse { 0%,100% { box-shadow: 0 0 0 4px rgba(139,92,246,.3), 0 0 14px rgba(196,181,253,.9); } 50% { box-shadow: 0 0 0 8px rgba(139,92,246,.1), 0 0 22px rgba(196,181,253,1); } }
+  @keyframes ringpulse { 0% { transform: scale(.9); opacity: .8; } 70%,100% { transform: scale(1.3); opacity: 0; } }
+  @keyframes spark { 0% { transform: translateY(0) scale(.6); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(calc(-1 * var(--h))) scale(0); opacity: 0; } }
+  @keyframes drift1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(40px, 30px); } }
+  @keyframes drift2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(70px, -50px); } }
+  @keyframes drift3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-60px, 40px); } }
 
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; }
-    .rung { opacity: var(--o, 1); transform: none; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .rung, .rw, .trow, .pod { opacity: var(--o, 1); transform: none; }
   }
 </style>
 </head>
 <body>
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="grain" aria-hidden="true"></div>
+
 <main class="app" id="app" data-state="loading">
 
   <header class="top">
@@ -246,68 +344,130 @@
     <div class="sub"><i class="live"></i><span id="season-text" class="sk" style="width:150px"></span></div>
   </header>
 
-  <section class="hero">
-    <div class="emblem" id="emblem">
-      <div class="halo"></div>
-      <div class="disc"></div>
-      <div class="spin"></div>
-      <div class="emoji" id="tier-emoji"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg></div>
-    </div>
-    <h2 class="tier sk" id="tier-name" style="width:170px"></h2>
-    <div class="rp"><span id="rp-val" class="empty">—</span><small>RP</small></div>
-  </section>
-
   <div class="err" id="err" role="alert">
     <div class="err-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="7.5" x2="12" y2="12.5"/><line x1="12" y1="16" x2="12" y2="16.01"/></svg></div>
     <div><b id="err-title">Нет связи</b><p id="err-text"></p></div>
     <button type="button" id="retry">Повторить</button>
   </div>
 
-  <section class="card data-sec" id="pg-card">
-    <div class="pg-head">
-      <span class="chip sk" id="cur-chip" style="width:112px;height:34px"></span>
-      <span class="arr" id="pg-arr">→</span>
-      <span class="chip sk" id="next-chip" style="width:112px;height:34px"></span>
+  <!-- ═══ РАНГ ═══ -->
+  <section class="page on" data-page="rank">
+    <div class="hero">
+      <div class="stage" id="stage">
+        <div class="emblem" id="emblem">
+          <div class="halo"></div>
+          <div class="disc"></div>
+          <div class="spin"></div>
+          <div class="glare"></div>
+          <div class="medal ph" id="tier-emblem"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg></div>
+        </div>
+        <div class="sparks" id="sparks"></div>
+      </div>
+      <h2 class="tier sk" id="tier-name" style="width:170px"></h2>
+      <div class="rp"><span id="rp-val" class="empty">—</span><small>RP</small></div>
     </div>
-    <div class="bar loading" id="bar"><i id="bar-fill"></i></div>
-    <div class="pg-foot"><span id="pg-nums" class="sk" style="width:96px"></span><span id="pg-pct"></span></div>
-    <p class="pg-note sk" id="pg-note" style="width:72%"></p>
+
+    <section class="card glow data-sec" id="pg-card">
+      <div class="pg-head">
+        <span class="chip sk" id="cur-chip" style="width:112px;height:34px"></span>
+        <span class="arr" id="pg-arr">→</span>
+        <span class="chip sk" id="next-chip" style="width:112px;height:34px"></span>
+      </div>
+      <div class="bar loading" id="bar"><i id="bar-fill"></i></div>
+      <div class="pg-foot"><span id="pg-nums" class="sk" style="width:96px"></span><span id="pg-pct"></span></div>
+      <p class="pg-note sk" id="pg-note" style="width:72%"></p>
+    </section>
+
+    <section class="data-sec">
+      <div class="stats">
+        <div class="stat w"><b id="st-w" class="sk" style="width:44px"></b><span>Победы</span></div>
+        <div class="stat l"><b id="st-l" class="sk" style="width:44px"></b><span>Поражения</span></div>
+        <div class="stat r"><b id="st-wr" class="sk" style="width:52px"></b><span>Винрейт</span></div>
+      </div>
+      <p class="stats-note">Победы и поражения считаются за всё время и не обнуляются со сменой сезона.</p>
+    </section>
+
+    <section class="data-sec">
+      <div class="sec-title">Лестница рангов</div>
+      <ol class="ladder" id="ladder">
+        <li class="rung ghost" style="--i:0"><span class="badge sk"></span><span class="meta"><span class="nm sk" style="width:110px"></span><span class="th sk" style="width:74px"></span></span></li>
+        <li class="rung ghost" style="--i:1"><span class="badge sk"></span><span class="meta"><span class="nm sk" style="width:96px"></span><span class="th sk" style="width:74px"></span></span></li>
+        <li class="rung ghost" style="--i:2"><span class="badge sk"></span><span class="meta"><span class="nm sk" style="width:120px"></span><span class="th sk" style="width:74px"></span></span></li>
+        <li class="rung ghost" style="--i:3"><span class="badge sk"></span><span class="meta"><span class="nm sk" style="width:88px"></span><span class="th sk" style="width:74px"></span></span></li>
+      </ol>
+    </section>
   </section>
 
-  <section class="data-sec">
-    <div class="stats">
-      <div class="stat w"><b id="st-w" class="sk" style="width:44px"></b><span>Победы</span></div>
-      <div class="stat l"><b id="st-l" class="sk" style="width:44px"></b><span>Поражения</span></div>
-      <div class="stat r"><b id="st-wr" class="sk" style="width:52px"></b><span>Винрейт</span></div>
+  <!-- ═══ ТОП ═══ -->
+  <section class="page" data-page="top">
+    <div class="page-head"><h3>Топ-10 сезона</h3><span class="pill" id="top-pill">—</span></div>
+    <div class="data-sec" id="top-body">
+      <div class="ghostrow"><i class="a"></i><span class="b"><i></i><i></i></span><i class="c"></i></div>
+      <div class="ghostrow"><i class="a"></i><span class="b"><i></i><i></i></span><i class="c"></i></div>
+      <div class="ghostrow"><i class="a"></i><span class="b"><i></i><i></i></span><i class="c"></i></div>
     </div>
-    <p class="stats-note">Победы и поражения считаются за всё время и не обнуляются со сменой сезона.</p>
   </section>
 
-  <section class="data-sec">
-    <div class="sec-title">Лестница рангов</div>
-    <ol class="ladder" id="ladder">
-      <li class="rung ghost" style="--i:0"><span class="badge sk"></span><span class="meta"><span class="nm sk" style="width:110px"></span><span class="th sk" style="width:74px"></span></span></li>
-      <li class="rung ghost" style="--i:1"><span class="badge sk"></span><span class="meta"><span class="nm sk" style="width:96px"></span><span class="th sk" style="width:74px"></span></span></li>
-      <li class="rung ghost" style="--i:2"><span class="badge sk"></span><span class="meta"><span class="nm sk" style="width:120px"></span><span class="th sk" style="width:74px"></span></span></li>
-      <li class="rung ghost" style="--i:3"><span class="badge sk"></span><span class="meta"><span class="nm sk" style="width:88px"></span><span class="th sk" style="width:74px"></span></span></li>
-    </ol>
+  <!-- ═══ СЕЗОН ═══ -->
+  <section class="page" data-page="season">
+    <div class="page-head"><h3>Сезон</h3><span class="pill" id="season-pill">—</span></div>
+    <div class="data-sec" id="season-body">
+      <div class="ghostrow"><i class="a"></i><span class="b"><i></i><i></i></span><i class="c"></i></div>
+      <div class="ghostrow"><i class="a"></i><span class="b"><i></i><i></i></span><i class="c"></i></div>
+    </div>
+  </section>
+
+  <!-- ═══ НАГРАДЫ ═══ -->
+  <section class="page" data-page="rewards">
+    <div class="page-head"><h3>Награды</h3><span class="pill soon">В разработке</span></div>
+    <div class="empty-state" style="margin-bottom:16px">
+      <div class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="1.5"/><rect x="3" y="7" width="18" height="3.5" rx="1"/><line x1="12" y1="7" x2="12" y2="20"/><path d="M12 7C9 7 7.5 5.8 7.5 4.6 7.5 3.3 9.3 3 10.5 4.2 11.4 5.1 12 7 12 7 12 7 12.6 5.1 13.5 4.2 14.7 3 16.5 3.3 16.5 4.6 16.5 5.8 15 7 12 7z"/></svg></div>
+      <b>Призы за ранги и места в топе</b>
+      <p>Здесь появятся награды за достижение рангов и за призовые места в конце сезона. Пока слоты пустые — будем наполнять вместе.</p>
+    </div>
+    <div id="rewards-list"></div>
+  </section>
+
+  <!-- ═══ ИСТОРИЯ ═══ -->
+  <section class="page" data-page="history">
+    <div class="page-head"><h3>История боёв</h3><span class="pill soon">В разработке</span></div>
+    <div class="empty-state" style="margin-bottom:16px">
+      <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+      <b>Последние матчи 1vs1</b>
+      <p>Тут будут твои недавние бои: соперник, ставка и сколько RP ты получил или потерял.</p>
+    </div>
+    <div class="ghostrow"><i class="a"></i><span class="b"><i></i><i></i></span><i class="c"></i></div>
+    <div class="ghostrow"><i class="a"></i><span class="b"><i></i><i></i></span><i class="c"></i></div>
+    <div class="ghostrow"><i class="a"></i><span class="b"><i></i><i></i></span><i class="c"></i></div>
   </section>
 
 </main>
+
+<nav class="tabbar" id="tabbar" aria-label="Разделы">
+  <div class="tabpill" id="tabpill"></div>
+  <button class="tab on" type="button" data-tab="rank"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg><span>Ранг</span></button>
+  <button class="tab" type="button" data-tab="top"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5v1a3 3 0 0 0 3 3"/><path d="M16 6h3v1a3 3 0 0 1-3 3"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="8.5" y1="20" x2="15.5" y2="20"/></svg><span>Топ</span></button>
+  <button class="tab" type="button" data-tab="season"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14" rx="2"/><line x1="4" y1="11" x2="20" y2="11"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg><span>Сезон</span></button>
+  <button class="tab" type="button" data-tab="rewards"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="1.5"/><rect x="3" y="7" width="18" height="3.5" rx="1"/><line x1="12" y1="7" x2="12" y2="20"/><path d="M12 7C9 7 7.5 5.8 7.5 4.6 7.5 3.3 9.3 3 10.5 4.2 11.4 5.1 12 7 12 7 12 7 12.6 5.1 13.5 4.2 14.7 3 16.5 3.3 16.5 4.6 16.5 5.8 15 7 12 7z"/></svg><span>Награды</span><i class="dot"></i></button>
+  <button class="tab" type="button" data-tab="history"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>История</span><i class="dot"></i></button>
+</nav>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
 (function () {
   'use strict';
 
+  var NS = 'http://www.w3.org/2000/svg';
   var $ = function (id) { return document.getElementById(id); };
   var reduce = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   // Telegram SDK необязателен — страница работает и в обычном браузере
+  var tg = null;
   try {
-    var tg = window.Telegram && window.Telegram.WebApp;
+    tg = window.Telegram && window.Telegram.WebApp;
     if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#000000'); tg.setBackgroundColor('#000000'); }
   } catch (e) {}
+  function haptic() { try { tg && tg.HapticFeedback && tg.HapticFeedback.selectionChanged(); } catch (e) {} }
 
   // Параметры из ссылки бота. Секрет живёт только в этой переменной и нигде не логируется.
   var q = new URLSearchParams(location.search);
@@ -318,33 +478,145 @@
   if (API && !/^https?:\/\//i.test(API)) { try { API = decodeURIComponent(API); } catch (e) {} }
   API = API.replace(/\/+$/, '');
 
-  // Оттенок свечения по позиции ранга в лестнице (только оформление)
+  // ───────────────────────────────────────────────
+  //  SVG-эмблемы рангов (спрайт строится один раз)
+  // ───────────────────────────────────────────────
+  // цвета: светлый, средний, тёмный, «глубина» фона плашки
+  var TIER_COL = [
+    ['#ffd7ad', '#e08f4a', '#8a4513', '#3a1c08'],  // Бронза
+    ['#ffffff', '#d3dbea', '#7a869d', '#252b38'],  // Серебро
+    ['#fff6bd', '#ffca3a', '#b8720d', '#3d2703'],  // Золото
+    ['#f0fdff', '#86e5f7', '#2f86a3', '#0c2f3b'],  // Платина
+    ['#eef5ff', '#74acff', '#2d4bd0', '#0e1a52'],  // Алмаз
+    ['#f4eaff', '#b090fb', '#5e22bb', '#1f0c45'],  // Героик
+    ['#fff0fd', '#ee7ffb', '#8a1f9b', '#33083f']   // Грандмастер
+  ];
+  // оттенок свечения по позиции ранга
   var PALETTE = ['205,127,79', '196,204,220', '255,201,74', '110,231,255', '96,165,250', '167,139,250', '232,121,249'];
-  var ICON_CHECK = '<svg viewBox="0 0 24 24"><polyline points="4 12.5 9.5 18 20 6.5"/></svg>';
-  var ICON_LOCK = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 
+  function L(i) { return 'url(#rk' + i + 'L)'; }
+  function F(i) { return 'url(#rk' + i + 'F)'; }
+  function path(d, fill, extra) { return '<path d="' + d + '" fill="' + fill + '"' + (extra || '') + '/>'; }
+  function line(d, stroke, w) { return '<path d="' + d + '" fill="none" stroke="' + stroke + '" stroke-width="' + w + '" stroke-linecap="round" stroke-linejoin="round"/>'; }
+  var SHIELD = 'M32 3 L55 11.5 V30 C55 45 45 55 32 61 C19 55 9 45 9 30 V11.5 Z';
+  var SHIELD_IN = 'M32 8.5 L50 15 V30 C50 42 42.5 50.5 32 55.8 C21.5 50.5 14 42 14 30 V15 Z';
+  var GLOSS = path('M15 15 L32 8.6 L49 15 V25 C40 20.5 24 20.5 15 25 Z', '#fff', ' opacity=".10"');
+  var RIMLINE = line(SHIELD_IN, 'rgba(255,255,255,.22)', 1);
+  function shield(i) { return path(SHIELD, L(i)) + path(SHIELD_IN, F(i)) + RIMLINE; }
+  function chev(i, y) { return line('M21 ' + y + ' L32 ' + (y + 10) + ' L43 ' + y, L(i), 4.6); }
+  function facet(d, color, op) { return path(d, color, ' opacity="' + op + '"'); }
+
+  var SHAPES = [
+    // 0 Бронза — щит и одна шевронная стрела
+    shield(0) + chev(0, 26) + GLOSS,
+    // 1 Серебро — щит и два шеврона
+    shield(1) + chev(1, 20) + chev(1, 32) + GLOSS,
+    // 2 Золото — щит со звездой
+    shield(2) + '<circle cx="32" cy="31" r="15" fill="' + L(2) + '" opacity=".14"/>' +
+      path('M32 18.5 35.06 27.8 44.9 28.1 37.1 34.1 39.9 43.6 32 38 24.1 43.6 26.9 34.1 19.1 28.1 28.94 27.8Z', L(2)) + GLOSS,
+    // 3 Платина — шестигранник с огранённым камнем
+    path('M32 3 L57 17.5 V46.5 L32 61 L7 46.5 V17.5 Z', L(3)) + path('M32 8.8 L52 20.4 V43.6 L32 55.2 L12 43.6 V20.4 Z', F(3)) +
+      line('M32 8.8 L52 20.4 V43.6 L32 55.2 L12 43.6 V20.4 Z', 'rgba(255,255,255,.22)', 1) +
+      path('M24 21.5 H40 L47 30.5 L32 47.5 L17 30.5 Z', L(3)) +
+      facet('M24 21.5 H40 L37 30.5 H27 Z', '#fff', .45) + facet('M17 30.5 H47 L32 47.5 Z', '#000', .16) +
+      line('M17 30.5 H47 M24 21.5 L27 30.5 L32 47.5 L37 30.5 L40 21.5', 'rgba(255,255,255,.5)', 1),
+    // 4 Алмаз — крупный бриллиант с гранями
+    path('M20 5 H44 L60 23 L32 60 L4 23 Z', L(4)) +
+      facet('M4 23 L20 5 L17 23 Z', '#fff', .30) + facet('M20 5 L32 23 L17 23 Z', '#fff', .12) + facet('M20 5 H44 L32 23 Z', '#fff', .55) +
+      facet('M44 5 L47 23 L32 23 Z', '#000', .10) + facet('M44 5 L60 23 L47 23 Z', '#000', .28) +
+      facet('M4 23 L17 23 L32 60 Z', '#000', .12) + facet('M17 23 L32 23 L32 60 Z', '#fff', .22) +
+      facet('M32 23 L47 23 L32 60 Z', '#000', .16) + facet('M47 23 L60 23 L32 60 Z', '#000', .34) +
+      line('M20 5 H44 L60 23 L32 60 L4 23 Z', 'rgba(255,255,255,.55)', 1.3) + line('M4 23 H60', 'rgba(255,255,255,.45)', 1),
+    // 5 Героик — крылья, щит и молния
+    '<g>' + path('M27 20 C18 9 8 7 1 10 C7 13 10 17 9 22 C15 19 21 20 27 27 Z', L(5)) +
+      path('M27 29 C20 24 13 24 6 27 C10 30 12 34 11 38 C16 34 22 35 27 40 Z', L(5)) +
+      path('M27 42 C21 38 16 39 11 42 C15 45 16 49 15 53 C19 49 24 49 28 53 Z', L(5)) + '</g>' +
+    '<g transform="translate(64 0) scale(-1 1)">' + path('M27 20 C18 9 8 7 1 10 C7 13 10 17 9 22 C15 19 21 20 27 27 Z', L(5)) +
+      path('M27 29 C20 24 13 24 6 27 C10 30 12 34 11 38 C16 34 22 35 27 40 Z', L(5)) +
+      path('M27 42 C21 38 16 39 11 42 C15 45 16 49 15 53 C19 49 24 49 28 53 Z', L(5)) + '</g>' +
+    path('M32 5 L46 16 V35 C46 45 39 51 32 58 C25 51 18 45 18 35 V16 Z', L(5)) +
+      path('M32 10.5 L41.5 18 V34.5 C41.5 41.5 37 46 32 51.5 C27 46 22.5 41.5 22.5 34.5 V18 Z', F(5)) +
+      path('M35.5 14.5 L26.5 33 H32.3 L29 47.5 L38 27.5 H32.5 Z', L(5)),
+    // 6 Грандмастер — медальон со звездой и корона
+    '<circle cx="32" cy="41" r="19" fill="' + L(6) + '"/><circle cx="32" cy="41" r="15.4" fill="' + F(6) + '"/>' +
+      '<circle cx="32" cy="41" r="12.4" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>' +
+      path('M32 33 34 38.25 39.61 38.53 35.23 42.05 36.7 47.47 32 44.4 27.3 47.47 28.77 42.05 24.39 38.53 30 38.25Z', L(2)) +
+      path('M15 27 L18 9 L25.5 18 L32 5 L38.5 18 L46 9 L49 27 Z', L(2)) + path('M15 26 H49 L47.6 32 H16.4 Z', L(2)) +
+      line('M15 26 H49', 'rgba(90,50,0,.45)', 1) +
+      '<circle cx="18" cy="9" r="2.4" fill="' + L(6) + '"/><circle cx="32" cy="5" r="2.6" fill="' + L(6) + '"/><circle cx="46" cy="9" r="2.4" fill="' + L(6) + '"/>' +
+      '<circle cx="24" cy="29" r="1.6" fill="' + L(6) + '"/><circle cx="32" cy="29" r="1.6" fill="' + L(6) + '"/><circle cx="40" cy="29" r="1.6" fill="' + L(6) + '"/>'
+  ];
+
+  (function buildSprite() {
+    var defs = '<linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6d28d9"/><stop offset=".6" stop-color="#8b5cf6"/><stop offset="1" stop-color="#c4b5fd"/></linearGradient>';
+    TIER_COL.forEach(function (c, i) {
+      defs += '<linearGradient id="rk' + i + 'L" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c[0] + '"/><stop offset=".45" stop-color="' + c[1] + '"/><stop offset="1" stop-color="' + c[2] + '"/></linearGradient>';
+      defs += '<linearGradient id="rk' + i + 'F" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c[2] + '"/><stop offset="1" stop-color="' + c[3] + '"/></linearGradient>';
+    });
+    var syms = '';
+    SHAPES.forEach(function (s, i) { syms += '<symbol id="rk' + i + '" viewBox="0 0 64 64">' + s + '</symbol>'; });
+    var wrap = document.createElement('div');
+    wrap.innerHTML = '<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>' + defs + '</defs>' + syms + '</svg>';
+    document.body.insertBefore(wrap.firstChild, document.body.firstChild);
+  })();
+
+  // размер задаём атрибутами width/height — так эмблема стабильно рисуется в нужном масштабе
+  function emb(idx, size, cls) {
+    var i = Math.max(0, Math.min(SHAPES.length - 1, idx | 0));
+    var s = document.createElementNS(NS, 'svg');
+    s.setAttribute('viewBox', '0 0 64 64');
+    s.setAttribute('width', String(size));
+    s.setAttribute('height', String(size));
+    s.setAttribute('class', 'rk' + (cls ? ' ' + cls : ''));
+    var u = document.createElementNS(NS, 'use');
+    u.setAttribute('href', '#rk' + i);
+    s.appendChild(u);
+    return s;
+  }
+  function tierIdx(tiers, name) {
+    for (var i = 0; i < tiers.length; i++) { if (tiers[i].name === name) return i; }
+    return -1;
+  }
+
+  // ───────────────────────────────────────────────
+  //  Утилиты
+  // ───────────────────────────────────────────────
   var app = $('app');
-  var loaded = false, busy = false, shownRp = null, rafId = 0;
+  var loaded = false, busy = false, shownRp = null, rafId = 0, DATA = null;
+  var TIME = { srv: 0, perf: 0 };
 
   function fmt(n) { return Number(n).toLocaleString('ru-RU'); }
   function num(v) { v = Number(v); return isFinite(v) ? v : 0; }
   function unsk(el) { el.classList.remove('sk'); el.style.width = ''; el.style.height = ''; }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function svgIcon(html) { var s = el('span'); s.innerHTML = '<svg viewBox="0 0 24 24">' + html + '</svg>'; return s.firstChild; }
+  function fdate(ts) { return new Date(ts * 1000).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }); }
+  function nowSrv() { return TIME.srv + (performance.now() - TIME.perf) / 1000; }
+  function tierRgb(i) { return i >= 0 ? PALETTE[Math.min(i, PALETTE.length - 1)] : PALETTE[5]; }
 
-  // Снимок RP из ссылки — показываем сразу, пока идёт запрос
+  function animNum(node, from, to, fmtFn, dur) {
+    if (reduce || from === to) { node.textContent = fmtFn(to); return; }
+    var t0 = performance.now();
+    (function step(t) {
+      var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      node.textContent = fmtFn(Math.round(from + (to - from) * e));
+      if (p < 1) requestAnimationFrame(step);
+    })(t0);
+  }
+
   if (isFinite(RP0) && RP0 >= 0) { shownRp = RP0; $('rp-val').textContent = fmt(RP0); $('rp-val').classList.remove('empty'); }
 
-  function countTo(to) {
-    var el = $('rp-val');
-    el.classList.remove('empty');
+  function countRp(to) {
+    var node = $('rp-val');
+    node.classList.remove('empty');
     var from = shownRp == null ? 0 : shownRp;
     shownRp = to;
     cancelAnimationFrame(rafId);
-    if (reduce || from === to) { el.textContent = fmt(to); return; }
-    var t0 = performance.now();
-    var dur = Math.min(1800, 800 + Math.abs(to - from) * 2);
+    if (reduce || from === to) { node.textContent = fmt(to); return; }
+    var t0 = performance.now(), dur = Math.min(1800, 800 + Math.abs(to - from) * 2);
     (function step(t) {
       var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
-      el.textContent = fmt(Math.round(from + (to - from) * e));
+      node.textContent = fmt(Math.round(from + (to - from) * e));
       if (p < 1) rafId = requestAnimationFrame(step);
     })(t0);
   }
@@ -357,78 +629,312 @@
     requestAnimationFrame(function () { requestAnimationFrame(function () { fill.style.width = pct + '%'; }); });
   }
 
-  function render(d) {
-    var tiers = Array.isArray(d.all_tiers) ? d.all_tiers : [];
-    var cur = -1;
-    for (var i = 0; i < tiers.length; i++) { if (tiers[i].name === d.tier_name) { cur = i; break; } }
-    var rgb = cur >= 0 ? PALETTE[Math.min(cur, PALETTE.length - 1)] : PALETTE[5];
-    app.style.setProperty('--tier-rgb', rgb);
+  // ───────────────────────────────────────────────
+  //  Эффекты: искры вокруг эмблемы + наклон по касанию
+  // ───────────────────────────────────────────────
+  (function sparks() {
+    var box = $('sparks');
+    for (var i = 0; i < 16; i++) {
+      var s = document.createElement('i');
+      s.style.setProperty('--x', (Math.random() * 150 - 75).toFixed(0) + 'px');
+      s.style.setProperty('--s', (2 + Math.random() * 3).toFixed(1) + 'px');
+      s.style.setProperty('--h', (90 + Math.random() * 70).toFixed(0) + 'px');
+      s.style.setProperty('--d', (3 + Math.random() * 3.5).toFixed(1) + 's');
+      s.style.setProperty('--dl', (-Math.random() * 6).toFixed(1) + 's');
+      box.appendChild(s);
+    }
+  })();
+  (function tilt() {
+    if (reduce) return;
+    var stage = $('stage'), em = $('emblem');
+    function move(e) {
+      var r = stage.getBoundingClientRect();
+      var x = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
+      var y = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
+      x = Math.max(-1.4, Math.min(1.4, x)); y = Math.max(-1.4, Math.min(1.4, y));
+      em.style.transform = 'rotateX(' + (-y * 14).toFixed(1) + 'deg) rotateY(' + (x * 14).toFixed(1) + 'deg)';
+    }
+    function reset() { em.style.transform = ''; }
+    document.addEventListener('pointermove', move, { passive: true });
+    document.addEventListener('pointerleave', reset);
+    document.addEventListener('pointerup', reset);
+  })();
 
-    // сезон
+  // ───────────────────────────────────────────────
+  //  Вкладки
+  // ───────────────────────────────────────────────
+  var TABS = ['rank', 'top', 'season', 'rewards', 'history'];
+  var pages = Array.prototype.slice.call(document.querySelectorAll('.page'));
+  var tabBtns = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  function movePill() {
+    var on = document.querySelector('.tab.on'), pill = $('tabpill');
+    if (!on) return;
+    pill.style.width = on.offsetWidth + 'px';
+    pill.style.transform = 'translateX(' + on.offsetLeft + 'px)';
+  }
+  function setTab(t, silent) {
+    if (TABS.indexOf(t) < 0) t = 'rank';
+    pages.forEach(function (p) { p.classList.toggle('on', p.getAttribute('data-page') === t); });
+    tabBtns.forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
+    movePill();
+    if (!silent) {
+      try { history.replaceState(null, '', location.pathname + location.search + '#' + t); } catch (e) {}
+      haptic();
+      window.scrollTo(0, 0);
+    }
+  }
+  tabBtns.forEach(function (b) { b.addEventListener('click', function () { setTab(b.getAttribute('data-tab')); }); });
+  window.addEventListener('resize', movePill);
+  setTab(location.hash.slice(1), true);
+  requestAnimationFrame(movePill);
+  window.addEventListener('load', movePill);
+
+  // ───────────────────────────────────────────────
+  //  Отрисовка
+  // ───────────────────────────────────────────────
+  function soon(title, text) {
+    var box = el('div', 'empty-state');
+    var ic = el('div', 'ic'); ic.appendChild(svgIcon('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')); box.appendChild(ic);
+    box.appendChild(el('b', '', title)); box.appendChild(el('p', '', text));
+    return box;
+  }
+
+  function renderRank(d, tiers, cur) {
     var season = $('season-text'); unsk(season);
-    season.textContent = 'Сезон ' + d.season_number + ' · ' + d.season_name;
+    var sname = String(d.season_name || '');
+    season.textContent = /^\s*сезон\s*\d+/i.test(sname) ? sname : 'Сезон ' + d.season_number + ' · ' + sname;
 
-    // герой
-    var emoji = $('tier-emoji');
-    emoji.textContent = d.tier_emoji;
-    emoji.classList.remove('pop'); void emoji.offsetWidth; if (!reduce) emoji.classList.add('pop');
+    var med = $('tier-emblem');
+    med.textContent = '';
+    med.classList.remove('ph', 'pop'); void med.offsetWidth;
+    if (cur >= 0) med.appendChild(emb(cur, 96)); else med.textContent = d.tier_emoji;
+    if (!reduce) med.classList.add('pop');
     var tn = $('tier-name'); unsk(tn); tn.classList.remove('muted'); tn.textContent = d.tier_name;
-    countTo(num(d.rp));
+    countRp(num(d.rp));
 
-    // прогресс до следующего ранга
     var isMax = !d.next_tier_name;
     var pct = Math.max(0, Math.min(100, num(d.progress_percent)));
-    var curChip = $('cur-chip'); unsk(curChip); curChip.className = 'chip cur';
-    curChip.textContent = d.tier_emoji + ' ' + d.tier_name;
-    var nextChip = $('next-chip'); unsk(nextChip);
+    var curChip = $('cur-chip'); unsk(curChip); curChip.className = 'chip cur'; curChip.textContent = '';
+    if (cur >= 0) curChip.appendChild(emb(cur, 22, 'in')); else curChip.appendChild(document.createTextNode(d.tier_emoji + ' '));
+    curChip.appendChild(document.createTextNode(d.tier_name));
+    var nextChip = $('next-chip'); unsk(nextChip); nextChip.textContent = '';
+    var nextIdx = isMax ? -1 : tierIdx(tiers, d.next_tier_name);
     var nums = $('pg-nums'); unsk(nums);
     var note = $('pg-note'); unsk(note); note.textContent = '';
     if (isMax) {
       $('pg-arr').style.display = 'none';
-      nextChip.className = 'chip max'; nextChip.textContent = '👑 Максимум';
+      nextChip.className = 'chip max'; nextChip.appendChild(emb(6, 22, 'in')); nextChip.appendChild(document.createTextNode('Максимум'));
       nums.textContent = fmt(num(d.rp)) + ' RP';
       $('pg-pct').textContent = '100%';
       note.textContent = 'Ты на вершине лестницы — выше рангов нет.';
     } else {
       $('pg-arr').style.display = '';
-      nextChip.className = 'chip'; nextChip.textContent = d.next_tier_emoji + ' ' + d.next_tier_name;
+      nextChip.className = 'chip';
+      if (nextIdx >= 0) nextChip.appendChild(emb(nextIdx, 22, 'in')); else nextChip.appendChild(document.createTextNode(d.next_tier_emoji + ' '));
+      nextChip.appendChild(document.createTextNode(d.next_tier_name));
       nums.textContent = fmt(num(d.rp)) + ' / ' + fmt(num(d.next_tier_threshold)) + ' RP';
       $('pg-pct').textContent = pct + '%';
-      note.appendChild(document.createTextNode('До ' + d.next_tier_emoji + ' ' + d.next_tier_name + ' осталось '));
-      var b = document.createElement('b'); b.textContent = fmt(num(d.rp_remaining)) + ' RP';
-      note.appendChild(b);
+      note.appendChild(document.createTextNode('До '));
+      if (nextIdx >= 0) note.appendChild(emb(nextIdx, 22, 'in'));
+      note.appendChild(document.createTextNode(' ' + d.next_tier_name + ' осталось '));
+      note.appendChild(el('b', '', fmt(num(d.rp_remaining)) + ' RP'));
     }
     setBar(isMax ? 100 : pct);
 
-    // победы / поражения
     var w = num(d.wins), l = num(d.losses), games = w + l;
     var sw = $('st-w'), sl = $('st-l'), sr = $('st-wr');
     unsk(sw); unsk(sl); unsk(sr);
-    sw.textContent = fmt(w); sl.textContent = fmt(l);
-    sr.textContent = games ? Math.round(w / games * 100) + '%' : '—';
+    animNum(sw, 0, w, fmt, 1100); animNum(sl, 0, l, fmt, 1100);
+    if (games) animNum(sr, 0, Math.round(w / games * 100), function (v) { return v + '%'; }, 1100); else sr.textContent = '—';
 
-    // лестница: сверху высший ранг
     var ladder = $('ladder');
     ladder.textContent = '';
     for (var k = tiers.length - 1; k >= 0; k--) {
       var t = tiers[k];
       var state = cur < 0 ? 'locked' : (k < cur ? 'passed' : (k === cur ? 'current' : 'locked'));
-      var li = document.createElement('li');
-      li.className = 'rung ' + state;
+      var li = el('li', 'rung ' + state);
       li.style.setProperty('--i', String(tiers.length - 1 - k));
-
-      var badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = t.emoji;
-      var meta = document.createElement('span'); meta.className = 'meta';
-      var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = t.name;
-      var th = document.createElement('span'); th.className = 'th'; th.textContent = 'от ' + fmt(num(t.threshold)) + ' RP';
-      meta.appendChild(nm); meta.appendChild(th);
-      var st = document.createElement('span'); st.className = 'st';
-      if (state === 'current') { var here = document.createElement('span'); here.className = 'here'; here.textContent = 'Ты здесь'; st.appendChild(here); }
-      else { st.innerHTML = state === 'passed' ? ICON_CHECK : ICON_LOCK; }
-
+      var badge = el('span', 'badge'); badge.appendChild(emb(k, 36));
+      var meta = el('span', 'meta');
+      meta.appendChild(el('span', 'nm', t.name));
+      meta.appendChild(el('span', 'th', 'от ' + fmt(num(t.threshold)) + ' RP'));
+      var st = el('span', 'st');
+      if (state === 'current') st.appendChild(el('span', 'here', 'Ты здесь'));
+      else st.appendChild(svgIcon(state === 'passed' ? '<polyline points="4 12.5 9.5 18 20 6.5"/>' : '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'));
       li.appendChild(badge); li.appendChild(meta); li.appendChild(st);
       ladder.appendChild(li);
     }
+  }
+
+  function podSlot(rank, p, tiers) {
+    var pod = el('div', 'pod p' + rank + (p ? '' : ' empty') + (p && p.is_me ? ' me' : ''));
+    if (rank === 1 && p) {
+      var c = document.createElementNS(NS, 'svg'); c.setAttribute('viewBox', '0 0 26 20'); c.setAttribute('class', 'crown');
+      c.innerHTML = '<path d="M2 17 4 5 9.5 10 13 2 16.5 10 22 5 24 17Z" fill="url(#rk2L)"/><rect x="2" y="17" width="22" height="2.5" rx="1" fill="url(#rk2L)"/>';
+      pod.appendChild(c);
+    }
+    var av = el('div', 'av');
+    if (p) {
+      var ti = tierIdx(tiers, p.tier_name);
+      av.appendChild(emb(ti >= 0 ? ti : 0, rank === 1 ? 52 : 40));
+      if (p.is_me) av.appendChild(el('span', 'you', 'Ты'));
+    } else av.appendChild(svgIcon('<path d="M12 5v14M5 12h14" stroke-dasharray="1 4"/>'));
+    pod.appendChild(av);
+    pod.appendChild(el('div', 'pn', p ? p.name : 'Свободно'));
+    pod.appendChild(el('div', 'pp', p ? fmt(num(p.rp)) + ' RP' : '—'));
+    pod.appendChild(el('div', 'base', String(rank)));
+    return pod;
+  }
+
+  function renderTop(d, tiers, cur) {
+    var body = $('top-body'); body.textContent = '';
+    $('top-pill').textContent = 'Сезон ' + d.season_number;
+    if (!Array.isArray(d.top)) { body.appendChild(soon('Топ скоро', 'Рейтинг игроков сезона появится после обновления бота.')); return; }
+    var top = d.top, mp = d.my_place, total = num(d.players_total);
+
+    if (mp && mp <= 10) {
+      var yb = el('div', 'youbar'); yb.appendChild(emb(cur >= 0 ? cur : 0, 34));
+      var yt = el('span'); yt.appendChild(document.createTextNode('Ты на ')); yt.appendChild(el('b', '', mp + '-м месте')); yt.appendChild(document.createTextNode(' — так держать!'));
+      yb.appendChild(yt); body.appendChild(yb);
+    }
+
+    if (!top.length) { body.appendChild(soon('Рейтинг пока пуст', 'Сыграй первый матч 1vs1 — и окажешься на первом месте.')); }
+    else {
+      var podium = el('div', 'podium');
+      podium.appendChild(podSlot(2, top[1] || null, tiers));
+      podium.appendChild(podSlot(1, top[0] || null, tiers));
+      podium.appendChild(podSlot(3, top[2] || null, tiers));
+      body.appendChild(podium);
+      for (var i = 3; i < top.length; i++) {
+        var p = top[i], ti = tierIdx(tiers, p.tier_name);
+        var row = el('div', 'trow' + (p.is_me ? ' me' : ''));
+        row.style.setProperty('--i', String(i - 3));
+        row.appendChild(el('span', 'pl', String(p.place)));
+        row.appendChild(emb(ti >= 0 ? ti : 0, 34));
+        var who = el('span', 'who'); who.appendChild(el('b', '', p.name));
+        who.appendChild(el('small', '', p.tier_name + ' · ' + fmt(num(p.wins)) + ' / ' + fmt(num(p.losses))));
+        row.appendChild(who);
+        var pt = el('span', 'pt', fmt(num(p.rp))); pt.appendChild(el('small', '', 'RP'));
+        row.appendChild(pt);
+        body.appendChild(row);
+      }
+    }
+
+    if (!mp || mp > 10) {
+      var card = el('div', 'card glow'); card.style.marginTop = '14px';
+      var line = el('div', 'mycard');
+      line.appendChild(emb(cur >= 0 ? cur : 0, 38));
+      var left = el('div');
+      if (mp) { left.appendChild(el('div', 'big', '#' + fmt(mp))); left.appendChild(el('div', 'of', 'твоё место из ' + fmt(total))); }
+      else { left.appendChild(el('div', 'big', '—')); left.appendChild(el('div', 'of', 'ты пока вне рейтинга')); }
+      line.appendChild(left);
+      var rt = el('div', 'rt'); rt.appendChild(el('b', '', fmt(num(d.rp)))); rt.appendChild(document.createTextNode('RP'));
+      line.appendChild(rt);
+      card.appendChild(line);
+      var mn = el('div', 'mynote');
+      if (mp && top.length >= 10) {
+        var gap = Math.max(1, num(top[9].rp) - num(d.rp) + 1);
+        mn.appendChild(document.createTextNode('До топ-10 нужно набрать ещё ')); mn.appendChild(el('b', '', fmt(gap) + ' RP')); mn.appendChild(document.createTextNode('.'));
+      } else if (mp) mn.textContent = 'В списке показаны только первые десять игроков — остальные видят своё место, как ты.';
+      else mn.textContent = 'Сыграй матч 1vs1 и заработай первые очки — тогда ты попадёшь в рейтинг сезона.';
+      card.appendChild(mn);
+      body.appendChild(card);
+    }
+  }
+
+  var TIMER = null;
+  function tickTimer() {
+    if (!TIMER) return;
+    var left = Math.max(0, TIMER.end - nowSrv());
+    var dd = Math.floor(left / 86400), hh = Math.floor(left % 86400 / 3600), mm = Math.floor(left % 3600 / 60), ss = Math.floor(left % 60);
+    var p2 = function (n) { return (n < 10 ? '0' : '') + n; };
+    var a = $('tm-d'), b = $('tm-hms');
+    if (a) a.textContent = String(dd);
+    if (b) b.textContent = p2(hh) + ':' + p2(mm) + ':' + p2(ss);
+  }
+  setInterval(tickTimer, 1000);
+
+  function renderSeason(d) {
+    var body = $('season-body'); body.textContent = '';
+    $('season-pill').textContent = '№ ' + d.season_number;
+    var start = num(d.season_start_time), end = num(d.season_end_time);
+
+    var card = el('div', 'card glow');
+    card.appendChild(el('div', 'sec-title', d.season_name));
+    if (start && end && end > start) {
+      var total = end - start, now = nowSrv();
+      var prog = Math.max(0, Math.min(1, (now - start) / total));
+      var C = 2 * Math.PI * 52;
+      var wrap = el('div', 'timer');
+      var rb = el('div', 'ringbox');
+      rb.innerHTML = '<svg viewBox="0 0 124 124"><circle class="trk" cx="62" cy="62" r="52"/><circle class="prg" id="tm-ring" cx="62" cy="62" r="52" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + C.toFixed(1) + '"/></svg>';
+      var mid = el('div', 'mid'); mid.appendChild(el('b', '', '0')); mid.firstChild.id = 'tm-d'; mid.appendChild(el('span', '', 'дн. осталось'));
+      rb.appendChild(mid); wrap.appendChild(rb);
+      var info = el('div', 'tinfo');
+      info.appendChild(el('div', 'k', 'До конца сезона'));
+      var hms = el('div', 'hms', '00:00:00'); hms.id = 'tm-hms'; info.appendChild(hms);
+      info.appendChild(el('div', 'dt', fdate(start) + ' — ' + fdate(end) + ' · день ' + Math.min(Math.round(total / 86400), Math.floor((now - start) / 86400) + 1) + ' из ' + Math.round(total / 86400)));
+      wrap.appendChild(info); card.appendChild(wrap);
+      TIMER = { end: end };
+      tickTimer();
+      requestAnimationFrame(function () { requestAnimationFrame(function () {
+        var ring = $('tm-ring'); if (ring) ring.style.strokeDashoffset = (C * (1 - prog)).toFixed(1);
+      }); });
+      card.appendChild(el('div', 'note', 'Сезон длится около двух месяцев. Итоги подводятся в конце сезона, а рейтинг при этом не обнуляется — часть очков остаётся с тобой.'));
+    } else {
+      TIMER = null;
+      card.appendChild(el('div', 'note', 'Сезон стартует с первого сыгранного матча — после этого здесь появится обратный отсчёт.'));
+    }
+    body.appendChild(card);
+
+    var r = d.rules;
+    if (r && typeof r === 'object') {
+      var rules = el('div', 'rules');
+      var mk = function (cls, icon, big, txt) { var x = el('div', 'rule ' + cls); x.appendChild(svgIcon(icon)); x.appendChild(el('b', '', big)); x.appendChild(el('span', '', txt)); return x; };
+      rules.appendChild(mk('w', '<polyline points="4 15 10 9 14 13 20 7"/><polyline points="15 7 20 7 20 12"/>', '+' + num(r.win_rp), 'RP за победу'));
+      rules.appendChild(mk('l', '<polyline points="4 9 10 15 14 11 20 17"/><polyline points="15 17 20 17 20 12"/>', '−' + num(r.loss_rp), 'RP за поражение, не ниже 0'));
+      rules.appendChild(mk('d', '<path d="M12 4v10"/><polyline points="7 10 12 15 17 10"/><line x1="6" y1="20" x2="18" y2="20"/>', num(r.decay_percent) + '%', 'RP остаётся в новом сезоне'));
+      body.appendChild(rules);
+    }
+
+    body.appendChild(el('div', 'sec-title', 'Прошлые сезоны'));
+    var hist = Array.isArray(d.history) ? d.history : [];
+    if (!hist.length) body.appendChild(el('div', 'note', 'Пока прошлых сезонов нет — ты в самом первом. Победители будут собраны здесь.'));
+    hist.forEach(function (h) {
+      var box = el('div', 'hs');
+      var t = el('div', 't'); t.appendChild(document.createTextNode(h.name + ' (№ ' + h.number + ')'));
+      t.appendChild(el('span', '', (h.start && h.end) ? fdate(h.start) + ' — ' + fdate(h.end) : ''));
+      box.appendChild(t);
+      var wn = el('div', 'w');
+      (h.top3 || []).forEach(function (x, i) { wn.appendChild(el('i', '', (i + 1) + ' · ' + x.name + ' · ' + fmt(num(x.rp)))); });
+      if (wn.childNodes.length) box.appendChild(wn);
+      body.appendChild(box);
+    });
+  }
+
+  function renderRewards(tiers) {
+    var box = $('rewards-list'); box.textContent = '';
+    tiers.forEach(function (t, i) {
+      var row = el('div', 'rw'); row.style.setProperty('--i', String(i));
+      var badge = el('div', 'badge'); badge.appendChild(emb(i, 36));
+      var meta = el('div', 'meta'); meta.appendChild(el('div', 'nm', t.name)); meta.appendChild(el('div', 'slot'));
+      var lock = el('div', 'lock'); lock.appendChild(svgIcon('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'));
+      row.appendChild(badge); row.appendChild(meta); row.appendChild(lock);
+      box.appendChild(row);
+    });
+  }
+  renderRewards([{ name: 'Бронза' }, { name: 'Серебро' }, { name: 'Золото' }, { name: 'Платина' }, { name: 'Алмаз' }, { name: 'Героик' }, { name: 'Грандмастер' }]);
+
+  function render(d) {
+    var tiers = Array.isArray(d.all_tiers) ? d.all_tiers : [];
+    var cur = tierIdx(tiers, d.tier_name);
+    app.style.setProperty('--tier-rgb', tierRgb(cur));
+    TIME.srv = num(d.server_time) || Date.now() / 1000; TIME.perf = performance.now();
+    DATA = d;
+    renderRank(d, tiers, cur);
+    renderTop(d, tiers, cur);
+    renderSeason(d);
+    renderRewards(tiers);
   }
 
   function fail(kind) {
@@ -467,6 +973,7 @@
         loaded = true;
         app.dataset.state = 'ready';
         render(res.j);
+        requestAnimationFrame(movePill);
       })
       .catch(function () { fail('network'); })
       .then(function () { clearTimeout(timer); busy = false; });
