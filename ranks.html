@@ -311,6 +311,47 @@
   .nxt-txt { margin-top: 9px; font-size: 12.5px; font-weight: 700; color: var(--text2); }
   .sum { margin: 0 2px 20px; padding: 12px 14px; border-radius: 16px; background: rgba(255,255,255,.03); border: 1px dashed rgba(255,255,255,.14); }
   .sum small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text3); }
+  /* кнопка «Забрать» */
+  .claim { position: relative; overflow: hidden; flex-shrink: 0; border: 0; padding: 9px 15px; border-radius: 12px; font-size: 13px; font-weight: 900; letter-spacing: .01em; color: #170b2e; cursor: pointer;
+    background: linear-gradient(135deg, #a78bfa, #ead9ff); box-shadow: 0 0 20px -2px rgba(167,139,250,.8), inset 0 1px 0 rgba(255,255,255,.55); animation: claimglow 2.2s ease-in-out infinite; }
+  .claim::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%) 0 0 / 220% 100%; animation: sheen 3s linear infinite; }
+  .claim:active { transform: scale(.94); }
+  .claim.busy, .claiming .claim { opacity: .6; pointer-events: none; animation: none; }
+  .claim.big { display: block; width: 100%; margin-top: 14px; padding: 14px; border-radius: 16px; font-size: 15px; }
+  @keyframes claimglow { 0%,100% { box-shadow: 0 0 14px -2px rgba(167,139,250,.55), inset 0 1px 0 rgba(255,255,255,.55); } 50% { box-shadow: 0 0 30px 0 rgba(196,181,253,.95), inset 0 1px 0 rgba(255,255,255,.55); } }
+  .rw.pend { border-color: rgba(167,139,250,.55); box-shadow: 0 0 26px -12px rgba(167,139,250,.95); }
+  /* эффект получения награды */
+  .reveal { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; overflow: hidden;
+    background: radial-gradient(circle at 50% 28%, rgba(var(--tier-rgb), .30), rgba(4,2,10,.94) 64%); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+  .reveal.on { display: flex; animation: pageIn .35s ease both; }
+  #reveal-cf { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .cf { position: absolute; top: -16px; left: var(--x); width: 8px; height: 14px; border-radius: 2px; background: var(--c); opacity: 0; animation: cfall var(--d) linear var(--dl) forwards; }
+  @keyframes cfall { 0% { transform: translateY(0) rotate(0); opacity: 1; } 100% { transform: translateY(110vh) rotate(var(--r)); opacity: .9; } }
+  .rv-card { position: relative; width: 100%; max-width: 380px; max-height: 88vh; overflow-y: auto; padding: 26px 20px 20px; text-align: center; border-radius: 28px;
+    background: linear-gradient(180deg, rgba(26,15,48,.97), rgba(10,6,20,.99)); border: 1px solid rgba(var(--tier-rgb), .55); box-shadow: 0 0 60px -10px rgba(var(--tier-rgb), .9); }
+  .rv-emb { position: relative; width: 112px; height: 112px; margin: 0 auto 14px; display: grid; place-items: center; }
+  .rv-emb::before { content: ''; position: absolute; inset: -16px; border-radius: 50%; background: radial-gradient(circle, rgba(var(--tier-rgb), .6), transparent 68%); animation: breathe 2.6s ease-in-out infinite; }
+  .rv-emb svg { position: relative; z-index: 1; animation: pop .6s cubic-bezier(.3,1.5,.5,1) both; }
+  .rv-title { font-size: 22px; font-weight: 900; letter-spacing: -.02em; }
+  .rv-sub { margin-top: 4px; font-size: 13px; font-weight: 700; color: rgb(var(--tier-rgb)); }
+  .rv-list { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+  .rv-tier { margin-top: 6px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--text3); }
+  .rv-item { --c: 196,204,220; display: flex; align-items: center; gap: 12px; padding: 11px 13px; border-radius: 16px; background: rgba(var(--c), .1); border: 1px solid rgba(var(--c), .35);
+    opacity: 0; transform: translateY(10px) scale(.96); animation: rise .5s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: calc(.4s + var(--i, 0) * .16s); }
+  .rv-item .ic { width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0; display: grid; place-items: center; font-size: 19px; background: rgba(var(--c), .16); }
+  .rv-item b { display: block; font-size: 15px; font-weight: 900; color: rgb(var(--c)); }
+  .rv-item small { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 600; line-height: 1.35; color: var(--text2); }
+  .rv-ok { margin-top: 20px; }
+  .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 120; max-width: 88vw; padding: 11px 16px; border-radius: 14px; font-size: 13px; font-weight: 700; text-align: center; color: #fff;
+    background: rgba(20,12,36,.97); border: 1px solid rgba(139,92,246,.5); box-shadow: 0 10px 30px -8px rgba(0,0,0,.8); opacity: 0; transform: translate(-50%, 10px); pointer-events: none; transition: opacity .25s, transform .25s; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+  .toast.err { border-color: rgba(255,59,92,.65); }
+  /* титул (название ранга) рядом с ником в топе */
+  .ttl { --c: 196,204,220; display: inline-block; flex-shrink: 0; padding: 1px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 800; font-style: normal; white-space: nowrap;
+    color: rgb(var(--c)); background: rgba(var(--c), .12); border: 1px solid rgba(var(--c), .38); }
+  .trow .who b { display: flex; align-items: center; gap: 7px; }
+  .trow .who b > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pod .ttl { margin: 1px 0 4px; }
   /* история боёв */
   .form { display: flex; align-items: center; gap: 5px; margin: 0 2px 16px; }
   .form i { flex: 1; max-width: 22px; height: 8px; border-radius: 4px; background: var(--c); box-shadow: 0 0 8px -1px var(--c); }
@@ -384,7 +425,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
-    .rung, .rw, .trow, .pod, .hrow { opacity: var(--o, 1); transform: none; }
+    .rung, .rw, .trow, .pod, .hrow, .rv-item { opacity: var(--o, 1); transform: none; }
+    .cf { display: none; }
   }
 </style>
 </head>
@@ -489,6 +531,12 @@
   </section>
 
 </main>
+
+<div class="reveal" id="reveal" role="dialog" aria-modal="true" aria-label="Награда получена">
+  <div id="reveal-cf"></div>
+  <div class="rv-card" id="reveal-box"></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <nav class="tabbar" id="tabbar" aria-label="Разделы">
   <div class="tabpill" id="tabpill"></div>
@@ -732,7 +780,8 @@
   }
   tabBtns.forEach(function (b) { b.addEventListener('click', function () { setTab(b.getAttribute('data-tab')); }); });
   window.addEventListener('resize', movePill);
-  setTab(location.hash.slice(1), true);
+  // вкладка при открытии: ?tab=rewards (из уведомления бота) или #хэш; всё неизвестное — «Ранг»
+  setTab(q.get('tab') || location.hash.slice(1), true);
   requestAnimationFrame(movePill);
   window.addEventListener('load', movePill);
 
@@ -828,6 +877,7 @@
     } else av.appendChild(svgIcon('<path d="M12 5v14M5 12h14" stroke-dasharray="1 4"/>'));
     pod.appendChild(av);
     pod.appendChild(el('div', 'pn', p ? p.name : 'Свободно'));
+    if (p) { var ttl = el('div', 'ttl', p.tier_name || ''); ttl.style.setProperty('--c', tierRgb(tierIdx(tiers, p.tier_name))); pod.appendChild(ttl); }   // титул рядом с ником
     pod.appendChild(el('div', 'pp', p ? fmt(num(p.rp)) + ' RP' : '—'));
     pod.appendChild(el('div', 'base', String(rank)));
     return pod;
@@ -858,8 +908,11 @@
         row.style.setProperty('--i', String(i - 3));
         row.appendChild(el('span', 'pl', String(p.place)));
         row.appendChild(emb(ti >= 0 ? ti : 0, 34));
-        var who = el('span', 'who'); who.appendChild(el('b', '', p.name));
-        who.appendChild(el('small', '', p.tier_name + ' · ' + fmt(num(p.wins)) + ' / ' + fmt(num(p.losses))));
+        var who = el('span', 'who'), wb = el('b');
+        wb.appendChild(el('span', '', p.name));
+        var ttl2 = el('i', 'ttl', p.tier_name || ''); ttl2.style.setProperty('--c', tierRgb(ti)); wb.appendChild(ttl2);   // титул рядом с ником
+        who.appendChild(wb);
+        who.appendChild(el('small', '', fmt(num(p.wins)) + ' поб. / ' + fmt(num(p.losses)) + ' пор.'));
         row.appendChild(who);
         var pt = el('span', 'pt', fmt(num(p.rp))); pt.appendChild(el('small', '', 'RP'));
         row.appendChild(pt);
@@ -1126,11 +1179,11 @@
   }
 
   // карточка «ближайшая награда» с прогрессом до ранга
-  function nextRewardCard(list, ni, rp, tiers) {
+  function nextRewardCard(list, ni, rp, tiers, claimOn, pendingN) {
     var x = list[ni], ei = embIndex(x.name, tiers), prevTh = 0;
     for (var k = 0; k < tiers.length; k++) { if (tiers[k].name === x.name) { prevTh = k > 0 ? num(tiers[k - 1].threshold) : 0; break; } }
     var span = num(x.threshold) - prevTh;
-    var pct = x.state === 'pending' ? 100 : (span > 0 ? Math.max(0, Math.min(100, (rp - prevTh) / span * 100)) : 100);
+    var pct = x.state === 'pending' ? 100 : (num(x.matches_needed) > 0 ? 0 : (span > 0 ? Math.max(0, Math.min(100, (rp - prevTh) / span * 100)) : 100));
     var card = el('div', 'nxt'); card.style.setProperty('--tier-rgb', tierRgb(ei));
     card.appendChild(el('div', 'nxt-lab', 'Ближайшая награда'));
     var main = el('div', 'nxt-main');
@@ -1138,9 +1191,18 @@
     var meta = el('div', 'meta'); meta.appendChild(el('div', 'nm', x.name)); meta.appendChild(prizeChips(x.reward));
     main.appendChild(meta); card.appendChild(main);
     var bar = el('div', 'nxt-bar'), fill = el('i'); bar.appendChild(fill); card.appendChild(bar);
-    card.appendChild(el('div', 'nxt-txt', x.state === 'pending'
-      ? 'Ранг достигнут — награда придёт после ближайшего матча'
-      : 'Ещё ' + fmt(x.rp_needed) + ' RP до ранга «' + x.name + '»'));
+    var txt;
+    if (x.state === 'pending') txt = claimOn ? 'Награда готова — забери её!' : 'Ранг достигнут — награда придёт после ближайшего матча';
+    else if (num(x.matches_needed) > 0) txt = 'Сыграй матч 1vs1 — и награда станет доступна';
+    else txt = 'Ещё ' + fmt(x.rp_needed) + ' RP до ранга «' + x.name + '»';
+    card.appendChild(el('div', 'nxt-txt', txt));
+    if (x.state === 'pending' && claimOn) {
+      var many = pendingN > 1;
+      var cb = el('button', 'claim big', many ? 'Забрать все награды (' + pendingN + ')' : 'Забрать награду');
+      cb.type = 'button';
+      cb.addEventListener('click', function () { haptic(); claimRewards(many ? null : x.name, cb); });
+      card.appendChild(cb);
+    }
     requestAnimationFrame(function () { requestAnimationFrame(function () { fill.style.width = pct + '%'; }); });
     return card;
   }
@@ -1150,8 +1212,10 @@
     box.textContent = '';
     var rp = num(d.rp);
     var got = list.filter(function (x) { return x.state === 'claimed'; }).length;
+    var pendingN = list.filter(function (x) { return x.state === 'pending'; }).length;
+    var claimOn = !!d.claim_enabled;     // бот старше v294 кнопку «Забрать» не умеет — тогда прежний текст
     pill.textContent = 'Получено ' + got + '/' + list.length; pill.className = 'pill';
-    dot.style.display = list.some(function (x) { return x.state === 'pending'; }) ? '' : 'none';
+    dot.style.display = pendingN ? '' : 'none';
 
     var ni = -1;
     for (var i = 0; i < list.length; i++) { if (list[i].state !== 'claimed') { ni = i; break; } }
@@ -1159,7 +1223,7 @@
       box.appendChild(soon('Все награды получены', 'Ты собрал все награды за ранги. Новые призы появятся здесь.', '<circle cx="12" cy="12" r="9"/><polyline points="8 12.5 11 15.5 16.5 9"/>'));
       box.lastChild.style.marginBottom = '16px';
     } else {
-      box.appendChild(nextRewardCard(list, ni, rp, tiers));
+      box.appendChild(nextRewardCard(list, ni, rp, tiers, claimOn, pendingN));
     }
 
     var tot = { tokens: 0, slx: 0, nft: 0 };
@@ -1175,19 +1239,28 @@
     list.forEach(function (x, j) {
       var ei = embIndex(x.name, tiers);
       var cls = x.name === d.tier_name ? 'cur' : (x.state === 'claimed' ? 'reached' : (x.state === 'locked' ? 'later' : ''));
+      if (x.state === 'pending' && claimOn) cls += ' pend';
       var row = el('div', 'rw ' + cls); row.style.setProperty('--i', String(j));
       var badge = el('div', 'badge'); badge.appendChild(emb(ei, 36));
       var meta = el('div', 'meta'); meta.appendChild(el('div', 'nm', x.name)); meta.appendChild(prizeChips(x.reward));
-      if (x.state === 'locked') meta.appendChild(el('div', 'hint', 'Нужно ещё ' + fmt(x.rp_needed) + ' RP'));
-      else if (x.state === 'pending') meta.appendChild(el('div', 'hint', 'Придёт после ближайшего матча'));
+      if (x.state === 'locked') meta.appendChild(el('div', 'hint', num(x.matches_needed) > 0 ? 'Сыграй матч 1vs1, чтобы забрать' : 'Нужно ещё ' + fmt(x.rp_needed) + ' RP'));
+      else if (x.state === 'pending' && !claimOn) meta.appendChild(el('div', 'hint', 'Придёт после ближайшего матча'));
       row.appendChild(badge); row.appendChild(meta);
-      var st = el('div', x.state === 'claimed' ? 'got' : (x.state === 'pending' ? 'wait' : 'lock'));
-      st.appendChild(svgIcon(x.state === 'claimed' ? '<polyline points="4 12.5 9.5 18 20 6.5"/>' : (x.state === 'pending' ? WAIT_SVG : LOCK_SVG)));
-      row.appendChild(st);
+      if (x.state === 'pending' && claimOn) {
+        var cbtn = el('button', 'claim', 'Забрать'); cbtn.type = 'button';
+        cbtn.addEventListener('click', function () { haptic(); claimRewards(x.name, cbtn); });
+        row.appendChild(cbtn);
+      } else {
+        var st = el('div', x.state === 'claimed' ? 'got' : (x.state === 'pending' ? 'wait' : 'lock'));
+        st.appendChild(svgIcon(x.state === 'claimed' ? '<polyline points="4 12.5 9.5 18 20 6.5"/>' : (x.state === 'pending' ? WAIT_SVG : LOCK_SVG)));
+        row.appendChild(st);
+      }
       box.appendChild(row);
     });
 
-    var note = el('p', 'note', 'Награда приходит автоматически после матча, в котором достигнут ранг, — бот пришлёт уведомление. '
+    var note = el('p', 'note', (claimOn
+        ? 'Нажми «Забрать»: токены сразу зачислятся на баланс, SLX попадут в портфель на бирже (Аккаунт → Инвестиции), а NFT — в твою коллекцию. Бот пришлёт уведомление, когда награда станет доступна. '
+        : 'Награда приходит автоматически после матча, в котором достигнут ранг, — бот пришлёт уведомление. ')
       + (d.rank_rewards_per_season ? 'Награды выдаются заново в каждом новом сезоне. ' : 'Каждая награда выдаётся один раз. ')
       + 'NFT достаются случайно из доступных карт нужной редкости.');
     note.style.marginTop = '4px'; box.appendChild(note);
@@ -1199,6 +1272,116 @@
     else renderRewardsLegacy(d, tiers, cur);
   }
   renderRewards(null, null, -1);
+
+  // ───────────────────────────────────────────────
+  //  «Забрать»: запрос к боту + эффект получения награды
+  // ───────────────────────────────────────────────
+  var claiming = false, toastTimer = 0;
+  function tiersOf(d) { return d && Array.isArray(d.all_tiers) ? d.all_tiers : []; }
+  function rerenderRewards() { if (!DATA) return; var t = tiersOf(DATA); safe(renderRewards, DATA, t, tierIdx(t, DATA.tier_name)); }
+
+  function toast(msg, isErr) {
+    var t = $('toast');
+    t.textContent = msg; t.className = 'toast on' + (isErr ? ' err' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.className = 'toast'; }, 3200);
+  }
+
+  function confetti(box) {
+    box.textContent = '';
+    if (reduce) return;
+    var cols = ['rgb(255,201,74)', 'rgb(167,139,250)', 'rgb(110,231,255)', 'rgb(232,121,249)', 'rgb(0,230,160)'];
+    for (var i = 0; i < 44; i++) {
+      var c = el('i', 'cf');
+      c.style.setProperty('--x', (Math.random() * 100).toFixed(1) + '%');
+      c.style.setProperty('--c', cols[i % cols.length]);
+      c.style.setProperty('--r', (Math.random() * 720 - 360).toFixed(0) + 'deg');
+      c.style.setProperty('--d', (2.2 + Math.random() * 2).toFixed(2) + 's');
+      c.style.setProperty('--dl', (Math.random() * 0.7).toFixed(2) + 's');
+      box.appendChild(c);
+    }
+  }
+
+  function revealItem(it, i) {
+    var row = el('div', 'rv-item'); row.style.setProperty('--i', String(i));
+    var ic = el('span', 'ic'), txt = el('div'), b = el('b'), sm = el('small');
+    if (it.kind === 'tokens') {
+      row.style.setProperty('--c', '255,201,74'); ic.textContent = '💰';
+      b.textContent = '+' + fmt(it.amount) + ' токенов'; sm.textContent = 'зачислены на баланс';
+    } else if (it.kind === 'slx') {
+      row.style.setProperty('--c', '167,139,250'); ic.textContent = '📈';
+      b.textContent = '+' + fmt(it.amount) + ' SLX'; sm.textContent = 'в твоём портфеле на бирже (Аккаунт → Инвестиции)';
+    } else {
+      row.style.setProperty('--c', NFT_COL[it.rarity] || '196,204,220'); ic.textContent = '🎴';
+      if (it.given) {
+        b.textContent = (it.name || 'NFT') + (it.serial ? ' #' + it.serial + (it.max_supply ? '/' + it.max_supply : '') : '');
+        sm.textContent = 'NFT ' + (it.label || '') + (it.test ? ' · тестовая, не выдана' : ' · уже в твоей коллекции');
+      } else {
+        b.textContent = 'NFT ' + (it.label || ''); sm.textContent = 'выдаст администратор — тираж этой редкости закончился';
+      }
+    }
+    txt.appendChild(b); txt.appendChild(sm); row.appendChild(ic); row.appendChild(txt);
+    return row;
+  }
+
+  function closeReveal() { $('reveal').classList.remove('on'); document.body.style.overflow = ''; }
+
+  function showReveal(detail) {
+    var ov = $('reveal'), box = $('reveal-box'), tiers = tiersOf(DATA);
+    box.textContent = '';
+    var ei = embIndex(detail[0].name, tiers);
+    ov.style.setProperty('--tier-rgb', tierRgb(ei));
+    var hero = el('div', 'rv-emb'); hero.appendChild(emb(ei, 84)); box.appendChild(hero);
+    box.appendChild(el('div', 'rv-title', 'Награда получена!'));
+    box.appendChild(el('div', 'rv-sub', detail.map(function (t) { return t.name; }).join(' · ')));
+    var list = el('div', 'rv-list'), n = 0;
+    detail.forEach(function (t) {
+      if (detail.length > 1) list.appendChild(el('div', 'rv-tier', (t.emoji || '') + ' ' + t.name));
+      (t.items || []).forEach(function (it) { list.appendChild(revealItem(it, n++)); });
+    });
+    box.appendChild(list);
+    var ok = el('button', 'claim big rv-ok', 'Отлично!'); ok.type = 'button';
+    ok.addEventListener('click', closeReveal);
+    box.appendChild(ok);
+    confetti($('reveal-cf'));
+    document.body.style.overflow = 'hidden';
+    ov.classList.add('on');
+    try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+  }
+  $('reveal').addEventListener('click', function (e) { if (e.target === $('reveal')) closeReveal(); });
+
+  // tier — название ранга; null — забрать всё, что доступно. Нажимать повторно безопасно:
+  // сервер выдаёт награду один раз, а при потерянном ответе следующий запрос просто вернёт «уже получено».
+  function claimRewards(tier, btn) {
+    if (claiming) return;
+    if (!UID || !SECRET || !/^https?:\/\//i.test(API)) { toast('Открой ранги через кнопку в боте — в ссылке не хватает данных', true); return; }
+    claiming = true; app.classList.add('claiming');
+    var label = btn ? btn.textContent : ''; if (btn) { btn.classList.add('busy'); btn.textContent = 'Забираю…'; }
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 15000);
+    function resync() { setTimeout(function () { load(true); }, 700); }
+    fetch(API + '/casino/ranks/claim', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
+      body: JSON.stringify({ uid: UID, secret: SECRET, tier: tier || null }), signal: ctrl ? ctrl.signal : undefined
+    })
+      .then(function (r) { return r.json().catch(function () { return null; }).then(function (j) { return { status: r.status, ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (res.status === 401) { toast('Доступ не подтверждён — открой ранги заново из бота', true); return; }
+        if (res.status === 429) { toast('Не так быстро — попробуй через секунду', true); return; }
+        if (res.status === 404) { toast('Бот ещё не обновлён — награду пока нельзя забрать', true); return; }
+        if (!res.ok || !res.j || res.j.ok !== true) { toast('Не удалось забрать награду. Попробуй ещё раз', true); resync(); return; }
+        var j = res.j;
+        if (DATA && Array.isArray(j.rank_rewards)) { DATA.rank_rewards = j.rank_rewards; lastSig = ''; rerenderRewards(); }
+        if (Array.isArray(j.detail) && j.detail.length) showReveal(j.detail);
+        else if (j.blocked === 'matches') toast('Сначала сыграй матч 1vs1 — после него награда откроется');
+        else toast('Эти награды уже получены');
+      })
+      .catch(function () { toast('Нет связи с сервером — проверь интернет и нажми ещё раз', true); resync(); })
+      .then(function () {
+        clearTimeout(timer); claiming = false; app.classList.remove('claiming');
+        if (btn && btn.parentNode) { btn.classList.remove('busy'); btn.textContent = label; }
+      });
+  }
 
   // Один сломанный экран не должен валить остальные (и не должен выглядеть как «сервер не отвечает»)
   function safe(fn, a, b, c) { try { fn(a, b, c); } catch (e) { try { console.error(e); } catch (_) {} } }
