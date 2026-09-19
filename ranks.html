@@ -453,6 +453,7 @@
   @keyframes admGlow { 0%,100% { -webkit-filter: drop-shadow(0 0 5px rgba(255,201,74,.4)); filter: drop-shadow(0 0 5px rgba(255,201,74,.4)); } 50% { -webkit-filter: drop-shadow(0 0 11px rgba(255,201,74,.8)); filter: drop-shadow(0 0 11px rgba(255,201,74,.8)); } }
   @keyframes admTw { 0%,100% { transform: scale(.3) rotate(0deg); opacity: 0; } 50% { transform: scale(1) rotate(45deg); opacity: 1; } }
   @keyframes achGlow { 0%,100% { -webkit-filter: drop-shadow(0 0 4px rgba(var(--ac), .45)); filter: drop-shadow(0 0 4px rgba(var(--ac), .45)); } 50% { -webkit-filter: drop-shadow(0 0 11px rgba(var(--ac), .95)); filter: drop-shadow(0 0 11px rgba(var(--ac), .95)); } }
+  @keyframes achRing { from { stroke-dashoffset: var(--c); } }
   @keyframes pcUp { from { transform: translateY(100%); } to { transform: none; } }
   @keyframes pcBar { from { transform: scaleX(0); } to { transform: none; } }
   @keyframes tmTickA { 0% { transform: scale(1.14); color: #fff; } 100% { transform: none; } }
@@ -620,18 +621,54 @@
   .ach.on { -webkit-filter: drop-shadow(0 0 6px rgba(var(--ac), .5)); filter: drop-shadow(0 0 6px rgba(var(--ac), .5)); }
   .ach.on.t-gold, .ach.on.t-legend { animation: achGlow 2.8s ease-in-out infinite; }
   .ach.lock { -webkit-filter: grayscale(1) brightness(.75); filter: grayscale(1) brightness(.75); opacity: .5; }
-  .ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 12px 6px; }
-  .ach-c { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 2px 8px; border: 1px solid transparent; border-radius: 16px; background: transparent; color: var(--text); font-family: inherit; cursor: pointer;
-    -webkit-tap-highlight-color: transparent; opacity: 0; transform: scale(.85); animation: pop .45s cubic-bezier(.3,1.5,.5,1) forwards; animation-delay: calc(var(--i, 0) * 45ms + .15s); }
-  .ach-c.sel { background: rgba(var(--ac), .1); border-color: rgba(var(--ac), .4); }
-  .ach-c .nm { max-width: 100%; font-size: 10.5px; font-weight: 800; line-height: 1.15; text-align: center; color: var(--text2); }
-  .ach-c:not(.lock) .nm { color: var(--text); }
-  .ach-c .pr { display: block; width: 46px; height: 4px; border-radius: 3px; overflow: hidden; background: rgba(255,255,255,.08); }
-  .ach-c .pr i { display: block; height: 100%; border-radius: 3px; background: rgba(var(--ac), .85); }
-  .ach-new { position: absolute; top: 2px; right: 6px; padding: 1px 5px; border-radius: 999px; font-size: 8.5px; font-weight: 900; font-style: normal; letter-spacing: .05em; color: #170b2e; background: #ffc94a; box-shadow: 0 0 10px rgba(255,201,74,.8); }
-  .ach-head { display: flex; align-items: center; }
-  .ach-info { margin-top: 8px; min-height: 34px; padding: 9px 12px; border-radius: 14px; font-size: 12px; font-weight: 600; line-height: 1.4; text-align: center; color: var(--text2); background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); }
-  .ach-info b { color: var(--text); }
+  /* v299: значки собраны на отдельной вкладке; на «Ранге» осталась компактная карточка-ссылка */
+  .ach-new { display: inline-block; flex-shrink: 0; padding: 1px 6px; border-radius: 999px; font-size: 8.5px; font-weight: 900; font-style: normal; letter-spacing: .05em; color: #170b2e; background: #ffc94a; box-shadow: 0 0 10px rgba(255,201,74,.8); }
+  .ach-row.t-bronze, .tchip.t-bronze { --ac: 205,127,79; } .ach-row.t-silver, .tchip.t-silver { --ac: 200,209,227; }
+  .ach-row.t-gold, .tchip.t-gold { --ac: 255,201,74; } .ach-row.t-legend, .tchip.t-legend { --ac: 232,121,249; }
+
+  .ach-mini { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px 14px; border-radius: 18px; text-align: left; cursor: pointer; color: var(--text); font-family: inherit;
+    background: linear-gradient(90deg, rgba(139,92,246,.16), rgba(139,92,246,.04)); border: 1px solid rgba(139,92,246,.35); -webkit-tap-highlight-color: transparent; }
+  .ach-mini:active { background: rgba(255,255,255,.08); }
+  .ach-mini .strip { display: flex; flex-shrink: 0; padding-left: 6px; }
+  .ach-mini .strip .ach { margin-left: -6px; }
+  .ach-mini .lb { flex: 1; min-width: 0; }
+  .ach-mini .lb b { display: block; font-size: 14px; font-weight: 800; }
+  .ach-mini .lb small { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 600; line-height: 1.3; color: var(--text3); }
+  .ach-mini::after { content: ''; width: 8px; height: 8px; flex-shrink: 0; border-top: 2px solid var(--text3); border-right: 2px solid var(--text3); transform: rotate(45deg); }
+
+  .ah-box { padding: 16px; border-radius: 20px; background: linear-gradient(180deg, rgba(139,92,246,.14), rgba(139,92,246,.04)); border: 1px solid rgba(139,92,246,.32); }
+  .ah-hero { display: flex; align-items: center; gap: 16px; }
+  .ah-ring { position: relative; width: 84px; height: 84px; flex-shrink: 0; }
+  .ah-ring svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+  .ah-ring .bg { fill: none; stroke: rgba(255,255,255,.08); stroke-width: 7; }
+  .ah-ring .fg { fill: none; stroke: rgb(var(--tier-rgb)); stroke-width: 7; stroke-linecap: round; stroke-dasharray: var(--c); stroke-dashoffset: var(--off);
+    -webkit-filter: drop-shadow(0 0 6px rgba(var(--tier-rgb), .8)); filter: drop-shadow(0 0 6px rgba(var(--tier-rgb), .8)); animation: achRing 1.1s cubic-bezier(.2,.9,.25,1) both; }
+  .ah-ring .cn { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+  .ah-ring .cn small { margin-top: 3px; font-size: 10.5px; font-weight: 800; color: var(--text3); }
+  .ah-txt { min-width: 0; }
+  .ah-txt h4 { font-size: 16px; font-weight: 900; letter-spacing: -.01em; }
+  .ah-txt p { margin-top: 3px; font-size: 12.5px; font-weight: 600; line-height: 1.4; color: var(--text2); }
+  .ah-tiers { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .tchip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; color: rgb(var(--ac)); background: rgba(var(--ac), .12); border: 1px solid rgba(var(--ac), .4); }
+  .tchip i { width: 8px; height: 8px; background: rgb(var(--ac)); -webkit-clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+  .ah-next { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+  .ah-next .lb { font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--text3); }
+  .ah-next .tx { flex: 1; min-width: 0; }
+  .ah-next .tx b { display: block; margin-top: 3px; font-size: 15px; font-weight: 900; }
+  .ah-next .tx span { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; color: var(--text2); }
+  .ach-row { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; padding: 12px 14px 12px 12px; border-radius: 16px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.05);
+    opacity: 0; transform: translateY(8px); animation: rise .45s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: calc(var(--i, 0) * 45ms); }
+  .ach-row.on { border-color: rgba(var(--ac), .38); background: linear-gradient(90deg, rgba(var(--ac), .11), rgba(var(--ac), .02)); }
+  .ach-row .tx { flex: 1; min-width: 0; }
+  .ach-row .nm { display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 800; }
+  .ach-row.lock .nm { color: var(--text2); }
+  .ach-row .ds { margin-top: 2px; font-size: 12px; font-weight: 600; line-height: 1.35; color: var(--text2); }
+  .ach-row .pg, .ah-next .pg { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .ach-row .bar2, .ah-next .bar2 { flex: 1; height: 5px; border-radius: 3px; overflow: hidden; background: rgba(255,255,255,.08); }
+  .ach-row .bar2 i, .ah-next .bar2 i { display: block; height: 100%; border-radius: 3px; background: rgba(var(--ac), .85); }
+  .ach-row .pg em { font-style: normal; font-size: 11px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--text3); }
+  .ach-row .got { margin-top: 6px; font-size: 11px; font-weight: 800; color: rgb(var(--ac)); }
+  .ach-hint { margin: 14px 4px 0; font-size: 11.5px; font-weight: 600; line-height: 1.45; text-align: center; color: var(--text3); }
 
   /* карточка игрока — шторка снизу */
   .pcb { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 90; display: none; align-items: flex-end; justify-content: center; background: rgba(4,2,10,.72); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
@@ -784,8 +821,7 @@
 
     <section class="data-sec" id="ach-sec" style="display:none">
       <div class="sub-hd"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z"/></svg><b class="tx">Достижения</b><i class="ln"></i><em id="ach-count"></em></div>
-      <div class="ach-grid" id="ach-grid"></div>
-      <div class="ach-info" id="ach-info" aria-live="polite">Нажми на значок — расскажу, за что он</div>
+      <button class="ach-mini" id="ach-mini" type="button"><span class="strip" id="ach-strip"></span><span class="lb"><b id="ach-mini-t"></b><small id="ach-mini-s"></small></span></button>
     </section>
 
     <section class="data-sec">
@@ -860,6 +896,28 @@
     <div id="rewards-body"></div>
   </section>
 
+  <!-- ═══ ЗНАЧКИ (v299) ═══ -->
+  <section class="page" data-page="ach">
+    <div class="page-head">
+      <div class="ph-l">
+        <svg class="ph-ic" viewBox="0 0 44 44" aria-hidden="true" focusable="false">
+          <circle class="ph-ring" cx="22" cy="22" r="20.5" fill="none" stroke-width="1" stroke-dasharray="2 4"/>
+          <path d="M22 3.5 38 12.75v18.5L22 40.5 6 31.25v-18.5z" fill="url(#hdF)" stroke="url(#hdG)" stroke-width="1.7" stroke-linejoin="round"/>
+          <g transform="translate(10 10)" fill="none" stroke="#efe7ff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z"/></g>
+        </svg>
+        <div class="ph-t"><h3>Значки</h3>
+          <svg class="ph-line" viewBox="0 0 230 10" aria-hidden="true" focusable="false"><path d="M5 1.6 8.4 5 5 8.4 1.6 5z" class="hd-dia"/><line x1="12" y1="5" x2="228" y2="5" stroke="url(#hdLn)" stroke-width="1.6" stroke-linecap="round"/><circle class="hd-spark" cx="12" cy="5" r="2.2"/></svg>
+        </div>
+      </div>
+      <span class="pill" id="ach-pill">—</span>
+    </div>
+    <div class="data-sec" id="ach-body">
+      <div class="ghostrow"><i class="a"></i><span class="b"><i></i><i></i></span><i class="c"></i></div>
+      <div class="ghostrow"><i class="a"></i><span class="b"><i></i><i></i></span><i class="c"></i></div>
+      <div class="ghostrow"><i class="a"></i><span class="b"><i></i><i></i></span><i class="c"></i></div>
+    </div>
+  </section>
+
   <!-- ═══ ИСТОРИЯ ═══ -->
   <section class="page" data-page="history">
     <div class="page-head">
@@ -902,6 +960,7 @@
   <button class="tab" type="button" data-tab="top"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5v1a3 3 0 0 0 3 3"/><path d="M16 6h3v1a3 3 0 0 1-3 3"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="8.5" y1="20" x2="15.5" y2="20"/></svg><span>Топ</span></button>
   <button class="tab" type="button" data-tab="season"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14" rx="2"/><line x1="4" y1="11" x2="20" y2="11"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg><span>Сезон</span></button>
   <button class="tab" type="button" data-tab="rewards"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="1.5"/><rect x="3" y="7" width="18" height="3.5" rx="1"/><line x1="12" y1="7" x2="12" y2="20"/><path d="M12 7C9 7 7.5 5.8 7.5 4.6 7.5 3.3 9.3 3 10.5 4.2 11.4 5.1 12 7 12 7 12 7 12.6 5.1 13.5 4.2 14.7 3 16.5 3.3 16.5 4.6 16.5 5.8 15 7 12 7z"/></svg><span>Награды</span><i class="dot" id="dot-rewards" style="display:none"></i></button>
+  <button class="tab" type="button" data-tab="ach"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z"/></svg><span>Значки</span><i class="dot" id="dot-ach" style="display:none"></i></button>
   <button class="tab" type="button" data-tab="history"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>История</span><i class="dot" id="dot-history" style="display:none"></i></button>
 </nav>
 
@@ -916,7 +975,7 @@ window.addEventListener('error', function (e) {
     a.setAttribute('data-state', 'error');
     document.getElementById('err-title').textContent = 'Страница сломалась при запуске';
     document.getElementById('err-text').textContent = 'Закрой и открой рейтинг заново. Если повторится — пришли скриншот этого экрана.';
-    document.getElementById('err-detail').textContent = 'Причина: ' + String((e && e.message) || 'ошибка') + ' · v298';
+    document.getElementById('err-detail').textContent = 'Причина: ' + String((e && e.message) || 'ошибка') + ' · v299';
   } catch (_) {}
 }, true);
 </script>
@@ -1273,7 +1332,7 @@ window.addEventListener('error', function (e) {
   // ───────────────────────────────────────────────
   //  Вкладки
   // ───────────────────────────────────────────────
-  var TABS = ['rank', 'top', 'season', 'rewards', 'history'];
+  var TABS = ['rank', 'top', 'season', 'rewards', 'ach', 'history'];
   var pages = Array.prototype.slice.call(document.querySelectorAll('.page'));
   var tabBtns = Array.prototype.slice.call(document.querySelectorAll('.tab'));
   function movePill() {
@@ -1287,6 +1346,7 @@ window.addEventListener('error', function (e) {
     pages.forEach(function (p) { p.classList.toggle('on', p.getAttribute('data-page') === t); });
     tabBtns.forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
     movePill();
+    if (t === 'ach') achMarkSeen();                                  // v299: открыл «Значки» — золотая точка гаснет
     if (!silent) {
       haptic();
       window.scrollTo(0, 0);
@@ -1419,46 +1479,95 @@ window.addEventListener('error', function (e) {
     return h;
   }
 
-  var ACH_SEL = '';
+  // ── v299: вкладка «Значки» ──
+  var TIER_ORDER = ['bronze', 'silver', 'gold', 'legend'], TIER_LBL = { bronze: 'Бронза', silver: 'Серебро', gold: 'Золото', legend: 'Легенда' };
   function achCatalog() { var m = {}; ((DATA && DATA.achievements) || []).forEach(function (a) { m[a.id] = a; }); return m; }
-  function achInfoNode(a, srv) {
-    var n = el('span');
-    n.appendChild(el('b', '', a.name)); n.appendChild(document.createTextNode(' — ' + a.desc));
-    if (a.unlocked) n.appendChild(document.createTextNode(a.at ? ' · получено ' + fdate(a.at) : ' · получено'));
-    else if (a.target) n.appendChild(document.createTextNode(' · ' + fmt(num(a.progress)) + ' / ' + fmt(num(a.target)) + (a.unit ? ' ' + a.unit : '')));
-    return n;
+  function achSeenKey() { return 'rk_ach_seen_1_' + UID; }
+  function achLatest(list) { var mx = 0; list.forEach(function (a) { if (a.unlocked && num(a.at) > mx) mx = num(a.at); }); return mx; }
+  function achSeen() { try { return parseFloat(localStorage.getItem(achSeenKey())) || 0; } catch (e) { return 0; } }
+  // Золотая точка на вкладке — пока в ней есть значок, которого игрок ещё не видел (запоминаем в браузере, время самого свежего значка)
+  function achMarkSeen() {
+    var list = DATA && DATA.achievements; if (!Array.isArray(list)) return;
+    try { localStorage.setItem(achSeenKey(), String(achLatest(list))); } catch (e) {}
+    var dt = $('dot-ach'); if (dt) dt.style.display = 'none';
+  }
+  function achRatio(a) { return a.target ? Math.min(1, num(a.progress) / a.target) : -1; }
+  function achRow(a, i, srv) {
+    var r = el('div', 'ach-row t-' + a.tier + (a.unlocked ? ' on' : ' lock')); r.style.setProperty('--i', String(Math.min(i, 12)));
+    r.appendChild(achBadge(a, 52));
+    var tx = el('div', 'tx'), nm = el('div', 'nm'); nm.appendChild(el('span', '', a.name));
+    if (a.unlocked && a.at && srv - num(a.at) < 3 * 86400) nm.appendChild(el('i', 'ach-new', 'NEW'));
+    tx.appendChild(nm); tx.appendChild(el('div', 'ds', a.desc));
+    if (a.unlocked) tx.appendChild(el('div', 'got', a.at ? 'Получено ' + fdate(a.at) : 'Получено'));
+    else if (a.target) {
+      var pg = el('div', 'pg'), bar = el('span', 'bar2'), fill = el('i');
+      fill.style.width = Math.max(3, Math.round(achRatio(a) * 100)) + '%'; bar.appendChild(fill); pg.appendChild(bar);
+      pg.appendChild(el('em', '', fmt(num(a.progress)) + ' / ' + fmt(num(a.target)) + (a.unit ? ' ' + a.unit : '')));
+      tx.appendChild(pg);
+    }
+    r.appendChild(tx);
+    return r;
   }
 
   function renderAch(d) {
-    var sec = $('ach-sec'), list = d.achievements;
-    if (!Array.isArray(list) || !list.length) { sec.style.display = 'none'; return; }
+    var list = d.achievements, sec = $('ach-sec'), body = $('ach-body'), dot = $('dot-ach');
+    body.textContent = '';
+    if (!Array.isArray(list) || !list.length) {              // бот без v298 — значков нет
+      sec.style.display = 'none'; $('ach-pill').textContent = '—'; if (dot) dot.style.display = 'none';
+      body.appendChild(soon('Значки скоро', 'Достижения появятся после обновления бота.'));
+      return;
+    }
+    var srv = num(d.server_time) || Date.now() / 1000, total = list.length;
+    var got = list.filter(function (a) { return a.unlocked; }).sort(function (x, y) { return num(y.at) - num(x.at); });
+    var left = list.filter(function (a) { return !a.unlocked; }).sort(function (x, y) { return achRatio(y) - achRatio(x); });   // ближайшие к открытию — первыми
+    $('ach-pill').textContent = got.length + ' / ' + total;
+
+    // компактная карточка на вкладке «Ранг»
     sec.style.display = '';
-    var grid = $('ach-grid'), info = $('ach-info'), got = 0, srv = num(d.server_time) || Date.now() / 1000;
-    grid.textContent = '';
-    list.forEach(function (a, i) {
-      if (a.unlocked) got++;
-      var c = el('button', 'ach-c t-' + a.tier + (a.unlocked ? '' : ' lock') + (ACH_SEL === a.id ? ' sel' : '')); c.type = 'button';
-      c.style.setProperty('--i', String(i));
-      c.appendChild(achBadge(a, 54));
-      if (a.unlocked && a.at && srv - num(a.at) < 3 * 86400) c.appendChild(el('i', 'ach-new', 'NEW'));
-      c.appendChild(el('span', 'nm', a.name));
-      if (!a.unlocked && a.target) {
-        var pr = el('span', 'pr'), bar = el('i'); bar.style.width = Math.max(4, Math.round(num(a.progress) / a.target * 100)) + '%'; pr.appendChild(bar); c.appendChild(pr);
-      }
-      c.addEventListener('click', function () {
-        ACH_SEL = a.id; haptic();
-        var all = grid.children; for (var k = 0; k < all.length; k++) all[k].classList.remove('sel');
-        c.classList.add('sel'); info.textContent = ''; info.appendChild(achInfoNode(a, srv));
-      });
-      grid.appendChild(c);
+    $('ach-count').textContent = got.length + ' / ' + total;
+    var strip = $('ach-strip'); strip.textContent = '';
+    (got.length ? got : left).slice(0, got.length ? 5 : 3).forEach(function (a) { strip.appendChild(achBadge(a, 36)); });
+    $('ach-mini-t').textContent = got.length ? 'Открыто ' + got.length + ' из ' + total : 'Пока ни одного значка';
+    var nxt = left.filter(function (a) { return a.target; })[0];
+    $('ach-mini-s').textContent = nxt ? 'Ближайший: «' + nxt.name + '» — ' + fmt(num(nxt.progress)) + ' / ' + fmt(num(nxt.target)) + (nxt.unit ? ' ' + nxt.unit : '') : (left.length ? 'Смотри все значки' : 'Все значки собраны 🎉');
+    $('ach-mini').onclick = function () { haptic(); setTab('ach'); window.scrollTo(0, 0); };
+
+    // страница «Значки»: кольцо прогресса, ближайшее, списки
+    var hero = el('div', 'ah-box ah-hero'), ring = el('div', 'ah-ring'), C = 226.2;
+    ring.innerHTML = '<svg viewBox="0 0 84 84" aria-hidden="true"><circle class="bg" cx="42" cy="42" r="36"/><circle class="fg" cx="42" cy="42" r="36" style="--c:' + C + ';--off:' + (C * (1 - got.length / total)).toFixed(1) + '"/></svg>';
+    var cn = el('div', 'cn', String(got.length)); cn.appendChild(el('small', '', 'из ' + total)); ring.appendChild(cn); hero.appendChild(ring);
+    var ht = el('div', 'ah-txt'); ht.appendChild(el('h4', '', 'Твоя коллекция'));
+    ht.appendChild(el('p', '', got.length === total ? 'Собрано всё — ты легенда 🏆' : 'Играй матчи 1vs1 — значки выдаются сами, бот пришлёт сообщение, когда откроешь новый.'));
+    var tiers = el('div', 'ah-tiers');
+    TIER_ORDER.forEach(function (t) {
+      var all = list.filter(function (a) { return a.tier === t; }); if (!all.length) return;
+      var c = el('span', 'tchip t-' + t); c.appendChild(el('i')); c.appendChild(document.createTextNode(TIER_LBL[t] + ' ' + all.filter(function (a) { return a.unlocked; }).length + '/' + all.length)); tiers.appendChild(c);
     });
-    $('ach-count').textContent = got + ' / ' + list.length;
-    var cur = null; for (var q = 0; q < list.length; q++) if (list[q].id === ACH_SEL) cur = list[q];
-    if (cur) { info.textContent = ''; info.appendChild(achInfoNode(cur, srv)); }
+    ht.appendChild(tiers); hero.appendChild(ht); body.appendChild(hero);
+
+    if (nxt) {
+      var nb = el('div', 'ah-box ah-next t-' + nxt.tier); nb.appendChild(achBadge(nxt, 56));
+      var nt = el('div', 'tx'); nt.appendChild(el('div', 'lb', 'Ближайший значок')); nt.appendChild(el('b', '', nxt.name));
+      var rem = Math.max(0, nxt.target - num(nxt.progress));
+      nt.appendChild(el('span', '', nxt.desc + ' · осталось ' + fmt(rem) + (nxt.unit ? ' ' + nxt.unit : '')));
+      var pg2 = el('div', 'pg'), br2 = el('span', 'bar2'), fl2 = el('i'); fl2.style.width = Math.max(3, Math.round(achRatio(nxt) * 100)) + '%'; br2.appendChild(fl2); pg2.appendChild(br2);
+      pg2.style.marginTop = '8px'; nt.appendChild(pg2); nb.appendChild(nt);
+      nb.style.setProperty('--ac', {bronze: '205,127,79', silver: '200,209,227', gold: '255,201,74', legend: '232,121,249'}[nxt.tier] || '139,92,246');
+      body.appendChild(nb);
+    }
+    var k = 0;
+    if (got.length) { body.appendChild(subHd('star', 'Получено', String(got.length))); got.forEach(function (a) { body.appendChild(achRow(a, k++, srv)); }); }
+    if (left.length) { body.appendChild(subHd('target', 'Ещё не открыто', String(left.length))); left.forEach(function (a) { body.appendChild(achRow(a, k++, srv)); }); }
+
+    // золотая точка на вкладке: есть значок новее того, что игрок уже видел
+    var on = document.querySelector('.tab.on');
+    if (on && on.getAttribute('data-tab') === 'ach') achMarkSeen();
+    else if (dot) dot.style.display = achLatest(list) > achSeen() ? '' : 'none';
   }
 
   // ── карточка игрока ──
   var PC = { open: false, sending: false, from: null };
+  var SENT = {};      // v299: cid → когда истекает приглашение; повторно открыть карточку и снова нажать нельзя — не плодим спам
   function closeCard() {
     $('pcb').classList.remove('on'); $('pcb').setAttribute('aria-hidden', 'true');
     if (!$('reveal').classList.contains('on')) document.body.style.overflow = '';
@@ -1502,7 +1611,7 @@ window.addEventListener('error', function (e) {
         if (res.status === 429) { toast('Не так быстро — подожди пару секунд', true); reset(); return; }
         if (res.status === 404 && (!j || !j.error)) { toast('Бот ещё не обновлён — вызов из приложения пока недоступен', true); reset(); return; }
         if (!j || j.ok !== true) { toast((j && j.message) || 'Не удалось отправить вызов. Попробуй ещё раз', true); reset(); return; }
-        PC.sending = false; btn.classList.remove('busy'); btn.classList.add('done'); btn.disabled = true;
+        PC.sending = false; btn.classList.remove('busy'); btn.classList.add('done'); btn.disabled = true; SENT[p.cid] = Date.now() + 180000;
         setBtn(btn, 'Вызов отправлен', 'Соперник отвечает в боте · 3 минуты');
         toast('Вызов отправлен — ответ придёт в чат с ботом');
         try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
@@ -1565,10 +1674,12 @@ window.addEventListener('error', function (e) {
     var act = el('div', 'pc-act');
     if (p.is_me) act.appendChild(el('p', 'pc-note', 'Это твоя карточка — вызвать самого себя нельзя.'));
     else if (!(DATA && DATA.challenge_enabled) || !p.cid) act.appendChild(el('p', 'pc-note', 'Вызов из приложения включится после обновления бота. Пока можно вызвать через бота: 1vs1 → «🎯 Вызвать по ID».'));
+    else if (p.open_to_duel === false) act.appendChild(el('p', 'pc-note', '🔕 Этот игрок не принимает вызовы на дуэль.'));   // v299: сам выключил в настройках бота
     else {
       var btn = el('button', 'claim big pc-fight'); btn.type = 'button';
       btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M14.5 5H19v4.5M8 16l-2.5 2.5"/><path d="M19 19 5 5M9.5 5H5v4.5M16 16l2.5 2.5"/></svg><span class="bt"><b class="lb"></b><small></small></span>';
       setBtn(btn, 'Вызвать на дуэль', 'Ставка: ' + fmt(num(DATA.my_stake)) + ' токенов');
+      if (SENT[p.cid] && SENT[p.cid] > Date.now()) { btn.classList.add('done'); btn.disabled = true; setBtn(btn, 'Вызов отправлен', 'Соперник отвечает в боте · до 3 минут'); }
       btn.addEventListener('click', function () { sendChallenge(p, btn, act); });
       act.appendChild(btn);
       act.appendChild(el('p', 'pc-note', 'Соперник получит приглашение в боте. Ставку можно поменять в боте: 1vs1 → «💰 Ставка».'));
@@ -2192,7 +2303,7 @@ window.addEventListener('error', function (e) {
   }
 
   // v295: причина последнего сбоя показывается мелким шрифтом на экране ошибки — по скриншоту видно, что именно сломалось
-  var VER = 'v298', lastErr = '', failKind = '', staleKind = '';
+  var VER = 'v299', lastErr = '', failKind = '', staleKind = '';
 
   function setConn(text) { var c = $('conn'); c.textContent = text || ''; c.classList.toggle('on', !!text); }
   function showStale(kind) {
