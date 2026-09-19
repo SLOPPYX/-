@@ -44,14 +44,39 @@
   }
 
   /* ─── Шапка ─── */
-  .top h1 {
-    font-size: 27px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; display: inline-block;
-    background: linear-gradient(135deg, #fff 20%, var(--accent-light) 100%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .top h1 span { color: var(--accent-light); -webkit-text-fill-color: var(--accent-light); }
-  .sub { margin-top: 6px; display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--text3); min-height: 16px; }
-  .live { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px rgba(139,92,246,.9); flex-shrink: 0; animation: pulse 1.8s ease-in-out infinite; }
+  /* v296: шапка в стиле SVG — эмблема со скрещёнными мечами, табличка «1VS1» и шестигранный бейдж сезона.
+     Цвет подсветки берётся у текущего ранга (--tier-rgb), поэтому у Бронзы шапка тёплая, у Грандмастера — розовая. */
+  .hd-brand { display: flex; align-items: center; gap: 12px; }
+  .hd-ic { width: 50px; height: 50px; flex-shrink: 0; overflow: visible; -webkit-filter: drop-shadow(0 0 10px rgba(var(--tier-rgb), .6)); filter: drop-shadow(0 0 10px rgba(var(--tier-rgb), .6)); animation: float 4s ease-in-out infinite; }
+  .hd-ring { stroke: rgba(var(--tier-rgb), .6); transform-origin: 24px 24px; animation: spin 18s linear infinite; }
+  .hd-sw { animation: pulse 3.2s ease-in-out infinite; }
+  .hd-tx { min-width: 0; }
+  .hd-h1 { display: flex; align-items: center; gap: 9px; line-height: 1; font-weight: 900; }
+  .hd-w { font-size: 29px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; line-height: 1.08;
+    background: linear-gradient(100deg, #ffffff 0%, #efe7ff 28%, #b79cff 50%, #ffffff 70%, #d7c8ff 100%) 0 0 / 250% 100%;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+    -webkit-filter: drop-shadow(0 0 12px rgba(var(--tier-rgb), .5)); filter: drop-shadow(0 0 12px rgba(var(--tier-rgb), .5)); animation: sheen 6s linear infinite; }
+  .hd-v { width: 68px; height: 27px; flex-shrink: 0; overflow: visible; -webkit-filter: drop-shadow(0 0 9px rgba(var(--tier-rgb), .65)); filter: drop-shadow(0 0 9px rgba(var(--tier-rgb), .65)); }
+  .hd-sh { animation: hdSweep 4.2s ease-in-out infinite; }
+  .hd-line { display: block; width: 230px; max-width: 100%; height: 10px; margin-top: 7px; overflow: visible; }
+  .hd-dia { fill: rgb(var(--tier-rgb)); }
+  .hd-spark { fill: #fff; -webkit-filter: drop-shadow(0 0 4px rgba(var(--tier-rgb), 1)); filter: drop-shadow(0 0 4px rgba(var(--tier-rgb), 1)); animation: hdSpark 3.6s ease-in-out infinite; }
+  .hd-sea-w { display: inline-block; max-width: 100%; vertical-align: top; margin-top: 10px; -webkit-filter: drop-shadow(0 0 9px rgba(var(--tier-rgb), .42)); filter: drop-shadow(0 0 9px rgba(var(--tier-rgb), .42)); }
+  .hd-sea { position: relative; display: inline-flex; align-items: center; gap: 8px; max-width: 100%; box-sizing: border-box; min-height: 30px; padding: 6px 20px 6px 15px; font-size: 12.5px; font-weight: 700; color: var(--text2);
+    -webkit-clip-path: polygon(11px 0, calc(100% - 11px) 0, 100% 50%, calc(100% - 11px) 100%, 11px 100%, 0 50%);
+            clip-path: polygon(11px 0, calc(100% - 11px) 0, 100% 50%, calc(100% - 11px) 100%, 11px 100%, 0 50%);
+    background: linear-gradient(100deg, rgba(var(--tier-rgb), .95), #c4b5fd 34%, rgba(var(--tier-rgb), .8) 66%, #c4b5fd) 0 0 / 220% 100%; animation: sheen 7s linear infinite; }
+  .hd-sea::before { content: ''; position: absolute; left: 1.5px; right: 1.5px; top: 1.5px; bottom: 1.5px; z-index: 0; background: linear-gradient(180deg, #1a0e33, #0a0616);
+    -webkit-clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
+            clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%); }
+  .hd-sea > * { position: relative; z-index: 1; }
+  .hd-si { width: 15px; height: 15px; flex-shrink: 0; fill: rgb(var(--tier-rgb)); -webkit-filter: drop-shadow(0 0 5px rgba(var(--tier-rgb), .95)); filter: drop-shadow(0 0 5px rgba(var(--tier-rgb), .95)); animation: pulse 2.2s ease-in-out infinite; }
+  .hd-sea #season-text { display: inline-flex; align-items: baseline; gap: 7px; min-width: 0; white-space: nowrap; }
+  #season-text b, #season-text em { flex-shrink: 0; }
+  .hd-sea .sk { height: 14px; }
+  #season-text b { color: #fff; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; }
+  #season-text em { font-style: normal; color: var(--text3); }
+  #season-text i { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-style: normal; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--accent-light); }
 
   /* ─── Скелетоны ─── */
   .sk {
@@ -422,6 +447,10 @@
   @keyframes flick { 0% { transform: scale(1, .84) skewX(0deg); opacity: .86; } 22% { transform: scale(.9, 1.1) skewX(5deg); opacity: 1; } 48% { transform: scale(1.06, .92) skewX(-4deg); opacity: .9; }
     74% { transform: scale(.94, 1.16) skewX(3deg); opacity: 1; } 100% { transform: scale(1, .84) skewX(0deg); opacity: .86; } }
   @keyframes aura { 0%,100% { opacity: .72; transform: scale(.95); } 50% { opacity: 1; transform: scale(1.07); } }
+  @keyframes hdSweep { 0%,50% { transform: translateX(0) skewX(-20deg); } 88%,100% { transform: translateX(112px) skewX(-20deg); } }
+  @keyframes hdSpark { 0% { transform: translateX(0); opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { transform: translateX(212px); opacity: 0; } }
+  @keyframes tmTickA { 0% { transform: scale(1.14); color: #fff; } 100% { transform: none; } }
+  @keyframes tmTickB { 0% { transform: scale(1.14); color: #fff; } 100% { transform: none; } }
   @keyframes shock { 0% { transform: scale(.9); opacity: .75; } 100% { transform: scale(1.95); opacity: 0; } }
   @keyframes zap { 0%,86%,100% { opacity: 0; } 88% { opacity: 1; } 90% { opacity: .15; } 93% { opacity: .95; } 96% { opacity: 0; } }
   @keyframes tglow { 0%,100% { text-shadow: 0 0 var(--tg1, 18px) rgba(var(--tier-rgb), .55); } 50% { text-shadow: 0 0 var(--tg2, 32px) rgba(var(--tier-rgb), .95); } }
@@ -440,7 +469,7 @@
     background: radial-gradient(circle, rgba(var(--tier-rgb), var(--fa, .2)) 0%, rgba(var(--tier-rgb), var(--fa2, .08)) 40%, transparent 68%);
     animation: aura var(--ad, 3s) ease-in-out infinite; }
   .fl { position: absolute; left: 50%; top: 50%; transform-origin: 50% 100%; }
-  .fl .fx { position: absolute; left: 0; top: 0; right: 0; bottom: 0; transform-origin: 50% 100%; -webkit-filter: blur(1.1px); filter: blur(1.1px);
+  .fl .fx { position: absolute; left: 0; top: 0; right: 0; bottom: 0; transform-origin: 50% 100%; -webkit-filter: blur(var(--bl, 1.1px)); filter: blur(var(--bl, 1.1px));
     animation: flick var(--d, 1.4s) ease-in-out var(--dl, 0s) infinite; }
   .fl i { position: absolute; display: block; bottom: 0;
     -webkit-clip-path: polygon(50% 0%, 58% 16%, 68% 30%, 82% 46%, 94% 64%, 92% 82%, 78% 96%, 50% 100%, 22% 96%, 8% 82%, 6% 64%, 18% 46%, 32% 30%, 42% 16%);
@@ -449,7 +478,7 @@
   .fl .fm { left: 16%; right: 16%; top: 24%; background: linear-gradient(to top, rgba(var(--core), .95) 0%, rgba(var(--core), .45) 55%, rgba(var(--core), 0) 100%); }
   .fl .fc { left: 33%; right: 33%; top: 50%; background: linear-gradient(to top, #fff 0%, rgba(255,255,255,.6) 55%, rgba(255,255,255,0) 100%); }
   .fl.soft { opacity: .5; }
-  .fl.soft .fx { -webkit-filter: blur(3.4px); filter: blur(3.4px); }
+  .fl.soft .fx { -webkit-filter: blur(var(--bs, 3.4px)); filter: blur(var(--bs, 3.4px)); }
   .fx-ring2 { position: absolute; left: -13px; right: -13px; top: -13px; bottom: -13px; border-radius: 50%; border: 1.5px dashed rgba(var(--tier-rgb), .65); animation: spin 16s linear infinite reverse; }
   .fx-orbit { position: absolute; left: -22px; right: -22px; top: -22px; bottom: -22px; animation: spin var(--os, 7s) linear infinite; }
   .fx-orbit b { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
@@ -468,6 +497,38 @@
   .stale button { margin-left: auto; flex-shrink: 0; padding: 5px 10px; border-radius: 10px; font-size: 12px; font-weight: 800; color: #ffd76a; border: 1px solid rgba(255,201,74,.4); }
   .err small { display: block; margin-top: 6px; font-size: 11px; line-height: 1.35; color: var(--text3); word-break: break-word; }
 
+  /* v296: полный таймер — дни, часы, минуты и секунды отдельными плитками (раньше «00:48:59» показывал только время внутри
+     последних суток, и при 59 днях до конца сезона это выглядело как «осталось 48 минут») */
+  .tinfo .dbig { margin: 6px 0 4px; font-size: 24px; font-weight: 900; letter-spacing: -.02em; line-height: 1.1; }
+  .tinfo .dbig span { font-size: 13px; font-weight: 700; letter-spacing: 0; color: var(--text3); }
+  .tinfo .fin { margin-top: 5px; font-size: 12px; font-weight: 600; line-height: 1.35; color: var(--text3); }
+  .tmg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; }
+  .tmc { position: relative; padding: 12px 2px 10px; border-radius: 14px; text-align: center; overflow: hidden;
+    background: linear-gradient(180deg, rgba(139,92,246,.22), rgba(139,92,246,.05)); border: 1px solid rgba(139,92,246,.34); box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+  .tmc b { display: block; font-size: 27px; font-weight: 900; letter-spacing: -.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .tmc span { display: block; margin-top: 7px; font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text3); }
+  .tmc.s { border-color: rgba(196,181,253,.62); background: linear-gradient(180deg, rgba(139,92,246,.4), rgba(139,92,246,.1)); }
+  .tmc.s b { color: #efe7ff; text-shadow: 0 0 14px rgba(167,139,250,.95); }
+  .tmc.done { opacity: .6; }
+  .tinfo .dbig { white-space: nowrap; }
+  /* узкие телефоны (≈340–390 px): кольцо и цифры чуть меньше, чтобы «День 24 из 60» не переносилось */
+  @media (max-width: 390px) {
+    .timer { gap: 12px; }
+    .ringbox { width: 106px; height: 106px; }
+    .ringbox .mid b { font-size: 30px; }
+    .tinfo .dbig { font-size: 20px; }
+    .tinfo .dbig span { font-size: 12px; }
+    .tmc b { font-size: 23px; }
+    .tmc span { font-size: 9px; letter-spacing: .04em; }
+    .hd-w { font-size: 26px; }
+  }
+
+  /* v296: пламя на подиуме топа — у каждого игрока свой цвет и сила по его рангу */
+  .pod .avw { position: relative; margin-bottom: 8px; }
+  .pod .av { margin-bottom: 0; }
+  .pod .crown { position: relative; z-index: 3; }
+  .pod.p1 { z-index: 2; }
+
   /* v295: раньше здесь стоял @media (prefers-reduced-motion) — если в Windows выключено «Показывать анимацию»
      (на ПК так часто), вся страница становилась статичной и выглядела «без эффектов», а на телефоне всё горело.
      Теперь эффекты одинаковы везде. Спокойный режим — только по явной просьбе: ссылка с ?motion=reduce. */
@@ -485,8 +546,47 @@
 <main class="app" id="app" data-state="loading">
 
   <header class="top">
-    <h1>Ранги <span>1vs1</span></h1>
-    <div class="sub"><i class="live"></i><span id="season-text" class="sk" style="width:150px"></span></div>
+    <div class="hd-brand">
+      <svg class="hd-ic" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="hdG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#c4b5fd"/><stop offset="1" style="stop-color: rgb(var(--tier-rgb))"/></linearGradient>
+          <radialGradient id="hdF" cx=".5" cy=".28" r=".85"><stop offset="0" stop-color="#2c1856"/><stop offset="1" stop-color="#0a0616"/></radialGradient>
+        </defs>
+        <circle class="hd-ring" cx="24" cy="24" r="22.5" fill="none" stroke-width="1" stroke-dasharray="2 4.2"/>
+        <path d="M24 4.5 L39.5 10.5 V23 C39.5 33 32.5 40 24 43.5 C15.5 40 8.5 33 8.5 23 V10.5 Z" fill="url(#hdF)" stroke="url(#hdG)" stroke-width="1.8" stroke-linejoin="round"/>
+        <g class="hd-sw" fill="none" stroke="url(#hdG)" stroke-width="2.4" stroke-linecap="round">
+          <path d="M16 32 L32 16"/><path d="M32 32 L16 16"/>
+          <path d="M16.2 27.3 L20.7 31.8"/><path d="M31.8 27.3 L27.3 31.8"/>
+        </g>
+        <circle cx="15" cy="33.2" r="1.7" fill="url(#hdG)"/><circle cx="33" cy="33.2" r="1.7" fill="url(#hdG)"/>
+        <circle cx="24" cy="24" r="2.3" fill="url(#hdG)"/>
+      </svg>
+      <div class="hd-tx">
+        <h1 class="hd-h1" aria-label="Ранги 1vs1">
+          <span class="hd-w">Ранги</span>
+          <svg class="hd-v" viewBox="0 0 68 27" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="hdPlate" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color: rgb(var(--tier-rgb))"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+              <clipPath id="hdPlateClip"><path d="M7 1 H67 L61 26 H1 Z"/></clipPath>
+            </defs>
+            <path d="M7 1 H67 L61 26 H1 Z" fill="url(#hdPlate)"/>
+            <g clip-path="url(#hdPlateClip)"><rect class="hd-sh" x="-26" y="-2" width="16" height="32" fill="#ffffff" opacity=".42"/></g>
+            <path d="M7 1 H67 L61 26 H1 Z" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1"/>
+            <text x="34" y="19.2" text-anchor="middle" font-size="16" font-weight="900" fill="#14091f" style="letter-spacing: .4px">1VS1</text>
+          </svg>
+        </h1>
+        <svg class="hd-line" viewBox="0 0 230 10" aria-hidden="true" focusable="false">
+          <defs><linearGradient id="hdLn" gradientUnits="userSpaceOnUse" x1="12" y1="0" x2="228" y2="0"><stop offset="0" style="stop-color: rgb(var(--tier-rgb))"/><stop offset=".6" stop-color="#8b5cf6" stop-opacity=".55"/><stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/></linearGradient></defs>
+          <path d="M5 1.6 L8.4 5 L5 8.4 L1.6 5 Z" class="hd-dia"/>
+          <line x1="12" y1="5" x2="228" y2="5" stroke="url(#hdLn)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle class="hd-spark" cx="12" cy="5" r="2.2"/>
+        </svg>
+      </div>
+    </div>
+    <div class="hd-sea-w"><div class="hd-sea">
+      <svg class="hd-si" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 1.5 L14.7 9.3 L22.5 12 L14.7 14.7 L12 22.5 L9.3 14.7 L1.5 12 L9.3 9.3 Z"/></svg>
+      <span id="season-text" class="sk" style="width:150px"></span>
+    </div></div>
     <div class="conn" id="conn"></div>
     <div class="stale" id="stale"><span id="stale-text"></span><button type="button" id="stale-retry">Обновить</button></div>
   </header>
@@ -609,7 +709,7 @@ window.addEventListener('error', function (e) {
     a.setAttribute('data-state', 'error');
     document.getElementById('err-title').textContent = 'Страница сломалась при запуске';
     document.getElementById('err-text').textContent = 'Закрой и открой рейтинг заново. Если повторится — пришли скриншот этого экрана.';
-    document.getElementById('err-detail').textContent = 'Причина: ' + String((e && e.message) || 'ошибка') + ' · v295';
+    document.getElementById('err-detail').textContent = 'Причина: ' + String((e && e.message) || 'ошибка') + ' · v296';
   } catch (_) {}
 }, true);
 </script>
@@ -769,6 +869,16 @@ window.addEventListener('error', function (e) {
   function unsk(el) { el.classList.remove('sk'); el.style.width = ''; el.style.height = ''; }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function svgIcon(html) { var s = el('span'); s.innerHTML = '<svg viewBox="0 0 24 24">' + html + '</svg>'; return s.firstChild; }
+  // «Сезон 2 · witers pull» → жирное «СЕЗОН 2», точка и название другим цветом
+  function setSeason(node, d) {
+    var sname = String(d.season_name || '').trim();
+    var m = /^сезон\s*(\d+)\s*[·:\-—]*\s*(.*)$/i.exec(sname);
+    var label = 'Сезон ' + (m ? m[1] : d.season_number), rest = m ? m[2] : sname;
+    node.textContent = '';
+    node.appendChild(el('b', '', label));
+    if (rest) { node.appendChild(el('em', '', '·')); node.appendChild(el('i', '', rest)); }
+  }
+  function fdatetime(ts) { return new Date(ts * 1000).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }); }
   function fdate(ts) { return new Date(ts * 1000).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }); }
   function nowSrv() { return TIME.srv + (performance.now() - TIME.perf) / 1000; }
   function tierRgb(i) { return i >= 0 ? PALETTE[Math.min(i, PALETTE.length - 1)] : PALETTE[5]; }
@@ -847,6 +957,32 @@ window.addEventListener('error', function (e) {
     f.appendChild(fx);
     return f;
   }
+  // языки пламени в box. size — диаметр «сцены» (150 у героя, 62–78 у подиума); mini — компактный вариант:
+  // языки толще и выше относительно размера, их меньше, колец и молний нет
+  function fireInto(box, lvl, size, mini) {
+    var t = lvl / 6, k = size / 150;
+    var n = Math.round((6 + t * 22) * (mini ? 0.6 : 1)), span = 105 + t * 75, hs = 0.55 + t * 1.05, ws = 0.85 + t * 0.3, dur0 = 1.7 - t * 0.75;
+    var hk = mini ? 1.3 + 0.5 * (1 - t) : 1, wk = mini ? 1.45 : 1, R1 = 62 * k, R2 = 60 * k;   // мини: у низких рангов языки выше, иначе за аватаром их почти не видно
+    var full = span >= 178;
+    function ang(i, cnt) { return (full ? -180 + (360 / cnt) * (i + 0.5) : -span + (2 * span) * (i / (cnt - 1))) + rnd(-5, 5); }
+    if (lvl >= 2) {                                                 // мягкий задний слой — даёт огню объём
+      var n2 = Math.round(n * 0.6);
+      for (var q2 = 0; q2 < n2; q2++) {
+        var a2 = ang(q2, n2), up2 = Math.max(0, Math.cos(a2 * Math.PI / 180));
+        box.appendChild(flame(a2, rnd(30, 42) * ws * k * wk, rnd(50, 66) * hs * k * hk * (0.5 + 0.5 * up2), R2, dur0 * rnd(1, 1.4), -rnd(0, 1.5), true));
+      }
+    }
+    for (var i = 0; i < n; i++) {
+      var a = ang(i, n);
+      var up = Math.max(0, Math.cos(a * Math.PI / 180));           // языки сверху выше, снизу короче — огонь тянется вверх
+      var tall = Math.random() < 0.35 ? 1.25 : 1;                   // часть языков вытянута — силуэт неровный, как у настоящего пламени
+      box.appendChild(flame(a, rnd(13, 21) * ws * k * wk, rnd(42, 58) * hs * k * hk * tall * (0.5 + 0.5 * up), R1, dur0 * rnd(0.8, 1.25), -rnd(0, 1.5)));
+    }
+    if (lvl >= 6) {                                                 // корона: высокие языки сверху
+      for (var c = 0; c < 6; c++) box.appendChild(flame(-55 + c * 22 + rnd(-4, 4), rnd(16, 24) * k * wk, rnd(100, 130) * k * hk, R2, dur0 * rnd(0.9, 1.3), -rnd(0, 1.5)));
+    }
+  }
+
   function applyFire(idx) {
     var lvl = Math.max(0, Math.min(6, idx | 0));
     if (lvl === fireLvl) return;
@@ -864,26 +1000,7 @@ window.addEventListener('error', function (e) {
     box.appendChild(el('div', 'aura'));
     if (lvl >= 3) box.appendChild(el('div', 'fx-ring2'));
     if (lvl >= 5) { for (var s1 = 0; s1 < (lvl >= 6 ? 2 : 1); s1++) { var sh = el('div', 'fx-shock'); sh.style.setProperty('--dl', (s1 * 1.45) + 's'); box.appendChild(sh); } }
-
-    var n = Math.round(6 + t * 22), span = 105 + t * 75, hs = 0.55 + t * 1.05, ws = 0.85 + t * 0.3, dur0 = 1.7 - t * 0.75;
-    var full = span >= 178;
-    function ang(i, cnt) { return (full ? -180 + (360 / cnt) * (i + 0.5) : -span + (2 * span) * (i / (cnt - 1))) + rnd(-5, 5); }
-    if (lvl >= 2) {                                                 // мягкий задний слой — даёт огню объём
-      var n2 = Math.round(n * 0.6);
-      for (var q2 = 0; q2 < n2; q2++) {
-        var a2 = ang(q2, n2), up2 = Math.max(0, Math.cos(a2 * Math.PI / 180));
-        box.appendChild(flame(a2, rnd(30, 42) * ws, rnd(50, 66) * hs * (0.5 + 0.5 * up2), 60, dur0 * rnd(1, 1.4), -rnd(0, 1.5), true));
-      }
-    }
-    for (var i = 0; i < n; i++) {
-      var a = ang(i, n);
-      var up = Math.max(0, Math.cos(a * Math.PI / 180));           // языки сверху выше, снизу короче — огонь тянется вверх
-      var tall = Math.random() < 0.35 ? 1.25 : 1;                   // часть языков вытянута — силуэт неровный, как у настоящего пламени
-      box.appendChild(flame(a, rnd(13, 21) * ws, rnd(42, 58) * hs * tall * (0.5 + 0.5 * up), 62, dur0 * rnd(0.8, 1.25), -rnd(0, 1.5)));
-    }
-    if (lvl >= 6) {                                                 // корона: высокие языки сверху
-      for (var k = 0; k < 6; k++) box.appendChild(flame(-55 + k * 22 + rnd(-4, 4), rnd(16, 24), rnd(100, 130), 60, dur0 * rnd(0.9, 1.3), -rnd(0, 1.5)));
-    }
+    fireInto(box, lvl, 150, false);
     if (lvl >= 4) {                                                 // светлые бусины на орбите
       var ob = el('div', 'fx-orbit'), dots = lvl >= 6 ? 3 : 2;
       ob.style.setProperty('--os', (11 - lvl) + 's');
@@ -901,6 +1018,20 @@ window.addEventListener('error', function (e) {
       }
     }
     buildSparks(Math.round(10 + t * 40), lvl);
+  }
+
+  // v296: пламя для аватара на подиуме — свой цвет (rgb) и сила (lvl) у каждого игрока
+  function miniFire(size, lvl, rgb) {
+    var box = el('div', 'fire mini'), t = lvl / 6, k = size / 150, fa = 0.14 + t * 0.32;
+    box.style.setProperty('--tier-rgb', rgb); box.style.setProperty('--core', CORE[lvl]);
+    box.style.setProperty('--fa', fa.toFixed(2)); box.style.setProperty('--fa2', (fa * 0.4).toFixed(2));
+    box.style.setProperty('--ad', (3.4 - t * 1.6).toFixed(2) + 's');
+    box.style.setProperty('--bl', (0.35 + t * 0.35).toFixed(2) + 'px'); box.style.setProperty('--bs', '1.6px');
+    var au = el('div', 'aura'), ax = (-95 * k).toFixed(0) + 'px';
+    au.style.left = ax; au.style.right = ax; au.style.top = ax; au.style.bottom = ax;
+    box.appendChild(au);
+    fireInto(box, lvl, size * 1.15, true);           // 1.15 — основания языков прячутся точно за краем круглого аватара
+    return box;
   }
 
   // если движок не знает @property, угол бегущей рамки карточки крутим руками
@@ -970,9 +1101,7 @@ window.addEventListener('error', function (e) {
   }
 
   function renderRank(d, tiers, cur) {
-    var season = $('season-text'); unsk(season);
-    var sname = String(d.season_name || '');
-    season.textContent = /^\s*сезон\s*\d+/i.test(sname) ? sname : 'Сезон ' + d.season_number + ' · ' + sname;
+    var season = $('season-text'); unsk(season); setSeason(season, d);
 
     var med = $('tier-emblem');
     med.textContent = '';
@@ -1043,13 +1172,14 @@ window.addEventListener('error', function (e) {
       c.innerHTML = '<path d="M2 17 4 5 9.5 10 13 2 16.5 10 22 5 24 17Z" fill="url(#rk2L)"/><rect x="2" y="17" width="22" height="2.5" rx="1" fill="url(#rk2L)"/>';
       pod.appendChild(c);
     }
-    var av = el('div', 'av');
+    var av = el('div', 'av'), avw = el('div', 'avw');
     if (p) {
       var ti = tierIdx(tiers, p.tier_name);
+      avw.appendChild(miniFire(rank === 1 ? 78 : 62, Math.max(0, ti), tierRgb(ti)));      // v296: пламя позади аватара
       av.appendChild(emb(ti >= 0 ? ti : 0, rank === 1 ? 52 : 40));
       if (p.is_me) av.appendChild(el('span', 'you', 'Ты'));
     } else av.appendChild(svgIcon('<path d="M12 5v14M5 12h14" stroke-dasharray="1 4"/>'));
-    pod.appendChild(av);
+    avw.appendChild(av); pod.appendChild(avw);
     pod.appendChild(el('div', 'pn', p ? p.name : 'Свободно'));
     if (p) { var ttl = el('div', 'ttl', p.tier_name || ''); ttl.style.setProperty('--c', tierRgb(tierIdx(tiers, p.tier_name))); pod.appendChild(ttl); }   // титул рядом с ником
     pod.appendChild(el('div', 'pp', p ? fmt(num(p.rp)) + ' RP' : '—'));
@@ -1072,6 +1202,9 @@ window.addEventListener('error', function (e) {
     if (!top.length) { body.appendChild(soon('Рейтинг пока пуст', 'Сыграй первый матч 1vs1 — и окажешься на первом месте.')); }
     else {
       var podium = el('div', 'podium');
+      var hot = 0;
+      for (var hi = 0; hi < 3; hi++) { if (top[hi]) hot = Math.max(hot, tierIdx(tiers, top[hi].tier_name)); }
+      podium.style.marginTop = Math.round(6 + 36 * Math.max(0, hot) / 6) + 'px';
       podium.appendChild(podSlot(2, top[1] || null, tiers));
       podium.appendChild(podSlot(1, top[0] || null, tiers));
       podium.appendChild(podSlot(3, top[2] || null, tiers));
@@ -1117,14 +1250,25 @@ window.addEventListener('error', function (e) {
   }
 
   var TIMER = null;
+  function plural(n, a, b, c) { var m = n % 100, k = n % 10; if (m > 10 && m < 20) return c; if (k === 1) return a; if (k >= 2 && k <= 4) return b; return c; }
+  var TM_IDS = ['tm-dd', 'tm-hh', 'tm-mm', 'tm-ss'];
+  var TM_LAB = [['день', 'дня', 'дней'], ['час', 'часа', 'часов'], ['минута', 'минуты', 'минут'], ['секунда', 'секунды', 'секунд']];
   function tickTimer() {
     if (!TIMER) return;
     var left = Math.max(0, TIMER.end - nowSrv());
-    var dd = Math.floor(left / 86400), hh = Math.floor(left % 86400 / 3600), mm = Math.floor(left % 3600 / 60), ss = Math.floor(left % 60);
-    var p2 = function (n) { return (n < 10 ? '0' : '') + n; };
-    var a = $('tm-d'), b = $('tm-hms');
-    if (a) a.textContent = String(dd);
-    if (b) b.textContent = p2(hh) + ':' + p2(mm) + ':' + p2(ss);
+    var v = [Math.floor(left / 86400), Math.floor(left % 86400 / 3600), Math.floor(left % 3600 / 60), Math.floor(left % 60)];
+    for (var i = 0; i < 4; i++) {
+      var b = $(TM_IDS[i]); if (!b) continue;
+      var txt = i === 0 ? String(v[i]) : (v[i] < 10 ? '0' : '') + v[i];
+      if (b.textContent !== txt) {
+        b.textContent = txt;
+        if (i === 3 && !reduce) b.style.animation = 'none', b.offsetWidth, b.style.animation = (v[3] % 2 ? 'tmTickA' : 'tmTickB') + ' .35s ease-out';
+      }
+      var lb = $(TM_IDS[i] + '-l'); if (lb) lb.textContent = plural(v[i], TM_LAB[i][0], TM_LAB[i][1], TM_LAB[i][2]);
+    }
+    var ringDays = $('tm-d'); if (ringDays) ringDays.textContent = String(v[0]);
+    var k = $('tm-k'); if (k) k.textContent = left <= 0 ? 'Плановый срок сезона вышел' : 'До конца сезона';
+    var g = $('tm-grid'); if (g) g.classList.toggle('done', left <= 0);
   }
   setInterval(tickTimer, 1000);
 
@@ -1145,10 +1289,22 @@ window.addEventListener('error', function (e) {
       var mid = el('div', 'mid'); mid.appendChild(el('b', '', '0')); mid.firstChild.id = 'tm-d'; mid.appendChild(el('span', '', 'дн. осталось'));
       rb.appendChild(mid); wrap.appendChild(rb);
       var info = el('div', 'tinfo');
-      info.appendChild(el('div', 'k', 'До конца сезона'));
-      var hms = el('div', 'hms', '00:00:00'); hms.id = 'tm-hms'; info.appendChild(hms);
-      info.appendChild(el('div', 'dt', fdate(start) + ' — ' + fdate(end) + ' · день ' + Math.min(Math.round(total / 86400), Math.floor((now - start) / 86400) + 1) + ' из ' + Math.round(total / 86400)));
+      var kk = el('div', 'k', 'До конца сезона'); kk.id = 'tm-k'; info.appendChild(kk);
+      var dbig = el('div', 'dbig');
+      dbig.appendChild(document.createTextNode('День ' + Math.min(Math.round(total / 86400), Math.floor((now - start) / 86400) + 1)));
+      dbig.appendChild(el('span', '', ' из ' + Math.round(total / 86400)));
+      info.appendChild(dbig);
+      info.appendChild(el('div', 'dt', fdate(start) + ' — ' + fdate(end)));
+      info.appendChild(el('div', 'fin', 'Финиш: ' + fdatetime(end)));
       wrap.appendChild(info); card.appendChild(wrap);
+      var grid = el('div', 'tmg'); grid.id = 'tm-grid';
+      for (var gi = 0; gi < 4; gi++) {
+        var cell = el('div', 'tmc' + (gi === 3 ? ' s' : ''));
+        var cb = el('b', '', '00'); cb.id = TM_IDS[gi];
+        var cl = el('span', '', ''); cl.id = TM_IDS[gi] + '-l';
+        cell.appendChild(cb); cell.appendChild(cl); grid.appendChild(cell);
+      }
+      card.appendChild(grid);
       TIMER = { end: end };
       tickTimer();
       requestAnimationFrame(function () { requestAnimationFrame(function () {
@@ -1576,7 +1732,7 @@ window.addEventListener('error', function (e) {
   }
 
   // v295: причина последнего сбоя показывается мелким шрифтом на экране ошибки — по скриншоту видно, что именно сломалось
-  var VER = 'v295', lastErr = '', failKind = '', staleKind = '';
+  var VER = 'v296', lastErr = '', failKind = '', staleKind = '';
 
   function setConn(text) { var c = $('conn'); c.textContent = text || ''; c.classList.toggle('on', !!text); }
   function showStale(kind) {
