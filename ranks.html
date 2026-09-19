@@ -449,6 +449,9 @@
   @keyframes aura { 0%,100% { opacity: .72; transform: scale(.95); } 50% { opacity: 1; transform: scale(1.07); } }
   @keyframes hdSweep { 0%,50% { transform: translateX(0) skewX(-20deg); } 88%,100% { transform: translateX(112px) skewX(-20deg); } }
   @keyframes hdSpark { 0% { transform: translateX(0); opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { transform: translateX(212px); opacity: 0; } }
+  @keyframes admSweep { 0%,45% { transform: translateX(-160%) skewX(-20deg); } 85%,100% { transform: translateX(380%) skewX(-20deg); } }
+  @keyframes admGlow { 0%,100% { -webkit-filter: drop-shadow(0 0 5px rgba(255,201,74,.4)); filter: drop-shadow(0 0 5px rgba(255,201,74,.4)); } 50% { -webkit-filter: drop-shadow(0 0 11px rgba(255,201,74,.8)); filter: drop-shadow(0 0 11px rgba(255,201,74,.8)); } }
+  @keyframes admTw { 0%,100% { transform: scale(.3) rotate(0deg); opacity: 0; } 50% { transform: scale(1) rotate(45deg); opacity: 1; } }
   @keyframes tmTickA { 0% { transform: scale(1.14); color: #fff; } 100% { transform: none; } }
   @keyframes tmTickB { 0% { transform: scale(1.14); color: #fff; } 100% { transform: none; } }
   @keyframes shock { 0% { transform: scale(.9); opacity: .75; } 100% { transform: scale(1.95); opacity: 0; } }
@@ -528,6 +531,45 @@
   .pod .av { margin-bottom: 0; }
   .pod .crown { position: relative; z-index: 3; }
   .pod.p1 { z-index: 2; }
+
+  /* v297: «Администратор проекта». Золото + фиолетовый: не спутать с цветами рангов (те идут по ступеням),
+     а выглядит как знак должности. Признак приходит от бота (is_admin), ник тут ни при чём — подделать нельзя. */
+  .adm-w { display: inline-block; max-width: 100%; vertical-align: top; -webkit-filter: drop-shadow(0 0 7px rgba(255,201,74,.5)); filter: drop-shadow(0 0 7px rgba(255,201,74,.5)); animation: admGlow 2.8s ease-in-out infinite; }
+  .adm-pl { position: relative; display: block; box-sizing: border-box; padding: 4px 12px; text-align: center; line-height: 1.08; overflow: hidden;
+    font-size: 8.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: #fff1c2;
+    -webkit-clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 6px 100%, 0 50%);
+            clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 6px 100%, 0 50%);
+    background: linear-gradient(100deg, #ffd76a, #ffffff 26%, #c4b5fd 50%, #ffc94a 74%, #ffd76a) 0 0 / 260% 100%; animation: sheen 5s linear infinite; }
+  .adm-pl::before { content: ''; position: absolute; left: 1.5px; right: 1.5px; top: 1.5px; bottom: 1.5px; z-index: 0; background: linear-gradient(180deg, #2b1652, #120a26);
+    -webkit-clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 50%, calc(100% - 5px) 100%, 5px 100%, 0 50%);
+            clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 50%, calc(100% - 5px) 100%, 5px 100%, 0 50%); }
+  .adm-pl::after { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 38%; z-index: 2; pointer-events: none;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,.6), transparent); transform: translateX(-160%) skewX(-20deg); animation: admSweep 3.8s ease-in-out infinite; }
+  .adm-pl > * { position: relative; z-index: 1; }
+  .adm-pl .l1 { display: block; }
+  .adm-pl .l2 { display: block; margin-top: 1px; color: #ffc94a; letter-spacing: .14em; }
+  .adm-pl.row, .adm-pl.big { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .adm-pl.row { padding: 3px 12px 3px 8px; font-size: 9px; }
+  .adm-pl.big { padding: 6px 20px 6px 12px; font-size: 11px; letter-spacing: .09em; }
+  .adm-pl.row .l1, .adm-pl.big .l1 { display: inline; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .adm-ic { width: 13px; height: 13px; flex-shrink: 0; overflow: visible; -webkit-filter: drop-shadow(0 0 4px rgba(255,201,74,.9)); filter: drop-shadow(0 0 4px rgba(255,201,74,.9)); }
+  .adm-pl.big .adm-ic { width: 17px; height: 17px; }
+  .pod .adm-w { margin: 2px 0 3px; }
+  .adm-hero { display: flex; justify-content: center; margin: 12px 0 2px; }
+  /* аватар админа на подиуме: золотая рамка, вращающееся кольцо, значок должности и мерцающие звёздочки */
+  .pod.adm .av, .pod.adm.me .av { border-color: rgba(255,201,74,.92); box-shadow: 0 0 28px -3px rgba(255,201,74,.6); }
+  .adm-ring { position: absolute; left: -11px; top: -11px; width: calc(100% + 22px); height: calc(100% + 22px); overflow: visible; pointer-events: none; z-index: 1; transform-origin: 50% 50%; animation: spin 16s linear infinite; }
+  .adm-ring circle { fill: none; stroke: rgba(255,201,74,.75); stroke-width: 1.4; stroke-dasharray: 2.5 5; }
+  .adm-ring path { fill: #ffe9a8; }
+  .adm-badge { position: absolute; left: -9px; bottom: -6px; width: 26px; height: 26px; z-index: 3; overflow: visible; -webkit-filter: drop-shadow(0 0 6px rgba(255,201,74,.95)); filter: drop-shadow(0 0 6px rgba(255,201,74,.95)); animation: float 3.2s ease-in-out infinite; }
+  .pod.p1 .adm-badge { width: 30px; height: 30px; }
+  .adm-st { position: absolute; z-index: 3; width: 9px; height: 9px; background: #fff1c2; pointer-events: none; animation: admTw 2.4s ease-in-out infinite;
+    -webkit-clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); }
+  .adm-st.s1 { left: -14px; top: 2px; } .adm-st.s2 { right: -14px; top: 22%; width: 7px; height: 7px; animation-delay: -.8s; } .adm-st.s3 { right: -8px; bottom: -8px; width: 6px; height: 6px; animation-delay: -1.6s; }
+  .trow.adm, .trow.adm.me { border-color: rgba(255,201,74,.5); background: linear-gradient(90deg, rgba(255,201,74,.13), rgba(139,92,246,.07)); box-shadow: 0 0 26px -12px rgba(255,201,74,.85); }
+  .trow.adm .pl { color: #ffc94a; }
+  .trow .who .adm-w { margin: 3px 0 1px; }
+  @media (max-width: 390px) { .adm-pl { font-size: 7.3px; padding: 4px 7px; letter-spacing: .015em; } .adm-pl .l2 { letter-spacing: .1em; } .adm-pl.row { font-size: 8.5px; letter-spacing: .04em; padding: 3px 11px 3px 8px; } .adm-pl.big { font-size: 10px; letter-spacing: .06em; padding: 6px 18px 6px 11px; } }
 
   /* v295: раньше здесь стоял @media (prefers-reduced-motion) — если в Windows выключено «Показывать анимацию»
      (на ПК так часто), вся страница становилась статичной и выглядела «без эффектов», а на телефоне всё горело.
@@ -612,6 +654,7 @@
         <div class="sparks" id="sparks"></div>
       </div>
       <h2 class="tier sk" id="tier-name" style="width:170px"></h2>
+      <div class="adm-hero" id="adm-hero" style="display:none"></div>
       <div class="rp"><span id="rp-val" class="empty">—</span><small>RP</small></div>
     </div>
 
@@ -709,7 +752,7 @@ window.addEventListener('error', function (e) {
     a.setAttribute('data-state', 'error');
     document.getElementById('err-title').textContent = 'Страница сломалась при запуске';
     document.getElementById('err-text').textContent = 'Закрой и открой рейтинг заново. Если повторится — пришли скриншот этого экрана.';
-    document.getElementById('err-detail').textContent = 'Причина: ' + String((e && e.message) || 'ошибка') + ' · v296';
+    document.getElementById('err-detail').textContent = 'Причина: ' + String((e && e.message) || 'ошибка') + ' · v297';
   } catch (_) {}
 }, true);
 </script>
@@ -827,7 +870,8 @@ window.addEventListener('error', function (e) {
   ];
 
   (function buildSprite() {
-    var defs = '<linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6d28d9"/><stop offset=".6" stop-color="#8b5cf6"/><stop offset="1" stop-color="#c4b5fd"/></linearGradient>';
+    var defs = '<linearGradient id="admG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1b8"/><stop offset=".5" stop-color="#ffc94a"/><stop offset="1" stop-color="#b8842a"/></linearGradient>';
+    defs += '<linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6d28d9"/><stop offset=".6" stop-color="#8b5cf6"/><stop offset="1" stop-color="#c4b5fd"/></linearGradient>';
     TIER_COL.forEach(function (c, i) {
       defs += '<linearGradient id="rk' + i + 'L" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c[0] + '"/><stop offset=".45" stop-color="' + c[1] + '"/><stop offset="1" stop-color="' + c[2] + '"/></linearGradient>';
       defs += '<linearGradient id="rk' + i + 'F" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c[2] + '"/><stop offset="1" stop-color="' + c[3] + '"/></linearGradient>';
@@ -1103,6 +1147,9 @@ window.addEventListener('error', function (e) {
   function renderRank(d, tiers, cur) {
     var season = $('season-text'); unsk(season); setSeason(season, d);
 
+    var ah = $('adm-hero'); ah.textContent = '';                       // v297: своя плашка, если открыл сам администратор
+    if (d.is_admin) { ah.appendChild(admPlate('big')); ah.style.display = ''; } else ah.style.display = 'none';
+
     var med = $('tier-emblem');
     med.textContent = '';
     med.classList.remove('ph', 'pop'); void med.offsetWidth;
@@ -1165,8 +1212,28 @@ window.addEventListener('error', function (e) {
     }
   }
 
+  // v297: значок должности (щит с короной) и плашка «Администратор проекта». kind: pod | row | big
+  function admIcon(cls) {
+    var s = document.createElementNS(NS, 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('class', cls); s.setAttribute('aria-hidden', 'true');
+    s.innerHTML = '<path d="M12 1.8 20.2 4.9v6.5c0 5-3.4 9-8.2 10.8-4.8-1.8-8.2-5.8-8.2-10.8V4.9z" fill="url(#admG)" stroke="#fff4c8" stroke-width="1.1" stroke-linejoin="round"/>' +
+      '<path d="M7.6 14.6 8.6 8.4 10.9 11.1 12 7.4 13.1 11.1 15.4 8.4 16.4 14.6z" fill="#2a1450"/><rect x="7.6" y="15.3" width="8.8" height="1.5" rx=".6" fill="#2a1450"/>';
+    return s;
+  }
+  function admPlate(kind) {
+    var w = el('span', 'adm-w'), pl = el('span', 'adm-pl ' + (kind === 'pod' ? 'pd' : kind));   // не 'pod': такой класс уже занят контейнером подиума
+    if (kind === 'pod') { pl.appendChild(el('span', 'l1', 'Администратор')); pl.appendChild(el('span', 'l2', 'проекта')); }
+    else { pl.appendChild(admIcon('adm-ic')); pl.appendChild(el('span', 'l1', 'Администратор проекта')); }
+    w.appendChild(pl);
+    return w;
+  }
+  function admRing() {
+    var s = document.createElementNS(NS, 'svg'); s.setAttribute('viewBox', '0 0 100 100'); s.setAttribute('class', 'adm-ring'); s.setAttribute('aria-hidden', 'true');
+    s.innerHTML = '<circle cx="50" cy="50" r="48"/><path d="M50 -2 53 3 50 8 47 3Z"/><path d="M102 50 97 53 92 50 97 47Z"/><path d="M50 102 47 97 50 92 53 97Z"/><path d="M-2 50 3 47 8 50 3 53Z"/>';
+    return s;
+  }
+
   function podSlot(rank, p, tiers) {
-    var pod = el('div', 'pod p' + rank + (p ? '' : ' empty') + (p && p.is_me ? ' me' : ''));
+    var pod = el('div', 'pod p' + rank + (p ? '' : ' empty') + (p && p.is_me ? ' me' : '') + (p && p.is_admin ? ' adm' : ''));
     if (rank === 1 && p) {
       var c = document.createElementNS(NS, 'svg'); c.setAttribute('viewBox', '0 0 26 20'); c.setAttribute('class', 'crown');
       c.innerHTML = '<path d="M2 17 4 5 9.5 10 13 2 16.5 10 22 5 24 17Z" fill="url(#rk2L)"/><rect x="2" y="17" width="22" height="2.5" rx="1" fill="url(#rk2L)"/>';
@@ -1177,10 +1244,16 @@ window.addEventListener('error', function (e) {
       var ti = tierIdx(tiers, p.tier_name);
       avw.appendChild(miniFire(rank === 1 ? 78 : 62, Math.max(0, ti), tierRgb(ti)));      // v296: пламя позади аватара
       av.appendChild(emb(ti >= 0 ? ti : 0, rank === 1 ? 52 : 40));
+      if (p.is_admin) {                                              // v297: кольцо, значок и звёздочки вокруг аватара админа
+        avw.appendChild(admRing());
+        av.appendChild(admIcon('adm-badge'));
+        for (var st = 1; st <= 3; st++) avw.appendChild(el('i', 'adm-st s' + st));
+      }
       if (p.is_me) av.appendChild(el('span', 'you', 'Ты'));
     } else av.appendChild(svgIcon('<path d="M12 5v14M5 12h14" stroke-dasharray="1 4"/>'));
     avw.appendChild(av); pod.appendChild(avw);
     pod.appendChild(el('div', 'pn', p ? p.name : 'Свободно'));
+    if (p && p.is_admin) pod.appendChild(admPlate('pod'));            // v297
     if (p) { var ttl = el('div', 'ttl', p.tier_name || ''); ttl.style.setProperty('--c', tierRgb(tierIdx(tiers, p.tier_name))); pod.appendChild(ttl); }   // титул рядом с ником
     pod.appendChild(el('div', 'pp', p ? fmt(num(p.rp)) + ' RP' : '—'));
     pod.appendChild(el('div', 'base', String(rank)));
@@ -1204,14 +1277,16 @@ window.addEventListener('error', function (e) {
       var podium = el('div', 'podium');
       var hot = 0;
       for (var hi = 0; hi < 3; hi++) { if (top[hi]) hot = Math.max(hot, tierIdx(tiers, top[hi].tier_name)); }
-      podium.style.marginTop = Math.round(6 + 36 * Math.max(0, hot) / 6) + 'px';
+      var admExtra = 0;
+      for (var ai = 0; ai < 3; ai++) { if (top[ai] && top[ai].is_admin) admExtra = 28; }   // v297: колонка админа выше на высоту плашки
+      podium.style.marginTop = Math.round(6 + 36 * Math.max(0, hot) / 6 + admExtra) + 'px';
       podium.appendChild(podSlot(2, top[1] || null, tiers));
       podium.appendChild(podSlot(1, top[0] || null, tiers));
       podium.appendChild(podSlot(3, top[2] || null, tiers));
       body.appendChild(podium);
       for (var i = 3; i < top.length; i++) {
         var p = top[i], ti = tierIdx(tiers, p.tier_name);
-        var row = el('div', 'trow' + (p.is_me ? ' me' : ''));
+        var row = el('div', 'trow' + (p.is_me ? ' me' : '') + (p.is_admin ? ' adm' : ''));
         row.style.setProperty('--i', String(i - 3));
         row.appendChild(el('span', 'pl', String(p.place)));
         row.appendChild(emb(ti >= 0 ? ti : 0, 34));
@@ -1219,6 +1294,7 @@ window.addEventListener('error', function (e) {
         wb.appendChild(el('span', '', p.name));
         var ttl2 = el('i', 'ttl', p.tier_name || ''); ttl2.style.setProperty('--c', tierRgb(ti)); wb.appendChild(ttl2);   // титул рядом с ником
         who.appendChild(wb);
+        if (p.is_admin) who.appendChild(admPlate('row'));                // v297
         who.appendChild(el('small', '', fmt(num(p.wins)) + ' поб. / ' + fmt(num(p.losses)) + ' пор.'));
         row.appendChild(who);
         var pt = el('span', 'pt', fmt(num(p.rp))); pt.appendChild(el('small', '', 'RP'));
@@ -1732,7 +1808,7 @@ window.addEventListener('error', function (e) {
   }
 
   // v295: причина последнего сбоя показывается мелким шрифтом на экране ошибки — по скриншоту видно, что именно сломалось
-  var VER = 'v296', lastErr = '', failKind = '', staleKind = '';
+  var VER = 'v297', lastErr = '', failKind = '', staleKind = '';
 
   function setConn(text) { var c = $('conn'); c.textContent = text || ''; c.classList.toggle('on', !!text); }
   function showStale(kind) {
