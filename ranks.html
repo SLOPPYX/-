@@ -338,8 +338,8 @@
   .sum small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text3); }
   /* кнопка «Забрать» */
   .claim { position: relative; overflow: hidden; flex-shrink: 0; border: 0; padding: 9px 15px; border-radius: 12px; font-size: 13px; font-weight: 900; letter-spacing: .01em; color: #170b2e; cursor: pointer;
-    background: linear-gradient(135deg, #a78bfa, #ead9ff); box-shadow: 0 0 20px -2px rgba(167,139,250,.8), inset 0 1px 0 rgba(255,255,255,.55); animation: claimglow 2.2s ease-in-out infinite; }
-  .claim::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%) 0 0 / 220% 100%; animation: sheen 3s linear infinite; }
+    background: linear-gradient(135deg, #a78bfa, #ead9ff); box-shadow: 0 0 20px -2px rgba(167,139,250,.8), inset 0 1px 0 rgba(255,255,255,.55); animation: claimglow 2.2s ease-in-out infinite; isolation: isolate; }
+  .claim::after { z-index: -1; content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%) 0 0 / 220% 100%; animation: sheen 3s linear infinite; }
   .claim:active { transform: scale(.94); }
   .claim.busy, .claiming .claim { opacity: .6; pointer-events: none; animation: none; }
   .claim.big { display: block; width: 100%; margin-top: 14px; padding: 14px; border-radius: 16px; font-size: 15px; }
@@ -712,6 +712,43 @@
   .pc-back { display: block; width: 100%; margin-top: 10px; padding: 12px; border-radius: 14px; font-size: 13.5px; font-weight: 800; font-family: inherit; cursor: pointer; color: var(--accent-light); background: rgba(139,92,246,.12); border: 1px solid rgba(139,92,246,.4); }
   .pc-note { margin: 10px 4px 0; font-size: 11.5px; font-weight: 600; line-height: 1.45; color: var(--text3); }
 
+  /* v300: результат вызова — не тост на 3 секунды, а строка под кнопкой, которая остаётся на месте (с кодом причины для скриншота) */
+  .pc-res { margin: 10px 0 0; padding: 11px 13px; border-radius: 14px; text-align: left; font-size: 12.5px; font-weight: 700; line-height: 1.45; color: var(--text);
+    background: rgba(255,59,92,.1); border: 1px solid rgba(255,59,92,.5); animation: pageIn .3s ease both; }
+  .pc-res.ok { background: rgba(52,211,153,.1); border-color: rgba(52,211,153,.55); }
+  .pc-res small { display: block; margin-top: 4px; font-size: 10.5px; font-weight: 700; letter-spacing: .02em; color: var(--text3); }
+  /* v300: значки забираются вручную */
+  .ach-mini.ready { border-color: rgba(255,201,74,.65); background: linear-gradient(90deg, rgba(255,201,74,.17), rgba(255,201,74,.04)); box-shadow: 0 0 22px -8px rgba(255,201,74,.75); }
+  .ach-mini.ready .lb b { color: #ffd66b; }
+  .ach-mini.off .lb b { color: var(--text2); }
+  .ah-all { margin-top: 12px; }
+  .ach-row.ready { border-color: rgba(var(--ac), .7); background: linear-gradient(90deg, rgba(var(--ac), .2), rgba(var(--ac), .04)); box-shadow: 0 0 22px -10px rgba(var(--ac), .9); }
+  .ach-row .rd { padding: 10px 15px; }
+  /* v300: настройки дуэлей */
+  .ds-sub { margin-top: 6px; font-size: 12.5px; font-weight: 600; line-height: 1.4; color: var(--text2); }
+  .ds-sw { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 16px; padding: 13px 14px; border-radius: 16px; text-align: left; cursor: pointer; font-family: inherit; color: var(--text);
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); -webkit-tap-highlight-color: transparent; }
+  .ds-sw .tx { flex: 1; min-width: 0; }
+  .ds-sw .tx b { display: block; font-size: 14.5px; font-weight: 800; }
+  .ds-sw .tx small { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 600; line-height: 1.35; color: var(--text3); }
+  .ds-sw .knob { position: relative; flex-shrink: 0; width: 46px; height: 26px; border-radius: 999px; background: rgba(255,255,255,.14); transition: background .2s; }
+  .ds-sw .knob::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; }
+  .ds-sw.on .knob { background: linear-gradient(135deg, #34d399, #10b981); box-shadow: 0 0 14px -2px rgba(52,211,153,.8); }
+  .ds-sw.on .knob::after { transform: translateX(20px); }
+  .ds-set { transition: opacity .2s; }
+  .ds-set.off { opacity: .4; }
+  .ds-g { margin-top: 18px; text-align: left; }
+  .ds-h { font-size: 12px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-light); }
+  .ds-d { margin-top: 3px; font-size: 11.5px; font-weight: 600; line-height: 1.4; color: var(--text3); }
+  .ds-seg { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .ds-o { flex: 1 1 auto; min-width: 64px; padding: 10px 12px; border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; color: var(--text2);
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); -webkit-tap-highlight-color: transparent; transition: background .15s, border-color .15s, color .15s; }
+  .ds-o.on { color: #170b2e; background: linear-gradient(135deg, #a78bfa, #ead9ff); border-color: transparent; box-shadow: 0 0 16px -3px rgba(167,139,250,.8); }
+  .ds-o:active { transform: scale(.96); }
+  .ds-sum { margin-top: 18px; padding: 10px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; line-height: 1.4; text-align: center; color: var(--text2); background: rgba(139,92,246,.1); border: 1px dashed rgba(139,92,246,.4); }
+  .ds-stat { min-height: 18px; margin-top: 12px; font-size: 12px; font-weight: 800; text-align: center; color: var(--text3); }
+  .ds-stat.ok { color: var(--up); } .ds-stat.err { color: var(--down); }
+
   /* v295: раньше здесь стоял @media (prefers-reduced-motion) — если в Windows выключено «Показывать анимацию»
      (на ПК так часто), вся страница становилась статичной и выглядела «без эффектов», а на телефоне всё горело.
      Теперь эффекты одинаковы везде. Спокойный режим — только по явной просьбе: ссылка с ?motion=reduce. */
@@ -822,6 +859,11 @@
     <section class="data-sec" id="ach-sec" style="display:none">
       <div class="sub-hd"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z"/></svg><b class="tx">Достижения</b><i class="ln"></i><em id="ach-count"></em></div>
       <button class="ach-mini" id="ach-mini" type="button"><span class="strip" id="ach-strip"></span><span class="lb"><b id="ach-mini-t"></b><small id="ach-mini-s"></small></span></button>
+    </section>
+
+    <section class="data-sec" id="duel-sec" style="display:none">
+      <div class="sub-hd"><svg class="ic" viewBox="0 0 24 24"><path d="M5 19 19 5M14.5 5H19v4.5M8 16l-2.5 2.5"/><path d="M19 19 5 5M9.5 5H5v4.5M16 16l2.5 2.5"/></svg><b class="tx">Дуэли</b><i class="ln"></i><em id="duel-count"></em></div>
+      <button class="ach-mini" id="duel-mini" type="button"><span class="strip" id="duel-strip"></span><span class="lb"><b id="duel-mini-t"></b><small id="duel-mini-s"></small></span></button>
     </section>
 
     <section class="data-sec">
@@ -951,6 +993,12 @@
   <div class="pc" id="pc" role="dialog" aria-modal="true" aria-labelledby="pc-name">
     <button class="pc-x" type="button" id="pc-x" aria-label="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     <div id="pc-body"></div>
+  </div>
+</div>
+<div class="pcb" id="dsb" aria-hidden="true">
+  <div class="pc" id="ds" role="dialog" aria-modal="true" aria-labelledby="ds-title">
+    <button class="pc-x" type="button" id="ds-x" aria-label="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div id="ds-body"></div>
   </div>
 </div>
 
@@ -1346,7 +1394,6 @@ window.addEventListener('error', function (e) {
     pages.forEach(function (p) { p.classList.toggle('on', p.getAttribute('data-page') === t); });
     tabBtns.forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
     movePill();
-    if (t === 'ach') achMarkSeen();                                  // v299: открыл «Значки» — золотая точка гаснет
     if (!silent) {
       haptic();
       window.scrollTo(0, 0);
@@ -1480,25 +1527,23 @@ window.addEventListener('error', function (e) {
   }
 
   // ── v299: вкладка «Значки» ──
+  // v300: значок не выдаётся сам — заработал → нажал «Забрать» → он появился в карточке. Состояния: locked / ready / claimed.
   var TIER_ORDER = ['bronze', 'silver', 'gold', 'legend'], TIER_LBL = { bronze: 'Бронза', silver: 'Серебро', gold: 'Золото', legend: 'Легенда' };
+  var ACH_RGB = { bronze: '205,127,79', silver: '200,209,227', gold: '255,201,74', legend: '232,121,249' };
   function achCatalog() { var m = {}; ((DATA && DATA.achievements) || []).forEach(function (a) { m[a.id] = a; }); return m; }
-  function achSeenKey() { return 'rk_ach_seen_1_' + UID; }
-  function achLatest(list) { var mx = 0; list.forEach(function (a) { if (a.unlocked && num(a.at) > mx) mx = num(a.at); }); return mx; }
-  function achSeen() { try { return parseFloat(localStorage.getItem(achSeenKey())) || 0; } catch (e) { return 0; } }
-  // Золотая точка на вкладке — пока в ней есть значок, которого игрок ещё не видел (запоминаем в браузере, время самого свежего значка)
-  function achMarkSeen() {
-    var list = DATA && DATA.achievements; if (!Array.isArray(list)) return;
-    try { localStorage.setItem(achSeenKey(), String(achLatest(list))); } catch (e) {}
-    var dt = $('dot-ach'); if (dt) dt.style.display = 'none';
-  }
+  // Старый бот присылает только unlocked — такой значок считаем уже полученным и кнопок «Забрать» не рисуем
+  function achState(a) { return a.state || (a.unlocked ? 'claimed' : 'locked'); }
+  function achWord(n) { var a = n % 10, b = n % 100; return a === 1 && b !== 11 ? 'значок' : (a >= 2 && a <= 4 && (b < 12 || b > 14) ? 'значка' : 'значков'); }
   function achRatio(a) { return a.target ? Math.min(1, num(a.progress) / a.target) : -1; }
-  function achRow(a, i, srv) {
-    var r = el('div', 'ach-row t-' + a.tier + (a.unlocked ? ' on' : ' lock')); r.style.setProperty('--i', String(Math.min(i, 12)));
-    r.appendChild(achBadge(a, 52));
+  var achClaiming = false;
+  function achRow(a, i) {
+    var stt = achState(a);
+    var r = el('div', 'ach-row t-' + a.tier + (stt === 'claimed' ? ' on' : (stt === 'ready' ? ' ready' : ' lock'))); r.style.setProperty('--i', String(Math.min(i, 12)));
+    r.appendChild(achBadge({ tier: a.tier, icon: a.icon, unlocked: stt !== 'locked' }, 52));
     var tx = el('div', 'tx'), nm = el('div', 'nm'); nm.appendChild(el('span', '', a.name));
-    if (a.unlocked && a.at && srv - num(a.at) < 3 * 86400) nm.appendChild(el('i', 'ach-new', 'NEW'));
     tx.appendChild(nm); tx.appendChild(el('div', 'ds', a.desc));
-    if (a.unlocked) tx.appendChild(el('div', 'got', a.at ? 'Получено ' + fdate(a.at) : 'Получено'));
+    if (stt === 'ready') tx.appendChild(el('div', 'got', a.at ? 'Заработан ' + fdate(a.at) + ' · осталось забрать' : 'Осталось забрать'));
+    else if (stt === 'claimed') { var when = a.claimed_at || a.at; tx.appendChild(el('div', 'got', when ? 'Получено ' + fdate(when) : 'Получено')); }
     else if (a.target) {
       var pg = el('div', 'pg'), bar = el('span', 'bar2'), fill = el('i');
       fill.style.width = Math.max(3, Math.round(achRatio(a) * 100)) + '%'; bar.appendChild(fill); pg.appendChild(bar);
@@ -1506,6 +1551,11 @@ window.addEventListener('error', function (e) {
       tx.appendChild(pg);
     }
     r.appendChild(tx);
+    if (stt === 'ready') {
+      var b = el('button', 'claim rd', 'Забрать'); b.type = 'button'; b.setAttribute('aria-label', 'Забрать значок «' + a.name + '»');
+      b.addEventListener('click', function () { claimAch(a.id, b); });
+      r.appendChild(b);
+    }
     return r;
   }
 
@@ -1517,33 +1567,49 @@ window.addEventListener('error', function (e) {
       body.appendChild(soon('Значки скоро', 'Достижения появятся после обновления бота.'));
       return;
     }
-    var srv = num(d.server_time) || Date.now() / 1000, total = list.length;
-    var got = list.filter(function (a) { return a.unlocked; }).sort(function (x, y) { return num(y.at) - num(x.at); });
-    var left = list.filter(function (a) { return !a.unlocked; }).sort(function (x, y) { return achRatio(y) - achRatio(x); });   // ближайшие к открытию — первыми
+    var total = list.length, canClaim = !!d.ach_claim_enabled;
+    var ready = list.filter(function (a) { return achState(a) === 'ready'; }).sort(function (x, y) { return num(x.at) - num(y.at); });
+    var got = list.filter(function (a) { return achState(a) === 'claimed'; }).sort(function (x, y) { return num(y.claimed_at || y.at) - num(x.claimed_at || x.at); });
+    var left = list.filter(function (a) { return achState(a) === 'locked'; }).sort(function (x, y) { return achRatio(y) - achRatio(x); });   // ближайшие к открытию — первыми
     $('ach-pill').textContent = got.length + ' / ' + total;
 
     // компактная карточка на вкладке «Ранг»
     sec.style.display = '';
     $('ach-count').textContent = got.length + ' / ' + total;
     var strip = $('ach-strip'); strip.textContent = '';
-    (got.length ? got : left).slice(0, got.length ? 5 : 3).forEach(function (a) { strip.appendChild(achBadge(a, 36)); });
-    $('ach-mini-t').textContent = got.length ? 'Открыто ' + got.length + ' из ' + total : 'Пока ни одного значка';
+    var shown = ready.length ? ready : (got.length ? got : left);
+    shown.slice(0, ready.length || got.length ? 5 : 3).forEach(function (a) { strip.appendChild(achBadge({ tier: a.tier, icon: a.icon, unlocked: achState(a) !== 'locked' }, 36)); });
     var nxt = left.filter(function (a) { return a.target; })[0];
-    $('ach-mini-s').textContent = nxt ? 'Ближайший: «' + nxt.name + '» — ' + fmt(num(nxt.progress)) + ' / ' + fmt(num(nxt.target)) + (nxt.unit ? ' ' + nxt.unit : '') : (left.length ? 'Смотри все значки' : 'Все значки собраны 🎉');
+    $('ach-mini').classList.toggle('ready', ready.length > 0);
+    $('ach-mini-t').textContent = ready.length ? 'Ждут тебя: ' + ready.length + ' ' + achWord(ready.length) : (got.length ? 'Получено ' + got.length + ' из ' + total : 'Пока ни одного значка');
+    $('ach-mini-s').textContent = ready.length ? 'Нажми и забери — они появятся в твоей карточке'
+      : (nxt ? 'Ближайший: «' + nxt.name + '» — ' + fmt(num(nxt.progress)) + ' / ' + fmt(num(nxt.target)) + (nxt.unit ? ' ' + nxt.unit : '') : (left.length ? 'Смотри все значки' : 'Все значки собраны 🎉'));
     $('ach-mini').onclick = function () { haptic(); setTab('ach'); window.scrollTo(0, 0); };
 
-    // страница «Значки»: кольцо прогресса, ближайшее, списки
+    // страница «Значки»: кольцо прогресса, «забрать», ближайшее, списки
     var hero = el('div', 'ah-box ah-hero'), ring = el('div', 'ah-ring'), C = 226.2;
     ring.innerHTML = '<svg viewBox="0 0 84 84" aria-hidden="true"><circle class="bg" cx="42" cy="42" r="36"/><circle class="fg" cx="42" cy="42" r="36" style="--c:' + C + ';--off:' + (C * (1 - got.length / total)).toFixed(1) + '"/></svg>';
     var cn = el('div', 'cn', String(got.length)); cn.appendChild(el('small', '', 'из ' + total)); ring.appendChild(cn); hero.appendChild(ring);
-    var ht = el('div', 'ah-txt'); ht.appendChild(el('h4', '', 'Твоя коллекция'));
-    ht.appendChild(el('p', '', got.length === total ? 'Собрано всё — ты легенда 🏆' : 'Играй матчи 1vs1 — значки выдаются сами, бот пришлёт сообщение, когда откроешь новый.'));
+    var ht = el('div', 'ah-txt');
+    if (ready.length) {
+      ht.appendChild(el('h4', '', 'Есть что забрать!'));
+      ht.appendChild(el('p', '', 'Ты заработал ' + ready.length + ' ' + achWord(ready.length) + '. Нажми «Забрать» — и значок появится в твоей карточке для всех игроков.'));
+    } else {
+      ht.appendChild(el('h4', '', 'Твоя коллекция'));
+      ht.appendChild(el('p', '', got.length === total ? 'Собрано всё — ты легенда 🏆' : 'Играй матчи 1vs1. Заработанный значок бот отметит сообщением, а забрать его нужно здесь, вручную.'));
+    }
     var tiers = el('div', 'ah-tiers');
-    TIER_ORDER.forEach(function (t) {
-      var all = list.filter(function (a) { return a.tier === t; }); if (!all.length) return;
-      var c = el('span', 'tchip t-' + t); c.appendChild(el('i')); c.appendChild(document.createTextNode(TIER_LBL[t] + ' ' + all.filter(function (a) { return a.unlocked; }).length + '/' + all.length)); tiers.appendChild(c);
+    TIER_ORDER.forEach(function (tt) {
+      var all = list.filter(function (a) { return a.tier === tt; }); if (!all.length) return;
+      var c = el('span', 'tchip t-' + tt); c.appendChild(el('i')); c.appendChild(document.createTextNode(TIER_LBL[tt] + ' ' + all.filter(function (a) { return achState(a) === 'claimed'; }).length + '/' + all.length)); tiers.appendChild(c);
     });
     ht.appendChild(tiers); hero.appendChild(ht); body.appendChild(hero);
+
+    if (canClaim && ready.length) {
+      var all2 = el('button', 'claim big ah-all', ready.length > 1 ? 'Забрать все (' + ready.length + ')' : 'Забрать значок'); all2.type = 'button';
+      all2.addEventListener('click', function () { claimAch(null, all2); });
+      body.appendChild(all2);
+    }
 
     if (nxt) {
       var nb = el('div', 'ah-box ah-next t-' + nxt.tier); nb.appendChild(achBadge(nxt, 56));
@@ -1552,17 +1618,74 @@ window.addEventListener('error', function (e) {
       nt.appendChild(el('span', '', nxt.desc + ' · осталось ' + fmt(rem) + (nxt.unit ? ' ' + nxt.unit : '')));
       var pg2 = el('div', 'pg'), br2 = el('span', 'bar2'), fl2 = el('i'); fl2.style.width = Math.max(3, Math.round(achRatio(nxt) * 100)) + '%'; br2.appendChild(fl2); pg2.appendChild(br2);
       pg2.style.marginTop = '8px'; nt.appendChild(pg2); nb.appendChild(nt);
-      nb.style.setProperty('--ac', {bronze: '205,127,79', silver: '200,209,227', gold: '255,201,74', legend: '232,121,249'}[nxt.tier] || '139,92,246');
+      nb.style.setProperty('--ac', ACH_RGB[nxt.tier] || '139,92,246');
       body.appendChild(nb);
     }
     var k = 0;
-    if (got.length) { body.appendChild(subHd('star', 'Получено', String(got.length))); got.forEach(function (a) { body.appendChild(achRow(a, k++, srv)); }); }
-    if (left.length) { body.appendChild(subHd('target', 'Ещё не открыто', String(left.length))); left.forEach(function (a) { body.appendChild(achRow(a, k++, srv)); }); }
+    if (ready.length) { body.appendChild(subHd('star', 'Готово к получению', String(ready.length))); ready.forEach(function (a) { body.appendChild(achRow(a, k++)); }); }
+    if (got.length) { body.appendChild(subHd('star', 'Получено', String(got.length))); got.forEach(function (a) { body.appendChild(achRow(a, k++)); }); }
+    if (left.length) { body.appendChild(subHd('target', 'Ещё не открыто', String(left.length))); left.forEach(function (a) { body.appendChild(achRow(a, k++)); }); }
 
-    // золотая точка на вкладке: есть значок новее того, что игрок уже видел
-    var on = document.querySelector('.tab.on');
-    if (on && on.getAttribute('data-tab') === 'ach') achMarkSeen();
-    else if (dot) dot.style.display = achLatest(list) > achSeen() ? '' : 'none';
+    // золотая точка на вкладке — пока есть что забрать (данные с сервера, а не «видел / не видел» в браузере)
+    if (dot) dot.style.display = ready.length ? '' : 'none';
+  }
+
+  // Эффект получения значка: то же окно, что у наград за ранги
+  function showBadgeReveal(items) {
+    var ov = $('reveal'), box = $('reveal-box'); box.textContent = '';
+    var first = items[0];
+    ov.style.setProperty('--tier-rgb', ACH_RGB[first.tier] || '139,92,246');
+    ov.setAttribute('aria-label', 'Значок получен');
+    var hero = el('div', 'rv-emb'); hero.appendChild(achBadge({ tier: first.tier, icon: first.icon, unlocked: true }, 92)); box.appendChild(hero);
+    box.appendChild(el('div', 'rv-title', items.length > 1 ? 'Значки получены!' : 'Значок получен!'));
+    box.appendChild(el('div', 'rv-sub', items.map(function (a) { return a.name; }).join(' · ')));
+    var list = el('div', 'rv-list');
+    items.forEach(function (a, i) {
+      var row = el('div', 'rv-item'); row.style.setProperty('--i', String(i)); row.style.setProperty('--c', ACH_RGB[a.tier] || '196,204,220');
+      var ic = el('span', 'ic'), tx = el('div'); ic.appendChild(achBadge({ tier: a.tier, icon: a.icon, unlocked: true }, 30));
+      tx.appendChild(el('b', '', a.name)); tx.appendChild(el('small', '', a.desc + ' · теперь виден в твоей карточке'));
+      row.appendChild(ic); row.appendChild(tx); list.appendChild(row);
+    });
+    box.appendChild(list);
+    var ok = el('button', 'claim big rv-ok', 'Отлично!'); ok.type = 'button';
+    ok.addEventListener('click', closeReveal);
+    box.appendChild(ok);
+    confetti($('reveal-cf'));
+    document.body.style.overflow = 'hidden';
+    ov.classList.add('on');
+    try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+  }
+
+  // id — забрать один значок, null — все готовые. Повторное нажатие безопасно: сервер выдаёт один раз.
+  function claimAch(id, btn) {
+    if (achClaiming) return;
+    if (!canLoad()) { toast('Открой ранги через кнопку в боте — в ссылке не хватает данных', true); return; }
+    achClaiming = true;
+    var label = btn ? btn.textContent : ''; if (btn) { btn.classList.add('busy'); btn.textContent = 'Забираю…'; }
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 15000);
+    function resync() { setTimeout(function () { load(true); }, 700); }
+    fetch(API + '/casino/ranks/ach/claim', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
+      body: JSON.stringify({ uid: UID, secret: SECRET, init_data: INIT || undefined, id: id || undefined }), signal: ctrl ? ctrl.signal : undefined
+    })
+      .then(function (r) { return r.json().catch(function () { return null; }).then(function (j) { return { status: r.status, j: j }; }); })
+      .then(function (res) {
+        var j = res.j;
+        if (res.status === 401) { toast('Доступ не подтверждён — открой ранги заново из бота', true); return; }
+        if (res.status === 429) { toast('Не так быстро — попробуй через секунду', true); return; }
+        if (res.status === 404) { toast('Бот ещё не обновлён — значки пока нельзя забрать', true); return; }
+        if (j && Array.isArray(j.achievements) && DATA) { DATA.achievements = j.achievements; lastSig = ''; safe(renderAch, DATA); }
+        if (!j || j.ok !== true) { toast(j && j.error === 'locked' ? 'Этот значок ещё не заработан' : 'Не удалось забрать значок. Попробуй ещё раз', true); resync(); return; }
+        if (DATA) { DATA.ach_ready = j.ach_ready; cachePut(DATA); }
+        if (Array.isArray(j.claimed) && j.claimed.length) { showBadgeReveal(j.claimed); resync(); }
+        else toast('Эти значки уже у тебя');
+      })
+      .catch(function () { toast('Нет связи с сервером — проверь интернет и нажми ещё раз', true); resync(); })
+      .then(function () {
+        clearTimeout(timer); achClaiming = false;
+        if (btn && btn.parentNode) { btn.classList.remove('busy'); btn.textContent = label; }
+      });
   }
 
   // ── карточка игрока ──
@@ -1592,34 +1715,56 @@ window.addEventListener('error', function (e) {
 
   // Вызов уходит боту — тот шлёт сопернику приглашение с кнопками «Принять / Отклонить». Ответ придёт в чат, поэтому после отправки
   // предлагаем вернуться в чат (закрыть приложение).
+  // v300: результат — строка под кнопкой (остаётся, пока карточка открыта), а не тост на 3 секунды: отказ по причине «у соперника не хватает токенов»
+  // раньше исчезал, пока игрок смотрел на кнопку, и выглядело как «кнопка просто нажимается». В строке ещё и код причины — его видно на скриншоте.
+  function resBox(act, ok, text, code) {
+    var old = act.querySelector('.pc-res'); if (old && old.parentNode) old.parentNode.removeChild(old);
+    var r = el('div', 'pc-res' + (ok ? ' ok' : '')); r.setAttribute('role', 'status');
+    r.appendChild(document.createTextNode(text));
+    if (code) r.appendChild(el('small', '', 'Код: ' + code));
+    var b = act.querySelector('.pc-fight');
+    if (b && b.nextSibling) act.insertBefore(r, b.nextSibling); else act.appendChild(r);
+    return r;
+  }
   function sendChallenge(p, btn, act) {
     if (PC.sending) return;
-    if (!canLoad()) { toast('Открой ранги через кнопку в боте — в ссылке не хватает данных', true); return; }
+    if (!canLoad()) { resBox(act, false, 'Открой ранги через кнопку в боте — в ссылке не хватает данных для отправки.', 'no_params'); return; }
     PC.sending = true; btn.classList.add('busy'); setBtn(btn, 'Отправляю…', '');
+    var prev = act.querySelector('.pc-res'); if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
     var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
     var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 15000);
     function reset() { PC.sending = false; btn.classList.remove('busy'); setBtn(btn, 'Вызвать на дуэль', 'Ставка: ' + fmt(num(DATA && DATA.my_stake)) + ' токенов'); }
+    function fail(text, code) {
+      clearTimeout(timer); reset(); resBox(act, false, text, code); toast(text, true);
+      try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('error'); } catch (e) {}
+    }
     fetch(API + '/casino/ranks/challenge', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
       body: JSON.stringify({ uid: UID, secret: SECRET, init_data: INIT || undefined, cid: p.cid }), signal: ctrl ? ctrl.signal : undefined
     })
       .then(function (r) { return r.json().catch(function () { return null; }).then(function (j) { return { status: r.status, j: j }; }); })
       .then(function (res) {
-        clearTimeout(timer);
         var j = res.j;
-        if (res.status === 401) { toast('Доступ не подтверждён — открой ранги заново из бота', true); reset(); return; }
-        if (res.status === 429) { toast('Не так быстро — подожди пару секунд', true); reset(); return; }
-        if (res.status === 404 && (!j || !j.error)) { toast('Бот ещё не обновлён — вызов из приложения пока недоступен', true); reset(); return; }
-        if (!j || j.ok !== true) { toast((j && j.message) || 'Не удалось отправить вызов. Попробуй ещё раз', true); reset(); return; }
-        PC.sending = false; btn.classList.remove('busy'); btn.classList.add('done'); btn.disabled = true; SENT[p.cid] = Date.now() + 180000;
-        setBtn(btn, 'Вызов отправлен', 'Соперник отвечает в боте · 3 минуты');
-        toast('Вызов отправлен — ответ придёт в чат с ботом');
-        try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
-        var back = el('button', 'pc-back', 'Вернуться в чат'); back.type = 'button';
-        back.addEventListener('click', function () { try { if (tg && tg.close) { tg.close(); return; } } catch (e) {} closeCard(); });
-        act.appendChild(back);
+        if (res.status === 401) return fail('Доступ не подтверждён — открой ранги заново из бота.', 'http_401');
+        if (res.status === 429) return fail('Не так быстро — подожди пару секунд и нажми ещё раз.', 'http_429');
+        if (res.status === 404 && (!j || !j.error)) return fail('Бот ещё не обновлён — вызов из приложения пока недоступен.', 'http_404');
+        if (!j || j.ok !== true) return fail((j && j.message) || ('Сервер ответил ошибкой (' + res.status + '). Попробуй ещё раз.'), (j && j.error) || ('http_' + res.status));
+        clearTimeout(timer);
+        try {
+          PC.sending = false; btn.classList.remove('busy'); btn.classList.add('done'); btn.disabled = true; SENT[p.cid] = Date.now() + 180000;
+          setBtn(btn, 'Вызов отправлен', 'Соперник отвечает в боте · 3 минуты');
+          resBox(act, true, 'Приглашение ушло игроку' + (j.name ? ' ' + j.name : '') + '. Ответ придёт в чат с ботом — соперник отвечает до 3 минут.');
+          toast('Вызов отправлен — ответ придёт в чат с ботом');
+          try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+          var back = el('button', 'pc-back', 'Вернуться в чат'); back.type = 'button';
+          back.addEventListener('click', function () { try { if (tg && tg.close) { tg.close(); return; } } catch (e) {} closeCard(); });
+          act.appendChild(back);
+        } catch (e2) { fail('Вызов отправлен, но экран не обновился. Загляни в чат с ботом.', 'client'); }
       })
-      .catch(function () { clearTimeout(timer); toast('Нет связи с сервером — проверь интернет и нажми ещё раз', true); reset(); });
+      .catch(function (e) {
+        var to = e && e.name === 'AbortError';
+        fail(to ? 'Сервер не ответил за 15 секунд. Вызов мог не уйти — загляни в чат с ботом и попробуй ещё раз.' : 'Нет связи с сервером — проверь интернет и нажми ещё раз.', to ? 'timeout' : 'network');
+      });
   }
 
   function openCard(p, fromNode) {
@@ -1676,13 +1821,22 @@ window.addEventListener('error', function (e) {
     else if (!(DATA && DATA.challenge_enabled) || !p.cid) act.appendChild(el('p', 'pc-note', 'Вызов из приложения включится после обновления бота. Пока можно вызвать через бота: 1vs1 → «🎯 Вызвать по ID».'));
     else if (p.open_to_duel === false) act.appendChild(el('p', 'pc-note', '🔕 Этот игрок не принимает вызовы на дуэль.'));   // v299: сам выключил в настройках бота
     else {
-      var btn = el('button', 'claim big pc-fight'); btn.type = 'button';
-      btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M14.5 5H19v4.5M8 16l-2.5 2.5"/><path d="M19 19 5 5M9.5 5H5v4.5M16 16l2.5 2.5"/></svg><span class="bt"><b class="lb"></b><small></small></span>';
-      setBtn(btn, 'Вызвать на дуэль', 'Ставка: ' + fmt(num(DATA.my_stake)) + ' токенов');
-      if (SENT[p.cid] && SENT[p.cid] > Date.now()) { btn.classList.add('done'); btn.disabled = true; setBtn(btn, 'Вызов отправлен', 'Соперник отвечает в боте · до 3 минут'); }
-      btn.addEventListener('click', function () { sendChallenge(p, btn, act); });
-      act.appendChild(btn);
-      act.appendChild(el('p', 'pc-note', 'Соперник получит приглашение в боте. Ставку можно поменять в боте: 1vs1 → «💰 Ставка».'));
+      // v300: у игрока свои правила приёма вызовов — объясняем заранее, а не даём нажать и получить отказ (сервер всё равно проверяет сам)
+      var myStake = num(DATA.my_stake), maxS = num(p.duel_max), myTi = tierIdx(tiers, DATA.tier_name), why = '';
+      if (maxS && myStake > maxS) why = 'Этот игрок принимает ставку не больше ' + fmt(maxS) + '. Твоя сейчас — ' + fmt(myStake) + '. Поменяй её в боте: 1vs1 → «💰 Ставка».';
+      else if (p.duel_from === 'near' && myTi >= 0 && ti >= 0 && Math.abs(myTi - ti) > 1) why = 'Этот игрок принимает вызовы только от соперников близкого ранга (разница не больше одного ранга).';
+      if (why) act.appendChild(el('div', 'pc-res', why));
+      else {
+        var btn = el('button', 'claim big pc-fight'); btn.type = 'button';
+        btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M14.5 5H19v4.5M8 16l-2.5 2.5"/><path d="M19 19 5 5M9.5 5H5v4.5M16 16l2.5 2.5"/></svg><span class="bt"><b class="lb"></b><small></small></span>';
+        setBtn(btn, 'Вызвать на дуэль', 'Ставка: ' + fmt(num(DATA.my_stake)) + ' токенов');
+        if (SENT[p.cid] && SENT[p.cid] > Date.now()) { btn.classList.add('done'); btn.disabled = true; setBtn(btn, 'Вызов отправлен', 'Соперник отвечает в боте · до 3 минут'); }
+        btn.addEventListener('click', function () { sendChallenge(p, btn, act); });
+        act.appendChild(btn);
+        var rules = []; if (maxS) rules.push('ставка до ' + fmt(maxS)); if (p.duel_from === 'near') rules.push('только близкие по рангу');
+        if (rules.length) act.appendChild(el('p', 'pc-note', 'Условия игрока: ' + rules.join(' · ') + '.'));
+        act.appendChild(el('p', 'pc-note', 'Соперник получит приглашение в боте. Ставку можно поменять в боте: 1vs1 → «💰 Ставка».'));
+      }
     }
     box.appendChild(act);
 
@@ -1691,6 +1845,124 @@ window.addEventListener('error', function (e) {
     document.body.style.overflow = 'hidden';
     haptic();
     try { $('pc-x').focus(); } catch (e) {}
+  }
+
+  // ── v300: настройки дуэлей — игрок сам решает, кто и как может его вызывать ──
+  var DS = { open: false, prefs: null, dirty: {}, timer: 0, saving: false, refs: null };
+  function dsStake(n) { return !n ? 'любая' : (n >= 1000000 ? (n / 1000000) + ' млн' : (n / 1000) + ' тыс'); }
+  function dsSummary(p) {
+    if (!p.enabled) return 'Приглашения тебе не приходят';
+    return (p.from === 'near' ? 'Близкие по рангу' : 'Все игроки') + ' · ставка ' + (p.max_stake ? 'до ' + dsStake(num(p.max_stake)) : 'любая') + ' · до ' + num(p.per_hour) + ' в час';
+  }
+  function dsClone(p) { return { enabled: !!p.enabled, from: p.from, max_stake: num(p.max_stake), per_hour: num(p.per_hour), decline_h: num(p.decline_h) }; }
+
+  function renderDuel(d) {
+    var sec = $('duel-sec'), p = d && d.challenge_prefs;
+    if (!p || !d.challenge_enabled) { sec.style.display = 'none'; return; }   // бот без v300 — настроек нет
+    sec.style.display = '';
+    var strip = $('duel-strip'); if (!strip.firstChild) strip.appendChild(achBadge({ tier: 'silver', icon: 'sword', unlocked: true }, 40));
+    $('duel-count').textContent = p.enabled ? 'ВКЛ' : 'ВЫКЛ';
+    $('duel-mini-t').textContent = p.enabled ? 'Ты принимаешь вызовы' : 'Вызовы выключены';
+    $('duel-mini-s').textContent = dsSummary(p) + ' · нажми, чтобы настроить';
+    $('duel-mini').classList.toggle('off', !p.enabled);
+    $('duel-mini').onclick = openDuel;
+  }
+
+  function dsStat(text, kind) { var s = DS.refs && DS.refs.stat; if (!s) return; s.textContent = text || ''; s.className = 'ds-stat' + (kind ? ' ' + kind : ''); }
+  function dsSync() {
+    var p = DS.prefs, r = DS.refs; if (!r || !p) return;
+    r.sw.classList.toggle('on', !!p.enabled); r.sw.setAttribute('aria-checked', p.enabled ? 'true' : 'false');
+    r.set.classList.toggle('off', !p.enabled);
+    ['from', 'max_stake', 'per_hour', 'decline_h'].forEach(function (k) {
+      Array.prototype.forEach.call(r[k].children, function (b) {
+        var on = b.getAttribute('data-v') === String(p[k]); b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+    });
+    r.sum.textContent = 'Сейчас: ' + dsSummary(p);
+  }
+  function dsGroup(title, desc, key, opts, label) {
+    var g = el('div', 'ds-g'); g.appendChild(el('div', 'ds-h', title)); g.appendChild(el('p', 'ds-d', desc));
+    var seg = el('div', 'ds-seg'); seg.setAttribute('role', 'radiogroup'); seg.setAttribute('aria-label', title);
+    opts.forEach(function (v) {
+      var b = el('button', 'ds-o', label(v)); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('data-v', String(v));
+      b.addEventListener('click', function () { var patch = {}; patch[key] = v; dsChange(patch); haptic(); });
+      seg.appendChild(b);
+    });
+    g.appendChild(seg); DS.refs[key] = seg;
+    return g;
+  }
+  function buildDuel() {
+    var box = $('ds-body'); box.textContent = ''; DS.refs = {};
+    var o = (DATA && DATA.challenge_prefs && DATA.challenge_prefs.options) || {};
+    var h = el('h3', 'pc-name', 'Дуэли'); h.id = 'ds-title'; h.style.marginTop = '30px'; box.appendChild(h);
+    box.appendChild(el('p', 'ds-sub', 'Настрой, кто и как может тебя вызывать. Изменения сохраняются сами — кнопки «Сохранить» нет.'));
+    var sw = el('button', 'ds-sw'); sw.type = 'button'; sw.setAttribute('role', 'switch');
+    var tx = el('span', 'tx'); tx.appendChild(el('b', '', 'Принимать вызовы')); tx.appendChild(el('small', '', 'Выключишь — в твоей карточке будет «не принимает вызовы», приглашения не придут'));
+    sw.appendChild(tx); sw.appendChild(el('i', 'knob'));
+    sw.addEventListener('click', function () { dsChange({ enabled: !DS.prefs.enabled }); haptic(); });
+    box.appendChild(sw); DS.refs.sw = sw;
+    var set = el('div', 'ds-set'); DS.refs.set = set;
+    set.appendChild(dsGroup('Кто может вызвать', 'Близкие по рангу — те, кто не дальше одного ранга от тебя (например, Серебро и Золото рядом с Бронзой).', 'from', o.from || ['all', 'near'], function (v) { return v === 'near' ? 'Близкие по рангу' : 'Все игроки'; }));
+    set.appendChild(dsGroup('Максимальная ставка', 'Вызовы со ставкой выше этой отклоняются сразу — тебя они не побеспокоят.', 'max_stake', o.max_stake || [0, 500000, 1000000, 5000000, 25000000], function (v) { return v ? dsStake(v) : 'Любая'; }));
+    set.appendChild(dsGroup('Не больше приглашений в час', 'Остальные подождут — тебя не завалят вызовами, даже если игроков станет много.', 'per_hour', o.per_hour || [1, 2, 3, 6], function (v) { return String(v); }));
+    set.appendChild(dsGroup('Если я отказал', 'Этот же игрок не сможет вызвать тебя снова столько времени.', 'decline_h', o.decline_h || [1, 6, 24], function (v) { return v + ' ч'; }));
+    box.appendChild(set);
+    var sum = el('div', 'ds-sum'); box.appendChild(sum); DS.refs.sum = sum;
+    var stat = el('div', 'ds-stat'); stat.setAttribute('role', 'status'); box.appendChild(stat); DS.refs.stat = stat;
+    var ok = el('button', 'claim big', 'Готово'); ok.type = 'button'; ok.addEventListener('click', closeDuel); box.appendChild(ok);
+  }
+
+  function openDuel() {
+    if (!DATA || !DATA.challenge_prefs) return;
+    DS.prefs = dsClone(DATA.challenge_prefs); DS.dirty = {};
+    buildDuel(); dsSync();
+    $('dsb').classList.add('on'); $('dsb').setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; DS.open = true;
+    $('ds').scrollTop = 0; haptic();
+    try { $('ds-x').focus(); } catch (e) {}
+  }
+  function closeDuel() {
+    if (DS.timer) { clearTimeout(DS.timer); DS.timer = 0; dsFlush(); }      // есть несохранённое — отправляем сразу, не ждём паузы
+    $('dsb').classList.remove('on'); $('dsb').setAttribute('aria-hidden', 'true');
+    if (!$('reveal').classList.contains('on') && !$('pcb').classList.contains('on')) document.body.style.overflow = '';
+    DS.open = false;
+  }
+  $('ds-x').addEventListener('click', closeDuel);
+  $('dsb').addEventListener('click', function (e) { if (e.target === $('dsb')) closeDuel(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && DS.open) closeDuel(); });
+
+  // Показываем выбор сразу, на сервер отправляем одним запросом после короткой паузы — быстрые нажатия не упираются в кулдаун
+  function dsChange(patch) {
+    Object.keys(patch).forEach(function (k) { DS.prefs[k] = patch[k]; DS.dirty[k] = patch[k]; });
+    dsSync(); dsStat('Сохраняю…');
+    if (DS.timer) clearTimeout(DS.timer);
+    DS.timer = setTimeout(dsFlush, 450);
+  }
+  function dsFlush() {
+    DS.timer = 0;
+    if (DS.saving) { DS.timer = setTimeout(dsFlush, 500); return; }
+    var patch = DS.dirty, keys = Object.keys(patch); if (!keys.length) return;
+    DS.dirty = {};
+    function revert(msg) { if (DATA && DATA.challenge_prefs) { DS.prefs = dsClone(DATA.challenge_prefs); dsSync(); } dsStat(msg, 'err'); toast(msg, true); }
+    if (!canLoad()) { revert('Открой ранги через кнопку в боте — в ссылке не хватает данных'); return; }
+    DS.saving = true;
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 12000);
+    fetch(API + '/casino/ranks/challenge/prefs', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
+      body: JSON.stringify({ uid: UID, secret: SECRET, init_data: INIT || undefined, prefs: patch }), signal: ctrl ? ctrl.signal : undefined
+    })
+      .then(function (r) { return r.json().catch(function () { return null; }).then(function (j) { return { status: r.status, j: j }; }); })
+      .then(function (res) {
+        var j = res.j;
+        if (res.status === 429) { keys.forEach(function (k) { if (!(k in DS.dirty)) DS.dirty[k] = patch[k]; }); DS.timer = setTimeout(dsFlush, 1100); return; }
+        if (res.status === 401) return revert('Доступ не подтверждён — открой ранги заново из бота');
+        if (res.status === 404) return revert('Бот ещё не обновлён — настройки пока недоступны');
+        if (!j || j.ok !== true || !j.challenge_prefs) return revert('Не сохранилось — попробуй ещё раз');
+        if (DATA) { DATA.challenge_prefs = j.challenge_prefs; cachePut(DATA); lastSig = ''; safe(renderDuel, DATA); }
+        if (!Object.keys(DS.dirty).length && !DS.timer) dsStat('Сохранено ✓', 'ok');
+      })
+      .catch(function () { revert('Нет связи с сервером — настройка не сохранилась'); })
+      .then(function () { clearTimeout(timer); DS.saving = false; });
   }
 
   // строка игрока (места 4–10 и блок «Рядом с тобой»)
@@ -2296,6 +2568,7 @@ window.addEventListener('error', function (e) {
     safe(applyFire, cur);
     safe(renderRank, d, tiers, cur);
     safe(renderAch, d);                                              // v298
+    safe(renderDuel, d);                                             // v300
     safe(renderTop, d, tiers, cur);
     safe(renderSeason, d);
     safe(renderHistory, d);
@@ -2303,7 +2576,7 @@ window.addEventListener('error', function (e) {
   }
 
   // v295: причина последнего сбоя показывается мелким шрифтом на экране ошибки — по скриншоту видно, что именно сломалось
-  var VER = 'v299', lastErr = '', failKind = '', staleKind = '';
+  var VER = 'v300', lastErr = '', failKind = '', staleKind = '';
 
   function setConn(text) { var c = $('conn'); c.textContent = text || ''; c.classList.toggle('on', !!text); }
   function showStale(kind) {
