@@ -288,6 +288,29 @@
   .rw .got svg { width: 16px; height: 16px; fill: none; stroke: var(--up); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   .rw.reached { border-color: rgba(0,230,160,.25); }
   .rw.cur { border-color: rgba(var(--tier-rgb), .5); background: linear-gradient(90deg, rgba(var(--tier-rgb), .14), rgba(255,255,255,.02)); }
+  /* награды за ранги: плашки призов, состояния, «ближайшая награда» */
+  .pzs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+  .pz { --c: 196,204,220; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 8px; border-radius: 999px; font-size: 12px; font-weight: 800; white-space: nowrap;
+    color: rgb(var(--c)); background: rgba(var(--c), .1); border: 1px solid rgba(var(--c), .32); }
+  .pz i { width: 8px; height: 8px; border-radius: 50%; background: rgb(var(--c)); box-shadow: 0 0 8px rgba(var(--c), .9); }
+  .pz.tk { --c: 255,201,74; } .pz.slx { --c: 167,139,250; }
+  .rw .hint { margin-top: 6px; font-size: 11.5px; font-weight: 600; color: var(--text3); }
+  .rw.later { --o: .68; }
+  .rw .wait { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; background: rgba(139,92,246,.14); border: 1px solid rgba(196,181,253,.4); animation: pulse 2.2s ease-in-out infinite; }
+  .rw .wait svg { width: 16px; height: 16px; fill: none; stroke: var(--accent-light); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .nxt { position: relative; margin-bottom: 14px; padding: 16px; border-radius: 22px; overflow: hidden;
+    background: linear-gradient(135deg, rgba(var(--tier-rgb), .16), rgba(255,255,255,.02) 62%); border: 1px solid rgba(var(--tier-rgb), .45); box-shadow: 0 0 34px -14px rgba(var(--tier-rgb), .9); }
+  .nxt::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.07) 50%, transparent 70%) 0 0 / 220% 100%; animation: sheen 5.5s linear infinite; }
+  .nxt-lab { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgb(var(--tier-rgb)); }
+  .nxt-main { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+  .nxt-main .badge { width: 62px; height: 62px; border-radius: 18px; flex-shrink: 0; display: grid; place-items: center; background: rgba(var(--tier-rgb), .14); border: 1px solid rgba(var(--tier-rgb), .45); box-shadow: 0 0 20px -6px rgba(var(--tier-rgb), .8); }
+  .nxt-main .meta { flex: 1; min-width: 0; }
+  .nxt-main .nm { font-size: 19px; font-weight: 900; letter-spacing: -.01em; }
+  .nxt-bar { margin-top: 14px; height: 8px; border-radius: 6px; background: rgba(255,255,255,.07); overflow: hidden; }
+  .nxt-bar i { display: block; height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, rgba(var(--tier-rgb), .65), rgb(var(--tier-rgb))); box-shadow: 0 0 12px rgba(var(--tier-rgb), .8); transition: width 1s cubic-bezier(.2,.8,.2,1); }
+  .nxt-txt { margin-top: 9px; font-size: 12.5px; font-weight: 700; color: var(--text2); }
+  .sum { margin: 0 2px 20px; padding: 12px 14px; border-radius: 16px; background: rgba(255,255,255,.03); border: 1px dashed rgba(255,255,255,.14); }
+  .sum small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text3); }
   /* история боёв */
   .form { display: flex; align-items: center; gap: 5px; margin: 0 2px 16px; }
   .form i { flex: 1; max-width: 22px; height: 8px; border-radius: 4px; background: var(--c); box-shadow: 0 0 8px -1px var(--c); }
@@ -1017,7 +1040,19 @@
     return row;
   }
 
-  function renderRewards(d, tiers, cur) {
+  // Призовые места сезона (текстовая витрина, админ выдаёт вручную) — общий блок для обеих версий вкладки
+  function topPlaces(box, top, gap) {
+    var keys = Object.keys(top || {}).map(Number).filter(function (n) { return n > 0; }).sort(function (a, b) { return a - b; });
+    if (!keys.length) return;
+    var st = el('div', 'sec-title', 'Призовые места'); if (gap) st.style.marginTop = '22px'; box.appendChild(st);
+    keys.forEach(function (pl, i) {
+      var badge = el('div', 'badge num', String(pl));
+      box.appendChild(rewardRow('pl' + (pl <= 3 ? ' pl' + pl : ''), i, badge, pl + '-е место', top[String(pl)]));
+    });
+  }
+
+  // Запасная версия для ответа бота старше v293 (там нет d.rank_rewards — только текстовая витрина)
+  function renderRewardsLegacy(d, tiers, cur) {
     var box = $('rewards-body'), pill = $('rw-pill'), dot = $('dot-rewards');
     box.textContent = '';
     var rw = (d && d.rewards) || {};
@@ -1042,13 +1077,7 @@
 
     pill.textContent = d && d.season_number ? 'Сезон ' + d.season_number : 'Сезон'; pill.className = 'pill'; dot.style.display = 'none';
 
-    if (placeKeys.length) {
-      box.appendChild(el('div', 'sec-title', 'Призовые места'));
-      placeKeys.forEach(function (pl, i) {
-        var badge = el('div', 'badge num', String(pl));
-        box.appendChild(rewardRow('pl' + (pl <= 3 ? ' pl' + pl : ''), i, badge, pl + '-е место', top[String(pl)]));
-      });
-    }
+    topPlaces(box, top, false);
 
     var tierKeys = names.map(function (n, i) { return { n: n, i: i, prize: tr[n] }; }).filter(function (x) { return x.prize; });
     if (tierKeys.length) {
@@ -1064,7 +1093,115 @@
       });
     }
   }
+  // ───────────────────────────────────────────────
+  //  Награды за ранги: бот выдаёт их сам (RANK_REWARDS в боте), тут — состояние получения
+  // ───────────────────────────────────────────────
+  var WAIT_SVG = '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>';
+  var NFT_COL = { common: '196,204,220', rare: '96,165,250', epic: '167,139,250', legendary: '255,165,60', ultralegendary: '255,90,110' };
+  var NFT_NAME = { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary', ultralegendary: 'Ultra Legendary' };
+
+  function fmtTok(n) {
+    n = num(n);
+    if (n >= 1e6) return (n / 1e6).toLocaleString('ru-RU', { maximumFractionDigits: 1 }) + ' млн';
+    if (n >= 1e3) return (n / 1e3).toLocaleString('ru-RU', { maximumFractionDigits: 1 }) + ' тыс.';
+    return fmt(n);
+  }
+  function chip(cls, text, rgb) {
+    var c = el('span', 'pz ' + cls);
+    if (rgb) c.style.setProperty('--c', rgb);
+    c.appendChild(el('i')); c.appendChild(document.createTextNode(text));
+    return c;
+  }
+  function prizeChips(r) {
+    var box = el('div', 'pzs'); r = r || {};
+    if (num(r.tokens) > 0) box.appendChild(chip('tk', fmtTok(r.tokens) + ' токенов'));
+    if (num(r.slx) > 0) box.appendChild(chip('slx', fmt(r.slx) + ' SLX'));
+    (Array.isArray(r.nft) ? r.nft : []).forEach(function (rar) { box.appendChild(chip('nft', 'NFT ' + (NFT_NAME[rar] || rar), NFT_COL[rar])); });
+    return box;
+  }
+  function embIndex(name, tiers) {
+    var i = tierIdx(tiers || [], name);
+    if (i < 0) i = DEFAULT_TIER_NAMES.indexOf(name);
+    return i < 0 ? 0 : i;
+  }
+
+  // карточка «ближайшая награда» с прогрессом до ранга
+  function nextRewardCard(list, ni, rp, tiers) {
+    var x = list[ni], ei = embIndex(x.name, tiers), prevTh = 0;
+    for (var k = 0; k < tiers.length; k++) { if (tiers[k].name === x.name) { prevTh = k > 0 ? num(tiers[k - 1].threshold) : 0; break; } }
+    var span = num(x.threshold) - prevTh;
+    var pct = x.state === 'pending' ? 100 : (span > 0 ? Math.max(0, Math.min(100, (rp - prevTh) / span * 100)) : 100);
+    var card = el('div', 'nxt'); card.style.setProperty('--tier-rgb', tierRgb(ei));
+    card.appendChild(el('div', 'nxt-lab', 'Ближайшая награда'));
+    var main = el('div', 'nxt-main');
+    var badge = el('div', 'badge'); badge.appendChild(emb(ei, 44)); main.appendChild(badge);
+    var meta = el('div', 'meta'); meta.appendChild(el('div', 'nm', x.name)); meta.appendChild(prizeChips(x.reward));
+    main.appendChild(meta); card.appendChild(main);
+    var bar = el('div', 'nxt-bar'), fill = el('i'); bar.appendChild(fill); card.appendChild(bar);
+    card.appendChild(el('div', 'nxt-txt', x.state === 'pending'
+      ? 'Ранг достигнут — награда придёт после ближайшего матча'
+      : 'Ещё ' + fmt(x.rp_needed) + ' RP до ранга «' + x.name + '»'));
+    requestAnimationFrame(function () { requestAnimationFrame(function () { fill.style.width = pct + '%'; }); });
+    return card;
+  }
+
+  function renderRankRewards(d, tiers, list) {
+    var box = $('rewards-body'), pill = $('rw-pill'), dot = $('dot-rewards');
+    box.textContent = '';
+    var rp = num(d.rp);
+    var got = list.filter(function (x) { return x.state === 'claimed'; }).length;
+    pill.textContent = 'Получено ' + got + '/' + list.length; pill.className = 'pill';
+    dot.style.display = list.some(function (x) { return x.state === 'pending'; }) ? '' : 'none';
+
+    var ni = -1;
+    for (var i = 0; i < list.length; i++) { if (list[i].state !== 'claimed') { ni = i; break; } }
+    if (ni < 0) {
+      box.appendChild(soon('Все награды получены', 'Ты собрал все награды за ранги. Новые призы появятся здесь.', '<circle cx="12" cy="12" r="9"/><polyline points="8 12.5 11 15.5 16.5 9"/>'));
+      box.lastChild.style.marginBottom = '16px';
+    } else {
+      box.appendChild(nextRewardCard(list, ni, rp, tiers));
+    }
+
+    var tot = { tokens: 0, slx: 0, nft: 0 };
+    list.forEach(function (x) { var r = x.reward || {}; tot.tokens += num(r.tokens); tot.slx += num(r.slx); tot.nft += Array.isArray(r.nft) ? r.nft.length : 0; });
+    var sum = el('div', 'sum'); sum.appendChild(el('small', '', 'Всего за все ранги'));
+    var sb = el('div', 'pzs');
+    if (tot.tokens) sb.appendChild(chip('tk', fmtTok(tot.tokens) + ' токенов'));
+    if (tot.slx) sb.appendChild(chip('slx', fmt(tot.slx) + ' SLX'));
+    if (tot.nft) sb.appendChild(chip('nft', tot.nft + ' NFT', '110,231,255'));
+    sum.appendChild(sb); box.appendChild(sum);
+
+    box.appendChild(el('div', 'sec-title', 'Награды за ранги'));
+    list.forEach(function (x, j) {
+      var ei = embIndex(x.name, tiers);
+      var cls = x.name === d.tier_name ? 'cur' : (x.state === 'claimed' ? 'reached' : (x.state === 'locked' ? 'later' : ''));
+      var row = el('div', 'rw ' + cls); row.style.setProperty('--i', String(j));
+      var badge = el('div', 'badge'); badge.appendChild(emb(ei, 36));
+      var meta = el('div', 'meta'); meta.appendChild(el('div', 'nm', x.name)); meta.appendChild(prizeChips(x.reward));
+      if (x.state === 'locked') meta.appendChild(el('div', 'hint', 'Нужно ещё ' + fmt(x.rp_needed) + ' RP'));
+      else if (x.state === 'pending') meta.appendChild(el('div', 'hint', 'Придёт после ближайшего матча'));
+      row.appendChild(badge); row.appendChild(meta);
+      var st = el('div', x.state === 'claimed' ? 'got' : (x.state === 'pending' ? 'wait' : 'lock'));
+      st.appendChild(svgIcon(x.state === 'claimed' ? '<polyline points="4 12.5 9.5 18 20 6.5"/>' : (x.state === 'pending' ? WAIT_SVG : LOCK_SVG)));
+      row.appendChild(st);
+      box.appendChild(row);
+    });
+
+    var note = el('p', 'note', 'Награда приходит автоматически после матча, в котором достигнут ранг, — бот пришлёт уведомление. '
+      + (d.rank_rewards_per_season ? 'Награды выдаются заново в каждом новом сезоне. ' : 'Каждая награда выдаётся один раз. ')
+      + 'NFT достаются случайно из доступных карт нужной редкости.');
+    note.style.marginTop = '4px'; box.appendChild(note);
+    topPlaces(box, (d.rewards && d.rewards.top) || {}, true);
+  }
+
+  function renderRewards(d, tiers, cur) {
+    if (d && Array.isArray(d.rank_rewards) && d.rank_rewards.length) renderRankRewards(d, tiers || [], d.rank_rewards);
+    else renderRewardsLegacy(d, tiers, cur);
+  }
   renderRewards(null, null, -1);
+
+  // Один сломанный экран не должен валить остальные (и не должен выглядеть как «сервер не отвечает»)
+  function safe(fn, a, b, c) { try { fn(a, b, c); } catch (e) { try { console.error(e); } catch (_) {} } }
 
   function render(d) {
     var tiers = Array.isArray(d.all_tiers) ? d.all_tiers : [];
@@ -1072,11 +1209,11 @@
     app.style.setProperty('--tier-rgb', tierRgb(cur));
     TIME.srv = num(d.server_time) || Date.now() / 1000; TIME.perf = performance.now();
     DATA = d;
-    renderRank(d, tiers, cur);
-    renderTop(d, tiers, cur);
-    renderSeason(d);
-    renderHistory(d);
-    renderRewards(d, tiers, cur);
+    safe(renderRank, d, tiers, cur);
+    safe(renderTop, d, tiers, cur);
+    safe(renderSeason, d);
+    safe(renderHistory, d);
+    safe(renderRewards, d, tiers, cur);
   }
 
   function fail(kind) {
@@ -1093,36 +1230,63 @@
     app.dataset.state = 'error';
   }
 
-  function load() {
+  // silent = фоновое обновление уже показанных данных: не мигает загрузкой, а при сбое молча
+  // оставляет прежние данные (экран ошибки — только если показать вообще нечего).
+  var lastSig = '', lastLoadAt = 0, retried = false;
+  function sigOf(j) { try { return JSON.stringify(j, function (k, v) { return k === 'server_time' ? undefined : v; }); } catch (e) { return ''; } }
+
+  function load(silent) {
     if (busy) return;
-    if (!UID || !SECRET || !/^https?:\/\//i.test(API)) { fail('params'); return; }
+    if (!UID || !SECRET || !/^https?:\/\//i.test(API)) { if (!silent) fail('params'); return; }
     busy = true;
-    app.dataset.state = 'loading';
-    if (!loaded) {
-      var tn = $('tier-name'); tn.classList.remove('muted'); tn.classList.add('sk'); tn.textContent = ''; tn.style.width = '170px';
+    if (!silent) {
+      app.dataset.state = 'loading';
+      if (!loaded) {
+        var tn = $('tier-name'); tn.classList.remove('muted'); tn.classList.add('sk'); tn.textContent = ''; tn.style.width = '170px';
+      }
     }
     var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
     var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 12000);
     var url = API + '/casino/ranks?uid=' + encodeURIComponent(UID) + '&secret=' + encodeURIComponent(SECRET);
+
+    // сетевой сбой первой загрузки: один тихий повтор через 1.5с (сервер мог просто моргнуть), потом экран ошибки
+    function netFail() {
+      if (silent) return;
+      if (!loaded && !retried) { retried = true; setTimeout(function () { load(false); }, 1500); return; }
+      fail('network');
+    }
 
     fetch(url, { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
       .then(function (r) {
         return r.json().catch(function () { return null; }).then(function (j) { return { status: r.status, ok: r.ok, j: j }; });
       })
       .then(function (res) {
-        if (res.status === 401) { fail('unauthorized'); return; }
-        if (!res.ok || !res.j || res.j.ok !== true) { fail('network'); return; }
+        if (res.status === 401) { if (!silent) fail('unauthorized'); return; }
+        if (!res.ok || !res.j || res.j.ok !== true) { netFail(); return; }
+        var sig = sigOf(res.j);
+        lastLoadAt = Date.now();
+        if (silent && loaded && sig === lastSig) {   // ничего не изменилось — не перерисовываем (иначе строки заново «выезжают»)
+          TIME.srv = num(res.j.server_time) || TIME.srv; TIME.perf = performance.now();
+          return;
+        }
+        lastSig = sig;
         loaded = true;
         app.dataset.state = 'ready';
-        render(res.j);
+        try { render(res.j); } catch (e) { try { console.error(e); } catch (_) {} }
         requestAnimationFrame(movePill);
       })
-      .catch(function () { fail('network'); })
+      .catch(function () { netFail(); })
       .then(function () { clearTimeout(timer); busy = false; });
   }
 
-  $('retry').addEventListener('click', load);
-  load();
+  // вернулся в приложение (после матча, из другого чата) — данные могли измениться
+  function refreshSoon() { if (!loaded || busy || document.hidden) return; if (Date.now() - lastLoadAt < 15000) return; load(true); }
+  document.addEventListener('visibilitychange', refreshSoon);
+  window.addEventListener('focus', refreshSoon);
+  setInterval(refreshSoon, 60000);
+
+  $('retry').addEventListener('click', function () { retried = false; load(false); });
+  load(false);
 })();
 </script>
 </body>
