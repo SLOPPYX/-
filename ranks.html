@@ -191,6 +191,24 @@
   .stat.w { --c: var(--up); } .stat.l { --c: var(--down); } .stat.r { --c: var(--accent-light); }
   .stats-note { margin: 10px 4px 24px; font-size: 11.5px; line-height: 1.4; color: var(--text3); text-align: center; }
 
+  /* v301: пламя серии побед на главном экране — тёплые тона нарочно ломают фиолетовую тему, чтобы серия
+     сразу бросалась в глаза (раньше её вообще не было видно вне карточки игрока) */
+  .streak-card { position: relative; display: flex; align-items: center; gap: 16px; margin-bottom: 16px; padding: 14px 18px; border-radius: 20px; overflow: hidden;
+    background: linear-gradient(135deg, rgba(255,140,60,.18), rgba(255,60,40,.05) 55%, rgba(26,15,48,.55)); border: 1px solid rgba(255,140,60,.45);
+    box-shadow: 0 0 30px -12px rgba(255,120,50,.75); transition: opacity .3s, box-shadow .3s, border-color .3s; }
+  .streak-card.off { border-color: var(--border); box-shadow: none; background: rgba(255,255,255,.03); }
+  .streak-fire-wrap { position: relative; flex-shrink: 0; width: 64px; height: 64px; }
+  .streak-drop { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; transform: translate(-50%,-54%);
+    fill: #ffb066; filter: drop-shadow(0 0 10px rgba(255,140,60,.9)); animation: streakPulse 1.7s ease-in-out infinite; }
+  .streak-card.off .streak-drop { fill: rgba(255,255,255,.28); filter: none; animation: none; }
+  @keyframes streakPulse { 0%, 100% { transform: translate(-50%,-54%) scale(1); } 50% { transform: translate(-50%,-54%) scale(1.1); } }
+  .streak-info { min-width: 0; }
+  .streak-num { font-size: 30px; font-weight: 900; letter-spacing: -.02em; line-height: 1; color: #ffcf94; font-variant-numeric: tabular-nums; text-shadow: 0 0 16px rgba(255,140,60,.65); }
+  .streak-num.sk { height: 30px; }
+  .streak-card.off .streak-num { color: var(--text3); text-shadow: none; }
+  .streak-lb { margin-top: 4px; font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text3); }
+  .streak-sub { margin-top: 6px; font-size: 12.5px; font-weight: 700; color: var(--text2); min-height: 16px; }
+
   /* лестница */
   .sec-title { margin: 0 2px 12px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text3); }
   .ladder { list-style: none; }
@@ -848,6 +866,19 @@
     </section>
 
     <section class="data-sec">
+      <div class="streak-card" id="streak-card">
+        <div class="streak-fire-wrap" id="streak-fire-wrap">
+          <svg class="streak-drop" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c1.7 3-1.5 4.4-1.5 7.5a3.5 3.5 0 0 0 7 0c0-1-.4-1.9-1-2.4.6 1.7-.7 2.9-1.8 2.9a1.8 1.8 0 0 1-1.8-1.8c0-1.9 2-3 2-5.3a4.2 4.2 0 0 0-2.9-4.9zM9 15a3 3 0 0 0 6 0c0-.6-.2-1-.4-1.4-.3.9-1 1.4-1.7 1.4-1 0-1.5-.7-1.4-1.5-1 .3-2.5 1-2.5 1.5z"/></svg>
+        </div>
+        <div class="streak-info">
+          <div class="streak-num sk" id="streak-num" style="width:36px"></div>
+          <div class="streak-lb">Серия побед подряд</div>
+          <div class="streak-sub" id="streak-sub"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="data-sec">
       <div class="stats">
         <div class="stat w"><b id="st-w" class="sk" style="width:44px"></b><span>Победы</span></div>
         <div class="stat l"><b id="st-l" class="sk" style="width:44px"></b><span>Поражения</span></div>
@@ -1416,6 +1447,26 @@ window.addEventListener('error', function (e) {
     return box;
   }
 
+  // v301: пламя серии побед на главном экране — уровень зависит от текущей серии, а не от ранга,
+  // поэтому цвет нарочно тёплый (не фиолетовый тира), чтобы серию было видно с первого взгляда.
+  function streakLevel(n) { return n <= 0 ? 0 : n < 3 ? 1 : n < 5 ? 2 : n < 7 ? 3 : n < 10 ? 4 : n < 15 ? 5 : 6; }
+  function renderStreak(d) {
+    var cur = d.streak == null ? null : num(d.streak);       // старый бот серию не шлёт — «—», а не 0 (см. карточку игрока)
+    var best = d.best_streak == null ? null : num(d.best_streak);
+    var wrap = $('streak-fire-wrap'), card = $('streak-card'), numEl = $('streak-num');
+    var old = wrap.querySelector('.fire'); if (old) old.parentNode.removeChild(old);
+    unsk(numEl);
+    var lvl = streakLevel(cur || 0);
+    if (lvl > 0) wrap.insertBefore(miniFire(64, lvl, '255,120,50'), wrap.firstChild);   // вставляем ПЕРЕД капелькой — огонь позади, капелька поверх
+    card.classList.toggle('off', !cur);
+    numEl.textContent = cur == null ? '—' : fmt(cur);
+    var sub = $('streak-sub');
+    if (cur == null) sub.textContent = '';
+    else if (!cur) sub.textContent = best ? 'Лучшая была ' + fmt(best) + ' — выиграй два матча подряд, чтобы разжечь снова' : 'Выиграй два матча подряд — и загорится';
+    else if (best && best > cur) sub.textContent = 'Лучшая серия: ' + fmt(best);
+    else sub.textContent = 'Личный рекорд! 🏆';
+  }
+
   function renderRank(d, tiers, cur) {
     var season = $('season-text'); unsk(season); setSeason(season, d);
 
@@ -1464,6 +1515,7 @@ window.addEventListener('error', function (e) {
     unsk(sw); unsk(sl); unsk(sr);
     animNum(sw, 0, w, fmt, 1100); animNum(sl, 0, l, fmt, 1100);
     if (games) animNum(sr, 0, Math.round(w / games * 100), function (v) { return v + '%'; }, 1100); else sr.textContent = '—';
+    renderStreak(d);
 
     var ladder = $('ladder');
     ladder.textContent = '';
@@ -2576,7 +2628,7 @@ window.addEventListener('error', function (e) {
   }
 
   // v295: причина последнего сбоя показывается мелким шрифтом на экране ошибки — по скриншоту видно, что именно сломалось
-  var VER = 'v300', lastErr = '', failKind = '', staleKind = '';
+  var VER = 'v301', lastErr = '', failKind = '', staleKind = '';
 
   function setConn(text) { var c = $('conn'); c.textContent = text || ''; c.classList.toggle('on', !!text); }
   function showStale(kind) {
