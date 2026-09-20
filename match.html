@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Результат матча</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #000;
+    --card: rgba(255,255,255,.04);
+    --border: rgba(139,92,246,.2);
+    --accent: #8b5cf6;
+    --accent-light: #c4b5fd;
+    --accent-dark: #6d28d9;
+    --up: #00e6a0;
+    --down: #ff3b5c;
+    --warn: #ffc94a;
+    --text: #f5f1ff;
+    --text2: #a79dbd;
+    --text3: #6b6280;
+  }
+  html, body { background: var(--bg); color: var(--text); overflow-x: hidden; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  [hidden] { display: none !important; }
+
+  /* ─── Живой фон (тот же, что в «Рангах») ─── */
+  .aurora { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .aurora i { position: absolute; border-radius: 50%; will-change: transform; }
+  .aurora i:nth-child(1) { width: 460px; height: 340px; top: -150px; left: 50%; margin-left: -230px; background: radial-gradient(ellipse, rgba(139,92,246,.30), transparent 70%); animation: drift1 16s ease-in-out infinite; }
+  .aurora i:nth-child(2) { width: 380px; height: 380px; bottom: -160px; left: -110px; background: radial-gradient(circle, rgba(109,40,217,.26), transparent 70%); animation: drift2 20s ease-in-out infinite; }
+  .aurora i:nth-child(3) { width: 320px; height: 320px; top: 40%; right: -140px; background: radial-gradient(circle, rgba(139,92,246,.16), transparent 70%); animation: drift3 24s ease-in-out infinite; }
+  .grain { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 0; pointer-events: none; opacity: .5;
+    background-image: radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px); background-size: 26px 26px;
+    -webkit-mask: linear-gradient(180deg, #000, transparent 55%); mask: linear-gradient(180deg, #000, transparent 55%); }
+  @keyframes drift1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(40px,26px); } }
+  @keyframes drift2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(50px,-34px); } }
+  @keyframes drift3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-44px,30px); } }
+
+  .app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto;
+    padding: calc(20px + env(safe-area-inset-top, 0px)) 16px calc(28px + env(safe-area-inset-bottom, 0px)); }
+
+  /* ─── Шапка ─── */
+  .hd { display: flex; align-items: center; gap: 13px; animation: rise .55s cubic-bezier(.2,.8,.2,1) both; }
+  .hd-ic { width: 52px; height: 52px; flex-shrink: 0; overflow: visible; -webkit-filter: drop-shadow(0 0 10px rgba(139,92,246,.65)); filter: drop-shadow(0 0 10px rgba(139,92,246,.65)); animation: float 4s ease-in-out infinite; }
+  .hd-laser { animation: laser 2.6s ease-in-out infinite; }
+  .hd-w { font-size: 25px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; line-height: 1.1;
+    background: linear-gradient(100deg, #ffffff 0%, #efe7ff 28%, #b79cff 50%, #ffffff 70%, #d7c8ff 100%) 0 0 / 250% 100%;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+    -webkit-filter: drop-shadow(0 0 12px rgba(139,92,246,.5)); filter: drop-shadow(0 0 12px rgba(139,92,246,.5)); animation: sheen 6s linear infinite; }
+  .hd-s { margin-top: 5px; font-size: 12.5px; color: var(--text2); line-height: 1.35; }
+  @keyframes sheen { to { background-position: 250% 0; } }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+  @keyframes laser { 0%,100% { transform: translateY(-9px); opacity: .25; } 50% { transform: translateY(9px); opacity: 1; } }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @keyframes pop { 0% { opacity: 0; transform: scale(.78); } 60% { transform: scale(1.06); } 100% { opacity: 1; transform: none; } }
+
+  /* ─── Полоса матча ─── */
+  .mstrip { margin-top: 16px; display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 18px;
+    background: linear-gradient(90deg, rgba(139,92,246,.14), rgba(255,255,255,.03)); border: 1px solid var(--border); animation: rise .5s .05s cubic-bezier(.2,.8,.2,1) both; }
+  .mstrip .vs { font-size: 11px; font-weight: 900; letter-spacing: .12em; color: var(--accent-light); padding: 3px 8px; border-radius: 8px; background: rgba(139,92,246,.18); }
+  .mstrip .nm { flex: 1; min-width: 0; font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 800; padding: 5px 10px; border-radius: 999px; color: var(--warn); background: rgba(255,201,74,.1); border: 1px solid rgba(255,201,74,.3); white-space: nowrap; }
+
+  /* ─── Шаги ─── */
+  .steps { list-style: none; margin-top: 14px; display: flex; gap: 6px; animation: rise .5s .1s cubic-bezier(.2,.8,.2,1) both; }
+  .steps li { flex: 1; min-width: 0; text-align: center; font-size: 10.5px; font-weight: 800; color: var(--text3); letter-spacing: .02em; }
+  .steps li i { display: block; height: 4px; border-radius: 3px; margin-bottom: 6px; background: rgba(255,255,255,.08); overflow: hidden; position: relative; }
+  .steps li.done { color: var(--text2); } .steps li.done i { background: var(--accent); }
+  .steps li.on { color: var(--accent-light); } .steps li.on i { background: rgba(139,92,246,.35); }
+  .steps li.on i::after { content: ''; position: absolute; top: 0; bottom: 0; width: 45%; background: linear-gradient(90deg, transparent, #c4b5fd, transparent); animation: slide 1.4s linear infinite; }
+  @keyframes slide { from { left: -45%; } to { left: 100%; } }
+
+  /* ─── Общие блоки ─── */
+  .view { margin-top: 16px; animation: rise .5s cubic-bezier(.2,.8,.2,1) both; }
+  .card { border-radius: 22px; padding: 18px; background: var(--card); border: 1px solid var(--border); }
+  .center { text-align: center; }
+  .big-ic { width: 76px; height: 76px; margin: 2px auto 12px; display: block; overflow: visible; }
+  .t1 { font-size: 19px; font-weight: 900; line-height: 1.2; }
+  .t2 { margin-top: 8px; font-size: 13.5px; line-height: 1.5; color: var(--text2); }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; padding: 13px 18px; border-radius: 16px; font-size: 15.5px; font-weight: 900; letter-spacing: .01em; }
+  .btn.pri { color: #fff; background: linear-gradient(100deg, #7c3aed, #a78bfa 55%, #7c3aed) 0 0 / 200% 100%; box-shadow: 0 8px 28px -8px rgba(139,92,246,.85); animation: sheen 5s linear infinite; }
+  .btn.pri:active { transform: scale(.98); }
+  .btn.ghost { color: var(--accent-light); background: rgba(139,92,246,.1); border: 1px solid rgba(139,92,246,.3); }
+  .btn[disabled] { opacity: .5; }
+  .btn + .btn { margin-top: 10px; }
+  .btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+  /* Ошибка */
+  .err { margin-top: 14px; padding: 12px 14px; border-radius: 16px; font-size: 13.5px; line-height: 1.45; color: #ffd0d8; background: rgba(255,59,92,.1); border: 1px solid rgba(255,59,92,.4); animation: pop .35s both; }
+  .err b { color: #fff; }
+
+  /* Предупреждение «соперник уже прислал» */
+  .alert { margin-bottom: 12px; padding: 12px 14px; border-radius: 16px; display: flex; align-items: center; gap: 12px; background: linear-gradient(90deg, rgba(255,201,74,.14), rgba(255,201,74,.04)); border: 1px solid rgba(255,201,74,.4); }
+  .alert.hot { background: linear-gradient(90deg, rgba(255,59,92,.16), rgba(255,59,92,.04)); border-color: rgba(255,59,92,.5); }
+  .alert .cd { font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; color: var(--warn); min-width: 66px; }
+  .alert.hot .cd { color: var(--down); }
+  .alert p { font-size: 12.5px; line-height: 1.4; color: var(--text2); }
+  .alert p b { color: var(--text); }
+
+  /* ─── Зона загрузки ─── */
+  .drop { position: relative; display: block; width: 100%; padding: 26px 18px 22px; border-radius: 24px; text-align: center; cursor: pointer;
+    background: linear-gradient(180deg, rgba(139,92,246,.12), rgba(139,92,246,.03)); border: 2px dashed rgba(167,139,250,.45); transition: border-color .2s, background .2s, transform .15s; }
+  .drop.over { border-color: #c4b5fd; background: rgba(139,92,246,.22); transform: scale(1.01); }
+  .drop:active { transform: scale(.985); }
+  .drop .big-ic { -webkit-filter: drop-shadow(0 0 14px rgba(139,92,246,.7)); filter: drop-shadow(0 0 14px rgba(139,92,246,.7)); animation: float 3.6s ease-in-out infinite; }
+  .drop .alt { margin-top: 12px; font-size: 12px; color: var(--text3); line-height: 1.5; }
+  .tips { margin-top: 14px; padding: 4px 4px 0; list-style: none; }
+  .tips li { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; font-size: 12.5px; line-height: 1.4; color: var(--text2); }
+  .tips li svg { width: 17px; height: 17px; flex-shrink: 0; margin-top: 1px; stroke: var(--accent-light); }
+  .tips li.warn svg { stroke: var(--warn); }
+
+  /* ─── Предпросмотр и сканер ─── */
+  .shot { position: relative; border-radius: 20px; overflow: hidden; background: #0b0716; border: 1px solid var(--border); }
+  .shot img { display: block; width: 100%; max-height: 46vh; object-fit: contain; background: #000; }
+  .shot .meta { position: absolute; left: 10px; bottom: 10px; padding: 4px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; color: var(--text2); background: rgba(0,0,0,.6); border: 1px solid rgba(255,255,255,.12); }
+  .scanning .shot img { -webkit-filter: brightness(.7) saturate(.8); filter: brightness(.7) saturate(.8); }
+  .beam { position: absolute; left: 0; right: 0; top: 0; height: 64px; pointer-events: none; display: none;
+    background: linear-gradient(180deg, transparent, rgba(167,139,250,.55), rgba(196,181,253,.9) 96%, #fff); border-bottom: 2px solid #fff; box-shadow: 0 6px 26px 4px rgba(167,139,250,.7);
+    animation: beam 1.9s ease-in-out infinite; }
+  .scanning .beam { display: block; }
+  @keyframes beam { 0% { top: -64px; } 100% { top: 100%; } }   /* проценты от высоты рамки, а не экрана — иначе луч уезжал за низ картинки */
+  .corner { position: absolute; width: 22px; height: 22px; border: 3px solid #c4b5fd; display: none; }
+  .scanning .corner { display: block; }
+  .corner.a { top: 8px; left: 8px; border-right: 0; border-bottom: 0; border-radius: 8px 0 0 0; }
+  .corner.b { top: 8px; right: 8px; border-left: 0; border-bottom: 0; border-radius: 0 8px 0 0; }
+  .corner.c { bottom: 8px; left: 8px; border-right: 0; border-top: 0; border-radius: 0 0 0 8px; }
+  .corner.d { bottom: 8px; right: 8px; border-left: 0; border-top: 0; border-radius: 0 0 8px 0; }
+  .sc-steps { list-style: none; margin-top: 14px; }
+  .sc-steps li { display: flex; align-items: center; gap: 11px; padding: 7px 2px; font-size: 13.5px; color: var(--text3); font-weight: 700; transition: color .25s; }
+  .sc-steps li .dot { width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; border: 2px solid rgba(255,255,255,.14); display: grid; place-items: center; transition: all .25s; }
+  .sc-steps li .dot svg { width: 12px; height: 12px; stroke: #04140e; opacity: 0; }
+  .sc-steps li.act { color: var(--text); } .sc-steps li.act .dot { border-color: #c4b5fd; border-top-color: transparent; animation: spin .8s linear infinite; }
+  .sc-steps li.ok { color: var(--text2); } .sc-steps li.ok .dot { background: var(--up); border-color: var(--up); } .sc-steps li.ok .dot svg { opacity: 1; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── Карточка результата ─── */
+  .vcard { --c: 167,139,250; text-align: center; padding: 22px 16px 18px; border-radius: 24px; background: linear-gradient(180deg, rgba(var(--c), .16), rgba(var(--c), .04)); border: 1px solid rgba(var(--c), .5); box-shadow: 0 0 44px -14px rgba(var(--c), .8); animation: pop .55s both; }
+  .vcard.win { --c: 0,230,160; } .vcard.loss { --c: 255,59,92; } .vcard.unk { --c: 255,201,74; }
+  .vcard .ring { width: 86px; height: 86px; margin: 0 auto 12px; border-radius: 50%; display: grid; place-items: center; background: rgba(var(--c), .14); border: 2px solid rgba(var(--c), .7); box-shadow: 0 0 30px -4px rgba(var(--c), .8); }
+  .vcard .ring svg { width: 44px; height: 44px; stroke: rgb(var(--c)); }
+  .vcard .vt { font-size: 26px; font-weight: 900; letter-spacing: .06em; color: rgb(var(--c)); }
+  .vcard .vs2 { margin-top: 8px; font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .badges { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 800; color: var(--text2); background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); }
+  .badge.good { color: var(--up); background: rgba(0,230,160,.1); border-color: rgba(0,230,160,.35); }
+  .badge.bad { color: var(--warn); background: rgba(255,201,74,.1); border-color: rgba(255,201,74,.35); }
+  .badge.rp-up { color: var(--up); } .badge.rp-down { color: var(--down); }
+
+  .wait { margin-top: 14px; padding: 16px; border-radius: 20px; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; gap: 14px; }
+  .wait .cdw { position: relative; width: 74px; height: 74px; flex-shrink: 0; }
+  .wait .cdw svg { width: 74px; height: 74px; transform: rotate(-90deg); }
+  .wait .cdw circle { fill: none; stroke-width: 6; }
+  .wait .cdw .bgc { stroke: rgba(255,255,255,.08); } .wait .cdw .fgc { stroke: var(--accent-light); stroke-linecap: round; transition: stroke-dashoffset .5s linear; }
+  .wait .cdw b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 15px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .wait p { font-size: 13px; line-height: 1.5; color: var(--text2); }
+  .wait p b { color: var(--text); display: block; font-size: 15px; margin-bottom: 3px; }
+  .pulse-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--up); margin-right: 7px; box-shadow: 0 0 10px var(--up); animation: blink 1.3s ease-in-out infinite; vertical-align: 1px; }
+  @keyframes blink { 50% { opacity: .25; } }
+
+  .sk { border-radius: 14px; background: linear-gradient(100deg, rgba(255,255,255,.04) 30%, rgba(255,255,255,.1) 50%, rgba(255,255,255,.04) 70%) 0 0 / 250% 100%; animation: sheen 1.6s linear infinite; }
+
+  .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(20px); z-index: 20; max-width: 88vw; padding: 11px 16px; border-radius: 14px; font-size: 13px; font-weight: 700; color: #fff; background: rgba(30,20,56,.96); border: 1px solid rgba(167,139,250,.5); opacity: 0; pointer-events: none; transition: all .3s; }
+  .toast.show { opacity: 1; transform: translateX(-50%); }
+  .vh { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; pointer-events: none; }
+  .foot { margin-top: 18px; text-align: center; font-size: 11px; color: var(--text3); }
+  .fatal { display: none; margin: 40px 16px; padding: 18px; border-radius: 16px; background: rgba(255,59,92,.1); border: 1px solid rgba(255,59,92,.4); color: #ffd0d8; font-size: 14px; line-height: 1.5; position: relative; z-index: 2; }
+</style>
+</head>
+<body>
+<div class="aurora"><i></i><i></i><i></i></div><div class="grain"></div>
+
+<div class="fatal" id="fatal"><b id="fatal-t">Страница сломалась при запуске</b><br><span id="fatal-d"></span></div>
+
+<main class="app" id="app">
+  <header class="hd">
+    <svg class="hd-ic" viewBox="0 0 52 52" aria-hidden="true">
+      <defs><linearGradient id="gA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c4b5fd"/><stop offset="1" stop-color="#6d28d9"/></linearGradient>
+      <clipPath id="cpA"><rect x="9" y="9" width="34" height="34" rx="7"/></clipPath></defs>
+      <rect x="6" y="6" width="40" height="40" rx="11" fill="rgba(139,92,246,.14)" stroke="url(#gA)" stroke-width="2.2"/>
+      <path d="M6 17V13a7 7 0 0 1 7-7h4M35 6h4a7 7 0 0 1 7 7v4M46 35v4a7 7 0 0 1-7 7h-4M17 46h-4a7 7 0 0 1-7-7v-4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" opacity=".9"/>
+      <g clip-path="url(#cpA)"><rect class="hd-laser" x="9" y="24" width="34" height="3" rx="1.5" fill="#e9ddff"/></g>
+      <path d="M19 27l5 5 10-11" fill="none" stroke="#00e6a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <h1 class="hd-w" id="ttl">Результат матча</h1>
+      <div class="hd-s" id="sub">Загрузи один скриншот — сканер прочитает исход</div>
+    </div>
+  </header>
+
+  <section class="mstrip" id="mstrip" hidden>
+    <span class="vs">VS</span><span class="nm" id="m-nm">—</span>
+    <span class="chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffc94a" stroke-width="2.4" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h3.7a1.8 1.8 0 0 1 0 3.6h-2.6a1.8 1.8 0 0 0 0 3.6H14.5" stroke-linecap="round"/></svg><span id="m-stake">—</span></span>
+  </section>
+
+  <ol class="steps" id="steps"><li><i></i><span></span></li><li><i></i><span></span></li><li><i></i><span></span></li><li><i></i><span></span></li></ol>
+
+  <div class="err" id="err" hidden></div>
+
+  <!-- Загрузка -->
+  <section class="view" id="v-load"><div class="sk" style="height:190px"></div><div class="sk" style="height:52px;margin-top:12px"></div></section>
+
+  <!-- Нет матча -->
+  <section class="view" id="v-none" hidden>
+    <div class="card center">
+      <svg class="big-ic" viewBox="0 0 64 64" fill="none" stroke="#a79dbd" stroke-width="3" stroke-linecap="round" aria-hidden="true"><circle cx="32" cy="32" r="24"/><path d="M32 20v13M32 42v1"/></svg>
+      <div class="t1" id="none-t"></div><div class="t2" id="none-d"></div>
+    </div>
+    <div style="margin-top:12px"><button class="btn ghost" type="button" data-close></button></div>
+  </section>
+
+  <!-- Комнаты ещё нет -->
+  <section class="view" id="v-room" hidden>
+    <div class="card center">
+      <svg class="big-ic" viewBox="0 0 64 64" fill="none" stroke="#ffc94a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="14" y="26" width="36" height="26" rx="6"/><path d="M22 26v-6a10 10 0 0 1 20 0v6M32 36v6"/></svg>
+      <div class="t1" id="room-t"></div><div class="t2" id="room-d"></div>
+    </div>
+    <div style="margin-top:12px"><button class="btn ghost" type="button" data-close></button></div>
+  </section>
+
+  <!-- Загрузка скриншота -->
+  <section class="view" id="v-up" hidden>
+    <div class="alert" id="up-alert" hidden><div class="cd" id="up-cd">4:00</div><p id="up-alert-t"></p></div>
+
+    <label class="drop" id="drop" for="file">
+      <svg class="big-ic" viewBox="0 0 64 64" fill="none" stroke="#c4b5fd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="14" width="48" height="36" rx="8"/><circle cx="32" cy="32" r="9"/><path d="M22 14l3-5h14l3 5"/><circle cx="47" cy="22" r="1.6" fill="#c4b5fd"/></svg>
+      <div class="t1" id="drop-t"></div>
+      <div class="t2" id="drop-d"></div>
+      <div class="alt" id="drop-alt"></div>
+    </label>
+    <input type="file" id="file" accept="image/*" class="vh">
+
+    <div id="prev" hidden>
+      <div class="shot"><img id="prev-img" alt=""><span class="meta" id="prev-meta"></span></div>
+      <div style="margin-top:12px">
+        <button class="btn pri" type="button" id="btn-send"></button>
+        <button class="btn ghost" type="button" id="btn-swap"></button>
+      </div>
+    </div>
+
+    <ul class="tips" id="tips"></ul>
+  </section>
+
+  <!-- Сканирование -->
+  <section class="view" id="v-scan" hidden>
+    <div class="scanning" id="scan-box">
+      <div class="shot"><img id="scan-img" alt=""><i class="beam"></i><i class="corner a"></i><i class="corner b"></i><i class="corner c"></i><i class="corner d"></i></div>
+    </div>
+    <ul class="sc-steps" id="sc-steps"></ul>
+  </section>
+
+  <!-- Мой результат принят: ждём соперника / подведение итога -->
+  <section class="view" id="v-wait" hidden>
+    <div class="vcard unk" id="w-card">
+      <div class="ring" id="w-ring"></div>
+      <div class="vt" id="w-vt"></div>
+      <div class="vs2" id="w-vs"></div>
+      <div class="badges" id="w-badges"></div>
+    </div>
+    <div class="wait" id="w-wait">
+      <div class="cdw"><svg viewBox="0 0 74 74"><circle class="bgc" cx="37" cy="37" r="31"/><circle class="fgc" id="w-arc" cx="37" cy="37" r="31" stroke-dasharray="194.8" stroke-dashoffset="0"/></svg><b id="w-cd">4:00</b></div>
+      <p id="w-wt"></p>
+    </div>
+    <div style="margin-top:12px"><button class="btn ghost" type="button" data-close></button></div>
+  </section>
+
+  <!-- Матч закрыт -->
+  <section class="view" id="v-final" hidden>
+    <div class="vcard unk" id="f-card">
+      <div class="ring" id="f-ring"></div>
+      <div class="vt" id="f-vt"></div>
+      <div class="vs2" id="f-vs"></div>
+      <div class="badges" id="f-badges"></div>
+    </div>
+    <div style="margin-top:12px"><button class="btn pri" type="button" data-close></button></div>
+  </section>
+
+  <div class="foot" id="foot"></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+window.addEventListener('error', function (e) {
+  try {
+    document.getElementById('app').style.display = 'none';
+    var f = document.getElementById('fatal'); f.style.display = 'block';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой приложение заново. Если повторится — пришли скриншот этого экрана. Причина: ' + String((e && e.message) || 'ошибка') + ' · v307';
+  } catch (_) {}
+}, true);
+</script>
+<script>
+/* SDK Telegram грузим НЕ блокируя страницу (урок v295 в «Рангах»): если telegram.org медленный, страница всё равно стартует. */
+(function () {
+  var s = document.createElement('script'); s.src = 'https://telegram.org/js/telegram-web-app.js'; s.async = true;
+  s.onload = function () { try { if (window.__mtTg) window.__mtTg(); } catch (e) {} };
+  (document.head || document.documentElement).appendChild(s);
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  var VER = 'v307';
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ── Telegram и параметры из ссылки бота ─────────────────────────────
+  var tg = null, INIT = '';
+  function tgInit() {
+    try { tg = window.Telegram && window.Telegram.WebApp; if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#000000'); tg.setBackgroundColor('#000000'); } } catch (e) {}
+    try { if (tg && !INIT && tg.initData) INIT = tg.initData; } catch (e) {}
+  }
+  var q = new URLSearchParams(location.search);
+  var UID = q.get('user_id') || q.get('uid') || '';
+  var SECRET = q.get('api_secret') || q.get('secret') || '';
+  var API = (q.get('api_url') || '').trim();
+  if (API && !/^https?:\/\//i.test(API)) { try { API = decodeURIComponent(API); } catch (e) {} }
+  API = API.replace(/\/+$/, '');
+  try { INIT = new URLSearchParams(location.hash.replace(/^#/, '')).get('tgWebAppData') || ''; } catch (e) {}
+  if (!UID && INIT) { try { var uu = JSON.parse(new URLSearchParams(INIT).get('user') || '{}'); if (uu && uu.id) UID = String(uu.id); } catch (e) {} }
+  var useInit = !SECRET && !!INIT;
+  tgInit(); if (!tg) window.__mtTg = tgInit;
+  var LANG = (q.get('lang') === 'en') ? 'en' : 'ru';
+  document.documentElement.lang = LANG;
+
+  // ── Тексты ──────────────────────────────────────────────────────────
+  var TX = {
+    ru: {
+      ttl: 'Результат матча', sub: 'Загрузи один скриншот — сканер прочитает исход',
+      steps: ['Комната', 'Скриншот', 'Соперник', 'Итог'],
+      close: 'Вернуться в чат', foot: 'Читаем надпись VICTORY / BOOYAH / ПОРАЖЕНИЕ и ники на экране',
+      none_t: 'Нет активного матча', none_d: 'Скриншот можно отправить только во время матча 1vs1. Найди соперника в боте.',
+      room_t: 'Комната ещё не создана', room_d: 'Сначала создай комнату в боте — кнопка «🎮 Комната». Когда сыграете, возвращайся сюда.',
+      drop_t: 'Загрузи скриншот', drop_d: 'Финальный экран матча Free Fire с надписью VICTORY / BOOYAH или ПОРАЖЕНИЕ',
+      drop_alt_touch: 'Нажми, чтобы выбрать из галереи', drop_alt_pc: 'Нажми, перетащи файл сюда или вставь из буфера (Ctrl+V)',
+      tip1: 'Принимается только ОДИН скриншот на игрока — проверь, что он верный.',
+      tip2: 'На экране должна быть видна надпись об исходе и ники игроков.',
+      tip3: 'Чужой или старый скриншот сканер увидит: коды и ники матча сверяются.',
+      send: 'Отправить результат', swap: 'Выбрать другой',
+      alert_opp: 'Соперник уже прислал скриншот. Успей отправить свой — иначе <b>засчитается поражение</b>.',
+      scan: ['Загрузка изображения', 'Чтение текста', 'Поиск маркеров исхода', 'Проверка результата'],
+      win: 'ПОБЕДА', loss: 'ПОРАЖЕНИЕ', unk: 'НЕ ОПРЕДЕЛЁН',
+      win_d: 'Скриншот принят.', loss_d: 'Скриншот принят.',
+      unk_d: 'Скриншот принят, исход определит администратор.',
+      conflict_d: 'На экране противоречивые данные — матч передан администратору.',
+      noai_d: 'Автоматическое распознавание сейчас недоступно — скриншот увидит администратор.',
+      nick_ok: 'Ник подтверждён', nick_bad: 'Ники на экране не найдены',
+      wait_t: 'Ждём скриншот соперника', wait_d: 'У него есть время до отсчёта. Не пришлёт — тебе засчитается победа. Можно закрыть окно: итог придёт в чат.',
+      review_t: 'Определяю победителя…', review_d: 'Оба скриншота получены. Если данные спорные — решит администратор, итог придёт в чат.',
+      wait_over: 'Время вышло — подвожу итог…',
+      fin_win: 'ПОБЕДА', fin_loss: 'ПОРАЖЕНИЕ', fin_none: 'МАТЧ ЗАВЕРШЁН',
+      fin_none_d: 'Итог смотри в чате с ботом.',
+      r_screenshot: 'Результат подтверждён скриншотами', r_forfeit: 'Соперник сдался', r_timeout: 'Соперник не прислал скриншот вовремя', r_admin: 'Решение администратора',
+      stake: 'Ставка', rp: 'RP',
+      e_bad_image: 'Не удалось прочитать картинку. Пришли обычный скриншот (PNG или JPG).',
+      e_big: 'Картинка слишком большая. Сделай скриншот экрана, а не фото файла.',
+      e_not_ff: '<b>Это не экран результата Free Fire.</b> Нужен финальный экран матча с надписью VICTORY / BOOYAH или ПОРАЖЕНИЕ. Попробуй другой скриншот — этот не засчитан.',
+      e_no_match: 'Матч уже завершён или отменён.', e_room: 'Комната ещё не создана — сначала создай её в боте.',
+      e_pending: 'Твой скриншот уже обрабатывается — подожди пару секунд.', e_sent: 'Твой скриншот уже принят. Второй система не берёт.',
+      e_rate: 'Не так быстро — подожди пару секунд и нажми ещё раз.',
+      e_auth: 'Доступ не подтверждён — открой приложение заново кнопкой в боте.',
+      e_net: 'Нет связи с сервером — проверь интернет и нажми ещё раз.',
+      e_net_up: 'Связь оборвалась. Проверяю, дошёл ли скриншот…',
+      e_404: 'Бот ещё не обновлён — приём скриншотов из приложения пока недоступен. Пришли скриншот в чат скрепкой 📎.',
+      e_srv: 'Ошибка на сервере. Попробуй ещё раз или пришли скриншот в чат скрепкой 📎.',
+      e_blocked: 'Твой аккаунт не может отправлять результаты.',
+      e_read: 'Не удалось открыть файл. Выбери обычный скриншот (PNG или JPG).',
+      state_fail: 'Не удалось получить данные матча. Проверь интернет.',
+      sending: 'Отправляю…', min: 'мин'
+    },
+    en: {
+      ttl: 'Match result', sub: 'Upload one screenshot — the scanner reads the outcome',
+      steps: ['Room', 'Screenshot', 'Opponent', 'Result'],
+      close: 'Back to chat', foot: 'Reads VICTORY / BOOYAH / DEFEAT and the nicknames on the screen',
+      none_t: 'No active match', none_d: 'You can send a screenshot only during a 1vs1 match. Find an opponent in the bot.',
+      room_t: 'The room is not created yet', room_d: 'Create the room in the bot first — the "🎮 Room" button. Come back here after you play.',
+      drop_t: 'Upload a screenshot', drop_d: 'The Free Fire final screen with VICTORY / BOOYAH or DEFEAT',
+      drop_alt_touch: 'Tap to pick from your gallery', drop_alt_pc: 'Click, drop a file here, or paste from clipboard (Ctrl+V)',
+      tip1: 'Only ONE screenshot per player is accepted — make sure it is the right one.',
+      tip2: 'The outcome text and the players\' nicknames should be visible.',
+      tip3: 'Old or foreign screenshots are caught: match codes and nicknames are cross-checked.',
+      send: 'Send result', swap: 'Choose another',
+      alert_opp: 'Your opponent already sent their screenshot. Send yours in time — otherwise <b>you lose</b>.',
+      scan: ['Loading image', 'Reading text', 'Scanning for outcome markers', 'Verifying result'],
+      win: 'VICTORY', loss: 'DEFEAT', unk: 'UNDETERMINED',
+      win_d: 'Screenshot accepted.', loss_d: 'Screenshot accepted.',
+      unk_d: 'Screenshot accepted, an admin will decide the outcome.',
+      conflict_d: 'Conflicting data on the screen — the match was forwarded to the admin.',
+      noai_d: 'Automatic recognition is unavailable right now — an admin will review the screenshot.',
+      nick_ok: 'Nickname verified', nick_bad: 'Nicknames not found on screen',
+      wait_t: 'Waiting for the opponent\'s screenshot', wait_d: 'They have until the countdown ends. If they do not send it, you win. You can close this window — the result comes to the chat.',
+      review_t: 'Determining the winner…', review_d: 'Both screenshots received. If the data is disputed, an admin will decide — you will get the result in the chat.',
+      wait_over: 'Time is up — finalizing…',
+      fin_win: 'VICTORY', fin_loss: 'DEFEAT', fin_none: 'MATCH FINISHED',
+      fin_none_d: 'See the result in the bot chat.',
+      r_screenshot: 'Result confirmed by screenshots', r_forfeit: 'Opponent forfeited', r_timeout: 'Opponent did not send a screenshot in time', r_admin: 'Admin decision',
+      stake: 'Stake', rp: 'RP',
+      e_bad_image: 'Could not read the image. Send a regular screenshot (PNG or JPG).',
+      e_big: 'The image is too large. Take a screenshot instead of a photo of a file.',
+      e_not_ff: '<b>This is not a Free Fire result screen.</b> Use the final match screen showing VICTORY / BOOYAH or DEFEAT. Try another screenshot — this one was not counted.',
+      e_no_match: 'The match is already finished or cancelled.', e_room: 'The room is not created yet — create it in the bot first.',
+      e_pending: 'Your screenshot is already being processed — wait a couple of seconds.', e_sent: 'Your screenshot was already accepted. A second one is not allowed.',
+      e_rate: 'Not so fast — wait a couple of seconds and try again.',
+      e_auth: 'Access not confirmed — reopen the app with the button in the bot.',
+      e_net: 'No connection to the server — check your internet and try again.',
+      e_net_up: 'Connection dropped. Checking whether the screenshot arrived…',
+      e_404: 'The bot is not updated yet — uploading from the app is unavailable. Send the screenshot in chat with the 📎 icon.',
+      e_srv: 'Server error. Try again or send the screenshot in chat with the 📎 icon.',
+      e_blocked: 'Your account cannot submit results.',
+      e_read: 'Could not open the file. Pick a regular screenshot (PNG or JPG).',
+      state_fail: 'Could not load the match data. Check your internet.',
+      sending: 'Sending…', min: 'min'
+    }
+  };
+  var L = TX[LANG];
+
+  // ── Вспомогательное ─────────────────────────────────────────────────
+  var S = { st: null, view: 'load', shot: null, busy: false, offset: 0, pollT: 0, scanT: [], tick: 0, total: 240, lastVerdict: null };
+  function haptic(kind) { try { tg && tg.HapticFeedback && (kind ? tg.HapticFeedback.notificationOccurred(kind) : tg.HapticFeedback.selectionChanged()); } catch (e) {} }
+  function fmt(ms) { var s = Math.max(0, Math.ceil(ms / 1000)); var m = Math.floor(s / 60); s = s % 60; return m + ':' + (s < 10 ? '0' : '') + s; }
+  function num(n) { return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var toastT = 0;
+  function toast(t) { var el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { el.classList.remove('show'); }, 2800); }
+  function showErr(html) { var e = $('err'); if (!html) { e.hidden = true; return; } e.innerHTML = html; e.hidden = false; }
+  function closeApp() { try { if (tg && tg.close) { tg.close(); return; } } catch (e) {} try { history.back(); } catch (e2) {} }
+
+  var ICON = {
+    win: '<svg viewBox="0 0 44 44" fill="none" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 23l9 9 17-19"/></svg>',
+    loss: '<svg viewBox="0 0 44 44" fill="none" stroke-width="4.5" stroke-linecap="round"><path d="M11 11l22 22M33 11L11 33"/></svg>',
+    unk: '<svg viewBox="0 0 44 44" fill="none" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 16a7 7 0 1 1 10 6.3c-2 1-3 2.2-3 4.2M22 34v.5"/></svg>',
+    tip: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>',
+    warn: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3zM12 10v4M12 17v.5"/></svg>'
+  };
+
+  // ── Тексты в разметку ───────────────────────────────────────────────
+  function fillStatic() {
+    document.title = L.ttl; $('ttl').textContent = L.ttl; $('sub').textContent = L.sub;
+    var lis = $('steps').children; for (var i = 0; i < 4; i++) lis[i].lastChild.textContent = L.steps[i];
+    var cl = document.querySelectorAll('[data-close]'); for (var c = 0; c < cl.length; c++) { cl[c].textContent = L.close; cl[c].onclick = closeApp; }
+    $('none-t').textContent = L.none_t; $('none-d').textContent = L.none_d;
+    $('room-t').textContent = L.room_t; $('room-d').textContent = L.room_d;
+    $('drop-t').textContent = L.drop_t; $('drop-d').textContent = L.drop_d;
+    var touch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    $('drop-alt').textContent = touch ? L.drop_alt_touch : L.drop_alt_pc;
+    $('btn-send').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-3-7z"/></svg><span>' + esc(L.send) + '</span>';
+    $('btn-swap').textContent = L.swap;
+    $('tips').innerHTML = '<li class="warn">' + ICON.warn + '<span>' + esc(L.tip1) + '</span></li><li>' + ICON.tip + '<span>' + esc(L.tip2) + '</span></li><li>' + ICON.tip + '<span>' + esc(L.tip3) + '</span></li>';
+    $('up-alert-t').innerHTML = L.alert_opp;
+    $('foot').textContent = L.foot;
+    var sc = ''; for (var k = 0; k < L.scan.length; k++) sc += '<li><span class="dot">' + ICON.tip + '</span><span>' + esc(L.scan[k]) + '</span></li>';
+    $('sc-steps').innerHTML = sc;
+    $('w-wt').innerHTML = '';
+  }
+
+  // ── Вид (экран) ─────────────────────────────────────────────────────
+  var VIEWS = ['load', 'none', 'room', 'up', 'scan', 'wait', 'final'];
+  function show(v) {
+    S.view = v;
+    for (var i = 0; i < VIEWS.length; i++) { var el = $('v-' + VIEWS[i]); var on = VIEWS[i] === v; if (el.hidden === on) { el.hidden = !on; } }
+    $('app').setAttribute('data-view', v);
+    // шаги: 0 комната · 1 скриншот · 2 соперник · 3 итог
+    var idx = { load: -1, none: -1, room: 0, up: 1, scan: 1, wait: 2, final: 4 }[v];
+    if (v === 'wait' && S.st && S.st.phase === 'review') idx = 3;
+    var lis = $('steps').children;
+    for (var j = 0; j < 4; j++) { lis[j].className = idx < 0 ? '' : (j < idx ? 'done' : (j === idx ? 'on' : '')); }
+  }
+
+  // ── Запросы ─────────────────────────────────────────────────────────
+  function jfetch(url, opts, limit) {
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, limit || 15000);
+    opts = opts || {}; opts.cache = 'no-store'; if (ctrl) opts.signal = ctrl.signal;
+    return fetch(url, opts).then(function (r) {
+      clearTimeout(timer);
+      return r.json().catch(function () { return null; }).then(function (j) { return { status: r.status, j: j }; });
+    }, function (e) { clearTimeout(timer); throw e; });
+  }
+  function getState() {
+    var url = API + '/casino/match/state?uid=' + encodeURIComponent(UID) + '&secret=' + encodeURIComponent(SECRET) +
+      (useInit && INIT ? '&init_data=' + encodeURIComponent(INIT) : '');
+    return jfetch(url, {}, 12000).then(function (res) {
+      if (res.status === 401 && !useInit && INIT) { useInit = true; return getState(); }   // секрет в ссылке устарел — пробуем подписью Telegram
+      return res;
+    });
+  }
+
+  // ── Опрос состояния ─────────────────────────────────────────────────
+  function schedule(ms) { clearTimeout(S.pollT); S.pollT = setTimeout(function () { refresh(true); }, ms); }
+  function refresh(quiet) {
+    if (document.hidden && quiet) { schedule(5000); return Promise.resolve(); }
+    return getState().then(function (res) {
+      if (res.status === 401) { if (!quiet || S.view === 'load') { show('none'); $('none-t').textContent = L.none_t; showErr(esc(L.e_auth)); } return; }
+      if (res.status === 404 && (!res.j || !res.j.error)) { showErr(esc(L.e_404)); if (S.view === 'load') show('none'); return; }
+      if (!res.j || res.j.ok !== true) { if (S.view === 'load') { showErr(esc(L.state_fail)); show('none'); } schedule(6000); return; }
+      if (!quiet) showErr('');   // фоновый опрос ошибку не стирает — иначе сообщение пропадало бы через пару секунд, не успев прочитаться
+      S.offset = (Number(res.j.now) || 0) * 1000 - Date.now();
+      S.st = res.j;
+      applyState(res.j);
+    }).catch(function () {
+      if (S.view === 'load') { showErr(esc(L.state_fail)); show('none'); }
+      schedule(6000);
+    });
+  }
+  function leftMs() { var st = S.st; if (!st || !st.deadline) return null; return st.deadline * 1000 - (Date.now() + S.offset); }
+
+  function setMatch(st) {
+    var on = st && st.opp_name != null && st.phase !== 'no_match';
+    $('mstrip').hidden = !on;
+    if (on) { $('m-nm').textContent = st.opp_name || '—'; $('m-stake').textContent = num(st.stake); }
+  }
+
+  function applyState(st) {
+    setMatch(st);
+    // пока идёт отправка, экран сканера не трогаем — им управляет сам ответ сервера
+    if (S.busy) { schedule(3000); return; }
+    var p = st.phase;
+    if (p !== 'no_match') S.everInMatch = true;
+    if (p === 'no_match') { if (st.last || S.everInMatch) showFinal(st.last); else show('none'); return; }
+    if (p === 'no_room') { show('room'); schedule(5000); return; }
+    if (p === 'ready') {
+      if (S.view !== 'up') { if (S.view !== 'scan') S.shot = null; showUpload(); }   // из сканера (обрыв связи) скриншот не теряем
+      var alertOn = !!st.opp_sent && st.deadline;
+      $('up-alert').hidden = !alertOn;
+      updateTimers(); schedule(4000); return;
+    }
+    if (p === 'processing') { startScan(S.shot ? S.shot.dataUrl : null, true); schedule(1800); return; }
+    // waiting_opp / review
+    showWait(st); schedule(p === 'review' ? 2500 : 4000);
+  }
+
+  function showUpload() {
+    show('up'); showErr('');
+    var has = !!S.shot;
+    $('drop').hidden = has; $('prev').hidden = !has;
+    if (has) { $('prev-img').src = S.shot.dataUrl; $('prev-meta').textContent = S.shot.w + '×' + S.shot.h + ' · ' + Math.round(S.shot.bytes / 1024) + ' KB'; }
+    $('tips').hidden = has;
+  }
+
+  // ── Таймеры обратного отсчёта ───────────────────────────────────────
+  function updateTimers() {
+    var ms = leftMs(), st = S.st;
+    if (S.view === 'up') {
+      var a = $('up-alert');
+      if (!a.hidden && ms != null) { $('up-cd').textContent = fmt(ms); a.classList.toggle('hot', ms < 60000); }
+    } else if (S.view === 'wait' && st) {
+      var cdEl = $('w-cd'), arc = $('w-arc');
+      if (st.phase === 'review') { cdEl.textContent = '…'; arc.style.strokeDashoffset = '0'; }
+      else if (ms != null) {
+        cdEl.textContent = fmt(ms);
+        arc.style.strokeDashoffset = String(194.8 * (1 - Math.max(0, Math.min(1, ms / (S.total * 1000)))));
+        if (ms <= 0) { $('w-wt').innerHTML = '<b>' + esc(L.wait_over) + '</b>'; }
+      }
+    }
+  }
+  setInterval(updateTimers, 500);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && S.view !== 'load') refresh(true); });
+
+  // ── Выбор и сжатие скриншота ────────────────────────────────────────
+  var MAXSIDE = 1400, MAXBYTES = 600 * 1024;
+  function readImage(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), im = new Image();
+      im.onload = function () { URL.revokeObjectURL(url); resolve(im); };
+      im.onerror = function () { URL.revokeObjectURL(url); reject(new Error('decode')); };
+      im.src = url;
+    });
+  }
+  /* Сжимаем в браузере: скриншот телефона — это 2–5 МБ, а перед сервером может стоять лимит 1 МБ на запрос.
+     Распознаванию хватает и 1400 px: Telegram сам ужимает фото в чате примерно до такого размера. */
+  function compress(file) {
+    return readImage(file).then(function (im) {
+      var w = im.naturalWidth || im.width, h = im.naturalHeight || im.height;
+      if (!w || !h) throw new Error('decode');
+      var sc = Math.min(1, MAXSIDE / Math.max(w, h)), out = null, cw = 0, ch = 0;
+      for (var round = 0; round < 4; round++) {
+        cw = Math.max(1, Math.round(w * sc)); ch = Math.max(1, Math.round(h * sc));
+        var cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+        var cx = cv.getContext('2d'); cx.fillStyle = '#000'; cx.fillRect(0, 0, cw, ch); cx.drawImage(im, 0, 0, cw, ch);
+        var qual = 0.88;
+        for (var k = 0; k < 6; k++) {
+          out = cv.toDataURL('image/jpeg', qual);
+          if (out.length * 0.75 <= MAXBYTES) return { dataUrl: out, w: cw, h: ch, bytes: Math.round(out.length * 0.75) };
+          qual -= 0.1;
+        }
+        sc *= 0.8;   // качеством не хватило — уменьшаем размер
+      }
+      return { dataUrl: out, w: cw, h: ch, bytes: Math.round(out.length * 0.75) };
+    });
+  }
+  function handleFile(file) {
+    if (!file || S.busy) return Promise.resolve();
+    if (file.type && !/^image\//i.test(file.type)) { showErr(esc(L.e_bad_image)); return Promise.resolve(); }
+    if (S.view !== 'up') return Promise.resolve();
+    showErr('');
+    return compress(file).then(function (shot) {
+      S.shot = shot; showUpload(); haptic();
+    }, function () { showErr(esc(L.e_read)); });
+  }
+
+  var drop = $('drop'), fileIn = $('file');
+  fileIn.addEventListener('change', function () { var f = fileIn.files && fileIn.files[0]; fileIn.value = ''; handleFile(f); });
+  ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop', function (e) { var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; handleFile(f); });
+  document.addEventListener('paste', function (e) {
+    var items = (e.clipboardData && e.clipboardData.items) || [];
+    for (var i = 0; i < items.length; i++) { if (items[i].kind === 'file' && /^image\//.test(items[i].type)) { handleFile(items[i].getAsFile()); e.preventDefault(); return; } }
+  });
+  $('btn-swap').addEventListener('click', function () { S.shot = null; showUpload(); fileIn.click(); });
+  $('btn-send').addEventListener('click', function () { send(); });
+
+  // ── Сканер ──────────────────────────────────────────────────────────
+  function stepsSet(active, allDone) {
+    var lis = $('sc-steps').children;
+    for (var i = 0; i < lis.length; i++) { lis[i].className = allDone || i < active ? 'ok' : (i === active ? 'act' : ''); }
+  }
+  function startScan(dataUrl, fromServer) {
+    if (S.view === 'scan' && fromServer) return;
+    show('scan'); showErr('');
+    var im = $('scan-img'); if (dataUrl) im.src = dataUrl; im.parentNode.style.minHeight = dataUrl ? '' : '180px';
+    stepsSet(0, false);
+    S.scanT.forEach(clearTimeout); S.scanT = [];
+    for (var i = 1; i < 4; i++) (function (n) { S.scanT.push(setTimeout(function () { if (S.view === 'scan') stepsSet(n, false); }, n * 850)); })(i);
+  }
+  function scanFinish() { S.scanT.forEach(clearTimeout); S.scanT = []; stepsSet(4, true); return new Promise(function (r) { setTimeout(r, 450); }); }
+
+  // ── Отправка ────────────────────────────────────────────────────────
+  function send() {
+    if (S.busy || !S.shot) return;
+    S.busy = true; var shot = S.shot;
+    $('btn-send').disabled = true;
+    startScan(shot.dataUrl, false);
+    var body = JSON.stringify({ uid: UID, secret: SECRET, init_data: INIT || undefined, image: shot.dataUrl });
+    var t0 = Date.now();
+    jfetch(API + '/casino/match/screenshot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body }, 45000)
+      .then(function (res) {
+        var j = res.j;
+        // сканер показываем хотя бы ~2.5 с: мгновенный ответ выглядел бы как «ничего не проверили»
+        var wait = Math.max(0, 2500 - (Date.now() - t0));
+        return new Promise(function (r) { setTimeout(r, wait); }).then(function () { return scanFinish(); }).then(function () { onSendResult(res.status, j); });
+      })
+      .catch(function () {
+        S.scanT.forEach(clearTimeout);
+        // обрыв связи — скриншот мог дойти: сверяемся с сервером, а не просим слать вслепую
+        showErr(esc(L.e_net_up));
+        S.busy = false;
+        refresh(false).then(function () {
+          if (S.view === 'scan' || (S.view === 'up' && S.st && S.st.phase === 'ready')) { showUpload(); showErr(esc(L.e_net)); }
+        });
+      });
+  }
+  function backToUpload(msg) {
+    S.busy = false; showUpload(); $('btn-send').disabled = false;
+    if (msg) showErr(msg);
+    haptic('error');
+  }
+  function onSendResult(status, j) {
+    S.busy = false;
+    if (status === 401) return backToUpload(esc(L.e_auth));
+    if (status === 403) return backToUpload(esc(L.e_blocked));
+    if (status === 404 && (!j || !j.error)) return backToUpload(esc(L.e_404));
+    if (status === 413) return backToUpload(esc(L.e_big));
+    if (status === 429) return backToUpload(esc(L.e_rate));
+    if (!j) return backToUpload(esc(L.e_srv));
+    if (j.ok === true) {
+      haptic('success');
+      S.shot = null; S.lastVerdict = j;
+      // временное состояние до первого ответа сервера, чтобы экран не мигал
+      S.st = S.st || {}; S.st.phase = j.status === 'second' ? 'review' : 'waiting_opp'; S.st.my_verdict = j.verdict;
+      showWait(S.st, j);
+      refresh(true);
+      return;
+    }
+    var e = j.error;
+    if (e === 'not_ff') { S.shot = null; return backToUpload(L.e_not_ff); }
+    if (e === 'bad_image') return backToUpload(esc(L.e_bad_image));
+    if (e === 'too_large') return backToUpload(esc(L.e_big));
+    if (e === 'no_match') { refresh(false); return; }
+    if (e === 'room_not_ready') { refresh(false); showErr(esc(L.e_room)); return; }
+    if (e === 'already_pending' || e === 'already_sent') { S.shot = null; refresh(false).then(function () { showErr(esc(e === 'already_sent' ? L.e_sent : L.e_pending)); }); return; }
+    if (e === 'unauthorized') return backToUpload(esc(L.e_auth));
+    if (e === 'rate_limited') return backToUpload(esc(L.e_rate));
+    backToUpload(esc(L.e_srv));
+  }
+
+  // ── Экран «принято / ждём» ──────────────────────────────────────────
+  function vcardFill(prefix, verdict, desc, badges) {
+    var cls = verdict === 'win' ? 'win' : (verdict === 'loss' ? 'loss' : 'unk');
+    var card = $(prefix + '-card'); card.className = 'vcard ' + cls;
+    card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+    $(prefix + '-ring').innerHTML = ICON[cls];
+    $(prefix + '-vt').textContent = L[cls];
+    $(prefix + '-vs').textContent = desc || '';
+    $(prefix + '-badges').innerHTML = badges || '';
+  }
+  function showWait(st, resp) {
+    var verdict = (resp && resp.verdict) || st.my_verdict || (S.lastVerdict && S.lastVerdict.verdict) || 'unknown';
+    var r = resp || S.lastVerdict || {};
+    var desc = verdict === 'win' ? L.win_d : (verdict === 'loss' ? L.loss_d : (r.conflict ? L.conflict_d : ((st.ai === false || r.ai === false) ? L.noai_d : L.unk_d)));
+    var bd = '';
+    if (r.nick_ok === true) bd += '<span class="badge good">' + esc(L.nick_ok) + '</span>';
+    else if (r.nick_ok === false) bd += '<span class="badge bad">' + esc(L.nick_bad) + '</span>';
+    vcardFill('w', verdict, desc, bd);
+    var review = st.phase === 'review';
+    var key = [verdict, st.phase, r.nick_ok, r.conflict].join('|');
+    if (S.view === 'wait' && S.wkey === key) { updateTimers(); return; }   // не перерисовываем на каждом опросе — иначе карточка «подпрыгивает» заново
+    S.wkey = key;
+    $('w-wt').innerHTML = '<b>' + esc(review ? L.review_t : L.wait_t) + '</b>' + esc(review ? L.review_d : L.wait_d);
+    $('w-wait').querySelector('.cdw').style.display = review ? 'none' : '';
+    show('wait'); updateTimers();
+    if (!review) { $('w-wt').firstChild.innerHTML = '<span class="pulse-dot"></span>' + esc(L.wait_t); }
+  }
+
+  // ── Экран «матч закрыт» ─────────────────────────────────────────────
+  function showFinal(last) {
+    if (last && (last.result === 'win' || last.result === 'loss')) {
+      var v = last.result, bd = '';
+      if (last.stake) bd += '<span class="badge">' + esc(L.stake) + ' ' + num(last.stake) + '</span>';
+      if (last.rp) bd += '<span class="badge ' + (last.rp > 0 ? 'rp-up' : 'rp-down') + '">' + (last.rp > 0 ? '+' : '') + last.rp + ' ' + esc(L.rp) + '</span>';
+      vcardFill('f', v, L['r_' + last.reason] || '', bd);
+      $('f-vt').textContent = v === 'win' ? L.fin_win : L.fin_loss;
+      haptic(v === 'win' ? 'success' : 'warning');
+    } else {
+      vcardFill('f', 'unknown', L.fin_none_d, '');
+      $('f-vt').textContent = L.fin_none;
+    }
+    $('mstrip').hidden = true;
+    show('final');
+    clearTimeout(S.pollT);   // матч закрыт — опрашивать больше нечего
+  }
+
+  // ── Старт ───────────────────────────────────────────────────────────
+  fillStatic();
+  show('load');
+  if (!API || !UID) { showErr(esc(L.e_auth)); show('none'); }
+  else { refresh(false); }
+
+  // хук для автотестов (в приложении не используется)
+  window.MT = { handleFile: handleFile, state: function () { return S; }, refresh: refresh, ver: VER };
+})();
+</script>
+</body>
+</html>
