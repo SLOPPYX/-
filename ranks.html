@@ -89,7 +89,7 @@
 
   /* ─── Страницы (вкладки) ─── */
   .page { display: none; }
-  .page.on { display: block; animation: pageIn .5s cubic-bezier(.2,.8,.2,1); }
+  .page.on { display: block; animation: pageIn .24s ease-out; }   /* v308: было .5s — при проведении пальцем по вкладкам страницы должны сменяться сразу */
   .page-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 20px 2px 14px; }
   .page-head h3 { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
   .pill { padding: 6px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 800; letter-spacing: .02em; white-space: nowrap;
@@ -437,14 +437,24 @@
   /* ─── Нижняя панель вкладок ─── */
   .tabbar { position: fixed; z-index: 50; left: 12px; right: 12px; max-width: 456px; margin: 0 auto; bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     display: flex; padding: 6px; border-radius: 24px; background: rgba(12,7,22,.82); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
-    border: 1px solid rgba(139,92,246,.28); box-shadow: 0 18px 40px -10px rgba(0,0,0,.9), 0 0 40px -14px rgba(139,92,246,.6), inset 0 1px 0 rgba(255,255,255,.06); }
-  .tabpill { position: absolute; top: 6px; bottom: 6px; left: 0; width: 0; border-radius: 18px; pointer-events: none;
+    border: 1px solid rgba(139,92,246,.28); box-shadow: 0 18px 40px -10px rgba(0,0,0,.9), 0 0 40px -14px rgba(139,92,246,.6), inset 0 1px 0 rgba(255,255,255,.06);
+    /* v308: как в iOS — вкладку можно ЗАЖАТЬ и, не отпуская палец, вести по панели: пилюля едет за пальцем, страница меняется на лету.
+       touch-action: none — иначе браузер сам «забирает» жест на прокрутку/системные действия, и водить пальцем не даёт;
+       user-select/callout — иначе долгое нажатие на iOS выделяет текст или показывает меню вместо нашего эффекта. */
+    touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; cursor: pointer; }
+  /* невидимая зона нажатия шире самой панели: тап чуть выше или ниже кнопки тоже попадает во вкладку (раньше приходилось целиться) */
+  .tabbar::before { content: ''; position: absolute; left: -8px; right: -8px; top: -18px; bottom: -10px; }
+  .tabpill { position: absolute; top: 6px; bottom: 6px; left: 0; width: 0; border-radius: 18px; pointer-events: none; transform-origin: 50% 50%; will-change: transform;
     background: linear-gradient(180deg, rgba(139,92,246,.34), rgba(139,92,246,.12)); border: 1px solid rgba(196,181,253,.4); box-shadow: 0 0 22px -4px rgba(139,92,246,.9);
-    transition: transform .4s cubic-bezier(.3,1.2,.4,1), width .4s cubic-bezier(.3,1.2,.4,1); }
-  .tab { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 0 7px; border-radius: 18px; font-size: 10.5px; font-weight: 700; color: var(--text3); transition: color .25s; }
-  .tab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; transition: transform .3s cubic-bezier(.3,1.5,.5,1); }
+    transition: transform .42s cubic-bezier(.3,1.25,.4,1), width .3s ease, box-shadow .2s, background .2s, border-color .2s; }
+  .tabbar.press .tabpill { background: linear-gradient(180deg, rgba(167,139,250,.52), rgba(139,92,246,.24)); border-color: rgba(233,224,255,.72);
+    box-shadow: 0 0 34px -2px rgba(167,139,250,1), inset 0 1px 0 rgba(255,255,255,.4); }
+  .tabbar.drag .tabpill { transition: transform .07s linear, width .2s ease, box-shadow .2s, background .2s, border-color .2s; }   /* во время движения пилюля почти без инерции — держится за пальцем */
+  .tab { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 0 9px; border-radius: 18px; font-size: 10.5px; font-weight: 700; color: var(--text3); transition: color .14s; }
+  .tab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; transition: transform .22s cubic-bezier(.3,1.5,.5,1); }
   .tab.on { color: #fff; }
   .tab.on svg { transform: translateY(-1px) scale(1.12); filter: drop-shadow(0 0 6px rgba(196,181,253,.9)); }
+  .tabbar.press .tab.on svg { transform: translateY(-2px) scale(1.26); }
   .tab:active svg { transform: scale(.88); }
   .tab .dot { position: absolute; top: 6px; left: calc(50% + 9px); width: 6px; height: 6px; border-radius: 50%; background: #ffc94a; box-shadow: 0 0 8px #ffc94a; }
 
@@ -457,7 +467,7 @@
   @keyframes skmove { 0% { background-position: 120% 0; } 100% { background-position: -100% 0; } }
   @keyframes sheen { 0% { background-position: 120% 0; } 100% { background-position: -100% 0; } }
   @keyframes rise { to { opacity: var(--o, 1); transform: none; } }
-  @keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes pageIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   @keyframes glare { 0%,55% { transform: translateX(-130%); } 85%,100% { transform: translateX(130%); } }
   @keyframes headpulse { 0%,100% { box-shadow: 0 0 0 4px rgba(139,92,246,.3), 0 0 14px rgba(196,181,253,.9); } 50% { box-shadow: 0 0 0 8px rgba(139,92,246,.1), 0 0 22px rgba(196,181,253,1); } }
   @keyframes ringpulse { 0% { transform: scale(.9); opacity: .8; } 70%,100% { transform: scale(1.3); opacity: 0; } }
@@ -1414,14 +1424,19 @@ window.addEventListener('error', function (e) {
   var TABS = ['rank', 'top', 'season', 'rewards', 'ach', 'history'];
   var pages = Array.prototype.slice.call(document.querySelectorAll('.page'));
   var tabBtns = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var bar = $('tabbar'), pill = $('tabpill');
+  var curTab = '';
+  var press = { on: false, moved: false, x0: 0, id: null };   // состояние «палец на панели»
   function movePill() {
-    var on = document.querySelector('.tab.on'), pill = $('tabpill');
-    if (!on) return;
+    var on = document.querySelector('.tab.on');
+    if (!on || press.moved) return;      // пока палец ведёт пилюлю, её место задаёт палец, а не выбранная вкладка
     pill.style.width = on.offsetWidth + 'px';
-    pill.style.transform = 'translateX(' + on.offsetLeft + 'px)';
+    pill.style.transform = 'translateX(' + on.offsetLeft + 'px)' + (press.on ? ' scale(1.1, 1.16)' : '');
   }
   function setTab(t, silent) {
     if (TABS.indexOf(t) < 0) t = 'rank';
+    if (t === curTab && !silent) return;   // v308: повторное касание той же вкладки (и каждый шаг пальца по ней) ничего не перерисовывает и не «щёлкает»
+    curTab = t;
     pages.forEach(function (p) { p.classList.toggle('on', p.getAttribute('data-page') === t); });
     tabBtns.forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
     movePill();
@@ -1430,7 +1445,49 @@ window.addEventListener('error', function (e) {
       window.scrollTo(0, 0);
     }
   }
-  tabBtns.forEach(function (b) { b.addEventListener('click', function () { setTab(b.getAttribute('data-tab')); }); });
+  // Какая вкладка под пальцем: первая, чей правый край правее пальца (левее панели — первая, правее — последняя).
+  function tabIdxAt(cx) {
+    for (var i = 0; i < tabBtns.length; i++) { if (cx < tabBtns[i].getBoundingClientRect().right) return i; }
+    return tabBtns.length - 1;
+  }
+  // Пилюля держится за пальцем, но не выходит за крайние вкладки.
+  function followPill(cx) {
+    var first = tabBtns[0], last = tabBtns[tabBtns.length - 1];
+    var r = bar.getBoundingClientRect();
+    var w = first.offsetWidth;             // ширина вкладки, а не пилюли: у пилюли она может быть посреди анимации
+    var x = cx - r.left - bar.clientLeft - w / 2;
+    x = Math.max(first.offsetLeft, Math.min(last.offsetLeft, x));
+    pill.style.transform = 'translateX(' + x.toFixed(1) + 'px) scale(1.1, 1.16)';
+  }
+  function pressEnd() {
+    if (!press.on) return;
+    press.on = false; press.moved = false;
+    bar.classList.remove('press', 'drag');
+    movePill();                            // отпустили — пилюля пружиной садится на выбранную вкладку
+  }
+  /* v308: переключение — в момент КАСАНИЯ (pointerdown), а не по click. Раньше вкладка менялась только по click: в WebView он приходит
+     с задержкой и не приходит вовсе, если палец чуть сдвинулся — отсюда «плохо нажимается». Теперь тап срабатывает сразу, а если
+     не отпускать палец и вести вбок — вкладки меняются на лету (с лёгкой вибрацией на каждой), как в панели iPhone. */
+  var HAS_PTR = !!window.PointerEvent;
+  if (HAS_PTR) {
+    bar.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      press.on = true; press.moved = false; press.x0 = e.clientX; press.id = e.pointerId;
+      bar.classList.add('press');
+      try { bar.setPointerCapture(e.pointerId); } catch (_) {}   // палец может уйти за край панели — движение всё равно приходит нам
+      setTab(TABS[tabIdxAt(e.clientX)]);
+      movePill();                          // вкладка та же — пилюля всё равно «приподнимается» под пальцем
+    });
+    bar.addEventListener('pointermove', function (e) {
+      if (!press.on || e.pointerId !== press.id) return;
+      if (!press.moved && Math.abs(e.clientX - press.x0) > 6) { press.moved = true; bar.classList.add('drag'); }
+      if (press.moved) { followPill(e.clientX); setTab(TABS[tabIdxAt(e.clientX)]); }
+    });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (n) { bar.addEventListener(n, pressEnd); });
+    bar.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  }
+  // click остаётся для клавиатуры (detail === 0) и для старых WebView без pointer-событий
+  tabBtns.forEach(function (b) { b.addEventListener('click', function (e) { if (!HAS_PTR || e.detail === 0) setTab(b.getAttribute('data-tab')); }); });
   window.addEventListener('resize', movePill);
   // вкладка при открытии: ?tab=rewards (из уведомления бота) или #хэш; всё неизвестное — «Ранг»
   setTab(q.get('tab') || location.hash.slice(1), true);
