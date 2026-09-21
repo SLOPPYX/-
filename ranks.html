@@ -29,14 +29,18 @@
   button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 
   /* ─── Живой фон ─── */
+  /* v311: фон строже и тише. Было: три яркие цветные «кляксы» и точечная сетка — на фоне эмблема и цифры терялись.
+     Стало: те же кляксы, но заметно слабее; сетка — тонкие линии вместо точек, гаснет к низу; а вокруг эмблемы —
+     «радар» из тонких колец цвета текущего ранга (см. .radar ниже). Цвет фона по-прежнему берётся у ранга (--tier-rgb). */
   .aurora { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 0; pointer-events: none; overflow: hidden; }
   .aurora i { position: absolute; border-radius: 50%; will-change: transform; }
-  .aurora i:nth-child(1) { width: 460px; height: 340px; top: -150px; left: 50%; margin-left: -230px; background: radial-gradient(ellipse, rgba(139,92,246,.30), transparent 70%); animation: drift1 16s ease-in-out infinite; }
-  .aurora i:nth-child(2) { width: 380px; height: 380px; bottom: -160px; left: -110px; background: radial-gradient(circle, rgba(109,40,217,.26), transparent 70%); animation: drift2 20s ease-in-out infinite; }
-  .aurora i:nth-child(3) { width: 320px; height: 320px; top: 34%; right: -140px; background: radial-gradient(circle, rgba(var(--tier-rgb),.16), transparent 70%); animation: drift3 24s ease-in-out infinite; transition: background 1s; }
-  .grain { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 0; pointer-events: none; opacity: .5;
-    background-image: radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px); background-size: 26px 26px;
-    -webkit-mask: linear-gradient(180deg, #000, transparent 55%); mask: linear-gradient(180deg, #000, transparent 55%); }
+  .aurora i:nth-child(1) { width: 460px; height: 340px; top: -150px; left: 50%; margin-left: -230px; background: radial-gradient(ellipse, rgba(139,92,246,.19), transparent 70%); animation: drift1 16s ease-in-out infinite; }
+  .aurora i:nth-child(2) { width: 380px; height: 380px; bottom: -160px; left: -110px; background: radial-gradient(circle, rgba(109,40,217,.15), transparent 70%); animation: drift2 20s ease-in-out infinite; }
+  .aurora i:nth-child(3) { width: 320px; height: 320px; top: 34%; right: -140px; background: radial-gradient(circle, rgba(var(--tier-rgb),.10), transparent 70%); animation: drift3 24s ease-in-out infinite; transition: background 1s; }
+  .hair { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 0; pointer-events: none;
+    background-image: linear-gradient(rgba(255,255,255,.034) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.034) 1px, transparent 1px);
+    background-size: 44px 44px; background-position: center top;
+    -webkit-mask: radial-gradient(ellipse 95% 64% at 50% 16%, #000 0%, transparent 100%); mask: radial-gradient(ellipse 95% 64% at 50% 16%, #000 0%, transparent 100%); }
 
   .app {
     position: relative; z-index: 1; max-width: 480px; margin: 0 auto;
@@ -101,7 +105,21 @@
   .rk.in { display: inline-block; vertical-align: -6px; }
 
   /* ─── Герой ─── */
-  .hero { text-align: center; padding: calc(22px + var(--fire, 0) * 62px) 0 22px; }   /* v295: место под языки пламени */
+  .hero { position: relative; text-align: center; padding: calc(22px + var(--fire, 0) * 62px) 0 22px; }   /* v295: место под языки пламени */
+  /* v311: «радар» — тонкие кольца вокруг эмблемы. Центр считается от тех же величин, что и отступ героя (22px + пламя) + половина
+     эмблемы (75px), поэтому кольца остаются точно вокруг эмблемы и при пламени у высоких рангов. z-index −1: кольца лежат ПОД текстом
+     и карточками. Низ гасится маской — до названия ранга и RP кольца не доходят, чтобы не пересекать цифры. */
+  .radar { position: absolute; z-index: -1; left: 50%; top: calc(22px + var(--fire, 0) * 62px + 75px); width: 100vw; max-width: 480px; height: 540px;
+    -webkit-transform: translate(-50%, -50%); transform: translate(-50%, -50%); overflow: hidden; pointer-events: none;
+    -webkit-mask: linear-gradient(180deg, #000 calc(50% + 30px), transparent calc(50% + 116px)); mask: linear-gradient(180deg, #000 calc(50% + 30px), transparent calc(50% + 116px)); }
+  .radar svg { display: block; width: 100%; height: 100%; }
+  .radar .rd { fill: none; stroke: rgba(var(--tier-rgb), .2); stroke-width: 1; transition: stroke 1s; }
+  .radar .r1 { stroke: rgba(var(--tier-rgb), .32); }
+  .radar .r2 { stroke: rgba(var(--tier-rgb), .28); stroke-dasharray: 1.5 9; transform-origin: 240px 270px; animation: spin 140s linear infinite; }
+  .radar .r3 { stroke: rgba(var(--tier-rgb), .14); }
+  .radar .r4 { stroke: rgba(var(--tier-rgb), .07); }
+  .radar .tk { stroke: rgba(var(--tier-rgb), .45); }
+  .radar .blip { fill: rgb(var(--tier-rgb)); transform-origin: 240px 270px; animation: spin 52s linear infinite; -webkit-filter: drop-shadow(0 0 4px rgba(var(--tier-rgb), .9)); filter: drop-shadow(0 0 4px rgba(var(--tier-rgb), .9)); }
   .stage { position: relative; width: 150px; height: 150px; margin: 0 auto 26px; perspective: 700px; }
   .emblem { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: grid; place-items: center; transform-style: preserve-3d; transition: transform .25s ease-out; }
   .emblem .halo { position: absolute; top: -30px; right: -30px; bottom: -30px; left: -30px; border-radius: 50%; opacity: .55; background: radial-gradient(circle, rgba(var(--tier-rgb), .6) 0%, transparent 66%); animation: breathe 3.6s ease-in-out infinite; }
@@ -789,7 +807,7 @@
 </head>
 <body>
 <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-<div class="grain" aria-hidden="true"></div>
+<div class="hair" aria-hidden="true"></div>
 
 <main class="app" id="app" data-state="loading">
 
@@ -848,6 +866,16 @@
   <!-- ═══ РАНГ ═══ -->
   <section class="page on" data-page="rank">
     <div class="hero">
+      <div class="radar" aria-hidden="true">
+        <svg viewBox="0 0 480 540" preserveAspectRatio="xMidYMid slice" focusable="false">
+          <circle class="rd r4" cx="240" cy="270" r="272"/>
+          <circle class="rd r3" cx="240" cy="270" r="214"/>
+          <circle class="rd r2" cx="240" cy="270" r="164"/>
+          <circle class="rd r1" cx="240" cy="270" r="118"/>
+          <path class="rd tk" d="M240 152v-9M240 388v9M122 270h-9M358 270h9"/>
+          <circle class="blip" cx="454" cy="270" r="2.3"/>
+        </svg>
+      </div>
       <div class="stage" id="stage">
         <div class="fire" id="fire" aria-hidden="true"></div>
         <div class="emblem" id="emblem">
