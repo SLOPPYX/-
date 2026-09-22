@@ -82,6 +82,19 @@
   #season-text em { font-style: normal; color: var(--text3); }
   #season-text i { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-style: normal; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--accent-light); }
 
+  /* v312: «Онлайн сейчас» — тихая пилюля рядом с сезоном. Скрыта, пока бот не прислал online_count
+     (старая версия бота) — лучше ничего не показывать, чем врать нулём. */
+  .hd-onl-w { display: none; vertical-align: top; margin: 10px 0 0 8px; }
+  .hd-onl-w.on { display: inline-block; }
+  .hd-onl { display: inline-flex; align-items: center; gap: 7px; min-height: 30px; box-sizing: border-box;
+    padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--text2);
+    background: rgba(255,255,255,.04); border: 1px solid var(--border); }
+  .hd-onl-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--up);
+    box-shadow: 0 0 8px 1px var(--up); animation: onlPulse 1.8s ease-in-out infinite; }
+  @keyframes onlPulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+  .hd-onl .sk { height: 12px; }
+  #online-text b { color: var(--up); font-weight: 900; }
+
   /* ─── Скелетоны ─── */
   .sk {
     display: inline-block; min-height: 1em; vertical-align: middle; border-radius: 8px;
@@ -226,6 +239,22 @@
   .streak-card.off .streak-num { color: var(--text3); text-shadow: none; }
   .streak-lb { margin-top: 4px; font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text3); }
   .streak-sub { margin-top: 6px; font-size: 12.5px; font-weight: 700; color: var(--text2); min-height: 16px; }
+
+  /* v312: «Форма» — последние 5 матчей точками + тренд. Отдельно от «Серии»: серия — подряд идущие победы,
+     форма — как вообще шли последние бои (может быть 3 победы, поражение, победа — серии тут никакой уже нет,
+     а форма всё равно хорошая). */
+  .form-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px;
+    padding: 13px 16px; border-radius: 20px; background: rgba(255,255,255,.03); border: 1px solid var(--border);
+    transition: opacity .3s; }
+  .form-dots { display: flex; gap: 6px; }
+  .form-dots i { width: 13px; height: 13px; border-radius: 50%; background: rgba(255,255,255,.08);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+  .form-dots i.w { background: var(--up); box-shadow: 0 0 8px -1px var(--up); }
+  .form-dots i.l { background: var(--down); box-shadow: 0 0 8px -1px var(--down); }
+  .form-lb { margin-top: 7px; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); }
+  .form-trend { flex-shrink: 0; display: flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 800; color: var(--text3); }
+  .form-trend svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .form-trend.up { color: var(--up); } .form-trend.down { color: var(--down); }
 
   /* лестница */
   .sec-title { margin: 0 2px 12px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text3); }
@@ -418,6 +447,10 @@
   .form i { flex: 1; max-width: 22px; height: 8px; border-radius: 4px; background: var(--c); box-shadow: 0 0 8px -1px var(--c); }
   .form i.w { --c: var(--up); } .form i.l { --c: var(--down); }
   .form small { margin-left: auto; font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text3); white-space: nowrap; }
+  /* v312: та же «форма», но мелкими точками — рядом с ником в «Топ» */
+  .form-mini { display: inline-flex; gap: 3px; margin-left: 7px; vertical-align: middle; }
+  .form-mini i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.14); }
+  .form-mini i.w { background: var(--up); } .form-mini i.l { background: var(--down); }
   .hrow { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; padding: 11px 14px 11px 11px; border-radius: 16px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.05);
     opacity: 0; transform: translateY(8px); animation: rise .5s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: calc(var(--i, 0) * 45ms); }
   .hrow.win { --c: var(--up); } .hrow.loss { --c: var(--down); }
@@ -853,6 +886,9 @@
       <svg class="hd-si" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 1.5 L14.7 9.3 L22.5 12 L14.7 14.7 L12 22.5 L9.3 14.7 L1.5 12 L9.3 9.3 Z"/></svg>
       <span id="season-text" class="sk" style="width:150px"></span>
     </div></div>
+    <div class="hd-onl-w" id="hd-onl-w"><div class="hd-onl">
+      <i class="hd-onl-dot"></i><span id="online-text" class="sk" style="width:64px"></span>
+    </div></div>
     <div class="conn" id="conn"></div>
     <div class="stale" id="stale"><span id="stale-text"></span><button type="button" id="stale-retry">Обновить</button></div>
   </header>
@@ -913,6 +949,16 @@
           <div class="streak-lb">Серия побед подряд</div>
           <div class="streak-sub" id="streak-sub"></div>
         </div>
+      </div>
+    </section>
+
+    <section class="data-sec">
+      <div class="form-card" id="form-card">
+        <div>
+          <div class="form-dots" id="form-dots"></div>
+          <div class="form-lb">Форма — последние 5</div>
+        </div>
+        <div class="form-trend" id="form-trend"></div>
       </div>
     </section>
 
@@ -1552,6 +1598,44 @@ window.addEventListener('error', function (e) {
     else sub.textContent = 'Личный рекорд! 🏆';
   }
 
+  // v312: «Форма» — мини-точки последних матчей (переиспользуется и в строке «Топ», и в карточке на «Ранге»)
+  function formMini(arr) {
+    var box = el('span', 'form-mini');
+    (arr || []).forEach(function (r) { box.appendChild(el('i', r === 'W' ? 'w' : 'l')); });
+    return box;
+  }
+  var FORM_TREND_ICON = {
+    up: '<polyline points="4 15 10 9 14 13 20 7"/><polyline points="15 7 20 7 20 12"/>',
+    down: '<polyline points="4 9 10 15 14 11 20 17"/><polyline points="15 17 20 17 20 12"/>',
+    flat: '<line x1="4" y1="12" x2="20" y2="12"/>'
+  };
+  var FORM_TREND_TXT = { up: 'В разгоне', down: 'Просадка', flat: 'Ровно' };
+  function renderForm(d) {
+    var card = $('form-card'); if (!card) return;
+    var dots = $('form-dots'), trend = $('form-trend');
+    dots.textContent = ''; trend.textContent = ''; trend.className = 'form-trend';
+    var arr = Array.isArray(d.form) ? d.form : null;
+    if (!arr) { card.style.opacity = '.5'; for (var z = 0; z < 5; z++) dots.appendChild(el('i')); return; }
+    card.style.opacity = '';
+    for (var p = 0; p < 5 - arr.length; p++) dots.appendChild(el('i'));            // нет матча — пустая точка, не проигрыш
+    arr.forEach(function (r) { dots.appendChild(el('i', r === 'W' ? 'w' : 'l')); });
+    if (!arr.length) { trend.textContent = ''; return; }
+    var tr = FORM_TREND_ICON[d.form_trend] ? d.form_trend : 'flat';
+    trend.classList.add(tr);
+    trend.appendChild(svgIcon(FORM_TREND_ICON[tr]));
+    trend.appendChild(document.createTextNode(FORM_TREND_TXT[tr]));
+  }
+
+  // v312: «Онлайн сейчас» в шапке — видна на любой вкладке. Скрыта, если бот старый и поля не прислал.
+  function renderOnline(d) {
+    var wrap = $('hd-onl-w');
+    if (d.online_count == null) { wrap.classList.remove('on'); return; }
+    wrap.classList.add('on');
+    var t = $('online-text'); unsk(t); t.textContent = '';
+    t.appendChild(el('b', '', fmt(num(d.online_count))));
+    t.appendChild(document.createTextNode(' ' + plural(num(d.online_count), 'игрок', 'игрока', 'игроков') + ' онлайн'));
+  }
+
   function renderRank(d, tiers, cur) {
     var season = $('season-text'); unsk(season); setSeason(season, d);
 
@@ -1601,6 +1685,7 @@ window.addEventListener('error', function (e) {
     animNum(sw, 0, w, fmt, 1100); animNum(sl, 0, l, fmt, 1100);
     if (games) animNum(sr, 0, Math.round(w / games * 100), function (v) { return v + '%'; }, 1100); else sr.textContent = '—';
     renderStreak(d);
+    renderForm(d);        // v312
 
     var ladder = $('ladder');
     ladder.textContent = '';
@@ -2114,7 +2199,10 @@ window.addEventListener('error', function (e) {
     var ttl2 = el('i', 'ttl', p.tier_name || ''); ttl2.style.setProperty('--c', tierRgb(ti)); wb.appendChild(ttl2);   // титул рядом с ником
     who.appendChild(wb);
     if (p.is_admin) who.appendChild(admPlate('row'));                // v297
-    who.appendChild(el('small', '', fmt(num(p.wins)) + ' поб. / ' + fmt(num(p.losses)) + ' пор.'));
+    var wl = el('small');
+    wl.appendChild(document.createTextNode(fmt(num(p.wins)) + ' поб. / ' + fmt(num(p.losses)) + ' пор.'));
+    if (Array.isArray(p.form) && p.form.length) wl.appendChild(formMini(p.form));   // v312
+    who.appendChild(wl);
     row.appendChild(who);
     var pt = el('span', 'pt', fmt(num(p.rp))); pt.appendChild(el('small', '', 'RP'));
     row.appendChild(pt);
@@ -2703,6 +2791,7 @@ window.addEventListener('error', function (e) {
     TIME.srv = num(d.server_time) || Date.now() / 1000; TIME.perf = performance.now();
     DATA = d;
     safe(applyFire, cur);
+    safe(renderOnline, d);        // v312: шапка общая для всех вкладок
     safe(renderRank, d, tiers, cur);
     safe(renderAch, d);                                              // v298
     safe(renderDuel, d);                                             // v300
@@ -2713,7 +2802,7 @@ window.addEventListener('error', function (e) {
   }
 
   // v295: причина последнего сбоя показывается мелким шрифтом на экране ошибки — по скриншоту видно, что именно сломалось
-  var VER = 'v301', lastErr = '', failKind = '', staleKind = '';
+  var VER = 'v312', lastErr = '', failKind = '', staleKind = '';
 
   function setConn(text) { var c = $('conn'); c.textContent = text || ''; c.classList.toggle('on', !!text); }
   function showStale(kind) {
