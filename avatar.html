@@ -208,7 +208,7 @@ window.addEventListener('error', function (e) {
   try {
     document.getElementById('app').style.display = 'none';
     var f = document.getElementById('fatal'); f.style.display = 'block';
-    document.getElementById('fatal-d').textContent = 'Закрой и открой приложение заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v320';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой приложение заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v321';
   } catch (_) {}
 }, true);
 </script>
@@ -223,7 +223,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v320';
+  var VER = 'v321';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -257,6 +257,9 @@ window.addEventListener('error', function (e) {
       r1: 'Без 18+, жестокости и чужих логотипов — такие снимаются.',
       r2: 'Каждая новая картинка проходит проверку, это занимает время.',
       r3: 'Картинку обрежем по центру в круг 256×256.',
+      r4: 'Сначала картинку смотрит твой телефон — 18+ не уйдёт даже на проверку.',
+      chk_run: 'Проверяю картинку…', chk_no: 'Картинка не подошла',
+      e_nsfw_dev: 'Проверка на твоём телефоне сочла картинку взрослой (18+). Выбери другую.',
       sent: 'Отправлено на проверку',
       rm_done: 'Картинка убрана', rm_ask: 'Убрать свою картинку и вернуться к аватарке из набора?',
       e_big: 'Файл слишком большой даже после сжатия. Возьми картинку поменьше.',
@@ -282,6 +285,9 @@ window.addEventListener('error', function (e) {
       r1: 'No 18+, violence or other people’s logos — those get removed.',
       r2: 'Every new picture is reviewed, which takes some time.',
       r3: 'The picture is cropped to a 256×256 circle.',
+      r4: 'Your phone checks the picture first — 18+ never even reaches review.',
+      chk_run: 'Checking the picture…', chk_no: 'Picture not suitable',
+      e_nsfw_dev: 'The check on your phone found this picture adult (18+). Choose another one.',
       sent: 'Sent for review',
       rm_done: 'Picture removed', rm_ask: 'Remove your picture and go back to a preset avatar?',
       e_big: 'The file is too large even after compression. Pick a smaller image.',
@@ -298,7 +304,7 @@ window.addEventListener('error', function (e) {
   };
   var L = TX[LANG];
 
-  var S = { status: 'none', url: null, shot: null, busy: false };
+  var S = { status: 'none', url: null, shot: null, busy: false, check: null };
   var toastT = 0;
   function toast(t) { var el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { el.classList.remove('show'); }, 2600); }
   function haptic(kind) { try { tg && tg.HapticFeedback && (kind ? tg.HapticFeedback.notificationOccurred(kind) : tg.HapticFeedback.selectionChanged()); } catch (e) {} }
@@ -313,6 +319,7 @@ window.addEventListener('error', function (e) {
     $('foot').textContent = L.foot;
     var ic = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5M12 16v.5"/><circle cx="12" cy="12" r="9"/></svg>';
     $('rules').innerHTML = '<li class="warn">' + ic + '<span>' + esc(L.r1) + '</span></li>'
+      + '<li>' + ic + '<span>' + esc(L.r4) + '</span></li>'
       + '<li>' + ic + '<span>' + esc(L.r2) + '</span></li>'
       + '<li>' + ic + '<span>' + esc(L.r3) + '</span></li>';
   }
@@ -361,6 +368,84 @@ window.addEventListener('error', function (e) {
     $('rm-wrap').hidden = (st === 'none');
   }
 
+
+  // ── Проверка на 18+ прямо в браузере ────────────────────────────────
+  /* v321: модель (MobileNetV2 из nsfwjs, 2.7 МБ) и tfjs лежат рядом со страницей и грузятся
+     ТОЛЬКО когда игрок выбрал картинку — иначе открытие мини-аппа платило бы 4 МБ впустую.
+     Считает телефон игрока: сервер бота с 889 МБ памяти такую модель не выдержит.
+     Обойти проверку в браузере можно, поэтому она не отменяет ручное одобрение — она лишь
+     не даёт очевидному 18+ дойти до администратора. Любой сбой = 'unknown' = пропускаем
+     дальше: необязательный слой не имеет права мешать человеку поставить аватарку. */
+  var NSFW_BASE = 'nsfw/';
+  var NSFW_LIMIT = 40000;          // столько ждём модель, дальше считаем, что проверки нет
+  var NSFW_SIDE = 224;
+  // Пороги высокие намеренно. Аватарки здесь — арты и скриншоты из игры, а модель склонна
+  // видеть в рисунке «hentai». Лучше лишний раз показать картинку человеку, чем отклонить нормальную.
+  var NSFW_PORN = 0.85, NSFW_HENTAI = 0.90, NSFW_BOTH = 0.92;
+  var NSFW = { ready: null };
+
+  function loadScript(src) {
+    return new Promise(function (res, rej) {
+      var s = document.createElement('script');
+      s.src = src; s.async = true;
+      s.onload = function () { res(); };
+      s.onerror = function () { rej(new Error('script ' + src)); };
+      (document.head || document.documentElement).appendChild(s);
+    });
+  }
+
+  function nsfwModel() {
+    if (NSFW.ready) return NSFW.ready;
+    NSFW.ready = Promise.resolve()
+      .then(function () { return window.tf ? null : loadScript(NSFW_BASE + 'tf.min.js'); })
+      .then(function () {
+        if (!window.tf) throw new Error('tf');
+        return window.tf.loadLayersModel(NSFW_BASE + 'model.json');
+      });
+    return NSFW.ready;
+  }
+
+  function nsfwRun(canvas) {
+    return nsfwModel().then(function (model) {
+      var tf = window.tf;
+      // ровно тот препроцессинг, на котором модель обучалась: пиксели /255 и билинейный ресайз до 224
+      var out = tf.tidy(function () {
+        var img = tf.browser.fromPixels(canvas).toFloat().div(tf.scalar(255));
+        if (img.shape[0] !== NSFW_SIDE || img.shape[1] !== NSFW_SIDE) {
+          img = tf.image.resizeBilinear(img, [NSFW_SIDE, NSFW_SIDE], true);
+        }
+        return model.predict(img.reshape([1, NSFW_SIDE, NSFW_SIDE, 3]));
+      });
+      return out.data().then(function (v) {
+        out.dispose();
+        return Array.prototype.slice.call(v);   // [Drawing, Hentai, Neutral, Porn, Sexy]
+      });
+    });
+  }
+
+  function nsfwCheck(canvas) {
+    var t0 = Date.now();
+    var timer;
+    var guard = new Promise(function (_, rej) { timer = setTimeout(function () { rej(new Error('timeout')); }, NSFW_LIMIT); });
+    return Promise.race([nsfwRun(canvas), guard]).then(function (p) {
+      clearTimeout(timer);
+      var hentai = p[1], porn = p[3];
+      var bad = (porn >= NSFW_PORN) || (hentai >= NSFW_HENTAI) || (porn + hentai >= NSFW_BOTH);
+      return { v: bad ? 'block' : 'ok', p: p.map(function (x) { return Math.round(x * 1000) / 1000; }), ms: Date.now() - t0 };
+    }, function (e) {
+      clearTimeout(timer);
+      // молча: игрок не виноват, что модель не доехала, и пугать его нечем — решит человек
+      return { v: 'unknown', why: String((e && e.message) || e).slice(0, 60), ms: Date.now() - t0 };
+    });
+  }
+
+  function setSend(mode) {
+    var b = $('btn-send');
+    if (mode === 'check') { b.disabled = true; b.textContent = L.chk_run; }
+    else if (mode === 'block') { b.disabled = true; b.textContent = L.chk_no; }
+    else { b.disabled = false; b.textContent = L.send; }
+  }
+
   // ── Картинка: сжимаем в браузере ────────────────────────────────────
   var MAXSIDE = 512, MAXBYTES = 400 * 1024;
   function readImage(file) {
@@ -380,7 +465,8 @@ window.addEventListener('error', function (e) {
           c.getContext('2d').drawImage(im, sx, sy, side, side, 0, 0, out, out);
           var q = 0.9, url = c.toDataURL('image/jpeg', q);
           while (url.length * 0.75 > MAXBYTES && q > 0.4) { q -= 0.12; url = c.toDataURL('image/jpeg', q); }
-          res({ dataUrl: url, bytes: Math.round(url.length * 0.75), side: out });
+          // canvas отдаём наружу: проверка на 18+ возьмёт готовые пиксели, а не станет декодировать заново
+          res({ dataUrl: url, bytes: Math.round(url.length * 0.75), side: out, canvas: c });
         };
         im.src = fr.result;
       };
@@ -397,6 +483,16 @@ window.addEventListener('error', function (e) {
       $('prev-meta').textContent = shot.side + '×' + shot.side + ' · ' + Math.round(shot.bytes / 1024) + ' KB';
       $('prev').hidden = false; $('acts').hidden = false; $('drop').hidden = true;
       haptic();
+      // Проверку запускаем сразу, пока игрок смотрит на превью: к моменту, когда он потянется
+      // к кнопке, вердикт обычно уже есть, и ждать ему нечего.
+      S.check = null;
+      setSend('check');
+      nsfwCheck(shot.canvas).then(function (r) {
+        if (S.shot !== shot) return;        // игрок успел выбрать другую картинку — этот вердикт уже не про неё
+        S.check = r;
+        if (r.v === 'block') { setSend('block'); showErr(esc(L.e_nsfw_dev)); haptic('error'); return; }
+        setSend('ok');
+      });
     }).catch(function () { showErr(esc(L.e_img)); });
   }
 
@@ -429,17 +525,23 @@ window.addEventListener('error', function (e) {
   });
   $('btn-swap').addEventListener('click', backToPick);
   function backToPick() {
-    S.shot = null; $('prev').hidden = true; $('acts').hidden = true; $('drop').hidden = false; showErr('');
+    S.shot = null; S.check = null;
+    $('prev').hidden = true; $('acts').hidden = true; $('drop').hidden = false; showErr('');
+    setSend('ok');
   }
 
   // ── Отправка ────────────────────────────────────────────────────────
   $('btn-send').addEventListener('click', function () {
     if (S.busy || !S.shot) return;
+    if (S.check && S.check.v === 'block') return;   // страховка: кнопка и так заблокирована
     S.busy = true; $('btn-send').disabled = true;
-    var body = JSON.stringify({ uid: UID, secret: SECRET, init_data: INIT || undefined, image: S.shot.dataUrl });
+    // check — ПОДСКАЗКА администратору, а не решение: с устройства её можно подделать,
+    // поэтому сервер по ней ничего не блокирует и не одобряет.
+    var body = JSON.stringify({ uid: UID, secret: SECRET, init_data: INIT || undefined, image: S.shot.dataUrl,
+                                check: S.check || { v: 'unknown' } });
     jfetch(API + '/casino/avatar/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body }, 30000)
       .then(function (res) {
-        S.busy = false; $('btn-send').disabled = false;
+        S.busy = false; setSend('ok');
         var j = res.j || {};
         if (j.ok) {
           S.status = j.status || 'pending';
@@ -456,7 +558,7 @@ window.addEventListener('error', function (e) {
         if (e === 'unauthorized') return showErr(esc(L.e_auth));
         showErr(esc(L.e_srv)); haptic('error');
       })
-      .catch(function () { S.busy = false; $('btn-send').disabled = false; showErr(esc(L.e_net)); haptic('error'); });
+      .catch(function () { S.busy = false; setSend('ok'); showErr(esc(L.e_net)); haptic('error'); });
   });
 
   $('btn-rm').addEventListener('click', function () {
@@ -490,7 +592,8 @@ window.addEventListener('error', function (e) {
   show('load');
   boot();
 
-  window.AV = { state: function () { return S; }, handleFile: handleFile, render: render, ver: VER };
+  window.AV = { state: function () { return S; }, handleFile: handleFile, render: render, ver: VER,
+                nsfwCheck: nsfwCheck, nsfwModel: nsfwModel };
 })();
 </script>
 </body>
