@@ -208,7 +208,7 @@ window.addEventListener('error', function (e) {
   try {
     document.getElementById('app').style.display = 'none';
     var f = document.getElementById('fatal'); f.style.display = 'block';
-    document.getElementById('fatal-d').textContent = 'Закрой и открой приложение заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v321';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой приложение заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v322';
   } catch (_) {}
 }, true);
 </script>
@@ -223,7 +223,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v321';
+  var VER = 'v322';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -249,25 +249,26 @@ window.addEventListener('error', function (e) {
       ttl: 'Моя аватарка', sub: 'Видна всем игрокам в топе «Рангов»',
       drop_t: 'Выбрать картинку', drop_d: 'Квадратная — лучше всего. Из любой сделаем круг.',
       drop_alt: 'Нажми, перетащи файл или вставь из буфера (Ctrl+V)',
-      send: 'Отправить на проверку', swap: 'Выбрать другую', rm: 'Убрать мою картинку',
+      send: 'Поставить аватарку', swap: 'Выбрать другую', rm: 'Убрать мою картинку',
       s_none: 'Своей картинки нет', s_none_d: 'В топе «Рангов» пока стоит эмблема твоего ранга. Загрузи картинку — её увидят все игроки.',
-      s_wait: 'Ждёт проверки', s_wait_d: 'Картинку видишь пока <b>только ты</b>. Как только её одобрят, она появится у всех в топах.',
-      s_ok: 'Одобрена', s_ok_d: 'Её видят все игроки в топе «Рангов».',
+      s_wait: 'Ждёт проверки', s_wait_d: 'Картинку видишь пока <b>только ты</b>.',
+      s_ok: 'Активна', s_ok_d: 'Её видят все игроки в топе «Рангов».',
       s_no: 'Отклонена', s_no_d: 'Эта картинка не подошла под правила. Загрузи другую.',
-      r1: 'Без 18+, жестокости и чужих логотипов — такие снимаются.',
-      r2: 'Каждая новая картинка проходит проверку, это занимает время.',
+      r1: 'Без 18+ — такие картинки отклоняются автоматически.',
+      r2: 'Отклонили? Просто выбери другую — прежняя аватарка останется на месте.',
       r3: 'Картинку обрежем по центру в круг 256×256.',
-      r4: 'Сначала картинку смотрит твой телефон — 18+ не уйдёт даже на проверку.',
+      r4: 'Проверка мгновенная: ставишь — и её сразу видят все.',
       chk_run: 'Проверяю картинку…', chk_no: 'Картинка не подошла',
       e_nsfw_dev: 'Проверка на твоём телефоне сочла картинку взрослой (18+). Выбери другую.',
-      sent: 'Отправлено на проверку',
+      sent: 'Готово! Аватарку видят все',
       rm_done: 'Картинка убрана', rm_ask: 'Убрать свою картинку и вернуться к аватарке из набора?',
       e_big: 'Файл слишком большой даже после сжатия. Возьми картинку поменьше.',
       e_img: 'Это не похоже на картинку. Нужен JPG или PNG.',
       e_net: 'Нет связи с сервером — проверь интернет и попробуй ещё раз.',
       e_auth: 'Доступ не подтверждён — открой приложение заново кнопкой в боте.',
       e_rate: 'Слишком часто. Подожди немного и попробуй снова.',
-      e_nsfw: 'Картинка отклонена автоматической проверкой. Выбери другую.',
+      e_nsfw: 'Картинка не прошла проверку на 18+. Выбери другую.',
+      e_check: 'Проверка сейчас недоступна — попробуй через пару минут.',
       e_srv: 'Ошибка на сервере. Попробуй ещё раз позже.',
       e_load: 'Не удалось получить данные. Проверь интернет.',
       none_t: 'Приложение не открылось', none_d: 'Зайди в бот и нажми «🖼 Моя аватарка» в профиле.',
@@ -277,25 +278,26 @@ window.addEventListener('error', function (e) {
       ttl: 'My avatar', sub: 'Everyone sees it in the Ranks leaderboard',
       drop_t: 'Choose a picture', drop_d: 'Square works best. Any image becomes a circle.',
       drop_alt: 'Tap, drop a file, or paste from clipboard (Ctrl+V)',
-      send: 'Send for review', swap: 'Choose another', rm: 'Remove my picture',
+      send: 'Set avatar', swap: 'Choose another', rm: 'Remove my picture',
       s_none: 'No custom picture', s_none_d: 'Your rank emblem is shown in the leaderboard for now. Upload a picture and everyone will see it.',
-      s_wait: 'Waiting for review', s_wait_d: 'Only <b>you</b> can see it so far. Once approved, everyone will.',
-      s_ok: 'Approved', s_ok_d: 'Every player sees it in the Ranks leaderboard.',
+      s_wait: 'Waiting for review', s_wait_d: 'Only <b>you</b> can see it so far.',
+      s_ok: 'Active', s_ok_d: 'Every player sees it in the Ranks leaderboard.',
       s_no: 'Rejected', s_no_d: 'This picture did not fit the rules. Upload another one.',
-      r1: 'No 18+, violence or other people’s logos — those get removed.',
-      r2: 'Every new picture is reviewed, which takes some time.',
+      r1: 'No 18+ — such pictures are rejected automatically.',
+      r2: 'Rejected? Just pick another — your current avatar stays as it is.',
       r3: 'The picture is cropped to a 256×256 circle.',
-      r4: 'Your phone checks the picture first — 18+ never even reaches review.',
+      r4: 'The check is instant: you set it and everyone sees it right away.',
       chk_run: 'Checking the picture…', chk_no: 'Picture not suitable',
       e_nsfw_dev: 'The check on your phone found this picture adult (18+). Choose another one.',
-      sent: 'Sent for review',
+      sent: 'Done! Everyone sees your avatar',
       rm_done: 'Picture removed', rm_ask: 'Remove your picture and go back to a preset avatar?',
       e_big: 'The file is too large even after compression. Pick a smaller image.',
       e_img: 'That does not look like an image. JPG or PNG is needed.',
       e_net: 'No connection to the server — check the internet and try again.',
       e_auth: 'Access not confirmed — reopen the app from the bot.',
       e_rate: 'Too often. Wait a bit and try again.',
-      e_nsfw: 'The picture was rejected by the automatic check. Choose another one.',
+      e_nsfw: 'The picture did not pass the 18+ check. Choose another one.',
+      e_check: 'The check is unavailable right now — try again in a couple of minutes.',
       e_srv: 'Server error. Try again later.',
       e_load: 'Could not load your data. Check the internet.',
       none_t: 'The app did not open', none_d: 'Open the bot and tap "🖼 My avatar" in your profile.',
@@ -544,14 +546,17 @@ window.addEventListener('error', function (e) {
         S.busy = false; setSend('ok');
         var j = res.j || {};
         if (j.ok) {
-          S.status = j.status || 'pending';
-          S.url = S.shot.dataUrl;      // свою показываем сразу, не дожидаясь сервера
+          S.status = j.status || 'ok';
+          S.url = S.shot.dataUrl;      // показываем сразу: сервер уже принял решение
           backToPick(); render();
           toast(L.sent); haptic('success');
           return;
         }
         var e = j.error;
-        if (e === 'nsfw') { S.status = 'blocked'; S.url = null; render(); showErr(esc(L.e_nsfw)); haptic('error'); return; }
+        // v322: сервер не заменяет уже принятую аватарку, если новая не прошла, — значит и
+        // здесь ничего не стираем и не рисуем «Отклонена»: у игрока всё осталось как было.
+        if (e === 'nsfw') { showErr(esc(L.e_nsfw)); haptic('error'); return; }
+        if (e === 'check_unavailable') { showErr(esc(L.e_check)); haptic('error'); return; }
         if (e === 'rate_limited') return showErr(esc(L.e_rate));
         if (e === 'too_large') return showErr(esc(L.e_big));
         if (e === 'bad_image') return showErr(esc(L.e_img));
