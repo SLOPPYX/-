@@ -7,115 +7,126 @@
 <title>Моя аватарка</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  /* v319: та же чёрно-белая тема, что у «Результата матча» — приложения должны выглядеть одной семьёй.
-     Цвет только по смыслу: зелёный — одобрено, красный — отклонено, янтарный — ждёт проверки. */
+  /* v320: фирменная пара казино — фиолетовый и циан — вместо прежней чёрно-белой темы.
+     Смысловые цвета (одобрено / ждёт / отклонено) остаются отдельными: по ним читается статус. */
   @property --ang { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
   :root {
-    --bg: #000; --ink: #fff; --ink2: #a3a3ac; --ink3: #62626b;
-    --line: rgba(255,255,255,.11); --line2: rgba(255,255,255,.2);
-    --ok: #34f5a4; --no: #ff4d6d; --wait: #ffcf5c;
+    --bg: #06060c; --ink: #fff; --ink2: #9d9db0; --ink3: #5e5e73;
+    --vio: #bf00ff; --cy: #00e5ff;
+    --line: rgba(255,255,255,.1); --line2: rgba(255,255,255,.18);
+    --ok: #2ff3a4; --no: #ff4d6d; --wait: #ffc84a;
   }
   html, body { background: var(--bg); color: var(--ink); overflow-x: hidden; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; }
   button, label { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; touch-action: manipulation; }
   [hidden] { display: none !important; }
 
+  /* Фон: два больших цветных пятна, медленно дышат. Они дают глубину без единой картинки. */
   .aurora { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-  .aurora i { position: absolute; border-radius: 50%; }
-  .aurora i:nth-child(1) { width: 560px; height: 420px; top: -230px; left: 50%; margin-left: -280px; background: radial-gradient(ellipse, rgba(255,255,255,.2), rgba(255,255,255,.05) 45%, transparent 70%); animation: drift1 14s ease-in-out infinite; }
-  .aurora i:nth-child(2) { width: 340px; height: 340px; bottom: -170px; left: -130px; background: radial-gradient(circle, rgba(255,255,255,.08), transparent 70%); animation: drift2 20s ease-in-out infinite; }
-  .grain { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 0; pointer-events: none; opacity: .7;
-    background-image: radial-gradient(rgba(255,255,255,.1) 1px, transparent 1px); background-size: 22px 22px;
-    -webkit-mask: radial-gradient(ellipse 90% 60% at 50% 0, #000, transparent 75%); mask: radial-gradient(ellipse 90% 60% at 50% 0, #000, transparent 75%); }
-  @keyframes drift1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(38px,22px); } }
-  @keyframes drift2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(46px,-30px); } }
-  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-  @keyframes pop { 0% { opacity: 0; transform: scale(.85); } 60% { transform: scale(1.04); } 100% { opacity: 1; transform: none; } }
+  .aurora i { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .5; }
+  .aurora i:nth-child(1) { width: 420px; height: 420px; top: -170px; left: -120px; background: radial-gradient(circle, rgba(191,0,255,.75), transparent 68%); animation: dr1 18s ease-in-out infinite; }
+  .aurora i:nth-child(2) { width: 380px; height: 380px; bottom: -160px; right: -130px; background: radial-gradient(circle, rgba(0,229,255,.6), transparent 68%); animation: dr2 22s ease-in-out infinite; }
+  .grain { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 0; pointer-events: none; opacity: .5;
+    background-image: radial-gradient(rgba(255,255,255,.09) 1px, transparent 1px); background-size: 24px 24px;
+    -webkit-mask: radial-gradient(ellipse 95% 55% at 50% 0, #000, transparent 78%); mask: radial-gradient(ellipse 95% 55% at 50% 0, #000, transparent 78%); }
+  @keyframes dr1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px,30px) scale(1.08); } }
+  @keyframes dr2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-36px,-28px) scale(1.06); } }
+  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @keyframes pop { 0% { opacity: 0; transform: scale(.86); } 60% { transform: scale(1.04); } 100% { opacity: 1; transform: none; } }
   @keyframes ang { to { --ang: 360deg; } }
-  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+  @keyframes sheen { to { background-position: 260% 0; } }
 
   .app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto;
-    padding: calc(22px + env(safe-area-inset-top, 0px)) 16px calc(30px + env(safe-area-inset-bottom, 0px)); }
+    padding: calc(20px + env(safe-area-inset-top, 0px)) 16px calc(30px + env(safe-area-inset-bottom, 0px)); }
 
-  .hd { display: flex; align-items: center; gap: 14px; animation: rise .55s cubic-bezier(.2,.8,.2,1) both; }
-  .hd-ic { width: 54px; height: 54px; flex-shrink: 0; overflow: visible; -webkit-filter: drop-shadow(0 0 14px rgba(255,255,255,.35)); filter: drop-shadow(0 0 14px rgba(255,255,255,.35)); }
-  .hd-w { font-size: 24px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; line-height: 1.08;
-    background: linear-gradient(100deg, #6b6b73 0%, #fff 30%, #fff 50%, #8d8d96 70%, #fff 100%) 0 0 / 260% 100%;
-    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
-    -webkit-filter: drop-shadow(0 0 16px rgba(255,255,255,.28)); filter: drop-shadow(0 0 16px rgba(255,255,255,.28)); animation: sheen 6s linear infinite; }
-  @keyframes sheen { to { background-position: 260% 0; } }
-  .hd-s { margin-top: 6px; font-size: 12px; color: var(--ink2); line-height: 1.4; }
+  /* Шапка: иконка в стеклянном квадрате с градиентной рамкой */
+  .hd { display: flex; align-items: center; gap: 13px; animation: rise .5s cubic-bezier(.2,.8,.2,1) both; }
+  .hd-b { position: relative; width: 52px; height: 52px; flex-shrink: 0; border-radius: 17px; display: grid; place-items: center;
+    background: linear-gradient(150deg, rgba(191,0,255,.28), rgba(0,229,255,.2)); box-shadow: 0 10px 30px -10px rgba(191,0,255,.8); }
+  .hd-b::before { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-radius: 17px; padding: 1px;
+    background: linear-gradient(150deg, rgba(191,0,255,.9), rgba(0,229,255,.7)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude; }
+  .hd-ic { width: 27px; height: 27px; }
+  .hd-w { font-size: 25px; font-weight: 900; letter-spacing: .02em; line-height: 1.05;
+    background: linear-gradient(95deg, #fff 10%, #e0b6ff 40%, #9ef0ff 75%, #fff 100%) 0 0 / 260% 100%;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; animation: sheen 7s linear infinite; }
+  .hd-s { margin-top: 5px; font-size: 12px; color: var(--ink2); line-height: 1.4; }
 
-  /* ─── Текущая аватарка ─── */
-  .now { margin-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 14px;
-    padding: 22px 18px; border-radius: 26px; border: 1px solid var(--line);
-    background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.02));
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 24px 50px -28px rgba(255,255,255,.22);
-    animation: rise .55s .06s cubic-bezier(.2,.8,.2,1) both; }
-  /* кольцо вокруг аватарки крутится и красится по статусу — статус видно, не читая текст */
-  .ring { position: relative; width: 148px; height: 148px; border-radius: 50%; display: grid; place-items: center; isolation: isolate; }
-  .ring::before { content: ''; position: absolute; top: -5px; right: -5px; bottom: -5px; left: -5px; border-radius: 50%; z-index: -1;
-    background: conic-gradient(from var(--ang), transparent, var(--rc, rgba(255,255,255,.75)), transparent 62%);
-    animation: ang 5.5s linear infinite; opacity: .9; }
-  .ring img, .ring .ph { width: 138px; height: 138px; border-radius: 50%; object-fit: cover; display: block;
-    background: #0b0b0d; border: 1px solid var(--line2); }
-  .ring .ph { display: grid; place-items: center; font-size: 52px; }
-  .st { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 800;
+  /* Стеклянная карточка с тонкой градиентной обводкой — основной приём нового оформления */
+  .glass { position: relative; border-radius: 26px; background: rgba(255,255,255,.045);
+    -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: 0 26px 60px -34px rgba(0,0,0,.9); }
+  .glass::before { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-radius: 26px; padding: 1px; pointer-events: none;
+    background: linear-gradient(160deg, rgba(255,255,255,.28), rgba(255,255,255,.05) 45%, rgba(191,0,255,.35));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+
+  .now { margin-top: 18px; padding: 26px 18px 22px; display: flex; flex-direction: column; align-items: center; gap: 15px;
+    animation: rise .5s .05s cubic-bezier(.2,.8,.2,1) both; }
+  /* Кольцо вокруг аватарки: цвет статуса + мягкое свечение того же цвета под ней */
+  .ring { position: relative; width: 156px; height: 156px; border-radius: 50%; display: grid; place-items: center; isolation: isolate; }
+  .ring::before { content: ''; position: absolute; top: -7px; right: -7px; bottom: -7px; left: -7px; border-radius: 50%; z-index: -2;
+    background: conic-gradient(from var(--ang), transparent 8%, var(--rc, #fff) 45%, transparent 82%); animation: ang 6s linear infinite; }
+  .ring::after { content: ''; position: absolute; top: 4px; right: 4px; bottom: 4px; left: 4px; border-radius: 50%; z-index: -1;
+    box-shadow: 0 0 46px 6px var(--rc, rgba(255,255,255,.5)); opacity: .5; }
+  .ring img, .ring .ph { width: 142px; height: 142px; border-radius: 50%; object-fit: cover; display: block; background: #0c0c16; }
+  .ring .ph { display: grid; place-items: center; font-size: 54px; }
+
+  .st { display: inline-flex; align-items: center; gap: 9px; padding: 9px 17px; border-radius: 999px; font-size: 13px; font-weight: 800;
     border: 1px solid var(--line2); background: rgba(255,255,255,.06); }
   .st i { width: 9px; height: 9px; border-radius: 50%; background: var(--ink3); }
-  .st.ok { color: #baf7dd; border-color: rgba(52,245,164,.45); background: rgba(52,245,164,.1); }
-  .st.ok i { background: var(--ok); box-shadow: 0 0 12px var(--ok); }
-  .st.wait { color: #f0e2bd; border-color: rgba(255,207,92,.45); background: rgba(255,207,92,.1); }
-  .st.wait i { background: var(--wait); box-shadow: 0 0 12px var(--wait); animation: blink 1.4s ease-in-out infinite; }
-  .st.no { color: #ffd3da; border-color: rgba(255,77,109,.5); background: rgba(255,77,109,.1); }
-  .st.no i { background: var(--no); box-shadow: 0 0 12px var(--no); }
-  .st-d { font-size: 12.5px; line-height: 1.5; color: var(--ink2); text-align: center; max-width: 320px; }
+  .st.ok { color: #a7fcdb; border-color: rgba(47,243,164,.5); background: rgba(47,243,164,.12); }
+  .st.ok i { background: var(--ok); box-shadow: 0 0 14px var(--ok); }
+  .st.wait { color: #ffe6ac; border-color: rgba(255,200,74,.5); background: rgba(255,200,74,.12); }
+  .st.wait i { background: var(--wait); box-shadow: 0 0 14px var(--wait); animation: blink 1.4s ease-in-out infinite; }
+  .st.no { color: #ffd0d8; border-color: rgba(255,77,109,.55); background: rgba(255,77,109,.12); }
+  .st.no i { background: var(--no); box-shadow: 0 0 14px var(--no); }
+  .st-d { font-size: 13px; line-height: 1.55; color: var(--ink2); text-align: center; max-width: 330px; }
   .st-d b { color: #fff; }
 
-  /* ─── Выбор файла ─── */
+  /* Зона выбора файла: пунктир + подсветка под пальцем */
   .drop { position: relative; isolation: isolate; overflow: hidden; display: block; width: 100%; margin-top: 14px;
-    padding: 26px 18px 22px; border-radius: 24px; text-align: center;
-    background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 0%), rgba(255,255,255,.16), transparent 70%),
-                linear-gradient(180deg, rgba(255,255,255,.065), rgba(255,255,255,.015));
-    border: 1px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.14); transition: transform .15s, box-shadow .2s; }
+    padding: 28px 18px 24px; border-radius: 26px; text-align: center; border: 1.5px dashed rgba(255,255,255,.22);
+    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgba(191,0,255,.28), transparent 68%), rgba(255,255,255,.03);
+    transition: transform .15s, border-color .2s, box-shadow .2s; }
   .drop:active { transform: scale(.985); }
-  .drop.over { box-shadow: 0 0 0 1px rgba(255,255,255,.5), 0 0 40px -12px rgba(255,255,255,.6); }
-  .drop .ic { width: 60px; height: 60px; margin: 0 auto 12px; display: block; }
+  .drop.over { border-color: rgba(0,229,255,.8); box-shadow: 0 0 44px -12px rgba(0,229,255,.9); }
+  .drop .ic { width: 54px; height: 54px; margin: 0 auto 12px; display: block; opacity: .95; }
   .drop .t1 { font-size: 17px; font-weight: 900; }
   .drop .t2 { margin-top: 7px; font-size: 12.5px; color: var(--ink2); line-height: 1.5; }
   .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
   .prev { margin-top: 14px; display: flex; flex-direction: column; align-items: center; gap: 12px; animation: pop .35s both; }
-  .prev img { width: 168px; height: 168px; border-radius: 50%; object-fit: cover; border: 1px solid var(--line2);
-    box-shadow: 0 0 50px -14px rgba(255,255,255,.5); }
-  .prev .meta { font-size: 11px; color: var(--ink3); font-variant-numeric: tabular-nums; }
+  .prev img { width: 172px; height: 172px; border-radius: 50%; object-fit: cover;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.2), 0 0 56px -12px rgba(191,0,255,.9); }
+  .prev .meta { font-size: 11.5px; color: var(--ink3); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
 
   .btn { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%;
-    min-height: 54px; padding: 14px 18px; border-radius: 18px; font-size: 15px; font-weight: 900; letter-spacing: .04em;
-    text-transform: uppercase; transition: transform .12s ease, background .2s; }
-  .btn:active { transform: scale(.97); }
-  .btn.pri { color: #000; background: linear-gradient(180deg, #fff, #d9d9de);
-    box-shadow: 0 0 0 1px rgba(255,255,255,.6), 0 10px 34px -6px rgba(255,255,255,.45); }
+    min-height: 56px; padding: 15px 18px; border-radius: 19px; font-size: 15px; font-weight: 900; letter-spacing: .03em;
+    transition: transform .12s ease, box-shadow .2s, background .2s; }
+  .btn:active { transform: scale(.975); }
+  .btn.pri { color: #fff; background: linear-gradient(100deg, var(--vio), #7b3cff 55%, var(--cy));
+    box-shadow: 0 12px 38px -12px rgba(191,0,255,.95), inset 0 1px 0 rgba(255,255,255,.35); }
   .btn.ghost { color: #fff; background: rgba(255,255,255,.06); border: 1px solid var(--line2); }
   .btn.ghost:active { background: rgba(255,255,255,.13); }
-  .btn.dgr { color: #ffd3da; background: rgba(255,77,109,.1); border: 1px solid rgba(255,77,109,.42); }
+  .btn.dgr { color: #ffd0d8; background: rgba(255,77,109,.1); border: 1px solid rgba(255,77,109,.45); }
   .btn[disabled] { opacity: .45; }
   .btn + .btn { margin-top: 10px; }
-  .btn svg { width: 19px; height: 19px; flex-shrink: 0; }
 
-  .err { margin-top: 14px; padding: 13px 15px; border-radius: 16px; font-size: 13.5px; line-height: 1.5; color: #ffd3da;
-    background: linear-gradient(180deg, rgba(255,77,109,.14), rgba(255,77,109,.05)); border: 1px solid rgba(255,77,109,.5); animation: pop .35s both; }
-  .rules { margin-top: 18px; padding: 2px 4px 0; list-style: none; }
-  .rules li { display: flex; gap: 11px; align-items: flex-start; padding: 8px 0; font-size: 12.5px; line-height: 1.45; color: var(--ink2);
-    border-bottom: 1px solid rgba(255,255,255,.06); }
+  .err { margin-top: 14px; padding: 14px 16px; border-radius: 18px; font-size: 13.5px; line-height: 1.5; color: #ffd0d8;
+    background: rgba(255,77,109,.12); border: 1px solid rgba(255,77,109,.5); animation: pop .35s both; }
+
+  .rules { margin-top: 16px; padding: 6px 4px; list-style: none; }
+  .rules li { display: flex; gap: 11px; align-items: flex-start; padding: 9px 2px; font-size: 12.5px; line-height: 1.45; color: var(--ink2);
+    border-bottom: 1px solid rgba(255,255,255,.055); }
   .rules li:last-child { border-bottom: 0; }
-  .rules li svg { width: 17px; height: 17px; flex-shrink: 0; margin-top: 1px; stroke: #fff; }
-  .rules li.warn svg { stroke: var(--wait); } .rules li.warn { color: #d8d3c4; }
-  .foot { margin-top: 20px; text-align: center; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); }
-  .sk { border-radius: 24px; background: linear-gradient(100deg, rgba(255,255,255,.05) 30%, rgba(255,255,255,.12) 50%, rgba(255,255,255,.05) 70%) 0 0 / 300% 100%; animation: sheen 1.6s linear infinite; }
+  .rules li svg { width: 17px; height: 17px; flex-shrink: 0; margin-top: 1px; stroke: var(--cy); }
+  .rules li.warn svg { stroke: var(--wait); } .rules li.warn { color: #ded4bd; }
+  .foot { margin-top: 18px; text-align: center; font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink3); }
+  .sk { border-radius: 26px; background: linear-gradient(100deg, rgba(255,255,255,.04) 30%, rgba(255,255,255,.11) 50%, rgba(255,255,255,.04) 70%) 0 0 / 300% 100%; animation: sheen 1.6s linear infinite; }
   .toast { position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px);
-    max-width: 88%; padding: 12px 18px; border-radius: 14px; font-size: 13px; font-weight: 700; text-align: center;
-    background: rgba(255,255,255,.96); color: #000; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 50; }
+    max-width: 88%; padding: 13px 20px; border-radius: 15px; font-size: 13px; font-weight: 700; text-align: center;
+    background: linear-gradient(100deg, var(--vio), var(--cy)); color: #fff; box-shadow: 0 14px 40px -14px rgba(191,0,255,.9);
+    opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 50; }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
   .fatal { display: none; padding: 40px 22px; text-align: center; }
   .fatal .t1 { font-size: 19px; font-weight: 900; }
@@ -132,19 +143,21 @@
 
 <main class="app" id="app">
   <header class="hd">
-    <svg class="hd-ic" viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <circle cx="32" cy="32" r="25"/><circle cx="32" cy="25" r="8"/><path d="M15 52a17 17 0 0 1 34 0"/>
-    </svg>
+    <div class="hd-b">
+      <svg class="hd-ic" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="9" r="3.6"/><path d="M4.6 20a7.4 7.4 0 0 1 14.8 0"/>
+      </svg>
+    </div>
     <div>
       <div class="hd-w" id="ttl">Моя аватарка</div>
-      <div class="hd-s" id="sub">Одна картинка — видна везде: казино, ранги, NFT</div>
+      <div class="hd-s" id="sub">Видна всем игрокам в топе «Рангов»</div>
     </div>
   </header>
 
-  <section id="v-load"><div class="sk" style="height:250px;margin-top:20px"></div></section>
+  <section id="v-load"><div class="sk" style="height:260px;margin-top:18px"></div></section>
 
   <section id="v-main" hidden>
-    <div class="now">
+    <div class="now glass">
       <div class="ring" id="ring"><div class="ph" id="ph">🎮</div></div>
       <div class="st" id="st"><i></i><span id="st-t"></span></div>
       <div class="st-d" id="st-d"></div>
@@ -153,8 +166,9 @@
     <div class="err" id="err" hidden></div>
 
     <label class="drop" id="drop" for="file">
-      <svg class="ic" viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="8" y="14" width="48" height="36" rx="8"/><circle cx="32" cy="32" r="9"/><path d="M22 14l3-5h14l3 5"/>
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="url(#avg)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <defs><linearGradient id="avg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bf00ff"/><stop offset="1" stop-color="#00e5ff"/></linearGradient></defs>
+        <rect x="3" y="6" width="18" height="14" rx="4"/><circle cx="12" cy="13" r="3.4"/><path d="M8.5 6l1.2-2h4.6l1.2 2"/>
       </svg>
       <div class="t1" id="drop-t">Выбрать картинку</div>
       <div class="t2" id="drop-d">Квадратная — лучше всего. Из любой сделаем круг.</div>
@@ -180,7 +194,7 @@
   </section>
 
   <section id="v-none" hidden>
-    <div class="now" style="margin-top:26px">
+    <div class="now glass" style="margin-top:24px">
       <div class="st no"><i></i><span id="none-t"></span></div>
       <div class="st-d" id="none-d"></div>
     </div>
@@ -194,7 +208,7 @@ window.addEventListener('error', function (e) {
   try {
     document.getElementById('app').style.display = 'none';
     var f = document.getElementById('fatal'); f.style.display = 'block';
-    document.getElementById('fatal-d').textContent = 'Закрой и открой приложение заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v319';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой приложение заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v320';
   } catch (_) {}
 }, true);
 </script>
@@ -209,7 +223,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v319';
+  var VER = 'v320';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -232,13 +246,13 @@ window.addEventListener('error', function (e) {
 
   var TX = {
     ru: {
-      ttl: 'Моя аватарка', sub: 'Одна картинка — видна везде: казино, ранги, NFT',
+      ttl: 'Моя аватарка', sub: 'Видна всем игрокам в топе «Рангов»',
       drop_t: 'Выбрать картинку', drop_d: 'Квадратная — лучше всего. Из любой сделаем круг.',
       drop_alt: 'Нажми, перетащи файл или вставь из буфера (Ctrl+V)',
       send: 'Отправить на проверку', swap: 'Выбрать другую', rm: 'Убрать мою картинку',
-      s_none: 'Своей картинки нет', s_none_d: 'Сейчас показывается аватарка из набора. Загрузи свою — и она появится во всех мини-аппах.',
+      s_none: 'Своей картинки нет', s_none_d: 'В топе «Рангов» пока стоит эмблема твоего ранга. Загрузи картинку — её увидят все игроки.',
       s_wait: 'Ждёт проверки', s_wait_d: 'Картинку видишь пока <b>только ты</b>. Как только её одобрят, она появится у всех в топах.',
-      s_ok: 'Одобрена', s_ok_d: 'Её видят все — в казино, рангах и NFT.',
+      s_ok: 'Одобрена', s_ok_d: 'Её видят все игроки в топе «Рангов».',
       s_no: 'Отклонена', s_no_d: 'Эта картинка не подошла под правила. Загрузи другую.',
       r1: 'Без 18+, жестокости и чужих логотипов — такие снимаются.',
       r2: 'Каждая новая картинка проходит проверку, это занимает время.',
@@ -254,16 +268,16 @@ window.addEventListener('error', function (e) {
       e_srv: 'Ошибка на сервере. Попробуй ещё раз позже.',
       e_load: 'Не удалось получить данные. Проверь интернет.',
       none_t: 'Приложение не открылось', none_d: 'Зайди в бот и нажми «🖼 Моя аватарка» в профиле.',
-      foot: 'Картинка хранится на сервере бота и видна другим игрокам'
+      foot: 'Картинка хранится на сервере бота'
     },
     en: {
-      ttl: 'My avatar', sub: 'One picture — shown everywhere: casino, ranks, NFT',
+      ttl: 'My avatar', sub: 'Everyone sees it in the Ranks leaderboard',
       drop_t: 'Choose a picture', drop_d: 'Square works best. Any image becomes a circle.',
       drop_alt: 'Tap, drop a file, or paste from clipboard (Ctrl+V)',
       send: 'Send for review', swap: 'Choose another', rm: 'Remove my picture',
-      s_none: 'No custom picture', s_none_d: 'A preset avatar is shown for now. Upload yours and it appears in every mini app.',
+      s_none: 'No custom picture', s_none_d: 'Your rank emblem is shown in the leaderboard for now. Upload a picture and everyone will see it.',
       s_wait: 'Waiting for review', s_wait_d: 'Only <b>you</b> can see it so far. Once approved, everyone will.',
-      s_ok: 'Approved', s_ok_d: 'Everyone sees it — in the casino, ranks and NFT.',
+      s_ok: 'Approved', s_ok_d: 'Every player sees it in the Ranks leaderboard.',
       s_no: 'Rejected', s_no_d: 'This picture did not fit the rules. Upload another one.',
       r1: 'No 18+, violence or other people’s logos — those get removed.',
       r2: 'Every new picture is reviewed, which takes some time.',
@@ -279,7 +293,7 @@ window.addEventListener('error', function (e) {
       e_srv: 'Server error. Try again later.',
       e_load: 'Could not load your data. Check the internet.',
       none_t: 'The app did not open', none_d: 'Open the bot and tap "🖼 My avatar" in your profile.',
-      foot: 'The picture is stored on the bot server and visible to other players'
+      foot: 'The picture is stored on the bot server'
     }
   };
   var L = TX[LANG];
