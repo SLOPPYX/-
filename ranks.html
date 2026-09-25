@@ -610,6 +610,11 @@
   }
 
   /* v296: пламя на подиуме топа — у каждого игрока свой цвет и сила по его рангу */
+  /* v319: своя картинка-аватарка. Круглая, поверх подложки — пламя и кольца рангов остаются как были. */
+  .avimg { border-radius: 50%; object-fit: cover; display: block; background: #0b0b12; }
+  .pod .av .avimg { width: 100%; height: 100%; }
+  .trow .avimg { width: 34px; height: 34px; flex-shrink: 0; border: 1px solid rgba(255,255,255,.18); }
+  .pc-av .avimg { width: 100%; height: 100%; }
   .pod .avw { position: relative; margin-bottom: 8px; }
   .pod .av { margin-bottom: 0; }
   .pod .crown { position: relative; z-index: 3; }
@@ -1999,7 +2004,7 @@ window.addEventListener('error', function (e) {
     var avw = el('div', 'pc-avw');
     avw.appendChild(miniFire(86, Math.max(0, ti), rgb));
     if (p.is_admin) { avw.appendChild(admRing()); for (var st = 1; st <= 3; st++) avw.appendChild(el('i', 'adm-st s' + st)); }
-    var av = el('div', 'pc-av' + (p.is_admin ? ' adm' : '')); av.appendChild(emb(ti >= 0 ? ti : 0, 54));
+    var av = el('div', 'pc-av' + (p.is_admin ? ' adm' : '')); av.appendChild(avatarNode(p, ti, 54));   // v319
     if (p.is_admin) av.appendChild(admIcon('adm-badge'));
     avw.appendChild(av); box.appendChild(avw);
 
@@ -2193,7 +2198,7 @@ window.addEventListener('error', function (e) {
     var row = el('div', 'trow' + (p.is_me ? ' me' : '') + (p.is_admin ? ' adm' : ''));
     row.style.setProperty('--i', String(k));
     row.appendChild(el('span', 'pl', String(p.place)));
-    row.appendChild(emb(ti >= 0 ? ti : 0, 34));
+    row.appendChild(avatarNode(p, ti, 34));                          // v319
     var who = el('span', 'who'), wb = el('b');
     wb.appendChild(el('span', '', p.name));
     var ttl2 = el('i', 'ttl', p.tier_name || ''); ttl2.style.setProperty('--c', tierRgb(ti)); wb.appendChild(ttl2);   // титул рядом с ником
@@ -2230,6 +2235,25 @@ window.addEventListener('error', function (e) {
     return s;
   }
 
+  // v319: что показать в кружке игрока — его фото, если оно есть и одобрено, иначе эмблема ранга.
+  // Одно место решения на все три списка (подиум, строки, карточка), чтобы они не разъехались.
+  // Если картинка не загрузилась (сервер недоступен, файл снят) — молча возвращаем эмблему,
+  // пустого кружка игрок не увидит.
+  function avatarNode(p, ti, size) {
+    if (p && p.avatar_url) {
+      var im = document.createElement('img');
+      im.className = 'avimg'; im.alt = ''; im.loading = 'lazy'; im.decoding = 'async';
+      im.width = size; im.height = size;
+      im.onerror = function () {
+        var fb = emb(ti >= 0 ? ti : 0, size);
+        if (im.parentNode) im.parentNode.replaceChild(fb, im);
+      };
+      im.src = p.avatar_url;
+      return im;
+    }
+    return emb(ti >= 0 ? ti : 0, size);
+  }
+
   function podSlot(rank, p, tiers) {
     var pod = el('div', 'pod p' + rank + (p ? '' : ' empty') + (p && p.is_me ? ' me' : '') + (p && p.is_admin ? ' adm' : ''));
     if (rank === 1 && p) {
@@ -2241,7 +2265,7 @@ window.addEventListener('error', function (e) {
     if (p) {
       var ti = tierIdx(tiers, p.tier_name);
       avw.appendChild(miniFire(rank === 1 ? 78 : 62, Math.max(0, ti), tierRgb(ti)));      // v296: пламя позади аватара
-      av.appendChild(emb(ti >= 0 ? ti : 0, rank === 1 ? 52 : 40));
+      av.appendChild(avatarNode(p, ti, rank === 1 ? 52 : 40));      // v319: фото игрока, иначе эмблема ранга
       if (p.is_admin) {                                              // v297: кольцо, значок и звёздочки вокруг аватара админа
         avw.appendChild(admRing());
         av.appendChild(admIcon('adm-badge'));
