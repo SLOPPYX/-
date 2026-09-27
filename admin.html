@@ -26,7 +26,9 @@
   input:focus, textarea:focus, select:focus { border-color: var(--acc); }
   textarea { min-height: 72px; resize: vertical; }
   .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .top .row { gap: 6px; }
   h1 { font-size: 18px; font-weight: 700; }
+  h2 { font-size: 16px; font-weight: 700; margin: 12px 0 4px; }
   .ver { font-size: 11px; color: var(--tx3); margin-left: 6px; font-weight: 400; }
   .stats { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
   .stats span { background: var(--card); border: 1px solid var(--ln); border-radius: 8px; padding: 4px 8px; font-size: 12px; color: var(--tx2); }
@@ -55,6 +57,7 @@
   .bd.wn { background: rgba(245,158,11,.2); color: #fcd34d; }
   .bd.mt { background: rgba(139,92,246,.24); color: #c4b5fd; }
   .bd.adm { background: rgba(250,204,21,.2); color: #fde68a; }
+  .bd.auto { background: rgba(160,160,174,.18); color: var(--tx2); }
   .more { width: 100%; margin-top: 8px; }
   .empty { padding: 30px 10px; text-align: center; color: var(--tx3); }
   .sec { background: var(--card); border-radius: 14px; padding: 12px; margin-top: 10px; }
@@ -63,6 +66,7 @@
   .kv { background: var(--card2); border-radius: 10px; padding: 7px 10px; min-width: 0; }
   .kv i { display: block; font-style: normal; font-size: 11px; color: var(--tx3); }
   .kv b { font-size: 14px; word-break: break-word; }
+  .kv small { display: block; font-size: 11px; color: var(--tx3); }
   .note { padding: 9px 11px; border-radius: 10px; font-size: 13px; line-height: 1.45; }
   .note.ban { background: rgba(239,68,68,.12); color: #fecaca; }
   .note.frz { background: rgba(34,211,238,.1); color: #cffafe; }
@@ -77,9 +81,13 @@
   .ph { display: flex; align-items: center; gap: 12px; }
   .ph .av { width: 58px; height: 58px; flex-basis: 58px; font-size: 26px; }
   .ph .nm { font-size: 17px; white-space: normal; }
+  .cp { cursor: pointer; border-bottom: 1px dashed var(--tx3); }
   .avbig { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; background: var(--card2); display: block; }
   .small { font-size: 12px; color: var(--tx3); }
   .danger { border: 1px solid rgba(239,68,68,.35); }
+  .lg { padding: 9px 10px; border-radius: 12px; background: var(--card); margin-top: 6px; cursor: pointer; font-size: 13px; }
+  .lg .lt { font-size: 11.5px; color: var(--tx3); margin-bottom: 2px; }
+  .lg .lt b { color: var(--tx2); font-weight: 600; }
   .toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 9;
            max-width: 92%; background: #2a2a35; border: 1px solid var(--ln); padding: 10px 14px; border-radius: 12px; font-size: 13px;
            opacity: 0; transition: opacity .2s; pointer-events: none; }
@@ -89,6 +97,13 @@
   .fatal b { display: block; font-size: 17px; margin-bottom: 8px; }
   .fatal span { color: var(--tx2); font-size: 13px; line-height: 1.5; }
   .busy { opacity: .55; pointer-events: none; }
+  /* v325: вместо затемнения всей карточки крутится только нажатая кнопка — видно, что именно происходит */
+  .lock { pointer-events: none; }
+  .ld { position: relative; color: transparent !important; }
+  .ld::after { content: ''; position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px;
+               border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .upd { color: var(--acc); }
 </style>
 </head>
 <body>
@@ -97,7 +112,10 @@
 <main id="app">
   <div class="top">
     <h1>Админка<span class="ver" id="ver"></span></h1>
-    <button id="reload" type="button" title="Обновить">↻</button>
+    <div class="row">
+      <button id="journal" type="button" title="Журнал действий">📜 Журнал</button>
+      <button id="reload" type="button" title="Обновить">↻</button>
+    </div>
   </div>
 
   <section id="v-list">
@@ -119,8 +137,15 @@
   </section>
 
   <section id="v-pl" hidden>
-    <button id="back" type="button">← К списку</button>
+    <button class="back" type="button">← Назад</button>
     <div id="pl"></div>
+  </section>
+
+  <section id="v-log" hidden>
+    <button class="back" type="button">← К списку</button>
+    <h2>Журнал действий</h2>
+    <div class="small">Что делал администратор и что бот сделал сам. Нажми на запись — откроется игрок.</div>
+    <div id="log"></div>
   </section>
 </main>
 
@@ -136,7 +161,7 @@ window.addEventListener('error', function (e) {
     document.getElementById('app').hidden = true;
     var f = document.getElementById('fatal'); f.hidden = false;
     document.getElementById('fatal-t').textContent = 'Ошибка на странице';
-    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v324';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v325';
   } catch (_) {}
 }, true);
 </script>
@@ -151,7 +176,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v324';
+  var VER = 'v325';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -167,29 +192,62 @@ window.addEventListener('error', function (e) {
       tg.ready(); tg.expand();
       if (!INIT) INIT = tg.initData || '';
       if (tg.setHeaderColor) tg.setHeaderColor('#0e0e12');
-      if (tg.BackButton) tg.BackButton.onClick(function () { showList(); });
+      // функцию зовут дважды (сразу и когда догрузится SDK) — обработчик «Назад» вешаем один раз
+      if (tg.BackButton && !tg.__admBack) { tg.__admBack = true; tg.BackButton.onClick(function () { goBack(); }); }
+      if (tg.BackButton && S.view !== 'list') tg.BackButton.show();
     } catch (e) {}
   };
-  window.__admTg();
 
   var FILTERS = [['all', 'Все'], ['online', 'Онлайн'], ['banned', 'Бан'], ['frozen', 'Заморозка'],
                  ['reports', 'Жалобы'], ['strikes', 'Аватарки'], ['match', 'В матче']];
   var DUR0 = [3600, 21600, 86400, 259200, 604800, 2592000];
-  var S = { meta: null, q: '', flt: 'all', sort: 'recent', items: [], total: 0, seq: 0, cur: null, dirty: false, pick: {} };
+  var S = { meta: null, q: '', flt: 'all', sort: 'recent', items: [], total: 0, seq: 0, pseq: 0, cur: null, dirty: false,
+            pick: {}, view: 'list', from: 'list', listY: 0, views: {} };
+  window.__admTg();
 
   // ── мелочи ──────────────────────────────────────────────────────────
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function fmt(n) { n = Number(n || 0); var s = Math.abs(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); return (n < 0 ? '−' : '') + s; }
+  function digits(s) { return String(s).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+  // v325: от 10^21 JS печатает число как «8.57e+21» — раньше так и выводилось. Теперь все цифры.
+  function fmt(n) {
+    n = Number(n || 0);
+    if (!isFinite(n)) return '—';
+    var a = Math.abs(Math.round(n));
+    var s = a < 1e21 ? String(a) : a.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 0 });
+    return (n < 0 ? '−' : '') + digits(s);
+  }
+  // точный баланс: сервер присылает его строкой — числа больше 2^53 в JS уже неточные
+  function bal(p) { return p.balance_s ? digits(p.balance_s) : fmt(p.balance); }
+  var UNITS = [[1e24, 'септлн'], [1e21, 'секстлн'], [1e18, 'квинтлн'], [1e15, 'квадрлн'], [1e12, 'трлн'], [1e9, 'млрд'], [1e6, 'млн']];
+  function short(n) {
+    n = Math.abs(Number(n || 0));
+    for (var i = 0; i < UNITS.length; i++) {
+      if (n >= UNITS[i][0]) {
+        var x = n / UNITS[i][0];
+        return (x < 10 ? x.toFixed(2) : x < 100 ? x.toFixed(1) : x.toFixed(0)).replace('.', ',') + ' ' + UNITS[i][1];
+      }
+    }
+    return fmt(n);
+  }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
-  function dt(ts) { if (!ts) return '—'; var d = new Date(ts * 1000); return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function hm(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function dt(ts) { if (!ts) return '—'; var d = new Date(ts * 1000); return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + ' ' + hm(d); }
   function ago(ts) {
-    if (!ts) return 'давно';
-    var s = Date.now() / 1000 - ts;
+    var s = Date.now() / 1000 - ts, d = new Date(ts * 1000), y = new Date(); y.setDate(y.getDate() - 1);
     if (s < 90) return 'только что';
     if (s < 3600) return Math.round(s / 60) + ' мин назад';
-    if (s < 86400) return Math.round(s / 3600) + ' ч назад';
+    if (s < 6 * 3600) return Math.round(s / 3600) + ' ч назад';
+    if (d.toDateString() === new Date().toDateString()) return 'сегодня в ' + hm(d);
+    if (d.toDateString() === y.toDateString()) return 'вчера в ' + hm(d);
     return dt(ts);
   }
+  // v325: раньше без отметки времени писалось «давно», даже если игрок только что был в боте
+  function seenTxt(p, long) {
+    if (p.online) return 'в сети';
+    if (!p.seen) return long ? 'нет данных о входе' : 'нет данных';
+    return (long ? 'был ' : '') + ago(p.seen);
+  }
+  function regTxt(r) { var m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(r || ''); return m ? m[3] + '.' + m[2] + '.' + m[1] : (r || '—'); }
   function dur(sec) {
     if (!sec) return 'навсегда';
     if (sec % 86400 === 0) return (sec / 86400) + ' дн';
@@ -199,11 +257,12 @@ window.addEventListener('error', function (e) {
   // «1м», «1кк», «250к», «1 000 000» → число
   function parseAmount(s) {
     s = String(s || '').toLowerCase().replace(/\s/g, '').replace(',', '.');
-    var m = s.match(/^(\d+(?:\.\d+)?)(кк|к|k|м|m|млн)?$/);
+    var m = s.match(/^(\d+(?:\.\d+)?)(кк|к|k|м|m|млн|млрд)?$/);
     if (!m) return NaN;
     var n = parseFloat(m[1]), u = m[2] || '';
     if (u === 'к' || u === 'k') n *= 1e3;
     if (u === 'кк' || u === 'м' || u === 'm' || u === 'млн') n *= 1e6;
+    if (u === 'млрд') n *= 1e9;
     return Math.round(n);
   }
   var toastT = 0;
@@ -222,6 +281,23 @@ window.addEventListener('error', function (e) {
       res(window.confirm(text));
     });
   }
+  // v325: нажал на ID — скопировано. Сначала старый способ через выделение (срабатывает сразу, в момент нажатия),
+  // если нет — буфер обмена, но не дольше секунды: в некоторых окнах Telegram он молча не отвечает никогда.
+  function copy(t) {
+    function done() { toast('Скопировано: ' + t); haptic('success'); }
+    function fail() { toast('Не удалось скопировать: ' + t, true); }
+    var ta = document.createElement('textarea'), ok = false;
+    ta.value = t; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    if (ok) { done(); return; }
+    var fin = false, tm = setTimeout(function () { if (!fin) { fin = true; fail(); } }, 1000);
+    try {
+      navigator.clipboard.writeText(t).then(function () { if (!fin) { fin = true; clearTimeout(tm); done(); } },
+                                            function () { if (!fin) { fin = true; clearTimeout(tm); fail(); } });
+    } catch (e) { if (!fin) { fin = true; clearTimeout(tm); fail(); } }
+  }
 
   // ── запросы: всё POST, в теле — подпись Telegram и ключ из ссылки ────
   function api(path, body) {
@@ -239,20 +315,51 @@ window.addEventListener('error', function (e) {
   }
   function denied(res) {
     if (res.status === 403) { fatal('Нет доступа', 'Открой /admin в боте и нажми «🗂 Игроки — мини-апп» заново.'); return true; }
-    if (res.status === 404 && !res.j) { fatal('Бот ещё не обновлён', 'Эта страница работает с ботом v324. Обнови бота на сервере.'); return true; }
+    if (res.status === 404 && !res.j) { fatal('Бот ещё не обновлён', 'Эта страница работает с ботом v324 и новее. Обнови бота на сервере.'); return true; }
     return false;
   }
 
+  // ── запомненный список: при открытии он виден сразу, пока с сервера едут свежие данные ──
+  var CK = 'adm_cache_v1';
+  function cacheLoad() {
+    try { var c = JSON.parse(localStorage.getItem(CK) || 'null'); if (c && c.meta && c.items) return c; } catch (e) {}
+    return null;
+  }
+  function cacheSave() {
+    // запоминаем только стартовый вид и только когда пришли и шапка, и сам список
+    if (S.q || S.flt !== 'all' || S.sort !== 'recent' || !S.meta || !S.listLoaded) return;
+    try { localStorage.setItem(CK, JSON.stringify({ meta: S.meta, items: S.items.slice(0, 50), total: S.total })); } catch (e) {}
+  }
+
+  // ── переходы между экранами ─────────────────────────────────────────
+  function show(view) {
+    S.view = view;
+    $('v-list').hidden = view !== 'list'; $('v-pl').hidden = view !== 'pl'; $('v-log').hidden = view !== 'log';
+    try { if (tg && tg.BackButton) { if (view === 'list') tg.BackButton.hide(); else tg.BackButton.show(); } } catch (e) {}
+  }
+  function goBack() {
+    var to = S.view === 'pl' ? (S.from || 'list') : 'list';
+    show(to);
+    if (to === 'log') { loadLog(); return; }
+    window.scrollTo(0, S.listY || 0);                // v325: возвращаемся туда же, где были в списке
+    if (S.dirty) { S.dirty = false; renderList(); loadMeta(); loadList(false, true); }
+  }
+  var backs = document.querySelectorAll('.back');
+  for (var bi = 0; bi < backs.length; bi++) backs[bi].addEventListener('click', goBack);
+
   // ── шапка ───────────────────────────────────────────────────────────
+  function renderStats() {
+    var st = (S.meta && S.meta.stats) || {};
+    $('stats').innerHTML = [['Игроков', st.players], ['Онлайн', st.online], ['За сутки', st.day], ['Новых сегодня', st.new_today],
+                            ['Бан', st.banned], ['Заморозка', st.frozen], ['Жалобы', st.reports], ['Матчей', st.in_match], ['В поиске', st.queue]]
+      .filter(function (x) { return x[1] !== undefined; })
+      .map(function (x) { return '<span>' + x[0] + ' <b>' + fmt(x[1]) + '</b></span>'; }).join('');
+  }
   function loadMeta() {
     return api('/meta').then(function (res) {
       if (denied(res)) return false;
       if (!res.j || !res.j.ok) { toast('Не удалось загрузить данные: ' + ((res.j && res.j.message) || res.status), true); return false; }
-      S.meta = res.j;
-      var st = S.meta.stats || {};
-      $('stats').innerHTML = [['Игроков', st.players], ['Онлайн', st.online], ['Бан', st.banned], ['Заморозка', st.frozen],
-                              ['Жалобы', st.reports], ['Матчей', st.in_match], ['В поиске', st.queue]]
-        .map(function (x) { return '<span>' + x[0] + ' <b>' + fmt(x[1]) + '</b></span>'; }).join('');
+      S.meta = res.j; renderStats(); cacheSave();
       return true;
     });
   }
@@ -276,15 +383,22 @@ window.addEventListener('error', function (e) {
     if (p.strikes) b += '<span class="bd wn">аватарка ⚠' + p.strikes + '</span>';
     return b;
   }
+  function rowBal(p) { return Number(p.balance) >= 1e12 ? short(p.balance) : bal(p); }
   function rowHtml(p) {
     return '<div class="it" data-uid="' + p.uid + '"><div class="av">' + avHtml(p) + (p.online ? '<i class="dot"></i>' : '') + '</div>'
       + '<div class="m"><div class="nm">' + esc(p.name || 'без имени') + badges(p) + '</div>'
-      + '<div class="sub">ID ' + esc(p.cid || '—') + ' · ' + fmt(p.balance) + ' 💰 · ' + fmt(p.rp) + ' RP · ' + (p.online ? 'онлайн' : ago(p.seen)) + '</div></div></div>';
+      + '<div class="sub">ID ' + esc(p.cid || '—') + ' · ' + rowBal(p) + ' 💰 · ' + fmt(p.rp) + ' RP · ' + seenTxt(p) + '</div></div></div>';
   }
-  function loadList(append) {
+  function renderList() {
+    $('cnt').textContent = 'Найдено: ' + fmt(S.total);
+    $('list').innerHTML = S.items.length ? S.items.map(rowHtml).join('') : '<div class="empty">Никого не нашлось</div>';
+    $('more').hidden = S.items.length >= S.total;
+  }
+  // silent — обновить без затемнения (после действия, при возврате к списку)
+  function loadList(append, silent) {
     var my = ++S.seq;
     var off = append ? S.items.length : 0;
-    if (!append) $('list').classList.add('busy');
+    if (!append && !silent) $('list').classList.add('busy');
     return api('/players', { q: S.q, filter: S.flt, sort: S.sort, offset: off }).then(function (res) {
       if (my !== S.seq) return;            // пришёл ответ на старый поиск — он уже не нужен
       $('list').classList.remove('busy');
@@ -292,11 +406,14 @@ window.addEventListener('error', function (e) {
       var j = res.j;
       if (!j || !j.ok) { toast('Список не загрузился: ' + ((j && j.message) || res.status), true); return; }
       S.items = append ? S.items.concat(j.items) : j.items;
-      S.total = j.total;
-      $('cnt').textContent = 'Найдено: ' + fmt(j.total);
-      $('list').innerHTML = S.items.length ? S.items.map(rowHtml).join('') : '<div class="empty">Никого не нашлось</div>';
-      $('more').hidden = S.items.length >= S.total;
-    }).catch(function () { if (my === S.seq) { $('list').classList.remove('busy'); toast('Нет связи с сервером', true); } });
+      S.total = j.total; S.listLoaded = true;
+      renderList(); cacheSave();
+    }).catch(function () { if (my === S.seq) { $('list').classList.remove('busy'); $('cnt').textContent = 'Найдено: ' + fmt(S.total); toast('Нет связи с сервером', true); } });
+  }
+  function patchRow(p) {
+    for (var i = 0; i < S.items.length; i++) {
+      if (S.items[i].uid === p.uid) { S.items[i] = p; return; }
+    }
   }
   var qT = 0;
   $('q').addEventListener('input', function () {
@@ -315,28 +432,81 @@ window.addEventListener('error', function (e) {
     openPlayer(Number(it.getAttribute('data-uid')));
   });
   $('reload').addEventListener('click', function () {
-    if (!$('v-pl').hidden && S.cur) { openPlayer(S.cur.uid); return; }
+    if (S.view === 'pl' && S.cur) { openPlayer(S.cur.uid, S.from, true); return; }
+    if (S.view === 'log') { loadLog(); return; }
     loadMeta(); loadList(false);
+  });
+  $('journal').addEventListener('click', function () {
+    if (S.view === 'list') S.listY = window.scrollY;
+    show('log'); window.scrollTo(0, 0); loadLog();
+  });
+
+  // ── журнал ──────────────────────────────────────────────────────────
+  function logHtml(e, withName) {
+    return '<div class="lg" data-uid="' + e.u + '"><div class="lt">' + dt(e.t)
+      + (withName ? ' · <b>' + esc(e.name || 'без имени') + '</b> (ID ' + esc(e.cid || '—') + ')' : '')
+      + (e.w === 'auto' ? ' <span class="bd auto">бот сам</span>' : '') + '</div>' + esc(e.m) + '</div>';
+  }
+  function loadLog() {
+    if (!$('log').children.length) $('log').innerHTML = '<div class="empty">Загрузка…</div>';
+    return api('/log', {}).then(function (res) {
+      if (res.status === 404 && !res.j) { $('log').innerHTML = '<div class="empty">Журнал появится, когда бот обновится до v325.</div>'; return; }
+      if (denied(res)) return;
+      var j = res.j || {};
+      if (!j.ok) { toast('Журнал не загрузился', true); return; }
+      $('log').innerHTML = j.items.length ? j.items.map(function (e) { return logHtml(e, true); }).join('')
+                                          : '<div class="empty">Пока пусто — здесь появится всё, что делаешь с игроками.</div>';
+    }).catch(function () { toast('Нет связи с сервером', true); });
+  }
+  $('log').addEventListener('click', function (e) {
+    var it = e.target.closest('[data-uid]'); if (!it) return;
+    var u = Number(it.getAttribute('data-uid'));
+    if (u) openPlayer(u, 'log');
   });
 
   // ── карточка игрока ─────────────────────────────────────────────────
-  function showList() {
-    $('v-pl').hidden = true; $('v-list').hidden = false;
-    try { tg && tg.BackButton && tg.BackButton.hide(); } catch (e) {}
-    if (S.dirty) { S.dirty = false; loadMeta(); loadList(false); }
-  }
-  $('back').addEventListener('click', showList);
-
-  function openPlayer(uid) {
-    $('v-list').hidden = true; $('v-pl').hidden = false;
-    try { tg && tg.BackButton && tg.BackButton.show(); } catch (e) {}
-    if (!S.cur || S.cur.uid !== uid) $('pl').innerHTML = '<div class="empty">Загрузка…</div>';
-    window.scrollTo(0, 0);
+  // v325: карточка открывается СРАЗУ — из строки списка или из прошлого открытия, а подробности догружаются.
+  // Раньше экран ждал ответа сервера с надписью «Загрузка…».
+  function openPlayer(uid, from, refresh) {
+    if (!refresh) {
+      if (S.view === 'list') S.listY = window.scrollY;
+      S.from = from || S.view;
+      show('pl');
+      var cached = S.views[uid], row = null;
+      for (var i = 0; i < S.items.length && !cached; i++) if (S.items[i].uid === uid) row = S.items[i];
+      if (cached) { S.cur = cached; S.pick = {}; renderPlayer(); }
+      else { S.cur = extend({ partial: true, uid: uid }, row || {}); S.pick = {}; renderPlayer(); }
+      window.scrollTo(0, 0);
+    }
+    var my = ++S.pseq;
     return api('/player', { uid: uid }).then(function (res) {
+      if (my !== S.pseq || !S.cur || S.cur.uid !== uid) return;
       if (denied(res)) return;
       if (!res.j || !res.j.ok) { $('pl').innerHTML = '<div class="empty">Игрок не найден</div>'; return; }
-      S.cur = res.j.player; S.pick = {}; renderPlayer();
-    }).catch(function () { $('pl').innerHTML = '<div class="empty">Нет связи с сервером</div>'; });
+      S.views[uid] = res.j.player;
+      S.cur = res.j.player;
+      var st = formState(); renderPlayer(); formRestore(st);   // то, что уже начал вписывать, не пропадает
+      if (refresh) toast('Обновлено');
+    }).catch(function () {
+      if (my === S.pseq && S.cur && S.cur.partial) { var l = $('pl-load'); if (l) l.textContent = 'Нет связи с сервером — нажми ↻'; }
+      else toast('Нет связи с сервером', true);
+    });
+  }
+  function extend(a, b) { for (var k in b) if (Object.prototype.hasOwnProperty.call(b, k)) a[k] = b[k]; return a; }
+  function formState() {
+    var st = { v: {}, open: [] }, els = $('pl').querySelectorAll('input[id],textarea[id],select[id]');
+    for (var i = 0; i < els.length; i++) st.v[els[i].id] = els[i].value;
+    var ds = $('pl').querySelectorAll('details[data-k]');
+    for (var j = 0; j < ds.length; j++) if (ds[j].open) st.open.push(ds[j].getAttribute('data-k'));
+    return st;
+  }
+  function formRestore(st) {
+    for (var id in st.v) {
+      var el = $(id);
+      if (!el || st.v[id] === '') continue;
+      try { el.value = st.v[id]; if (el.tagName === 'SELECT' && el.value !== st.v[id]) el.selectedIndex = 0; } catch (e) {}
+    }
+    for (var i = 0; i < st.open.length; i++) { var d = $('pl').querySelector('details[data-k="' + st.open[i] + '"]'); if (d) d.open = true; }
   }
 
   function durChips(key, withForever) {
@@ -358,32 +528,41 @@ window.addEventListener('error', function (e) {
     return p === 'f' ? null : Number(p);
   }
 
-  function renderPlayer() {
-    var p = S.cur, a = p.avatar_info || {}, h = '';
-    // шапка
-    h += '<div class="sec"><div class="ph"><div class="av">' + avHtml(p) + (p.online ? '<i class="dot"></i>' : '') + '</div>'
+  function headHtml(p) {
+    var h = '<div class="sec"><div class="ph"><div class="av">' + avHtml(p) + (p.online ? '<i class="dot"></i>' : '') + '</div>'
       + '<div class="m"><div class="nm">' + esc(p.name || 'без имени') + badges(p) + '</div>'
-      + '<div class="sub">ID ' + esc(p.cid || '—') + ' · TG ' + p.uid + '</div>'
-      + '<div class="sub">рег. ' + esc(p.reg || '—') + ' · ' + (p.online ? 'онлайн' : 'был ' + ago(p.seen)) + ' · ' + esc(p.lang || 'ru') + '</div></div></div>'
+      + '<div class="sub"><span class="cp" data-copy="' + esc(p.cid || '') + '">ID ' + esc(p.cid || '—') + '</span> · '
+      + '<span class="cp" data-copy="' + p.uid + '">TG ' + p.uid + '</span></div>'
+      + '<div class="sub">рег. ' + esc(regTxt(p.reg)) + ' · ' + seenTxt(p, true) + (p.lang ? ' · ' + esc(p.lang) : '') + '</div></div></div>'
       + '<div class="grid" style="margin-top:10px">'
-      + kv('Баланс', fmt(p.balance) + ' 💰') + kv('Рейтинг', fmt(p.rp) + ' RP · ' + esc(p.tier) + ' ' + esc(p.tier_name))
-      + kv('Победы / поражения', p.wins + ' / ' + p.losses) + kv('Серия (лучшая)', p.streak + ' (' + p.best_streak + ')')
-      + kv('NFT', p.nft_count) + kv('Рефералы', p.referrals) + kv('Ставка 1vs1', fmt(p.stake)) + kv('Значки', p.ach + ' из ' + p.ach_earned)
-      + '</div>';
+      + kv('Баланс', bal(p) + ' 💰' + (Number(p.balance) >= 1e9 ? '<small>≈ ' + short(p.balance) + '</small>' : ''))
+      + kv('Рейтинг', fmt(p.rp) + ' RP · ' + esc(p.tier || '') + ' ' + esc(p.tier_name || ''));
+    if (!p.partial) {
+      h += kv('Победы / поражения', p.wins + ' / ' + p.losses) + kv('Серия (лучшая)', p.streak + ' (' + p.best_streak + ')')
+        + kv('NFT', p.nft_count) + kv('Рефералы', p.referrals) + kv('Ставка 1vs1', fmt(p.stake)) + kv('Значки', p.ach + ' из ' + p.ach_earned);
+    }
+    h += '</div>';
     if (p.banned) h += '<div class="note ban" style="margin-top:8px">🚫 Забанен ' + (p.ban_until ? 'до <b>' + dt(p.ban_until) + '</b>' : '<b>навсегда</b>')
       + (p.ban_reason ? '<br>Причина: ' + esc(p.ban_reason) : '') + '</div>';
-    if (p.frozen) h += '<div class="note frz" style="margin-top:8px">❄️ Заморожен ' + (p.frozen_until ? 'до <b>' + dt(p.frozen_until) + '</b>' : '<b>навсегда</b>') + '</div>';
+    if (p.frozen && !p.partial) h += '<div class="note frz" style="margin-top:8px">❄️ Заморожен ' + (p.frozen_until ? 'до <b>' + dt(p.frozen_until) + '</b>' : '<b>навсегда</b>') + '</div>';
     if (p.opp) h += '<div class="note mt" style="margin-top:8px">⚔️ В матче с ' + esc(p.opp.name || '') + ' (ID ' + esc(p.opp.cid || '—') + ')'
       + '<div class="row" style="margin-top:8px"><button type="button" class="b-no f1" data-act="cancel_match">Отменить матч (залог обоим)</button></div></div>';
     else if (p.in_queue) h += '<div class="note mt" style="margin-top:8px">🔍 Сейчас в поиске соперника</div>';
-    h += '</div>';
+    return h + '</div>';
+  }
+
+  function renderPlayer() {
+    var p = S.cur, a = p.avatar_info || {}, h = headHtml(p);
+    if (p.partial) { $('pl').innerHTML = h + '<div class="empty" id="pl-load">Загружаю подробности…</div>'; return; }
 
     // токены
     h += sec('Токены', '<div class="chips wrap">' + [['100к', 1e5], ['1м', 1e6], ['10м', 1e7], ['100м', 1e8]].map(function (x) {
           return '<button type="button" class="chip" data-amt="' + x[1] + '">' + x[0] + '</button>'; }).join('') + '</div>'
       + '<input id="t-amt" inputmode="numeric" placeholder="Сумма (можно 250к, 1м)">'
       + '<input id="t-rsn" placeholder="Причина (необязательно)">'
-      + '<div class="row"><button type="button" class="b-ok f1" data-act="tok+">+ Начислить</button><button type="button" class="b-no f1" data-act="tok-">− Списать</button></div>');
+      + '<div class="row"><button type="button" class="b-ok f1" data-act="tok+">+ Начислить</button><button type="button" class="b-no f1" data-act="tok-">− Списать</button></div>'
+      + '<div class="row"><input id="t-set" inputmode="numeric" placeholder="Поставить баланс ровно" class="f1">'
+      + '<button type="button" data-act="set_bal">= Поставить</button></div>');
 
     // бан
     h += sec('Бан', (p.banned ? '<div class="row"><button type="button" class="b-ok f1" data-act="unban">Разбанить</button></div>' : '')
@@ -400,8 +579,8 @@ window.addEventListener('error', function (e) {
     h += sec('Предупреждение и жалобы', '<input id="w-r" placeholder="Причина предупреждения">'
       + '<div class="row"><button type="button" class="f1" data-act="warn">⚠️ Предупредить</button>'
       + (pend ? '<button type="button" class="f1" data-act="reports_dismiss">Отклонить жалобы (' + pend + ')</button>' : '') + '</div>'
-      + list('Предупреждения', p.warnings, function (w) { return dt(w.time) + ' — ' + esc(w.reason) + ' <span class="small">(' + srcName(w.source) + ')</span>'; })
-      + list('Жалобы на игрока', p.reports_list, function (r) {
+      + list('Предупреждения', 'warn', p.warnings, function (w) { return dt(w.time) + ' — ' + esc(w.reason) + ' <span class="small">(' + srcName(w.source) + ')</span>'; })
+      + list('Жалобы на игрока', 'rep', p.reports_list, function (r) {
           return dt(r.time) + ' — <b>' + esc(r.category) + '</b> от ' + esc(r.from) + ' <span class="small">' + (r.handled ? '(' + esc(r.handled) + ')' : '(ждёт)') + '</span>'; }));
 
     // сообщение
@@ -421,7 +600,7 @@ window.addEventListener('error', function (e) {
           return '<option value="' + esc(n.id) + '"' + (n.left === 0 ? ' disabled' : '') + '>' + esc(n.name) + ' · ' + esc(n.rarity) + ' · осталось ' + left + '</option>';
         }).join('') + '</select>'
       + '<div class="row"><button type="button" class="b-acc f1" data-act="give_nft">Выдать</button></div>'
-      + list('У игрока (' + p.nft_count + ')', p.nfts, function (n) { return esc(n.name) + ' #' + esc(n.serial) + ' <span class="small">' + esc(n.rarity) + '</span>'; }));
+      + list('У игрока (' + p.nft_count + ')', 'nft', p.nfts, function (n) { return esc(n.name) + ' #' + esc(n.serial) + ' <span class="small">' + esc(n.rarity) + '</span>'; }));
 
     // аватарка
     var img = a.data || a.url;
@@ -434,7 +613,7 @@ window.addEventListener('error', function (e) {
       + '<div class="row"><button type="button" class="f1" data-act="ava_rm"' + (a.status === 'none' ? ' disabled' : '') + '>Снять</button>'
       + '<button type="button" class="b-no f1" data-act="ava_rm_strike"' + (a.status === 'none' ? ' disabled' : '') + '>Снять + нарушение</button></div>'
       + ((a.strikes || []).length ? '<div class="row"><button type="button" class="f1" data-act="avatar_strikes_reset">Обнулить нарушения</button></div>' : '')
-      + list('Нарушения', (a.strikes || []).slice().reverse(), function (t) { return dt(t); }));
+      + list('Нарушения', 'strk', (a.strikes || []).slice().reverse(), function (t) { return dt(t); }));
 
     // сбросы
     h += sec('Сбросы', '<div class="row"><button type="button" class="f1" data-act="rank_reset">Награды за ранги (' + p.rank_rewards + ')</button>'
@@ -442,11 +621,15 @@ window.addEventListener('error', function (e) {
       + '<div class="small">Выданные токены, SLX и NFT не отбираются — снимаются только отметки «получено».</div>');
 
     // история
-    h += sec('История', list('Матчи', p.matches, function (m) {
+    var logs = p.log || [];
+    h += sec('История', list('Журнал: что с ним делали', 'log', logs, function (e) {
+          return dt(e.t) + ' — ' + esc(e.m) + (e.w === 'auto' ? ' <span class="bd auto">бот сам</span>' : ''); })
+      + list('Матчи', 'mt', p.matches, function (m) {
           return dt(m.time) + ' — <b>' + (m.result === 'win' ? 'победа' : 'поражение') + '</b> vs ' + esc(m.opp) + ' · ' + fmt(m.stake)
-            + (m.rp != null ? ' · ' + (m.rp > 0 ? '+' : '') + m.rp + ' RP' : '') + (m.reason ? ' <span class="small">(' + esc(m.reason) + ')</span>' : ''); }, true)
-      + list('Токены', p.tokens_hist, function (t) {
-          return esc(t.date) + ' — <b>' + (t.amount > 0 ? '+' : '') + fmt(t.amount) + '</b> ' + esc(t.reason) + ' <span class="small">→ ' + fmt(t.balance) + '</span>'; }, true));
+            + (m.rp != null ? ' · ' + (m.rp > 0 ? '+' : '') + m.rp + ' RP' : '') + (m.reason ? ' <span class="small">(' + esc(m.reason) + ')</span>' : ''); })
+      + list('Токены', 'tk', p.tokens_hist, function (t) {
+          return esc(t.date) + ' — <b>' + (t.amount > 0 ? '+' : '') + fmt(t.amount) + '</b> ' + esc(t.reason) + ' <span class="small">→ ' + fmt(t.balance) + '</span>'; })
+      + (logs.length || (p.matches || []).length || (p.tokens_hist || []).length ? '' : '<div class="small">Пока пусто</div>'));
 
     // опасное
     h += '<div class="sec danger"><h3>Удалить аккаунт</h3><div class="v">'
@@ -459,34 +642,44 @@ window.addEventListener('error', function (e) {
   function kv(k, v) { return '<div class="kv"><i>' + k + '</i><b>' + v + '</b></div>'; }
   function sec(title, body) { return '<div class="sec"><h3>' + title + '</h3><div class="v">' + body + '</div></div>'; }
   function srcName(s) { return { report: 'по жалобе', admin: 'админ', avatar: 'аватарка' }[s] || s; }
-  function list(title, arr, fn, open) {
+  function list(title, key, arr, fn) {
     if (!arr || !arr.length) return '';
-    return '<details' + (open ? '' : '') + '><summary>' + title + ' (' + arr.length + ')</summary><div class="hist">'
+    return '<details data-k="' + key + '"><summary>' + title + ' (' + arr.length + ')</summary><div class="hist">'
       + arr.map(function (x) { return '<div>' + fn(x) + '</div>'; }).join('') + '</div></details>';
   }
 
   // ── действия ────────────────────────────────────────────────────────
-  function send(action, extra, confirmText) {
-    var p = S.cur; if (!p) return;
+  function send(action, extra, confirmText, btn) {
+    var p = S.cur; if (!p || p.partial) return;
     var go = confirmText ? ask(confirmText) : Promise.resolve(true);
     return go.then(function (yes) {
       if (!yes) return;
-      $('pl').classList.add('busy');
+      if (btn) btn.classList.add('ld');
+      $('pl').classList.add('lock');
       var body = { uid: p.uid, action: action };
       for (var k in extra) body[k] = extra[k];
       return api('/action', body).then(function (res) {
-        $('pl').classList.remove('busy');
+        $('pl').classList.remove('lock'); if (btn) btn.classList.remove('ld');
         if (denied(res)) return;
         var j = res.j || {};
         if (!j.ok) { toast(j.message || ('Ошибка ' + res.status), true); haptic('error'); return; }
         S.dirty = true;
         toast(j.msg || 'Готово'); haptic('success');
-        if (j.deleted) { showList(); return; }
-        if (j.player) { S.cur = j.player; S.pick = {}; renderPlayer(); }
-      }).catch(function () { $('pl').classList.remove('busy'); toast('Нет связи с сервером', true); });
+        if (j.deleted) {
+          S.items = S.items.filter(function (x) { return x.uid !== p.uid; }); S.total = Math.max(0, S.total - 1);
+          delete S.views[p.uid]; S.from = 'list'; goBack(); return;
+        }
+        if (j.player) {
+          S.views[p.uid] = j.player; S.cur = j.player; S.pick = {};
+          var ds = formState().open; renderPlayer(); formRestore({ v: {}, open: ds });   // поля очищаются, раскрытые списки — нет
+          patchRow(j.player);
+        }
+      }).catch(function () { $('pl').classList.remove('lock'); if (btn) btn.classList.remove('ld'); toast('Нет связи с сервером', true); });
     });
   }
   $('pl').addEventListener('click', function (e) {
+    var cp = e.target.closest('[data-copy]');
+    if (cp) { if (cp.getAttribute('data-copy')) copy(cp.getAttribute('data-copy')); return; }
     var t = e.target.closest('button'); if (!t || t.disabled) return;
     var p = S.cur, nm = p.name || ('ID ' + p.cid);
     if (t.hasAttribute('data-amt')) { $('t-amt').value = fmt(t.getAttribute('data-amt')); return; }
@@ -504,43 +697,49 @@ window.addEventListener('error', function (e) {
       if (!(n > 0)) { toast('Впиши сумму', true); return; }
       var sign = a === 'tok+' ? 1 : -1;
       return send('tokens', { amount: sign * n, reason: $('t-rsn').value.trim() },
-        sign > 0 ? null : 'Списать ' + fmt(n) + ' у ' + nm + '?');
+        sign > 0 ? null : 'Списать ' + fmt(n) + ' у ' + nm + '?', t);
+    }
+    if (a === 'set_bal') {
+      var v = parseAmount($('t-set').value);
+      if (!(v >= 0)) { toast('Впиши, какой баланс поставить', true); return; }
+      return send('set_balance', { value: v, reason: $('t-rsn').value.trim() },
+        'Поставить ' + nm + ' баланс ровно ' + fmt(v) + '?\nСейчас: ' + (Number(p.balance) >= 1e12 ? short(p.balance) : bal(p)), t);
     }
     if (a === 'ban' || a === 'freeze') {
       var key = a === 'ban' ? 'ban' : 'frz', d = chosenDur(key);
       if (d === undefined) { toast('Выбери срок', true); return; }
       return send(a, { seconds: d, reason: $(key + '-r').value.trim() },
-        (a === 'ban' ? 'Забанить ' : 'Заморозить ') + nm + (d ? ' на ' + dur(d) : ' навсегда') + '?');
+        (a === 'ban' ? 'Забанить ' : 'Заморозить ') + nm + (d ? ' на ' + dur(d) : ' навсегда') + '?', t);
     }
-    if (a === 'unban') return send('unban', {}, 'Снять бан с ' + nm + '?');
-    if (a === 'unfreeze') return send('unfreeze', {});
-    if (a === 'warn') return send('warn', { reason: $('w-r').value.trim() }, 'Отправить предупреждение ' + nm + '?');
-    if (a === 'reports_dismiss') return send('reports_dismiss', {});
+    if (a === 'unban') return send('unban', {}, 'Снять бан с ' + nm + '?', t);
+    if (a === 'unfreeze') return send('unfreeze', {}, null, t);
+    if (a === 'warn') return send('warn', { reason: $('w-r').value.trim() }, 'Отправить предупреждение ' + nm + '?', t);
+    if (a === 'reports_dismiss') return send('reports_dismiss', {}, null, t);
     if (a === 'message') {
       var tx = $('msg').value.trim();
       if (!tx) { toast('Пустое сообщение', true); return; }
-      return send('message', { text: tx });
+      return send('message', { text: tx }, null, t);
     }
     if (a === 'set_rp') {
       var rp = parseInt($('rp').value, 10);
       if (!(rp >= 0)) { toast('RP — число от 0', true); return; }
-      return send('set_rp', { rp: rp });
+      return send('set_rp', { rp: rp }, null, t);
     }
     if (a === 'give_nft') {
       var sel = $('nft');
       if (!sel.value) { toast('Выбери NFT', true); return; }
-      return send('give_nft', { nft_id: sel.value }, 'Выдать ' + sel.options[sel.selectedIndex].text.split(' · ')[0] + ' игроку ' + nm + '?');
+      return send('give_nft', { nft_id: sel.value }, 'Выдать ' + sel.options[sel.selectedIndex].text.split(' · ')[0] + ' игроку ' + nm + '?', t);
     }
-    if (a === 'ava_rm') return send('avatar_remove', { strike: false }, 'Снять аватарку у ' + nm + '?');
-    if (a === 'ava_rm_strike') return send('avatar_remove', { strike: true }, 'Снять аватарку и засчитать нарушение (может привести к бану по лестнице)?');
-    if (a === 'avatar_strikes_reset') return send('avatar_strikes_reset', {}, 'Обнулить нарушения по аватарке?');
-    if (a === 'rank_reset') return send('rank_reset', {}, 'Сбросить отметки о наградах за ранги?');
-    if (a === 'ach_reset') return send('ach_reset', {}, 'Сбросить значки?');
-    if (a === 'cancel_match') return send('cancel_match', {}, 'Отменить матч и вернуть залог обоим?');
+    if (a === 'ava_rm') return send('avatar_remove', { strike: false }, 'Снять аватарку у ' + nm + '?', t);
+    if (a === 'ava_rm_strike') return send('avatar_remove', { strike: true }, 'Снять аватарку и засчитать нарушение (может привести к бану по лестнице)?', t);
+    if (a === 'avatar_strikes_reset') return send('avatar_strikes_reset', {}, 'Обнулить нарушения по аватарке?', t);
+    if (a === 'rank_reset') return send('rank_reset', {}, 'Сбросить отметки о наградах за ранги?', t);
+    if (a === 'ach_reset') return send('ach_reset', {}, 'Сбросить значки?', t);
+    if (a === 'cancel_match') return send('cancel_match', {}, 'Отменить матч и вернуть залог обоим?', t);
     if (a === 'delete') {
       var c = $('del').value.trim();
       if (!c) { toast('Впиши ID игрока для подтверждения', true); return; }
-      return send('delete', { confirm: c }, 'Удалить аккаунт ' + nm + '? Это не отменить.');
+      return send('delete', { confirm: c }, 'Удалить аккаунт ' + nm + '? Это не отменить.', t);
     }
   });
   // свой срок: как только вписали число — выбранная кнопка срока гаснет, чтобы не было двух сроков сразу
@@ -560,8 +759,15 @@ window.addEventListener('error', function (e) {
   if (!API) { fatal('Открой из бота', 'Эта страница открывается кнопкой «🗂 Игроки — мини-апп» в /admin.'); }
   else if (!INIT && !TOK) { fatal('Нет доступа', 'Открой /admin в боте и нажми «🗂 Игроки — мини-апп».'); }
   else {
-    loadMeta().then(function (ok) { if (ok) loadList(false); })
-      .catch(function () { toast('Нет связи с сервером — нажми ↻', true); });
+    // v325: запомненный список показываем сразу, а шапку и список запрашиваем одновременно — раньше шли друг за другом
+    var cached = cacheLoad();
+    if (cached) {
+      S.meta = cached.meta; S.items = cached.items; S.total = cached.total;
+      renderStats(); renderList();
+      $('cnt').innerHTML = 'Найдено: ' + fmt(S.total) + ' · <span class="upd">обновляю…</span>';
+    }
+    loadMeta().catch(function () {});
+    loadList(false, !!cached);
   }
 
   window.ADM = { state: function () { return S; }, open: openPlayer, ver: VER };
