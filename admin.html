@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0e0e12">
+<title>Админка</title>
+<style>
+  /* v324: мини-апп администратора. Намеренно просто: тёмный фон, карточки, кнопки — главное, чтобы всё работало. */
+  :root { --bg: #0e0e12; --card: #17171d; --card2: #202028; --ln: #2c2c37; --tx: #ececf1; --tx2: #a0a0ae; --tx3: #6c6c7a;
+          --acc: #8b5cf6; --ok: #22c55e; --no: #ef4444; --wn: #f59e0b; --cy: #22d3ee; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--tx); overflow-x: hidden; }
+  body { font: 14px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+         padding: calc(12px + env(safe-area-inset-top, 0px)) 12px calc(28px + env(safe-area-inset-bottom, 0px)); }
+  [hidden] { display: none !important; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: var(--card2); border-radius: 10px; padding: 9px 12px; touch-action: manipulation; }
+  button:active { opacity: .7; }
+  button[disabled] { opacity: .4; }
+  .b-acc { background: var(--acc); color: #fff; font-weight: 600; }
+  .b-ok { background: rgba(34,197,94,.18); color: #86efac; font-weight: 600; }
+  .b-no { background: rgba(239,68,68,.2); color: #fca5a5; font-weight: 600; }
+  input, select, textarea { width: 100%; min-width: 0; background: var(--card2); border: 1px solid var(--ln); border-radius: 10px;
+                            padding: 9px 11px; outline: none; }
+  input:focus, textarea:focus, select:focus { border-color: var(--acc); }
+  textarea { min-height: 72px; resize: vertical; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  h1 { font-size: 18px; font-weight: 700; }
+  .ver { font-size: 11px; color: var(--tx3); margin-left: 6px; font-weight: 400; }
+  .stats { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .stats span { background: var(--card); border: 1px solid var(--ln); border-radius: 8px; padding: 4px 8px; font-size: 12px; color: var(--tx2); }
+  .stats b { color: var(--tx); }
+  .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: 0 0 auto; padding: 6px 11px; border-radius: 999px; background: var(--card); border: 1px solid var(--ln); font-size: 12.5px; color: var(--tx2); }
+  .chip.on { background: var(--acc); border-color: var(--acc); color: #fff; }
+  .wrap { flex-wrap: wrap; overflow: visible; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row > * { min-width: 0; }
+  .f1 { flex: 1; }
+  .v { display: flex; flex-direction: column; gap: 8px; }
+  .it { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--card); margin-top: 6px; cursor: pointer; }
+  .it:active { background: var(--card2); }
+  .av { position: relative; width: 38px; height: 38px; flex: 0 0 38px; border-radius: 50%; background: var(--card2);
+        display: grid; place-items: center; font-size: 18px; overflow: hidden; }
+  .av img { width: 100%; height: 100%; object-fit: cover; }
+  .dot { position: absolute; right: 0; bottom: 0; width: 11px; height: 11px; border-radius: 50%; background: var(--ok); border: 2px solid var(--card); }
+  .m { flex: 1; min-width: 0; }
+  .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sub { font-size: 12px; color: var(--tx2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bd { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 6px; margin-left: 4px; vertical-align: 1px; }
+  .bd.ban { background: rgba(239,68,68,.22); color: #fca5a5; }
+  .bd.frz { background: rgba(34,211,238,.18); color: #a5f3fc; }
+  .bd.wn { background: rgba(245,158,11,.2); color: #fcd34d; }
+  .bd.mt { background: rgba(139,92,246,.24); color: #c4b5fd; }
+  .bd.adm { background: rgba(250,204,21,.2); color: #fde68a; }
+  .more { width: 100%; margin-top: 8px; }
+  .empty { padding: 30px 10px; text-align: center; color: var(--tx3); }
+  .sec { background: var(--card); border-radius: 14px; padding: 12px; margin-top: 10px; }
+  .sec h3 { font-size: 12px; font-weight: 700; color: var(--tx2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .kv { background: var(--card2); border-radius: 10px; padding: 7px 10px; min-width: 0; }
+  .kv i { display: block; font-style: normal; font-size: 11px; color: var(--tx3); }
+  .kv b { font-size: 14px; word-break: break-word; }
+  .note { padding: 9px 11px; border-radius: 10px; font-size: 13px; line-height: 1.45; }
+  .note.ban { background: rgba(239,68,68,.12); color: #fecaca; }
+  .note.frz { background: rgba(34,211,238,.1); color: #cffafe; }
+  .note.mt { background: rgba(139,92,246,.14); color: #ddd6fe; }
+  .note.wn { background: rgba(245,158,11,.12); color: #fde68a; }
+  .hist { font-size: 12.5px; color: var(--tx2); }
+  .hist > div { padding: 6px 0; border-bottom: 1px solid var(--ln); }
+  .hist > div:last-child { border-bottom: 0; }
+  .hist b { color: var(--tx); font-weight: 600; }
+  details summary { cursor: pointer; color: var(--tx2); font-size: 13px; padding: 2px 0; }
+  details[open] summary { margin-bottom: 6px; }
+  .ph { display: flex; align-items: center; gap: 12px; }
+  .ph .av { width: 58px; height: 58px; flex-basis: 58px; font-size: 26px; }
+  .ph .nm { font-size: 17px; white-space: normal; }
+  .avbig { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; background: var(--card2); display: block; }
+  .small { font-size: 12px; color: var(--tx3); }
+  .danger { border: 1px solid rgba(239,68,68,.35); }
+  .toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 9;
+           max-width: 92%; background: #2a2a35; border: 1px solid var(--ln); padding: 10px 14px; border-radius: 12px; font-size: 13px;
+           opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .toast.err { border-color: rgba(239,68,68,.6); color: #fecaca; }
+  .fatal { padding: 50px 16px; text-align: center; }
+  .fatal b { display: block; font-size: 17px; margin-bottom: 8px; }
+  .fatal span { color: var(--tx2); font-size: 13px; line-height: 1.5; }
+  .busy { opacity: .55; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="fatal" class="fatal" hidden><b id="fatal-t"></b><span id="fatal-d"></span></div>
+
+<main id="app">
+  <div class="top">
+    <h1>Админка<span class="ver" id="ver"></span></h1>
+    <button id="reload" type="button" title="Обновить">↻</button>
+  </div>
+
+  <section id="v-list">
+    <div class="stats" id="stats"></div>
+    <input id="q" type="search" placeholder="Имя, ID или Telegram-id" autocomplete="off">
+    <div class="chips" id="flt" style="margin-top:8px"></div>
+    <div class="row" style="margin-top:8px">
+      <span class="small">Сортировка</span>
+      <select id="sort" class="f1">
+        <option value="recent">Недавно в сети</option>
+        <option value="balance">Баланс</option>
+        <option value="rp">Рейтинг</option>
+        <option value="new">Новые</option>
+      </select>
+    </div>
+    <div class="small" id="cnt" style="margin-top:8px"></div>
+    <div id="list"></div>
+    <button id="more" class="more" type="button" hidden>Показать ещё</button>
+  </section>
+
+  <section id="v-pl" hidden>
+    <button id="back" type="button">← К списку</button>
+    <div id="pl"></div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+window.addEventListener('error', function (e) {
+  // v324: сбой загрузки файла (скрипт модели 18+, SDK Telegram, картинка) — не ошибка страницы. С capture сюда
+  // приходят и такие события, и раньше недоехавшая модель показывала «Что-то пошло не так» вместо того,
+  // чтобы молча пропустить необязательную проверку. Экран сбоя — только для настоящих ошибок кода.
+  if (e && e.target && e.target !== window && e.target.nodeType === 1) return;
+  try {
+    document.getElementById('app').hidden = true;
+    var f = document.getElementById('fatal'); f.hidden = false;
+    document.getElementById('fatal-t').textContent = 'Ошибка на странице';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v324';
+  } catch (_) {}
+}, true);
+</script>
+<script>
+/* SDK Telegram — не блокируя страницу (урок v295): подпись для входа есть и в адресе, SDK нужен только для окон подтверждения */
+(function () {
+  var s = document.createElement('script'); s.src = 'https://telegram.org/js/telegram-web-app.js'; s.async = true;
+  s.onload = function () { try { if (window.__admTg) window.__admTg(); } catch (e) {} };
+  (document.head || document.documentElement).appendChild(s);
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  var VER = 'v324';
+  function $(i) { return document.getElementById(i); }
+  var Q = new URLSearchParams(location.search);
+  var API = (Q.get('api_url') || '').replace(/\/+$/, '');
+  var TOK = Q.get('t') || '';
+  // Подпись Telegram лежит в #хэше ссылки — читаем сами, не дожидаясь SDK
+  var INIT = '';
+  try { INIT = new URLSearchParams(location.hash.replace(/^#/, '')).get('tgWebAppData') || ''; } catch (e) {}
+  var tg = null;
+  window.__admTg = function () {
+    try {
+      tg = window.Telegram && window.Telegram.WebApp;
+      if (!tg) return;
+      tg.ready(); tg.expand();
+      if (!INIT) INIT = tg.initData || '';
+      if (tg.setHeaderColor) tg.setHeaderColor('#0e0e12');
+      if (tg.BackButton) tg.BackButton.onClick(function () { showList(); });
+    } catch (e) {}
+  };
+  window.__admTg();
+
+  var FILTERS = [['all', 'Все'], ['online', 'Онлайн'], ['banned', 'Бан'], ['frozen', 'Заморозка'],
+                 ['reports', 'Жалобы'], ['strikes', 'Аватарки'], ['match', 'В матче']];
+  var DUR0 = [3600, 21600, 86400, 259200, 604800, 2592000];
+  var S = { meta: null, q: '', flt: 'all', sort: 'recent', items: [], total: 0, seq: 0, cur: null, dirty: false, pick: {} };
+
+  // ── мелочи ──────────────────────────────────────────────────────────
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function fmt(n) { n = Number(n || 0); var s = Math.abs(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); return (n < 0 ? '−' : '') + s; }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function dt(ts) { if (!ts) return '—'; var d = new Date(ts * 1000); return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function ago(ts) {
+    if (!ts) return 'давно';
+    var s = Date.now() / 1000 - ts;
+    if (s < 90) return 'только что';
+    if (s < 3600) return Math.round(s / 60) + ' мин назад';
+    if (s < 86400) return Math.round(s / 3600) + ' ч назад';
+    return dt(ts);
+  }
+  function dur(sec) {
+    if (!sec) return 'навсегда';
+    if (sec % 86400 === 0) return (sec / 86400) + ' дн';
+    if (sec % 3600 === 0) return (sec / 3600) + ' ч';
+    return Math.round(sec / 60) + ' мин';
+  }
+  // «1м», «1кк», «250к», «1 000 000» → число
+  function parseAmount(s) {
+    s = String(s || '').toLowerCase().replace(/\s/g, '').replace(',', '.');
+    var m = s.match(/^(\d+(?:\.\d+)?)(кк|к|k|м|m|млн)?$/);
+    if (!m) return NaN;
+    var n = parseFloat(m[1]), u = m[2] || '';
+    if (u === 'к' || u === 'k') n *= 1e3;
+    if (u === 'кк' || u === 'м' || u === 'm' || u === 'млн') n *= 1e6;
+    return Math.round(n);
+  }
+  var toastT = 0;
+  function toast(t, err) {
+    var el = $('toast'); el.textContent = t; el.className = 'toast show' + (err ? ' err' : '');
+    clearTimeout(toastT); toastT = setTimeout(function () { el.className = 'toast'; }, 3000);
+  }
+  function haptic(kind) { try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred(kind); } catch (e) {} }
+  function fatal(t, d) { $('app').hidden = true; $('fatal').hidden = false; $('fatal-t').textContent = t; $('fatal-d').textContent = d; }
+  // подтверждение: окно Telegram, если есть, иначе обычное
+  function ask(text) {
+    return new Promise(function (res) {
+      try {
+        if (tg && tg.showConfirm && tg.isVersionAtLeast && tg.isVersionAtLeast('6.2')) { tg.showConfirm(text, function (ok) { res(!!ok); }); return; }
+      } catch (e) {}
+      res(window.confirm(text));
+    });
+  }
+
+  // ── запросы: всё POST, в теле — подпись Telegram и ключ из ссылки ────
+  function api(path, body) {
+    body = body || {};
+    body.init_data = INIT || undefined;
+    body.t = TOK || undefined;
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 20000);
+    return fetch(API + '/casino/admin' + path, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body), cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) {
+        clearTimeout(timer);
+        return r.json().catch(function () { return null; }).then(function (j) { return { status: r.status, j: j }; });
+      }, function (e) { clearTimeout(timer); throw e; });
+  }
+  function denied(res) {
+    if (res.status === 403) { fatal('Нет доступа', 'Открой /admin в боте и нажми «🗂 Игроки — мини-апп» заново.'); return true; }
+    if (res.status === 404 && !res.j) { fatal('Бот ещё не обновлён', 'Эта страница работает с ботом v324. Обнови бота на сервере.'); return true; }
+    return false;
+  }
+
+  // ── шапка ───────────────────────────────────────────────────────────
+  function loadMeta() {
+    return api('/meta').then(function (res) {
+      if (denied(res)) return false;
+      if (!res.j || !res.j.ok) { toast('Не удалось загрузить данные: ' + ((res.j && res.j.message) || res.status), true); return false; }
+      S.meta = res.j;
+      var st = S.meta.stats || {};
+      $('stats').innerHTML = [['Игроков', st.players], ['Онлайн', st.online], ['Бан', st.banned], ['Заморозка', st.frozen],
+                              ['Жалобы', st.reports], ['Матчей', st.in_match], ['В поиске', st.queue]]
+        .map(function (x) { return '<span>' + x[0] + ' <b>' + fmt(x[1]) + '</b></span>'; }).join('');
+      return true;
+    });
+  }
+
+  // ── список ──────────────────────────────────────────────────────────
+  function renderFilters() {
+    $('flt').innerHTML = FILTERS.map(function (f) {
+      return '<button type="button" class="chip' + (S.flt === f[0] ? ' on' : '') + '" data-f="' + f[0] + '">' + f[1] + '</button>';
+    }).join('');
+  }
+  function avHtml(p) {
+    return p.avatar_url ? '<img src="' + esc(p.avatar_url) + '" alt="" onerror="this.remove()">' : esc(p.tier || '🎮');
+  }
+  function badges(p) {
+    var b = '';
+    if (p.is_admin) b += '<span class="bd adm">админ</span>';
+    if (p.banned) b += '<span class="bd ban">бан' + (p.ban_until ? ' до ' + dt(p.ban_until) : '') + '</span>';
+    if (p.frozen) b += '<span class="bd frz">заморожен</span>';
+    if (p.in_match) b += '<span class="bd mt">в матче</span>';
+    if (p.reports) b += '<span class="bd wn">жалоб ' + p.reports + '</span>';
+    if (p.strikes) b += '<span class="bd wn">аватарка ⚠' + p.strikes + '</span>';
+    return b;
+  }
+  function rowHtml(p) {
+    return '<div class="it" data-uid="' + p.uid + '"><div class="av">' + avHtml(p) + (p.online ? '<i class="dot"></i>' : '') + '</div>'
+      + '<div class="m"><div class="nm">' + esc(p.name || 'без имени') + badges(p) + '</div>'
+      + '<div class="sub">ID ' + esc(p.cid || '—') + ' · ' + fmt(p.balance) + ' 💰 · ' + fmt(p.rp) + ' RP · ' + (p.online ? 'онлайн' : ago(p.seen)) + '</div></div></div>';
+  }
+  function loadList(append) {
+    var my = ++S.seq;
+    var off = append ? S.items.length : 0;
+    if (!append) $('list').classList.add('busy');
+    return api('/players', { q: S.q, filter: S.flt, sort: S.sort, offset: off }).then(function (res) {
+      if (my !== S.seq) return;            // пришёл ответ на старый поиск — он уже не нужен
+      $('list').classList.remove('busy');
+      if (denied(res)) return;
+      var j = res.j;
+      if (!j || !j.ok) { toast('Список не загрузился: ' + ((j && j.message) || res.status), true); return; }
+      S.items = append ? S.items.concat(j.items) : j.items;
+      S.total = j.total;
+      $('cnt').textContent = 'Найдено: ' + fmt(j.total);
+      $('list').innerHTML = S.items.length ? S.items.map(rowHtml).join('') : '<div class="empty">Никого не нашлось</div>';
+      $('more').hidden = S.items.length >= S.total;
+    }).catch(function () { if (my === S.seq) { $('list').classList.remove('busy'); toast('Нет связи с сервером', true); } });
+  }
+  var qT = 0;
+  $('q').addEventListener('input', function () {
+    clearTimeout(qT);
+    var v = this.value;
+    qT = setTimeout(function () { S.q = v.trim(); loadList(false); }, 300);
+  });
+  $('flt').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-f]'); if (!b) return;
+    S.flt = b.getAttribute('data-f'); renderFilters(); loadList(false);
+  });
+  $('sort').addEventListener('change', function () { S.sort = this.value; loadList(false); });
+  $('more').addEventListener('click', function () { loadList(true); });
+  $('list').addEventListener('click', function (e) {
+    var it = e.target.closest('[data-uid]'); if (!it) return;
+    openPlayer(Number(it.getAttribute('data-uid')));
+  });
+  $('reload').addEventListener('click', function () {
+    if (!$('v-pl').hidden && S.cur) { openPlayer(S.cur.uid); return; }
+    loadMeta(); loadList(false);
+  });
+
+  // ── карточка игрока ─────────────────────────────────────────────────
+  function showList() {
+    $('v-pl').hidden = true; $('v-list').hidden = false;
+    try { tg && tg.BackButton && tg.BackButton.hide(); } catch (e) {}
+    if (S.dirty) { S.dirty = false; loadMeta(); loadList(false); }
+  }
+  $('back').addEventListener('click', showList);
+
+  function openPlayer(uid) {
+    $('v-list').hidden = true; $('v-pl').hidden = false;
+    try { tg && tg.BackButton && tg.BackButton.show(); } catch (e) {}
+    if (!S.cur || S.cur.uid !== uid) $('pl').innerHTML = '<div class="empty">Загрузка…</div>';
+    window.scrollTo(0, 0);
+    return api('/player', { uid: uid }).then(function (res) {
+      if (denied(res)) return;
+      if (!res.j || !res.j.ok) { $('pl').innerHTML = '<div class="empty">Игрок не найден</div>'; return; }
+      S.cur = res.j.player; S.pick = {}; renderPlayer();
+    }).catch(function () { $('pl').innerHTML = '<div class="empty">Нет связи с сервером</div>'; });
+  }
+
+  function durChips(key, withForever) {
+    var ds = (S.meta && S.meta.durations) || DUR0;
+    var list = ds.map(function (d) { return [d, dur(d)]; });
+    if (withForever) list.push(['f', 'навсегда']);
+    return '<div class="chips wrap">' + list.map(function (d) {
+      return '<button type="button" class="chip' + (String(S.pick[key]) === String(d[0]) ? ' on' : '') + '" data-dur="' + key + ':' + d[0] + '">' + d[1] + '</button>';
+    }).join('') + '</div>'
+      + '<div class="row"><input id="' + key + '-n" inputmode="numeric" placeholder="Свой срок" class="f1">'
+      + '<select id="' + key + '-u" style="width:92px"><option value="60">мин</option><option value="3600" selected>ч</option><option value="86400">дн</option></select></div>';
+  }
+  // выбранный срок: свой (число + единица) главнее кнопки; undefined — не выбран, null — навсегда
+  function chosenDur(key) {
+    var n = parseInt(($(key + '-n') || {}).value, 10);
+    if (n > 0) return n * parseInt($(key + '-u').value, 10);
+    var p = S.pick[key];
+    if (p === undefined) return undefined;
+    return p === 'f' ? null : Number(p);
+  }
+
+  function renderPlayer() {
+    var p = S.cur, a = p.avatar_info || {}, h = '';
+    // шапка
+    h += '<div class="sec"><div class="ph"><div class="av">' + avHtml(p) + (p.online ? '<i class="dot"></i>' : '') + '</div>'
+      + '<div class="m"><div class="nm">' + esc(p.name || 'без имени') + badges(p) + '</div>'
+      + '<div class="sub">ID ' + esc(p.cid || '—') + ' · TG ' + p.uid + '</div>'
+      + '<div class="sub">рег. ' + esc(p.reg || '—') + ' · ' + (p.online ? 'онлайн' : 'был ' + ago(p.seen)) + ' · ' + esc(p.lang || 'ru') + '</div></div></div>'
+      + '<div class="grid" style="margin-top:10px">'
+      + kv('Баланс', fmt(p.balance) + ' 💰') + kv('Рейтинг', fmt(p.rp) + ' RP · ' + esc(p.tier) + ' ' + esc(p.tier_name))
+      + kv('Победы / поражения', p.wins + ' / ' + p.losses) + kv('Серия (лучшая)', p.streak + ' (' + p.best_streak + ')')
+      + kv('NFT', p.nft_count) + kv('Рефералы', p.referrals) + kv('Ставка 1vs1', fmt(p.stake)) + kv('Значки', p.ach + ' из ' + p.ach_earned)
+      + '</div>';
+    if (p.banned) h += '<div class="note ban" style="margin-top:8px">🚫 Забанен ' + (p.ban_until ? 'до <b>' + dt(p.ban_until) + '</b>' : '<b>навсегда</b>')
+      + (p.ban_reason ? '<br>Причина: ' + esc(p.ban_reason) : '') + '</div>';
+    if (p.frozen) h += '<div class="note frz" style="margin-top:8px">❄️ Заморожен ' + (p.frozen_until ? 'до <b>' + dt(p.frozen_until) + '</b>' : '<b>навсегда</b>') + '</div>';
+    if (p.opp) h += '<div class="note mt" style="margin-top:8px">⚔️ В матче с ' + esc(p.opp.name || '') + ' (ID ' + esc(p.opp.cid || '—') + ')'
+      + '<div class="row" style="margin-top:8px"><button type="button" class="b-no f1" data-act="cancel_match">Отменить матч (залог обоим)</button></div></div>';
+    else if (p.in_queue) h += '<div class="note mt" style="margin-top:8px">🔍 Сейчас в поиске соперника</div>';
+    h += '</div>';
+
+    // токены
+    h += sec('Токены', '<div class="chips wrap">' + [['100к', 1e5], ['1м', 1e6], ['10м', 1e7], ['100м', 1e8]].map(function (x) {
+          return '<button type="button" class="chip" data-amt="' + x[1] + '">' + x[0] + '</button>'; }).join('') + '</div>'
+      + '<input id="t-amt" inputmode="numeric" placeholder="Сумма (можно 250к, 1м)">'
+      + '<input id="t-rsn" placeholder="Причина (необязательно)">'
+      + '<div class="row"><button type="button" class="b-ok f1" data-act="tok+">+ Начислить</button><button type="button" class="b-no f1" data-act="tok-">− Списать</button></div>');
+
+    // бан
+    h += sec('Бан', (p.banned ? '<div class="row"><button type="button" class="b-ok f1" data-act="unban">Разбанить</button></div>' : '')
+      + durChips('ban', true) + '<input id="ban-r" placeholder="Причина">'
+      + '<div class="row"><button type="button" class="b-no f1" data-act="ban"' + (p.is_admin ? ' disabled' : '') + '>' + (p.banned ? 'Изменить бан' : 'Забанить') + '</button></div>');
+
+    // заморозка
+    h += sec('Заморозка', (p.frozen ? '<div class="row"><button type="button" class="b-ok f1" data-act="unfreeze">Разморозить</button></div>' : '')
+      + durChips('frz', true) + '<input id="frz-r" placeholder="Причина">'
+      + '<div class="row"><button type="button" class="b-no f1" data-act="freeze"' + (p.is_admin ? ' disabled' : '') + '>Заморозить</button></div>');
+
+    // предупреждение и жалобы
+    var pend = (p.reports_list || []).filter(function (r) { return !r.handled; }).length;
+    h += sec('Предупреждение и жалобы', '<input id="w-r" placeholder="Причина предупреждения">'
+      + '<div class="row"><button type="button" class="f1" data-act="warn">⚠️ Предупредить</button>'
+      + (pend ? '<button type="button" class="f1" data-act="reports_dismiss">Отклонить жалобы (' + pend + ')</button>' : '') + '</div>'
+      + list('Предупреждения', p.warnings, function (w) { return dt(w.time) + ' — ' + esc(w.reason) + ' <span class="small">(' + srcName(w.source) + ')</span>'; })
+      + list('Жалобы на игрока', p.reports_list, function (r) {
+          return dt(r.time) + ' — <b>' + esc(r.category) + '</b> от ' + esc(r.from) + ' <span class="small">' + (r.handled ? '(' + esc(r.handled) + ')' : '(ждёт)') + '</span>'; }));
+
+    // сообщение
+    h += sec('Сообщение игроку', '<textarea id="msg" placeholder="Текст — придёт в бот от имени администратора"></textarea>'
+      + '<div class="row"><button type="button" class="b-acc f1" data-act="message">Отправить</button></div>');
+
+    // рейтинг
+    var tiers = (S.meta && S.meta.tiers) || [];
+    h += sec('Рейтинг сезона', '<div class="chips wrap">' + tiers.map(function (t) {
+          return '<button type="button" class="chip" data-rp="' + t[0] + '">' + esc(t[1]) + ' ' + t[0] + '</button>'; }).join('') + '</div>'
+      + '<div class="row"><input id="rp" inputmode="numeric" value="' + p.rp + '" class="f1"><button type="button" class="b-acc" data-act="set_rp">Поставить</button></div>');
+
+    // NFT
+    var nfts = (S.meta && S.meta.nfts) || [];
+    h += sec('NFT', '<select id="nft"><option value="">— выбери NFT —</option>' + nfts.map(function (n) {
+          var left = n.left === null || n.left === undefined ? '∞' : n.left;
+          return '<option value="' + esc(n.id) + '"' + (n.left === 0 ? ' disabled' : '') + '>' + esc(n.name) + ' · ' + esc(n.rarity) + ' · осталось ' + left + '</option>';
+        }).join('') + '</select>'
+      + '<div class="row"><button type="button" class="b-acc f1" data-act="give_nft">Выдать</button></div>'
+      + list('У игрока (' + p.nft_count + ')', p.nfts, function (n) { return esc(n.name) + ' #' + esc(n.serial) + ' <span class="small">' + esc(n.rarity) + '</span>'; }));
+
+    // аватарка
+    var img = a.data || a.url;
+    var st = { ok: 'принята, видна всем', blocked: 'закрыта', pending: 'ждёт перепроверки', none: 'своей картинки нет' }[a.status] || a.status;
+    h += sec('Аватарка', '<div class="row">' + (img ? '<img class="avbig" src="' + esc(img) + '" alt="">' : '<div class="avbig" style="display:grid;place-items:center;font-size:30px">' + esc(p.tier || '🎮') + '</div>')
+      + '<div class="m"><div>Статус: <b>' + esc(st) + '</b></div>'
+      + '<div class="sub">Нарушений за 30 дн: <b>' + (a.strikes || []).length + '</b></div>'
+      + (a.cooldown_left ? '<div class="sub">Пауза ещё ' + Math.ceil(a.cooldown_left / 60) + ' мин</div>' : '')
+      + (a.note ? '<div class="sub">' + esc(a.note) + '</div>' : '') + '</div></div>'
+      + '<div class="row"><button type="button" class="f1" data-act="ava_rm"' + (a.status === 'none' ? ' disabled' : '') + '>Снять</button>'
+      + '<button type="button" class="b-no f1" data-act="ava_rm_strike"' + (a.status === 'none' ? ' disabled' : '') + '>Снять + нарушение</button></div>'
+      + ((a.strikes || []).length ? '<div class="row"><button type="button" class="f1" data-act="avatar_strikes_reset">Обнулить нарушения</button></div>' : '')
+      + list('Нарушения', (a.strikes || []).slice().reverse(), function (t) { return dt(t); }));
+
+    // сбросы
+    h += sec('Сбросы', '<div class="row"><button type="button" class="f1" data-act="rank_reset">Награды за ранги (' + p.rank_rewards + ')</button>'
+      + '<button type="button" class="f1" data-act="ach_reset">Значки (' + p.ach_earned + ')</button></div>'
+      + '<div class="small">Выданные токены, SLX и NFT не отбираются — снимаются только отметки «получено».</div>');
+
+    // история
+    h += sec('История', list('Матчи', p.matches, function (m) {
+          return dt(m.time) + ' — <b>' + (m.result === 'win' ? 'победа' : 'поражение') + '</b> vs ' + esc(m.opp) + ' · ' + fmt(m.stake)
+            + (m.rp != null ? ' · ' + (m.rp > 0 ? '+' : '') + m.rp + ' RP' : '') + (m.reason ? ' <span class="small">(' + esc(m.reason) + ')</span>' : ''); }, true)
+      + list('Токены', p.tokens_hist, function (t) {
+          return esc(t.date) + ' — <b>' + (t.amount > 0 ? '+' : '') + fmt(t.amount) + '</b> ' + esc(t.reason) + ' <span class="small">→ ' + fmt(t.balance) + '</span>'; }, true));
+
+    // опасное
+    h += '<div class="sec danger"><h3>Удалить аккаунт</h3><div class="v">'
+      + '<div class="small">Как /deluser: токены, язык и имя стираются, ID остаётся за игроком. Для подтверждения впиши ID игрока.</div>'
+      + '<input id="del" inputmode="numeric" placeholder="ID игрока (' + esc(p.cid || p.uid) + ')">'
+      + '<div class="row"><button type="button" class="b-no f1" data-act="delete"' + (p.is_admin ? ' disabled' : '') + '>Удалить</button></div></div></div>';
+
+    $('pl').innerHTML = h;
+  }
+  function kv(k, v) { return '<div class="kv"><i>' + k + '</i><b>' + v + '</b></div>'; }
+  function sec(title, body) { return '<div class="sec"><h3>' + title + '</h3><div class="v">' + body + '</div></div>'; }
+  function srcName(s) { return { report: 'по жалобе', admin: 'админ', avatar: 'аватарка' }[s] || s; }
+  function list(title, arr, fn, open) {
+    if (!arr || !arr.length) return '';
+    return '<details' + (open ? '' : '') + '><summary>' + title + ' (' + arr.length + ')</summary><div class="hist">'
+      + arr.map(function (x) { return '<div>' + fn(x) + '</div>'; }).join('') + '</div></details>';
+  }
+
+  // ── действия ────────────────────────────────────────────────────────
+  function send(action, extra, confirmText) {
+    var p = S.cur; if (!p) return;
+    var go = confirmText ? ask(confirmText) : Promise.resolve(true);
+    return go.then(function (yes) {
+      if (!yes) return;
+      $('pl').classList.add('busy');
+      var body = { uid: p.uid, action: action };
+      for (var k in extra) body[k] = extra[k];
+      return api('/action', body).then(function (res) {
+        $('pl').classList.remove('busy');
+        if (denied(res)) return;
+        var j = res.j || {};
+        if (!j.ok) { toast(j.message || ('Ошибка ' + res.status), true); haptic('error'); return; }
+        S.dirty = true;
+        toast(j.msg || 'Готово'); haptic('success');
+        if (j.deleted) { showList(); return; }
+        if (j.player) { S.cur = j.player; S.pick = {}; renderPlayer(); }
+      }).catch(function () { $('pl').classList.remove('busy'); toast('Нет связи с сервером', true); });
+    });
+  }
+  $('pl').addEventListener('click', function (e) {
+    var t = e.target.closest('button'); if (!t || t.disabled) return;
+    var p = S.cur, nm = p.name || ('ID ' + p.cid);
+    if (t.hasAttribute('data-amt')) { $('t-amt').value = fmt(t.getAttribute('data-amt')); return; }
+    if (t.hasAttribute('data-rp')) { $('rp').value = t.getAttribute('data-rp'); return; }
+    if (t.hasAttribute('data-dur')) {
+      var kd = t.getAttribute('data-dur').split(':');
+      S.pick[kd[0]] = kd[1]; $(kd[0] + '-n').value = '';
+      var chips = t.parentNode.querySelectorAll('.chip');
+      for (var i = 0; i < chips.length; i++) chips[i].classList.toggle('on', chips[i] === t);
+      return;
+    }
+    var a = t.getAttribute('data-act'); if (!a) return;
+    if (a === 'tok+' || a === 'tok-') {
+      var n = parseAmount($('t-amt').value);
+      if (!(n > 0)) { toast('Впиши сумму', true); return; }
+      var sign = a === 'tok+' ? 1 : -1;
+      return send('tokens', { amount: sign * n, reason: $('t-rsn').value.trim() },
+        sign > 0 ? null : 'Списать ' + fmt(n) + ' у ' + nm + '?');
+    }
+    if (a === 'ban' || a === 'freeze') {
+      var key = a === 'ban' ? 'ban' : 'frz', d = chosenDur(key);
+      if (d === undefined) { toast('Выбери срок', true); return; }
+      return send(a, { seconds: d, reason: $(key + '-r').value.trim() },
+        (a === 'ban' ? 'Забанить ' : 'Заморозить ') + nm + (d ? ' на ' + dur(d) : ' навсегда') + '?');
+    }
+    if (a === 'unban') return send('unban', {}, 'Снять бан с ' + nm + '?');
+    if (a === 'unfreeze') return send('unfreeze', {});
+    if (a === 'warn') return send('warn', { reason: $('w-r').value.trim() }, 'Отправить предупреждение ' + nm + '?');
+    if (a === 'reports_dismiss') return send('reports_dismiss', {});
+    if (a === 'message') {
+      var tx = $('msg').value.trim();
+      if (!tx) { toast('Пустое сообщение', true); return; }
+      return send('message', { text: tx });
+    }
+    if (a === 'set_rp') {
+      var rp = parseInt($('rp').value, 10);
+      if (!(rp >= 0)) { toast('RP — число от 0', true); return; }
+      return send('set_rp', { rp: rp });
+    }
+    if (a === 'give_nft') {
+      var sel = $('nft');
+      if (!sel.value) { toast('Выбери NFT', true); return; }
+      return send('give_nft', { nft_id: sel.value }, 'Выдать ' + sel.options[sel.selectedIndex].text.split(' · ')[0] + ' игроку ' + nm + '?');
+    }
+    if (a === 'ava_rm') return send('avatar_remove', { strike: false }, 'Снять аватарку у ' + nm + '?');
+    if (a === 'ava_rm_strike') return send('avatar_remove', { strike: true }, 'Снять аватарку и засчитать нарушение (может привести к бану по лестнице)?');
+    if (a === 'avatar_strikes_reset') return send('avatar_strikes_reset', {}, 'Обнулить нарушения по аватарке?');
+    if (a === 'rank_reset') return send('rank_reset', {}, 'Сбросить отметки о наградах за ранги?');
+    if (a === 'ach_reset') return send('ach_reset', {}, 'Сбросить значки?');
+    if (a === 'cancel_match') return send('cancel_match', {}, 'Отменить матч и вернуть залог обоим?');
+    if (a === 'delete') {
+      var c = $('del').value.trim();
+      if (!c) { toast('Впиши ID игрока для подтверждения', true); return; }
+      return send('delete', { confirm: c }, 'Удалить аккаунт ' + nm + '? Это не отменить.');
+    }
+  });
+  // свой срок: как только вписали число — выбранная кнопка срока гаснет, чтобы не было двух сроков сразу
+  $('pl').addEventListener('input', function (e) {
+    var id = e.target.id || '';
+    var mm = id.match(/^(ban|frz)-n$/);
+    if (mm && e.target.value) {
+      delete S.pick[mm[1]];
+      var chips = e.target.closest('.v').querySelectorAll('[data-dur]');
+      for (var i = 0; i < chips.length; i++) chips[i].classList.remove('on');
+    }
+  });
+
+  // ── старт ───────────────────────────────────────────────────────────
+  $('ver').textContent = VER;
+  renderFilters();
+  if (!API) { fatal('Открой из бота', 'Эта страница открывается кнопкой «🗂 Игроки — мини-апп» в /admin.'); }
+  else if (!INIT && !TOK) { fatal('Нет доступа', 'Открой /admin в боте и нажми «🗂 Игроки — мини-апп».'); }
+  else {
+    loadMeta().then(function (ok) { if (ok) loadList(false); })
+      .catch(function () { toast('Нет связи с сервером — нажми ↻', true); });
+  }
+
+  window.ADM = { state: function () { return S; }, open: openPlayer, ver: VER };
+})();
+</script>
+</body>
+</html>
