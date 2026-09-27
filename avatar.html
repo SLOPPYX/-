@@ -131,6 +131,25 @@
   .fatal { display: none; padding: 40px 22px; text-align: center; }
   .fatal .t1 { font-size: 19px; font-weight: 900; }
   .fatal .t2 { margin-top: 10px; font-size: 13px; color: var(--ink2); line-height: 1.5; }
+  /* v324: нарушения, пауза после запрещённой картинки, бан и окно-предупреждение */
+  .strk { margin-top: 12px; padding: 11px 15px; border-radius: 16px; font-size: 12.5px; line-height: 1.5; color: #ffe6ac;
+    background: rgba(255,200,74,.1); border: 1px solid rgba(255,200,74,.4); animation: pop .35s both; }
+  .strk b { color: #fff; }
+  .ban { margin-top: 12px; padding: 13px 15px; border-radius: 16px; font-size: 13px; line-height: 1.5; color: #ffd0d8;
+    background: rgba(255,77,109,.14); border: 1px solid rgba(255,77,109,.55); }
+  .ban b { color: #fff; }
+  .cdw { margin-top: 14px; padding: 22px 18px; border-radius: 26px; text-align: center; border: 1.5px dashed rgba(255,200,74,.45);
+    background: rgba(255,200,74,.05); }
+  .cdw .t1 { font-size: 14px; font-weight: 800; color: #ffe6ac; }
+  .cdw .cd { margin-top: 8px; font-size: 34px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+  .cdw .t2 { margin-top: 6px; font-size: 12px; color: var(--ink2); line-height: 1.5; }
+  .modal { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 60; display: grid; place-items: center; padding: 20px;
+    background: rgba(0,0,0,.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .modal .mc { width: 100%; max-width: 360px; padding: 24px 20px 18px; border-radius: 24px; text-align: center;
+    background: #111120; border: 1px solid var(--line2); animation: pop .3s both; }
+  .modal .mi { font-size: 44px; line-height: 1; }
+  .modal .mt { margin-top: 12px; font-size: 19px; font-weight: 900; }
+  .modal .md { margin: 10px 0 18px; font-size: 13.5px; line-height: 1.55; color: var(--ink2); }
 </style>
 </head>
 <body>
@@ -163,7 +182,15 @@
       <div class="st-d" id="st-d"></div>
     </div>
 
+    <div class="strk" id="strk" hidden></div>
+    <div class="ban" id="ban" hidden><b id="ban-t"></b><span id="ban-d"></span></div>
     <div class="err" id="err" hidden></div>
+
+    <div class="cdw" id="cdw" hidden>
+      <div class="t1" id="cd-t"></div>
+      <div class="cd" id="cd">60:00</div>
+      <div class="t2" id="cd-d"></div>
+    </div>
 
     <label class="drop" id="drop" for="file">
       <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="url(#avg)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -202,13 +229,21 @@
 </main>
 
 <div class="toast" id="toast"></div>
+<div class="modal" id="modal" hidden>
+  <div class="mc"><div class="mi" id="m-i"></div><div class="mt" id="m-t"></div><div class="md" id="m-d"></div>
+    <button class="btn pri" type="button" id="m-ok"></button></div>
+</div>
 
 <script>
 window.addEventListener('error', function (e) {
+  // v324: сбой загрузки файла (скрипт модели 18+, SDK Telegram, картинка) — не ошибка страницы. С capture сюда
+  // приходят и такие события, и раньше недоехавшая модель показывала «Что-то пошло не так» вместо того,
+  // чтобы молча пропустить необязательную проверку. Экран сбоя — только для настоящих ошибок кода.
+  if (e && e.target && e.target !== window && e.target.nodeType === 1) return;
   try {
     document.getElementById('app').style.display = 'none';
     var f = document.getElementById('fatal'); f.style.display = 'block';
-    document.getElementById('fatal-d').textContent = 'Закрой и открой приложение заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v322';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой приложение заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v324';
   } catch (_) {}
 }, true);
 </script>
@@ -223,7 +258,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v322';
+  var VER = 'v324';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -255,7 +290,22 @@ window.addEventListener('error', function (e) {
       s_ok: 'Активна', s_ok_d: 'Её видят все игроки в топе «Рангов».',
       s_no: 'Отклонена', s_no_d: 'Эта картинка не подошла под правила. Загрузи другую.',
       r1: 'Без 18+ — такие картинки отклоняются автоматически.',
-      r2: 'Отклонили? Просто выбери другую — прежняя аватарка останется на месте.',
+      r2: 'Если картинку отклонили, прежняя аватарка остаётся на месте.',
+      p1: 'Отклонили — новую картинку можно поставить только через {cd} мин.',
+      p2: '{w}-е нарушение — предупреждение.',
+      p3: 'Дальше бан: {list}.',
+      p4: 'Нарушения считаются за последние {days} дней.',
+      p_ban_n: '{n}-е — на {d}', p_ban_forever: '{n}-е — навсегда',
+      d_day: 'дн', d_hour: 'ч', d_min: 'мин', forever: 'навсегда',
+      strk: 'Нарушений за {days} дн: <b>{n}</b>', strk_next: ' · следующее — {x}',
+      nx_pause: 'пауза {cd} мин', nx_warn: 'предупреждение', nx_ban: 'бан на {d}', nx_ban_forever: 'бан навсегда',
+      cd_t: 'Пауза после запрещённой картинки', cd_d: 'Новую аватарку можно поставить, когда отсчёт закончится.',
+      ban_t: 'Аккаунт заблокирован', ban_until: 'до {date}', ban_forever: 'навсегда',
+      m_ok: 'Понятно',
+      m_warn_t: 'Предупреждение', m_warn_d: 'Это уже второе запрещённое изображение (18+). Следующее — {x}.',
+      m_ban_t: 'Аккаунт заблокирован', m_ban_d: 'Нарушение №{n} за {days} дней — {x}.',
+      e_cd: 'После запрещённой картинки — пауза. Новую можно поставить через {t}.',
+      e_ban: 'Аккаунт заблокирован — поставить аватарку сейчас нельзя.',
       r3: 'Картинку обрежем по центру в круг 256×256.',
       r4: 'Проверка мгновенная: ставишь — и её сразу видят все.',
       chk_run: 'Проверяю картинку…', chk_no: 'Картинка не подошла',
@@ -267,7 +317,8 @@ window.addEventListener('error', function (e) {
       e_net: 'Нет связи с сервером — проверь интернет и попробуй ещё раз.',
       e_auth: 'Доступ не подтверждён — открой приложение заново кнопкой в боте.',
       e_rate: 'Слишком часто. Подожди немного и попробуй снова.',
-      e_nsfw: 'Картинка не прошла проверку на 18+. Выбери другую.',
+      e_nsfw: 'Картинка не прошла проверку на 18+. Новую можно поставить через {cd} мин.',
+      e_nsfw0: 'Картинка не прошла проверку на 18+. Выбери другую.',
       e_check: 'Проверка сейчас недоступна — попробуй через пару минут.',
       e_srv: 'Ошибка на сервере. Попробуй ещё раз позже.',
       e_load: 'Не удалось получить данные. Проверь интернет.',
@@ -284,7 +335,22 @@ window.addEventListener('error', function (e) {
       s_ok: 'Active', s_ok_d: 'Every player sees it in the Ranks leaderboard.',
       s_no: 'Rejected', s_no_d: 'This picture did not fit the rules. Upload another one.',
       r1: 'No 18+ — such pictures are rejected automatically.',
-      r2: 'Rejected? Just pick another — your current avatar stays as it is.',
+      r2: 'If a picture is rejected, your current avatar stays as it is.',
+      p1: 'Rejected — you can set a new picture only in {cd} min.',
+      p2: 'Violation #{w} — a warning.',
+      p3: 'Then a ban: {list}.',
+      p4: 'Violations count over the last {days} days.',
+      p_ban_n: '#{n} — {d}', p_ban_forever: '#{n} — forever',
+      d_day: 'd', d_hour: 'h', d_min: 'min', forever: 'forever',
+      strk: 'Violations in {days} d: <b>{n}</b>', strk_next: ' · next one — {x}',
+      nx_pause: 'a {cd} min pause', nx_warn: 'a warning', nx_ban: 'a {d} ban', nx_ban_forever: 'a permanent ban',
+      cd_t: 'Pause after a forbidden picture', cd_d: 'You can set a new avatar when the countdown ends.',
+      ban_t: 'Account banned', ban_until: 'until {date}', ban_forever: 'permanently',
+      m_ok: 'Got it',
+      m_warn_t: 'Warning', m_warn_d: 'This is the second forbidden (18+) picture. The next one means {x}.',
+      m_ban_t: 'Account banned', m_ban_d: 'Violation #{n} in {days} days — {x}.',
+      e_cd: 'Pause after a forbidden picture. You can set a new one in {t}.',
+      e_ban: 'Your account is banned — you cannot set an avatar right now.',
       r3: 'The picture is cropped to a 256×256 circle.',
       r4: 'The check is instant: you set it and everyone sees it right away.',
       chk_run: 'Checking the picture…', chk_no: 'Picture not suitable',
@@ -296,7 +362,8 @@ window.addEventListener('error', function (e) {
       e_net: 'No connection to the server — check the internet and try again.',
       e_auth: 'Access not confirmed — reopen the app from the bot.',
       e_rate: 'Too often. Wait a bit and try again.',
-      e_nsfw: 'The picture did not pass the 18+ check. Choose another one.',
+      e_nsfw: 'The picture did not pass the 18+ check. You can set a new one in {cd} min.',
+      e_nsfw0: 'The picture did not pass the 18+ check. Choose another one.',
       e_check: 'The check is unavailable right now — try again in a couple of minutes.',
       e_srv: 'Server error. Try again later.',
       e_load: 'Could not load your data. Check the internet.',
@@ -306,7 +373,38 @@ window.addEventListener('error', function (e) {
   };
   var L = TX[LANG];
 
-  var S = { status: 'none', url: null, shot: null, busy: false, check: null };
+  var S = { status: 'none', url: null, shot: null, busy: false, check: null,
+            // v324: штрафы. Правила приходят с сервера (/casino/avatar/state), здесь — те же значения на случай старого бота
+            rules: { cooldown_min: 60, warn_at: 2, window_days: 30, bans: [[3, 86400], [4, 604800], [5, 0]] },
+            strikes: 0, cdUntil: 0, banUntil: null };
+  function tpl(s, o) { return String(s).replace(/\{(\w+)\}/g, function (_, k) { return o[k] != null ? o[k] : ''; }); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function mmss(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + pad(s % 60); }
+  function fdate(ts) { var d = new Date(ts * 1000); return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function dur(sec) {
+    if (!sec) return L.forever;
+    if (sec % 86400 === 0) return (sec / 86400) + ' ' + L.d_day;
+    if (sec % 3600 === 0) return (sec / 3600) + ' ' + L.d_hour;
+    return Math.round(sec / 60) + ' ' + L.d_min;
+  }
+  // бан за нарушение №n: секунды (0 — навсегда) или undefined — бана нет. Дальше последней ступени — как последняя.
+  function banFor(n) {
+    var b = S.rules.bans || [], top = null;
+    for (var i = 0; i < b.length; i++) { if (b[i][0] === n) return b[i][1]; if (!top || b[i][0] > top[0]) top = b[i]; }
+    return (top && n > top[0]) ? top[1] : undefined;
+  }
+  function nextText(n) {
+    var b = banFor(n);
+    if (b !== undefined) return b ? tpl(L.nx_ban, { d: dur(b) }) : L.nx_ban_forever;
+    if (n === S.rules.warn_at) return L.nx_warn;
+    return tpl(L.nx_pause, { cd: S.rules.cooldown_min });
+  }
+  function isBanned() { return S.banUntil !== null && S.banUntil !== undefined && (S.banUntil === 0 || S.banUntil * 1000 > Date.now()); }
+  function isLocked() { return isBanned() || S.cdUntil > Date.now(); }
+  function modal(icon, title, text) {
+    $('m-i').textContent = icon; $('m-t').textContent = title; $('m-d').textContent = text;
+    $('m-ok').textContent = L.m_ok; $('modal').hidden = false; haptic('warning');
+  }
   var toastT = 0;
   function toast(t) { var el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { el.classList.remove('show'); }, 2600); }
   function haptic(kind) { try { tg && tg.HapticFeedback && (kind ? tg.HapticFeedback.notificationOccurred(kind) : tg.HapticFeedback.selectionChanged()); } catch (e) {} }
@@ -319,11 +417,19 @@ window.addEventListener('error', function (e) {
     $('btn-send').textContent = L.send; $('btn-swap').textContent = L.swap; $('btn-rm').textContent = L.rm;
     $('none-t').textContent = L.none_t; $('none-d').textContent = L.none_d;
     $('foot').textContent = L.foot;
+    renderRules();
+  }
+  // v324: правила — из того, что прислал бот: штрафы описаны в одном месте (на сервере), страница их только показывает
+  function renderRules() {
+    var R = S.rules;
     var ic = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5M12 16v.5"/><circle cx="12" cy="12" r="9"/></svg>';
-    $('rules').innerHTML = '<li class="warn">' + ic + '<span>' + esc(L.r1) + '</span></li>'
-      + '<li>' + ic + '<span>' + esc(L.r4) + '</span></li>'
-      + '<li>' + ic + '<span>' + esc(L.r2) + '</span></li>'
-      + '<li>' + ic + '<span>' + esc(L.r3) + '</span></li>';
+    function li(cls, t) { return '<li' + (cls ? ' class="' + cls + '"' : '') + '>' + ic + '<span>' + esc(t) + '</span></li>'; }
+    var bans = (R.bans || []).map(function (b) {
+      return b[1] ? tpl(L.p_ban_n, { n: b[0], d: dur(b[1]) }) : tpl(L.p_ban_forever, { n: b[0] });
+    }).join(', ');
+    $('rules').innerHTML = li('warn', L.r1) + li('warn', tpl(L.p1, { cd: R.cooldown_min }))
+      + li('warn', tpl(L.p2, { w: R.warn_at })) + li('warn', tpl(L.p3, { list: bans }))
+      + li('', tpl(L.p4, { days: R.window_days })) + li('', L.r4) + li('', L.r2) + li('', L.r3);
   }
 
   // ── Запросы ─────────────────────────────────────────────────────────
@@ -368,6 +474,32 @@ window.addEventListener('error', function (e) {
     $('st-d').innerHTML = m[2];
     ring.style.setProperty('--rc', m[3]);
     $('rm-wrap').hidden = (st === 'none');
+    // v324: нарушения, бан, пауза. Пока идёт пауза или бан — выбрать картинку нельзя
+    var sk = $('strk');
+    if (S.strikes > 0) {
+      sk.innerHTML = tpl(L.strk, { days: S.rules.window_days, n: S.strikes }) + esc(tpl(L.strk_next, { x: nextText(S.strikes + 1) }));
+      sk.hidden = false;
+    } else sk.hidden = true;
+    var banned = isBanned();
+    $('ban').hidden = !banned;
+    if (banned) {
+      $('ban-t').textContent = L.ban_t;
+      $('ban-d').textContent = ' · ' + (S.banUntil ? tpl(L.ban_until, { date: fdate(S.banUntil) }) : L.ban_forever);
+    }
+    var cd = !banned && S.cdUntil > Date.now();
+    $('cdw').hidden = !cd;
+    if (cd) {
+      $('cd-t').textContent = L.cd_t; $('cd-d').textContent = L.cd_d;
+      $('cd').textContent = mmss((S.cdUntil - Date.now()) / 1000);
+      if (!cdTimer) cdTimer = setInterval(tickCd, 1000);
+    }
+    $('drop').hidden = banned || cd || !!S.shot;
+  }
+  var cdTimer = 0;
+  function tickCd() {
+    var left = (S.cdUntil - Date.now()) / 1000;
+    $('cd').textContent = mmss(left);
+    if (left <= 0) { clearInterval(cdTimer); cdTimer = 0; S.cdUntil = 0; render(); }
   }
 
 
@@ -375,8 +507,8 @@ window.addEventListener('error', function (e) {
   /* v321: модель (MobileNetV2 из nsfwjs, 2.7 МБ) и tfjs лежат рядом со страницей и грузятся
      ТОЛЬКО когда игрок выбрал картинку — иначе открытие мини-аппа платило бы 4 МБ впустую.
      Считает телефон игрока: сервер бота с 889 МБ памяти такую модель не выдержит.
-     Обойти проверку в браузере можно, поэтому она не отменяет ручное одобрение — она лишь
-     не даёт очевидному 18+ дойти до администратора. Любой сбой = 'unknown' = пропускаем
+     Обойти проверку в браузере можно, поэтому решает сервер (v322) — эта лишь не пускает очевидное
+     18+ в сеть и не даёт получить за него нарушение (v324). Любой сбой = 'unknown' = пропускаем
      дальше: необязательный слой не имеет права мешать человеку поставить аватарку. */
   var NSFW_BASE = 'nsfw/';
   var NSFW_LIMIT = 40000;          // столько ждём модель, дальше считаем, что проверки нет
@@ -477,6 +609,7 @@ window.addEventListener('error', function (e) {
   }
 
   function handleFile(file) {
+    if (isLocked()) return Promise.resolve();      // v324: пауза или бан — выбирать нечего
     showErr('');
     return readImage(file).then(function (shot) {
       if (shot.bytes > MAXBYTES * 1.3) { showErr(esc(L.e_big)); return; }
@@ -526,9 +659,10 @@ window.addEventListener('error', function (e) {
     }
   });
   $('btn-swap').addEventListener('click', backToPick);
+  $('m-ok').addEventListener('click', function () { $('modal').hidden = true; });
   function backToPick() {
     S.shot = null; S.check = null;
-    $('prev').hidden = true; $('acts').hidden = true; $('drop').hidden = false; showErr('');
+    $('prev').hidden = true; $('acts').hidden = true; $('drop').hidden = isLocked(); showErr('');
     setSend('ok');
   }
 
@@ -537,7 +671,7 @@ window.addEventListener('error', function (e) {
     if (S.busy || !S.shot) return;
     if (S.check && S.check.v === 'block') return;   // страховка: кнопка и так заблокирована
     S.busy = true; $('btn-send').disabled = true;
-    // check — ПОДСКАЗКА администратору, а не решение: с устройства её можно подделать,
+    // check — только строка в логе сервера, а не решение: с устройства её можно подделать,
     // поэтому сервер по ней ничего не блокирует и не одобряет.
     var body = JSON.stringify({ uid: UID, secret: SECRET, init_data: INIT || undefined, image: S.shot.dataUrl,
                                 check: S.check || { v: 'unknown' } });
@@ -555,7 +689,31 @@ window.addEventListener('error', function (e) {
         var e = j.error;
         // v322: сервер не заменяет уже принятую аватарку, если новая не прошла, — значит и
         // здесь ничего не стираем и не рисуем «Отклонена»: у игрока всё осталось как было.
-        if (e === 'nsfw') { showErr(esc(L.e_nsfw)); haptic('error'); return; }
+        if (e === 'nsfw') {
+          // v324: сервер засчитал нарушение и сказал, что за ним последовало — показываем сразу
+          var sk = j.strike || null;
+          if (sk) {
+            S.strikes = sk.n || (S.strikes + 1);
+            S.cdUntil = Date.now() + (sk.cooldown || S.rules.cooldown_min * 60) * 1000;
+            if (sk.ban) {
+              S.banUntil = sk.banned_until || 0;
+              modal('⛔', L.m_ban_t, tpl(L.m_ban_d, { n: sk.n, days: S.rules.window_days,
+                x: sk.ban_seconds ? tpl(L.nx_ban, { d: dur(sk.ban_seconds) }) : L.nx_ban_forever }));
+            } else if (sk.warn) {
+              modal('⚠️', L.m_warn_t, tpl(L.m_warn_d, { x: nextText(sk.n + 1) }));
+            }
+          }
+          backToPick(); render();
+          showErr(esc(sk ? tpl(L.e_nsfw, { cd: Math.round((sk.cooldown || 3600) / 60) }) : L.e_nsfw0));
+          haptic('error'); return;
+        }
+        if (e === 'cooldown') {
+          S.cdUntil = Date.now() + (j.retry_after || 60) * 1000;
+          if (j.strikes) S.strikes = j.strikes;
+          backToPick(); render();
+          return showErr(esc(tpl(L.e_cd, { t: mmss(j.retry_after || 60) })));
+        }
+        if (e === 'banned') { S.banUntil = j.until || 0; backToPick(); render(); return showErr(esc(L.e_ban)); }
         if (e === 'check_unavailable') { showErr(esc(L.e_check)); haptic('error'); return; }
         if (e === 'rate_limited') return showErr(esc(L.e_rate));
         if (e === 'too_large') return showErr(esc(L.e_big));
@@ -591,6 +749,11 @@ window.addEventListener('error', function (e) {
       if (!j || j.ok !== true) { show('main'); render(); showErr(esc(L.e_load)); return; }
       S.status = j.status || 'none';
       S.url = j.url || null;
+      // v324: штрафы. У старого бота этих полей нет — остаются значения по умолчанию, ничего не ломается
+      if (j.rules && j.rules.bans) { S.rules = j.rules; renderRules(); }
+      S.strikes = j.strikes || 0;
+      S.cdUntil = j.cooldown_left ? Date.now() + j.cooldown_left * 1000 : 0;
+      S.banUntil = (j.banned_until === undefined) ? null : j.banned_until;
       show('main'); render();
     }).catch(function () { show('main'); render(); showErr(esc(L.e_load)); });
   }
