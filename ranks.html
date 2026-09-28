@@ -351,6 +351,36 @@
   .hs .t span { font-size: 11.5px; font-weight: 600; color: var(--text3); white-space: nowrap; }
   .hs .w { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
   .hs .w i { font-style: normal; padding: 4px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; color: var(--text2); background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07); }
+  .hs .w i.rw { color: #ffe29a; background: rgba(255,201,74,.1); border-color: rgba(255,201,74,.34); }
+
+  /* v329: награды за топ-3 сезона — золотая карточка под подиумом и во вкладке «Сезон».
+     Что за награда, пишет администратор; вручает её тоже он сам — об этом внизу карточки, с его значком. */
+  .prz { position: relative; margin: 0 0 16px; padding: 16px; border-radius: 22px; overflow: hidden;
+         background: linear-gradient(160deg, rgba(255,201,74,.14), rgba(26,15,48,.74) 46%, rgba(9,6,16,.86));
+         border: 1px solid rgba(255,201,74,.3); box-shadow: 0 22px 44px -26px rgba(255,201,74,.45); }
+  .prz::before { content: ''; position: absolute; top: 0; right: 0; left: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,226,154,.8), transparent); }
+  .prz::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none; transform: translateX(-130%);
+                background: linear-gradient(115deg, transparent 40%, rgba(255,240,200,.09) 50%, transparent 60%); animation: glare 7s ease-in-out infinite; }
+  .pz-h { display: flex; align-items: center; gap: 11px; margin-bottom: 4px; }
+  .pz-h svg { width: 34px; height: 34px; flex: 0 0 34px; -webkit-filter: drop-shadow(0 0 8px rgba(255,201,74,.55)); filter: drop-shadow(0 0 8px rgba(255,201,74,.55)); }
+  .pz-h b { display: block; font-size: 15.5px; font-weight: 800; }
+  .pz-h span { display: block; margin-top: 1px; font-size: 11.5px; font-weight: 600; color: var(--text2); }
+  .pz-row { --c: 255,201,74; position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; margin-top: 9px; padding: 10px 12px;
+            border-radius: 16px; background: rgba(var(--c), .07); border: 1px solid rgba(var(--c), .24); }
+  .pz-row.p2 { --c: 196,204,220; } .pz-row.p3 { --c: 205,127,79; }
+  .pz-md { width: 36px; height: 36px; flex: 0 0 36px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; font-weight: 900; color: #1c1230;
+           background: radial-gradient(circle at 34% 28%, #fff, rgb(var(--c)) 52%, rgba(var(--c), .55)); box-shadow: 0 0 18px -3px rgba(var(--c), .85); }
+  .pz-t { flex: 1; min-width: 0; }
+  .pz-t i { display: block; font-style: normal; font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: rgb(var(--c)); }
+  .pz-t b { display: block; margin-top: 1px; font-size: 14px; font-weight: 700; line-height: 1.3; word-break: break-word; }
+  .pz-t b.none { color: var(--text2); font-weight: 600; font-size: 13px; }
+  .pz-who { flex: 0 1 auto; max-width: 36%; text-align: right; font-size: 11.5px; line-height: 1.3; color: var(--text3); }
+  .pz-who b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text2); font-size: 12px; }
+  .pz-who.me b { color: var(--accent-light); }
+  .pz-f { position: relative; z-index: 1; display: flex; align-items: flex-start; gap: 9px; margin-top: 13px; padding-top: 12px;
+          border-top: 1px solid rgba(255,201,74,.16); font-size: 12px; line-height: 1.45; color: var(--text2); }
+  .pz-f .adm-ic { width: 20px; height: 20px; margin-top: 1px; }
+  .pz-f b { color: #ffe29a; }
 
   /* ─── Заглушки «в разработке» ─── */
   .empty-state { text-align: center; padding: 34px 20px; border-radius: 22px; border: 1px dashed rgba(139,92,246,.35); background: rgba(139,92,246,.05); }
@@ -2283,6 +2313,47 @@ window.addEventListener('error', function (e) {
     return pod;
   }
 
+  // v329: награды за 1–3 место сезона. Текст награды пишет администратор (d.season_prizes); вручает он же, лично —
+  // об этом внизу карточки с его значком. withWho — показать, кто держит место прямо сейчас (вкладка «Топ»).
+  var PZ_GIFT = '<defs><linearGradient id="pzG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff4c8"/><stop offset="1" stop-color="#ffb938"/></linearGradient></defs>' +
+    '<rect x="5" y="15" width="30" height="20" rx="3" fill="rgba(255,201,74,.16)" stroke="url(#pzG)" stroke-width="2"/>' +
+    '<rect x="3" y="10" width="34" height="7" rx="2" fill="rgba(255,201,74,.22)" stroke="url(#pzG)" stroke-width="2"/>' +
+    '<line x1="20" y1="10" x2="20" y2="35" stroke="url(#pzG)" stroke-width="2"/>' +
+    '<path d="M20 10C15 10 12.5 8 12.5 6 12.5 3.8 15.5 3.3 17.5 5.3 19 6.8 20 10 20 10 20 10 21 6.8 22.5 5.3 24.5 3.3 27.5 3.8 27.5 6 27.5 8 25 10 20 10z" fill="none" stroke="url(#pzG)" stroke-width="2" stroke-linejoin="round"/>';
+  var PZ_N = 0;
+  function prizeCard(d, withWho) {
+    var pz = Array.isArray(d.season_prizes) ? d.season_prizes : [], top = Array.isArray(d.top) ? d.top : [];
+    var c = el('div', 'prz');
+    var h = el('div', 'pz-h');
+    // своё имя градиента у каждой карточки: карточек две (Топ и Сезон), и одинаковый id на скрытой вкладке
+    // оставлял вторую иконку без обводки — сплошным квадратом
+    var g = document.createElementNS(NS, 'svg'); g.setAttribute('viewBox', '0 0 40 40'); g.setAttribute('aria-hidden', 'true');
+    g.innerHTML = PZ_GIFT.replace(/pzG/g, 'pzG' + (++PZ_N));
+    h.appendChild(g);
+    var ht = el('div'); ht.appendChild(el('b', '', 'Награды за топ-3 сезона')); ht.appendChild(el('span', '', 'Закончи сезон на пьедестале — получи награду'));
+    h.appendChild(ht); c.appendChild(h);
+    for (var i = 0; i < 3; i++) {
+      var r = el('div', 'pz-row p' + (i + 1));
+      r.appendChild(el('span', 'pz-md', String(i + 1)));
+      var t = el('div', 'pz-t'); t.appendChild(el('i', '', (i + 1) + ' место'));
+      t.appendChild(pz[i] ? el('b', '', pz[i]) : el('b', 'none', 'Награду объявит администратор'));
+      r.appendChild(t);
+      if (withWho && top[i]) {
+        var w = el('div', 'pz-who' + (top[i].is_me ? ' me' : ''));
+        w.appendChild(document.createTextNode('сейчас')); w.appendChild(el('b', '', top[i].is_me ? 'ты' : top[i].name));
+        r.appendChild(w);
+      }
+      c.appendChild(r);
+    }
+    var f = el('div', 'pz-f'); f.appendChild(admIcon('adm-ic'));
+    var ft = el('span');
+    ft.appendChild(document.createTextNode('Награды вручает '));
+    ft.appendChild(el('b', '', 'администратор проекта лично'));
+    ft.appendChild(document.createTextNode(' — после закрытия сезона. Кому уже вручено, видно во вкладке «Сезон» в прошлых сезонах.'));
+    f.appendChild(ft); c.appendChild(f);
+    return c;
+  }
+
   function renderTop(d, tiers, cur) {
     var body = $('top-body'); body.textContent = '';
     $('top-pill').textContent = 'Сезон ' + d.season_number;
@@ -2295,7 +2366,7 @@ window.addEventListener('error', function (e) {
       yb.appendChild(yt); body.appendChild(yb);
     }
 
-    if (!top.length) { body.appendChild(soon('Рейтинг пока пуст', 'Сыграй первый матч 1vs1 — и окажешься на первом месте.')); }
+    if (!top.length) { body.appendChild(soon('Рейтинг пока пуст', 'Сыграй первый матч 1vs1 — и окажешься на первом месте.')); body.appendChild(prizeCard(d, false)); }
     else {
       var podium = el('div', 'podium');
       var hot = 0;
@@ -2307,6 +2378,7 @@ window.addEventListener('error', function (e) {
       podium.appendChild(podSlot(1, top[0] || null, tiers));
       podium.appendChild(podSlot(3, top[2] || null, tiers));
       body.appendChild(podium);
+      body.appendChild(prizeCard(d, true));                          // v329: сразу под пьедесталом
       for (var i = 3; i < top.length; i++) body.appendChild(playerRow(top[i], tiers, i - 3));
     }
 
@@ -2407,6 +2479,7 @@ window.addEventListener('error', function (e) {
       card.appendChild(el('div', 'note', 'Сезон стартует с первого сыгранного матча — после этого здесь появится обратный отсчёт.'));
     }
     body.appendChild(card);
+    body.appendChild(prizeCard(d, false));                          // v329
 
     var r = d.rules;
     if (r && typeof r === 'object') {
@@ -2427,7 +2500,10 @@ window.addEventListener('error', function (e) {
       t.appendChild(el('span', '', (h.start && h.end) ? fdate(h.start) + ' — ' + fdate(h.end) : ''));
       box.appendChild(t);
       var wn = el('div', 'w');
-      (h.top3 || []).forEach(function (x, i) { wn.appendChild(el('i', '', (i + 1) + ' · ' + x.name + ' · ' + fmt(num(x.rp)))); });
+      // v329: 🎁 — администратор отметил, что награду за это место вручил
+      (h.top3 || []).forEach(function (x, i) {
+        wn.appendChild(el('i', x.rewarded ? 'rw' : '', (i + 1) + ' · ' + x.name + ' · ' + fmt(num(x.rp)) + (x.rewarded ? ' · 🎁 награда вручена' : '')));
+      });
       if (wn.childNodes.length) box.appendChild(wn);
       body.appendChild(box);
     });
@@ -2826,7 +2902,7 @@ window.addEventListener('error', function (e) {
   }
 
   // v295: причина последнего сбоя показывается мелким шрифтом на экране ошибки — по скриншоту видно, что именно сломалось
-  var VER = 'v312', lastErr = '', failKind = '', staleKind = '';
+  var VER = 'v329', lastErr = '', failKind = '', staleKind = '';
 
   function setConn(text) { var c = $('conn'); c.textContent = text || ''; c.classList.toggle('on', !!text); }
   function showStale(kind) {
