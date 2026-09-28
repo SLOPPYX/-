@@ -104,12 +104,14 @@
                border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .upd { color: var(--acc); }
-  /* v326: вкладки — все пять видны сразу и на узком экране (раньше «Журнал» был отдельной кнопкой сверху) */
-  .tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; margin-top: 10px; padding: 4px;
+  /* v326: вкладки — все видны сразу и на узком экране (раньше «Журнал» был отдельной кнопкой сверху).
+     v328: шесть вкладок — две строки по три, иначе подписи на телефоне не влезают */
+  .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; margin-top: 10px; padding: 4px;
           background: var(--card); border-radius: 14px; }
-  .tabs button { position: relative; background: transparent; border-radius: 10px; padding: 6px 2px 5px; font-size: 11px;
-                 line-height: 1.15; color: var(--tx2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tabs .ic { display: block; font-size: 17px; line-height: 1.25; }
+  .tabs button { position: relative; background: transparent; border-radius: 10px; padding: 7px 3px; font-size: 12.5px;
+                 line-height: 1.2; color: var(--tx2); white-space: nowrap; overflow: hidden;
+                 display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .tabs .ic { font-size: 15px; line-height: 1; }
   .tabs button.on { background: var(--acc); color: #fff; font-weight: 600; }
   .tdot { position: absolute; top: 4px; right: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
   .bar { height: 6px; border-radius: 3px; background: var(--card2); overflow: hidden; }
@@ -123,6 +125,13 @@
   .lk { cursor: pointer; }
   .lg.gen { cursor: default; }
   .wrapt { white-space: normal; }
+  /* v328: экономика, картинка рассылки */
+  .er { flex: 0 0 auto; font-weight: 600; font-size: 13px; white-space: nowrap; }
+  .brow { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+  .brow span { flex: 0 0 58px; color: var(--tx2); }
+  .brow b { flex: 0 0 auto; min-width: 26px; text-align: right; }
+  .bcimg { width: 64px; height: 64px; flex: 0 0 64px; border-radius: 10px; object-fit: cover; background: var(--card2); }
+  .up { color: #86efac; } .dn { color: #fca5a5; }
 </style>
 </head>
 <body>
@@ -138,6 +147,7 @@
     <button type="button" data-tab="bc"><span class="ic">📢</span>Рассылка<span class="tdot" id="bc-dot" hidden></span></button>
     <button type="button" data-tab="promo"><span class="ic">🎫</span>Промо</button>
     <button type="button" data-tab="tour"><span class="ic">🏆</span>Турнир</button>
+    <button type="button" data-tab="econ"><span class="ic">💰</span>Экономика</button>
     <button type="button" data-tab="log" id="journal"><span class="ic">📜</span>Журнал</button>
   </nav>
 
@@ -176,14 +186,29 @@
     <div class="sec"><h3>Новая рассылка</h3><div class="v">
       <textarea id="bc-text" maxlength="4000" placeholder="Текст — придёт каждому в бот с заголовком «📢 Сообщение от администратора»"></textarea>
       <div class="small" id="bc-len">0 / 4000</div>
+      <!-- v328: картинка, кнопка-ссылка, время отправки -->
+      <div class="row" id="bc-ph-row"><button type="button" class="f1" id="bc-ph-add">🖼 Добавить картинку</button></div>
+      <input type="file" id="bc-ph-file" accept="image/*" hidden>
+      <div class="row" id="bc-ph-box" hidden><img id="bc-ph-img" class="bcimg" alt=""><div class="m small" id="bc-ph-info"></div>
+        <button type="button" class="xs" id="bc-ph-del">✕ Убрать</button></div>
+      <div class="lbl">Кнопка под сообщением — необязательно</div>
+      <div class="chips wrap" id="bc-btn-c"><button type="button" class="chip" data-bt="📢 Канал SloppyX" data-bu="https://t.me/SloppyX444">📢 Канал @SloppyX444</button></div>
+      <input id="bc-bt" maxlength="64" placeholder="Надпись на кнопке">
+      <input id="bc-bu" maxlength="512" autocapitalize="off" spellcheck="false" placeholder="Ссылка: https://…, t.me/… или @канал">
       <div class="lbl">Кому</div>
       <div class="chips wrap" id="bc-aud"></div>
       <div class="small" id="bc-skip"></div>
+      <div class="lbl">Когда</div>
+      <div class="v" id="bc-when"></div>
       <div class="row"><button type="button" class="f1" id="bc-test">Себе — проверить</button>
         <button type="button" class="b-acc f1" id="bc-go">Отправить</button></div>
     </div></div>
+    <div class="sec" id="bc-sch-box" hidden><h3>Запланированные</h3><div class="hist" id="bc-sch"></div></div>
     <div class="sec" id="bc-hist-box" hidden><h3>Прошлые рассылки</h3><div class="hist" id="bc-hist"></div></div>
   </section>
+
+  <!-- v328: экономика — только посмотреть -->
+  <section id="v-econ" hidden><div id="ec"></div></section>
 
   <!-- v326: промокоды -->
   <section id="v-promo" hidden>
@@ -249,7 +274,7 @@ window.addEventListener('error', function (e) {
     document.getElementById('app').hidden = true;
     var f = document.getElementById('fatal'); f.hidden = false;
     document.getElementById('fatal-t').textContent = 'Ошибка на странице';
-    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v327';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v328';
   } catch (_) {}
 }, true);
 </script>
@@ -264,7 +289,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v327';
+  var VER = 'v328';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -386,6 +411,11 @@ window.addEventListener('error', function (e) {
                                             function () { if (!fin) { fin = true; clearTimeout(tm); fail(); } });
     } catch (e) { if (!fin) { fin = true; clearTimeout(tm); fail(); } }
   }
+  // v328: ссылку t.me открываем средствами Telegram (чат откроется поверх, админка останется); вне Telegram — вкладкой
+  function openTg(url) {
+    try { if (tg && tg.openTelegramLink) { tg.openTelegramLink(url); return; } } catch (e) {}
+    window.open(url, '_blank');
+  }
 
   // ── запросы: всё POST, в теле — подпись Telegram и ключ из ссылки ────
   function api(path, body) {
@@ -421,7 +451,8 @@ window.addEventListener('error', function (e) {
 
   // ── переходы между экранами ─────────────────────────────────────────
   // v326: вкладки Игроки / Рассылка / Промо / Турнир / Журнал; карточка игрока открывается поверх любой из них
-  var VIEWS = ['list', 'pl', 'log', 'bc', 'promo', 'tour'];
+  // v328: + Экономика
+  var VIEWS = ['list', 'pl', 'log', 'bc', 'promo', 'tour', 'econ'];
   function show(view) {
     S.view = view;
     for (var i = 0; i < VIEWS.length; i++) $('v-' + VIEWS[i]).hidden = VIEWS[i] !== view;
@@ -435,6 +466,7 @@ window.addEventListener('error', function (e) {
     if (v === 'bc') return loadBc();
     if (v === 'promo') return loadPromo();
     if (v === 'tour') return loadTour();
+    if (v === 'econ') return loadEcon();
   }
   function toList() {
     window.scrollTo(0, S.listY || 0);                // v325: возвращаемся туда же, где были в списке
@@ -642,7 +674,8 @@ window.addEventListener('error', function (e) {
     var h = '<div class="sec"><div class="ph"><div class="av">' + avHtml(p) + (p.online ? '<i class="dot"></i>' : '') + '</div>'
       + '<div class="m"><div class="nm">' + esc(p.name || 'без имени') + badges(p) + '</div>'
       + '<div class="sub"><span class="cp" data-copy="' + esc(p.cid || '') + '">ID ' + esc(p.cid || '—') + '</span> · '
-      + '<span class="cp" data-copy="' + p.uid + '">TG ' + p.uid + '</span></div>'
+      + '<span class="cp" data-copy="' + p.uid + '">TG ' + p.uid + '</span>'
+      + (p.username ? ' · <span class="cp" data-copy="@' + esc(p.username) + '">@' + esc(p.username) + '</span>' : '') + '</div>'
       + '<div class="sub">рег. ' + esc(regTxt(p.reg)) + ' · ' + seenTxt(p, true) + (p.lang ? ' · ' + esc(p.lang) : '') + '</div></div></div>'
       + '<div class="grid" style="margin-top:10px">'
       + kv('Баланс', bal(p) + ' 💰' + (Number(p.balance) >= 1e9 ? '<small>≈ ' + short(p.balance) + '</small>' : ''))
@@ -694,8 +727,15 @@ window.addEventListener('error', function (e) {
           return dt(r.time) + ' — <b>' + esc(r.category) + '</b> от ' + esc(r.from) + ' <span class="small">' + (r.handled ? '(' + esc(r.handled) + ')' : '(ждёт)') + '</span>'; }));
 
     // сообщение
-    h += sec('Сообщение игроку', '<textarea id="msg" placeholder="Текст — придёт в бот от имени администратора"></textarea>'
-      + '<div class="row"><button type="button" class="b-acc f1" data-act="message">Отправить</button></div>');
+    // v328: написать игроку в личку Telegram. Есть @username — чат открывается сразу; нет — бот присылает администратору
+    // ссылку-упоминание на профиль (из мини-аппа tg://user?id= не открывается, а в сообщении бота работает).
+    h += sec('Связаться с игроком', '<div class="row">'
+      + (p.username ? '<button type="button" class="b-acc f1" data-act="tg_open">✉️ Написать @' + esc(p.username) + '</button>' : '')
+      + '<button type="button" class="f1" data-act="tg_link">👤 Профиль в Telegram</button></div>'
+      + '<div class="small">' + (p.username ? 'Откроется личный чат с игроком в Telegram.'
+          : 'У игрока нет @username — ссылку на его профиль бот пришлёт тебе в чат, там «Написать сообщение».') + '</div>'
+      + '<textarea id="msg" placeholder="…или сообщение через бота — придёт от имени администратора"></textarea>'
+      + '<div class="row"><button type="button" class="b-acc f1" data-act="message">Отправить через бота</button></div>');
 
     // рейтинг
     var tiers = (S.meta && S.meta.tiers) || [];
@@ -825,6 +865,8 @@ window.addEventListener('error', function (e) {
     if (a === 'unfreeze') return send('unfreeze', {}, null, t);
     if (a === 'warn') return send('warn', { reason: $('w-r').value.trim() }, 'Отправить предупреждение ' + nm + '?', t);
     if (a === 'reports_dismiss') return send('reports_dismiss', {}, null, t);
+    if (a === 'tg_open') { openTg('https://t.me/' + encodeURIComponent(p.username)); return; }
+    if (a === 'tg_link') return send('tg_link', {}, null, t);
     if (a === 'message') {
       var tx = $('msg').value.trim();
       if (!tx) { toast('Пустое сообщение', true); return; }
@@ -873,11 +915,11 @@ window.addEventListener('error', function (e) {
     if (sec < 3600) return Math.round(sec / 60) + ' мин';
     return Math.floor(sec / 3600) + ' ч ' + Math.round(sec % 3600 / 60) + ' мин';
   }
-  function oldBot(box) { $(box).innerHTML = '<div class="empty">Этот раздел заработает, когда бот на сервере обновится до v326.</div>'; }
+  function oldBot(box, ver) { $(box).innerHTML = '<div class="empty">Этот раздел заработает, когда бот на сервере обновится до ' + (ver || 'v326') + '.</div>'; }
   // загрузка раздела; null — показывать нечего (нет доступа или старый бот)
-  function sect(path, body, box) {
+  function sect(path, body, box, ver) {
     return api(path, body).then(function (res) {
-      if (res.status === 404 && !res.j) { oldBot(box); return null; }
+      if (res.status === 404 && !res.j) { oldBot(box, ver); return null; }
       if (denied(res)) return null;
       var j = res.j || {};
       if (!j.ok) { toast(j.message || ('Ошибка ' + res.status), true); return null; }
@@ -905,11 +947,96 @@ window.addEventListener('error', function (e) {
     });
   }
 
+  // ── выбор времени ───────────────────────────────────────────────────
+  // v327: срок промокода — любой: кнопка, своё число (мин / ч / дн) или точные дата и время. v328: тот же блок выбирает,
+  // когда отправить рассылку. pc — срок нового промокода, pe — смена срока у готового, bw — когда уйдёт рассылка.
+  // Действует то, что тронули последним.
+  var EXP_CH = [[3600, '1 ч'], [43200, '12 ч'], [86400, '1 дн'], [259200, '3 дн'], [604800, '7 дн'], [2592000, '30 дн']];
+  var EXPC = {
+    pc: { chips: [[0, 'без срока']].concat(EXP_CH), or: 'или до', zero: '♾ Без срока', lead: '⏱ Будет действовать до ', after: '' },
+    pe: { chips: EXP_CH, or: 'или до', zero: '', lead: '⏱ Будет действовать до ', after: '' },
+    bw: { chips: [[0, 'сейчас'], [3600, 'через 1 ч'], [10800, 'через 3 ч'], [86400, 'через сутки']], or: 'или в',
+          num: 'Через сколько', zero: '⚡ Уйдёт сразу', lead: '🗓 Уйдёт ', after: 'через ', on: function () { bcGoLabel(); } }
+  };
+  S.exp = { pc: 0, bw: 0 };    // выбранная кнопка; 0 — «без срока» / «сейчас»; нет ключа — кнопка не выбрана
+  function leftTxt(sec) {
+    sec = Math.max(0, sec);
+    if (sec >= 86400) { var d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600); return d + ' дн' + (h ? ' ' + h + ' ч' : ''); }
+    if (sec >= 3600) { var hh = Math.floor(sec / 3600), mm = Math.floor(sec % 3600 / 60); return hh + ' ч' + (mm ? ' ' + mm + ' мин' : ''); }
+    return Math.max(1, Math.ceil(sec / 60)) + ' мин';
+  }
+  function localDT(ts) { var d = new Date(ts * 1000); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + hm(d); }
+  function expHtml(p) {
+    var c = EXPC[p];
+    return '<div class="chips wrap" data-exp="' + p + '">' + c.chips.map(function (x) {
+        return '<button type="button" class="chip' + (S.exp[p] === x[0] ? ' on' : '') + '" data-es="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>'
+      + '<div class="row"><input id="' + p + '-n" inputmode="numeric" placeholder="' + (c.num || 'Своё число') + '" class="f1">'
+      + '<select id="' + p + '-u" style="width:92px"><option value="60">мин</option><option value="3600" selected>ч</option><option value="86400">дн</option></select></div>'
+      + '<div class="row"><span class="small" style="flex:0 0 auto">' + c.or + '</span><input id="' + p + '-dt" type="datetime-local" class="f1"></div>'
+      + '<div class="small" id="' + p + '-hint"></div>';
+  }
+  // выбранное время: {seconds} или {until}; null — ошибка (уже сказано); undefined — ничего не выбрано
+  function readExp(p) {
+    var dv = $(p + '-dt').value;
+    if (dv) {
+      var t = Math.round(new Date(dv).getTime() / 1000);
+      if (!(t > Date.now() / 1000 + 59)) { toast('Это время уже прошло', true); return null; }
+      return { until: t };
+    }
+    var n = parseInt($(p + '-n').value, 10);
+    if (n > 0) return { seconds: n * parseInt($(p + '-u').value, 10) };
+    if (S.exp[p] === undefined) return undefined;
+    return { seconds: S.exp[p] };
+  }
+  // к какому моменту выйдет выбранное: unix; 0 — «без срока» / «сейчас»; null — ничего не выбрано
+  function expEnd(p) {
+    if (!$(p + '-dt')) return null;
+    var dv = $(p + '-dt').value, n = parseInt($(p + '-n').value, 10), now = Date.now() / 1000;
+    if (dv) return new Date(dv).getTime() / 1000;
+    if (n > 0) return now + n * parseInt($(p + '-u').value, 10);
+    if (S.exp[p]) return now + S.exp[p];
+    return S.exp[p] === 0 ? 0 : null;
+  }
+  // подсказка под блоком — видно ДО нажатия, к какому времени выйдет
+  function expHint(p) {
+    var el = $(p + '-hint'), c = EXPC[p]; if (!el) return;
+    var end = expEnd(p), now = Date.now() / 1000;
+    el.textContent = end === null ? '' : end === 0 ? c.zero
+      : end > now ? c.lead + dt(end) + ' (' + c.after + leftTxt(end - now) + ')' : '⚠️ Это время уже прошло';
+    if (c.on) c.on();
+  }
+  function offChips(p) {
+    delete S.exp[p];
+    var cs = document.querySelectorAll('[data-exp="' + p + '"] .chip');
+    for (var i = 0; i < cs.length; i++) cs[i].classList.remove('on');
+  }
+  function expWire(box) {
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-es]'); if (!b) return;
+      var p = b.parentNode.getAttribute('data-exp');
+      S.exp[p] = Number(b.getAttribute('data-es'));
+      $(p + '-n').value = ''; $(p + '-dt').value = '';
+      var cs = b.parentNode.querySelectorAll('.chip');
+      for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('on', cs[i] === b);
+      expHint(p);
+    });
+    function typed(e) {
+      var m = (e.target.id || '').match(/^(pc|pe|bw)-(n|u|dt)$/); if (!m) return;
+      if (m[2] === 'n' && e.target.value) { $(m[1] + '-dt').value = ''; offChips(m[1]); }
+      if (m[2] === 'dt' && e.target.value) { $(m[1] + '-n').value = ''; offChips(m[1]); }
+      expHint(m[1]);
+    }
+    box.addEventListener('input', typed); box.addEventListener('change', typed);
+  }
+  // бот этой версии и новее — что уже умеет сервер (у старого бота новые поля молча пропали бы)
+  function botVer() { var m = /^v(\d+)/.exec((S.meta && S.meta.ver) || ''); return m ? Number(m[1]) : 999; }
+
   // ── рассылка ────────────────────────────────────────────────────────
   var AUD = [['all', 'Всем'], ['week', 'За 7 дней'], ['day', 'За сутки']];
   var AUDN = { all: 'всем', week: 'заходившим за 7 дней', day: 'заходившим за сутки' };
   var bcT = 0, DK = 'adm_bc_draft';
   S.bcAud = 'all';
+  S.bcPhoto = '';              // v328: картинка — уже ужатая на телефоне, data:image/jpeg;base64,…
   function loadBc(silent) {
     clearTimeout(bcT); bcT = 0;
     if (!S.bc && !silent) $('bc-job').innerHTML = '<div class="empty">Загрузка…</div>';
@@ -954,123 +1081,140 @@ window.addEventListener('error', function (e) {
     }).join('');
     var cur = (j.aud && j.aud[S.bcAud]) || { n: 0, skip: 0 };
     $('bc-skip').textContent = cur.skip ? 'Не получат ' + fmt(cur.skip) + ': забаненные и те, кто выключил «Новости» в уведомлениях бота.' : '';
-    $('bc-go').textContent = run ? 'Дождись конца текущей' : 'Отправить ' + fmt(cur.n) + ' ' + plural(cur.n, 'игроку', 'игрокам');
-    $('bc-go').disabled = run || !cur.n;
+    bcGoLabel();
+    // v328: запланированные — ближайшая сверху
+    var sc = j.scheduled || [];
+    $('bc-sch-box').hidden = !sc.length;
+    $('bc-sch').innerHTML = sc.map(function (x) {
+      return '<div><b>🗓 ' + dt(x.at) + '</b> · ' + esc(AUDN[x.aud] || x.aud) + (x.photo ? ' · 🖼' : '')
+        + (x.btn_text ? ' · 🔗 ' + esc(cut(x.btn_text, 30)) : '')
+        + ' <span class="small">(через ' + leftTxt(x.at - Date.now() / 1000) + ')</span>'
+        + (x.text ? '<br><span class="small">«' + esc(cut(x.text, 120)) + '»</span>' : '')
+        + '<div class="row" style="margin-top:6px"><button type="button" class="xs" data-unsch="' + esc(x.id) + '">Отменить</button></div></div>';
+    }).join('');
     var hs = j.history || [];
     $('bc-hist-box').hidden = !hs.length;
     $('bc-hist').innerHTML = hs.map(function (x) {
       return '<div><b>' + dt(x.t) + '</b> · ' + esc(AUDN[x.aud] || x.aud) + (x.kind === 'tournament' ? ' · 🏆 объявление турнира' : '')
+        + (x.scheduled ? ' · 🗓' : '') + (x.photo ? ' · 🖼' : '') + (x.btn ? ' · 🔗 ' + esc(cut(x.btn, 30)) : '')
         + (x.state === 'cancelled' ? ' <span class="bd wn">остановлена</span>' : '')
         + '<br>✓ дошло ' + fmt(x.sent) + ' из ' + fmt(x.total) + (x.failed ? ' · ✗ ' + fmt(x.failed) : '')
         + (x.skipped ? ' · пропущено ' + fmt(x.skipped) : '')
-        + '<br><span class="small">«' + esc(cut(x.text, 100)) + '»</span></div>';
+        + (x.text ? '<br><span class="small">«' + esc(cut(x.text, 100)) + '»</span>' : '') + '</div>';
     }).join('');
   }
-  function bcLen() { $('bc-len').textContent = $('bc-text').value.length + ' / 4000'; }
-  function bcText() {
-    var t = $('bc-text').value.trim();
-    if (!t) { toast('Впиши текст рассылки', true); return ''; }
-    return t;
+  // надпись на главной кнопке: «Отправить N игрокам» или «🗓 Запланировать на …» — смотря что выбрано в «Когда»
+  function bcGoLabel() {
+    if (!S.bc) return;
+    var cur = ((S.bc.aud || {})[S.bcAud]) || { n: 0 }, at = expEnd('bw'), g = $('bc-go');
+    if (at) { g.textContent = '🗓 Запланировать на ' + dt(at); g.disabled = false; return; }
+    g.textContent = bcRunning() ? 'Дождись конца текущей' : 'Отправить ' + fmt(cur.n) + ' ' + plural(cur.n, 'игроку', 'игрокам');
+    g.disabled = bcRunning() || !cur.n;
+  }
+  // v328: с картинкой Telegram разрешает подпись только до 1024 знаков
+  function bcLim() { return S.bcPhoto ? 1000 : 4000; }
+  function bcLen() {
+    var n = $('bc-text').value.length, l = bcLim();
+    $('bc-len').textContent = n + ' / ' + l + (S.bcPhoto ? ' — с картинкой подпись короче' : '');
+    $('bc-len').style.color = n > l ? '#fca5a5' : '';
+  }
+  // что отправлять: текст, картинка, кнопка; null — чего-то не хватает (уже сказано)
+  function bcPayload() {
+    var t = $('bc-text').value.trim(), bt = $('bc-bt').value.trim(), bu = $('bc-bu').value.trim();
+    if (!t && !S.bcPhoto) { toast('Впиши текст рассылки или добавь картинку', true); return null; }
+    if (t.length > bcLim()) { toast('С картинкой текст — до 1000 знаков (так у Telegram), сейчас ' + t.length, true); return null; }
+    if ((bt || bu) && !(bt && bu)) { toast('Для кнопки нужны и надпись, и ссылка', true); return null; }
+    if ((S.bcPhoto || bt) && botVer() < 328) { toast('Картинка и кнопка заработают, когда бот обновится до v328', true); return null; }
+    var p = { text: t };
+    if (S.bcPhoto) p.photo = S.bcPhoto;
+    if (bt) { p.btn_text = bt; p.btn_url = bu; }
+    return p;
+  }
+  function bcPhotoShow() {
+    $('bc-ph-box').hidden = !S.bcPhoto; $('bc-ph-row').hidden = !!S.bcPhoto;
+    if (S.bcPhoto) {
+      $('bc-ph-img').src = S.bcPhoto;
+      $('bc-ph-info').textContent = 'Картинка ≈ ' + Math.max(1, Math.round(S.bcPhoto.length * 0.75 / 1024)) + ' КБ — уйдёт с текстом как подпись';
+    }
+    bcLen();
+  }
+  // картинку ужимаем прямо на телефоне: длинная сторона до 1280 px, JPEG — по сети уходит ~200–400 КБ, а не 5 МБ с камеры
+  function readPhoto(f) {
+    return new Promise(function (res, rej) {
+      var u = URL.createObjectURL(f), im = new Image();
+      im.onload = function () {
+        try {
+          var k = Math.min(1, 1280 / Math.max(im.naturalWidth, im.naturalHeight));
+          var c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.naturalWidth * k)); c.height = Math.max(1, Math.round(im.naturalHeight * k));
+          var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0, c.width, c.height);
+          URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg', 0.86));
+        } catch (e) { URL.revokeObjectURL(u); rej(e); }
+      };
+      im.onerror = function () { URL.revokeObjectURL(u); rej(new Error('bad image')); };
+      im.src = u;
+    });
+  }
+  function bcClear() {
+    $('bc-text').value = ''; $('bc-bt').value = ''; $('bc-bu').value = ''; S.bcPhoto = ''; bcPhotoShow();
+    try { localStorage.removeItem(DK); } catch (e) {}
+    S.exp.bw = 0; $('bc-when').innerHTML = expHtml('bw'); expHint('bw');
   }
   // черновик — только в этом телефоне: закрыл приложение случайно — текст на месте
   try { $('bc-text').value = localStorage.getItem(DK) || ''; } catch (e) {}
   bcLen();
+  $('bc-when').innerHTML = expHtml('bw'); expWire($('bc-when')); expHint('bw');
   $('bc-text').addEventListener('input', function () { bcLen(); try { localStorage.setItem(DK, this.value); } catch (e) {} });
   $('bc-aud').addEventListener('click', function (e) {
     var b = e.target.closest('[data-aud]'); if (!b || !S.bc) return;
     S.bcAud = b.getAttribute('data-aud'); renderBc();
   });
+  $('bc-ph-add').addEventListener('click', function () { $('bc-ph-file').click(); });
+  function bcSetFile(f) {
+    return readPhoto(f).then(function (url) { S.bcPhoto = url; bcPhotoShow(); }, function () { toast('Картинка не открылась — выбери другую', true); });
+  }
+  $('bc-ph-file').addEventListener('change', function () {
+    var f = this.files && this.files[0]; this.value = '';
+    if (f) bcSetFile(f);
+  });
+  $('bc-ph-del').addEventListener('click', function () { S.bcPhoto = ''; bcPhotoShow(); });
+  $('bc-btn-c').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-bu]'); if (!b) return;
+    $('bc-bt').value = b.getAttribute('data-bt'); $('bc-bu').value = b.getAttribute('data-bu');
+  });
   $('bc-test').addEventListener('click', function () {
-    var t = bcText(); if (!t) return;
-    doSect('/broadcast', { op: 'test', text: t }, null, this, setBc);
+    var p = bcPayload(); if (!p) return;
+    doSect('/broadcast', extend({ op: 'test' }, p), null, this, setBc);
   });
   $('bc-go').addEventListener('click', function () {
-    var t = bcText(); if (!t || !S.bc) return;
-    var n = ((S.bc.aud || {})[S.bcAud] || {}).n || 0;
-    doSect('/broadcast', { op: 'start', text: t, aud: S.bcAud },
-      'Отправить сообщение ' + fmt(n) + ' ' + plural(n, 'игроку', 'игрокам') + ' (' + AUDN[S.bcAud] + ')?\nУже отправленное вернуть нельзя — сначала можно проверить на себе.',
-      this, function (j) {
-        $('bc-text').value = ''; bcLen(); try { localStorage.removeItem(DK); } catch (e) {}
-        setBc(j);
-      });
+    var p = bcPayload(); if (!p || !S.bc) return;
+    var w = readExp('bw'); if (w === null) return;
+    if (!w || !(w.until || w.seconds)) {
+      var n = ((S.bc.aud || {})[S.bcAud] || {}).n || 0;
+      doSect('/broadcast', extend({ op: 'start', aud: S.bcAud }, p),
+        'Отправить сообщение ' + fmt(n) + ' ' + plural(n, 'игроку', 'игрокам') + ' (' + AUDN[S.bcAud] + ')?\nУже отправленное вернуть нельзя — сначала можно проверить на себе.',
+        this, function (j) { bcClear(); setBc(j); });
+      return;
+    }
+    if (botVer() < 328) { toast('Отправка по времени заработает, когда бот обновится до v328', true); return; }
+    var at = w.until || Math.round(Date.now() / 1000 + w.seconds);
+    doSect('/broadcast', extend(extend({ op: 'schedule', aud: S.bcAud }, p), w),
+      'Запланировать рассылку на ' + dt(at) + ' (' + AUDN[S.bcAud] + ')?\nОтменить можно до отправки — в списке «Запланированные».',
+      this, function (j) { bcClear(); setBc(j); });
   });
   $('bc-job').addEventListener('click', function (e) {
     var b = e.target.closest('#bc-stop'); if (!b || b.disabled) return;
     doSect('/broadcast', { op: 'cancel' }, 'Остановить рассылку? Кому уже ушло — у того останется.', b, setBc);
   });
+  $('bc-sch').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-unsch]'); if (!b) return;
+    doSect('/broadcast', { op: 'unschedule', id: b.getAttribute('data-unsch') }, 'Отменить запланированную рассылку?', b, setBc);
+  });
 
   // ── промокоды ───────────────────────────────────────────────────────
   var PR_TOK = [['10к', 1e4], ['50к', 5e4], ['100к', 1e5], ['1м', 1e6]], PR_MAX = [1, 10, 50, 100, 1000];
   var PST = { on: ['ok', 'работает'], off: ['auto', 'выключен'], expired: ['wn', 'срок вышел'], full: ['mt', 'все ввели'] };
-  // v327: срок — любой: кнопка, своё число (мин / ч / дн) или точные дата и время. Один и тот же блок — в форме нового
-  // промокода (pc) и в «⏱ Срок» у готового (pe). Действует то, что тронули последним.
-  var EXP_CH = [[3600, '1 ч'], [43200, '12 ч'], [86400, '1 дн'], [259200, '3 дн'], [604800, '7 дн'], [2592000, '30 дн']];
-  S.exp = { pc: 0 };           // выбранная кнопка срока; 0 — без срока; нет ключа — кнопка не выбрана
   S.prEdit = '';               // у какого промокода открыта смена срока
-  function leftTxt(sec) {
-    sec = Math.max(0, sec);
-    if (sec >= 86400) { var d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600); return d + ' дн' + (h ? ' ' + h + ' ч' : ''); }
-    if (sec >= 3600) { var hh = Math.floor(sec / 3600), mm = Math.floor(sec % 3600 / 60); return hh + ' ч' + (mm ? ' ' + mm + ' мин' : ''); }
-    return Math.max(1, Math.ceil(sec / 60)) + ' мин';
-  }
-  function localDT(ts) { var d = new Date(ts * 1000); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + hm(d); }
-  function expHtml(p, withNone) {
-    var ch = (withNone ? [[0, 'без срока']] : []).concat(EXP_CH);
-    return '<div class="chips wrap" data-exp="' + p + '">' + ch.map(function (x) {
-        return '<button type="button" class="chip' + (S.exp[p] === x[0] ? ' on' : '') + '" data-es="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>'
-      + '<div class="row"><input id="' + p + '-n" inputmode="numeric" placeholder="Своё число" class="f1">'
-      + '<select id="' + p + '-u" style="width:92px"><option value="60">мин</option><option value="3600" selected>ч</option><option value="86400">дн</option></select></div>'
-      + '<div class="row"><span class="small" style="flex:0 0 auto">или до</span><input id="' + p + '-dt" type="datetime-local" class="f1"></div>'
-      + '<div class="small" id="' + p + '-hint"></div>';
-  }
-  // выбранный срок: {seconds} или {until}; null — ошибка (уже сказано); undefined — ничего не выбрано
-  function readExp(p) {
-    var dv = $(p + '-dt').value;
-    if (dv) {
-      var t = Math.round(new Date(dv).getTime() / 1000);
-      if (!(t > Date.now() / 1000 + 59)) { toast('Это время уже прошло', true); return null; }
-      return { until: t };
-    }
-    var n = parseInt($(p + '-n').value, 10);
-    if (n > 0) return { seconds: n * parseInt($(p + '-u').value, 10) };
-    if (S.exp[p] === undefined) return undefined;
-    return { seconds: S.exp[p] };
-  }
-  // подсказка под блоком: до какого времени будет действовать — видно ДО нажатия «Создать»
-  function expHint(p) {
-    var el = $(p + '-hint'); if (!el) return;
-    var dv = $(p + '-dt').value, n = parseInt($(p + '-n').value, 10), now = Date.now() / 1000, end = 0;
-    if (dv) end = new Date(dv).getTime() / 1000;
-    else if (n > 0) end = now + n * parseInt($(p + '-u').value, 10);
-    else if (S.exp[p]) end = now + S.exp[p];
-    else { el.textContent = S.exp[p] === 0 ? '♾ Без срока' : ''; return; }
-    el.textContent = end > now ? '⏱ Будет действовать до ' + dt(end) + ' (' + leftTxt(end - now) + ')' : '⚠️ Это время уже прошло';
-  }
-  function offChips(p) {
-    delete S.exp[p];
-    var cs = document.querySelectorAll('[data-exp="' + p + '"] .chip');
-    for (var i = 0; i < cs.length; i++) cs[i].classList.remove('on');
-  }
-  function expWire(box) {
-    box.addEventListener('click', function (e) {
-      var b = e.target.closest('[data-es]'); if (!b) return;
-      var p = b.parentNode.getAttribute('data-exp');
-      S.exp[p] = Number(b.getAttribute('data-es'));
-      $(p + '-n').value = ''; $(p + '-dt').value = '';
-      var cs = b.parentNode.querySelectorAll('.chip');
-      for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('on', cs[i] === b);
-      expHint(p);
-    });
-    function typed(e) {
-      var m = (e.target.id || '').match(/^(p[ce])-(n|u|dt)$/); if (!m) return;
-      if (m[2] === 'n' && e.target.value) { $(m[1] + '-dt').value = ''; offChips(m[1]); }
-      if (m[2] === 'dt' && e.target.value) { $(m[1] + '-n').value = ''; offChips(m[1]); }
-      expHint(m[1]);
-    }
-    box.addEventListener('input', typed); box.addEventListener('change', typed);
-  }
   // бот до v327 понимает только целые дни (поле days): остальное он бы молча сделал бессрочным
-  function botVer() { var m = /^v(\d+)/.exec((S.meta && S.meta.ver) || ''); return m ? Number(m[1]) : 999; }
   function expForOld(x) {
     if (botVer() >= 327) return x;
     if (x.until || (x.seconds && x.seconds % 86400)) { toast('Такой срок заработает, когда бот обновится до v327. Пока — только целые дни.', true); return null; }
@@ -1080,7 +1224,7 @@ window.addEventListener('error', function (e) {
     $('pr-tok-c').innerHTML = PR_TOK.map(function (x) { return '<button type="button" class="chip" data-v="' + x[1] + '">' + x[0] + '</button>'; }).join('');
     $('pr-max-c').innerHTML = PR_MAX.map(function (x) { return '<button type="button" class="chip" data-v="' + x + '">' + x + '</button>'; }).join('');
     S.exp.pc = 0;
-    $('pr-exp').innerHTML = expHtml('pc', true); expHint('pc');
+    $('pr-exp').innerHTML = expHtml('pc'); expHint('pc');
   }
   function loadPromo() {
     if (!S.pr) $('pr-list').innerHTML = '<div class="empty">Загрузка…</div>';
@@ -1105,7 +1249,7 @@ window.addEventListener('error', function (e) {
       + (p.state === 'off' ? 'Включить' : 'Выключить') + '</button>'
       + '<button type="button" class="f1" data-pact="exp" data-code="' + c + '">⏱ Срок</button>'
       + '<button type="button" class="b-no f1" data-pact="delete" data-code="' + c + '">Удалить</button></div>'
-      + (S.prEdit === p.code ? '<div class="v" style="margin-top:8px"><div class="lbl">Новый срок — от текущего момента или до даты</div>' + expHtml('pe', false)
+      + (S.prEdit === p.code ? '<div class="v" style="margin-top:8px"><div class="lbl">Новый срок — от текущего момента или до даты</div>' + expHtml('pe')
           + '<div class="row"><button type="button" class="f1" data-pact="exp-cancel" data-code="' + c + '">Отмена</button>'
           + '<button type="button" class="f1" data-pact="exp-none" data-code="' + c + '">Без срока</button>'
           + '<button type="button" class="b-acc f1" data-pact="exp-save" data-code="' + c + '">Сохранить</button></div></div>' : '')
@@ -1308,6 +1452,60 @@ window.addEventListener('error', function (e) {
       this, setTr);
   });
 
+  // ── v328: экономика — только посмотреть ─────────────────────────────
+  // Большие суммы сервер присылает строкой (в JS числа больше 2^53 неточные): коротко «8,57 секстлн», точно — мелко ниже.
+  function bigS(s) { var n = Number(s || 0); return n >= 1e12 ? short(n) : digits(String(s || 0)); }
+  function bigKv(k, s, unit) {
+    return kv(k, bigS(s) + (unit || '') + (Number(s) >= 1e12 ? '<small>' + digits(String(s)) + '</small>' : ''));
+  }
+  function erow(p, right) {
+    return '<div class="it" data-uid="' + p.uid + '"><div class="av">' + avHtml(p) + '</div>'
+      + '<div class="m"><div class="nm">' + esc(p.name || 'без имени') + '</div><div class="sub">ID ' + esc(p.cid || '—') + '</div></div>'
+      + '<div class="er">' + right + '</div></div>';
+  }
+  function loadEcon() {
+    if (!S.ec) $('ec').innerHTML = '<div class="empty">Считаю…</div>';
+    return sect('/economy', {}, 'ec', 'v328').then(function (j) { if (j) { S.ec = j; renderEcon(); } })
+      .catch(function () { toast('Нет связи с сервером', true); });
+  }
+  function renderEcon() {
+    var e = S.ec, t = e.tokens || {}, d = e.duel || {}, c = e.casino || {}, x = e.slx || {}, n = e.nft || {}, h = '';
+    h += sec('💰 Токены у игроков', '<div class="grid">' + bigKv('В обороте', t.total_s, ' 💰') + kv('Игроков', fmt(t.players))
+      + bigKv('Средний баланс', t.avg_s) + bigKv('Медиана', t.median_s)
+      + kv('У топ-10', String(t.top10_pct).replace('.', ',') + '% всех') + kv('С нулём на балансе', fmt(t.zero)) + '</div>'
+      + '<div class="small">Медиана — баланс «среднего» игрока: у половины больше, у половины меньше. Средний завышают богатые.</div>');
+    h += sec('🏆 Самые богатые', (e.rich || []).map(function (p, i) {
+        return erow(extend(extend({}, p), { name: (i + 1) + '. ' + (p.name || 'без имени') }), bigS(p.balance_s) + ' 💰');
+      }).join('') || '<div class="small">Пока никого</div>');
+    var mx = Math.max.apply(null, [1].concat((d.by_stake || []).map(function (s) { return s[2]; })));
+    h += sec('⚔️ Дуэли 1vs1', '<div class="grid">' + kv('Сейчас в матче', fmt(d.now)) + kv('Ищут соперника', fmt(d.queue))
+      + kv('За сутки', fmt(d.day) + ' матч.<small>ставки: ' + bigS(d.day_volume_s) + ' 💰</small>')
+      + kv('За 7 дней', fmt(d.week) + ' матч.<small>ставки: ' + bigS(d.week_volume_s) + ' 💰</small>')
+      + kv('Сыграно всего', fmt(d.total)) + bigKv('Оборот за всё время', d.volume_s, ' 💰') + '</div>'
+      + (d.reports ? '<div class="note wn">🚩 Жалоб ждут разбора: <b>' + fmt(d.reports) + '</b> — фильтр «Жалобы» во вкладке «Игроки»</div>' : '')
+      + ((d.by_stake || []).length ? '<div class="lbl">Матчей по ставкам (за всё время)</div>' + d.by_stake.map(function (s) {
+          return '<div class="brow"><span>' + esc(s[1]) + '</span><div class="bar f1"><i style="width:' + Math.round(s[2] / mx * 100) + '%"></i></div><b>' + fmt(s[2]) + '</b></div>';
+        }).join('') : '')
+      + ((d.active || []).length ? '<div class="lbl">Больше всех играли за неделю</div>'
+          + d.active.map(function (p) { return erow(p, p.matches + ' матч.'); }).join('') : ''));
+    h += sec('🎰 Казино', '<div class="grid">' + bigKv('Выиграно всего', c.won_s, ' 💰') + '</div>'
+      + ((c.top || []).length ? '<div class="lbl">Больше всех выиграли</div>' + c.top.map(function (p) { return erow(p, bigS(p.won_s) + ' 💰'); }).join('') : ''));
+    if (x.price) {
+      var ch = Number(x.change_pct || 0);
+      h += sec('💹 Биржа SLX', '<div class="grid">' + kv('Курс', fmt(x.price) + ' 💰')
+        + kv('За сутки', '<span class="' + (ch > 0 ? 'up' : ch < 0 ? 'dn' : '') + '">' + (ch > 0 ? '+' : '') + String(ch).replace('.', ',') + '%</span>')
+        + kv('Глубина пула', short(x.liquidity) + ' 💰') + '</div>');
+    }
+    h += sec('🎴 NFT у игроков', '<div class="grid">' + kv('Всего карт', fmt(n.total)) + '</div>'
+      + ((n.by_rarity || []).length ? '<div class="chips wrap">' + n.by_rarity.map(function (r) {
+          return '<span class="chip">' + r[1] + ' ' + esc(r[0]) + ' · ' + fmt(r[2]) + '</span>'; }).join('') + '</div>' : ''));
+    h += '<div class="small" style="margin-top:8px">Посчитано в ' + hm(new Date(e.t * 1000)) + ' · ↻ вверху — пересчитать</div>';
+    $('ec').innerHTML = h;
+  }
+  $('ec').addEventListener('click', function (e) {
+    var it = e.target.closest('[data-uid]'); if (it) openPlayer(Number(it.getAttribute('data-uid')), 'econ');
+  });
+
   // ── старт ───────────────────────────────────────────────────────────
   $('ver').textContent = VER;
   renderPrForm();
@@ -1326,7 +1524,7 @@ window.addEventListener('error', function (e) {
     loadList(false, !!cached);
   }
 
-  window.ADM = { state: function () { return S; }, open: openPlayer, tab: openTab, ver: VER };
+  window.ADM = { state: function () { return S; }, open: openPlayer, tab: openTab, photo: bcSetFile, ver: VER };
 })();
 </script>
 </body>
