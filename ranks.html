@@ -7,7 +7,6 @@
 <title>Ранги 1vs1</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  @property --ang { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
   :root {
     --bg: #000;
     --border: rgba(139,92,246,.18);
@@ -128,11 +127,15 @@
   .radar svg { display: block; width: 100%; height: 100%; }
   .radar .rd { fill: none; stroke: rgba(var(--tier-rgb), .2); stroke-width: 1; transition: stroke 1s; }
   .radar .r1 { stroke: rgba(var(--tier-rgb), .32); }
-  .radar .r2 { stroke: rgba(var(--tier-rgb), .28); stroke-dasharray: 1.5 9; transform-origin: 240px 270px; animation: spin 140s linear infinite; }
+  .radar .r2 { stroke: rgba(var(--tier-rgb), .28); stroke-dasharray: 1.5 9; }
+  /* v332: вращается весь слой (центр слоя = центр колец при любой ширине экрана: slice + xMidYMid) — это делает видеокарта */
+  .radar .rot { position: absolute; left: 0; top: 0; will-change: transform; }
+  .radar .rot-r2 { animation: spin 140s linear infinite; }
+  .radar .rot-bl { animation: spin 52s linear infinite; }
   .radar .r3 { stroke: rgba(var(--tier-rgb), .14); }
   .radar .r4 { stroke: rgba(var(--tier-rgb), .07); }
   .radar .tk { stroke: rgba(var(--tier-rgb), .45); }
-  .radar .blip { fill: rgb(var(--tier-rgb)); transform-origin: 240px 270px; animation: spin 52s linear infinite; -webkit-filter: drop-shadow(0 0 4px rgba(var(--tier-rgb), .9)); filter: drop-shadow(0 0 4px rgba(var(--tier-rgb), .9)); }
+  .radar .blip { fill: rgb(var(--tier-rgb)); -webkit-filter: drop-shadow(0 0 4px rgba(var(--tier-rgb), .9)); filter: drop-shadow(0 0 4px rgba(var(--tier-rgb), .9)); }
   .stage { position: relative; width: 150px; height: 150px; margin: 0 auto 26px; perspective: 700px; }
   .emblem { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: grid; place-items: center; transform-style: preserve-3d; transition: transform .25s ease-out; }
   .emblem .halo { position: absolute; top: -30px; right: -30px; bottom: -30px; left: -30px; border-radius: 50%; opacity: .55; background: radial-gradient(circle, rgba(var(--tier-rgb), .6) 0%, transparent 66%); animation: breathe 3.6s ease-in-out infinite; }
@@ -162,7 +165,14 @@
     background: rgb(var(--tier-rgb)); box-shadow: 0 0 8px 1px rgba(var(--tier-rgb), .9);
     animation: spark var(--d) linear var(--dl) infinite;
   }
-  .tier { font-size: 32px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; min-height: 37px; text-shadow: 0 0 30px rgba(var(--tier-rgb), .6); animation: tglow 2.6s ease-in-out infinite; }
+  .tier { font-size: 32px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; min-height: 37px; }
+  /* v332: пульс свечения названия ранга. Было: анимировалась сама тень текста (text-shadow) — размытие 18–60 px
+     перерисовывалось каждый кадр. Стало: два неподвижных слоя свечения (слабое и сильное, те же значения) плавно
+     сменяют друг друга по прозрачности — это делает видеокарта. Текст слоёв — из data-t (ставит JS). */
+  .tier::before, .tier::after { content: attr(data-t); position: absolute; left: 0; right: 0; top: 0; z-index: -1; color: transparent; pointer-events: none; will-change: opacity; }
+  .tier::before { text-shadow: 0 0 var(--tg1, 18px) rgba(var(--tier-rgb), .55); animation: tgA 2.6s ease-in-out infinite; }
+  .tier::after { text-shadow: 0 0 var(--tg2, 32px) rgba(var(--tier-rgb), .95); opacity: 0; animation: tgB 2.6s ease-in-out infinite; }
+  .tier.sk::before, .tier.sk::after, .tier.muted::before, .tier.muted::after { display: none; }
   .tier.sk { height: 34px; }
   .tier.muted { font-size: 18px; color: var(--text3); text-shadow: none; animation: none; }
   .rp { margin-top: 8px; display: flex; align-items: baseline; justify-content: center; gap: 7px; }
@@ -177,13 +187,15 @@
     border: 1px solid var(--border); box-shadow: 0 20px 40px -22px rgba(0,0,0,.8);
   }
   .card::before { content: ''; position: absolute; top: 0; right: 0; bottom: auto; left: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(196,181,253,.55), transparent); }
-  .card.glow::after {
-    content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-radius: inherit; padding: 1.5px; pointer-events: none;
-    background: conic-gradient(from var(--ang), transparent 0 70%, rgba(var(--tier-rgb), .95) 86%, #fff 92%, transparent 100%);
+  /* v332: бегущая рамка. Было: угол градиента крутился через @property — рамка ПЕРЕРИСОВЫВАЛАСЬ каждый кадр (а без
+     @property её крутил JS раз в 40 мс). Стало: та же рамка-кольцо (.gl, маска), а внутри неё вращается готовый круг с тем же
+     градиентом — вращает видеокарта, перерисовки нет. Выглядит так же: лучи идут из центра карточки, 6 с на круг. */
+  .card.glow > .gl { position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-radius: inherit; padding: 1.5px; pointer-events: none; overflow: hidden;
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
-            mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-    animation: ang 6s linear infinite;
-  }
+            mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+  .card.glow > .gl > i { position: absolute; left: 50%; top: 50%; width: 160%; height: 0; padding-bottom: 160%; margin: -80% 0 0 -80%; border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0 70%, rgba(var(--tier-rgb), .95) 86%, #fff 92%, transparent 100%);
+    will-change: transform; animation: spin 6s linear infinite; }
 
   /* прогресс */
   .pg-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
@@ -198,8 +210,11 @@
   .bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: inherit; display: block;
     background: linear-gradient(90deg, var(--accent-dark), var(--accent) 55%, var(--accent-light));
     box-shadow: 0 0 16px rgba(139,92,246,.75); transition: width 1.7s cubic-bezier(.22,.9,.24,1); }
-  .bar i::before { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-radius: inherit;
-    background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.5) 50%, transparent 70%) 0 0 / 220% 100%; animation: sheen 2.4s linear infinite; }
+  /* v332: блик на полосе — готовая полоска света едет сдвигом (видеокарта), а не перерисовкой фона каждый кадр.
+     Размер и путь те же, что были у фона 220% с движением 120% → −100% (см. sheenT). */
+  .bar i .shn { position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-radius: inherit; overflow: hidden; }
+  .bar i .shn b { position: absolute; top: 0; bottom: 0; left: 0; width: 220%; display: block; will-change: transform;
+    background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.5) 50%, transparent 70%); animation: sheenT 2.4s linear infinite; }
   .bar i::after { content: ''; position: absolute; right: 0; top: 50%; width: 14px; height: 14px; border-radius: 50%; transform: translate(35%, -50%); background: #fff;
     box-shadow: 0 0 0 4px rgba(139,92,246,.3), 0 0 14px rgba(196,181,253,.9); animation: headpulse 1.8s ease-in-out infinite; }
   .pg-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 12.5px; font-weight: 700; color: var(--text2); font-variant-numeric: tabular-nums; }
@@ -422,7 +437,8 @@
   .rw .wait svg { width: 16px; height: 16px; fill: none; stroke: var(--accent-light); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .nxt { position: relative; margin-bottom: 14px; padding: 16px; border-radius: 22px; overflow: hidden;
     background: linear-gradient(135deg, rgba(var(--tier-rgb), .16), rgba(255,255,255,.02) 62%); border: 1px solid rgba(var(--tier-rgb), .45); box-shadow: 0 0 34px -14px rgba(var(--tier-rgb), .9); }
-  .nxt::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.07) 50%, transparent 70%) 0 0 / 220% 100%; animation: sheen 5.5s linear infinite; }
+  .nxt::after { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 220%; pointer-events: none; will-change: transform;
+    background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.07) 50%, transparent 70%); animation: sheenT 5.5s linear infinite; }   /* v332: сдвиг вместо перерисовки */
   .nxt-lab { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgb(var(--tier-rgb)); }
   .nxt-main { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
   .nxt-main .badge { width: 62px; height: 62px; border-radius: 18px; flex-shrink: 0; display: grid; place-items: center; background: rgba(var(--tier-rgb), .14); border: 1px solid rgba(var(--tier-rgb), .45); box-shadow: 0 0 20px -6px rgba(var(--tier-rgb), .8); }
@@ -436,7 +452,8 @@
   /* кнопка «Забрать» */
   .claim { position: relative; overflow: hidden; flex-shrink: 0; border: 0; padding: 9px 15px; border-radius: 12px; font-size: 13px; font-weight: 900; letter-spacing: .01em; color: #170b2e; cursor: pointer;
     background: linear-gradient(135deg, #a78bfa, #ead9ff); box-shadow: 0 0 20px -2px rgba(167,139,250,.8), inset 0 1px 0 rgba(255,255,255,.55); animation: claimglow 2.2s ease-in-out infinite; isolation: isolate; }
-  .claim::after { z-index: -1; content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%) 0 0 / 220% 100%; animation: sheen 3s linear infinite; }
+  .claim::after { z-index: -1; content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 220%; pointer-events: none; will-change: transform;
+    background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%); animation: sheenT 3s linear infinite; }   /* v332 */
   .claim:active { transform: scale(.94); }
   .claim.busy, .claiming .claim { opacity: .6; pointer-events: none; animation: none; }
   .claim.big { display: block; width: 100%; margin-top: 14px; padding: 14px; border-radius: 16px; font-size: 15px; }
@@ -543,12 +560,14 @@
 
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
   @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes ang { to { --ang: 360deg; } }
   @keyframes breathe { 0%,100% { opacity: .4; transform: scale(.96); } 50% { opacity: .8; transform: scale(1.07); } }
   @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
   @keyframes pop { 0% { transform: scale(.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
   @keyframes skmove { 0% { background-position: 120% 0; } 100% { background-position: -100% 0; } }
   @keyframes sheen { 0% { background-position: 120% 0; } 100% { background-position: -100% 0; } }
+  /* v332: тот же блик сдвигом. Фон 220% ширины при позиции p стоит со сдвигом −1,2·W·p: p = 120% → −1,44W, p = −100% → +1,2W.
+     Слой шириной 2,2W едет на те же расстояния: −1,44/2,2 = −65,45%, 1,2/2,2 = 54,55% своей ширины. */
+  @keyframes sheenT { 0% { transform: translateX(-65.4545%); } 100% { transform: translateX(54.5455%); } }
   @keyframes rise { to { opacity: var(--o, 1); transform: none; } }
   @keyframes pageIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   @keyframes glare { 0%,55% { transform: translateX(-130%); } 85%,100% { transform: translateX(130%); } }
@@ -571,7 +590,8 @@
   @keyframes tmTickB { 0% { transform: scale(1.14); color: #fff; } 100% { transform: none; } }
   @keyframes shock { 0% { transform: scale(.9); opacity: .75; } 100% { transform: scale(1.95); opacity: 0; } }
   @keyframes zap { 0%,86%,100% { opacity: 0; } 88% { opacity: 1; } 90% { opacity: .15; } 93% { opacity: .95; } 96% { opacity: 0; } }
-  @keyframes tglow { 0%,100% { text-shadow: 0 0 var(--tg1, 18px) rgba(var(--tier-rgb), .55); } 50% { text-shadow: 0 0 var(--tg2, 32px) rgba(var(--tier-rgb), .95); } }
+  @keyframes tgA { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+  @keyframes tgB { 0%,100% { opacity: 0; } 50% { opacity: 1; } }
   @keyframes drift1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(40px, 30px); } }
   @keyframes drift2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(70px, -50px); } }
   @keyframes drift3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-60px, 40px); } }
@@ -587,7 +607,12 @@
     background: radial-gradient(circle, rgba(var(--tier-rgb), var(--fa, .2)) 0%, rgba(var(--tier-rgb), var(--fa2, .08)) 40%, transparent 68%);
     animation: aura var(--ad, 3s) ease-in-out infinite; }
   .fl { position: absolute; left: 50%; top: 50%; transform-origin: 50% 100%; }
-  .fl .fx { position: absolute; left: 0; top: 0; right: 0; bottom: 0; transform-origin: 50% 100%; -webkit-filter: blur(var(--bl, 1.1px)); filter: blur(var(--bl, 1.1px));
+  /* v332: размытие языков — одно на группу (.fg), а не у каждого языка своё. У Грандмастера около 50 языков, и каждый
+     со своим фильтром заставлял видеокарту делать ~50 отдельных проходов размытия каждый кадр (на 120 Гц — 6000 в секунду).
+     Радиус тот же, размытие линейно — на глаз огонь такой же, а проходов два: мягкий задний слой и основной. */
+  .fg { position: absolute; left: 0; top: 0; right: 0; bottom: 0; -webkit-filter: blur(var(--bl, 1.1px)); filter: blur(var(--bl, 1.1px)); }
+  .fg.soft { -webkit-filter: blur(var(--bs, 3.4px)); filter: blur(var(--bs, 3.4px)); }
+  .fl .fx { position: absolute; left: 0; top: 0; right: 0; bottom: 0; transform-origin: 50% 100%; will-change: transform;
     animation: flick var(--d, 1.4s) ease-in-out var(--dl, 0s) infinite; }
   .fl i { position: absolute; display: block; bottom: 0;
     -webkit-clip-path: polygon(50% 0%, 58% 16%, 68% 30%, 82% 46%, 94% 64%, 92% 82%, 78% 96%, 50% 100%, 22% 96%, 8% 82%, 6% 64%, 18% 46%, 32% 30%, 42% 16%);
@@ -596,7 +621,6 @@
   .fl .fm { left: 16%; right: 16%; top: 24%; background: linear-gradient(to top, rgba(var(--core), .95) 0%, rgba(var(--core), .45) 55%, rgba(var(--core), 0) 100%); }
   .fl .fc { left: 33%; right: 33%; top: 50%; background: linear-gradient(to top, #fff 0%, rgba(255,255,255,.6) 55%, rgba(255,255,255,0) 100%); }
   .fl.soft { opacity: .5; }
-  .fl.soft .fx { -webkit-filter: blur(var(--bs, 3.4px)); filter: blur(var(--bs, 3.4px)); }
   .fx-ring2 { position: absolute; left: -13px; right: -13px; top: -13px; bottom: -13px; border-radius: 50%; border: 1.5px dashed rgba(var(--tier-rgb), .65); animation: spin 16s linear infinite reverse; }
   .fx-orbit { position: absolute; left: -22px; right: -22px; top: -22px; bottom: -22px; animation: spin var(--os, 7s) linear infinite; }
   .fx-orbit b { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
@@ -871,8 +895,9 @@
   html.calm *, html.calm *::before, html.calm *::after { animation: none !important; transition: none !important; }
   html.calm .rung, html.calm .rw, html.calm .trow, html.calm .pod, html.calm .hrow, html.calm .rv-item { opacity: var(--o, 1); transform: none; }
   html.calm .cf, html.calm .fire { display: none; }
-  /* @property (анимация угла у рамки карточки) есть не во всех движках — там угол крутит JS */
-  html.noprop .card.glow::after { animation: none; }
+  /* v332: то, что ушло за край экрана (шапка, пламя с радаром, подиум), стоит на паузе — глазу не видно, а телефон
+     не тратит на это кадры. Вернулось в экран — эффекты идут дальше с того же места. Класс ставит IntersectionObserver. */
+  .zz, .zz *, .zz *::before, .zz *::after { -webkit-animation-play-state: paused !important; animation-play-state: paused !important; }
 </style>
 </head>
 <body>
@@ -943,11 +968,12 @@
         <svg viewBox="0 0 480 540" preserveAspectRatio="xMidYMid slice" focusable="false">
           <circle class="rd r4" cx="240" cy="270" r="272"/>
           <circle class="rd r3" cx="240" cy="270" r="214"/>
-          <circle class="rd r2" cx="240" cy="270" r="164"/>
           <circle class="rd r1" cx="240" cy="270" r="118"/>
           <path class="rd tk" d="M240 152v-9M240 388v9M122 270h-9M358 270h9"/>
-          <circle class="blip" cx="454" cy="270" r="2.3"/>
         </svg>
+        <!-- v332: вращающиеся пунктирное кольцо и точка — отдельными слоями: их крутит видеокарта, а не перерисовка всего радара -->
+        <svg class="rot rot-r2" viewBox="0 0 480 540" preserveAspectRatio="xMidYMid slice" focusable="false"><circle class="rd r2" cx="240" cy="270" r="164"/></svg>
+        <svg class="rot rot-bl" viewBox="0 0 480 540" preserveAspectRatio="xMidYMid slice" focusable="false"><circle class="blip" cx="454" cy="270" r="2.3"/></svg>
       </div>
       <div class="stage" id="stage">
         <div class="fire" id="fire" aria-hidden="true"></div>
@@ -971,7 +997,7 @@
         <span class="arr" id="pg-arr">→</span>
         <span class="chip sk" id="next-chip" style="width:112px;height:34px"></span>
       </div>
-      <div class="bar loading" id="bar"><i id="bar-fill"></i></div>
+      <div class="bar loading" id="bar"><i id="bar-fill"><span class="shn"><b></b></span></i></div>
       <div class="pg-foot"><span id="pg-nums" class="sk" style="width:96px"></span><span id="pg-pct"></span></div>
       <p class="pg-note sk" id="pg-note" style="width:72%"></p>
     </section>
@@ -1433,22 +1459,26 @@ window.addEventListener('error', function (e) {
     var hk = mini ? 1.3 + 0.5 * (1 - t) : 1, wk = mini ? 1.45 : 1, R1 = 62 * k, R2 = 60 * k;   // мини: у низких рангов языки выше, иначе за аватаром их почти не видно
     var full = span >= 178;
     function ang(i, cnt) { return (full ? -180 + (360 / cnt) * (i + 0.5) : -span + (2 * span) * (i / (cnt - 1))) + rnd(-5, 5); }
+    // v332: языки — в две группы с общим размытием (.fg): мягкий задний слой и основной. Порядок слоёв тот же.
+    var gs = el('div', 'fg soft'), gm = el('div', 'fg');
     if (lvl >= 2) {                                                 // мягкий задний слой — даёт огню объём
       var n2 = Math.round(n * 0.6);
       for (var q2 = 0; q2 < n2; q2++) {
         var a2 = ang(q2, n2), up2 = Math.max(0, Math.cos(a2 * Math.PI / 180));
-        box.appendChild(flame(a2, rnd(30, 42) * ws * k * wk, rnd(50, 66) * hs * k * hk * (0.5 + 0.5 * up2), R2, dur0 * rnd(1, 1.4), -rnd(0, 1.5), true));
+        gs.appendChild(flame(a2, rnd(30, 42) * ws * k * wk, rnd(50, 66) * hs * k * hk * (0.5 + 0.5 * up2), R2, dur0 * rnd(1, 1.4), -rnd(0, 1.5), true));
       }
+      box.appendChild(gs);
     }
     for (var i = 0; i < n; i++) {
       var a = ang(i, n);
       var up = Math.max(0, Math.cos(a * Math.PI / 180));           // языки сверху выше, снизу короче — огонь тянется вверх
       var tall = Math.random() < 0.35 ? 1.25 : 1;                   // часть языков вытянута — силуэт неровный, как у настоящего пламени
-      box.appendChild(flame(a, rnd(13, 21) * ws * k * wk, rnd(42, 58) * hs * k * hk * tall * (0.5 + 0.5 * up), R1, dur0 * rnd(0.8, 1.25), -rnd(0, 1.5)));
+      gm.appendChild(flame(a, rnd(13, 21) * ws * k * wk, rnd(42, 58) * hs * k * hk * tall * (0.5 + 0.5 * up), R1, dur0 * rnd(0.8, 1.25), -rnd(0, 1.5)));
     }
     if (lvl >= 6) {                                                 // корона: высокие языки сверху
-      for (var c = 0; c < 6; c++) box.appendChild(flame(-55 + c * 22 + rnd(-4, 4), rnd(16, 24) * k * wk, rnd(100, 130) * k * hk, R2, dur0 * rnd(0.9, 1.3), -rnd(0, 1.5)));
+      for (var c = 0; c < 6; c++) gm.appendChild(flame(-55 + c * 22 + rnd(-4, 4), rnd(16, 24) * k * wk, rnd(100, 130) * k * hk, R2, dur0 * rnd(0.9, 1.3), -rnd(0, 1.5)));
     }
+    box.appendChild(gm);
   }
 
   function applyFire(idx) {
@@ -1502,28 +1532,55 @@ window.addEventListener('error', function (e) {
     return box;
   }
 
-  // если движок не знает @property, угол бегущей рамки карточки крутим руками
-  (function angFallback() {
-    if (typeof CSSPropertyRule !== 'undefined' || reduce) return;
-    document.documentElement.classList.add('noprop');
-    var a = 0;
-    setInterval(function () {
-      a = (a + 2) % 360;
-      var cs = document.querySelectorAll('.card.glow');
-      for (var i = 0; i < cs.length; i++) cs[i].style.setProperty('--ang', a + 'deg');
-    }, 40);
-  })();
+  // v332: бегущая рамка карточки — кольцо с вращающимся кругом внутри (см. .card.glow > .gl). Раньше без @property угол
+  // крутил JS: раз в 40 мс искал все карточки и менял им стиль. Теперь всё делает видеокарта, JS только кладёт кольцо.
+  function glowify(card) {
+    if (!card || card.querySelector(':scope > .gl')) return card;
+    var g = el('span', 'gl'); g.setAttribute('aria-hidden', 'true'); g.appendChild(el('i'));
+    card.appendChild(g);
+    return card;
+  }
+  glowify($('pg-card'));
+
+  // v332: что ушло за край экрана — на паузу (класс .zz). Один наблюдатель на всё.
+  var visIO = null;
+  function watchVis(node) {
+    if (!node || typeof IntersectionObserver !== 'function') return;
+    if (!visIO) visIO = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { e.target.classList.toggle('zz', !e.isIntersecting); });
+    }, { rootMargin: '60px 0px' });
+    visIO.observe(node);
+  }
+  watchVis(document.querySelector('header'));
+  watchVis(document.querySelector('.hero'));
+  Array.prototype.forEach.call(document.querySelectorAll('.page-head'), watchVis);   // заголовки вкладок со значком и бликом
+
   (function tilt() {
     if (reduce) return;
     var stage = $('stage'), em = $('emblem');
-    function move(e) {
-      var r = stage.getBoundingClientRect();
-      var x = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
-      var y = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
+    // v332: было — на КАЖДОЕ движение пальца (на 120 Гц это 120+ раз в секунду, и во время прокрутки тоже) читали
+    // положение эмблемы (пересчёт раскладки) и писали стиль. Теперь: положение запоминаем и сбрасываем при прокрутке,
+    // а поворот ставим не чаще раза за кадр и только на вкладке «Ранг».
+    var rect = null, px = 0, py = 0, raf = 0;
+    function apply() {
+      raf = 0;
+      if (curTab !== 'rank') return;
+      if (!rect) rect = stage.getBoundingClientRect();
+      var r = rect;
+      if (!r.width) return;
+      var x = (px - (r.left + r.width / 2)) / (r.width / 2);
+      var y = (py - (r.top + r.height / 2)) / (r.height / 2);
       x = Math.max(-1.4, Math.min(1.4, x)); y = Math.max(-1.4, Math.min(1.4, y));
       em.style.transform = 'rotateX(' + (-y * 14).toFixed(1) + 'deg) rotateY(' + (x * 14).toFixed(1) + 'deg)';
     }
-    function reset() { em.style.transform = ''; }
+    function move(e) {
+      if (curTab !== 'rank') return;
+      px = e.clientX; py = e.clientY;
+      if (!raf) raf = requestAnimationFrame(apply);
+    }
+    function reset() { if (raf) { cancelAnimationFrame(raf); raf = 0; } em.style.transform = ''; }
+    window.addEventListener('scroll', function () { rect = null; }, { passive: true });
+    window.addEventListener('resize', function () { rect = null; });
     document.addEventListener('pointermove', move, { passive: true });
     document.addEventListener('pointerleave', reset);
     document.addEventListener('pointerup', reset);
@@ -1685,6 +1742,7 @@ window.addEventListener('error', function (e) {
     if (cur >= 0) med.appendChild(emb(cur, 96)); else med.textContent = d.tier_emoji;
     if (!reduce) med.classList.add('pop');
     var tn = $('tier-name'); unsk(tn); tn.classList.remove('muted'); tn.textContent = d.tier_name;
+    tn.setAttribute('data-t', d.tier_name || '');                    // v332: текст слоёв свечения (.tier::before/::after)
     countRp(num(d.rp));
 
     var isMax = !d.next_tier_name;
@@ -2385,6 +2443,7 @@ window.addEventListener('error', function (e) {
       podium.appendChild(podSlot(1, top[0] || null, tiers));
       podium.appendChild(podSlot(3, top[2] || null, tiers));
       body.appendChild(podium);
+      watchVis(podium);                                              // v332: пламя подиума — на паузе, когда подиум за краем экрана
       // v330: карточка наград отсюда убрана (Кирилл: здесь — только топ-10), она живёт во вкладке «Сезон»
       for (var i = 3; i < top.length; i++) body.appendChild(playerRow(top[i], tiers, i - 3));
       // v330: в начале сезона очки есть у двух-трёх игроков, и под пьедесталом было пусто — непонятно, что это топ-10.
@@ -2418,7 +2477,7 @@ window.addEventListener('error', function (e) {
       } else if (mp) mn.textContent = 'В списке показаны только первые десять игроков — остальные видят своё место, как ты.';
       else mn.textContent = 'Сыграй матч 1vs1 и заработай первые очки — тогда ты попадёшь в рейтинг сезона.';
       card.appendChild(mn);
-      body.appendChild(card);
+      body.appendChild(glowify(card));                             // v332: бегущая рамка — последним слоем, как было у ::after
     }
   }
 
@@ -2488,7 +2547,7 @@ window.addEventListener('error', function (e) {
       TIMER = null;
       card.appendChild(el('div', 'note', 'Сезон стартует с первого сыгранного матча — после этого здесь появится обратный отсчёт.'));
     }
-    body.appendChild(card);
+    body.appendChild(glowify(card));                                // v332
     body.appendChild(prizeCard(d));                                 // v329
 
     var r = d.rules;
@@ -2894,7 +2953,26 @@ window.addEventListener('error', function (e) {
   // Один сломанный экран не должен валить остальные (и не должен выглядеть как «сервер не отвечает»)
   function safe(fn, a, b, c) { try { fn(a, b, c); } catch (e) { try { console.error(e); } catch (_) {} } }
 
+  // v332: страница сама обновляется раз в минуту и при возврате в приложение. Раньше каждый раз перестраивалось ВСЁ —
+  // подиум с пламенем, списки (строки заново «въезжали») — и на телефоне это был заметный рывок. Теперь, если с сервера
+  // пришло то же самое (кроме часов сервера и счётчика онлайна), перестраивать нечего: обновляем только часы и онлайн.
+  var RKEY = '';
+  function dataKey(d) {
+    try {
+      var c = {};
+      for (var k in d) if (Object.prototype.hasOwnProperty.call(d, k) && k !== 'server_time' && k !== 'online_count') c[k] = d[k];
+      return JSON.stringify(c);
+    } catch (e) { return ''; }
+  }
   function render(d) {
+    var key = dataKey(d);
+    if (key && key === RKEY && DATA) {
+      TIME.srv = num(d.server_time) || Date.now() / 1000; TIME.perf = performance.now();
+      DATA = d;
+      safe(renderOnline, d);
+      return;
+    }
+    RKEY = key;
     var tiers = Array.isArray(d.all_tiers) ? d.all_tiers : [];
     var cur = tierIdx(tiers, d.tier_name);
     app.style.setProperty('--tier-rgb', tierRgb(cur));
@@ -2912,7 +2990,7 @@ window.addEventListener('error', function (e) {
   }
 
   // v295: причина последнего сбоя показывается мелким шрифтом на экране ошибки — по скриншоту видно, что именно сломалось
-  var VER = 'v330', lastErr = '', failKind = '', staleKind = '';
+  var VER = 'v332', lastErr = '', failKind = '', staleKind = '';
 
   function setConn(text) { var c = $('conn'); c.textContent = text || ''; c.classList.toggle('on', !!text); }
   function showStale(kind) {
