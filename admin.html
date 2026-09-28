@@ -196,7 +196,7 @@
       <div class="chips wrap" id="pr-max-c"></div>
       <input id="pr-max" inputmode="numeric" placeholder="Число активаций">
       <div class="lbl">Срок</div>
-      <div class="chips wrap" id="pr-days"></div>
+      <div class="v" id="pr-exp"></div>
       <div class="row"><button type="button" class="b-acc f1" id="pr-go">Создать</button></div>
       <div class="small">Игрок вводит код в боте: Донат → «🎫 Промокод». Один игрок — один раз.</div>
     </div></div>
@@ -249,7 +249,7 @@ window.addEventListener('error', function (e) {
     document.getElementById('app').hidden = true;
     var f = document.getElementById('fatal'); f.hidden = false;
     document.getElementById('fatal-t').textContent = 'Ошибка на странице';
-    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v326';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v327';
   } catch (_) {}
 }, true);
 </script>
@@ -264,7 +264,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v326';
+  var VER = 'v327';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -1001,14 +1001,86 @@ window.addEventListener('error', function (e) {
 
   // ── промокоды ───────────────────────────────────────────────────────
   var PR_TOK = [['10к', 1e4], ['50к', 5e4], ['100к', 1e5], ['1м', 1e6]], PR_MAX = [1, 10, 50, 100, 1000];
-  var PR_DAYS = [[0, 'без срока'], [1, '1 дн'], [3, '3 дн'], [7, '7 дн'], [30, '30 дн']];
   var PST = { on: ['ok', 'работает'], off: ['auto', 'выключен'], expired: ['wn', 'срок вышел'], full: ['mt', 'все ввели'] };
-  S.prDays = 0;
+  // v327: срок — любой: кнопка, своё число (мин / ч / дн) или точные дата и время. Один и тот же блок — в форме нового
+  // промокода (pc) и в «⏱ Срок» у готового (pe). Действует то, что тронули последним.
+  var EXP_CH = [[3600, '1 ч'], [43200, '12 ч'], [86400, '1 дн'], [259200, '3 дн'], [604800, '7 дн'], [2592000, '30 дн']];
+  S.exp = { pc: 0 };           // выбранная кнопка срока; 0 — без срока; нет ключа — кнопка не выбрана
+  S.prEdit = '';               // у какого промокода открыта смена срока
+  function leftTxt(sec) {
+    sec = Math.max(0, sec);
+    if (sec >= 86400) { var d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600); return d + ' дн' + (h ? ' ' + h + ' ч' : ''); }
+    if (sec >= 3600) { var hh = Math.floor(sec / 3600), mm = Math.floor(sec % 3600 / 60); return hh + ' ч' + (mm ? ' ' + mm + ' мин' : ''); }
+    return Math.max(1, Math.ceil(sec / 60)) + ' мин';
+  }
+  function localDT(ts) { var d = new Date(ts * 1000); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + hm(d); }
+  function expHtml(p, withNone) {
+    var ch = (withNone ? [[0, 'без срока']] : []).concat(EXP_CH);
+    return '<div class="chips wrap" data-exp="' + p + '">' + ch.map(function (x) {
+        return '<button type="button" class="chip' + (S.exp[p] === x[0] ? ' on' : '') + '" data-es="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>'
+      + '<div class="row"><input id="' + p + '-n" inputmode="numeric" placeholder="Своё число" class="f1">'
+      + '<select id="' + p + '-u" style="width:92px"><option value="60">мин</option><option value="3600" selected>ч</option><option value="86400">дн</option></select></div>'
+      + '<div class="row"><span class="small" style="flex:0 0 auto">или до</span><input id="' + p + '-dt" type="datetime-local" class="f1"></div>'
+      + '<div class="small" id="' + p + '-hint"></div>';
+  }
+  // выбранный срок: {seconds} или {until}; null — ошибка (уже сказано); undefined — ничего не выбрано
+  function readExp(p) {
+    var dv = $(p + '-dt').value;
+    if (dv) {
+      var t = Math.round(new Date(dv).getTime() / 1000);
+      if (!(t > Date.now() / 1000 + 59)) { toast('Это время уже прошло', true); return null; }
+      return { until: t };
+    }
+    var n = parseInt($(p + '-n').value, 10);
+    if (n > 0) return { seconds: n * parseInt($(p + '-u').value, 10) };
+    if (S.exp[p] === undefined) return undefined;
+    return { seconds: S.exp[p] };
+  }
+  // подсказка под блоком: до какого времени будет действовать — видно ДО нажатия «Создать»
+  function expHint(p) {
+    var el = $(p + '-hint'); if (!el) return;
+    var dv = $(p + '-dt').value, n = parseInt($(p + '-n').value, 10), now = Date.now() / 1000, end = 0;
+    if (dv) end = new Date(dv).getTime() / 1000;
+    else if (n > 0) end = now + n * parseInt($(p + '-u').value, 10);
+    else if (S.exp[p]) end = now + S.exp[p];
+    else { el.textContent = S.exp[p] === 0 ? '♾ Без срока' : ''; return; }
+    el.textContent = end > now ? '⏱ Будет действовать до ' + dt(end) + ' (' + leftTxt(end - now) + ')' : '⚠️ Это время уже прошло';
+  }
+  function offChips(p) {
+    delete S.exp[p];
+    var cs = document.querySelectorAll('[data-exp="' + p + '"] .chip');
+    for (var i = 0; i < cs.length; i++) cs[i].classList.remove('on');
+  }
+  function expWire(box) {
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-es]'); if (!b) return;
+      var p = b.parentNode.getAttribute('data-exp');
+      S.exp[p] = Number(b.getAttribute('data-es'));
+      $(p + '-n').value = ''; $(p + '-dt').value = '';
+      var cs = b.parentNode.querySelectorAll('.chip');
+      for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('on', cs[i] === b);
+      expHint(p);
+    });
+    function typed(e) {
+      var m = (e.target.id || '').match(/^(p[ce])-(n|u|dt)$/); if (!m) return;
+      if (m[2] === 'n' && e.target.value) { $(m[1] + '-dt').value = ''; offChips(m[1]); }
+      if (m[2] === 'dt' && e.target.value) { $(m[1] + '-n').value = ''; offChips(m[1]); }
+      expHint(m[1]);
+    }
+    box.addEventListener('input', typed); box.addEventListener('change', typed);
+  }
+  // бот до v327 понимает только целые дни (поле days): остальное он бы молча сделал бессрочным
+  function botVer() { var m = /^v(\d+)/.exec((S.meta && S.meta.ver) || ''); return m ? Number(m[1]) : 999; }
+  function expForOld(x) {
+    if (botVer() >= 327) return x;
+    if (x.until || (x.seconds && x.seconds % 86400)) { toast('Такой срок заработает, когда бот обновится до v327. Пока — только целые дни.', true); return null; }
+    return { days: (x.seconds || 0) / 86400 };
+  }
   function renderPrForm() {
     $('pr-tok-c').innerHTML = PR_TOK.map(function (x) { return '<button type="button" class="chip" data-v="' + x[1] + '">' + x[0] + '</button>'; }).join('');
     $('pr-max-c').innerHTML = PR_MAX.map(function (x) { return '<button type="button" class="chip" data-v="' + x + '">' + x + '</button>'; }).join('');
-    $('pr-days').innerHTML = PR_DAYS.map(function (x) {
-      return '<button type="button" class="chip' + (S.prDays === x[0] ? ' on' : '') + '" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('');
+    S.exp.pc = 0;
+    $('pr-exp').innerHTML = expHtml('pc', true); expHint('pc');
   }
   function loadPromo() {
     if (!S.pr) $('pr-list').innerHTML = '<div class="empty">Загрузка…</div>';
@@ -1017,18 +1089,27 @@ window.addEventListener('error', function (e) {
   }
   function prHtml(p) {
     var st = PST[p.state] || ['auto', p.state], pc = p.max_uses ? Math.min(100, Math.round(p.used / p.max_uses * 100)) : 0;
-    return '<div class="sec"><div class="row"><b class="code cp" data-copy="' + esc(p.code) + '">' + esc(p.code) + '</b>'
+    var now = Date.now() / 1000, c = esc(p.code);
+    var exp = !p.expires ? ' · без срока'
+      : (p.state === 'expired' || p.expires <= now ? ' · истёк ' + dt(p.expires) : ' · до ' + dt(p.expires) + ' (ещё ' + leftTxt(p.expires - now) + ')');
+    return '<div class="sec"><div class="row"><b class="code cp" data-copy="' + c + '">' + c + '</b>'
       + '<span class="f1"></span><span class="bd ' + st[0] + '">' + st[1] + '</span></div>'
       + '<div class="sub wrapt" style="margin-top:4px">' + fmt(p.tokens) + ' 💰 за ввод' + (p.item ? ' + предмет' : '')
-      + ' · создан ' + esc(p.created || '—') + (p.expires ? ' · ' + (p.state === 'expired' ? 'истёк ' : 'до ') + dt(p.expires) : ' · без срока') + '</div>'
+      + ' · создан ' + esc(p.created || '—') + exp + '</div>'
       + '<div class="bar" style="margin-top:8px"><i style="width:' + pc + '%"></i></div>'
       + '<div class="small" style="margin-top:4px">Ввели ' + fmt(p.used) + ' из ' + fmt(p.max_uses) + '</div>'
       + (p.users && p.users.length ? '<details data-k="pu-' + esc(p.code) + '"><summary>Кто ввёл (' + p.used + ')</summary><div class="hist">'
           + p.users.map(function (u) { return '<div class="lk" data-uid="' + u.uid + '">' + esc(u.name || 'без имени') + ' <span class="small">ID ' + esc(u.cid || '—') + '</span></div>'; }).join('')
           + '</div></details>' : '')
-      + '<div class="row" style="margin-top:8px"><button type="button" class="f1" data-pact="toggle" data-code="' + esc(p.code) + '">'
+      + '<div class="row" style="margin-top:8px"><button type="button" class="f1" data-pact="toggle" data-code="' + c + '">'
       + (p.state === 'off' ? 'Включить' : 'Выключить') + '</button>'
-      + '<button type="button" class="b-no f1" data-pact="delete" data-code="' + esc(p.code) + '">Удалить</button></div></div>';
+      + '<button type="button" class="f1" data-pact="exp" data-code="' + c + '">⏱ Срок</button>'
+      + '<button type="button" class="b-no f1" data-pact="delete" data-code="' + c + '">Удалить</button></div>'
+      + (S.prEdit === p.code ? '<div class="v" style="margin-top:8px"><div class="lbl">Новый срок — от текущего момента или до даты</div>' + expHtml('pe', false)
+          + '<div class="row"><button type="button" class="f1" data-pact="exp-cancel" data-code="' + c + '">Отмена</button>'
+          + '<button type="button" class="f1" data-pact="exp-none" data-code="' + c + '">Без срока</button>'
+          + '<button type="button" class="b-acc f1" data-pact="exp-save" data-code="' + c + '">Сохранить</button></div></div>' : '')
+      + '</div>';
   }
   function renderPromo() {
     var it = S.pr.items || [], open = {};
@@ -1038,6 +1119,12 @@ window.addEventListener('error', function (e) {
     $('pr-list').innerHTML = it.length ? it.map(prHtml).join('') : '<div class="empty">Промокодов пока нет — создай первый выше.</div>';
     var ds2 = $('pr-list').querySelectorAll('details[data-k]');
     for (var k = 0; k < ds2.length; k++) if (open[ds2[k].getAttribute('data-k')]) ds2[k].open = true;
+    // открыта смена срока: в поле даты — нынешний срок, «Сохранить» без правок его и оставит
+    if (S.prEdit && $('pe-dt')) {
+      var cur = it.filter(function (x) { return x.code === S.prEdit; })[0];
+      if (cur && cur.expires && cur.expires > Date.now() / 1000 + 60) $('pe-dt').value = localDT(cur.expires);
+      expHint('pe');
+    }
   }
   function chipPick(box, input) {
     $(box).addEventListener('click', function (e) {
@@ -1045,17 +1132,19 @@ window.addEventListener('error', function (e) {
     });
   }
   chipPick('pr-tok-c', 'pr-tok'); chipPick('pr-max-c', 'pr-max');
-  $('pr-days').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-v]'); if (!b) return;
-    S.prDays = Number(b.getAttribute('data-v')); renderPrForm();
-  });
+  expWire($('pr-exp')); expWire($('pr-list'));
   $('pr-go').addEventListener('click', function () {
     var tok = parseAmount($('pr-tok').value), mx = parseAmount($('pr-max').value);
     if (!(tok > 0)) { toast('Впиши, сколько токенов даёт промокод', true); return; }
     if (!(mx > 0)) { toast('Впиши, сколько игроков могут его ввести', true); return; }
-    doSect('/promo', { op: 'create', code: $('pr-code').value.trim(), tokens: tok, max_uses: mx, days: S.prDays }, null, this, function (j) {
+    var x = readExp('pc');
+    if (x === null) return;
+    if (x === undefined) { toast('Выбери срок или «без срока»', true); return; }
+    x = expForOld(x); if (!x) return;
+    doSect('/promo', extend({ op: 'create', code: $('pr-code').value.trim(), tokens: tok, max_uses: mx }, x), null, this, function (j) {
       S.pr = j; renderPromo();
       $('pr-code').value = ''; $('pr-tok').value = ''; $('pr-max').value = '';
+      renderPrForm();
       toast('Создан ' + j.created + ' — нажми на код, чтобы скопировать');
     });
   });
@@ -1066,6 +1155,21 @@ window.addEventListener('error', function (e) {
     if (u) { openPlayer(Number(u.getAttribute('data-uid')), 'promo'); return; }
     var b = e.target.closest('[data-pact]'); if (!b) return;
     var code = b.getAttribute('data-code'), a = b.getAttribute('data-pact');
+    if (a === 'exp' || a === 'exp-cancel') {
+      S.prEdit = a === 'exp' && S.prEdit !== code ? code : ''; delete S.exp.pe; renderPromo(); return;
+    }
+    if (a === 'exp-none' || a === 'exp-save') {
+      if (botVer() < 327) { toast('Смена срока заработает, когда бот обновится до v327', true); return; }
+      var body = { op: 'expire', code: code, seconds: 0 };
+      if (a === 'exp-save') {
+        var x = readExp('pe');
+        if (x === null) return;
+        if (x === undefined) { toast('Выбери новый срок', true); return; }
+        body = extend({ op: 'expire', code: code }, x);
+      }
+      doSect('/promo', body, null, b, function (j) { S.prEdit = ''; S.pr = j; renderPromo(); });
+      return;
+    }
     doSect('/promo', { op: a, code: code }, a === 'delete' ? 'Удалить промокод ' + code + '? Ввести его больше будет нельзя.' : null, b,
       function (j) { S.pr = j; renderPromo(); });
   });
