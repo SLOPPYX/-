@@ -104,6 +104,25 @@
                border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .upd { color: var(--acc); }
+  /* v326: вкладки — все пять видны сразу и на узком экране (раньше «Журнал» был отдельной кнопкой сверху) */
+  .tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; margin-top: 10px; padding: 4px;
+          background: var(--card); border-radius: 14px; }
+  .tabs button { position: relative; background: transparent; border-radius: 10px; padding: 6px 2px 5px; font-size: 11px;
+                 line-height: 1.15; color: var(--tx2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tabs .ic { display: block; font-size: 17px; line-height: 1.25; }
+  .tabs button.on { background: var(--acc); color: #fff; font-weight: 600; }
+  .tdot { position: absolute; top: 4px; right: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+  .bar { height: 6px; border-radius: 3px; background: var(--card2); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--acc); border-radius: 3px; transition: width .4s; }
+  .code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 16px; letter-spacing: .03em; }
+  .ck { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--tx2); cursor: pointer; }
+  .ck input { width: 18px; height: 18px; flex: 0 0 18px; padding: 0; accent-color: var(--acc); }
+  .xs { flex: 0 0 auto; padding: 6px 10px; font-size: 12px; }
+  .lbl { font-size: 12px; color: var(--tx3); margin-bottom: -3px; }
+  .bd.ok { background: rgba(34,197,94,.18); color: #86efac; }
+  .lk { cursor: pointer; }
+  .lg.gen { cursor: default; }
+  .wrapt { white-space: normal; }
 </style>
 </head>
 <body>
@@ -112,11 +131,15 @@
 <main id="app">
   <div class="top">
     <h1>Админка<span class="ver" id="ver"></span></h1>
-    <div class="row">
-      <button id="journal" type="button" title="Журнал действий">📜 Журнал</button>
-      <button id="reload" type="button" title="Обновить">↻</button>
-    </div>
+    <button id="reload" type="button" title="Обновить">↻</button>
   </div>
+  <nav class="tabs" id="tabs">
+    <button type="button" data-tab="list" class="on"><span class="ic">👥</span>Игроки</button>
+    <button type="button" data-tab="bc"><span class="ic">📢</span>Рассылка<span class="tdot" id="bc-dot" hidden></span></button>
+    <button type="button" data-tab="promo"><span class="ic">🎫</span>Промо</button>
+    <button type="button" data-tab="tour"><span class="ic">🏆</span>Турнир</button>
+    <button type="button" data-tab="log" id="journal"><span class="ic">📜</span>Журнал</button>
+  </nav>
 
   <section id="v-list">
     <div class="stats" id="stats"></div>
@@ -142,10 +165,75 @@
   </section>
 
   <section id="v-log" hidden>
-    <button class="back" type="button">← К списку</button>
     <h2>Журнал действий</h2>
-    <div class="small">Что делал администратор и что бот сделал сам. Нажми на запись — откроется игрок.</div>
+    <div class="small">Что делал администратор и что бот сделал сам. Нажми на запись об игроке — откроется его карточка.</div>
     <div id="log"></div>
+  </section>
+
+  <!-- v326: рассылка всем игрокам -->
+  <section id="v-bc" hidden>
+    <div id="bc-job"></div>
+    <div class="sec"><h3>Новая рассылка</h3><div class="v">
+      <textarea id="bc-text" maxlength="4000" placeholder="Текст — придёт каждому в бот с заголовком «📢 Сообщение от администратора»"></textarea>
+      <div class="small" id="bc-len">0 / 4000</div>
+      <div class="lbl">Кому</div>
+      <div class="chips wrap" id="bc-aud"></div>
+      <div class="small" id="bc-skip"></div>
+      <div class="row"><button type="button" class="f1" id="bc-test">Себе — проверить</button>
+        <button type="button" class="b-acc f1" id="bc-go">Отправить</button></div>
+    </div></div>
+    <div class="sec" id="bc-hist-box" hidden><h3>Прошлые рассылки</h3><div class="hist" id="bc-hist"></div></div>
+  </section>
+
+  <!-- v326: промокоды -->
+  <section id="v-promo" hidden>
+    <div class="sec"><h3>Новый промокод</h3><div class="v">
+      <input id="pr-code" maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Код (пусто — придумаю сам)">
+      <div class="lbl">Сколько токенов даёт</div>
+      <div class="chips wrap" id="pr-tok-c"></div>
+      <input id="pr-tok" inputmode="numeric" placeholder="Сумма (можно 250к, 1м)">
+      <div class="lbl">Сколько игроков могут ввести</div>
+      <div class="chips wrap" id="pr-max-c"></div>
+      <input id="pr-max" inputmode="numeric" placeholder="Число активаций">
+      <div class="lbl">Срок</div>
+      <div class="chips wrap" id="pr-days"></div>
+      <div class="row"><button type="button" class="b-acc f1" id="pr-go">Создать</button></div>
+      <div class="small">Игрок вводит код в боте: Донат → «🎫 Промокод». Один игрок — один раз.</div>
+    </div></div>
+    <div class="small" id="pr-cnt" style="margin-top:10px"></div>
+    <div id="pr-list"></div>
+  </section>
+
+  <!-- v326: турнир (в боте он один — как и раньше) -->
+  <section id="v-tour" hidden>
+    <div id="tr-card"></div>
+    <div id="tr-ops" hidden>
+      <div class="sec"><h3>Написать участникам</h3><div class="v">
+        <textarea id="tr-msg" maxlength="2000" placeholder="Например: старт через 10 минут, заходите в игру"></textarea>
+        <div class="row"><button type="button" class="b-acc f1" id="tr-send">Отправить участникам</button></div>
+      </div></div>
+      <div class="sec"><h3>Завершить турнир</h3><div class="v">
+        <select id="tr-win"></select>
+        <div class="row"><button type="button" class="b-ok f1" id="tr-finish">🏁 Завершить</button></div>
+        <div class="small">Приз уходит победителю сразу. Участникам придёт, кто победил; в «Турнирах» у каждого запишется результат.</div>
+      </div></div>
+      <div class="sec danger"><h3>Удалить турнир</h3><div class="v">
+        <label class="ck" id="tr-refund-l"><input type="checkbox" id="tr-refund" checked><span id="tr-refund-t">Вернуть взносы</span></label>
+        <div class="row"><button type="button" class="b-no f1" id="tr-del">Удалить</button></div>
+      </div></div>
+    </div>
+    <div class="sec" id="tr-form" hidden><h3 id="tr-form-t">Новый турнир</h3><div class="v">
+      <input id="tr-name" maxlength="60" placeholder="Название, например FF Cup">
+      <div class="row"><input id="tr-date" class="f1" maxlength="20" placeholder="Дата: 25.10"><input id="tr-time" class="f1" maxlength="20" placeholder="Время: 20:00"></div>
+      <input id="tr-prize" inputmode="numeric" placeholder="Приз победителю (можно 500к, 1м)">
+      <div class="row"><input id="tr-fee" class="f1" inputmode="numeric" placeholder="Взнос (0 — бесплатно)">
+        <input id="tr-max" class="f1" inputmode="numeric" placeholder="Мест (0 — без лимита)"></div>
+      <div class="small" id="tr-fee-n" hidden>Взнос не меняется: участники уже заплатили.</div>
+      <textarea id="tr-desc" maxlength="300" placeholder="Описание (необязательно)"></textarea>
+      <label class="ck" id="tr-ann-l"><input type="checkbox" id="tr-ann" checked><span>Объявить всем игрокам — с кнопкой «✅ Участвовать»</span></label>
+      <div class="row"><button type="button" class="f1" id="tr-cancel" hidden>Отмена</button>
+        <button type="button" class="b-acc f1" id="tr-save">Создать турнир</button></div>
+    </div></div>
   </section>
 </main>
 
@@ -161,7 +249,7 @@ window.addEventListener('error', function (e) {
     document.getElementById('app').hidden = true;
     var f = document.getElementById('fatal'); f.hidden = false;
     document.getElementById('fatal-t').textContent = 'Ошибка на странице';
-    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v325';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v326';
   } catch (_) {}
 }, true);
 </script>
@@ -176,7 +264,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v325';
+  var VER = 'v326';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -314,7 +402,7 @@ window.addEventListener('error', function (e) {
       }, function (e) { clearTimeout(timer); throw e; });
   }
   function denied(res) {
-    if (res.status === 403) { fatal('Нет доступа', 'Открой /admin в боте и нажми «🗂 Игроки — мини-апп» заново.'); return true; }
+    if (res.status === 403) { fatal('Нет доступа', 'Открой /admin в боте и нажми «🗂 Админка — мини-апп» заново.'); return true; }
     if (res.status === 404 && !res.j) { fatal('Бот ещё не обновлён', 'Эта страница работает с ботом v324 и новее. Обнови бота на сервере.'); return true; }
     return false;
   }
@@ -332,18 +420,41 @@ window.addEventListener('error', function (e) {
   }
 
   // ── переходы между экранами ─────────────────────────────────────────
+  // v326: вкладки Игроки / Рассылка / Промо / Турнир / Журнал; карточка игрока открывается поверх любой из них
+  var VIEWS = ['list', 'pl', 'log', 'bc', 'promo', 'tour'];
   function show(view) {
     S.view = view;
-    $('v-list').hidden = view !== 'list'; $('v-pl').hidden = view !== 'pl'; $('v-log').hidden = view !== 'log';
+    for (var i = 0; i < VIEWS.length; i++) $('v-' + VIEWS[i]).hidden = VIEWS[i] !== view;
+    $('tabs').hidden = view === 'pl';
+    var tb = $('tabs').querySelectorAll('[data-tab]');
+    for (var j = 0; j < tb.length; j++) tb[j].classList.toggle('on', tb[j].getAttribute('data-tab') === view);
     try { if (tg && tg.BackButton) { if (view === 'list') tg.BackButton.hide(); else tg.BackButton.show(); } } catch (e) {}
+  }
+  function loadView(v) {
+    if (v === 'log') return loadLog();
+    if (v === 'bc') return loadBc();
+    if (v === 'promo') return loadPromo();
+    if (v === 'tour') return loadTour();
+  }
+  function toList() {
+    window.scrollTo(0, S.listY || 0);                // v325: возвращаемся туда же, где были в списке
+    if (S.dirty) { S.dirty = false; renderList(); loadMeta(); loadList(false, true); }
   }
   function goBack() {
     var to = S.view === 'pl' ? (S.from || 'list') : 'list';
     show(to);
-    if (to === 'log') { loadLog(); return; }
-    window.scrollTo(0, S.listY || 0);                // v325: возвращаемся туда же, где были в списке
-    if (S.dirty) { S.dirty = false; renderList(); loadMeta(); loadList(false, true); }
+    if (to === 'list') toList(); else loadView(to);
   }
+  function openTab(v) {
+    if (v === S.view) return;
+    if (S.view === 'list') S.listY = window.scrollY;
+    show(v);
+    if (v === 'list') { toList(); return; }
+    window.scrollTo(0, 0); loadView(v);
+  }
+  $('tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-tab]'); if (b) openTab(b.getAttribute('data-tab'));
+  });
   var backs = document.querySelectorAll('.back');
   for (var bi = 0; bi < backs.length; bi++) backs[bi].addEventListener('click', goBack);
 
@@ -360,6 +471,8 @@ window.addEventListener('error', function (e) {
       if (denied(res)) return false;
       if (!res.j || !res.j.ok) { toast('Не удалось загрузить данные: ' + ((res.j && res.j.message) || res.status), true); return false; }
       S.meta = res.j; renderStats(); cacheSave();
+      // v326: рассылка уже идёт (например, запущена командой /broadcast) — точка на вкладке и слежение за ходом
+      if (res.j.bcast && res.j.bcast.state === 'running' && !bcT) loadBc(true);
       return true;
     });
   }
@@ -433,18 +546,15 @@ window.addEventListener('error', function (e) {
   });
   $('reload').addEventListener('click', function () {
     if (S.view === 'pl' && S.cur) { openPlayer(S.cur.uid, S.from, true); return; }
-    if (S.view === 'log') { loadLog(); return; }
+    if (S.view !== 'list') { loadView(S.view); return; }
     loadMeta(); loadList(false);
-  });
-  $('journal').addEventListener('click', function () {
-    if (S.view === 'list') S.listY = window.scrollY;
-    show('log'); window.scrollTo(0, 0); loadLog();
   });
 
   // ── журнал ──────────────────────────────────────────────────────────
+  // v326: записи без игрока (рассылка, промокод, турнир) — u = 0: без имени и не нажимаются
   function logHtml(e, withName) {
-    return '<div class="lg" data-uid="' + e.u + '"><div class="lt">' + dt(e.t)
-      + (withName ? ' · <b>' + esc(e.name || 'без имени') + '</b> (ID ' + esc(e.cid || '—') + ')' : '')
+    return '<div class="lg' + (e.u ? '" data-uid="' + e.u : ' gen') + '"><div class="lt">' + dt(e.t)
+      + (withName && e.u ? ' · <b>' + esc(e.name || 'без имени') + '</b> (ID ' + esc(e.cid || '—') + ')' : '')
       + (e.w === 'auto' ? ' <span class="bd auto">бот сам</span>' : '') + '</div>' + esc(e.m) + '</div>';
   }
   function loadLog() {
@@ -753,11 +863,353 @@ window.addEventListener('error', function (e) {
     }
   });
 
+  // ══ v326: рассылка, промокоды, турнир ══════════════════════════════
+  // Сервер на любое действие присылает раздел целиком — страница просто перерисовывает его.
+  // Поля ввода в разметке постоянные: перерисовка не стирает то, что уже вписано.
+  function plural(n, one, many) { return (n % 10 === 1 && n % 100 !== 11) ? one : many; }
+  function cut(s, n) { s = String(s || ''); return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+  function durTxt(sec) {
+    if (sec < 60) return Math.max(1, Math.round(sec)) + ' с';
+    if (sec < 3600) return Math.round(sec / 60) + ' мин';
+    return Math.floor(sec / 3600) + ' ч ' + Math.round(sec % 3600 / 60) + ' мин';
+  }
+  function oldBot(box) { $(box).innerHTML = '<div class="empty">Этот раздел заработает, когда бот на сервере обновится до v326.</div>'; }
+  // загрузка раздела; null — показывать нечего (нет доступа или старый бот)
+  function sect(path, body, box) {
+    return api(path, body).then(function (res) {
+      if (res.status === 404 && !res.j) { oldBot(box); return null; }
+      if (denied(res)) return null;
+      var j = res.j || {};
+      if (!j.ok) { toast(j.message || ('Ошибка ' + res.status), true); return null; }
+      return j;
+    });
+  }
+  // действие в разделе: подтверждение → крутится нажатая кнопка → ответ → onOk(раздел целиком)
+  function doSect(path, body, confirmText, btn, onOk) {
+    var go = confirmText ? ask(confirmText) : Promise.resolve(true);
+    return go.then(function (yes) {
+      if (!yes) return;
+      var sc = btn ? btn.closest('section') : null;
+      if (btn) btn.classList.add('ld');
+      if (sc) sc.classList.add('lock');
+      function done() { if (btn) btn.classList.remove('ld'); if (sc) sc.classList.remove('lock'); }
+      return api(path, body).then(function (res) {
+        done();
+        if (res.status === 404 && !res.j) { toast('Сначала обнови бота на сервере до v326', true); return; }
+        if (denied(res)) return;
+        var j = res.j || {};
+        if (!j.ok) { toast(j.message || ('Ошибка ' + res.status), true); haptic('error'); return; }
+        toast(j.msg || 'Готово'); haptic('success');
+        onOk(j);
+      }).catch(function () { done(); toast('Нет связи с сервером', true); });
+    });
+  }
+
+  // ── рассылка ────────────────────────────────────────────────────────
+  var AUD = [['all', 'Всем'], ['week', 'За 7 дней'], ['day', 'За сутки']];
+  var AUDN = { all: 'всем', week: 'заходившим за 7 дней', day: 'заходившим за сутки' };
+  var bcT = 0, DK = 'adm_bc_draft';
+  S.bcAud = 'all';
+  function loadBc(silent) {
+    clearTimeout(bcT); bcT = 0;
+    if (!S.bc && !silent) $('bc-job').innerHTML = '<div class="empty">Загрузка…</div>';
+    return sect('/broadcast', { op: 'status' }, 'bc-job').then(function (j) { if (j) setBc(j); })
+      .catch(function () { if (!silent) toast('Нет связи с сервером', true); bcSchedule(); });
+  }
+  function bcRunning() { return !!(S.bc && S.bc.job && S.bc.job.state === 'running'); }
+  function setBc(j) {
+    var was = bcRunning();
+    S.bc = j; renderBc();
+    if (was && !bcRunning() && j.job) {
+      toast((j.job.state === 'cancelled' ? 'Остановлена' : 'Готово') + ': доставлено ' + fmt(j.job.sent) + ' из ' + fmt(j.job.total));
+      haptic('success');
+    }
+    bcSchedule();
+  }
+  // пока идёт рассылка — спрашиваем, как дела: на вкладке часто, на других — изредка (ради точки и итога)
+  function bcSchedule() {
+    clearTimeout(bcT); bcT = 0;
+    $('bc-dot').hidden = !bcRunning();
+    if (bcRunning()) bcT = setTimeout(function () { loadBc(true); }, S.view === 'bc' ? 1500 : 5000);
+  }
+  function renderBc() {
+    var j = S.bc, jb = j.job, run = bcRunning(), h = '';
+    if (run) {
+      var pc = jb.total ? Math.round(jb.done / jb.total * 100) : 0;
+      var el = Date.now() / 1000 - jb.started, left = jb.done ? el / jb.done * (jb.total - jb.done) : 0;
+      h = '<div class="sec"><h3>' + (jb.kind === 'tournament' ? 'Идёт объявление турнира' : 'Идёт рассылка') + '</h3><div class="v">'
+        + '<div class="bar"><i style="width:' + pc + '%"></i></div>'
+        + '<div>Отправлено <b>' + fmt(jb.done) + '</b> из ' + fmt(jb.total) + ' · ' + pc + '%'
+        + (left >= 5 ? ' · осталось ~' + durTxt(left) : '') + '</div>'
+        + '<div class="small">Дошло ' + fmt(jb.sent) + (jb.failed ? ' · не дошло ' + fmt(jb.failed) : '')
+        + (jb.skipped ? ' · пропущено ' + fmt(jb.skipped) : '') + '</div>'
+        + '<div class="small wrapt">«' + esc(cut(jb.text, 140)) + '»</div>'
+        + '<div class="row"><button type="button" class="b-no f1" id="bc-stop"' + (jb.stopping ? ' disabled>Останавливаю…' : '>⏹ Остановить')
+        + '</button></div></div></div>';
+    }
+    $('bc-job').innerHTML = h;
+    $('bc-aud').innerHTML = AUD.map(function (a) {
+      var n = j.aud && j.aud[a[0]] ? j.aud[a[0]].n : 0;
+      return '<button type="button" class="chip' + (S.bcAud === a[0] ? ' on' : '') + '" data-aud="' + a[0] + '">' + a[1] + ' · ' + fmt(n) + '</button>';
+    }).join('');
+    var cur = (j.aud && j.aud[S.bcAud]) || { n: 0, skip: 0 };
+    $('bc-skip').textContent = cur.skip ? 'Не получат ' + fmt(cur.skip) + ': забаненные и те, кто выключил «Новости» в уведомлениях бота.' : '';
+    $('bc-go').textContent = run ? 'Дождись конца текущей' : 'Отправить ' + fmt(cur.n) + ' ' + plural(cur.n, 'игроку', 'игрокам');
+    $('bc-go').disabled = run || !cur.n;
+    var hs = j.history || [];
+    $('bc-hist-box').hidden = !hs.length;
+    $('bc-hist').innerHTML = hs.map(function (x) {
+      return '<div><b>' + dt(x.t) + '</b> · ' + esc(AUDN[x.aud] || x.aud) + (x.kind === 'tournament' ? ' · 🏆 объявление турнира' : '')
+        + (x.state === 'cancelled' ? ' <span class="bd wn">остановлена</span>' : '')
+        + '<br>✓ дошло ' + fmt(x.sent) + ' из ' + fmt(x.total) + (x.failed ? ' · ✗ ' + fmt(x.failed) : '')
+        + (x.skipped ? ' · пропущено ' + fmt(x.skipped) : '')
+        + '<br><span class="small">«' + esc(cut(x.text, 100)) + '»</span></div>';
+    }).join('');
+  }
+  function bcLen() { $('bc-len').textContent = $('bc-text').value.length + ' / 4000'; }
+  function bcText() {
+    var t = $('bc-text').value.trim();
+    if (!t) { toast('Впиши текст рассылки', true); return ''; }
+    return t;
+  }
+  // черновик — только в этом телефоне: закрыл приложение случайно — текст на месте
+  try { $('bc-text').value = localStorage.getItem(DK) || ''; } catch (e) {}
+  bcLen();
+  $('bc-text').addEventListener('input', function () { bcLen(); try { localStorage.setItem(DK, this.value); } catch (e) {} });
+  $('bc-aud').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-aud]'); if (!b || !S.bc) return;
+    S.bcAud = b.getAttribute('data-aud'); renderBc();
+  });
+  $('bc-test').addEventListener('click', function () {
+    var t = bcText(); if (!t) return;
+    doSect('/broadcast', { op: 'test', text: t }, null, this, setBc);
+  });
+  $('bc-go').addEventListener('click', function () {
+    var t = bcText(); if (!t || !S.bc) return;
+    var n = ((S.bc.aud || {})[S.bcAud] || {}).n || 0;
+    doSect('/broadcast', { op: 'start', text: t, aud: S.bcAud },
+      'Отправить сообщение ' + fmt(n) + ' ' + plural(n, 'игроку', 'игрокам') + ' (' + AUDN[S.bcAud] + ')?\nУже отправленное вернуть нельзя — сначала можно проверить на себе.',
+      this, function (j) {
+        $('bc-text').value = ''; bcLen(); try { localStorage.removeItem(DK); } catch (e) {}
+        setBc(j);
+      });
+  });
+  $('bc-job').addEventListener('click', function (e) {
+    var b = e.target.closest('#bc-stop'); if (!b || b.disabled) return;
+    doSect('/broadcast', { op: 'cancel' }, 'Остановить рассылку? Кому уже ушло — у того останется.', b, setBc);
+  });
+
+  // ── промокоды ───────────────────────────────────────────────────────
+  var PR_TOK = [['10к', 1e4], ['50к', 5e4], ['100к', 1e5], ['1м', 1e6]], PR_MAX = [1, 10, 50, 100, 1000];
+  var PR_DAYS = [[0, 'без срока'], [1, '1 дн'], [3, '3 дн'], [7, '7 дн'], [30, '30 дн']];
+  var PST = { on: ['ok', 'работает'], off: ['auto', 'выключен'], expired: ['wn', 'срок вышел'], full: ['mt', 'все ввели'] };
+  S.prDays = 0;
+  function renderPrForm() {
+    $('pr-tok-c').innerHTML = PR_TOK.map(function (x) { return '<button type="button" class="chip" data-v="' + x[1] + '">' + x[0] + '</button>'; }).join('');
+    $('pr-max-c').innerHTML = PR_MAX.map(function (x) { return '<button type="button" class="chip" data-v="' + x + '">' + x + '</button>'; }).join('');
+    $('pr-days').innerHTML = PR_DAYS.map(function (x) {
+      return '<button type="button" class="chip' + (S.prDays === x[0] ? ' on' : '') + '" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('');
+  }
+  function loadPromo() {
+    if (!S.pr) $('pr-list').innerHTML = '<div class="empty">Загрузка…</div>';
+    return sect('/promo', { op: 'list' }, 'pr-list').then(function (j) { if (j) { S.pr = j; renderPromo(); } })
+      .catch(function () { toast('Нет связи с сервером', true); });
+  }
+  function prHtml(p) {
+    var st = PST[p.state] || ['auto', p.state], pc = p.max_uses ? Math.min(100, Math.round(p.used / p.max_uses * 100)) : 0;
+    return '<div class="sec"><div class="row"><b class="code cp" data-copy="' + esc(p.code) + '">' + esc(p.code) + '</b>'
+      + '<span class="f1"></span><span class="bd ' + st[0] + '">' + st[1] + '</span></div>'
+      + '<div class="sub wrapt" style="margin-top:4px">' + fmt(p.tokens) + ' 💰 за ввод' + (p.item ? ' + предмет' : '')
+      + ' · создан ' + esc(p.created || '—') + (p.expires ? ' · ' + (p.state === 'expired' ? 'истёк ' : 'до ') + dt(p.expires) : ' · без срока') + '</div>'
+      + '<div class="bar" style="margin-top:8px"><i style="width:' + pc + '%"></i></div>'
+      + '<div class="small" style="margin-top:4px">Ввели ' + fmt(p.used) + ' из ' + fmt(p.max_uses) + '</div>'
+      + (p.users && p.users.length ? '<details data-k="pu-' + esc(p.code) + '"><summary>Кто ввёл (' + p.used + ')</summary><div class="hist">'
+          + p.users.map(function (u) { return '<div class="lk" data-uid="' + u.uid + '">' + esc(u.name || 'без имени') + ' <span class="small">ID ' + esc(u.cid || '—') + '</span></div>'; }).join('')
+          + '</div></details>' : '')
+      + '<div class="row" style="margin-top:8px"><button type="button" class="f1" data-pact="toggle" data-code="' + esc(p.code) + '">'
+      + (p.state === 'off' ? 'Включить' : 'Выключить') + '</button>'
+      + '<button type="button" class="b-no f1" data-pact="delete" data-code="' + esc(p.code) + '">Удалить</button></div></div>';
+  }
+  function renderPromo() {
+    var it = S.pr.items || [], open = {};
+    var ds = $('pr-list').querySelectorAll('details[data-k]');
+    for (var i = 0; i < ds.length; i++) if (ds[i].open) open[ds[i].getAttribute('data-k')] = 1;
+    $('pr-cnt').textContent = it.length ? 'Промокодов: ' + it.length + ' · работают: ' + it.filter(function (x) { return x.state === 'on'; }).length : '';
+    $('pr-list').innerHTML = it.length ? it.map(prHtml).join('') : '<div class="empty">Промокодов пока нет — создай первый выше.</div>';
+    var ds2 = $('pr-list').querySelectorAll('details[data-k]');
+    for (var k = 0; k < ds2.length; k++) if (open[ds2[k].getAttribute('data-k')]) ds2[k].open = true;
+  }
+  function chipPick(box, input) {
+    $(box).addEventListener('click', function (e) {
+      var b = e.target.closest('[data-v]'); if (b) $(input).value = fmt(b.getAttribute('data-v'));
+    });
+  }
+  chipPick('pr-tok-c', 'pr-tok'); chipPick('pr-max-c', 'pr-max');
+  $('pr-days').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-v]'); if (!b) return;
+    S.prDays = Number(b.getAttribute('data-v')); renderPrForm();
+  });
+  $('pr-go').addEventListener('click', function () {
+    var tok = parseAmount($('pr-tok').value), mx = parseAmount($('pr-max').value);
+    if (!(tok > 0)) { toast('Впиши, сколько токенов даёт промокод', true); return; }
+    if (!(mx > 0)) { toast('Впиши, сколько игроков могут его ввести', true); return; }
+    doSect('/promo', { op: 'create', code: $('pr-code').value.trim(), tokens: tok, max_uses: mx, days: S.prDays }, null, this, function (j) {
+      S.pr = j; renderPromo();
+      $('pr-code').value = ''; $('pr-tok').value = ''; $('pr-max').value = '';
+      toast('Создан ' + j.created + ' — нажми на код, чтобы скопировать');
+    });
+  });
+  $('pr-list').addEventListener('click', function (e) {
+    var cp = e.target.closest('[data-copy]');
+    if (cp) { copy(cp.getAttribute('data-copy')); return; }
+    var u = e.target.closest('[data-uid]');
+    if (u) { openPlayer(Number(u.getAttribute('data-uid')), 'promo'); return; }
+    var b = e.target.closest('[data-pact]'); if (!b) return;
+    var code = b.getAttribute('data-code'), a = b.getAttribute('data-pact');
+    doSect('/promo', { op: a, code: code }, a === 'delete' ? 'Удалить промокод ' + code + '? Ввести его больше будет нельзя.' : null, b,
+      function (j) { S.pr = j; renderPromo(); });
+  });
+
+  // ── турнир ──────────────────────────────────────────────────────────
+  var TST = { open: ['ok', 'запись открыта'], locked: ['wn', 'запись закрыта'], closed: ['auto', 'завершён'] };
+  S.trEdit = false;
+  function loadTour() {
+    if (!S.tr) $('tr-card').innerHTML = '<div class="empty">Загрузка…</div>';
+    return sect('/tournament', { op: 'get' }, 'tr-card').then(function (j) { if (j) setTr(j); })
+      .catch(function () { toast('Нет связи с сервером', true); });
+  }
+  function setTr(j) { S.tr = j; renderTour(); }
+  function trLive() { var t = S.tr && S.tr.t; return !!(t && t.status !== 'closed'); }
+  function renderTour() {
+    var t = S.tr.t, ms = S.tr.members || [], live = trLive(), h = '';
+    if (!t) h = '<div class="empty" style="padding:18px 10px">Турнира сейчас нет — создай его ниже.</div>';
+    else {
+      var st = TST[t.status] || ['auto', t.status];
+      h += '<div class="sec"><div class="row"><div class="nm f1 wrapt" style="font-size:17px">🏆 ' + esc(t.name) + '</div>'
+        + '<span class="bd ' + st[0] + '">' + st[1] + '</span></div>'
+        + (t.desc ? '<div class="sub wrapt" style="margin-top:2px">' + esc(t.desc) + '</div>' : '')
+        + '<div class="grid" style="margin-top:10px">'
+        + kv('Когда', esc(t.date) + ' · ' + esc(t.time)) + kv('Приз', fmt(t.prize) + ' 💰')
+        + kv('Взнос', t.entry_fee ? fmt(t.entry_fee) + ' 💰' : 'бесплатно')
+        + kv('Участники', ms.length + (t.max_players ? ' из ' + t.max_players : ''))
+        + (t.entry_fee ? kv('Собрано взносов', fmt(t.entry_fee * ms.length) + ' 💰') : '') + kv('Создан', esc(t.created || '—'))
+        + '</div>';
+      if (t.status === 'closed') {
+        h += '<div class="note ' + (t.winner ? 'mt' : 'wn') + '" style="margin-top:8px">🏁 Завершён' + (t.finished ? ' ' + dt(t.finished) : '')
+          + (t.winner ? ' · 🥇 победитель <b>' + esc(t.winner.name || 'без имени') + '</b> (ID ' + esc(t.winner.cid || '—') + ')' : ' · без победителя')
+          + '</div>';
+      }
+      if (live) {
+        h += '<div class="row" style="margin-top:8px"><button type="button" class="f1" data-tact="edit">✏️ Изменить</button>'
+          + '<button type="button" class="f1" data-tact="' + (t.status === 'locked' ? 'unlock">🔓 Открыть запись' : 'lock">🔒 Закрыть запись') + '</button></div>';
+      }
+      h += '</div><div class="sec"><h3>Участники (' + ms.length + ')</h3>' + (ms.length ? ms.map(function (p, i) {
+          return '<div class="it" data-uid="' + p.uid + '"><div class="av">' + avHtml(p) + (p.online ? '<i class="dot"></i>' : '') + '</div>'
+            + '<div class="m"><div class="nm">' + (i + 1) + '. ' + esc(p.name || 'без имени') + (t.winner && t.winner.uid === p.uid ? ' <span class="bd ok">победитель</span>' : '') + '</div>'
+            + '<div class="sub">ID ' + esc(p.cid || '—') + ' · ' + seenTxt(p) + '</div></div>'
+            + (live ? '<button type="button" class="xs" data-kick="' + p.uid + '">Убрать</button>' : '') + '</div>';
+        }).join('') : '<div class="small">Пока никто не записался. Игроки записываются в боте: 🏆 Турниры → «Текущий турнир» или кнопкой из объявления.</div>')
+        + '</div>';
+    }
+    $('tr-card').innerHTML = h;
+    $('tr-ops').hidden = !live;
+    if (live) {
+      var sel = $('tr-win'), keep = sel.value;
+      sel.innerHTML = '<option value="">— без победителя —</option>' + ms.map(function (p) {
+        return '<option value="' + p.uid + '">Победитель: ' + esc(p.name || 'без имени') + ' · ID ' + esc(p.cid || '—') + '</option>'; }).join('');
+      sel.value = keep; if (sel.value !== keep) sel.value = '';
+      trFinishLabel();
+      var fees = t.entry_fee > 0 && ms.length > 0;
+      $('tr-refund-l').hidden = !fees;
+      $('tr-refund-t').textContent = 'Вернуть взносы: ' + ms.length + ' × ' + fmt(t.entry_fee) + ' 💰';
+      $('tr-send').disabled = !ms.length;
+    }
+    if (!live) S.trEdit = false;
+    $('tr-form').hidden = live && !S.trEdit;
+    $('tr-form-t').textContent = S.trEdit ? 'Изменить турнир' : 'Новый турнир';
+    $('tr-save').textContent = S.trEdit ? 'Сохранить' : 'Создать турнир';
+    $('tr-cancel').hidden = !S.trEdit;
+    $('tr-ann-l').hidden = S.trEdit;
+    var feeLock = S.trEdit && ms.length > 0;
+    $('tr-fee').disabled = feeLock; $('tr-fee-n').hidden = !feeLock;
+  }
+  function trFinishLabel() { $('tr-finish').textContent = $('tr-win').value ? '🏁 Завершить и выдать приз' : '🏁 Завершить без победителя'; }
+  $('tr-win').addEventListener('change', trFinishLabel);
+  var TR_F = ['tr-name', 'tr-date', 'tr-time', 'tr-prize', 'tr-fee', 'tr-max', 'tr-desc'];
+  function trClear() { for (var i = 0; i < TR_F.length; i++) $(TR_F[i]).value = ''; }
+  function trNum(id, what) {
+    var v = $(id).value.trim();
+    if (!v) return 0;
+    var n = parseAmount(v);
+    if (!(n >= 0)) { toast(what + ' — число (можно 500к, 1м)', true); return NaN; }
+    return n;
+  }
+  $('tr-card').addEventListener('click', function (e) {
+    var k = e.target.closest('[data-kick]');
+    if (k) {
+      var uid = Number(k.getAttribute('data-kick')), t = S.tr.t, p = (S.tr.members || []).filter(function (x) { return x.uid === uid; })[0] || {};
+      doSect('/tournament', { op: 'kick', uid: uid, refund: true },
+        'Убрать ' + (p.name || 'игрока') + ' из турнира?' + (t.entry_fee ? '\nВзнос ' + fmt(t.entry_fee) + ' вернётся ему на баланс.' : ''), k, setTr);
+      return;
+    }
+    var a = e.target.closest('[data-tact]');
+    if (a) {
+      var act = a.getAttribute('data-tact'), tt = S.tr.t;
+      if (act === 'edit') {
+        S.trEdit = true;
+        $('tr-name').value = tt.name; $('tr-date').value = tt.date; $('tr-time').value = tt.time;
+        $('tr-prize').value = fmt(tt.prize); $('tr-fee').value = fmt(tt.entry_fee); $('tr-max').value = tt.max_players || '';
+        $('tr-desc').value = tt.desc || '';
+        renderTour(); $('tr-form').scrollIntoView({ block: 'start' });
+        return;
+      }
+      doSect('/tournament', { op: act }, act === 'lock' ? 'Закрыть запись? Новые игроки не смогут записаться, записавшиеся останутся.' : null, a, setTr);
+      return;
+    }
+    var it = e.target.closest('[data-uid]');
+    if (it) openPlayer(Number(it.getAttribute('data-uid')), 'tour');
+  });
+  $('tr-cancel').addEventListener('click', function () { S.trEdit = false; trClear(); renderTour(); });
+  $('tr-save').addEventListener('click', function () {
+    var name = $('tr-name').value.trim(), date = $('tr-date').value.trim(), time = $('tr-time').value.trim();
+    if (!name) { toast('Впиши название', true); return; }
+    if (!date || !time) { toast('Впиши дату и время', true); return; }
+    var prize = trNum('tr-prize', 'Приз'), fee = trNum('tr-fee', 'Взнос'), mx = trNum('tr-max', 'Мест');
+    if (isNaN(prize) || isNaN(fee) || isNaN(mx)) return;
+    var edit = S.trEdit, ann = !edit && $('tr-ann').checked;
+    doSect('/tournament', { op: 'save', mode: edit ? 'edit' : 'new', name: name, date: date, time: time, prize: prize, entry_fee: fee,
+                            max_players: mx, desc: $('tr-desc').value.trim(), announce: ann },
+      edit ? null : 'Создать турнир «' + name + '»?' + (ann ? '\nОбъявление с кнопкой «Участвовать» уйдёт всем игрокам.' : ''),
+      this, function (j) {
+        S.trEdit = false; trClear(); setTr(j); window.scrollTo(0, 0);
+        if (ann) loadBc(true);        // объявление идёт рассылкой — пусть на вкладке появится точка хода
+      });
+  });
+  $('tr-send').addEventListener('click', function () {
+    var t = $('tr-msg').value.trim();
+    if (!t) { toast('Впиши текст', true); return; }
+    doSect('/tournament', { op: 'notify', text: t }, null, this, function (j) { $('tr-msg').value = ''; setTr(j); });
+  });
+  $('tr-finish').addEventListener('click', function () {
+    var w = $('tr-win').value, t = S.tr.t, p = (S.tr.members || []).filter(function (x) { return String(x.uid) === w; })[0];
+    doSect('/tournament', { op: 'finish', winner: w ? Number(w) : null },
+      w ? 'Завершить турнир и выдать приз ' + fmt(t.prize) + ' игроку ' + ((p && p.name) || 'без имени') + '?'
+        : 'Завершить турнир без победителя? Приз никому не уйдёт.', this, setTr);
+  });
+  $('tr-del').addEventListener('click', function () {
+    var t = S.tr.t, n = (S.tr.members || []).length, back = t.entry_fee > 0 && n > 0 && $('tr-refund').checked;
+    doSect('/tournament', { op: 'delete', refund: back },
+      'Удалить турнир «' + t.name + '»?' + (n ? '\nУчастникам придёт, что турнир отменён.' : '')
+        + (t.entry_fee > 0 && n ? (back ? '\nВзносы вернутся: ' + n + ' × ' + fmt(t.entry_fee) + '.' : '\nВзносы НЕ вернутся.') : ''),
+      this, setTr);
+  });
+
   // ── старт ───────────────────────────────────────────────────────────
   $('ver').textContent = VER;
+  renderPrForm();
   renderFilters();
-  if (!API) { fatal('Открой из бота', 'Эта страница открывается кнопкой «🗂 Игроки — мини-апп» в /admin.'); }
-  else if (!INIT && !TOK) { fatal('Нет доступа', 'Открой /admin в боте и нажми «🗂 Игроки — мини-апп».'); }
+  if (!API) { fatal('Открой из бота', 'Эта страница открывается кнопкой «🗂 Админка — мини-апп» в /admin.'); }
+  else if (!INIT && !TOK) { fatal('Нет доступа', 'Открой /admin в боте и нажми «🗂 Админка — мини-апп».'); }
   else {
     // v325: запомненный список показываем сразу, а шапку и список запрашиваем одновременно — раньше шли друг за другом
     var cached = cacheLoad();
@@ -770,7 +1222,7 @@ window.addEventListener('error', function (e) {
     loadList(false, !!cached);
   }
 
-  window.ADM = { state: function () { return S; }, open: openPlayer, ver: VER };
+  window.ADM = { state: function () { return S; }, open: openPlayer, tab: openTab, ver: VER };
 })();
 </script>
 </body>
