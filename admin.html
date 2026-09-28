@@ -3,135 +3,190 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#0e0e12">
+<meta name="theme-color" content="#050507">
 <title>Админка</title>
 <style>
-  /* v324: мини-апп администратора. Намеренно просто: тёмный фон, карточки, кнопки — главное, чтобы всё работало. */
-  :root { --bg: #0e0e12; --card: #17171d; --card2: #202028; --ln: #2c2c37; --tx: #ececf1; --tx2: #a0a0ae; --tx3: #6c6c7a;
-          --acc: #8b5cf6; --ok: #22c55e; --no: #ef4444; --wn: #f59e0b; --cy: #22d3ee; }
+  /* v324: мини-апп администратора. v331: новый вид — минимализм в чёрном, белом и фиолетовом (просьба Кирилла);
+     все классы прежние, поменялось только оформление. Плавность: экраны появляются мягким сдвигом, кнопки, вкладки
+     и поля меняют цвет с переходом, всплывашка выезжает снизу, списки проявляются. Анимируются только opacity и
+     transform — на телефоне это не тормозит. */
+  :root { color-scheme: dark;
+          --bg: #050507; --card: #0d0d11; --card2: #15151b; --ln: rgba(255,255,255,.07); --ln2: rgba(255,255,255,.13);
+          --tx: #f4f4f6; --tx2: #a1a1ab; --tx3: #6a6a75;
+          --acc: #8b5cf6; --acc2: #a78bfa; --acc3: #c4b5fd; --accbg: rgba(139,92,246,.13);
+          --grad: linear-gradient(135deg, #7c3aed, #9d6bff);
+          --ok: #a78bfa; --no: #f87171; --wn: #c4b5fd; --cy: #e4e4e7;
+          --ease: cubic-bezier(.22,.8,.2,1); }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { background: var(--bg); color: var(--tx); overflow-x: hidden; }
-  body { font: 14px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-         padding: calc(12px + env(safe-area-inset-top, 0px)) 12px calc(28px + env(safe-area-inset-bottom, 0px)); }
+  body { font: 14px/1.45 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+         padding: calc(14px + env(safe-area-inset-top, 0px)) 12px calc(30px + env(safe-area-inset-bottom, 0px)); }
+  /* тихое фиолетовое свечение сверху — единственное «украшение» */
+  body::before { content: ''; position: fixed; top: -180px; left: 50%; width: 760px; height: 360px; margin-left: -380px; z-index: -1;
+                 pointer-events: none; background: radial-gradient(closest-side, rgba(139,92,246,.16), transparent); }
   [hidden] { display: none !important; }
   button, input, select, textarea { font: inherit; color: inherit; }
-  button { cursor: pointer; border: 0; background: var(--card2); border-radius: 10px; padding: 9px 12px; touch-action: manipulation; }
-  button:active { opacity: .7; }
-  button[disabled] { opacity: .4; }
-  .b-acc { background: var(--acc); color: #fff; font-weight: 600; }
-  .b-ok { background: rgba(34,197,94,.18); color: #86efac; font-weight: 600; }
-  .b-no { background: rgba(239,68,68,.2); color: #fca5a5; font-weight: 600; }
-  input, select, textarea { width: 100%; min-width: 0; background: var(--card2); border: 1px solid var(--ln); border-radius: 10px;
-                            padding: 9px 11px; outline: none; }
-  input:focus, textarea:focus, select:focus { border-color: var(--acc); }
-  textarea { min-height: 72px; resize: vertical; }
+  button { cursor: pointer; border: 1px solid var(--ln); background: var(--card2); color: var(--tx); border-radius: 12px; padding: 10px 13px;
+           touch-action: manipulation; font-weight: 500;
+           transition: background-color .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease), opacity .2s, transform .14s var(--ease), box-shadow .2s var(--ease); }
+  button:active { transform: scale(.97); }
+  button[disabled] { opacity: .35; }
+  @media (hover: hover) { button:hover:not([disabled]) { border-color: var(--ln2); } .b-acc:hover:not([disabled]) { box-shadow: 0 8px 24px -8px rgba(139,92,246,.85); } }
+  .b-acc { background: var(--grad); border-color: transparent; color: #fff; font-weight: 600; box-shadow: 0 6px 18px -10px rgba(139,92,246,.9); }
+  .b-ok { background: #f4f4f6; border-color: transparent; color: #0b0b0e; font-weight: 600; }
+  .b-no { background: rgba(248,113,113,.08); border-color: rgba(248,113,113,.26); color: #fca5a5; font-weight: 600; }
+  input, select, textarea { width: 100%; min-width: 0; background: #09090c; border: 1px solid var(--ln); border-radius: 12px;
+                            padding: 10px 12px; outline: none; color: var(--tx);
+                            transition: border-color .2s var(--ease), box-shadow .2s var(--ease), background-color .2s var(--ease); }
+  input::placeholder, textarea::placeholder { color: var(--tx3); }
+  input:focus, textarea:focus, select:focus { border-color: rgba(167,139,250,.65); box-shadow: 0 0 0 3px rgba(139,92,246,.16); background: #0b0a10; }
+  select { -webkit-appearance: none; appearance: none; padding-right: 30px;
+           background: #09090c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a1a1ab' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M7 10l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 9px center / 16px; }
+  textarea { min-height: 78px; resize: vertical; line-height: 1.45; }
   .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .top .row { gap: 6px; }
-  h1 { font-size: 18px; font-weight: 700; }
-  h2 { font-size: 16px; font-weight: 700; margin: 12px 0 4px; }
-  .ver { font-size: 11px; color: var(--tx3); margin-left: 6px; font-weight: 400; }
-  .stats { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
-  .stats span { background: var(--card); border: 1px solid var(--ln); border-radius: 8px; padding: 4px 8px; font-size: 12px; color: var(--tx2); }
-  .stats b { color: var(--tx); }
+  h1 { font-size: 20px; font-weight: 800; letter-spacing: -.02em; display: flex; align-items: center; }
+  h1::before { content: ''; width: 9px; height: 9px; margin-right: 9px; border-radius: 3px; transform: rotate(45deg);
+               background: var(--grad); box-shadow: 0 0 12px rgba(139,92,246,.9); }
+  h2 { font-size: 17px; font-weight: 700; margin: 14px 0 4px; letter-spacing: -.01em; }
+  .ver { font-size: 10.5px; font-weight: 600; color: var(--acc3); margin-left: 8px; padding: 2px 7px; border-radius: 999px;
+         background: var(--accbg); border: 1px solid rgba(139,92,246,.22); letter-spacing: .02em; }
+  #reload { width: 38px; height: 38px; padding: 0; font-size: 17px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 10px; }
+  .stats span { background: var(--card); border: 1px solid var(--ln); border-radius: 10px; padding: 5px 9px; font-size: 12px; color: var(--tx2); }
+  .stats b { color: var(--tx); font-weight: 700; font-variant-numeric: tabular-nums; }
   .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
   .chips::-webkit-scrollbar { display: none; }
-  .chip { flex: 0 0 auto; padding: 6px 11px; border-radius: 999px; background: var(--card); border: 1px solid var(--ln); font-size: 12.5px; color: var(--tx2); }
-  .chip.on { background: var(--acc); border-color: var(--acc); color: #fff; }
+  .chip { flex: 0 0 auto; padding: 7px 12px; border-radius: 999px; background: transparent; border: 1px solid var(--ln2); font-size: 12.5px; color: var(--tx2); }
+  .chip.on { background: var(--accbg); border-color: rgba(167,139,250,.7); color: #fff; font-weight: 600; }
   .wrap { flex-wrap: wrap; overflow: visible; }
   .row { display: flex; gap: 8px; align-items: center; }
   .row > * { min-width: 0; }
   .f1 { flex: 1; }
-  .v { display: flex; flex-direction: column; gap: 8px; }
-  .it { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--card); margin-top: 6px; cursor: pointer; }
-  .it:active { background: var(--card2); }
-  .av { position: relative; width: 38px; height: 38px; flex: 0 0 38px; border-radius: 50%; background: var(--card2);
+  .v { display: flex; flex-direction: column; gap: 9px; }
+  .it { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 14px; background: var(--card); border: 1px solid var(--ln);
+        margin-top: 7px; cursor: pointer; transition: background-color .18s var(--ease), border-color .18s var(--ease), transform .14s var(--ease); }
+  .it:active { transform: scale(.99); background: var(--card2); }
+  @media (hover: hover) { .it:hover { border-color: var(--ln2); } }
+  .sec .it { background: rgba(255,255,255,.015); }
+  .av { position: relative; width: 38px; height: 38px; flex: 0 0 38px; border-radius: 50%; background: var(--card2); border: 1px solid var(--ln);
         display: grid; place-items: center; font-size: 18px; overflow: hidden; }
   .av img { width: 100%; height: 100%; object-fit: cover; }
-  .dot { position: absolute; right: 0; bottom: 0; width: 11px; height: 11px; border-radius: 50%; background: var(--ok); border: 2px solid var(--card); }
+  .dot { position: absolute; right: 0; bottom: 0; width: 11px; height: 11px; border-radius: 50%; background: var(--acc2); border: 2px solid var(--card);
+         box-shadow: 0 0 8px rgba(167,139,250,.9); }
   .m { flex: 1; min-width: 0; }
   .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { font-size: 12px; color: var(--tx2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bd { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 6px; margin-left: 4px; vertical-align: 1px; }
-  .bd.ban { background: rgba(239,68,68,.22); color: #fca5a5; }
-  .bd.frz { background: rgba(34,211,238,.18); color: #a5f3fc; }
-  .bd.wn { background: rgba(245,158,11,.2); color: #fcd34d; }
-  .bd.mt { background: rgba(139,92,246,.24); color: #c4b5fd; }
-  .bd.adm { background: rgba(250,204,21,.2); color: #fde68a; }
-  .bd.auto { background: rgba(160,160,174,.18); color: var(--tx2); }
-  .more { width: 100%; margin-top: 8px; }
+  .bd { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; margin-left: 5px; vertical-align: 1px; }
+  .bd.ban { background: rgba(248,113,113,.14); color: #fca5a5; }
+  .bd.frz { background: rgba(255,255,255,.1); color: #e4e4e7; }
+  .bd.wn { background: rgba(196,181,253,.14); color: var(--acc3); }
+  .bd.mt { background: rgba(139,92,246,.22); color: #ddd6fe; }
+  .bd.adm { background: #f4f4f6; color: #0b0b0e; }
+  .bd.auto { background: rgba(255,255,255,.07); color: var(--tx2); }
+  .bd.ok { background: rgba(167,139,250,.16); color: var(--acc3); }
+  .more { width: 100%; margin-top: 10px; }
   .empty { padding: 30px 10px; text-align: center; color: var(--tx3); }
-  .sec { background: var(--card); border-radius: 14px; padding: 12px; margin-top: 10px; }
-  .sec h3 { font-size: 12px; font-weight: 700; color: var(--tx2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
-  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-  .kv { background: var(--card2); border-radius: 10px; padding: 7px 10px; min-width: 0; }
+  .sec { background: var(--card); border: 1px solid var(--ln); border-radius: 18px; padding: 14px; margin-top: 12px; }
+  .sec h3 { font-size: 11px; font-weight: 700; color: var(--tx3); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .kv { background: rgba(255,255,255,.025); border: 1px solid var(--ln); border-radius: 12px; padding: 8px 11px; min-width: 0; }
   .kv i { display: block; font-style: normal; font-size: 11px; color: var(--tx3); }
-  .kv b { font-size: 14px; word-break: break-word; }
-  .kv small { display: block; font-size: 11px; color: var(--tx3); }
-  .note { padding: 9px 11px; border-radius: 10px; font-size: 13px; line-height: 1.45; }
-  .note.ban { background: rgba(239,68,68,.12); color: #fecaca; }
-  .note.frz { background: rgba(34,211,238,.1); color: #cffafe; }
-  .note.mt { background: rgba(139,92,246,.14); color: #ddd6fe; }
-  .note.wn { background: rgba(245,158,11,.12); color: #fde68a; }
+  .kv b { font-size: 14.5px; word-break: break-word; font-variant-numeric: tabular-nums; }
+  .kv small { display: block; font-size: 11px; color: var(--tx3); font-weight: 400; }
+  .note { padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.45; border: 1px solid transparent; }
+  .note.ban { background: rgba(248,113,113,.07); border-color: rgba(248,113,113,.2); color: #fecaca; }
+  .note.frz { background: rgba(255,255,255,.04); border-color: var(--ln2); color: #e4e4e7; }
+  .note.mt { background: rgba(139,92,246,.1); border-color: rgba(139,92,246,.28); color: #ddd6fe; }
+  .note.wn { background: rgba(196,181,253,.07); border-color: rgba(196,181,253,.22); color: #e9e3ff; }
   .hist { font-size: 12.5px; color: var(--tx2); }
-  .hist > div { padding: 6px 0; border-bottom: 1px solid var(--ln); }
+  .hist > div { padding: 8px 0; border-bottom: 1px solid var(--ln); }
   .hist > div:last-child { border-bottom: 0; }
   .hist b { color: var(--tx); font-weight: 600; }
-  details summary { cursor: pointer; color: var(--tx2); font-size: 13px; padding: 2px 0; }
+  details summary { cursor: pointer; color: var(--tx2); font-size: 13px; padding: 3px 0; list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before { content: '›'; display: inline-block; width: 14px; color: var(--acc2); font-weight: 700; transition: transform .2s var(--ease); }
+  details[open] summary::before { transform: rotate(90deg); }
   details[open] summary { margin-bottom: 6px; }
-  .ph { display: flex; align-items: center; gap: 12px; }
-  .ph .av { width: 58px; height: 58px; flex-basis: 58px; font-size: 26px; }
-  .ph .nm { font-size: 17px; white-space: normal; }
+  details[open] > :not(summary) { animation: rin .22s var(--ease) both; }
+  .ph { display: flex; align-items: center; gap: 13px; }
+  .ph .av { width: 60px; height: 60px; flex-basis: 60px; font-size: 26px; border-color: rgba(167,139,250,.35); box-shadow: 0 0 22px -8px rgba(139,92,246,.8); }
+  .ph .nm { font-size: 18px; white-space: normal; letter-spacing: -.01em; }
   .cp { cursor: pointer; border-bottom: 1px dashed var(--tx3); }
-  .avbig { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; background: var(--card2); display: block; }
+  .avbig { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; background: var(--card2); display: block; border: 1px solid var(--ln2); }
   .small { font-size: 12px; color: var(--tx3); }
-  .danger { border: 1px solid rgba(239,68,68,.35); }
-  .lg { padding: 9px 10px; border-radius: 12px; background: var(--card); margin-top: 6px; cursor: pointer; font-size: 13px; }
+  .danger { border-color: rgba(248,113,113,.28); }
+  .lg { padding: 10px 12px; border-radius: 14px; background: var(--card); border: 1px solid var(--ln); margin-top: 7px; cursor: pointer; font-size: 13px; }
   .lg .lt { font-size: 11.5px; color: var(--tx3); margin-bottom: 2px; }
   .lg .lt b { color: var(--tx2); font-weight: 600; }
-  .toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 9;
-           max-width: 92%; background: #2a2a35; border: 1px solid var(--ln); padding: 10px 14px; border-radius: 12px; font-size: 13px;
-           opacity: 0; transition: opacity .2s; pointer-events: none; }
-  .toast.show { opacity: 1; }
-  .toast.err { border-color: rgba(239,68,68,.6); color: #fecaca; }
+  .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 9; max-width: 92%;
+           transform: translate(-50%, 14px) scale(.98); opacity: 0; pointer-events: none;
+           background: rgba(18,17,26,.92); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+           border: 1px solid rgba(139,92,246,.4); padding: 11px 16px; border-radius: 14px; font-size: 13px; color: var(--tx);
+           box-shadow: 0 16px 36px -12px rgba(0,0,0,.9); transition: opacity .24s var(--ease), transform .24s var(--ease); }
+  .toast.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  .toast.err { border-color: rgba(248,113,113,.5); color: #fecaca; }
   .fatal { padding: 50px 16px; text-align: center; }
   .fatal b { display: block; font-size: 17px; margin-bottom: 8px; }
   .fatal span { color: var(--tx2); font-size: 13px; line-height: 1.5; }
-  .busy { opacity: .55; pointer-events: none; }
+  .busy { opacity: .5; pointer-events: none; transition: opacity .2s; }
+  #list { transition: opacity .2s var(--ease); }
   /* v325: вместо затемнения всей карточки крутится только нажатая кнопка — видно, что именно происходит */
   .lock { pointer-events: none; }
   .ld { position: relative; color: transparent !important; }
   .ld::after { content: ''; position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px;
-               border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+               border: 2px solid rgba(255,255,255,.25); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+  .b-ok.ld::after { border-color: rgba(0,0,0,.2); border-top-color: #0b0b0e; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .upd { color: var(--acc); }
-  /* v326: вкладки — все видны сразу и на узком экране (раньше «Журнал» был отдельной кнопкой сверху).
-     v328: шесть вкладок — две строки по три, иначе подписи на телефоне не влезают */
-  .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; margin-top: 10px; padding: 4px;
-          background: var(--card); border-radius: 14px; }
-  .tabs button { position: relative; background: transparent; border-radius: 10px; padding: 7px 3px; font-size: 12.5px;
-                 line-height: 1.2; color: var(--tx2); white-space: nowrap; overflow: hidden;
-                 display: flex; align-items: center; justify-content: center; gap: 5px; }
-  .tabs .ic { font-size: 15px; line-height: 1; }
-  .tabs button.on { background: var(--acc); color: #fff; font-weight: 600; }
-  .tdot { position: absolute; top: 4px; right: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
-  .bar { height: 6px; border-radius: 3px; background: var(--card2); overflow: hidden; }
-  .bar i { display: block; height: 100%; background: var(--acc); border-radius: 3px; transition: width .4s; }
-  .code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 16px; letter-spacing: .03em; }
-  .ck { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--tx2); cursor: pointer; }
-  .ck input { width: 18px; height: 18px; flex: 0 0 18px; padding: 0; accent-color: var(--acc); }
-  .xs { flex: 0 0 auto; padding: 6px 10px; font-size: 12px; }
-  .lbl { font-size: 12px; color: var(--tx3); margin-bottom: -3px; }
-  .bd.ok { background: rgba(34,197,94,.18); color: #86efac; }
+  .upd { color: var(--acc2); }
+  /* v326: вкладки — все видны сразу и на узком экране. v328: шесть вкладок — две строки по три.
+     v331: значки — тонкие линии вместо цветных эмодзи; выбранная вкладка — фиолетовая, переход плавный */
+  .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-top: 12px; padding: 4px;
+          background: var(--card); border: 1px solid var(--ln); border-radius: 16px; }
+  .tabs button { position: relative; background: transparent; border: 0; border-radius: 12px; padding: 8px 3px; font-size: 12.5px;
+                 line-height: 1.2; color: var(--tx2); white-space: nowrap; overflow: hidden; box-shadow: none;
+                 display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .tabs .ic { width: 16px; height: 16px; flex: 0 0 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .tabs button.on { background: var(--grad); color: #fff; font-weight: 600; box-shadow: 0 6px 16px -9px rgba(139,92,246,.95); }
+  @media (hover: hover) { .tabs button:hover:not(.on) { color: var(--tx); background: rgba(255,255,255,.04); } }
+  .tdot { position: absolute; top: 5px; right: 7px; width: 7px; height: 7px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px #a78bfa; }
+  .bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.06); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, #7c3aed, #b69cff); border-radius: 3px; transition: width .5s var(--ease); }
+  .code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 16px; letter-spacing: .04em; }
+  .ck { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--tx2); cursor: pointer; }
+  .ck input { width: 18px; height: 18px; flex: 0 0 18px; padding: 0; accent-color: var(--acc); box-shadow: none; }
+  .xs { flex: 0 0 auto; padding: 6px 11px; font-size: 12px; border-radius: 10px; }
+  .lbl { font-size: 11.5px; color: var(--tx3); margin-bottom: -3px; letter-spacing: .01em; }
   .lk { cursor: pointer; }
   .lg.gen { cursor: default; }
   .wrapt { white-space: normal; }
   /* v328: экономика, картинка рассылки */
-  .er { flex: 0 0 auto; font-weight: 600; font-size: 13px; white-space: nowrap; }
+  .er { flex: 0 0 auto; font-weight: 600; font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .brow { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
   .brow span { flex: 0 0 58px; color: var(--tx2); }
   .brow b { flex: 0 0 auto; min-width: 26px; text-align: right; }
-  .bcimg { width: 64px; height: 64px; flex: 0 0 64px; border-radius: 10px; object-fit: cover; background: var(--card2); }
-  .up { color: #86efac; } .dn { color: #fca5a5; }
+  .bcimg { width: 64px; height: 64px; flex: 0 0 64px; border-radius: 12px; object-fit: cover; background: var(--card2); border: 1px solid var(--ln); }
+  .up { color: var(--acc3); } .dn { color: #fca5a5; }
+  /* v331: плавность — экран появляется мягким сдвигом, строки списков проявляются */
+  @keyframes vin { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes rin { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+  .vin { animation: vin .28s var(--ease) both; }
+  #list .it, #log .lg, #pr-list > .sec, #tr-card .it, #ec .sec { animation: rin .24s var(--ease) both; }
+  /* заготовка вместо «Загрузка…»: серые строки с мерцанием */
+  .sk { height: 60px; margin-top: 7px; border-radius: 14px; border: 1px solid var(--ln);
+        background: linear-gradient(90deg, var(--card) 0%, var(--card2) 50%, var(--card) 100%); background-size: 200% 100%; animation: sk 1.3s ease-in-out infinite; }
+  @keyframes sk { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+  /* v331: режим обслуживания — кнопка в шапке, полоса предупреждения, панель */
+  .pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--tx2); }
+  .pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--acc2); box-shadow: 0 0 8px rgba(167,139,250,.9); }
+  .pill.off i { background: #fca5a5; box-shadow: 0 0 8px rgba(248,113,113,.9); }
+  .pill.off { color: #fecaca; border-color: rgba(248,113,113,.35); background: rgba(248,113,113,.08); }
+  .mtbar { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 12px; border-radius: 14px; font-size: 12.5px; line-height: 1.4;
+           background: rgba(248,113,113,.07); border: 1px solid rgba(248,113,113,.25); color: #fecaca; animation: vin .28s var(--ease) both; }
+  .mtp { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .32s var(--ease), opacity .25s var(--ease); }
+  .mtp > div { overflow: hidden; min-height: 0; }
+  .mtp.open { grid-template-rows: 1fr; opacity: 1; }
+  .mtp:not(.open) { pointer-events: none; visibility: hidden; transition: grid-template-rows .32s var(--ease), opacity .25s var(--ease), visibility 0s .32s; }
 </style>
 </head>
 <body>
@@ -140,15 +195,30 @@
 <main id="app">
   <div class="top">
     <h1>Админка<span class="ver" id="ver"></span></h1>
-    <button id="reload" type="button" title="Обновить">↻</button>
+    <div class="row">
+      <!-- v331: режим обслуживания — всегда на виду: нажал — открылась панель -->
+      <button id="mt-pill" type="button" class="pill" hidden><i></i><span id="mt-pill-t">Работает</span></button>
+      <button id="reload" type="button" title="Обновить">↻</button>
+    </div>
   </div>
+  <div id="mt-bar" class="mtbar" hidden><span class="f1">🔧 Включено обслуживание — игроки не могут пользоваться ботом</span>
+    <button type="button" class="xs b-ok" id="mt-bar-off">Выключить</button></div>
+  <div id="mt-panel" class="mtp"><div>
+    <div class="sec"><h3>Режим обслуживания</h3><div class="v">
+      <div class="small" id="mt-state"></div>
+      <textarea id="mt-text" maxlength="500" placeholder="Что увидят игроки. Пусто — «Бот на техническом обслуживании. Скоро вернёмся!»"></textarea>
+      <div class="row"><button type="button" class="f1" id="mt-save">Сохранить текст</button>
+        <button type="button" class="b-no f1" id="mt-toggle">Включить</button></div>
+      <div class="small">Пока включено, бот отвечает игрокам этим текстом. Ты пользуешься ботом как обычно.</div>
+    </div></div>
+  </div></div>
   <nav class="tabs" id="tabs">
-    <button type="button" data-tab="list" class="on"><span class="ic">👥</span>Игроки</button>
-    <button type="button" data-tab="bc"><span class="ic">📢</span>Рассылка<span class="tdot" id="bc-dot" hidden></span></button>
-    <button type="button" data-tab="promo"><span class="ic">🎫</span>Промо</button>
-    <button type="button" data-tab="tour"><span class="ic">🏆</span>Турнир</button>
-    <button type="button" data-tab="econ"><span class="ic">💰</span>Экономика</button>
-    <button type="button" data-tab="log" id="journal"><span class="ic">📜</span>Журнал</button>
+    <button type="button" data-tab="list" class="on"><svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.8a3.3 3.3 0 0 1 0 6.4M18.5 14.8c1.7.8 2.8 2.5 3 5.2"/></svg>Игроки</button>
+    <button type="button" data-tab="bc"><svg class="ic" viewBox="0 0 24 24"><path d="M4 10v4a1 1 0 0 0 1 1h2l7 4V5L7 9H5a1 1 0 0 0-1 1z"/><path d="M18 9a4 4 0 0 1 0 6"/></svg>Рассылка<span class="tdot" id="bc-dot" hidden></span></button>
+    <button type="button" data-tab="promo"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 6v12" stroke-dasharray="2 2.2"/></svg>Промо</button>
+    <button type="button" data-tab="tour"><svg class="ic" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg>Турнир</button>
+    <button type="button" data-tab="econ"><svg class="ic" viewBox="0 0 24 24"><path d="M4 19V11M10 19V6M16 19v-9M22 19H2"/></svg>Экономика</button>
+    <button type="button" data-tab="log" id="journal"><svg class="ic" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r=".6"/><circle cx="4" cy="12" r=".6"/><circle cx="4" cy="18" r=".6"/></svg>Журнал</button>
   </nav>
 
   <section id="v-list">
@@ -214,6 +284,19 @@
 
   <!-- v326: промокоды -->
   <section id="v-promo" hidden>
+    <!-- v331: акция в Донате — раньше только командой /setpromo -->
+    <div class="sec" id="dp-box"><h3>Акция в Донате</h3><div class="v">
+      <div id="dp-state" class="small">Загрузка…</div>
+      <textarea id="dp-text" maxlength="3500" placeholder="Текст акции — игроки увидят его, когда откроют «💎 Донат». Например: 🔥 Только сегодня 60 000 000 токенов за 500₽"></textarea>
+      <div class="small" id="dp-len"></div>
+      <div class="row" id="dp-ph-row"><button type="button" class="f1" id="dp-ph-add">🖼 Картинка к акции</button></div>
+      <input type="file" id="dp-ph-file" accept="image/*" hidden>
+      <div class="row" id="dp-ph-box" hidden><img id="dp-ph-img" class="bcimg" alt=""><div class="m small" id="dp-ph-info"></div>
+        <button type="button" class="xs" id="dp-ph-del">✕ Убрать</button></div>
+      <div class="row"><button type="button" class="f1" id="dp-test">Себе — посмотреть</button>
+        <button type="button" class="b-acc f1" id="dp-save">Сохранить и включить</button></div>
+      <div class="row"><button type="button" class="b-no f1" id="dp-off" hidden>Выключить акцию</button></div>
+    </div></div>
     <div class="sec"><h3>Новый промокод</h3><div class="v">
       <input id="pr-code" maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Код (пусто — придумаю сам)">
       <div class="lbl">Сколько токенов даёт</div>
@@ -276,7 +359,7 @@ window.addEventListener('error', function (e) {
     document.getElementById('app').hidden = true;
     var f = document.getElementById('fatal'); f.hidden = false;
     document.getElementById('fatal-t').textContent = 'Ошибка на странице';
-    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v329';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v331';
   } catch (_) {}
 }, true);
 </script>
@@ -291,7 +374,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v329';
+  var VER = 'v331';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -456,8 +539,11 @@ window.addEventListener('error', function (e) {
   // v328: + Экономика
   var VIEWS = ['list', 'pl', 'log', 'bc', 'promo', 'tour', 'econ'];
   function show(view) {
+    var changed = S.view !== view;
     S.view = view;
     for (var i = 0; i < VIEWS.length; i++) $('v-' + VIEWS[i]).hidden = VIEWS[i] !== view;
+    // v331: новый экран появляется мягким сдвигом (анимацию перезапускаем, снимая и возвращая класс)
+    if (changed) { var ve = $('v-' + view); ve.classList.remove('vin'); void ve.offsetWidth; ve.classList.add('vin'); }
     $('tabs').hidden = view === 'pl';
     var tb = $('tabs').querySelectorAll('[data-tab]');
     for (var j = 0; j < tb.length; j++) tb[j].classList.toggle('on', tb[j].getAttribute('data-tab') === view);
@@ -505,6 +591,7 @@ window.addEventListener('error', function (e) {
       if (denied(res)) return false;
       if (!res.j || !res.j.ok) { toast('Не удалось загрузить данные: ' + ((res.j && res.j.message) || res.status), true); return false; }
       S.meta = res.j; renderStats(); cacheSave();
+      if (res.j.maintenance) setMt(res.j.maintenance);      // v331: кнопка обслуживания в шапке
       // v326: рассылка уже идёт (например, запущена командой /broadcast) — точка на вкладке и слежение за ходом
       if (res.j.bcast && res.j.bcast.state === 'running' && !bcT) loadBc(true);
       return true;
@@ -592,7 +679,7 @@ window.addEventListener('error', function (e) {
       + (e.w === 'auto' ? ' <span class="bd auto">бот сам</span>' : '') + '</div>' + esc(e.m) + '</div>';
   }
   function loadLog() {
-    if (!$('log').children.length) $('log').innerHTML = '<div class="empty">Загрузка…</div>';
+    if (!$('log').children.length) $('log').innerHTML = skel(4);
     return api('/log', {}).then(function (res) {
       if (res.status === 404 && !res.j) { $('log').innerHTML = '<div class="empty">Журнал появится, когда бот обновится до v325.</div>'; return; }
       if (denied(res)) return;
@@ -1047,7 +1134,7 @@ window.addEventListener('error', function (e) {
   S.bcPhoto = '';              // v328: картинка — уже ужатая на телефоне, data:image/jpeg;base64,…
   function loadBc(silent) {
     clearTimeout(bcT); bcT = 0;
-    if (!S.bc && !silent) $('bc-job').innerHTML = '<div class="empty">Загрузка…</div>';
+    if (!S.bc && !silent) $('bc-job').innerHTML = skel(1);
     return sect('/broadcast', { op: 'status' }, 'bc-job').then(function (j) { if (j) setBc(j); })
       .catch(function () { if (!silent) toast('Нет связи с сервером', true); bcSchedule(); });
   }
@@ -1255,7 +1342,8 @@ window.addEventListener('error', function (e) {
     $('pr-exp').innerHTML = expHtml('pc'); expHint('pc');
   }
   function loadPromo() {
-    if (!S.pr) $('pr-list').innerHTML = '<div class="empty">Загрузка…</div>';
+    loadDp();                                             // v331: акция в Донате — в этой же вкладке
+    if (!S.pr) $('pr-list').innerHTML = skel(3);
     return sect('/promo', { op: 'list' }, 'pr-list').then(function (j) { if (j) { S.pr = j; renderPromo(); } })
       .catch(function () { toast('Нет связи с сервером', true); });
   }
@@ -1350,7 +1438,7 @@ window.addEventListener('error', function (e) {
   var TST = { open: ['ok', 'запись открыта'], locked: ['wn', 'запись закрыта'], closed: ['auto', 'завершён'] };
   S.trEdit = false;
   function loadTour() {
-    if (!S.tr) $('tr-card').innerHTML = '<div class="empty">Загрузка…</div>';
+    if (!S.tr) $('tr-card').innerHTML = skel(3);
     return sect('/tournament', { op: 'get' }, 'tr-card').then(function (j) { if (j) setTr(j); })
       .catch(function () { toast('Нет связи с сервером', true); });
   }
@@ -1492,7 +1580,7 @@ window.addEventListener('error', function (e) {
       + '<div class="er">' + right + '</div></div>';
   }
   function loadEcon() {
-    if (!S.ec) $('ec').innerHTML = '<div class="empty">Считаю…</div>';
+    if (!S.ec) $('ec').innerHTML = skel(4);
     return sect('/economy', {}, 'ec', 'v328').then(function (j) { if (j) { S.ec = j; renderEcon(); } })
       .catch(function () { toast('Нет связи с сервером', true); });
   }
@@ -1615,6 +1703,105 @@ window.addEventListener('error', function (e) {
     var it = e.target.closest('[data-uid]'); if (it) openPlayer(Number(it.getAttribute('data-uid')), 'econ');
   });
 
+  // ── v331: режим обслуживания — кнопка в шапке, полоса предупреждения, панель ──
+  S.mt = null;
+  function setMt(m) {
+    S.mt = m; var on = !!m.on;
+    $('mt-pill').hidden = false;
+    $('mt-pill').classList.toggle('off', on);
+    $('mt-pill-t').textContent = on ? 'Обслуживание' : 'Работает';
+    $('mt-bar').hidden = !on;
+    $('mt-state').innerHTML = on ? 'Сейчас: <b style="color:#fecaca">включено</b> — игроки видят сообщение ниже' : 'Сейчас: бот работает для всех';
+    $('mt-toggle').textContent = on ? 'Выключить' : '🔧 Включить';
+    $('mt-toggle').className = on ? 'b-acc f1' : 'b-no f1';
+    if (document.activeElement !== $('mt-text')) $('mt-text').value = m.text || '';
+  }
+  function mtOpen(v) { $('mt-panel').classList.toggle('open', v === undefined ? !$('mt-panel').classList.contains('open') : v); }
+  // действия шапки и акции: бот до v331 их не знает — говорим прямо, а не ошибкой сервера
+  function stDo(body, confirmText, btn, onOk) {
+    if (botVer() < 331) { toast('Заработает, когда бот на сервере обновится до v331', true); return; }
+    doSect('/settings', body, confirmText, btn, onOk);
+  }
+  function mtSend(on, confirmText, btn) {
+    stDo({ op: 'maint', on: on, text: $('mt-text').value.trim() }, confirmText, btn, function (j) {
+      setMt(j.maintenance); if (j.promo) setDp(j.promo);
+      if (!j.maintenance.on) mtOpen(false);
+    });
+  }
+  $('mt-pill').addEventListener('click', function () { mtOpen(); });
+  $('mt-toggle').addEventListener('click', function () {
+    var on = !(S.mt && S.mt.on);
+    mtSend(on, on ? 'Включить обслуживание?\nИгроки не смогут пользоваться ботом, пока не выключишь.' : null, this);
+  });
+  $('mt-save').addEventListener('click', function () { mtSend(!!(S.mt && S.mt.on), null, this); });
+  $('mt-bar-off').addEventListener('click', function () { mtSend(false, null, this); });
+
+  // ── v331: акция в Донате (вкладка «Промо») ──
+  S.dp = null; S.dpPhoto = ''; S.dpDrop = false;
+  function loadDp() {
+    return sect('/settings', { op: 'get' }, 'dp-state', 'v331').then(function (j) {
+      if (j) { setDp(j.promo); setMt(j.maintenance); }
+    }).catch(function () {});
+  }
+  function setDp(p) {
+    S.dp = p; S.dpPhoto = ''; S.dpDrop = false;
+    $('dp-state').innerHTML = p.active ? '<span class="bd ok" style="margin:0">включена</span> — игроки видят её, когда открывают «💎 Донат»'
+      : 'Сейчас выключена' + (p.text ? ' — ниже прошлый текст, можно включить снова' : '');
+    if (document.activeElement !== $('dp-text')) $('dp-text').value = p.text || '';
+    $('dp-off').hidden = !p.active;
+    $('dp-save').textContent = p.active ? 'Сохранить' : 'Сохранить и включить';
+    dpPhotoShow();
+  }
+  function dpHasPhoto() { return !!S.dpPhoto || (!!(S.dp && S.dp.photo) && !S.dpDrop); }
+  function dpLen() {
+    var n = $('dp-text').value.length, l = dpHasPhoto() ? 1000 : 3500;
+    $('dp-len').textContent = n + ' / ' + l + (dpHasPhoto() ? ' — с картинкой подпись короче' : '');
+    $('dp-len').style.color = n > l ? '#fca5a5' : '';
+  }
+  function dpPhotoShow() {
+    var has = dpHasPhoto(), src = S.dpPhoto || (S.dp && S.dp.thumb) || '';
+    $('dp-ph-box').hidden = !has; $('dp-ph-row').hidden = has;
+    $('dp-ph-img').hidden = !src; if (src) $('dp-ph-img').src = src;
+    $('dp-ph-info').textContent = S.dpPhoto ? 'Новая картинка — сохранится вместе с текстом'
+      : (src ? 'Картинка акции' : 'Картинка есть (поставлена через бота)');
+    dpLen();
+  }
+  function dpBody() {
+    var t = $('dp-text').value.trim();
+    if (!t) { toast('Впиши текст акции', true); return null; }
+    if (t.length > (dpHasPhoto() ? 1000 : 3500)) { toast('С картинкой текст — до 1000 знаков (так у Telegram)', true); return null; }
+    var b = { text: t };
+    if (S.dpPhoto) b.photo = S.dpPhoto;
+    if (S.dpDrop) b.drop_photo = true;
+    return b;
+  }
+  $('dp-text').addEventListener('input', dpLen);
+  $('dp-ph-add').addEventListener('click', function () { $('dp-ph-file').click(); });
+  $('dp-ph-file').addEventListener('change', function () {
+    var f = this.files && this.files[0]; this.value = '';
+    if (f) dpSetFile(f);
+  });
+  function dpSetFile(f) {
+    return readPhoto(f).then(function (url) { S.dpPhoto = url; S.dpDrop = false; dpPhotoShow(); },
+                             function () { toast('Картинка не открылась — выбери другую', true); });
+  }
+  $('dp-ph-del').addEventListener('click', function () { if (S.dpPhoto) S.dpPhoto = ''; else S.dpDrop = true; dpPhotoShow(); });
+  $('dp-test').addEventListener('click', function () {
+    var b = dpBody(); if (!b) return;
+    stDo(extend({ op: 'promo_test' }, b), null, this, function () {});
+  });
+  $('dp-save').addEventListener('click', function () {
+    var b = dpBody(); if (!b) return;
+    stDo(extend({ op: 'promo_save' }, b), S.dp && S.dp.active ? null : 'Включить акцию?\nЕё увидят все, кто откроет «💎 Донат».', this,
+      function (j) { setDp(j.promo); });
+  });
+  $('dp-off').addEventListener('click', function () {
+    stDo({ op: 'promo_off' }, 'Выключить акцию в Донате?\nТекст и картинка сохранятся — включить снова можно одной кнопкой.', this,
+      function (j) { setDp(j.promo); });
+  });
+
+  function skel(n) { var h = ''; for (var i = 0; i < n; i++) h += '<div class="sk"></div>'; return h; }
+
   // ── старт ───────────────────────────────────────────────────────────
   $('ver').textContent = VER;
   renderPrForm();
@@ -1628,12 +1815,13 @@ window.addEventListener('error', function (e) {
       S.meta = cached.meta; S.items = cached.items; S.total = cached.total;
       renderStats(); renderList();
       $('cnt').innerHTML = 'Найдено: ' + fmt(S.total) + ' · <span class="upd">обновляю…</span>';
-    }
+      if (cached.meta.maintenance) setMt(cached.meta.maintenance);
+    } else $('list').innerHTML = skel(6);                  // v331: пока едет список — серые строки, а не пустота
     loadMeta().catch(function () {});
     loadList(false, !!cached);
   }
 
-  window.ADM = { state: function () { return S; }, open: openPlayer, tab: openTab, photo: bcSetFile, ver: VER };
+  window.ADM = { state: function () { return S; }, open: openPlayer, tab: openTab, photo: bcSetFile, dpPhoto: dpSetFile, ver: VER };
 })();
 </script>
 </body>
