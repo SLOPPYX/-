@@ -200,6 +200,8 @@
       <div class="small" id="bc-skip"></div>
       <div class="lbl">Когда</div>
       <div class="v" id="bc-when"></div>
+      <div class="lbl">Удалить у всех — необязательно</div>
+      <div class="v" id="bc-del"></div>
       <div class="row"><button type="button" class="f1" id="bc-test">Себе — проверить</button>
         <button type="button" class="b-acc f1" id="bc-go">Отправить</button></div>
     </div></div>
@@ -274,7 +276,7 @@ window.addEventListener('error', function (e) {
     document.getElementById('app').hidden = true;
     var f = document.getElementById('fatal'); f.hidden = false;
     document.getElementById('fatal-t').textContent = 'Ошибка на странице';
-    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v328';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v329';
   } catch (_) {}
 }, true);
 </script>
@@ -289,7 +291,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v328';
+  var VER = 'v329';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -956,9 +958,14 @@ window.addEventListener('error', function (e) {
     pc: { chips: [[0, 'без срока']].concat(EXP_CH), or: 'или до', zero: '♾ Без срока', lead: '⏱ Будет действовать до ', after: '' },
     pe: { chips: EXP_CH, or: 'или до', zero: '', lead: '⏱ Будет действовать до ', after: '' },
     bw: { chips: [[0, 'сейчас'], [3600, 'через 1 ч'], [10800, 'через 3 ч'], [86400, 'через сутки']], or: 'или в',
-          num: 'Через сколько', zero: '⚡ Уйдёт сразу', lead: '🗓 Уйдёт ', after: 'через ', on: function () { bcGoLabel(); } }
+          num: 'Через сколько', zero: '⚡ Уйдёт сразу', lead: '🗓 Уйдёт ', after: 'через ', on: function () { bcGoLabel(); } },
+    // v329: через сколько удалить рассылку у всех. Без даты: срок считается от отправки. Больше 47 ч Telegram не даёт
+    bd: { chips: [[0, 'не удалять'], [3600, 'через 1 ч'], [21600, 'через 6 ч'], [43200, 'через 12 ч'], [86400, 'через сутки']],
+          num: 'Своё число', noDt: true, zero: '♾ Останется у игроков',
+          fmt: function (sec) { return sec > 47 * 3600 + 30 ? '⚠️ Дольше 47 ч нельзя — Telegram не даёт боту удалять старые сообщения'
+                                                            : '🗑 Удалится у всех через ' + leftTxt(sec) + ' после отправки'; } }
   };
-  S.exp = { pc: 0, bw: 0 };    // выбранная кнопка; 0 — «без срока» / «сейчас»; нет ключа — кнопка не выбрана
+  S.exp = { pc: 0, bw: 0, bd: 0 };   // выбранная кнопка; 0 — «без срока» / «сейчас» / «не удалять»; нет ключа — не выбрана
   function leftTxt(sec) {
     sec = Math.max(0, sec);
     if (sec >= 86400) { var d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600); return d + ' дн' + (h ? ' ' + h + ' ч' : ''); }
@@ -972,12 +979,13 @@ window.addEventListener('error', function (e) {
         return '<button type="button" class="chip' + (S.exp[p] === x[0] ? ' on' : '') + '" data-es="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>'
       + '<div class="row"><input id="' + p + '-n" inputmode="numeric" placeholder="' + (c.num || 'Своё число') + '" class="f1">'
       + '<select id="' + p + '-u" style="width:92px"><option value="60">мин</option><option value="3600" selected>ч</option><option value="86400">дн</option></select></div>'
-      + '<div class="row"><span class="small" style="flex:0 0 auto">' + c.or + '</span><input id="' + p + '-dt" type="datetime-local" class="f1"></div>'
+      + (c.noDt ? '' : '<div class="row"><span class="small" style="flex:0 0 auto">' + c.or + '</span><input id="' + p + '-dt" type="datetime-local" class="f1"></div>')
       + '<div class="small" id="' + p + '-hint"></div>';
   }
+  function dtVal(p) { var e = $(p + '-dt'); return e ? e.value : ''; }
   // выбранное время: {seconds} или {until}; null — ошибка (уже сказано); undefined — ничего не выбрано
   function readExp(p) {
-    var dv = $(p + '-dt').value;
+    var dv = dtVal(p);
     if (dv) {
       var t = Math.round(new Date(dv).getTime() / 1000);
       if (!(t > Date.now() / 1000 + 59)) { toast('Это время уже прошло', true); return null; }
@@ -990,8 +998,8 @@ window.addEventListener('error', function (e) {
   }
   // к какому моменту выйдет выбранное: unix; 0 — «без срока» / «сейчас»; null — ничего не выбрано
   function expEnd(p) {
-    if (!$(p + '-dt')) return null;
-    var dv = $(p + '-dt').value, n = parseInt($(p + '-n').value, 10), now = Date.now() / 1000;
+    if (!$(p + '-n')) return null;
+    var dv = dtVal(p), n = parseInt($(p + '-n').value, 10), now = Date.now() / 1000;
     if (dv) return new Date(dv).getTime() / 1000;
     if (n > 0) return now + n * parseInt($(p + '-u').value, 10);
     if (S.exp[p]) return now + S.exp[p];
@@ -1001,7 +1009,7 @@ window.addEventListener('error', function (e) {
   function expHint(p) {
     var el = $(p + '-hint'), c = EXPC[p]; if (!el) return;
     var end = expEnd(p), now = Date.now() / 1000;
-    el.textContent = end === null ? '' : end === 0 ? c.zero
+    el.textContent = end === null ? '' : end === 0 ? c.zero : c.fmt ? c.fmt(end - now)
       : end > now ? c.lead + dt(end) + ' (' + c.after + leftTxt(end - now) + ')' : '⚠️ Это время уже прошло';
     if (c.on) c.on();
   }
@@ -1015,14 +1023,14 @@ window.addEventListener('error', function (e) {
       var b = e.target.closest('[data-es]'); if (!b) return;
       var p = b.parentNode.getAttribute('data-exp');
       S.exp[p] = Number(b.getAttribute('data-es'));
-      $(p + '-n').value = ''; $(p + '-dt').value = '';
+      $(p + '-n').value = ''; if ($(p + '-dt')) $(p + '-dt').value = '';
       var cs = b.parentNode.querySelectorAll('.chip');
       for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('on', cs[i] === b);
       expHint(p);
     });
     function typed(e) {
-      var m = (e.target.id || '').match(/^(pc|pe|bw)-(n|u|dt)$/); if (!m) return;
-      if (m[2] === 'n' && e.target.value) { $(m[1] + '-dt').value = ''; offChips(m[1]); }
+      var m = (e.target.id || '').match(/^(pc|pe|bw|bd)-(n|u|dt)$/); if (!m) return;
+      if (m[2] === 'n' && e.target.value) { if ($(m[1] + '-dt')) $(m[1] + '-dt').value = ''; offChips(m[1]); }
       if (m[2] === 'dt' && e.target.value) { $(m[1] + '-n').value = ''; offChips(m[1]); }
       expHint(m[1]);
     }
@@ -1054,10 +1062,12 @@ window.addEventListener('error', function (e) {
     bcSchedule();
   }
   // пока идёт рассылка — спрашиваем, как дела: на вкладке часто, на других — изредка (ради точки и итога)
+  // v329: пока рассылку удаляют у всех — тоже следим, чтобы «удаляю…» сменилось на «удалена у N»
+  function bcDeleting() { return !!(S.bc && (S.bc.history || []).some(function (x) { return x.deleting; })); }
   function bcSchedule() {
     clearTimeout(bcT); bcT = 0;
     $('bc-dot').hidden = !bcRunning();
-    if (bcRunning()) bcT = setTimeout(function () { loadBc(true); }, S.view === 'bc' ? 1500 : 5000);
+    if (bcRunning() || bcDeleting()) bcT = setTimeout(function () { loadBc(true); }, S.view === 'bc' ? 1500 : 5000);
   }
   function renderBc() {
     var j = S.bc, jb = j.job, run = bcRunning(), h = '';
@@ -1087,7 +1097,7 @@ window.addEventListener('error', function (e) {
     $('bc-sch-box').hidden = !sc.length;
     $('bc-sch').innerHTML = sc.map(function (x) {
       return '<div><b>🗓 ' + dt(x.at) + '</b> · ' + esc(AUDN[x.aud] || x.aud) + (x.photo ? ' · 🖼' : '')
-        + (x.btn_text ? ' · 🔗 ' + esc(cut(x.btn_text, 30)) : '')
+        + (x.btn_text ? ' · 🔗 ' + esc(cut(x.btn_text, 30)) : '') + (x.ttl ? ' · 🗑 через ' + leftTxt(x.ttl) : '')
         + ' <span class="small">(через ' + leftTxt(x.at - Date.now() / 1000) + ')</span>'
         + (x.text ? '<br><span class="small">«' + esc(cut(x.text, 120)) + '»</span>' : '')
         + '<div class="row" style="margin-top:6px"><button type="button" class="xs" data-unsch="' + esc(x.id) + '">Отменить</button></div></div>';
@@ -1100,7 +1110,12 @@ window.addEventListener('error', function (e) {
         + (x.state === 'cancelled' ? ' <span class="bd wn">остановлена</span>' : '')
         + '<br>✓ дошло ' + fmt(x.sent) + ' из ' + fmt(x.total) + (x.failed ? ' · ✗ ' + fmt(x.failed) : '')
         + (x.skipped ? ' · пропущено ' + fmt(x.skipped) : '')
-        + (x.text ? '<br><span class="small">«' + esc(cut(x.text, 100)) + '»</span>' : '') + '</div>';
+        // v329: удалена / удаляется / удалится по сроку, и кнопка «удалить у всех сейчас» (первые 47 ч)
+        + (x.deleted != null ? '<br>🗑 удалена у ' + fmt(x.deleted) + (x.deleted_at ? ' · ' + dt(x.deleted_at) : '')
+           : x.deleting ? '<br>🗑 удаляю у всех…' : x.del_at ? '<br>🗑 удалится сама ' + dt(x.del_at) : '')
+        + (x.text ? '<br><span class="small">«' + esc(cut(x.text, 100)) + '»</span>' : '')
+        + (x.can_delete ? '<div class="row" style="margin-top:6px"><button type="button" class="xs" data-bdel="' + esc(x.id) + '">🗑 Удалить у всех сейчас</button></div>' : '')
+        + '</div>';
     }).join('');
   }
   // надпись на главной кнопке: «Отправить N игрокам» или «🗓 Запланировать на …» — смотря что выбрано в «Когда»
@@ -1125,9 +1140,15 @@ window.addEventListener('error', function (e) {
     if (t.length > bcLim()) { toast('С картинкой текст — до 1000 знаков (так у Telegram), сейчас ' + t.length, true); return null; }
     if ((bt || bu) && !(bt && bu)) { toast('Для кнопки нужны и надпись, и ссылка', true); return null; }
     if ((S.bcPhoto || bt) && botVer() < 328) { toast('Картинка и кнопка заработают, когда бот обновится до v328', true); return null; }
+    // v329: удалить у всех через…
+    var dl = readExp('bd'); if (dl === null) return null;
+    var ttl = dl && dl.seconds ? dl.seconds : 0;
+    if (ttl > 47 * 3600 + 30) { toast('Удалить можно не позже чем через 47 ч — дольше Telegram не даёт боту удалять', true); return null; }
+    if (ttl && botVer() < 329) { toast('Автоудаление заработает, когда бот обновится до v329', true); return null; }
     var p = { text: t };
     if (S.bcPhoto) p.photo = S.bcPhoto;
     if (bt) { p.btn_text = bt; p.btn_url = bu; }
+    if (ttl) p.ttl = Math.min(ttl, 47 * 3600);
     return p;
   }
   function bcPhotoShow() {
@@ -1158,11 +1179,13 @@ window.addEventListener('error', function (e) {
     $('bc-text').value = ''; $('bc-bt').value = ''; $('bc-bu').value = ''; S.bcPhoto = ''; bcPhotoShow();
     try { localStorage.removeItem(DK); } catch (e) {}
     S.exp.bw = 0; $('bc-when').innerHTML = expHtml('bw'); expHint('bw');
+    S.exp.bd = 0; $('bc-del').innerHTML = expHtml('bd'); expHint('bd');
   }
   // черновик — только в этом телефоне: закрыл приложение случайно — текст на месте
   try { $('bc-text').value = localStorage.getItem(DK) || ''; } catch (e) {}
   bcLen();
   $('bc-when').innerHTML = expHtml('bw'); expWire($('bc-when')); expHint('bw');
+  $('bc-del').innerHTML = expHtml('bd'); expWire($('bc-del')); expHint('bd');
   $('bc-text').addEventListener('input', function () { bcLen(); try { localStorage.setItem(DK, this.value); } catch (e) {} });
   $('bc-aud').addEventListener('click', function (e) {
     var b = e.target.closest('[data-aud]'); if (!b || !S.bc) return;
@@ -1204,6 +1227,11 @@ window.addEventListener('error', function (e) {
   $('bc-job').addEventListener('click', function (e) {
     var b = e.target.closest('#bc-stop'); if (!b || b.disabled) return;
     doSect('/broadcast', { op: 'cancel' }, 'Остановить рассылку? Кому уже ушло — у того останется.', b, setBc);
+  });
+  $('bc-hist').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-bdel]'); if (!b) return;
+    doSect('/broadcast', { op: 'delete_now', id: b.getAttribute('data-bdel') },
+      'Удалить это сообщение у всех, кому оно пришло? Вернуть будет нельзя.', b, setBc);
   });
   $('bc-sch').addEventListener('click', function (e) {
     var b = e.target.closest('[data-unsch]'); if (!b) return;
@@ -1490,11 +1518,51 @@ window.addEventListener('error', function (e) {
           + d.active.map(function (p) { return erow(p, p.matches + ' матч.'); }).join('') : ''));
     h += sec('🎰 Казино', '<div class="grid">' + bigKv('Выиграно всего', c.won_s, ' 💰') + '</div>'
       + ((c.top || []).length ? '<div class="lbl">Больше всех выиграли</div>' + c.top.map(function (p) { return erow(p, bigS(p.won_s) + ' 💰'); }).join('') : ''));
+    // v329: сезон — награды топ-3 (текст видят игроки в «Рангах»), кто сейчас на пьедестале, кому вручено за прошлый
+    var s = e.season, M = ['🥇', '🥈', '🥉'];
+    if (s) {
+      h += sec('🏆 Награды топ-3 сезона', '<div class="small">Игроки видят их в «Рангах» — под пьедесталом и во вкладке «Сезон». '
+          + 'Вручаешь сам: токены или NFT — в карточке игрока (нажми на него ниже).</div>'
+        + [0, 1, 2].map(function (i) {
+            return '<div class="row"><span style="flex:0 0 auto;font-size:19px">' + M[i] + '</span><input id="pz-' + i + '" maxlength="100" class="f1" '
+              + 'placeholder="Награда за ' + (i + 1) + ' место, напр. 50м токенов + NFT" value="' + esc((s.prizes || [])[i] || '') + '"></div>';
+          }).join('')
+        + '<div class="row"><button type="button" class="b-acc f1" id="pz-save">Сохранить награды</button></div>'
+        + '<div class="lbl">Сейчас на пьедестале — сезон «' + esc(s.name) + '»</div>'
+        + ((s.top3 || []).length ? s.top3.map(function (p, i) {
+            return erow(extend(extend({}, p), { name: M[i] + ' ' + (p.name || 'без имени') }), fmt(p.rp) + ' RP'); }).join('')
+          : '<div class="small">Пока никто не набрал RP</div>')
+        + (s.last && (s.last.top3 || []).length ? '<div class="lbl">Прошлый сезон «' + esc(s.last.name) + '» — кому вручено</div>'
+          + s.last.top3.map(function (p, i) {
+              return '<div class="it"' + (p.uid ? ' data-uid="' + p.uid + '"' : '') + '><div class="av">' + (p.uid ? avHtml(p) : M[i]) + '</div>'
+                + '<div class="m"><div class="nm">' + M[i] + ' ' + esc(p.name || '—') + '</div><div class="sub">' + fmt(p.rp) + ' RP</div></div>'
+                + '<button type="button" class="xs' + (p.rewarded ? ' b-ok' : '') + '" data-rw="' + i + '" data-rn="' + s.last.number + '" data-rv="'
+                + (p.rewarded ? 0 : 1) + '">' + (p.rewarded ? '✅ Вручено' : 'Отметить «вручено»') + '</button></div>';
+            }).join('') : ''));
+    }
     if (x.price) {
       var ch = Number(x.change_pct || 0);
+      // v329: все команды биржи из /admin — здесь же: сдвиг курса, эмиссия, ликвидность, курс ровно, сброс
       h += sec('💹 Биржа SLX', '<div class="grid">' + kv('Курс', fmt(x.price) + ' 💰')
         + kv('За сутки', '<span class="' + (ch > 0 ? 'up' : ch < 0 ? 'dn' : '') + '">' + (ch > 0 ? '+' : '') + String(ch).replace('.', ',') + '%</span>')
-        + kv('Глубина пула', short(x.liquidity) + ' 💰') + '</div>');
+        + (x.fair != null ? kv('Тянется к', fmt(x.fair) + ' 💰<small>справедливый курс: цена плавно идёт к нему</small>')
+            + kv('Покупают / продают', x.buy_pct + '% / ' + (100 - x.buy_pct) + '%') : '')
+        + kv('Глубина рынка', short(x.liquidity) + ' 💰' + (x.treasury != null ? '<small>казна ' + short(x.treasury) + ' + игроки ' + short(x.lp) + '</small>' : ''))
+        + '</div>'
+        + '<div class="lbl">Сдвинуть курс — плавно, за несколько минут, все увидят на графике</div>'
+        + '<div class="chips wrap">' + [-20, -30, -40, -50].map(function (v) { return '<button type="button" class="chip" data-sx="move" data-v="' + v + '">📉 ' + v + '%</button>'; }).join('')
+        + [20, 30].map(function (v) { return '<button type="button" class="chip" data-sx="move" data-v="' + v + '">📈 +' + v + '%</button>'; }).join('') + '</div>'
+        + '<div class="row"><input id="sx-pct" inputmode="decimal" placeholder="Свой %: −15 или 25" class="f1"><button type="button" data-sx="move_c">Сдвинуть</button></div>'
+        + '<div class="lbl">Эмиссия — выбросить новые SLX на рынок (курс падает)</div>'
+        + '<div class="row"><input id="sx-dump" inputmode="numeric" placeholder="Сколько SLX, напр. 1000" class="f1"><button type="button" data-sx="dump">🌊 Выбросить</button></div>'
+        + '<div class="lbl">Ликвидность пула (казна): толще пул — меньше скачки курса</div>'
+        + '<div class="chips wrap"><button type="button" class="chip" data-sx="lock" data-v="10000000">🔒 +10M</button><button type="button" class="chip" data-sx="lock" data-v="50000000">🔒 +50M</button>'
+        + '<button type="button" class="chip" data-sx="unlock" data-v="10000000">🔓 −10M</button><button type="button" class="chip" data-sx="unlock" data-v="50000000">🔓 −50M</button></div>'
+        + '<div class="row"><input id="sx-liq" inputmode="numeric" placeholder="Сумма (можно 25м)" class="f1"><button type="button" data-sx="lock_c">🔒 В пул</button>'
+        + '<button type="button" data-sx="unlock_c">🔓 Из пула</button></div>'
+        + '<div class="lbl">Курс ровно</div>'
+        + '<div class="row"><input id="sx-price" inputmode="numeric" placeholder="Напр. 100 000" class="f1"><button type="button" data-sx="price">Поставить</button></div>'
+        + '<div class="row"><button type="button" class="f1" data-sx="reset">🔄 Сбросить к ' + fmt(x.start_price || 100000) + '</button></div>');
     }
     h += sec('🎴 NFT у игроков', '<div class="grid">' + kv('Всего карт', fmt(n.total)) + '</div>'
       + ((n.by_rarity || []).length ? '<div class="chips wrap">' + n.by_rarity.map(function (r) {
@@ -1502,7 +1570,48 @@ window.addEventListener('error', function (e) {
     h += '<div class="small" style="margin-top:8px">Посчитано в ' + hm(new Date(e.t * 1000)) + ' · ↻ вверху — пересчитать</div>';
     $('ec').innerHTML = h;
   }
+  // v329: действия вкладки: биржа, награды сезона, отметка «вручено». Ответ — вкладка целиком.
+  function ecDo(body, confirmText, btn) {
+    if (botVer() < 329) { toast('Заработает, когда бот на сервере обновится до v329', true); return; }
+    doSect('/economy', body, confirmText, btn, function (j) { S.ec = j; renderEcon(); });
+  }
+  function slxAct(b) {
+    var a = b.getAttribute('data-sx'), v = Number(b.getAttribute('data-v') || 0), x = (S.ec && S.ec.slx) || {};
+    if (a === 'move' || a === 'move_c') {
+      var pct = a === 'move' ? v : Math.round(Number(String($('sx-pct').value).replace(',', '.').replace('−', '-').replace('%', '')));
+      if (!pct || !isFinite(pct)) { toast('Впиши, на сколько процентов сдвинуть: −15 или 25', true); return; }
+      return ecDo({ op: 'slx_move', pct: pct }, (pct > 0 ? 'Поднять' : 'Опустить') + ' курс SLX на ' + Math.abs(pct) + '%?\nЦена поедет плавно — это увидят все на графике.', b);
+    }
+    if (a === 'dump') {
+      var n = parseAmount($('sx-dump').value);
+      if (!(n > 0)) { toast('Впиши, сколько SLX выбросить', true); return; }
+      return ecDo({ op: 'slx_dump', amount: n }, 'Выбросить ' + fmt(n) + ' SLX на рынок? Курс упадёт.', b);
+    }
+    if (/^(un)?lock/.test(a)) {
+      var amt = /_c$/.test(a) ? parseAmount($('sx-liq').value) : v, lock = a.indexOf('unlock') < 0;
+      if (!(amt > 0)) { toast('Впиши сумму', true); return; }
+      return ecDo({ op: lock ? 'slx_lock' : 'slx_unlock', amount: amt },
+        (lock ? 'Добавить в пул ' : 'Забрать из пула ') + short(amt) + ' токенов?\nКурс ' + (lock ? 'подрастёт' : 'опустится') + '.', b);
+    }
+    if (a === 'price' || a === 'reset') {
+      var pr = a === 'reset' ? (x.start_price || 100000) : parseAmount($('sx-price').value);
+      if (!(pr >= 1000)) { toast('Курс — от 1 000', true); return; }
+      return ecDo({ op: 'slx_price', price: pr }, 'Поставить курс SLX ровно ' + fmt(pr) + '?\nСейчас: ' + fmt(x.price), b);
+    }
+  }
   $('ec').addEventListener('click', function (e) {
+    var sx = e.target.closest('[data-sx]'); if (sx) { slxAct(sx); return; }
+    var rw = e.target.closest('[data-rw]');
+    if (rw) {
+      var on = rw.getAttribute('data-rv') === '1', pl = Number(rw.getAttribute('data-rw'));
+      ecDo({ op: 'rewarded', number: Number(rw.getAttribute('data-rn')), place: pl, value: on },
+        on ? 'Отметить, что награду за ' + (pl + 1) + ' место вручил?\nИгроки увидят 🎁 в «Рангах» → «Сезон».' : 'Снять отметку «вручено»?', rw);
+      return;
+    }
+    if (e.target.closest('#pz-save')) {
+      ecDo({ op: 'prizes', prizes: [$('pz-0').value.trim(), $('pz-1').value.trim(), $('pz-2').value.trim()] }, null, e.target.closest('#pz-save'));
+      return;
+    }
     var it = e.target.closest('[data-uid]'); if (it) openPlayer(Number(it.getAttribute('data-uid')), 'econ');
   });
 
