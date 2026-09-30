@@ -5541,8 +5541,8 @@ html.mobile-perf .hist-collapse {
       <div class="pt-row"><span class="pt-syms" id="ptRow5"></span><span class="pt-mult" style="color:var(--green)">× 15</span></div>
       <div class="pt-row"><span class="pt-syms" id="ptRow6"></span><span class="pt-mult" style="color:var(--cyan)">× 8</span></div>
       <div class="pt-row"><span class="pt-syms" id="ptRow7"></span><span class="pt-mult">× 5</span></div>
-      <div class="pt-row"><span class="pt-syms" id="ptRow8" style="font-size:12px"></span><span class="pt-mult" style="color:var(--gold)">× 3</span></div>
-      <div class="pt-row"><span class="pt-syms" id="ptRow9" style="font-size:12px"></span><span class="pt-mult" style="color:var(--cyan)">× 2</span></div>
+      <div class="pt-row"><span class="pt-syms" id="ptRow8" style="font-size:12px"></span><span class="pt-mult" style="color:var(--gold)">× 2</span></div>
+      <div class="pt-row"><span class="pt-syms" id="ptRow9" style="font-size:12px"></span><span class="pt-mult" style="color:var(--cyan)">× 1,5</span></div>
       <div class="pt-row"><span class="pt-syms" id="ptRow10" style="font-size:12px"></span><span class="pt-mult" style="color:var(--muted)">× 1 (возврат)</span></div>
       <div class="pt-row"><span class="pt-syms" style="font-size:13px;color:var(--muted)">Без совпадений</span><span class="pt-mult zero">проигрыш</span></div>
     </div>
@@ -5871,13 +5871,14 @@ const SLOT_SVGS = {
 // 💎 тройка: ~1/2800 | 7 тройка: ~1/780 | вишня тройка: ~1/60
 // Пары встречаются часто — хорошие ощущения от игры
 const SYMS = [
-  {e:'diamond', m3:100, m2:3, w:55},
-  {e:'seven',   m3:50,  m2:2, w:40},
-  {e:'cherry',  m3:20,  m2:2, w:80},
-  {e:'star',    m3:8,   m2:2, w:100},
-  {e:'bell',    m3:5,   m2:1, w:110},
-  {e:'ram',     m3:30,  m2:2, w:60},
-  {e:'clover',  m3:15,  m2:2, w:55},
+  // v337: пары ×1,5, пара алмазов ×2 — как на сервере (исход решает он; здесь таблица только для показа)
+  {e:'diamond', m3:100, m2:2,   w:55},
+  {e:'seven',   m3:50,  m2:1.5, w:40},
+  {e:'cherry',  m3:20,  m2:1.5, w:80},
+  {e:'star',    m3:8,   m2:1.5, w:100},
+  {e:'bell',    m3:5,   m2:1,   w:110},
+  {e:'ram',     m3:30,  m2:1.5, w:60},
+  {e:'clover',  m3:15,  m2:1.5, w:55},
 ];
 function getSymHtml(id) {
   return SLOT_SVGS[id] || id;
@@ -5898,8 +5899,8 @@ function renderPaytable() {
     { id:'ptRow5', html: triple('clover') },                            // ×15
     { id:'ptRow6', html: triple('star') },                              // ×8
     { id:'ptRow7', html: triple('bell') },                              // ×5
-    { id:'ptRow8', html: 'Пара ' + pair('diamond') },                   // ×3
-    { id:'ptRow9', html: 'Пара ' + pair('seven') + ' / ' + pair('ram') + ' / ' + pair('cherry') + ' / ' + pair('star') + ' / ' + pair('clover') }, // ×2
+    { id:'ptRow8', html: 'Пара ' + pair('diamond') },                   // ×2 (v337)
+    { id:'ptRow9', html: 'Пара ' + pair('seven') + ' / ' + pair('ram') + ' / ' + pair('cherry') + ' / ' + pair('star') + ' / ' + pair('clover') }, // ×1,5 (v337)
     { id:'ptRow10', html: 'Пара ' + pair('bell') },                     // ×1
   ];
   rows.forEach(r => {
@@ -6327,8 +6328,8 @@ async function spin() {
           // Пара
           const symHtml = getSymHtml(res.emoji);
           result.className = 'result-strip win';
-          if (res.mult >= 2) {
-            result.innerHTML = `<span style="display:flex;align-items:center;gap:6px;justify-content:center">✨ Пара <span style="display:inline-flex;gap:3px">${symHtml}${symHtml}</span> ×${res.mult} &nbsp;+${computedPrize.toLocaleString('ru-RU')} токенов</span>`;
+          if (res.mult > 1) {       // v337: ×1,5 — тоже выигрыш (раньше порог был ×2)
+            result.innerHTML = `<span style="display:flex;align-items:center;gap:6px;justify-content:center">✨ Пара <span style="display:inline-flex;gap:3px">${symHtml}${symHtml}</span> ×${String(res.mult).replace('.', ',')} &nbsp;+${computedPrize.toLocaleString('ru-RU')} токенов</span>`;
             try { showToast(`+${computedPrize.toLocaleString('ru-RU')} ✨`, 'gold'); } catch(e){}
           } else {
             result.innerHTML = `<span style="display:flex;align-items:center;gap:6px;justify-content:center">🤝 Пара <span style="display:inline-flex;gap:3px">${symHtml}${symHtml}</span> ×1 &nbsp;±0 (возврат)</span>`;
