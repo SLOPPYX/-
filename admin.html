@@ -246,6 +246,14 @@
   .chx span { position: absolute; top: 0; white-space: nowrap; }
   #rp-list.quiet .sec { animation: none; }
   .rpb button { padding-left: 6px; padding-right: 6px; white-space: nowrap; }
+  /* v334: улики — списком, маркер фиолетовый */
+  .sig { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--tx2); line-height: 1.5; }
+  .sig li { margin: 3px 0; }
+  .sig li::marker { color: var(--acc2); }
+  .sig b { color: var(--tx); font-weight: 600; }
+  .tr { font-size: 11.5px; color: var(--tx3); white-space: normal; }
+  #fr-pairs .sec, #fr-groups .sec, #fr-farms .sec { animation: rin .24s var(--ease) both; }
+  #v-rep.quiet .sec { animation: none; }
   .ctip { position: absolute; z-index: 3; top: 0; transform: translate(-50%, -100%); pointer-events: none; white-space: nowrap;
           background: rgba(18,17,26,.96); border: 1px solid rgba(139,92,246,.4); border-radius: 10px; padding: 5px 9px; font-size: 11.5px;
           color: var(--tx2); box-shadow: 0 10px 24px -10px rgba(0,0,0,.9); opacity: 0; transition: opacity .15s; }
@@ -284,7 +292,8 @@
     <button type="button" data-tab="list" class="on"><svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.8a3.3 3.3 0 0 1 0 6.4M18.5 14.8c1.7.8 2.8 2.5 3 5.2"/></svg>Игроки</button>
     <!-- v333: споры и матчи прямо сейчас, очередь, сезон · жалобы с перепиской -->
     <button type="button" data-tab="duels"><svg class="ic" viewBox="0 0 24 24"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg>1vs1<span class="tcnt" id="du-cnt" hidden></span></button>
-    <button type="button" data-tab="rep"><svg class="ic" viewBox="0 0 24 24"><path d="M5 21V4M5 4c3-2 6 1.6 9 0s4-1 5-.5V14c-1-.5-2-1-5 .5s-6-2-9 0"/></svg>Жалобы<span class="tcnt" id="rp-tcnt" hidden></span></button>
+    <!-- v334: «Жалобы» стали «Защитой»: жалобы, договорные пары, мульты -->
+    <button type="button" data-tab="rep"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.4 2.9 8.3 7 10 4.1-1.7 7-5.6 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>Защита<span class="tcnt" id="rp-tcnt" hidden></span></button>
     <button type="button" data-tab="bc"><svg class="ic" viewBox="0 0 24 24"><path d="M4 10v4a1 1 0 0 0 1 1h2l7 4V5L7 9H5a1 1 0 0 0-1 1z"/><path d="M18 9a4 4 0 0 1 0 6"/></svg>Рассылка<span class="tdot" id="bc-dot" hidden></span></button>
     <button type="button" data-tab="promo"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 6v12" stroke-dasharray="2 2.2"/></svg>Промо</button>
     <button type="button" data-tab="tour"><svg class="ic" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg>Турнир</button>
@@ -338,9 +347,24 @@
 
   <!-- v333: жалобы — по игрокам, с перепиской матча -->
   <section id="v-rep" hidden>
-    <div class="small" id="rp-cnt" style="margin-top:12px"></div>
-    <div id="rp-list"></div>
-    <div class="sec" id="rp-done-box" hidden><h3>Недавно разобраны</h3><div class="hist" id="rp-done"></div></div>
+    <div class="chips" id="rp-chips" style="margin-top:12px"></div>
+    <div id="rp-sub-rep">
+      <div class="small" id="rp-cnt" style="margin-top:10px"></div>
+      <div id="rp-list"></div>
+      <div class="sec" id="rp-done-box" hidden><h3>Недавно разобраны</h3><div class="hist" id="rp-done"></div></div>
+    </div>
+    <!-- v334: договорные матчи — один сливает токены и RP другому -->
+    <div id="rp-sub-pairs" hidden>
+      <div class="small" id="fr-pairs-head" style="margin-top:10px"></div>
+      <div id="fr-pairs"></div>
+      <div class="sec" id="fr-blocks-box" hidden><h3>Запрещено играть друг с другом</h3><div id="fr-blocks"></div></div>
+    </div>
+    <!-- v334: мульты — группы связанных аккаунтов и пустые рефералы -->
+    <div id="rp-sub-alts" hidden>
+      <div class="small" id="fr-alts-head" style="margin-top:10px"></div>
+      <div id="fr-groups"></div>
+      <div id="fr-farms"></div>
+    </div>
   </section>
 
   <section id="v-log" hidden>
@@ -459,7 +483,7 @@ window.addEventListener('error', function (e) {
     document.getElementById('app').hidden = true;
     var f = document.getElementById('fatal'); f.hidden = false;
     document.getElementById('fatal-t').textContent = 'Ошибка на странице';
-    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v333';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v334';
   } catch (_) {}
 }, true);
 </script>
@@ -474,7 +498,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v333';
+  var VER = 'v334';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -689,7 +713,7 @@ window.addEventListener('error', function (e) {
                             ['Бан', st.banned], ['Заморозка', st.frozen], ['Жалобы', st.reports], ['Матчей', st.in_match], ['В поиске', st.queue]]
       .filter(function (x) { return x[1] !== undefined; })
       .map(function (x) { return '<span>' + x[0] + ' <b>' + fmt(x[1]) + '</b></span>'; }).join('');
-    tabCnt('du-cnt', st.disputes); tabCnt('rp-tcnt', st.reports);       // v333
+    tabCnt('du-cnt', st.disputes); tabCnt('rp-tcnt', (st.reports || 0) + (st.fraud || 0));       // v333 (v334: + подозрения)
   }
   // v333: число на вкладке — сколько ждёт разбора (споры, жалобы); 0 — не видно
   function tabCnt(id, n) {
@@ -811,7 +835,7 @@ window.addEventListener('error', function (e) {
   // ── карточка игрока ─────────────────────────────────────────────────
   // v325: карточка открывается СРАЗУ — из строки списка или из прошлого открытия, а подробности догружаются.
   // Раньше экран ждал ответа сервера с надписью «Загрузка…».
-  function openPlayer(uid, from, refresh) {
+  function openPlayer(uid, from, refresh, quiet) {
     if (!refresh) {
       if (S.view === 'list') S.listY = window.scrollY;
       S.from = from || S.view;
@@ -830,7 +854,7 @@ window.addEventListener('error', function (e) {
       S.views[uid] = res.j.player;
       S.cur = res.j.player;
       var st = formState(); renderPlayer(); formRestore(st);   // то, что уже начал вписывать, не пропадает
-      if (refresh) toast('Обновлено');
+      if (refresh && !quiet) toast('Обновлено');
     }).catch(function () {
       if (my === S.pseq && S.cur && S.cur.partial) { var l = $('pl-load'); if (l) l.textContent = 'Нет связи с сервером — нажми ↻'; }
       else toast('Нет связи с сервером', true);
@@ -927,6 +951,21 @@ window.addEventListener('error', function (e) {
       + list('Предупреждения', 'warn', p.warnings, function (w) { return dt(w.time) + ' — ' + esc(w.reason) + ' <span class="small">(' + srcName(w.source) + ')</span>'; })
       + list('Жалобы на игрока', 'rep', p.reports_list, function (r) {
           return dt(r.time) + ' — <b>' + esc(r.category) + '</b> от ' + esc(r.from) + ' <span class="small">' + (r.handled ? '(' + esc(r.handled) + ')' : '(ждёт)') + '</span>'; }));
+
+    // v334: связи с другими аккаунтами (сеть, договорные матчи, рефералы) и запреты матчей
+    var lk = p.links || {};
+    if ((lk.links || []).length || (lk.blocks || []).length) {
+      h += sec('Связанные аккаунты', ((lk.links || []).length ? '<div class="small">Подсказки для поиска мультов и договорных матчей — решаешь ты.</div>' : '')
+        + (lk.links || []).map(function (l) {
+            return '<div class="it" data-open="' + l.uid + '"><div class="m"><div class="nm">' + esc(l.name || 'без имени') + ' <span class="small">ID ' + esc(l.cid || '—') + '</span></div>'
+              + '<div class="tr">' + esc(l.why.join('; ')) + '</div></div>'
+              + (l.blocked ? '<span class="bd auto">запрещено</span>' : '<button type="button" class="xs b-no" data-pblock="' + l.uid + '">⛔ Запретить</button>') + '</div>';
+          }).join('')
+        + ((lk.blocks || []).length ? '<div class="lbl">Запрещено играть с</div>' + lk.blocks.map(function (x) {
+            return '<div class="it" data-open="' + x.uid + '"><div class="m"><div class="nm">' + esc(x.name || 'без имени') + '</div><div class="sub">с ' + dt(x.t) + '</div></div>'
+              + '<button type="button" class="xs" data-punblock="' + x.uid + '">Разрешить</button></div>';
+          }).join('') : ''));
+    }
 
     // сообщение
     // v328: написать игроку в личку Telegram. Есть @username — чат открывается сразу; нет — бот присылает администратору
@@ -1032,8 +1071,22 @@ window.addEventListener('error', function (e) {
   $('pl').addEventListener('click', function (e) {
     var cp = e.target.closest('[data-copy]');
     if (cp) { if (cp.getAttribute('data-copy')) copy(cp.getAttribute('data-copy')); return; }
-    var t = e.target.closest('button'); if (!t || t.disabled) return;
+    var t = e.target.closest('button');
+    if (!t) {                                            // v334: нажал на связанного игрока — открыть его карточку
+      var op = e.target.closest('[data-open]');
+      if (op) openPlayer(Number(op.getAttribute('data-open')), S.from);
+      return;
+    }
+    if (t.disabled) return;
     var p = S.cur, nm = p.name || ('ID ' + p.cid);
+    if (t.hasAttribute('data-pblock') || t.hasAttribute('data-punblock')) {
+      var on = t.hasAttribute('data-pblock'), other = Number(t.getAttribute(on ? 'data-pblock' : 'data-punblock'));
+      if (botVer() < 334) { toast('Заработает, когда бот на сервере обновится до v334', true); return; }
+      doSect('/fraud', { op: on ? 'block' : 'unblock', a: p.uid, b: other },
+        on ? 'Запретить ' + nm + ' играть с этим игроком?\nС остальными — можно. Игрокам ничего не придёт.' : null, t,
+        function () { S.dirty = true; S.fr = null; openPlayer(p.uid, S.from, true, true); });
+      return;
+    }
     if (t.hasAttribute('data-amt')) { $('t-amt').value = fmt(t.getAttribute('data-amt')); return; }
     if (t.hasAttribute('data-rp')) { $('rp').value = t.getAttribute('data-rp'); return; }
     if (t.hasAttribute('data-dur')) {
@@ -2141,15 +2194,17 @@ window.addEventListener('error', function (e) {
   S.rp = null; S.rpBan = null; S.rpDur = undefined;
   function loadRep() {
     if (!S.rp) $('rp-list').innerHTML = skel(3);
+    renderRs();
+    loadFraud();                                        // v334: пары и мульты — в той же вкладке
     return sect('/reports', { op: 'get' }, 'rp-list', 'v333').then(function (j) { if (j) setRep(j, true); })
       .catch(function () { toast('Нет связи с сервером', true); });
   }
   function setRep(j, anim) {
     S.rp = j;
     var n = (j.items || []).length;
-    tabCnt('rp-tcnt', n);
     if (S.meta && S.meta.stats) { S.meta.stats.reports = n; renderStats(); }
     renderRep(anim);
+    renderRs(); repBadge();
   }
   function repRow(r, g) {
     var names = namesOf([g, r.from]), chat = r.chat || [];
@@ -2212,6 +2267,7 @@ window.addEventListener('error', function (e) {
   }
   function rpGroup(uid) { var it = (S.rp && S.rp.items) || []; for (var i = 0; i < it.length; i++) if (it[i].uid === uid) return it[i]; return null; }
   $('v-rep').addEventListener('click', function (e) {
+    if (frClick(e)) return;                            // v334: разделы, пары, мульты
     var b = e.target.closest('button');
     if (b && !b.disabled) {
       var u = Number(b.getAttribute('data-rwarn') || b.getAttribute('data-rban') || b.getAttribute('data-rdis') || b.getAttribute('data-rbgo') || 0);
@@ -2241,6 +2297,169 @@ window.addEventListener('error', function (e) {
     }
     var it = e.target.closest('[data-uid]'); if (it) openPlayer(Number(it.getAttribute('data-uid')), 'rep');
   });
+
+  // ══ v334: «Защита» — договорные пары и мульты ═══════════════════════
+  // Бот ничего не наказывает сам — только показывает улики. Решает администратор: «запретить играть друг с другом»
+  // (мягко, никого не банит) или «проверено» (пропадёт, пока не появится новое); бан и заморозка — в карточке игрока.
+  var RS = [['rep', 'Жалобы'], ['pairs', 'Пары'], ['alts', 'Мульты']];
+  var LV = { high: ['ban', 'высокий риск'], mid: ['wn', 'стоит проверить'] };
+  S.rs = 'rep'; S.fr = null;
+  function frOpen(x) { return !x.reviewed && !x.blocked; }
+  function frCounts() {
+    var f = S.fr, rp = ((S.rp && S.rp.items) || []).length;
+    if (!f) return { rep: rp, pairs: 0, alts: 0, fr: (S.meta && S.meta.stats && S.meta.stats.fraud) || 0 };
+    var pn = (f.pairs || []).filter(frOpen).length;
+    var an = (f.groups || []).filter(frOpen).length + (f.farms || []).filter(function (x) { return !x.reviewed; }).length;
+    return { rep: rp, pairs: pn, alts: an, fr: pn + an };
+  }
+  function repBadge() { var c = frCounts(); tabCnt('rp-tcnt', c.rep + c.fr); }
+  function renderRs() {
+    var c = frCounts();
+    $('rp-chips').innerHTML = RS.map(function (x) {
+      return '<button type="button" class="chip' + (S.rs === x[0] ? ' on' : '') + '" data-rs="' + x[0] + '">' + x[1] + (c[x[0]] ? ' · ' + c[x[0]] : '') + '</button>';
+    }).join('');
+    for (var i = 0; i < RS.length; i++) $('rp-sub-' + RS[i][0]).hidden = S.rs !== RS[i][0];
+  }
+  function loadFraud() {
+    if (!S.fr) { $('fr-pairs').innerHTML = skel(2); $('fr-groups').innerHTML = skel(2); }
+    return sect('/fraud', { op: 'get' }, 'fr-pairs', 'v334').then(function (j) {
+      if (j) { setFr(j, true); return; }
+      if (/обновится/.test($('fr-pairs').textContent)) { $('fr-groups').innerHTML = $('fr-pairs').innerHTML; $('fr-farms').innerHTML = ''; }
+    }).catch(function () {});
+  }
+  function setFr(j, anim) {
+    S.fr = j;
+    if (S.meta && S.meta.stats) S.meta.stats.fraud = j.count;
+    $('v-rep').classList.toggle('quiet', !anim);
+    renderFr(); renderRs(); repBadge();
+  }
+  function frPp(p) {
+    return '<div class="pp" data-uid="' + p.uid + '"><div class="av">' + avHtml(p) + '</div>'
+      + '<div class="nm">' + pName(p) + '</div><div class="sub">ID ' + esc(p.cid || '—') + '</div>'
+      + '<div class="sub">' + bigS(p.balance_s) + ' 💰' + (p.banned ? ' · <span class="dn">бан</span>' : '') + (p.frozen ? ' · заморожен' : '') + '</div></div>';
+  }
+  function frState(x) {
+    if (x.blocked) return '<span class="bd auto" style="margin:0">запрещено</span>';
+    if (x.reviewed) return '<span class="bd ok" style="margin:0">проверено</span>';
+    var lv = LV[x.level] || LV.mid;
+    return '<span class="bd ' + lv[0] + '" style="margin:0">' + lv[1] + '</span>';
+  }
+  function pairHtml(p) {
+    var lead = p.lead === p.a ? p.pa : p.pb, k = p.a + '_' + p.b;
+    return '<div class="sec"><div class="v"><div class="row"><span class="f1 small">' + p.n + ' ' + plural3(p.n, 'матч', 'матча', 'матчей') + ' за '
+      + S.fr.window_days + ' дней · последний ' + ago(p.last) + (p.since_review ? ' · после проверки ещё ' + p.since_review : '') + '</span>' + frState(p) + '</div>'
+      + '<div class="vs">' + frPp(p.pa) + '<span class="vsx">VS</span>' + frPp(p.pb) + '</div>'
+      + '<ul class="sig">' + p.signals.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>'
+      + (p.flow > 0 ? '<div class="note wn">Токены перетекли к одному: <b>' + pName(lead) + '</b> +' + fmt(p.flow) + ' 💰' + (p.rp ? ', +' + fmt(p.rp) + ' RP' : '') + '</div>' : '')
+      + '<div class="row">' + (p.blocked ? '<button type="button" class="f1" data-fu="' + k + '">Разрешить снова</button>'
+          : '<button type="button" class="b-no f1" data-fb="' + k + '">⛔ Запретить играть друг с другом</button>') + '</div>'
+      + (frOpen(p) ? '<div class="row"><button type="button" class="f1" data-fok="p:' + esc(p.key) + '">✓ Проверено, всё в порядке</button></div>' : '')
+      + '</div></div>';
+  }
+  function groupHtml(g) {
+    var mem = g.members.map(function (x) {
+      return '<div class="it" data-uid="' + x.uid + '"><div class="av">' + avHtml(x) + '</div><div class="m">'
+        + '<div class="nm">' + pName(x) + (x.uid === g.main ? '<span class="bd mt">главный</span>' : '') + (x.banned ? '<span class="bd ban">бан</span>' : '')
+        + (x.frozen ? '<span class="bd frz">заморожен</span>' : '') + '</div>'
+        + '<div class="sub">ID ' + esc(x.cid || '—') + ' · ' + bigS(x.balance_s) + ' 💰</div>'
+        + '<div class="tr">' + esc(x.traits.join(' · ')) + '</div></div></div>';
+    }).join('');
+    return '<div class="sec"><div class="v"><div class="row"><b class="f1">Группа из ' + g.members.length + ' ' + plural3(g.members.length, 'аккаунта', 'аккаунтов', 'аккаунтов')
+      + '</b>' + frState(g) + '</div>'
+      + '<div class="small">«Главный» — у кого больше всего токенов: обычно туда и стекается добытое остальными.</div>'
+      + '<div>' + mem + '</div>'
+      + '<div class="lbl">Чем связаны</div><ul class="sig">' + g.links.map(function (l) {
+          return '<li><b>' + esc(l.an) + ' — ' + esc(l.bn) + ':</b> ' + esc(l.why.join('; ')) + '</li>'; }).join('') + '</ul>'
+      + (g.blocked ? '' : '<div class="row"><button type="button" class="b-no f1" data-fbg="' + g.members.map(function (x) { return x.uid; }).join(',')
+          + '">⛔ Запретить им играть друг с другом</button></div>')
+      + (frOpen(g) ? '<div class="row"><button type="button" class="f1" data-fok="' + esc(g.key) + '">✓ Проверено, это не мульты</button></div>' : '')
+      + '</div></div>';
+  }
+  function farmHtml(f) {
+    return '<div class="sec"><div class="v"><div class="rph"><div class="av lk" data-uid="' + f.uid + '">' + avHtml(f) + '</div>'
+      + '<div class="m"><div class="nm lk" data-uid="' + f.uid + '">' + pName(f) + '</div><div class="sub">ID ' + esc(f.cid || '—') + ' · пригласил '
+      + f.invited + ', пустых ' + f.empty + '</div></div>' + (f.reviewed ? '<span class="bd ok" style="margin:0">проверено</span>'
+        : '<span class="bd wn" style="margin:0">пустые рефералы</span>') + '</div>'
+      + '<div class="note wn">Бонус за приглашение получен за пустые аккаунты: <b>' + fmt(f.earned) + '</b> 💰</div>'
+      + ((f.days || []).length ? '<div class="small">Когда регистрировались пустые: ' + f.days.map(function (d) { return esc(regTxt(d[0]).slice(0, 5)) + ' — ' + d[1]; }).join(', ') + '</div>' : '')
+      + '<details data-k="fe-' + f.uid + '"><summary>Пустые аккаунты (' + f.empties.length + ')</summary><div class="hist">'
+      + f.empties.map(function (x) { return '<div class="lk" data-uid="' + x.uid + '">' + esc(x.name || 'без имени') + ' <span class="small">ID ' + esc(x.cid || '—') + ' · рег. ' + esc(regTxt(x.reg)) + '</span></div>'; }).join('')
+      + '</div></details>'
+      + '<div class="small">Пустой — сыграл не больше одного матча и не заходит больше 3 дней. Забрать бонусы можно в карточке игрока: «− Списать».</div>'
+      + (f.reviewed ? '' : '<div class="row"><button type="button" class="f1" data-fok="' + esc(f.key) + '">✓ Проверено, всё в порядке</button></div>')
+      + '</div></div>';
+  }
+  function frSplit(arr) {
+    var a = [], b = [];
+    arr.forEach(function (x) { (x.reviewed || x.blocked ? b : a).push(x); });
+    return [a, b];
+  }
+  function renderFr() {
+    var j = S.fr, box = $('v-rep'), o = openDetails(box);
+    $('fr-pairs-head').textContent = 'Договорные матчи: один игрок сливает другому токены и RP — сдаётся, не присылает скрин, играет почти только с ним. '
+      + 'Это подсказки, а не приговор: решаешь ты.';
+    var ps = frSplit(j.pairs || []);
+    $('fr-pairs').innerHTML = (ps[0].length ? ps[0].map(pairHtml).join('') : '<div class="empty" style="padding:18px 10px">Подозрительных пар нет 👍</div>')
+      + (ps[1].length ? '<details data-k="fr-pdone" style="margin-top:12px"><summary>Проверенные и запрещённые (' + ps[1].length + ')</summary>'
+          + ps[1].map(pairHtml).join('') + '</details>' : '');
+    var bl = j.blocks || [];
+    $('fr-blocks-box').hidden = !bl.length;
+    $('fr-blocks').innerHTML = bl.map(function (x) {
+      return '<div class="it"><div class="m"><div class="nm"><span class="lk" data-uid="' + x.a.uid + '">' + pName(x.a) + '</span> ⇄ <span class="lk" data-uid="' + x.b.uid + '">'
+        + pName(x.b) + '</span></div><div class="sub">с ' + dt(x.t) + (x.why ? ' · ' + esc(x.why) : '') + '</div></div>'
+        + '<button type="button" class="xs" data-fu="' + esc(x.key) + '">Разрешить</button></div>';
+    }).join('');
+    var n = j.net || {};
+    $('fr-alts-head').innerHTML = 'Мульты — несколько аккаунтов одного человека: забирают бонусы и сливают их на главный. '
+      + 'Связи: одна сеть, договорные матчи, пустые рефералы.<br>'
+      + (n.seen ? '🛡 Сеть учитывается: ' + fmt(n.accounts) + ' ' + plural3(n.accounts, 'игрок', 'игрока', 'игроков') + '. Хранится только отпечаток, сам адрес — нет.'
+        : '⚠️ Бот пока не видит адреса игроков — совпадения по сети не работают (остальные признаки работают).');
+    var gs = frSplit(j.groups || []), fs = frSplit(j.farms || []);
+    $('fr-groups').innerHTML = (gs[0].length ? gs[0].map(groupHtml).join('') : '<div class="empty" style="padding:18px 10px">Групп мультов не видно 👍</div>')
+      + (gs[1].length ? '<details data-k="fr-gdone" style="margin-top:12px"><summary>Проверенные и запрещённые группы (' + gs[1].length + ')</summary>'
+          + gs[1].map(groupHtml).join('') + '</details>' : '');
+    $('fr-farms').innerHTML = (fs[0].length ? '<h2>Пригласили пустые аккаунты</h2>' + fs[0].map(farmHtml).join('') : '')
+      + (fs[1].length ? '<details data-k="fr-fdone" style="margin-top:12px"><summary>Проверенные пригласившие (' + fs[1].length + ')</summary>'
+          + fs[1].map(farmHtml).join('') + '</details>' : '');
+    reopen(box, o);
+  }
+  function frDo(body, confirmText, btn) {
+    if (botVer() < 334) { toast('Заработает, когда бот на сервере обновится до v334', true); return; }
+    doSect('/fraud', body, confirmText, btn, function (j) { S.dirty = true; setFr(j, false); });
+  }
+  function frFindPair(k) { return ((S.fr && S.fr.pairs) || []).filter(function (x) { return x.a + '_' + x.b === k; })[0]; }
+  function frNames(k) {
+    var p = frFindPair(k); if (p) return [p.pa.name || 'игрок', p.pb.name || 'игрок'];
+    var b = ((S.fr && S.fr.blocks) || []).filter(function (x) { return x.key === k; })[0];
+    return b ? [b.a.name || 'игрок', b.b.name || 'игрок'] : ['игрок', 'игрок'];
+  }
+  // true — нажатие обработано здесь
+  function frClick(e) {
+    var b = e.target.closest('button');
+    if (!b || b.disabled) return false;
+    if (b.hasAttribute('data-rs')) { S.rs = b.getAttribute('data-rs'); renderRs(); return true; }
+    if (b.hasAttribute('data-fb')) {
+      var k = b.getAttribute('data-fb'), ab = k.split('_'), nm = frNames(k);
+      frDo({ op: 'block', a: Number(ab[0]), b: Number(ab[1]) }, 'Запретить ' + nm[0] + ' и ' + nm[1] + ' играть друг с другом?\n'
+        + 'В поиске они не попадут друг на друга, вызов не отправится. Игрокам ничего не придёт.', b);
+      return true;
+    }
+    if (b.hasAttribute('data-fu')) {
+      var k2 = b.getAttribute('data-fu'), ab2 = k2.split('_');
+      frDo({ op: 'unblock', a: Number(ab2[0]), b: Number(ab2[1]) }, null, b);
+      return true;
+    }
+    if (b.hasAttribute('data-fbg')) {
+      var us = b.getAttribute('data-fbg').split(',').map(Number);
+      frDo({ op: 'block_group', uids: us }, 'Запретить ' + us.length + ' аккаунтам играть друг с другом?\nС остальными игроками — можно. Игрокам ничего не придёт.', b);
+      return true;
+    }
+    if (b.hasAttribute('data-fok')) {
+      frDo({ op: 'ok', key: b.getAttribute('data-fok') }, 'Отметить «проверено»?\nПропадёт из списка, пока не появится что-то новое.', b);
+      return true;
+    }
+    return false;
+  }
 
   // ── v331: режим обслуживания — кнопка в шапке, полоса предупреждения, панель ──
   S.mt = null;
