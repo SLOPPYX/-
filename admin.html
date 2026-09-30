@@ -486,7 +486,7 @@ window.addEventListener('error', function (e) {
     document.getElementById('app').hidden = true;
     var f = document.getElementById('fatal'); f.hidden = false;
     document.getElementById('fatal-t').textContent = 'Ошибка на странице';
-    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v335';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v337';
   } catch (_) {}
 }, true);
 </script>
@@ -501,7 +501,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v335';
+  var VER = 'v337';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -1841,6 +1841,14 @@ window.addEventListener('error', function (e) {
     h += sec('🎴 NFT у игроков', '<div class="grid">' + kv('Всего карт', fmt(n.total)) + '</div>'
       + ((n.by_rarity || []).length ? '<div class="chips wrap">' + n.by_rarity.map(function (r) {
           return '<span class="chip">' + r[1] + ' ' + esc(r[0]) + ' · ' + fmt(r[2]) + '</span>'; }).join('') + '</div>' : ''));
+    // v337: копия данных — каждый день приходит в чат с ботом; кнопка — прислать сейчас
+    if (e.backup) {
+      var bs = e.backup.size || 0, bsz = bs >= 1048576 ? (bs / 1048576).toFixed(1).replace('.', ',') + ' МБ' : Math.max(1, Math.round(bs / 1024)) + ' КБ';
+      h += sec('🗄 Копия данных', '<div class="small">Каждый день в ' + pad(e.backup.hour || 4) + ':00 по Москве бот присылает тебе в чат файл '
+        + 'со всеми данными — на случай, если с сервером что-то случится. Там и ключи бота: никому его не пересылай.</div>'
+        + '<div class="grid">' + kv('Последняя копия', e.backup.last ? dt(e.backup.last) : 'ещё не было') + kv('Данные сейчас', bsz) + '</div>'
+        + '<div class="row"><button type="button" class="f1" data-bk="1">📦 Прислать копию сейчас</button></div>');
+    }
     h += '<div class="small" style="margin-top:8px">Посчитано в ' + hm(new Date(e.t * 1000)) + ' · ↻ вверху — пересчитать</div>';
     $('ec').innerHTML = h;
   }
@@ -1875,6 +1883,11 @@ window.addEventListener('error', function (e) {
   }
   $('ec').addEventListener('click', function (e) {
     var sx = e.target.closest('[data-sx]'); if (sx) { slxAct(sx); return; }
+    var bk = e.target.closest('[data-bk]');
+    if (bk) {
+      if (botVer() < 337) { toast('Заработает, когда бот на сервере обновится до v337', true); return; }
+      ecDo({ op: 'backup_now' }, null, bk); return;
+    }
     var rw = e.target.closest('[data-rw]');
     if (rw) {
       var on = rw.getAttribute('data-rv') === '1', pl = Number(rw.getAttribute('data-rw'));
