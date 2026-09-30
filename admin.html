@@ -141,15 +141,20 @@
   .upd { color: var(--acc2); }
   /* v326: вкладки — все видны сразу и на узком экране. v328: шесть вкладок — две строки по три.
      v331: значки — тонкие линии вместо цветных эмодзи; выбранная вкладка — фиолетовая, переход плавный */
-  .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-top: 12px; padding: 4px;
+  /* v333: восемь вкладок — две строки по четыре, значок над подписью (так влезает и на узком телефоне) */
+  .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 12px; padding: 4px;
           background: var(--card); border: 1px solid var(--ln); border-radius: 16px; }
-  .tabs button { position: relative; background: transparent; border: 0; border-radius: 12px; padding: 8px 3px; font-size: 12.5px;
-                 line-height: 1.2; color: var(--tx2); white-space: nowrap; overflow: hidden; box-shadow: none;
-                 display: flex; align-items: center; justify-content: center; gap: 6px; }
-  .tabs .ic { width: 16px; height: 16px; flex: 0 0 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .tabs button { position: relative; background: transparent; border: 0; border-radius: 12px; padding: 7px 2px 6px; font-size: 11.5px;
+                 line-height: 1.15; color: var(--tx2); white-space: nowrap; overflow: hidden; box-shadow: none;
+                 display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+  .tabs .ic { width: 18px; height: 18px; flex: 0 0 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .tabs button.on { background: var(--grad); color: #fff; font-weight: 600; box-shadow: 0 6px 16px -9px rgba(139,92,246,.95); }
   @media (hover: hover) { .tabs button:hover:not(.on) { color: var(--tx); background: rgba(255,255,255,.04); } }
   .tdot { position: absolute; top: 5px; right: 7px; width: 7px; height: 7px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px #a78bfa; }
+  /* v333: сколько ждёт разбора — споры на «1vs1», жалобы на «Жалобах» */
+  .tcnt { position: absolute; top: 3px; left: 50%; margin-left: 6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px;
+          background: #f4f4f6; color: #0b0b0e; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center;
+          font-variant-numeric: tabular-nums; animation: rin .24s var(--ease) both; }
   .bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.06); overflow: hidden; }
   .bar i { display: block; height: 100%; background: linear-gradient(90deg, #7c3aed, #b69cff); border-radius: 3px; transition: width .5s var(--ease); }
   .code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 16px; letter-spacing: .04em; }
@@ -187,6 +192,69 @@
   .mtp > div { overflow: hidden; min-height: 0; }
   .mtp.open { grid-template-rows: 1fr; opacity: 1; }
   .mtp:not(.open) { pointer-events: none; visibility: hidden; transition: grid-template-rows .32s var(--ease), opacity .25s var(--ease), visibility 0s .32s; }
+  /* v333: 1vs1 — двое друг против друга, скриншоты рядом, переписка матча */
+  .vs { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; margin: 10px 0 2px; }
+  .pp { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 0; text-align: center; cursor: pointer; }
+  .pp .nm { max-width: 100%; font-size: 13.5px; }
+  .pp .sub { max-width: 100%; }
+  .vsx { font-size: 11px; font-weight: 800; color: var(--tx3); letter-spacing: .1em; }
+  .shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .shot { position: relative; min-height: 96px; border-radius: 12px; overflow: hidden; background: var(--card2); border: 1px solid var(--ln);
+          display: grid; place-items: center; font-size: 12px; color: var(--tx3); text-align: center; padding: 0; cursor: zoom-in; }
+  .shot img { display: block; width: 100%; height: auto; animation: rin .24s var(--ease) both; }
+  .shot.none { cursor: default; padding: 10px; }
+  .vd { font-size: 11.5px; color: var(--tx2); margin-top: 4px; text-align: center; }
+  .vd b { color: var(--tx); font-weight: 600; }
+  .lbx { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: calc(16px + env(safe-area-inset-top, 0px)) 12px 16px;
+         background: rgba(3,3,5,.94); opacity: 0; pointer-events: none; transition: opacity .22s var(--ease); cursor: zoom-out; }
+  .lbx.show { opacity: 1; pointer-events: auto; }
+  .lbx img { max-width: 100%; max-height: 100%; border-radius: 12px; transform: scale(.97); transition: transform .22s var(--ease); }
+  .lbx.show img { transform: none; }
+  .chat { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; }
+  .msg { align-self: flex-start; max-width: 88%; padding: 6px 10px; border-radius: 12px; background: rgba(255,255,255,.035); border: 1px solid var(--ln);
+         word-break: break-word; }
+  .msg.me { align-self: flex-end; background: var(--accbg); border-color: rgba(139,92,246,.28); }
+  .msg i { display: block; font-style: normal; font-size: 10.5px; color: var(--tx3); margin-bottom: 1px; }
+  .tl { font-size: 12px; color: var(--tx2); line-height: 1.6; }
+  .tl b { color: var(--tx); font-weight: 600; }
+  #du-live .sec, #rp-list .sec { animation: rin .24s var(--ease) both; }
+  #du-live.quiet .sec, #du-live.quiet .it { animation: none; }
+  .rph { display: flex; align-items: flex-start; gap: 11px; }
+  .rpi { padding: 9px 0; border-top: 1px solid var(--ln); }
+  .rpi:first-of-type { border-top: 0; }
+  .cnt { flex: 0 0 auto; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--accbg); color: var(--acc3);
+         border: 1px solid rgba(139,92,246,.28); }
+  /* v333: график активности — три маленьких графика одного вида (у каждого своя шкала: разные величины на одной оси
+     читались бы неверно). Столбик — фиолетовый акцент, скругление сверху, у основания прямой; сетка — волосок. */
+  .chs { display: grid; gap: 16px; }
+  .ch { position: relative; }
+  .ch h4 { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--tx2); }
+  .ch h4 span { font-weight: 400; color: var(--tx3); font-size: 11.5px; white-space: nowrap; }
+  .ch h4 b { color: var(--tx); font-weight: 700; font-size: 14px; }
+  .cp { position: relative; height: 72px; margin-top: 14px; border-bottom: 1px solid rgba(255,255,255,.12); }
+  .cg { position: absolute; left: 0; right: 0; top: 0; border-top: 1px solid rgba(255,255,255,.07); }
+  .cgt { position: absolute; right: 0; top: 0; transform: translateY(-100%); padding-bottom: 1px; font-size: 9.5px; color: var(--tx3); font-variant-numeric: tabular-nums; }
+  .cb { position: absolute; inset: 0; display: flex; }
+  .cc { flex: 1 1 0; min-width: 0; height: 100%; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none;
+        display: flex; align-items: flex-end; justify-content: center; }
+  .cc:active { transform: none; }
+  .cc:focus { outline: none; }
+  .cc i { display: block; width: 62%; max-width: 16px; border-radius: 4px 4px 0 0; background: #8b5cf6; transition: background-color .15s; }
+  @media (hover: hover) { .cc:hover i { background: #9d6bff; } }
+  .cc:focus i, .cc.on i { background: #9d6bff; }
+  .chx { position: relative; height: 14px; margin-top: 4px; font-size: 10.5px; color: var(--tx3); font-variant-numeric: tabular-nums; }
+  .chx span { position: absolute; top: 0; white-space: nowrap; }
+  #rp-list.quiet .sec { animation: none; }
+  .rpb button { padding-left: 6px; padding-right: 6px; white-space: nowrap; }
+  .ctip { position: absolute; z-index: 3; top: 0; transform: translate(-50%, -100%); pointer-events: none; white-space: nowrap;
+          background: rgba(18,17,26,.96); border: 1px solid rgba(139,92,246,.4); border-radius: 10px; padding: 5px 9px; font-size: 11.5px;
+          color: var(--tx2); box-shadow: 0 10px 24px -10px rgba(0,0,0,.9); opacity: 0; transition: opacity .15s; }
+  .ctip.show { opacity: 1; }
+  .ctip b { color: var(--tx); font-size: 13px; margin-right: 4px; }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .tbl th, .tbl td { padding: 5px 4px; text-align: right; border-bottom: 1px solid var(--ln); }
+  .tbl th:first-child, .tbl td:first-child { text-align: left; }
+  .tbl th { color: var(--tx3); font-weight: 600; font-size: 11px; }
 </style>
 </head>
 <body>
@@ -214,6 +282,9 @@
   </div></div>
   <nav class="tabs" id="tabs">
     <button type="button" data-tab="list" class="on"><svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.8a3.3 3.3 0 0 1 0 6.4M18.5 14.8c1.7.8 2.8 2.5 3 5.2"/></svg>Игроки</button>
+    <!-- v333: споры и матчи прямо сейчас, очередь, сезон · жалобы с перепиской -->
+    <button type="button" data-tab="duels"><svg class="ic" viewBox="0 0 24 24"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg>1vs1<span class="tcnt" id="du-cnt" hidden></span></button>
+    <button type="button" data-tab="rep"><svg class="ic" viewBox="0 0 24 24"><path d="M5 21V4M5 4c3-2 6 1.6 9 0s4-1 5-.5V14c-1-.5-2-1-5 .5s-6-2-9 0"/></svg>Жалобы<span class="tcnt" id="rp-tcnt" hidden></span></button>
     <button type="button" data-tab="bc"><svg class="ic" viewBox="0 0 24 24"><path d="M4 10v4a1 1 0 0 0 1 1h2l7 4V5L7 9H5a1 1 0 0 0-1 1z"/><path d="M18 9a4 4 0 0 1 0 6"/></svg>Рассылка<span class="tdot" id="bc-dot" hidden></span></button>
     <button type="button" data-tab="promo"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 6v12" stroke-dasharray="2 2.2"/></svg>Промо</button>
     <button type="button" data-tab="tour"><svg class="ic" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg>Турнир</button>
@@ -242,6 +313,34 @@
   <section id="v-pl" hidden>
     <button class="back" type="button">← Назад</button>
     <div id="pl"></div>
+  </section>
+
+  <!-- v333: 1vs1 — что происходит прямо сейчас; сезон и его награды -->
+  <section id="v-duels" hidden>
+    <div id="du-live"></div>
+    <div class="sec" id="du-season" hidden><h3>Сезон</h3><div class="v">
+      <div id="du-s-head"></div>
+      <div class="lbl">Награды топ-3 — игроки видят их в «Рангах»</div>
+      <div class="row"><span style="flex:0 0 auto;font-size:19px">🥇</span><input id="sp-0" maxlength="100" class="f1" placeholder="Награда за 1 место, напр. 50м токенов + NFT"></div>
+      <div class="row"><span style="flex:0 0 auto;font-size:19px">🥈</span><input id="sp-1" maxlength="100" class="f1" placeholder="Награда за 2 место"></div>
+      <div class="row"><span style="flex:0 0 auto;font-size:19px">🥉</span><input id="sp-2" maxlength="100" class="f1" placeholder="Награда за 3 место"></div>
+      <div class="row"><button type="button" class="b-acc f1" id="sp-save">Сохранить награды</button></div>
+      <div class="small">Вручаешь сам: токены или NFT — в карточке игрока (нажми на него ниже).</div>
+      <div id="du-s-top"></div>
+      <div id="du-s-last"></div>
+    </div></div>
+    <div class="sec danger" id="du-new" hidden><h3>Новый сезон</h3><div class="v">
+      <div class="small" id="du-new-info"></div>
+      <input id="ns-name" maxlength="60" placeholder="Название нового сезона, напр. Осень 2026">
+      <div class="row"><button type="button" class="b-no f1" id="ns-go">Закрыть сезон и начать новый</button></div>
+    </div></div>
+  </section>
+
+  <!-- v333: жалобы — по игрокам, с перепиской матча -->
+  <section id="v-rep" hidden>
+    <div class="small" id="rp-cnt" style="margin-top:12px"></div>
+    <div id="rp-list"></div>
+    <div class="sec" id="rp-done-box" hidden><h3>Недавно разобраны</h3><div class="hist" id="rp-done"></div></div>
   </section>
 
   <section id="v-log" hidden>
@@ -348,6 +447,7 @@
 </main>
 
 <div class="toast" id="toast"></div>
+<div class="lbx" id="lbx"><img id="lbx-img" alt=""></div>
 
 <script>
 window.addEventListener('error', function (e) {
@@ -359,7 +459,7 @@ window.addEventListener('error', function (e) {
     document.getElementById('app').hidden = true;
     var f = document.getElementById('fatal'); f.hidden = false;
     document.getElementById('fatal-t').textContent = 'Ошибка на странице';
-    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v331';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v333';
   } catch (_) {}
 }, true);
 </script>
@@ -374,7 +474,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v331';
+  var VER = 'v333';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -536,11 +636,12 @@ window.addEventListener('error', function (e) {
 
   // ── переходы между экранами ─────────────────────────────────────────
   // v326: вкладки Игроки / Рассылка / Промо / Турнир / Журнал; карточка игрока открывается поверх любой из них
-  // v328: + Экономика
-  var VIEWS = ['list', 'pl', 'log', 'bc', 'promo', 'tour', 'econ'];
+  // v328: + Экономика. v333: + 1vs1 (duels) и Жалобы (rep)
+  var VIEWS = ['list', 'pl', 'log', 'bc', 'promo', 'tour', 'econ', 'duels', 'rep'];
   function show(view) {
     var changed = S.view !== view;
     S.view = view;
+    if (view !== 'duels') duStop();         // v333: матчи обновляются, только пока вкладка открыта
     for (var i = 0; i < VIEWS.length; i++) $('v-' + VIEWS[i]).hidden = VIEWS[i] !== view;
     // v331: новый экран появляется мягким сдвигом (анимацию перезапускаем, снимая и возвращая класс)
     if (changed) { var ve = $('v-' + view); ve.classList.remove('vin'); void ve.offsetWidth; ve.classList.add('vin'); }
@@ -555,12 +656,15 @@ window.addEventListener('error', function (e) {
     if (v === 'promo') return loadPromo();
     if (v === 'tour') return loadTour();
     if (v === 'econ') return loadEcon();
+    if (v === 'duels') return loadDuels();
+    if (v === 'rep') return loadRep();
   }
   function toList() {
     window.scrollTo(0, S.listY || 0);                // v325: возвращаемся туда же, где были в списке
     if (S.dirty) { S.dirty = false; renderList(); loadMeta(); loadList(false, true); }
   }
   function goBack() {
+    if (lbClose()) return;                           // v333: открыт скриншот во весь экран — «Назад» закрывает его
     var to = S.view === 'pl' ? (S.from || 'list') : 'list';
     show(to);
     if (to === 'list') toList(); else loadView(to);
@@ -585,6 +689,15 @@ window.addEventListener('error', function (e) {
                             ['Бан', st.banned], ['Заморозка', st.frozen], ['Жалобы', st.reports], ['Матчей', st.in_match], ['В поиске', st.queue]]
       .filter(function (x) { return x[1] !== undefined; })
       .map(function (x) { return '<span>' + x[0] + ' <b>' + fmt(x[1]) + '</b></span>'; }).join('');
+    tabCnt('du-cnt', st.disputes); tabCnt('rp-tcnt', st.reports);       // v333
+  }
+  // v333: число на вкладке — сколько ждёт разбора (споры, жалобы); 0 — не видно
+  function tabCnt(id, n) {
+    var el = $(id); if (!el) return;
+    n = Number(n || 0);
+    if (!n) { el.hidden = true; return; }
+    var t = n > 99 ? '99+' : String(n);
+    if (el.hidden || el.textContent !== t) { el.textContent = t; el.hidden = false; }
   }
   function loadMeta() {
     return api('/meta').then(function (res) {
@@ -1586,6 +1699,7 @@ window.addEventListener('error', function (e) {
   }
   function renderEcon() {
     var e = S.ec, t = e.tokens || {}, d = e.duel || {}, c = e.casino || {}, x = e.slx || {}, n = e.nft || {}, h = '';
+    if (e.activity) h += actHtml(e.activity);          // v333: график активности за 14 дней
     h += sec('💰 Токены у игроков', '<div class="grid">' + bigKv('В обороте', t.total_s, ' 💰') + kv('Игроков', fmt(t.players))
       + bigKv('Средний баланс', t.avg_s) + bigKv('Медиана', t.median_s)
       + kv('У топ-10', String(t.top10_pct).replace('.', ',') + '% всех') + kv('С нулём на балансе', fmt(t.zero)) + '</div>'
@@ -1598,7 +1712,8 @@ window.addEventListener('error', function (e) {
       + kv('За сутки', fmt(d.day) + ' матч.<small>ставки: ' + bigS(d.day_volume_s) + ' 💰</small>')
       + kv('За 7 дней', fmt(d.week) + ' матч.<small>ставки: ' + bigS(d.week_volume_s) + ' 💰</small>')
       + kv('Сыграно всего', fmt(d.total)) + bigKv('Оборот за всё время', d.volume_s, ' 💰') + '</div>'
-      + (d.reports ? '<div class="note wn">🚩 Жалоб ждут разбора: <b>' + fmt(d.reports) + '</b> — фильтр «Жалобы» во вкладке «Игроки»</div>' : '')
+      + (d.reports ? '<div class="note wn">🚩 Жалоб ждут разбора: <b>' + fmt(d.reports) + '</b> — '
+          + (botVer() >= 333 ? 'вкладка «Жалобы»' : 'фильтр «Жалобы» во вкладке «Игроки»') + '</div>' : '')
       + ((d.by_stake || []).length ? '<div class="lbl">Матчей по ставкам (за всё время)</div>' + d.by_stake.map(function (s) {
           return '<div class="brow"><span>' + esc(s[1]) + '</span><div class="bar f1"><i style="width:' + Math.round(s[2] / mx * 100) + '%"></i></div><b>' + fmt(s[2]) + '</b></div>';
         }).join('') : '')
@@ -1606,9 +1721,10 @@ window.addEventListener('error', function (e) {
           + d.active.map(function (p) { return erow(p, p.matches + ' матч.'); }).join('') : ''));
     h += sec('🎰 Казино', '<div class="grid">' + bigKv('Выиграно всего', c.won_s, ' 💰') + '</div>'
       + ((c.top || []).length ? '<div class="lbl">Больше всех выиграли</div>' + c.top.map(function (p) { return erow(p, bigS(p.won_s) + ' 💰'); }).join('') : ''));
-    // v329: сезон — награды топ-3 (текст видят игроки в «Рангах»), кто сейчас на пьедестале, кому вручено за прошлый
+    // v329: сезон — награды топ-3 (текст видят игроки в «Рангах»), кто сейчас на пьедестале, кому вручено за прошлый.
+    // v333: сезон переехал во вкладку «1vs1» (там и новый сезон); здесь — только пока бот на сервере старее v333
     var s = e.season, M = ['🥇', '🥈', '🥉'];
-    if (s) {
+    if (s && botVer() < 333) {
       h += sec('🏆 Награды топ-3 сезона', '<div class="small">Игроки видят их в «Рангах» — под пьедесталом и во вкладке «Сезон». '
           + 'Вручаешь сам: токены или NFT — в карточке игрока (нажми на него ниже).</div>'
         + [0, 1, 2].map(function (i) {
@@ -1701,6 +1817,429 @@ window.addEventListener('error', function (e) {
       return;
     }
     var it = e.target.closest('[data-uid]'); if (it) openPlayer(Number(it.getAttribute('data-uid')), 'econ');
+  });
+
+  // ── v333: график активности за 14 дней ──────────────────────────────
+  // Три маленьких графика одного вида вместо одного с тремя шкалами: новые игроки, заходившие и матчи — величины разного
+  // масштаба, на общей оси маленькие просто пропали бы. Столбики — HTML (чёткие на любом экране), число — во всплывашке
+  // при нажатии и в таблице ниже.
+  var ACT = [['new', 'Новые игроки', 'новых'], ['active', 'Заходили в бот', 'заходили'], ['matches', 'Матчи 1vs1', 'матчей']];
+  var WD = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+  function dayLbl(k) { return k.slice(8, 10) + '.' + k.slice(5, 7); }
+  function dayWd(k) { var d = new Date(k + 'T12:00:00'); return isNaN(d) ? '' : WD[d.getDay()]; }
+  // верх шкалы — ровное число чуть выше максимума: 21 → 25, 130 → 150 (крупный шаг вроде 21 → 50 сплющивал столбики)
+  function niceMax(v) {
+    if (v <= 5) return Math.max(1, v);
+    var p = Math.pow(10, Math.floor(Math.log(v) / Math.LN10)), f = v / p, S = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+    for (var i = 0; i < S.length; i++) if (f <= S[i] + 1e-9) return Math.round(S[i] * p);
+    return 10 * p;
+  }
+  function chartHtml(a, key, title, unit) {
+    var vals = a[key] || [], days = a.days || [], last = vals.length - 1;
+    var max = niceMax(Math.max.apply(null, [0].concat(vals.map(function (v) { return v || 0; }))));
+    var sum = vals.reduce(function (s, v) { return s + (v || 0); }, 0), gaps = vals.some(function (v) { return v == null; });
+    var cols = vals.map(function (v, i) {
+      var h = v ? Math.max(3, Math.round(v / max * 100)) : 0;
+      return '<button type="button" class="cc" data-v="' + (v == null ? '' : v) + '" data-d="' + esc(days[i]) + '" data-u="' + unit + '" data-h="' + h + '"'
+        + ' aria-label="' + esc(dayLbl(days[i])) + ': ' + (v == null ? 'нет данных' : v + ' ' + unit) + '">' + (h ? '<i style="height:' + h + '%"></i>' : '') + '</button>';
+    }).join('');
+    var mid = Math.floor(last / 2);
+    return '<div class="ch"><h4>' + title + '<span>сегодня <b>' + (vals[last] == null ? '—' : fmt(vals[last])) + '</b>'
+      + (key === 'active' ? '' : ' · за ' + vals.length + ' дн ' + fmt(sum)) + '</span></h4>'
+      + '<div class="cp"><i class="cg"></i><span class="cgt">' + fmt(max) + '</span><div class="cb">' + cols + '</div></div>'
+      + '<div class="chx"><span style="left:0">' + esc(dayLbl(days[0] || '')) + '</span>'
+      + '<span style="left:' + ((mid + .5) / vals.length * 100).toFixed(2) + '%;transform:translateX(-50%)">' + esc(dayLbl(days[mid] || '')) + '</span>'
+      + '<span style="right:0">сегодня</span></div>'
+      + (gaps && a.since ? '<div class="small">Считаю с ' + esc(dayLbl(a.since)) + ' — раньше бот это не запоминал</div>' : '')
+      + '<div class="ctip"></div></div>';
+  }
+  function actHtml(a) {
+    var days = a.days || [];
+    var rows = days.map(function (k, i) { return i; }).reverse().map(function (i) {
+      return '<tr><td>' + esc(dayLbl(days[i])) + ' ' + dayWd(days[i]) + '</td>' + ACT.map(function (c) {
+        var v = (a[c[0]] || [])[i]; return '<td>' + (v == null ? '—' : fmt(v)) + '</td>'; }).join('') + '</tr>';
+    }).join('');
+    return sec('📈 Активность за ' + days.length + ' дней', '<div class="chs">' + ACT.map(function (c) { return chartHtml(a, c[0], c[1], c[2]); }).join('') + '</div>'
+      + '<details data-k="act-tbl"><summary>Таблицей</summary><table class="tbl"><tr><th>День</th><th>Новые</th><th>Заходили</th><th>Матчи</th></tr>'
+      + rows + '</table></details>'
+      + '<div class="small">Дни — по Москве. «Заходили» — хоть раз что-то сделали в боте или мини-аппах.</div>');
+  }
+  function chTip(cc) {
+    var ch = cc.closest('.ch'), tip = ch.querySelector('.ctip'), cp = ch.querySelector('.cp'), v = cc.getAttribute('data-v'), d = cc.getAttribute('data-d');
+    var prev = ch.querySelector('.cc.on'); if (prev) prev.classList.remove('on');
+    cc.classList.add('on');
+    tip.innerHTML = (v === '' ? 'нет данных' : '<b>' + fmt(v) + '</b>' + esc(cc.getAttribute('data-u'))) + ' · ' + esc(dayLbl(d)) + ' ' + dayWd(d);
+    var x = cc.offsetLeft + cc.offsetWidth / 2, w = ch.offsetWidth;
+    tip.style.left = Math.min(Math.max(x, 70), w - 70) + 'px';
+    tip.style.top = (cp.offsetTop + cp.offsetHeight * (1 - Number(cc.getAttribute('data-h') || 0) / 100) - 6) + 'px';
+    tip.classList.add('show');
+  }
+  function chHide(ch) {
+    if (!ch) return;
+    var tip = ch.querySelector('.ctip'); if (tip) tip.classList.remove('show');
+    var on = ch.querySelector('.cc.on'); if (on) on.classList.remove('on');
+  }
+  // мышь — всплывашка под курсором; палец — по нажатию на столбик, прячется от нажатия мимо; клавиатура — по фокусу
+  $('ec').addEventListener('pointerover', function (e) { if (e.pointerType === 'touch') return; var cc = e.target.closest('.cc'); if (cc) chTip(cc); });
+  $('ec').addEventListener('pointerout', function (e) {
+    if (e.pointerType === 'touch') return;
+    var cp = e.target.closest('.cp'); if (cp && !cp.contains(e.relatedTarget)) chHide(cp.closest('.ch'));
+  });
+  $('ec').addEventListener('click', function (e) { var cc = e.target.closest('.cc'); if (cc) chTip(cc); });
+  $('ec').addEventListener('focusin', function (e) { var cc = e.target.closest('.cc'); if (cc) chTip(cc); });
+  $('ec').addEventListener('focusout', function (e) { var cc = e.target.closest('.cc'); if (cc && !cc.parentNode.contains(e.relatedTarget)) chHide(cc.closest('.ch')); });
+  document.addEventListener('pointerdown', function (e) {
+    if (e.target.closest && e.target.closest('.cc')) return;
+    var on = $('ec').querySelectorAll('.ctip.show');
+    for (var i = 0; i < on.length; i++) chHide(on[i].closest('.ch'));
+  });
+
+  // ══ v333: вкладка «1vs1» — споры по скриншотам, матчи прямо сейчас, очередь поиска, сезон ════════
+  // Пока вкладка открыта, матчи обновляются каждые 5 секунд (и не обновляются, если приложение свёрнуто).
+  var VERD = { win: 'победа', loss: 'поражение', unknown: 'не распознано' };
+  var duT = 0;
+  S.du = null; S.duSeq = 0; S.duKey = '';
+  S.shot = {};                 // скриншоты споров: 'матч|игрок' → картинка; грузятся один раз
+  function plural3(n, a, b, c) { var m = n % 10, h = n % 100; return m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 10 || h >= 20) ? b : c; }
+  function since(ts) { return ts ? leftTxt(Date.now() / 1000 - ts) : ''; }
+  function tm(ts) { return ts ? hm(new Date(ts * 1000)) : ''; }
+  function pName(p) { return esc((p && p.name) || 'без имени'); }
+  function duStop() { clearTimeout(duT); duT = 0; }
+  function duPoll() {
+    duStop();
+    duT = setTimeout(function () {
+      if (S.view !== 'duels') return;
+      if (document.hidden) { duPoll(); return; }
+      loadDuels(true);
+    }, 5000);
+  }
+  function loadDuels(silent) {
+    duStop();
+    var my = ++S.duSeq;
+    if (!S.du && !silent) $('du-live').innerHTML = skel(3);
+    return sect('/duels', { op: 'get' }, 'du-live', 'v333').then(function (j) {
+      if (my !== S.duSeq) return;              // пока ехал ответ, админ что-то сделал — свежее уже на экране
+      if (j) setDu(j, !silent, !silent);
+      if (j && S.view === 'duels') duPoll();
+    }).catch(function () { if (!silent) toast('Нет связи с сервером', true); if (S.view === 'duels') duPoll(); });
+  }
+  function setDu(j, fill, anim) {
+    S.du = j;
+    tabCnt('du-cnt', (j.disputes || []).length);
+    if (S.meta && S.meta.stats) S.meta.stats.disputes = (j.disputes || []).length;
+    // перерисовываем, только если что-то поменялось (или прошла минута — «идёт 5 мин» должно расти)
+    var key = JSON.stringify([j.disputes, j.matches, j.queue]) + '|' + Math.floor(Date.now() / 60000);
+    if (anim || key !== S.duKey) { S.duKey = key; renderDuLive(anim); }
+    renderSeason(fill);
+  }
+  function ppHtml(p) {
+    return '<div class="pp" data-uid="' + p.uid + '"><div class="av">' + avHtml(p) + (p.online ? '<i class="dot"></i>' : '') + '</div>'
+      + '<div class="nm">' + pName(p) + '</div><div class="sub">ID ' + esc(p.cid || '—') + '</div></div>';
+  }
+  function vsHtml(ps) { return '<div class="vs">' + ppHtml(ps[0]) + '<span class="vsx">VS</span>' + ppHtml(ps[1]) + '</div>'; }
+  // переписка матча: сообщения второго игрока (или того, на кого жалуются) — справа
+  function chatHtml(arr, rightUid) {
+    return '<div class="chat">' + arr.map(function (m) {
+      var r = rightUid != null ? m.from === rightUid : !!m.me;
+      return '<div class="msg' + (r ? ' me' : '') + '"><i>' + esc(m.name || ('ID ' + m.from)) + (m.time ? ' · ' + tm(m.time) : '') + '</i>' + esc(m.text) + '</div>';
+    }).join('') + '</div>';
+  }
+  function tlHtml(tl, names) {
+    tl = tl || {}; var a = [];
+    if (tl.start) a.push('начало <b>' + tm(tl.start) + '</b>');
+    if (tl.room_at) a.push('комната <b>' + tm(tl.room_at) + '</b>' + (tl.room_by ? ' (создал ' + esc(names[tl.room_by] || 'игрок') + ')' : ''));
+    if (tl.joined_at) a.push('зашёл <b>' + tm(tl.joined_at) + '</b>');
+    if (tl.shot_at) a.push('первый скрин <b>' + tm(tl.shot_at) + '</b>');
+    if (tl.last) a.push('последняя активность <b>' + tm(tl.last) + '</b>');
+    return a.length ? '<div class="tl">' + a.join(' · ') + '</div>' : '';
+  }
+  function namesOf(ps) { var n = {}; ps.forEach(function (p) { if (p) n[p.uid] = p.name || ('ID ' + p.cid); }); return n; }
+  function duMatch(mid) { var ms = (S.du && S.du.matches) || []; for (var i = 0; i < ms.length; i++) if (ms[i].mid === mid) return ms[i]; return null; }
+  function matchDetails(m) {
+    return '<details data-k="mc-' + esc(m.mid) + '"><summary>Ход матча и переписка' + (m.chat_n ? ' · ' + m.chat_n : '') + '</summary><div class="v">'
+      + (tlHtml(m.tl, namesOf(m.p)) || '<div class="small">Пока ничего не происходило</div>')
+      + (m.chat && m.chat.length ? chatHtml(m.chat, m.p[1].uid) : '<div class="small">Переписки нет</div>') + '</div></details>';
+  }
+  function dispHtml(x) {
+    var shots = x.p.map(function (p) {
+      var s = (x.shots || {})[String(p.uid)], k = x.mid + '|' + p.uid, img = S.shot[k];
+      var box = !s ? '<div class="shot none">Скриншота нет</div>'
+        : '<button type="button" class="shot" data-shot="' + esc(k) + '">'
+          + (img && img !== 'err' && img !== 'loading' ? '<img src="' + img + '" alt="Скриншот">' : img === 'err' ? 'Не загрузился — нажми' : 'Загружаю…') + '</button>';
+      return '<div>' + box + '<div class="vd">' + pName(p) + (s ? ' · ИИ: <b>' + esc(VERD[s.verdict] || s.verdict) + '</b>' : '') + '</div>'
+        + (s && s.caption ? '<div class="vd">«' + esc(cut(s.caption, 80)) + '»</div>' : '') + '</div>';
+    }).join('');
+    var m = duMatch(x.mid);
+    return '<div class="sec"><div class="v"><div class="row"><span class="bd wn" style="margin:0;flex:0 0 auto">⚖️ спор</span>'
+      + '<span class="f1 small wrapt">' + esc(x.reason) + '</span></div>'
+      + vsHtml(x.p)
+      + '<div class="small" style="text-align:center">ставка ' + fmt(x.stake) + ' 💰' + (x.at ? ' · ждёт решения ' + since(x.at) : '') + '</div>'
+      + '<div class="shots">' + shots + '</div>'
+      + (m ? matchDetails(m) : '')
+      + (x.live ? '<div class="lbl">Кто победил?</div><div class="row">' + x.p.map(function (p) {
+            return '<button type="button" class="b-acc f1" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-dwin="' + p.uid + '" data-mid="' + esc(x.mid) + '">🏆 ' + pName(p) + '</button>'; }).join('') + '</div>'
+          + '<div class="row"><button type="button" class="f1" data-dvoid="' + esc(x.mid) + '">Аннулировать — залог обоим</button></div>'
+        : '<div class="note wn">Матч уже закончился — решать нечего</div>')
+      + '</div></div>';
+  }
+  function matchHtml(m) {
+    var names = namesOf(m.p), r = m.room || {}, sh = m.shots || {}, tl = m.tl || {};
+    var room = r.code ? 'комната <b class="cp" data-copy="' + esc(r.code) + '">' + esc(r.code) + '</b> · ' + (r.joined_at ? 'соперник зашёл' : 'ждёт захода')
+      : r.creator ? 'комнату создаёт ' + esc(names[r.creator] || '…') : 'комната ещё не создана';
+    var shots = Object.keys(sh).map(function (u) { return esc(names[u] || 'игрок') + ' (ИИ: ' + esc(VERD[sh[u].verdict] || '?') + ')'; });
+    return '<div class="sec"><div class="v">' + vsHtml(m.p)
+      + '<div class="small" style="text-align:center">ставка ' + fmt(m.stake) + ' 💰' + (tl.start ? ' · идёт ' + since(tl.start) : '') + '</div>'
+      + '<div class="small wrapt">🎮 ' + room + (r.dispute ? ' <span class="bd wn">спор по комнате — решается сам</span>' : '') + '</div>'
+      + '<div class="small wrapt">📸 ' + (shots.length ? 'скрин прислал: ' + shots.join(', ') : 'скриншотов ещё нет') + '</div>'
+      + (m.disputed ? '<div class="note wn">⚖️ Спор по скриншотам — выше, в «Спорных матчах»</div>' : '')
+      + matchDetails(m)
+      + '<div class="row"><button type="button" class="b-no f1" data-dcancel="' + esc(m.mid) + '">Отменить матч — залог обоим</button></div>'
+      + '</div></div>';
+  }
+  function queueHtml(q) {
+    return '<div class="it" data-uid="' + q.uid + '"><div class="av">' + avHtml(q) + (q.online ? '<i class="dot"></i>' : '') + '</div>'
+      + '<div class="m"><div class="nm">' + pName(q) + '</div><div class="sub">ставка ' + fmt(q.stake) + (q.since ? ' · ищет ' + since(q.since) : '') + '</div></div>'
+      + '<button type="button" class="xs" data-unq="' + q.uid + '">Убрать</button></div>';
+  }
+  function openDetails(box) {
+    var o = {}, ds = box.querySelectorAll('details[data-k]');
+    for (var i = 0; i < ds.length; i++) if (ds[i].open) o[ds[i].getAttribute('data-k')] = 1;
+    return o;
+  }
+  function reopen(box, o) {
+    var ds = box.querySelectorAll('details[data-k]');
+    for (var i = 0; i < ds.length; i++) if (o[ds[i].getAttribute('data-k')]) ds[i].open = true;
+  }
+  function renderDuLive(anim) {
+    var j = S.du, ds = j.disputes || [], ms = j.matches || [], q = j.queue || [], box = $('du-live'), o = openDetails(box), h = '';
+    if (ds.length) h += '<h2>Спорные матчи · ' + ds.length + '</h2><div class="small">Бот не смог сам решить по скриншотам. Посмотри оба и реши — игрокам сразу придёт результат.</div>'
+      + ds.map(dispHtml).join('');
+    h += '<h2>Идут сейчас' + (ms.length ? ' · ' + ms.length : '') + '</h2>'
+      + (ms.length ? ms.map(matchHtml).join('') : '<div class="empty" style="padding:16px 10px">Сейчас никто не играет</div>');
+    h += '<h2>Ищут соперника' + (q.length ? ' · ' + q.length : '') + '</h2>'
+      + (q.length ? q.map(queueHtml).join('') : '<div class="empty" style="padding:16px 10px">В поиске никого</div>');
+    box.classList.toggle('quiet', !anim);
+    box.innerHTML = h;
+    reopen(box, o);
+    duShots();
+  }
+  // скриншоты спорных матчей — по одному запросу на картинку, каждая грузится один раз
+  function duShots() {
+    ((S.du && S.du.disputes) || []).forEach(function (x) {
+      x.p.forEach(function (p) {
+        var k = x.mid + '|' + p.uid;
+        if (!(x.shots || {})[String(p.uid)] || S.shot[k]) return;
+        S.shot[k] = 'loading';
+        api('/duels', { op: 'shot', mid: x.mid, uid: p.uid }).then(function (res) {
+          var j = res.j || {};
+          S.shot[k] = j.ok && j.img ? j.img : 'err';
+        }, function () { S.shot[k] = 'err'; }).then(function () {
+          var el = $('du-live').querySelector('[data-shot="' + k.replace(/"/g, '') + '"]');
+          if (el) el.innerHTML = S.shot[k] !== 'err' ? '<img src="' + S.shot[k] + '" alt="Скриншот">' : 'Не загрузился — нажми';
+        });
+      });
+    });
+  }
+  function lbOpen(src) { $('lbx-img').src = src; $('lbx').classList.add('show'); try { tg && tg.BackButton && tg.BackButton.show(); } catch (e) {} }
+  function lbClose() {
+    if (!$('lbx').classList.contains('show')) return false;
+    $('lbx').classList.remove('show');
+    try { if (tg && tg.BackButton && S.view === 'list') tg.BackButton.hide(); } catch (e) {}
+    return true;
+  }
+  $('lbx').addEventListener('click', lbClose);
+  function renderSeason(fill) {
+    var s = S.du && S.du.season, M = ['🥇', '🥈', '🥉'];
+    if (!s) return;
+    $('du-season').hidden = false; $('du-new').hidden = false;
+    var days = s.start ? Math.floor((Date.now() / 1000 - s.start) / 86400) : null;
+    $('du-s-head').innerHTML = '<div class="nm wrapt" style="font-size:17px">«' + esc(s.name) + '» <span class="small">сезон #' + s.number + '</span></div>'
+      + '<div class="sub wrapt">' + (s.start ? 'идёт с ' + dt(s.start).split(' ')[0] + ' · ' + days + ' дн из ~' + s.length_days : 'начнётся с первым матчем')
+      + ' · с рейтингом ' + fmt(s.ranked) + ' из ' + fmt(s.players) + ' игр.</div>';
+    if (fill) for (var i = 0; i < 3; i++) $('sp-' + i).value = (s.prizes || [])[i] || '';
+    $('du-s-top').innerHTML = '<div class="lbl" style="margin-bottom:0">Сейчас на пьедестале</div>' + ((s.top3 || []).length ? s.top3.map(function (p, i) {
+        return erow(extend(extend({}, p), { name: M[i] + ' ' + (p.name || 'без имени') }), fmt(p.rp) + ' RP'); }).join('')
+      : '<div class="small" style="margin-top:6px">Пока никто не набрал RP</div>');
+    $('du-s-last').innerHTML = s.last && (s.last.top3 || []).length ? '<div class="lbl" style="margin:6px 0 0">Прошлый сезон «' + esc(s.last.name) + '» — кому вручено</div>'
+      + s.last.top3.map(function (p, i) {
+          return '<div class="it"' + (p.uid ? ' data-uid="' + p.uid + '"' : '') + '><div class="av">' + (p.uid ? avHtml(p) : M[i]) + '</div>'
+            + '<div class="m"><div class="nm">' + M[i] + ' ' + esc(p.name || '—') + '</div><div class="sub">' + fmt(p.rp) + ' RP</div></div>'
+            + '<button type="button" class="xs' + (p.rewarded ? ' b-ok' : '') + '" data-rw="' + i + '" data-rn="' + s.last.number + '" data-rv="'
+            + (p.rewarded ? 0 : 1) + '">' + (p.rewarded ? '✅ Вручено' : 'Отметить «вручено»') + '</button></div>';
+        }).join('') : '';
+    $('du-new-info').innerHTML = 'Закроется сезон «' + esc(s.name) + '» (#' + s.number + ') и сразу начнётся #' + (s.number + 1) + ':<br>'
+      + '• рейтинг всех игроков усохнет до ' + s.decay + '%<br>• топ-3 уйдёт в историю — награды вручаешь ты, потом отмечаешь «вручено»<br>'
+      + '• всем игрокам придёт объявление<br>Сам бот сезоны не переключает — только эта кнопка или /newseason.';
+  }
+  function duDo(body, confirmText, btn, after) {
+    if (botVer() < 333) { toast('Заработает, когда бот на сервере обновится до v333', true); return; }
+    S.duSeq++;                                 // ответ фонового обновления, если он уже в пути, не перетрёт результат
+    duStop();
+    doSect('/duels', body, confirmText, btn, function (j) {
+      S.dirty = true;
+      setDu(j, body.op === 'prizes' || body.op === 'new_season', false);
+      if (after) after(j);
+    }).then(function () { if (S.view === 'duels') duPoll(); });
+  }
+  function duFind(list, mid) { for (var i = 0; i < list.length; i++) if (list[i].mid === mid) return list[i]; return null; }
+  $('v-duels').addEventListener('click', function (e) {
+    var cp = e.target.closest('[data-copy]');
+    if (cp) { copy(cp.getAttribute('data-copy')); return; }
+    var sh = e.target.closest('[data-shot]');
+    if (sh) {
+      var k = sh.getAttribute('data-shot'), im = S.shot[k];
+      if (im === 'err') { delete S.shot[k]; sh.textContent = 'Загружаю…'; duShots(); }
+      else if (im && im !== 'loading') lbOpen(im);
+      return;
+    }
+    var b = e.target.closest('button');
+    if (b && !b.disabled) {
+      var j = S.du || {};
+      if (b.hasAttribute('data-dwin')) {
+        var x = duFind(j.disputes || [], b.getAttribute('data-mid')); if (!x) return;
+        var w = Number(b.getAttribute('data-dwin')), pw = x.p[0].uid === w ? x.p[0] : x.p[1], pl = x.p[0].uid === w ? x.p[1] : x.p[0];
+        duDo({ op: 'win', mid: x.mid, uid: w }, 'Присудить победу ' + (pw.name || 'игроку') + '?\nЕму +' + fmt(x.stake * 2) + ' (залог и приз), '
+          + (pl.name || 'сопернику') + ' — поражение, залог не вернётся. Обоим придёт результат.', b);
+        return;
+      }
+      if (b.hasAttribute('data-dvoid')) {
+        var xv = duFind(j.disputes || [], b.getAttribute('data-dvoid')); if (!xv) return;
+        duDo({ op: 'void', mid: xv.mid }, 'Аннулировать матч?\nЗалог ' + fmt(xv.stake) + ' вернётся обоим, рейтинг не изменится.', b);
+        return;
+      }
+      if (b.hasAttribute('data-dcancel')) {
+        var m = duFind(j.matches || [], b.getAttribute('data-dcancel')); if (!m) return;
+        duDo({ op: 'cancel', mid: m.mid }, 'Отменить матч ' + (m.p[0].name || 'игрок') + ' — ' + (m.p[1].name || 'игрок') + '?\nЗалог вернётся обоим, рейтинг не изменится.', b);
+        return;
+      }
+      if (b.hasAttribute('data-unq')) { duDo({ op: 'unqueue', uid: Number(b.getAttribute('data-unq')) }, null, b); return; }
+      if (b.hasAttribute('data-rw')) {
+        var on = b.getAttribute('data-rv') === '1', place = Number(b.getAttribute('data-rw'));
+        duDo({ op: 'rewarded', number: Number(b.getAttribute('data-rn')), place: place, value: on },
+          on ? 'Отметить, что награду за ' + (place + 1) + ' место вручил?\nИгроки увидят 🎁 в «Рангах» → «Сезон».' : 'Снять отметку «вручено»?', b);
+        return;
+      }
+      if (b.id === 'sp-save') { duDo({ op: 'prizes', prizes: [$('sp-0').value.trim(), $('sp-1').value.trim(), $('sp-2').value.trim()] }, null, b); return; }
+      if (b.id === 'ns-go') {
+        var s = j.season; if (!s) return;
+        var nm = $('ns-name').value.trim();
+        if (!nm) { toast('Впиши название нового сезона', true); $('ns-name').focus(); return; }
+        duDo({ op: 'new_season', name: nm, number: s.number },
+          'Закрыть сезон «' + s.name + '» и начать «' + nm + '»?\nРейтинг всех усохнет до ' + s.decay + '%, всем игрокам придёт объявление. Отменить нельзя.',
+          b, function () { $('ns-name').value = ''; window.scrollTo(0, 0); });
+        return;
+      }
+      if (!b.closest('[data-uid]')) return;
+    }
+    var it = e.target.closest('[data-uid]'); if (it) openPlayer(Number(it.getAttribute('data-uid')), 'duels');
+  });
+  // вернулся в приложение (было свёрнуто) — матчи сразу свежие
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && S.view === 'duels' && S.du) loadDuels(true); });
+
+  // ══ v333: вкладка «Жалобы» — по игрокам, с перепиской матча ═════════════
+  var HOW = { warn: ['wn', '⚠️ предупреждение'], ban: ['ban', '🚫 бан'], dismiss: ['auto', '✅ отклонено'] };
+  S.rp = null; S.rpBan = null; S.rpDur = undefined;
+  function loadRep() {
+    if (!S.rp) $('rp-list').innerHTML = skel(3);
+    return sect('/reports', { op: 'get' }, 'rp-list', 'v333').then(function (j) { if (j) setRep(j, true); })
+      .catch(function () { toast('Нет связи с сервером', true); });
+  }
+  function setRep(j, anim) {
+    S.rp = j;
+    var n = (j.items || []).length;
+    tabCnt('rp-tcnt', n);
+    if (S.meta && S.meta.stats) { S.meta.stats.reports = n; renderStats(); }
+    renderRep(anim);
+  }
+  function repRow(r, g) {
+    var names = namesOf([g, r.from]), chat = r.chat || [];
+    return '<div class="rpi v"><div><b>' + esc(r.emoji || '🚩') + ' ' + esc(r.cat) + '</b> <span class="small">· ' + dt(r.time) + '</span></div>'
+      + '<div class="sub wrapt" style="margin-top:-6px">от ' + (r.from ? '<span class="lk cp" data-uid="' + r.from.uid + '">' + pName(r.from) + '</span> · ID ' + esc(r.from.cid || '—') : '—') + '</div>'
+      + tlHtml(r.tl, names)
+      + (chat.length ? '<details data-k="rc-' + g.uid + '-' + Math.round(r.time || 0) + '"><summary>Переписка' + (r.live ? ' (матч ещё идёт)' : '') + ' · ' + chat.length + '</summary>'
+          + chatHtml(chat) + '</details>'
+        : '<div class="small">' + (r.after ? 'Жалоба подана после матча — переписка к тому времени не сохранилась'
+            : r.saved ? 'Переписки в матче не было' : 'Переписка не сохранилась — жалоба пришла до обновления v333') + '</div>')
+      + '</div>';
+  }
+  function repDurs() { return (S.rp && S.rp.durations) || (S.meta && S.meta.durations) || DUR0; }
+  function banLbl() { return S.rpDur === undefined ? '' : S.rpDur === null ? ' навсегда' : ' на ' + dur(S.rpDur); }
+  function repHtml(g) {
+    var n = g.reports.length, open = S.rpBan === g.uid, last = g.reports[0] || {};
+    var h = '<div class="sec"><div class="rph"><div class="av lk" data-uid="' + g.uid + '">' + avHtml(g) + (g.online ? '<i class="dot"></i>' : '') + '</div>'
+      + '<div class="m"><div class="nm lk" data-uid="' + g.uid + '">' + pName(g) + '</div>'
+      + '<div class="sub">ID ' + esc(g.cid || '—') + ' · ' + g.wins + '/' + g.losses + ' (' + g.rate + '%) · предупр. ' + g.warnings + '</div>'
+      // значки — своей строкой: рядом с длинным именем на узком экране они обрезались бы
+      + (g.is_admin || g.banned || g.in_match ? '<div style="margin:3px 0 0 -5px">' + (g.is_admin ? '<span class="bd adm">админ</span>' : '')
+          + (g.banned ? '<span class="bd ban">бан</span>' : '') + (g.in_match ? '<span class="bd mt">в матче</span>' : '') + '</div>' : '')
+      + '</div>'
+      + '<span class="cnt">' + n + ' ' + plural3(n, 'жалоба', 'жалобы', 'жалоб') + '</span></div>';
+    if (g.repeat) h += '<div class="note ban" style="margin-top:8px">🔴 Повторные жалобы: ' + g.recent + ' за 7 дней от ' + g.distinct + ' ' + plural3(g.distinct, 'игрока', 'разных игроков', 'разных игроков') + '</div>';
+    else if (g.total > n) h += '<div class="small" style="margin-top:6px">Всего жалоб на него: ' + g.total + ', за 7 дней: ' + g.recent + '</div>';
+    h += '<div style="margin-top:4px">' + g.reports.map(function (r) { return repRow(r, g); }).join('') + '</div>'
+      + '<div class="row rpb" style="margin-top:8px"><button type="button" class="f1" data-rwarn="' + g.uid + '">⚠️ Предупредить</button>'
+      + '<button type="button" class="' + (open ? 'b-acc' : 'b-no') + ' f1" data-rban="' + g.uid + '"' + (g.is_admin ? ' disabled' : '') + '>🚫 Забанить</button></div>'
+      + '<div class="row" style="margin-top:6px"><button type="button" class="f1" data-rdis="' + g.uid + '">✅ Отклонить</button></div>';
+    if (open) {
+      h += '<div class="v" style="margin-top:10px"><div class="lbl">Срок бана</div><div class="chips wrap">'
+        + repDurs().map(function (d) { return [d, dur(d)]; }).concat([['f', 'навсегда']]).map(function (d) {
+            var v = d[0] === 'f' ? null : d[0];
+            return '<button type="button" class="chip' + (S.rpDur === v ? ' on' : '') + '" data-rdur="' + d[0] + '">' + d[1] + '</button>'; }).join('') + '</div>'
+        + '<input id="rb-r" maxlength="200" placeholder="Причина (пусто — «' + esc(last.reason || 'нарушение правил') + '»)">'
+        + '<div class="row"><button type="button" class="f1" data-rbx="1">Отмена</button>'
+        + '<button type="button" class="b-no f1" id="rb-go" data-rbgo="' + g.uid + '">Забанить' + banLbl() + '</button></div></div>';
+    }
+    return h + '</div>';
+  }
+  function renderRep(anim) {
+    var it = S.rp.items || [], dn = S.rp.done || [], box = $('rp-list'), o = openDetails(box), keepR = $('rb-r') ? $('rb-r').value : '';
+    $('rp-cnt').textContent = it.length ? 'Ждут разбора: ' + it.length + ' ' + plural3(it.length, 'игрок', 'игрока', 'игроков')
+      + '. Дольше всех ждущие — сверху. Одно действие закрывает все жалобы на игрока.' : '';
+    box.classList.toggle('quiet', !anim);
+    box.innerHTML = it.length ? it.map(repHtml).join('') : '<div class="empty">Жалоб, которые ждут разбора, нет 🎉</div>';
+    reopen(box, o);
+    if ($('rb-r') && keepR) $('rb-r').value = keepR;
+    $('rp-done-box').hidden = !dn.length;
+    $('rp-done').innerHTML = dn.map(function (x) {
+      var hw = HOW[x.how] || ['auto', x.how];
+      return '<div class="lk" data-uid="' + x.uid + '"><b>' + esc(x.name || 'без имени') + '</b> <span class="bd ' + hw[0] + '">' + hw[1] + '</span>'
+        + '<br><span class="small">' + (x.t ? dt(x.t) + ' · ' : '') + esc((x.cats || []).join(', ')) + '</span></div>';
+    }).join('');
+  }
+  function rpDo(body, confirmText, btn) {
+    if (botVer() < 333) { toast('Заработает, когда бот на сервере обновится до v333', true); return; }
+    doSect('/reports', body, confirmText, btn, function (j) { S.rpBan = null; S.rpDur = undefined; S.dirty = true; setRep(j, false); });
+  }
+  function rpGroup(uid) { var it = (S.rp && S.rp.items) || []; for (var i = 0; i < it.length; i++) if (it[i].uid === uid) return it[i]; return null; }
+  $('v-rep').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (b && !b.disabled) {
+      var u = Number(b.getAttribute('data-rwarn') || b.getAttribute('data-rban') || b.getAttribute('data-rdis') || b.getAttribute('data-rbgo') || 0);
+      var g = u ? rpGroup(u) : null, nm = g ? (g.name || 'игрока') : '', rs = g && g.reports[0] ? g.reports[0].reason : '';
+      if (b.hasAttribute('data-rwarn') && g) {
+        rpDo({ op: 'warn', uid: u }, 'Предупредить ' + nm + '?\nПричина: «' + rs + '». Закроются все жалобы на него (' + g.reports.length + ').', b); return;
+      }
+      if (b.hasAttribute('data-rdis') && g) {
+        rpDo({ op: 'dismiss', uid: u }, 'Отклонить жалобы на ' + nm + ' (' + g.reports.length + ')?\nИгроку ничего не придёт.', b); return;
+      }
+      if (b.hasAttribute('data-rban') && g) {
+        S.rpBan = S.rpBan === u ? null : u; S.rpDur = undefined; renderRep(false); return;
+      }
+      if (b.hasAttribute('data-rbx')) { S.rpBan = null; S.rpDur = undefined; renderRep(false); return; }
+      if (b.hasAttribute('data-rdur')) {
+        var v = b.getAttribute('data-rdur'); S.rpDur = v === 'f' ? null : Number(v);
+        var cs = b.parentNode.querySelectorAll('.chip');
+        for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('on', cs[i] === b);
+        if ($('rb-go')) $('rb-go').textContent = 'Забанить' + banLbl();
+        return;
+      }
+      if (b.hasAttribute('data-rbgo') && g) {
+        if (S.rpDur === undefined) { toast('Выбери срок', true); return; }
+        var why = ($('rb-r') ? $('rb-r').value.trim() : '') || rs;
+        rpDo({ op: 'ban', uid: u, seconds: S.rpDur, reason: why }, 'Забанить ' + nm + banLbl() + '?\nПричина: «' + why + '».', b); return;
+      }
+    }
+    var it = e.target.closest('[data-uid]'); if (it) openPlayer(Number(it.getAttribute('data-uid')), 'rep');
   });
 
   // ── v331: режим обслуживания — кнопка в шапке, полоса предупреждения, панель ──
@@ -1819,6 +2358,11 @@ window.addEventListener('error', function (e) {
     } else $('list').innerHTML = skel(6);                  // v331: пока едет список — серые строки, а не пустота
     loadMeta().catch(function () {});
     loadList(false, !!cached);
+    // v333: из сообщения бота о споре или жалобе («🗂 Открыть в админке») — сразу на нужной вкладке
+    var TAB0 = { duels: 'duels', reports: 'rep' }[Q.get('tab') || ''];
+    if (TAB0) openTab(TAB0);
+    // v333: раз в полминуты — свежие цифры в шапке и на вкладках (споры, жалобы), пока приложение на экране
+    setInterval(function () { if (!document.hidden && S.view !== 'pl') loadMeta().catch(function () {}); }, 30000);
   }
 
   window.ADM = { state: function () { return S; }, open: openPlayer, tab: openTab, photo: bcSetFile, dpPhoto: dpSetFile, ver: VER };
