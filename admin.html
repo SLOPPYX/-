@@ -315,6 +315,9 @@
       </select>
     </div>
     <div class="small" id="cnt" style="margin-top:8px"></div>
+    <!-- v335: группа игроков — объяснение и «написать им» -->
+    <div class="note mt row" id="seg-box" style="margin-top:8px" hidden><span class="f1" id="seg-t"></span>
+      <button type="button" class="xs b-acc" id="seg-go">📢 Написать им</button></div>
     <div id="list"></div>
     <button id="more" class="more" type="button" hidden>Показать ещё</button>
   </section>
@@ -483,7 +486,7 @@ window.addEventListener('error', function (e) {
     document.getElementById('app').hidden = true;
     var f = document.getElementById('fatal'); f.hidden = false;
     document.getElementById('fatal-t').textContent = 'Ошибка на странице';
-    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v334';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v335';
   } catch (_) {}
 }, true);
 </script>
@@ -498,7 +501,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v334';
+  var VER = 'v335';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -520,8 +523,11 @@ window.addEventListener('error', function (e) {
     } catch (e) {}
   };
 
-  var FILTERS = [['all', 'Все'], ['online', 'Онлайн'], ['banned', 'Бан'], ['frozen', 'Заморозка'],
-                 ['reports', 'Жалобы'], ['strikes', 'Аватарки'], ['match', 'В матче']];
+  var FILTERS = [['all', 'Все'], ['online', 'Онлайн'], ['new', 'Новые'], ['gone', 'Пропали'], ['nomatch', 'Без 1vs1'],
+                 ['banned', 'Бан'], ['frozen', 'Заморозка'], ['reports', 'Жалобы'], ['strikes', 'Аватарки'], ['match', 'В матче']];
+  // v335: группы игроков — по ним же можно сделать рассылку (на сервере то же определение, что у адресатов рассылки)
+  var SEG = { new: 'Зарегистрировались за последние 7 дней.', gone: 'Зарегистрированы давно, но не заходят в бот 7+ дней.',
+              nomatch: 'Ни разу не сыграли матч 1vs1.' };
   var DUR0 = [3600, 21600, 86400, 259200, 604800, 2592000];
   var S = { meta: null, q: '', flt: 'all', sort: 'recent', items: [], total: 0, seq: 0, pseq: 0, cur: null, dirty: false,
             pick: {}, view: 'list', from: 'list', listY: 0, views: {} };
@@ -762,6 +768,8 @@ window.addEventListener('error', function (e) {
   }
   function renderList() {
     $('cnt').textContent = 'Найдено: ' + fmt(S.total);
+    $('seg-box').hidden = !SEG[S.flt] || !S.total;
+    if (SEG[S.flt]) $('seg-t').textContent = SEG[S.flt];
     $('list').innerHTML = S.items.length ? S.items.map(rowHtml).join('') : '<div class="empty">Никого не нашлось</div>';
     $('more').hidden = S.items.length >= S.total;
   }
@@ -797,6 +805,12 @@ window.addEventListener('error', function (e) {
     S.flt = b.getAttribute('data-f'); renderFilters(); loadList(false);
   });
   $('sort').addEventListener('change', function () { S.sort = this.value; loadList(false); });
+  // v335: «📢 Написать им» — вкладка «Рассылка» с этой группой в «Кому»
+  $('seg-go').addEventListener('click', function () {
+    if (botVer() < 335) { toast('Рассылка по группам заработает, когда бот обновится до v335', true); return; }
+    S.bcAud = S.flt; openTab('bc');
+    if (S.bc) renderBc();
+  });
   $('more').addEventListener('click', function () { loadList(true); });
   $('list').addEventListener('click', function (e) {
     var it = e.target.closest('[data-uid]'); if (!it) return;
@@ -1293,8 +1307,10 @@ window.addEventListener('error', function (e) {
   function botVer() { var m = /^v(\d+)/.exec((S.meta && S.meta.ver) || ''); return m ? Number(m[1]) : 999; }
 
   // ── рассылка ────────────────────────────────────────────────────────
-  var AUD = [['all', 'Всем'], ['week', 'За 7 дней'], ['day', 'За сутки']];
-  var AUDN = { all: 'всем', week: 'заходившим за 7 дней', day: 'заходившим за сутки' };
+  // v335: + группы игроков (показываются, только если их знает бот на сервере)
+  var AUD = [['all', 'Всем'], ['week', 'За 7 дней'], ['day', 'За сутки'], ['new', 'Новичкам'], ['gone', 'Пропавшим'], ['nomatch', 'Без 1vs1']];
+  var AUDN = { all: 'всем', week: 'заходившим за 7 дней', day: 'заходившим за сутки', new: 'новичкам (зарегистрировались за 7 дней)',
+               gone: 'пропавшим (не заходят 7+ дней)', nomatch: 'тем, кто ни разу не сыграл 1vs1' };
   var bcT = 0, DK = 'adm_bc_draft';
   S.bcAud = 'all';
   S.bcPhoto = '';              // v328: картинка — уже ужатая на телефоне, data:image/jpeg;base64,…
@@ -1338,7 +1354,8 @@ window.addEventListener('error', function (e) {
         + '</button></div></div></div>';
     }
     $('bc-job').innerHTML = h;
-    $('bc-aud').innerHTML = AUD.map(function (a) {
+    if (!(j.aud && j.aud[S.bcAud])) S.bcAud = 'all';
+    $('bc-aud').innerHTML = AUD.filter(function (a) { return a[0] === 'all' || (j.aud && j.aud[a[0]]); }).map(function (a) {
       var n = j.aud && j.aud[a[0]] ? j.aud[a[0]].n : 0;
       return '<button type="button" class="chip' + (S.bcAud === a[0] ? ' on' : '') + '" data-aud="' + a[0] + '">' + a[1] + ' · ' + fmt(n) + '</button>';
     }).join('');
