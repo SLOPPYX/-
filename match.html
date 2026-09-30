@@ -1,6 +1,50 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<script>
+/* v336: личный ключ игрока (tk) — в каждый запрос к боту. Бот вписывает его только в ссылку самого игрока, поэтому
+   действовать от чужого имени больше нельзя (раньше хватало общего ключа, который есть в ссылке у каждого). Страница
+   открыта со старой кнопкой (без ключа) и бот отказал в действии — подсказка «открой заново». */
+(function () {
+  var TK = '';
+  try { TK = new URLSearchParams(location.search).get('tk') || ''; } catch (e) {}
+  window.__TK = TK;
+  function stale() {
+    try {
+      if (document.getElementById('__tkStale')) return;
+      var d = document.createElement('div'); d.id = '__tkStale';
+      d.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:2147483647;'
+        + 'padding:12px 14px;border-radius:14px;background:rgba(20,16,32,.97);border:1px solid rgba(139,92,246,.65);color:#f4f4f6;'
+        + 'font:600 14px/1.4 -apple-system,system-ui,sans-serif;box-shadow:0 12px 30px rgba(0,0,0,.6);text-align:center';
+      d.textContent = 'Кнопка устарела после обновления бота. Закрой это окно и открой раздел заново из меню бота (или нажми /start).';
+      (document.body || document.documentElement).appendChild(d);
+    } catch (e) {}
+  }
+  window.__tkStale = stale;
+  var of = window.fetch;
+  if (!of) return;
+  window.fetch = function (u, o) {
+    var act = false;
+    try {
+      if (typeof u === 'string' && u.indexOf('/casino/') >= 0) {
+        o = o || {};
+        act = String(o.method || 'GET').toUpperCase() !== 'GET';
+        if (TK) {
+          if (!act) u += (u.indexOf('?') >= 0 ? '&' : '?') + 'tk=' + encodeURIComponent(TK);
+          else if (typeof o.body === 'string' && o.body.charAt(0) === '{') {
+            var b = JSON.parse(o.body);
+            if (b && typeof b === 'object' && !Array.isArray(b) && !b.tk) { b.tk = TK; o.body = JSON.stringify(b); }
+          }
+        }
+      }
+    } catch (e) {}
+    var p = of.call(this, u, o);
+    if (act && !TK) p.then(function (r) { if (r && r.status === 401) stale(); }, function () {});
+    return p;
+  };
+})();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
