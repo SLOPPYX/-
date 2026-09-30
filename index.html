@@ -2,6 +2,50 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<script>
+/* v336: личный ключ игрока (tk) — в каждый запрос к боту. Бот вписывает его только в ссылку самого игрока, поэтому
+   действовать от чужого имени больше нельзя (раньше хватало общего ключа, который есть в ссылке у каждого). Страница
+   открыта со старой кнопкой (без ключа) и бот отказал в действии — подсказка «открой заново». */
+(function () {
+  var TK = '';
+  try { TK = new URLSearchParams(location.search).get('tk') || ''; } catch (e) {}
+  window.__TK = TK;
+  function stale() {
+    try {
+      if (document.getElementById('__tkStale')) return;
+      var d = document.createElement('div'); d.id = '__tkStale';
+      d.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:2147483647;'
+        + 'padding:12px 14px;border-radius:14px;background:rgba(20,16,32,.97);border:1px solid rgba(139,92,246,.65);color:#f4f4f6;'
+        + 'font:600 14px/1.4 -apple-system,system-ui,sans-serif;box-shadow:0 12px 30px rgba(0,0,0,.6);text-align:center';
+      d.textContent = 'Кнопка устарела после обновления бота. Закрой это окно и открой раздел заново из меню бота (или нажми /start).';
+      (document.body || document.documentElement).appendChild(d);
+    } catch (e) {}
+  }
+  window.__tkStale = stale;
+  var of = window.fetch;
+  if (!of) return;
+  window.fetch = function (u, o) {
+    var act = false;
+    try {
+      if (typeof u === 'string' && u.indexOf('/casino/') >= 0) {
+        o = o || {};
+        act = String(o.method || 'GET').toUpperCase() !== 'GET';
+        if (TK) {
+          if (!act) u += (u.indexOf('?') >= 0 ? '&' : '?') + 'tk=' + encodeURIComponent(TK);
+          else if (typeof o.body === 'string' && o.body.charAt(0) === '{') {
+            var b = JSON.parse(o.body);
+            if (b && typeof b === 'object' && !Array.isArray(b) && !b.tk) { b.tk = TK; o.body = JSON.stringify(b); }
+          }
+        }
+      }
+    } catch (e) {}
+    var p = of.call(this, u, o);
+    if (act && !TK) p.then(function (r) { if (r && r.status === 401) stale(); }, function () {});
+    return p;
+  };
+})();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>SloppyX Casino</title>
@@ -5889,7 +5933,9 @@ function calcResult(f) {
 // ══════════════════════════════════════════════════════════
 // API — обращаемся к боту напрямую
 // ══════════════════════════════════════════════════════════
-async function apiSpin(bet, result, mult, game, opened) {
+// v336: барабаны крутит СЕРВЕР и отвечает, что выпало. Раньше исход выбирала страница и сообщала «выиграл ×100» —
+// сервер верил на слово. Мины — свои адреса (/casino/mines/*), ракета — свои.
+async function apiSpin(bet, result) {
   if(!API_URL || !API_SECRET) return null;
   try {
     const r = await fetch(API_URL + '/casino/spin', {
@@ -5898,16 +5944,26 @@ async function apiSpin(bet, result, mult, game, opened) {
       body: JSON.stringify({
         uid: parseInt(USER_ID),
         secret: API_SECRET,
-        bet, result, mult,
+        bet,
+        result: result || '',      // только 'daily_reward' — остальное сервер не слушает
         name: USER_NAME || '',
-        game: game || 'slots',     // 'slots'|'mines'|'rocket'|'refund'|'daily_reward'
-        opened: opened || 0,        // для мин — число открытых клеток
+        game: 'slots',
       }),
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(8000),
     });
-    if(r.ok) return await r.json();
+    const j = await r.json().catch(() => null);
+    return j || { ok: false, error: 'http_' + r.status };
   } catch(e) { console.warn('API spin error:', e); }
   return null;
+}
+function spinErrText(j) {
+  const e = j && j.error;
+  if (!j) return '⚠️ Нет связи с сервером — ставка не списана';
+  if (e === 'insufficient_funds') return 'Недостаточно токенов';
+  if (e === 'unauthorized') return '⚠️ Кнопка казино устарела — закрой и открой казино заново из бота';
+  if (e === 'too_fast' || e === 'burst_limit') return 'Слишком быстро — секунду…';
+  if (e === 'bet_too_large' || e === 'bet_too_small') return 'Такая ставка недоступна';
+  return '⚠️ Не получилось — ставка не списана';
 }
 
 async function apiExit() {
@@ -6155,14 +6211,11 @@ async function spin() {
     reels.forEach(r=>r.classList.remove('win-glow'));
     reels.forEach(r=>r.classList.remove('idle-glow'));
 
-    // Считаем результат заранее
-    const final=[rnd(),rnd(),rnd()];
-    const res=calcResult(final);
     const spinMs = speedMode==='fast' ? 320 : 650;
     const gapMs  = speedMode==='fast' ? 70  : 130;
 
-    // Запускаем API и анимацию ПАРАЛЛЕЛЬНО — сохранение происходит пока крутятся барабаны
-    const apiPromise = apiSpin(currentBet, res.win?'win':'loss', res.win?res.mult:0, 'slots');
+    // v336: исход решает сервер. Запрос и анимация идут параллельно; барабаны останавливаются на том, что ответил сервер
+    const apiPromise = apiSpin(currentBet);
 
     result.className='result-strip idle';
     result.textContent='КРУТИМ...';
@@ -6185,7 +6238,19 @@ async function spin() {
     requestAnimationFrame(tickFn);
 
     await sleep(spinMs);
+    const apiResp = await apiPromise;          // обычно уже пришёл, пока крутились барабаны
     tickRunning=false;
+    if (!apiResp || !apiResp.ok || !Array.isArray(apiResp.reels)) {
+      // сервер не ответил или отказал — ставка не списана, результата нет
+      reels.forEach(r => { r.classList.remove('spinning'); r.innerHTML = getSymHtml('ram'); });
+      result.className = 'result-strip loss';
+      result.textContent = spinErrText(apiResp);
+      if (apiResp && typeof apiResp.balance === 'number') { try { applyBalance(apiResp.balance, true); } catch(e){} }
+      if (autoMode) stopAuto();
+      return;
+    }
+    const final = apiResp.reels.map(e => SYMS.find(x => x.e === e) || SYMS[0]);
+    const res = { win: !!apiResp.win, mult: apiResp.mult || 0, emoji: apiResp.emoji || '', type: apiResp.type || 'loss' };
 
     for(let i=0;i<3;i++){
       await sleep(gapMs);
@@ -6196,9 +6261,7 @@ async function spin() {
     }
     await sleep(100);
 
-    // API уже ответил пока крутились барабаны — ждём результат
     setSave('saving','СОХРАНЕНИЕ...');
-    const apiResp = await apiPromise;
 
     // Вычисляем prize здесь, до обновления UI — чтобы если applyBalance упадёт,
     // отображение результата всё равно прошло
@@ -8584,7 +8647,7 @@ function dgClaimGoal(goalId) {
   try { localStorage.setItem(claimedKey, JSON.stringify(claimed)); } catch(e){}
   balance += g.reward;
   setBalance(balance);
-  try { apiSpin(0, 'daily_reward', 1.0); } catch(e){}
+  try { apiSpin(0, 'daily_reward'); } catch(e){}
   showToast('🎁 +' + g.reward.toLocaleString('ru-RU') + ' токенов!', 'gold');
   try { tg.HapticFeedback.notificationOccurred('success'); } catch(e){}
   try { spawnParticles(); } catch(e){}
@@ -10045,7 +10108,7 @@ window.addEventListener('pagehide', () => {
     try {
       saveBalToCache();
       // sendBeacon — надёжная отправка при закрытии страницы
-      const data = JSON.stringify({ uid:parseInt(USER_ID), secret:API_SECRET, balance });
+      const data = JSON.stringify({ uid:parseInt(USER_ID), secret:API_SECRET, balance, tk: window.__TK || undefined });   // v336
       navigator.sendBeacon(API_URL+'/casino/exit', new Blob([data], {type:'application/json'}));
     } catch(e) {}
   }
@@ -10117,8 +10180,50 @@ function mnsInit() {
   mnsRenderHist();
 }
 
+// ── v336: мины ведёт СЕРВЕР — он прячет бомбы и считает выигрыш. Раньше бомбы расставлял телефон, и выигрыш можно было
+// «прислать» любой. Страница только показывает ответы сервера: старт, каждая клетка, «забрать», отмена. ──
+async function mnsApi(op, body) {
+  if (!API_URL) return { ok: false, error: 'no_api' };
+  try {
+    const r = await fetch(API_URL + '/casino/mines/' + op, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(Object.assign({ uid: parseInt(USER_ID), secret: API_SECRET }, body || {})),
+      signal: AbortSignal.timeout(8000),
+    });
+    const j = await r.json().catch(() => null);
+    return j || { ok: false, error: 'http_' + r.status };
+  } catch (e) { return { ok: false, error: 'network' }; }
+}
+function mnsErr(j) {
+  const e = j && j.error;
+  return ({
+    insufficient_funds: 'Недостаточно токенов!',
+    bet_too_small: 'Минимальная ставка: ' + MNS_MIN_BET.toLocaleString('ru-RU'),
+    bet_too_large: 'Максимальная ставка: ' + MNS_MAX_BET.toLocaleString('ru-RU'),
+    no_round: 'Эта игра уже закончилась',
+    already_opened: 'Уже поздно — клетка открыта!',
+    nothing_opened: 'Открой хотя бы одну клетку',
+    unauthorized: 'Кнопка казино устарела — закрой и открой казино заново из бота',
+    rate_limited: 'Секунду…',
+    network: 'Нет связи с сервером — попробуй ещё раз',
+  })[e] || 'Не получилось — попробуй ещё раз';
+}
+function mnsSetBal(j) { if (j && typeof j.balance === 'number') { balance = j.balance; setBalance(balance); } }
+function mnsShowBombs(skip) {
+  (MNS.bombs || []).forEach(bi => {
+    if (bi === skip) return;
+    const c = document.querySelector(`.mns-cell[data-idx="${bi}"]`);
+    if (c) {
+      c.classList.add('revealed-bomb');
+      c.innerHTML = '<div class="mns-cell-icon">' + mnsBombIcon(true) + '</div>';
+    }
+  });
+}
+
 // ── Начать игру ──
-function mnsStart() {
+async function mnsStart() {
+  if (MNS.busy) return;
   // Валидация ставки
   const betInput = document.getElementById('mnsBetInput');
   const bet = parseInt(betInput.value) || 0;
@@ -10132,18 +10237,18 @@ function mnsStart() {
   }
   if (bet > balance) { showToast('Недостаточно токенов!', 'error'); return; }
 
+  // Ставку списывает сервер и прячет у себя бомбы
+  MNS.busy = true;
+  const j = await mnsApi('start', { bet: bet });
+  MNS.busy = false;
+  if (!j.ok) { mnsSetBal(j); showToast(mnsErr(j), 'error'); mnsRenderBtn(); return; }
   MNS.bet = bet;
   MNS.phase = 'playing';
   MNS.opened = [];
   MNS.mult = 1.0;
-  // Генерируем новые позиции мин
-  MNS.bombs = mnsPickBombs(MNS.mines);
-
-  // Списываем ставку локально + отправляем на сервер
-  balance -= bet;
-  setBalance(balance);
-  // На сервер уходит как "spin" с пометкой "loss" (пока). Если выиграет — пошлём ещё win-spin.
-  try { apiSpin(bet, 'loss', 0, 'mines'); } catch(e){}
+  MNS.bombs = [];
+  MNS.round = j.round_id;
+  mnsSetBal(j);
   try { localStorage.setItem('mns_bet_'+USER_ID, String(bet)); } catch(e){}
 
   // Обновляем UI
@@ -10159,49 +10264,45 @@ function mnsStart() {
   document.querySelectorAll('.mns-mult-chips button').forEach(b => b.disabled = true);
 }
 
-// ── ОТМЕНА игры до первого клика — возврат ставки ──
-function mnsCancel() {
-  if (MNS.phase !== 'playing') return;
+// ── ОТМЕНА игры до первого клика — возврат ставки (возвращает сервер) ──
+async function mnsCancel() {
+  if (MNS.phase !== 'playing' || MNS.busy) return;
   if (MNS.opened.length > 0) {
     showToast('Уже поздно — клетка открыта!', 'error');
     return;
   }
-  // Возвращаем ставку
-  balance += MNS.bet;
-  setBalance(balance);
-  // Откатываем "loss" запись на сервере: отправляем компенсирующий "win" с mult=1
-  // (apiSpin: bet, result, mult — если win с mult=1, начислится bet*1 = bet, что и есть возврат)
-  // game='refund' позволяет серверу принять mult=1.0 без проверки формулы
-  try { apiSpin(MNS.bet, 'win', 1.0, 'refund'); } catch(e){}
+  MNS.busy = true;
+  const j = await mnsApi('cancel', { round_id: MNS.round });
+  MNS.busy = false;
+  if (!j.ok) { showToast(mnsErr(j), 'error'); if (j.error === 'no_round') { mnsSetBal(j); mnsReset(); } return; }
+  mnsSetBal(j);
   showToast('💵 Ставка возвращена: ' + MNS.bet.toLocaleString('ru-RU'), 'gold');
   try { tg.HapticFeedback.impactOccurred('medium'); } catch(e){}
   // Сброс к начальному состоянию
   mnsReset();
 }
 
-// ── Рандомная расстановка мин ──
-function mnsPickBombs(count) {
-  const positions = Array.from({length: 25}, (_, i) => i);
-  // Фишер-Йейтс перемешивание
-  for (let i = positions.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [positions[i], positions[j]] = [positions[j], positions[i]];
-  }
-  return positions.slice(0, count).sort((a, b) => a - b);
-}
-
-// ── Клик по клетке ──
-function mnsClickCell(idx) {
-  if (MNS.phase !== 'playing') return;
+// ── Клик по клетке — что под ней, знает только сервер ──
+async function mnsClickCell(idx) {
+  if (MNS.phase !== 'playing' || MNS.busy) return;
   if (MNS.opened.includes(idx)) return;
 
   const cell = document.querySelector(`.mns-cell[data-idx="${idx}"]`);
   if (!cell) return;
 
-  if (MNS.bombs.includes(idx)) {
+  MNS.busy = true;
+  cell.style.opacity = '.55';
+  const j = await mnsApi('open', { round_id: MNS.round, cell: idx });
+  MNS.busy = false;
+  cell.style.opacity = '';
+  if (!j.ok) { showToast(mnsErr(j), 'error'); if (j.error === 'no_round') { mnsSetBal(j); mnsReset(); } return; }
+
+  if (j.boom) {
     // ПРОИГРЫШ 💥
     MNS.phase = 'lost';
+    MNS.bombs = j.bombs || [];
     MNS.opened.push(idx);
+    mnsSetBal(j);
     cell.classList.remove('disabled');
     cell.classList.add('opened', 'bomb');
     cell.innerHTML = '<div class="mns-cell-icon">' + mnsBombIcon() + '</div>';
@@ -10209,16 +10310,7 @@ function mnsClickCell(idx) {
     const cancelBtn = document.getElementById('mnsCancelBtn');
     if (cancelBtn) cancelBtn.style.display = 'none';
     // Открываем все остальные бомбы (показать что было)
-    setTimeout(() => {
-      MNS.bombs.forEach(bi => {
-        if (bi === idx) return;
-        const c = document.querySelector(`.mns-cell[data-idx="${bi}"]`);
-        if (c) {
-          c.classList.add('revealed-bomb');
-          c.innerHTML = '<div class="mns-cell-icon">' + mnsBombIcon(true) + '</div>';
-        }
-      });
-    }, 150);
+    setTimeout(() => mnsShowBombs(idx), 150);
     // Показываем кнопку "проигрыш"
     mnsRenderBtn();
     // Блокируем клетки
@@ -10244,39 +10336,42 @@ function mnsClickCell(idx) {
     mnsUnlockControls();
   } else {
     // БЕЗОПАСНАЯ КЛЕТКА 💎
-    MNS.opened.push(idx);
+    MNS.opened = (j.opened || []).slice();
     cell.classList.remove('disabled');
     cell.classList.add('opened', 'safe');
     cell.innerHTML = '<div class="mns-cell-icon">' + mnsGemIcon() + '</div>';
     // Скрываем кнопку отмены — после первого клика возврата нет
     const cancelBtn = document.getElementById('mnsCancelBtn');
     if (cancelBtn) cancelBtn.style.display = 'none';
-    // Увеличиваем множитель
-    MNS.mult = mnsMultFor(MNS.mines, MNS.opened.length);
+    // Множитель — от сервера
+    MNS.mult = j.mult;
     mnsUpdateMult();
     mnsUpdateNext();
     mnsRenderBtn();
     // Вибро
     try { tg.HapticFeedback.impactOccurred('light'); } catch(e){}
-    // Если все безопасные открыты — авто-кэшаут
-    if (MNS.opened.length >= 25 - MNS.mines) {
-      setTimeout(mnsCashout, 400);
-    }
+    // Открыты все безопасные — сервер сам забрал выигрыш
+    if (j.cashed) { MNS.bombs = j.bombs || []; mnsFinishWin(j); }
   }
 }
 
-// ── Забрать выигрыш ──
-function mnsCashout() {
-  if (MNS.phase !== 'playing') return;
+// ── Забрать выигрыш — считает и платит сервер ──
+async function mnsCashout() {
+  if (MNS.phase !== 'playing' || MNS.busy) return;
   if (MNS.opened.length === 0) { showToast('Открой хотя бы одну клетку', 'error'); return; }
+  MNS.busy = true;
+  const j = await mnsApi('cashout', { round_id: MNS.round });
+  MNS.busy = false;
+  if (!j.ok) { showToast(mnsErr(j), 'error'); if (j.error === 'no_round') { mnsSetBal(j); mnsReset(); } return; }
+  MNS.bombs = j.bombs || [];
+  mnsFinishWin(j);
+}
 
+function mnsFinishWin(j) {
   MNS.phase = 'won';
-  const win = Math.floor(MNS.bet * MNS.mult);
-  // Начисляем выигрыш (ставка уже списана при старте)
-  balance += win;
-  setBalance(balance);
-  // Сервер проверит mult по формуле для opened клеток
-  try { apiSpin(MNS.bet, 'win', MNS.mult, 'mines', MNS.opened.length); } catch(e){}
+  MNS.mult = j.mult;
+  const win = j.prize;
+  mnsSetBal(j);
 
   // Статистика
   S.spins = (S.spins || 0) + 1;
@@ -10296,13 +10391,7 @@ function mnsCashout() {
   } catch(e){}
 
   // Показать все бомбы
-  MNS.bombs.forEach(bi => {
-    const c = document.querySelector(`.mns-cell[data-idx="${bi}"]`);
-    if (c) {
-      c.classList.add('revealed-bomb');
-      c.innerHTML = '<div class="mns-cell-icon">' + mnsBombIcon(true) + '</div>';
-    }
-  });
+  mnsShowBombs(-1);
 
   // История
   MNS.history.unshift({mult: MNS.mult, won: true});
@@ -11171,7 +11260,7 @@ function rktWsConnect() {
   try { if (_ws) { _ws.onclose = null; _ws.close(); } } catch(e) {}
 
   const url = API_URL.replace(/^http/, 'ws') +
-    '/casino/rocket/ws?uid=' + USER_ID + '&secret=' + API_SECRET;
+    '/casino/rocket/ws?uid=' + USER_ID + '&secret=' + API_SECRET + '&tk=' + encodeURIComponent(window.__TK || '');   // v336
   _ws = new WebSocket(url);
 
   _ws.onopen = () => {
