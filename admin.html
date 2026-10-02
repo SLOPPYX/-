@@ -142,7 +142,7 @@
   /* v326: вкладки — все видны сразу и на узком экране. v328: шесть вкладок — две строки по три.
      v331: значки — тонкие линии вместо цветных эмодзи; выбранная вкладка — фиолетовая, переход плавный */
   /* v333: восемь вкладок — две строки по четыре, значок над подписью (так влезает и на узком телефоне) */
-  .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 12px; padding: 4px;
+  .tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-top: 12px; padding: 4px;
           background: var(--card); border: 1px solid var(--ln); border-radius: 16px; }
   .tabs button { position: relative; background: transparent; border: 0; border-radius: 12px; padding: 7px 2px 6px; font-size: 11.5px;
                  line-height: 1.15; color: var(--tx2); white-space: nowrap; overflow: hidden; box-shadow: none;
@@ -263,6 +263,30 @@
   .tbl th, .tbl td { padding: 5px 4px; text-align: right; border-bottom: 1px solid var(--ln); }
   .tbl th:first-child, .tbl td:first-child { text-align: left; }
   .tbl th { color: var(--tx3); font-weight: 600; font-size: 11px; }
+  /* v338: десять вкладок — две строки по пять; у модератора четыре — одной строкой. Узкий телефон — подпись мельче */
+  .tabs.mod { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 370px) { .tabs button { font-size: 10.5px; } }
+  @media (max-width: 340px) { .tabs { gap: 2px; padding: 3px; } .tabs button { font-size: 9.6px; letter-spacing: -.02em; padding-left: 0; padding-right: 0; } }
+  .tdot.err { background: #fca5a5; box-shadow: 0 0 8px rgba(248,113,113,.95); }
+  .bd.md { background: rgba(139,92,246,.22); color: #ddd6fe; }
+  /* v338: настройки матчей */
+  .gsr { display: flex; align-items: center; gap: 9px; padding: 8px 0; border-bottom: 1px solid var(--ln); }
+  .gsr:last-child { border-bottom: 0; }
+  .gsl { font-size: 13px; color: var(--tx); line-height: 1.3; }
+  .gsi { width: 66px; flex: 0 0 66px; text-align: center; padding: 8px 6px; font-variant-numeric: tabular-nums; }
+  .gsu { flex: 0 0 30px; font-size: 12px; color: var(--tx3); }
+  /* v338: поддержка — картинка в переписке, ответ */
+  .msg img { display: block; max-width: 100%; max-height: 220px; border-radius: 9px; margin-top: 6px; cursor: zoom-in; }
+  .msg.st { align-self: flex-end; background: rgba(255,255,255,.06); border-color: var(--ln2); }
+  #sp-list .it, #sp-one .sec { animation: rin .24s var(--ease) both; }
+  #v-sup.quiet .it, #v-sup.quiet .sec { animation: none; }
+  /* v338: состояние бота — ошибки */
+  .err { padding: 10px 12px; border-radius: 14px; background: rgba(248,113,113,.04); border: 1px solid rgba(248,113,113,.18); margin-top: 7px; }
+  .err.warn { background: rgba(196,181,253,.04); border-color: rgba(196,181,253,.16); }
+  .err .em { font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-word; color: var(--tx); margin-top: 6px; }
+  .err pre { font: 10.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word;
+             color: var(--tx2); max-height: 280px; overflow: auto; background: #09090c; border: 1px solid var(--ln); border-radius: 10px; padding: 8px; }
+  #bt .err { animation: rin .24s var(--ease) both; }
 </style>
 </head>
 <body>
@@ -270,7 +294,7 @@
 
 <main id="app">
   <div class="top">
-    <h1>Админка<span class="ver" id="ver"></span></h1>
+    <h1><span id="h1t">Админка</span><span class="ver" id="ver"></span></h1>
     <div class="row">
       <!-- v331: режим обслуживания — всегда на виду: нажал — открылась панель -->
       <button id="mt-pill" type="button" class="pill" hidden><i></i><span id="mt-pill-t">Работает</span></button>
@@ -294,11 +318,15 @@
     <button type="button" data-tab="duels"><svg class="ic" viewBox="0 0 24 24"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg>1vs1<span class="tcnt" id="du-cnt" hidden></span></button>
     <!-- v334: «Жалобы» стали «Защитой»: жалобы, договорные пары, мульты -->
     <button type="button" data-tab="rep"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.4 2.9 8.3 7 10 4.1-1.7 7-5.6 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>Защита<span class="tcnt" id="rp-tcnt" hidden></span></button>
+    <!-- v338: обращения игроков в поддержку -->
+    <button type="button" data-tab="sup"><svg class="ic" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12.5h5"/></svg>Поддержка<span class="tcnt" id="sup-cnt" hidden></span></button>
     <button type="button" data-tab="bc"><svg class="ic" viewBox="0 0 24 24"><path d="M4 10v4a1 1 0 0 0 1 1h2l7 4V5L7 9H5a1 1 0 0 0-1 1z"/><path d="M18 9a4 4 0 0 1 0 6"/></svg>Рассылка<span class="tdot" id="bc-dot" hidden></span></button>
     <button type="button" data-tab="promo"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 6v12" stroke-dasharray="2 2.2"/></svg>Промо</button>
     <button type="button" data-tab="tour"><svg class="ic" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg>Турнир</button>
     <button type="button" data-tab="econ"><svg class="ic" viewBox="0 0 24 24"><path d="M4 19V11M10 19V6M16 19v-9M22 19H2"/></svg>Экономика</button>
     <button type="button" data-tab="log" id="journal"><svg class="ic" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r=".6"/><circle cx="4" cy="12" r=".6"/><circle cx="4" cy="18" r=".6"/></svg>Журнал</button>
+    <!-- v338: состояние бота — работает ли, память, ошибки -->
+    <button type="button" data-tab="bot"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9.5 13h.01M14.5 13h.01M9.5 16.5h5"/></svg>Бот<span class="tdot err" id="bot-dot" hidden></span></button>
   </nav>
 
   <section id="v-list">
@@ -341,6 +369,13 @@
       <div id="du-s-top"></div>
       <div id="du-s-last"></div>
     </div></div>
+    <!-- v338: настройки матчей — без обновления бота -->
+    <div class="sec" id="du-set" hidden><h3>Настройки матчей</h3><div class="v">
+      <div class="small">Меняются сразу, без обновления бота. Идущие матчи доиграют по старым — новые значения для матчей, которые начнутся после сохранения. Правила 1vs1 в боте обновятся сами.</div>
+      <div id="gs-rows"></div>
+      <div class="row"><button type="button" class="f1" id="gs-reset">Вернуть стандартные</button>
+        <button type="button" class="b-acc f1" id="gs-save">Сохранить</button></div>
+    </div></div>
     <div class="sec danger" id="du-new" hidden><h3>Новый сезон</h3><div class="v">
       <div class="small" id="du-new-info"></div>
       <input id="ns-name" maxlength="60" placeholder="Название нового сезона, напр. Осень 2026">
@@ -369,6 +404,16 @@
       <div id="fr-farms"></div>
     </div>
   </section>
+
+  <!-- v338: поддержка — обращения игроков, ответ уходит в бот -->
+  <section id="v-sup" hidden>
+    <div class="chips" id="sp-chips" style="margin-top:12px"></div>
+    <div id="sp-list"></div>
+    <div id="sp-one" hidden></div>
+  </section>
+
+  <!-- v338: состояние бота -->
+  <section id="v-bot" hidden><div id="bt"></div></section>
 
   <section id="v-log" hidden>
     <h2>Журнал действий</h2>
@@ -486,7 +531,7 @@ window.addEventListener('error', function (e) {
     document.getElementById('app').hidden = true;
     var f = document.getElementById('fatal'); f.hidden = false;
     document.getElementById('fatal-t').textContent = 'Ошибка на странице';
-    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v337';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v338';
   } catch (_) {}
 }, true);
 </script>
@@ -501,7 +546,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v337';
+  var VER = 'v338';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -524,7 +569,8 @@ window.addEventListener('error', function (e) {
   };
 
   var FILTERS = [['all', 'Все'], ['online', 'Онлайн'], ['new', 'Новые'], ['gone', 'Пропали'], ['nomatch', 'Без 1vs1'],
-                 ['banned', 'Бан'], ['frozen', 'Заморозка'], ['reports', 'Жалобы'], ['strikes', 'Аватарки'], ['match', 'В матче']];
+                 ['banned', 'Бан'], ['frozen', 'Заморозка'], ['reports', 'Жалобы'], ['strikes', 'Аватарки'], ['match', 'В матче'],
+                 ['mods', 'Модераторы']];          // v338 (только у администратора)
   // v335: группы игроков — по ним же можно сделать рассылку (на сервере то же определение, что у адресатов рассылки)
   var SEG = { new: 'Зарегистрировались за последние 7 дней.', gone: 'Зарегистрированы давно, но не заходят в бот 7+ дней.',
               nomatch: 'Ни разу не сыграли матч 1vs1.' };
@@ -647,7 +693,7 @@ window.addEventListener('error', function (e) {
       }, function (e) { clearTimeout(timer); throw e; });
   }
   function denied(res) {
-    if (res.status === 403) { fatal('Нет доступа', 'Открой /admin в боте и нажми «🗂 Админка — мини-апп» заново.'); return true; }
+    if (res.status === 403) { fatal('Нет доступа', 'Открой /admin в боте (модератору — /mod) и нажми кнопку мини-аппа заново.'); return true; }
     if (res.status === 404 && !res.j) { fatal('Бот ещё не обновлён', 'Эта страница работает с ботом v324 и новее. Обнови бота на сервере.'); return true; }
     return false;
   }
@@ -667,11 +713,12 @@ window.addEventListener('error', function (e) {
   // ── переходы между экранами ─────────────────────────────────────────
   // v326: вкладки Игроки / Рассылка / Промо / Турнир / Журнал; карточка игрока открывается поверх любой из них
   // v328: + Экономика. v333: + 1vs1 (duels) и Жалобы (rep)
-  var VIEWS = ['list', 'pl', 'log', 'bc', 'promo', 'tour', 'econ', 'duels', 'rep'];
+  var VIEWS = ['list', 'pl', 'log', 'bc', 'promo', 'tour', 'econ', 'duels', 'rep', 'sup', 'bot'];   // v338: + поддержка, бот
   function show(view) {
     var changed = S.view !== view;
     S.view = view;
     if (view !== 'duels') duStop();         // v333: матчи обновляются, только пока вкладка открыта
+    if (view !== 'sup') spStop();           // v338: обращения — тоже
     for (var i = 0; i < VIEWS.length; i++) $('v-' + VIEWS[i]).hidden = VIEWS[i] !== view;
     // v331: новый экран появляется мягким сдвигом (анимацию перезапускаем, снимая и возвращая класс)
     if (changed) { var ve = $('v-' + view); ve.classList.remove('vin'); void ve.offsetWidth; ve.classList.add('vin'); }
@@ -688,6 +735,8 @@ window.addEventListener('error', function (e) {
     if (v === 'econ') return loadEcon();
     if (v === 'duels') return loadDuels();
     if (v === 'rep') return loadRep();
+    if (v === 'sup') return loadSup();
+    if (v === 'bot') return loadBot();
   }
   function toList() {
     window.scrollTo(0, S.listY || 0);                // v325: возвращаемся туда же, где были в списке
@@ -720,6 +769,27 @@ window.addEventListener('error', function (e) {
       .filter(function (x) { return x[1] !== undefined; })
       .map(function (x) { return '<span>' + x[0] + ' <b>' + fmt(x[1]) + '</b></span>'; }).join('');
     tabCnt('du-cnt', st.disputes); tabCnt('rp-tcnt', (st.reports || 0) + (st.fraud || 0));       // v333 (v334: + подозрения)
+    tabCnt('sup-cnt', st.support); botDot();                                                      // v338
+  }
+  // ── v338: кто открыл — администратор или модератор. Модератору — только его вкладки и кнопки (права всё равно
+  // проверяет сервер: спрятанная кнопка — для удобства, а не защита) ──
+  var MOD_TABS = { list: 1, duels: 1, rep: 1, sup: 1 };
+  function isMod() { return !!(S.meta && S.meta.role === 'mod'); }
+  function modMax() { return (S.meta && S.meta.mod_ban_max) || 604800; }
+  function applyRole() {
+    var mod = isMod(), tb = $('tabs').querySelectorAll('[data-tab]');
+    for (var i = 0; i < tb.length; i++) tb[i].hidden = mod && !MOD_TABS[tb[i].getAttribute('data-tab')];
+    $('tabs').classList.toggle('mod', mod);
+    $('h1t').textContent = mod ? 'Модерация' : 'Админка';
+    document.title = mod ? 'Модерация' : 'Админка';
+    if (mod) { $('mt-pill').hidden = true; $('mt-bar').hidden = true; mtOpen(false); }
+    renderFilters();
+  }
+  // точка на вкладке «Бот»: с последнего просмотра случились новые ошибки
+  function botDot() {
+    var last = (S.meta && S.meta.stats && S.meta.stats.err_last) || 0, seen = 0;
+    try { seen = Number(localStorage.getItem('adm_err_seen') || 0); } catch (e) {}
+    $('bot-dot').hidden = !(last > seen) || S.view === 'bot' || isMod();
   }
   // v333: число на вкладке — сколько ждёт разбора (споры, жалобы); 0 — не видно
   function tabCnt(id, n) {
@@ -733,8 +803,8 @@ window.addEventListener('error', function (e) {
     return api('/meta').then(function (res) {
       if (denied(res)) return false;
       if (!res.j || !res.j.ok) { toast('Не удалось загрузить данные: ' + ((res.j && res.j.message) || res.status), true); return false; }
-      S.meta = res.j; renderStats(); cacheSave();
-      if (res.j.maintenance) setMt(res.j.maintenance);      // v331: кнопка обслуживания в шапке
+      S.meta = res.j; applyRole(); renderStats(); cacheSave();
+      if (res.j.maintenance && !isMod()) setMt(res.j.maintenance);      // v331: кнопка обслуживания в шапке (v338: не у модератора)
       // v326: рассылка уже идёт (например, запущена командой /broadcast) — точка на вкладке и слежение за ходом
       if (res.j.bcast && res.j.bcast.state === 'running' && !bcT) loadBc(true);
       return true;
@@ -743,7 +813,7 @@ window.addEventListener('error', function (e) {
 
   // ── список ──────────────────────────────────────────────────────────
   function renderFilters() {
-    $('flt').innerHTML = FILTERS.map(function (f) {
+    $('flt').innerHTML = FILTERS.filter(function (f) { return f[0] !== 'mods' || (S.meta && S.meta.role === 'admin'); }).map(function (f) {
       return '<button type="button" class="chip' + (S.flt === f[0] ? ' on' : '') + '" data-f="' + f[0] + '">' + f[1] + '</button>';
     }).join('');
   }
@@ -753,6 +823,7 @@ window.addEventListener('error', function (e) {
   function badges(p) {
     var b = '';
     if (p.is_admin) b += '<span class="bd adm">админ</span>';
+    if (p.is_mod) b += '<span class="bd md">модератор</span>';                // v338
     if (p.banned) b += '<span class="bd ban">бан' + (p.ban_until ? ' до ' + dt(p.ban_until) : '') + '</span>';
     if (p.frozen) b += '<span class="bd frz">заморожен</span>';
     if (p.in_match) b += '<span class="bd mt">в матче</span>';
@@ -827,7 +898,8 @@ window.addEventListener('error', function (e) {
   function logHtml(e, withName) {
     return '<div class="lg' + (e.u ? '" data-uid="' + e.u : ' gen') + '"><div class="lt">' + dt(e.t)
       + (withName && e.u ? ' · <b>' + esc(e.name || 'без имени') + '</b> (ID ' + esc(e.cid || '—') + ')' : '')
-      + (e.w === 'auto' ? ' <span class="bd auto">бот сам</span>' : '') + '</div>' + esc(e.m) + '</div>';
+      + (e.w === 'auto' ? ' <span class="bd auto">бот сам</span>' : '')
+      + (e.w === 'mod' ? ' <span class="bd md">модератор ' + esc(e.by_name || '') + '</span>' : '') + '</div>' + esc(e.m) + '</div>';
   }
   function loadLog() {
     if (!$('log').children.length) $('log').innerHTML = skel(4);
@@ -891,8 +963,9 @@ window.addEventListener('error', function (e) {
     for (var i = 0; i < st.open.length; i++) { var d = $('pl').querySelector('details[data-k="' + st.open[i] + '"]'); if (d) d.open = true; }
   }
 
-  function durChips(key, withForever) {
+  function durChips(key, withForever, max) {
     var ds = (S.meta && S.meta.durations) || DUR0;
+    if (max) ds = ds.filter(function (d) { return d <= max; });          // v338: модератор — не дольше 7 дней
     var list = ds.map(function (d) { return [d, dur(d)]; });
     if (withForever) list.push(['f', 'навсегда']);
     return '<div class="chips wrap">' + list.map(function (d) {
@@ -926,7 +999,8 @@ window.addEventListener('error', function (e) {
     }
     h += '</div>';
     if (p.banned) h += '<div class="note ban" style="margin-top:8px">🚫 Забанен ' + (p.ban_until ? 'до <b>' + dt(p.ban_until) + '</b>' : '<b>навсегда</b>')
-      + (p.ban_reason ? '<br>Причина: ' + esc(p.ban_reason) : '') + '</div>';
+      + (p.ban_reason ? '<br>Причина: ' + esc(p.ban_reason) : '')
+      + (p.ban_by === 'mod' ? '<br>Поставил модератор' + (p.ban_by_name ? ' ' + esc(p.ban_by_name) : '') : '') + '</div>';
     if (p.frozen && !p.partial) h += '<div class="note frz" style="margin-top:8px">❄️ Заморожен ' + (p.frozen_until ? 'до <b>' + dt(p.frozen_until) + '</b>' : '<b>навсегда</b>') + '</div>';
     if (p.opp) h += '<div class="note mt" style="margin-top:8px">⚔️ В матче с ' + esc(p.opp.name || '') + ' (ID ' + esc(p.opp.cid || '—') + ')'
       + '<div class="row" style="margin-top:8px"><button type="button" class="b-no f1" data-act="cancel_match">Отменить матч (залог обоим)</button></div></div>';
@@ -935,11 +1009,11 @@ window.addEventListener('error', function (e) {
   }
 
   function renderPlayer() {
-    var p = S.cur, a = p.avatar_info || {}, h = headHtml(p);
+    var p = S.cur, a = p.avatar_info || {}, h = headHtml(p), mod = isMod();
     if (p.partial) { $('pl').innerHTML = h + '<div class="empty" id="pl-load">Загружаю подробности…</div>'; return; }
 
-    // токены
-    h += sec('Токены', '<div class="chips wrap">' + [['100к', 1e5], ['1м', 1e6], ['10м', 1e7], ['100м', 1e8]].map(function (x) {
+    // токены — только администратор
+    if (!mod) h += sec('Токены', '<div class="chips wrap">' + [['100к', 1e5], ['1м', 1e6], ['10м', 1e7], ['100м', 1e8]].map(function (x) {
           return '<button type="button" class="chip" data-amt="' + x[1] + '">' + x[0] + '</button>'; }).join('') + '</div>'
       + '<input id="t-amt" inputmode="numeric" placeholder="Сумма (можно 250к, 1м)">'
       + '<input id="t-rsn" placeholder="Причина (необязательно)">'
@@ -947,20 +1021,23 @@ window.addEventListener('error', function (e) {
       + '<div class="row"><input id="t-set" inputmode="numeric" placeholder="Поставить баланс ровно" class="f1">'
       + '<button type="button" data-act="set_bal">= Поставить</button></div>');
 
-    // бан
-    h += sec('Бан', (p.banned ? '<div class="row"><button type="button" class="b-ok f1" data-act="unban">Разбанить</button></div>' : '')
-      + durChips('ban', true) + '<input id="ban-r" placeholder="Причина">'
-      + '<div class="row"><button type="button" class="b-no f1" data-act="ban"' + (p.is_admin ? ' disabled' : '') + '>' + (p.banned ? 'Изменить бан' : 'Забанить') + '</button></div>');
+    // бан (v338: модератор — не дольше 7 дней и снимает только баны модераторов)
+    var canUnban = p.banned && (!mod || p.ban_by === 'mod');
+    h += sec('Бан', (canUnban ? '<div class="row"><button type="button" class="b-ok f1" data-act="unban">Разбанить</button></div>' : '')
+      + (p.banned && !canUnban ? '<div class="small">Этот бан поставил администратор — снять его может только он.</div>' : '')
+      + durChips('ban', !mod, mod ? modMax() : 0) + '<input id="ban-r" placeholder="Причина">'
+      + '<div class="row"><button type="button" class="b-no f1" data-act="ban"' + (p.is_admin || (mod && p.is_mod) ? ' disabled' : '') + '>' + (p.banned ? 'Изменить бан' : 'Забанить') + '</button></div>'
+      + (mod ? '<div class="small">Модератор банит не дольше чем на ' + dur(modMax()) + '.</div>' : ''));
 
-    // заморозка
-    h += sec('Заморозка', (p.frozen ? '<div class="row"><button type="button" class="b-ok f1" data-act="unfreeze">Разморозить</button></div>' : '')
+    // заморозка — только администратор
+    if (!mod) h += sec('Заморозка', (p.frozen ? '<div class="row"><button type="button" class="b-ok f1" data-act="unfreeze">Разморозить</button></div>' : '')
       + durChips('frz', true) + '<input id="frz-r" placeholder="Причина">'
       + '<div class="row"><button type="button" class="b-no f1" data-act="freeze"' + (p.is_admin ? ' disabled' : '') + '>Заморозить</button></div>');
 
     // предупреждение и жалобы
     var pend = (p.reports_list || []).filter(function (r) { return !r.handled; }).length;
     h += sec('Предупреждение и жалобы', '<input id="w-r" placeholder="Причина предупреждения">'
-      + '<div class="row"><button type="button" class="f1" data-act="warn">⚠️ Предупредить</button>'
+      + '<div class="row"><button type="button" class="f1" data-act="warn"' + (mod && (p.is_admin || p.is_mod) ? ' disabled' : '') + '>⚠️ Предупредить</button>'
       + (pend ? '<button type="button" class="f1" data-act="reports_dismiss">Отклонить жалобы (' + pend + ')</button>' : '') + '</div>'
       + list('Предупреждения', 'warn', p.warnings, function (w) { return dt(w.time) + ' — ' + esc(w.reason) + ' <span class="small">(' + srcName(w.source) + ')</span>'; })
       + list('Жалобы на игрока', 'rep', p.reports_list, function (r) {
@@ -982,30 +1059,48 @@ window.addEventListener('error', function (e) {
     }
 
     // сообщение
-    // v328: написать игроку в личку Telegram. Есть @username — чат открывается сразу; нет — бот присылает администратору
+    // v328: написать игроку в личку Telegram. Есть @username — чат открывается сразу; нет — бот присылает
     // ссылку-упоминание на профиль (из мини-аппа tg://user?id= не открывается, а в сообщении бота работает).
     h += sec('Связаться с игроком', '<div class="row">'
       + (p.username ? '<button type="button" class="b-acc f1" data-act="tg_open">✉️ Написать @' + esc(p.username) + '</button>' : '')
       + '<button type="button" class="f1" data-act="tg_link">👤 Профиль в Telegram</button></div>'
       + '<div class="small">' + (p.username ? 'Откроется личный чат с игроком в Telegram.'
           : 'У игрока нет @username — ссылку на его профиль бот пришлёт тебе в чат, там «Написать сообщение».') + '</div>'
-      + '<textarea id="msg" placeholder="…или сообщение через бота — придёт от имени администратора"></textarea>'
+      + '<textarea id="msg" placeholder="…или сообщение через бота — придёт от имени ' + (mod ? 'модератора' : 'администратора') + '"></textarea>'
       + '<div class="row"><button type="button" class="b-acc f1" data-act="message">Отправить через бота</button></div>');
 
-    // рейтинг
-    var tiers = (S.meta && S.meta.tiers) || [];
-    h += sec('Рейтинг сезона', '<div class="chips wrap">' + tiers.map(function (t) {
-          return '<button type="button" class="chip" data-rp="' + t[0] + '">' + esc(t[1]) + ' ' + t[0] + '</button>'; }).join('') + '</div>'
-      + '<div class="row"><input id="rp" inputmode="numeric" value="' + p.rp + '" class="f1"><button type="button" class="b-acc" data-act="set_rp">Поставить</button></div>');
+    // v338: имя в боте — новое закрепляется: Telegram и казино его больше не перепишут
+    h += sec('Имя в боте', (p.name_locked ? '<div class="note mt">✏️ Имя поставлено вручную — Telegram и казино его не меняют.</div>'
+          : '<div class="small">Сейчас имя берётся из Telegram и обновляется само. Новое имя закрепится — Telegram его больше не поменяет.</div>')
+      + '<div class="row"><input id="nm-new" maxlength="32" class="f1" placeholder="Новое имя (2–32 символа)">'
+      + '<button type="button" class="b-acc" data-act="rename"' + (mod && (p.is_admin || p.is_mod) ? ' disabled' : '') + '>Сохранить</button></div>'
+      + (p.name_locked ? '<div class="row"><button type="button" class="f1" data-act="rename_reset">Вернуть имя из Telegram</button></div>' : ''));
 
-    // NFT
+    // рейтинг — только администратор
+    if (!mod) {
+      var tiers = (S.meta && S.meta.tiers) || [];
+      h += sec('Рейтинг сезона', '<div class="chips wrap">' + tiers.map(function (t) {
+            return '<button type="button" class="chip" data-rp="' + t[0] + '">' + esc(t[1]) + ' ' + t[0] + '</button>'; }).join('') + '</div>'
+        + '<div class="row"><input id="rp" inputmode="numeric" value="' + p.rp + '" class="f1"><button type="button" class="b-acc" data-act="set_rp">Поставить</button></div>');
+    }
+
+    // NFT: выдать и (v338) забрать — только администратор; модератору — просто список
     var nfts = (S.meta && S.meta.nfts) || [];
-    h += sec('NFT', '<select id="nft"><option value="">— выбери NFT —</option>' + nfts.map(function (n) {
+    if (!mod) h += sec('NFT', '<select id="nft"><option value="">— выбери NFT —</option>' + nfts.map(function (n) {
           var left = n.left === null || n.left === undefined ? '∞' : n.left;
           return '<option value="' + esc(n.id) + '"' + (n.left === 0 ? ' disabled' : '') + '>' + esc(n.name) + ' · ' + esc(n.rarity) + ' · осталось ' + left + '</option>';
         }).join('') + '</select>'
       + '<div class="row"><button type="button" class="b-acc f1" data-act="give_nft">Выдать</button></div>'
-      + list('У игрока (' + p.nft_count + ')', 'nft', p.nfts, function (n) { return esc(n.name) + ' #' + esc(n.serial) + ' <span class="small">' + esc(n.rarity) + '</span>'; }));
+      + ((p.nfts || []).length ? '<input id="nft-r" maxlength="200" placeholder="Причина, если забираешь NFT (игрок увидит)">' : '')
+      + list('У игрока (' + p.nft_count + ')', 'nft', p.nfts, function (n) {
+          return '<div class="row"><span class="f1">' + esc(n.name) + ' #' + esc(n.serial) + ' <span class="small">' + esc(n.rarity) + '</span>'
+            + (n.listed ? ' <span class="bd wn">на продаже</span>' : '') + '</span>'
+            + '<button type="button" class="xs b-no" data-revoke="' + esc(n.id) + '|' + esc(n.serial) + '">Забрать</button></div>'; }));
+    else if ((p.nfts || []).length) h += sec('NFT', list('У игрока (' + p.nft_count + ')', 'nft', p.nfts, function (n) {
+          return esc(n.name) + ' #' + esc(n.serial) + ' <span class="small">' + esc(n.rarity) + '</span>'; }));
+
+    // v338: биржа SLX игрока — только администратор
+    if (!mod && p.slx) h += sec('Биржа SLX', slxHtml(p.slx));
 
     // аватарка
     var img = a.data || a.url;
@@ -1017,18 +1112,24 @@ window.addEventListener('error', function (e) {
       + (a.note ? '<div class="sub">' + esc(a.note) + '</div>' : '') + '</div></div>'
       + '<div class="row"><button type="button" class="f1" data-act="ava_rm"' + (a.status === 'none' ? ' disabled' : '') + '>Снять</button>'
       + '<button type="button" class="b-no f1" data-act="ava_rm_strike"' + (a.status === 'none' ? ' disabled' : '') + '>Снять + нарушение</button></div>'
-      + ((a.strikes || []).length ? '<div class="row"><button type="button" class="f1" data-act="avatar_strikes_reset">Обнулить нарушения</button></div>' : '')
+      + ((a.strikes || []).length && !mod ? '<div class="row"><button type="button" class="f1" data-act="avatar_strikes_reset">Обнулить нарушения</button></div>' : '')
       + list('Нарушения', 'strk', (a.strikes || []).slice().reverse(), function (t) { return dt(t); }));
 
-    // сбросы
-    h += sec('Сбросы', '<div class="row"><button type="button" class="f1" data-act="rank_reset">Награды за ранги (' + p.rank_rewards + ')</button>'
+    // сбросы — только администратор
+    if (!mod) h += sec('Сбросы', '<div class="row"><button type="button" class="f1" data-act="rank_reset">Награды за ранги (' + p.rank_rewards + ')</button>'
       + '<button type="button" class="f1" data-act="ach_reset">Значки (' + p.ach_earned + ')</button></div>'
       + '<div class="small">Выданные токены, SLX и NFT не отбираются — снимаются только отметки «получено».</div>');
+
+    // v338: обращения игрока в поддержку — нажал, открылась переписка
+    if ((p.tickets || []).length) h += sec('Обращения в поддержку', '<div class="hist">' + p.tickets.map(function (t) {
+        return '<div class="lk" data-tk="' + t.id + '">#' + t.id + ' · ' + (t.wait ? '<span class="bd wn" style="margin:0">ждёт ответа</span>'
+          : t.status === 'closed' ? 'закрыто' : 'отвечено') + ' <span class="small">· ' + ago(t.updated) + '</span></div>'; }).join('') + '</div>');
 
     // история
     var logs = p.log || [];
     h += sec('История', list('Журнал: что с ним делали', 'log', logs, function (e) {
-          return dt(e.t) + ' — ' + esc(e.m) + (e.w === 'auto' ? ' <span class="bd auto">бот сам</span>' : ''); })
+          return dt(e.t) + ' — ' + esc(e.m) + (e.w === 'auto' ? ' <span class="bd auto">бот сам</span>' : '')
+            + (e.w === 'mod' ? ' <span class="bd md">модератор ' + esc(e.by_name || '') + '</span>' : ''); })
       + list('Матчи', 'mt', p.matches, function (m) {
           return dt(m.time) + ' — <b>' + (m.result === 'win' ? 'победа' : 'поражение') + '</b> vs ' + esc(m.opp) + ' · ' + fmt(m.stake)
             + (m.rp != null ? ' · ' + (m.rp > 0 ? '+' : '') + m.rp + ' RP' : '') + (m.reason ? ' <span class="small">(' + esc(m.reason) + ')</span>' : ''); })
@@ -1036,13 +1137,36 @@ window.addEventListener('error', function (e) {
           return esc(t.date) + ' — <b>' + (t.amount > 0 ? '+' : '') + fmt(t.amount) + '</b> ' + esc(t.reason) + ' <span class="small">→ ' + fmt(t.balance) + '</span>'; })
       + (logs.length || (p.matches || []).length || (p.tokens_hist || []).length ? '' : '<div class="small">Пока пусто</div>'));
 
-    // опасное
-    h += '<div class="sec danger"><h3>Удалить аккаунт</h3><div class="v">'
+    // v338: модератор — назначить или снять (только администратор)
+    if (!mod && !p.is_admin) h += modSecHtml(p);
+
+    // опасное — только администратор
+    if (!mod) h += '<div class="sec danger"><h3>Удалить аккаунт</h3><div class="v">'
       + '<div class="small">Как /deluser: токены, язык и имя стираются, ID остаётся за игроком. Для подтверждения впиши ID игрока.</div>'
       + '<input id="del" inputmode="numeric" placeholder="ID игрока (' + esc(p.cid || p.uid) + ')">'
       + '<div class="row"><button type="button" class="b-no f1" data-act="delete"' + (p.is_admin ? ' disabled' : '') + '>Удалить</button></div></div></div>';
 
     $('pl').innerHTML = h;
+  }
+  // v338: SLX игрока — монеты, цена, прибыль, ликвидность, заявки
+  function fmtQ(q) { q = Number(q || 0); return String(Math.round(q * 100) / 100).replace('.', ','); }
+  function slxHtml(x) {
+    var cls = x.pnl > 0 ? 'up' : x.pnl < 0 ? 'dn' : '';
+    return '<div class="grid">' + kv('Монет', fmtQ(x.qty) + ' SLX') + kv('Средняя цена', fmt(x.avg))
+      + kv('Стоит сейчас', fmt(x.value) + ' 💰<small>курс ' + fmt(x.price) + '</small>')
+      + kv('Прибыль сейчас', '<span class="' + cls + '">' + (x.pnl > 0 ? '+' : '') + fmt(x.pnl) + '</span><small>'
+          + (x.pnl_pct > 0 ? '+' : '') + String(x.pnl_pct).replace('.', ',') + '% к вложенному</small>')
+      + kv('Вложено', fmt(x.invested)) + kv('Уже заработал', (x.realized > 0 ? '+' : '') + fmt(x.realized) + '<small>на продажах</small>')
+      + (x.lp ? kv('В ликвидности', fmt(x.lp) + ' 💰') : '') + kv('Сделок', fmt(x.trades)) + '</div>'
+      + ((x.orders || []).length ? '<div class="lbl">Заявки</div><div class="hist">' + x.orders.map(function (o) {
+          return '<div>' + (o.side === 'buy' ? 'купить' : 'продать') + ' ' + fmtQ(o.qty) + ' SLX по ' + fmt(o.price) + '</div>'; }).join('') + '</div>' : '');
+  }
+  function modSecHtml(p) {
+    if (p.is_mod) return sec('🛡 Модератор', '<div class="note mt">Модератор' + (p.mod_since ? ' с ' + dt(p.mod_since) : '') + '. Модерацию открывает командой /mod.</div>'
+      + '<div class="small">Может: предупредить, бан до 7 дней, написать, сменить имя, снять аватарку, отменить матч, споры 1vs1, жалобы и мульты, поддержка. Токены, RP, NFT, рассылки и настройки — нет.</div>'
+      + '<div class="row"><button type="button" class="b-no f1" data-act="mod_remove">Снять с модераторов</button></div>');
+    return sec('🛡 Модератор', '<div class="small">Помощник для жалоб, споров и поддержки — с урезанными правами: токены, RP, NFT, рассылки и настройки ему недоступны, бан — не дольше 7 дней. Всё, что он делает, видно в журнале.</div>'
+      + '<div class="row"><button type="button" class="f1" data-act="mod_add"' + (p.banned ? ' disabled' : '') + '>🛡 Сделать модератором</button></div>');
   }
   function kv(k, v) { return '<div class="kv"><i>' + k + '</i><b>' + v + '</b></div>'; }
   function sec(title, body) { return '<div class="sec"><h3>' + title + '</h3><div class="v">' + body + '</div></div>'; }
@@ -1085,6 +1209,8 @@ window.addEventListener('error', function (e) {
   $('pl').addEventListener('click', function (e) {
     var cp = e.target.closest('[data-copy]');
     if (cp) { if (cp.getAttribute('data-copy')) copy(cp.getAttribute('data-copy')); return; }
+    var tk = e.target.closest('[data-tk]');              // v338: обращение игрока — открыть переписку
+    if (tk) { S.spId = Number(tk.getAttribute('data-tk')); S.spT = null; openTab('sup'); return; }
     var t = e.target.closest('button');
     if (!t) {                                            // v334: нажал на связанного игрока — открыть его карточку
       var op = e.target.closest('[data-open]');
@@ -1100,6 +1226,13 @@ window.addEventListener('error', function (e) {
         on ? 'Запретить ' + nm + ' играть с этим игроком?\nС остальными — можно. Игрокам ничего не придёт.' : null, t,
         function () { S.dirty = true; S.fr = null; openPlayer(p.uid, S.from, true, true); });
       return;
+    }
+    if (t.hasAttribute('data-revoke')) {                 // v338: забрать NFT
+      if (botVer() < 338) { toast('Заработает, когда бот на сервере обновится до v338', true); return; }
+      var rv = t.getAttribute('data-revoke').split('|'), rn = (p.nfts || []).filter(function (n) { return n.id === rv[0] && String(n.serial) === rv[1]; })[0];
+      return send('revoke_nft', { nft_id: rv[0], serial: Number(rv[1]), reason: ($('nft-r') ? $('nft-r').value.trim() : '') },
+        'Забрать ' + ((rn && rn.name) || 'NFT') + ' #' + rv[1] + ' у ' + nm + '?' + (rn && rn.listed ? '\nОна выставлена на продажу — объявление снимется.' : '')
+        + '\nЕсли это последний выданный номер — он вернётся в тираж, иначе сгорит. Игроку придёт сообщение.', t);
     }
     if (t.hasAttribute('data-amt')) { $('t-amt').value = fmt(t.getAttribute('data-amt')); return; }
     if (t.hasAttribute('data-rp')) { $('rp').value = t.getAttribute('data-rp'); return; }
@@ -1150,6 +1283,18 @@ window.addEventListener('error', function (e) {
       var sel = $('nft');
       if (!sel.value) { toast('Выбери NFT', true); return; }
       return send('give_nft', { nft_id: sel.value }, 'Выдать ' + sel.options[sel.selectedIndex].text.split(' · ')[0] + ' игроку ' + nm + '?', t);
+    }
+    if (a === 'rename' || a === 'rename_reset' || a === 'mod_add' || a === 'mod_remove') {      // v338
+      if (botVer() < 338) { toast('Заработает, когда бот на сервере обновится до v338', true); return; }
+      if (a === 'rename') {
+        var nn = $('nm-new').value.trim();
+        if (nn.length < 2) { toast('Имя — от 2 до 32 символов', true); $('nm-new').focus(); return; }
+        return send('rename', { name: nn }, 'Переименовать ' + nm + ' в «' + nn + '»?\nИмя закрепится — Telegram его не поменяет. Игроку придёт сообщение.', t);
+      }
+      if (a === 'rename_reset') return send('rename_reset', {}, 'Вернуть имя из Telegram?\nДальше оно снова будет обновляться само.', t);
+      if (a === 'mod_add') return send('mod_add', {}, 'Сделать ' + nm + ' модератором?\nОн сможет: предупреждать, банить до 7 дней, разбирать споры, жалобы и поддержку. '
+        + 'Токены, RP, NFT, рассылки и настройки — нет. Ему придёт сообщение с кнопкой.', t);
+      return send('mod_remove', {}, 'Снять ' + nm + ' с модераторов?\nДоступ пропадёт сразу.', t);
     }
     if (a === 'ava_rm') return send('avatar_remove', { strike: false }, 'Снять аватарку у ' + nm + '?', t);
     if (a === 'ava_rm_strike') return send('avatar_remove', { strike: true }, 'Снять аватарку и засчитать нарушение (может привести к бану по лестнице)?', t);
@@ -2014,6 +2159,20 @@ window.addEventListener('error', function (e) {
     var key = JSON.stringify([j.disputes, j.matches, j.queue]) + '|' + Math.floor(Date.now() / 60000);
     if (anim || key !== S.duKey) { S.duKey = key; renderDuLive(anim); }
     renderSeason(fill);
+    renderGs(fill);                                      // v338
+  }
+  // v338: настройки матчей — поля заполняются при открытии и после сохранения, фоновое обновление их не трогает
+  var GSU = { rp: 'RP', n: 'шт', min: 'мин' };
+  function renderGs(fill) {
+    var st = S.du && S.du.settings;
+    $('du-set').hidden = !st;
+    if (!st || (!fill && $('gs-rows').children.length)) return;
+    $('gs-rows').innerHTML = st.map(function (x) {
+      return '<div class="gsr"><div class="m"><div class="gsl">' + esc(x.label) + '</div><div class="small">стандарт: ' + x.def + ' ' + GSU[x.unit]
+        + (x.changed ? ' · <span class="upd">изменено</span>' : '') + '</div></div>'
+        + '<input id="gs-' + x.k + '" inputmode="numeric" class="gsi" value="' + x.v + '">'
+        + '<span class="gsu">' + GSU[x.unit] + '</span></div>';
+    }).join('');
   }
   function ppHtml(p) {
     return '<div class="pp" data-uid="' + p.uid + '"><div class="av">' + avHtml(p) + (p.online ? '<i class="dot"></i>' : '') + '</div>'
@@ -2160,7 +2319,7 @@ window.addEventListener('error', function (e) {
     duStop();
     doSect('/duels', body, confirmText, btn, function (j) {
       S.dirty = true;
-      setDu(j, body.op === 'prizes' || body.op === 'new_season', false);
+      setDu(j, body.op === 'prizes' || body.op === 'new_season' || /^settings/.test(body.op), false);
       if (after) after(j);
     }).then(function () { if (S.view === 'duels') duPoll(); });
   }
@@ -2203,6 +2362,23 @@ window.addEventListener('error', function (e) {
         return;
       }
       if (b.id === 'sp-save') { duDo({ op: 'prizes', prizes: [$('sp-0').value.trim(), $('sp-1').value.trim(), $('sp-2').value.trim()] }, null, b); return; }
+      if (b.id === 'gs-save' || b.id === 'gs-reset') {      // v338: настройки матчей
+        var gs = j.settings || [];
+        if (b.id === 'gs-reset') {
+          duDo({ op: 'settings_reset' }, 'Вернуть стандартные настройки матчей?\n' + gs.map(function (x) { return x.label + ': ' + x.def + ' ' + GSU[x.unit]; }).join('\n'), b);
+          return;
+        }
+        var vals = {}, chg = [];
+        for (var gi = 0; gi < gs.length; gi++) {
+          var x2 = gs[gi], el = $('gs-' + x2.k), gv = Number(String(el.value).replace(',', '.').trim());
+          if (!(gv >= x2.lo && gv <= x2.hi) || Math.round(gv) !== gv) { toast(x2.label + ': от ' + x2.lo + ' до ' + x2.hi + ' ' + GSU[x2.unit], true); el.focus(); return; }
+          vals[x2.k] = gv;
+          if (gv !== x2.v) chg.push(x2.label + ': ' + x2.v + ' → ' + gv + ' ' + GSU[x2.unit]);
+        }
+        if (!chg.length) { toast('Ничего не изменилось'); return; }
+        duDo({ op: 'settings', values: vals }, 'Сохранить настройки матчей?\n' + chg.join('\n') + '\nИдущие матчи доиграют по старым.', b);
+        return;
+      }
       if (b.id === 'ns-go') {
         var s = j.season; if (!s) return;
         var nm = $('ns-name').value.trim();
@@ -2267,7 +2443,8 @@ window.addEventListener('error', function (e) {
       + '<div class="row" style="margin-top:6px"><button type="button" class="f1" data-rdis="' + g.uid + '">✅ Отклонить</button></div>';
     if (open) {
       h += '<div class="v" style="margin-top:10px"><div class="lbl">Срок бана</div><div class="chips wrap">'
-        + repDurs().map(function (d) { return [d, dur(d)]; }).concat([['f', 'навсегда']]).map(function (d) {
+        + repDurs().filter(function (d) { return !isMod() || d <= modMax(); }).map(function (d) { return [d, dur(d)]; })
+            .concat(isMod() ? [] : [['f', 'навсегда']]).map(function (d) {
             var v = d[0] === 'f' ? null : d[0];
             return '<button type="button" class="chip' + (S.rpDur === v ? ' on' : '') + '" data-rdur="' + d[0] + '">' + d[1] + '</button>'; }).join('') + '</div>'
         + '<input id="rb-r" maxlength="200" placeholder="Причина (пусто — «' + esc(last.reason || 'нарушение правил') + '»)">'
@@ -2491,6 +2668,187 @@ window.addEventListener('error', function (e) {
     return false;
   }
 
+  // ══ v338: вкладка «Поддержка» — обращения игроков; ответ уходит игроку в бот ═══════════
+  var SPS = [['wait', 'Ждут ответа'], ['answered', 'Отвечено'], ['closed', 'Закрыто']];
+  var spT0 = 0;
+  S.sp = null; S.spSt = 'wait'; S.spId = null; S.spT = null; S.spSeq = 0;
+  function spStop() { clearTimeout(spT0); spT0 = 0; }
+  function spPoll() {
+    spStop();
+    spT0 = setTimeout(function () {
+      if (S.view !== 'sup') return;
+      if (document.hidden) { spPoll(); return; }
+      loadSup(true);
+    }, 10000);
+  }
+  function loadSup(silent) {
+    spStop();
+    var my = ++S.spSeq;
+    if (!silent && !S.sp) $('sp-list').innerHTML = skel(3);
+    if (!silent && S.spId && !S.spT) { $('sp-one').hidden = false; $('sp-list').hidden = true; $('sp-chips').hidden = true; $('sp-one').innerHTML = skel(2); }
+    var body = S.spId ? { op: 'open', id: S.spId, status: S.spSt } : { op: 'get', status: S.spSt };
+    return sect('/support', body, 'sp-list', 'v338').then(function (j) {
+      if (my !== S.spSeq) return;
+      if (j) setSup(j, !silent);
+      if (S.view === 'sup') spPoll();
+    }).catch(function () { if (!silent) toast('Нет связи с сервером', true); if (S.view === 'sup') spPoll(); });
+  }
+  function setSup(j, anim) {
+    S.sp = j;
+    var w = (j.counts || {}).wait || 0;
+    tabCnt('sup-cnt', w);
+    if (S.meta && S.meta.stats) S.meta.stats.support = w;
+    if (j.ticket) S.spT = j.ticket;
+    renderSup(anim);
+  }
+  function spRow(t) {
+    var l = t.last || {};
+    return '<div class="it" data-tk="' + t.id + '"><div class="av">' + avHtml(t) + (t.online ? '<i class="dot"></i>' : '') + '</div>'
+      + '<div class="m"><div class="nm">' + pName(t) + (t.banned ? '<span class="bd ban">бан</span>' : '') + '</div>'
+      + '<div class="sub">#' + t.id + ' · ' + ago(t.updated) + ' · ' + t.n + ' ' + plural3(t.n, 'сообщение', 'сообщения', 'сообщений') + '</div>'
+      + '<div class="sub">' + (l.from && l.from !== 'user' ? '↩ ' : '') + (l.photo ? '📎 ' : '') + esc(l.text || (l.photo ? 'скриншот' : '')) + '</div></div>'
+      + (t.wait ? '<span class="bd wn" style="flex:0 0 auto">ждёт</span>' : '') + '</div>';
+  }
+  function spWho(m, t) {
+    if (m.from === 'user') return esc(t.name || 'игрок');
+    if (m.from === 'mod') return 'модератор ' + esc(m.by_name || '');
+    return 'администратор';
+  }
+  function renderTicket() {
+    var t = S.spT, keep = $('sp-txt') ? $('sp-txt').value : '';
+    var stt = t.wait ? '<span class="bd wn" style="margin:0">ждёт ответа</span>' : t.status === 'closed' ? 'закрыто' : 'отвечено';
+    var h = '<div class="row" style="margin-top:12px"><button type="button" class="xs" data-spback="1">← Все обращения</button></div>'
+      + '<div class="sec"><div class="rph"><div class="av lk" data-uid="' + t.uid + '">' + avHtml(t) + (t.online ? '<i class="dot"></i>' : '') + '</div>'
+      + '<div class="m"><div class="nm lk" data-uid="' + t.uid + '">' + pName(t) + (t.banned ? '<span class="bd ban">бан</span>' : '') + '</div>'
+      + '<div class="sub">ID ' + esc(t.cid || '—') + ' · обращение #' + t.id + ' · с ' + dt(t.created) + '</div></div></div>'
+      + '<div class="small" style="margin-top:6px">' + stt + (t.other ? ' · ещё обращений у игрока: ' + t.other : '') + '</div>'
+      + '<div class="chat" style="margin-top:10px">' + (t.msgs || []).map(function (m) {
+          return '<div class="msg' + (m.from === 'user' ? '' : ' me') + '"><i>' + spWho(m, t) + ' · ' + dt(m.t) + '</i>' + esc(m.text)
+            + (m.img ? '<img src="' + m.img + '" alt="Скриншот" data-lb="1">' : m.img_wait ? '<div class="small">📎 скриншот загружается…</div>' : '') + '</div>';
+        }).join('') + '</div></div>';
+    if (t.status !== 'closed') h += '<div class="sec"><h3>Ответ</h3><div class="v">'
+      + '<textarea id="sp-txt" maxlength="2000" placeholder="Ответ придёт игроку в бот — с кнопками «Ответить» и «Вопрос решён»"></textarea>'
+      + '<div class="row"><button type="button" class="b-acc f1" data-spsend="0">Отправить</button>'
+      + '<button type="button" class="f1" data-spsend="1">Отправить и закрыть</button></div>'
+      + '<div class="row"><button type="button" class="f1" data-spclose="1">Закрыть без ответа</button></div></div></div>';
+    else h += '<div class="note wn" style="margin-top:12px">Обращение закрыто' + (t.closed_by === 'user' ? ' игроком — «вопрос решён»' : '') + '.</div>'
+      + '<div class="row" style="margin-top:8px"><button type="button" class="f1" data-spreopen="1">Открыть снова</button></div>';
+    $('sp-one').innerHTML = h;
+    if (keep && $('sp-txt')) $('sp-txt').value = keep;
+  }
+  function renderSup(anim) {
+    var j = S.sp || {}, c = j.counts || {}, one = !!(S.spId && S.spT);
+    $('v-sup').classList.toggle('quiet', !anim);
+    $('sp-chips').innerHTML = SPS.map(function (x) {
+      return '<button type="button" class="chip' + (S.spSt === x[0] ? ' on' : '') + '" data-sps="' + x[0] + '">' + x[1] + (c[x[0]] ? ' · ' + c[x[0]] : '') + '</button>';
+    }).join('');
+    $('sp-chips').hidden = one; $('sp-list').hidden = one; $('sp-one').hidden = !one;
+    if (one) { renderTicket(); return; }
+    var it = j.items || [];
+    $('sp-list').innerHTML = it.length ? it.map(spRow).join('') : '<div class="empty">' + ({ wait: 'Все обращения разобраны 🎉',
+      answered: 'Нет отвеченных обращений, которые ещё открыты', closed: 'Закрытых обращений пока нет' }[S.spSt] || '') + '</div>';
+  }
+  function spDo(body, confirmText, btn, after) {
+    if (botVer() < 338) { toast('Заработает, когда бот на сервере обновится до v338', true); return; }
+    S.spSeq++; spStop();
+    body.status = S.spSt;
+    doSect('/support', body, confirmText, btn, function (j) { if (after) after(j); setSup(j, false); }).then(function () { if (S.view === 'sup') spPoll(); });
+  }
+  $('v-sup').addEventListener('click', function (e) {
+    var im = e.target.closest('[data-lb]');
+    if (im) { lbOpen(im.getAttribute('src')); return; }
+    var b = e.target.closest('button');
+    if (b && !b.disabled) {
+      if (b.hasAttribute('data-sps')) { S.spSt = b.getAttribute('data-sps'); S.spId = null; S.spT = null; S.sp = null; loadSup(false); return; }
+      if (b.hasAttribute('data-spback')) { S.spId = null; S.spT = null; renderSup(true); loadSup(true); return; }
+      var t = S.spT; if (!t) return;
+      if (b.hasAttribute('data-spsend')) {
+        var tx = $('sp-txt').value.trim();
+        if (!tx) { toast('Напиши ответ', true); $('sp-txt').focus(); return; }
+        var cl = b.getAttribute('data-spsend') === '1';
+        spDo({ op: 'reply', id: t.id, text: tx, close: cl }, null, b, function () { $('sp-txt').value = ''; });
+        return;
+      }
+      if (b.hasAttribute('data-spclose')) { spDo({ op: 'close', id: t.id }, 'Закрыть обращение #' + t.id + ' без ответа?\nИгроку ничего не придёт.', b); return; }
+      if (b.hasAttribute('data-spreopen')) { spDo({ op: 'reopen', id: t.id }, null, b); return; }
+      return;
+    }
+    var tk = e.target.closest('[data-tk]');
+    if (tk) { S.spId = Number(tk.getAttribute('data-tk')); S.spT = null; window.scrollTo(0, 0); loadSup(false); return; }
+    var it = e.target.closest('[data-uid]'); if (it) openPlayer(Number(it.getAttribute('data-uid')), 'sup');
+  });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && S.view === 'sup' && S.sp) loadSup(true); });
+
+  // ══ v338: вкладка «Бот» — работает ли, память, нагрузка, ошибки, перезапуски, версии ═══════════
+  S.bt = null; S.btLv = 'err';
+  function loadBot() {
+    if (!S.bt) $('bt').innerHTML = skel(4);
+    return sect('/status', {}, 'bt', 'v338').then(function (j) { if (j) setBot(j); }).catch(function () { toast('Нет связи с сервером', true); });
+  }
+  function setBot(j) {
+    S.bt = j;
+    try { localStorage.setItem('adm_err_seen', String(Math.floor(Date.now() / 1000))); } catch (e) {}
+    botDot(); renderBot();
+  }
+  function upTxt(s) {
+    s = Math.max(0, s || 0);
+    var d = Math.floor(s / 86400), hh = Math.floor(s % 86400 / 3600), mm = Math.floor(s % 3600 / 60);
+    return d ? d + ' дн ' + hh + ' ч' : hh ? hh + ' ч ' + mm + ' мин' : Math.max(1, mm) + ' мин';
+  }
+  function sizeTxt(b) { b = Number(b || 0); return b >= 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' МБ' : Math.max(1, Math.round(b / 1024)) + ' КБ'; }
+  function hk(s) { var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return 'e' + (h >>> 0).toString(36); }
+  function errHtml(e) {
+    var er = e.lvl === 'err';
+    return '<div class="err' + (er ? '' : ' warn') + '"><div class="row"><span class="bd ' + (er ? 'ban' : 'wn') + '" style="margin:0;flex:0 0 auto">'
+      + (er ? 'ошибка' : 'предупреждение') + '</span><span class="f1 small">' + (e.n > 1 ? '×' + fmt(e.n) + ' · ' : '') + 'последний раз ' + ago(e.last)
+      + (e.old ? ' · до перезапуска' : '') + '</span></div>'
+      + '<div class="em">' + esc(e.msg) + '</div>'
+      + (e.n > 1 ? '<div class="small" style="margin-top:4px">впервые ' + dt(e.first) + '</div>' : '')
+      + (e.tb ? '<details data-k="' + hk(e.k || e.msg) + '" style="margin-top:6px"><summary>Подробности</summary><pre>' + esc(e.tb) + '</pre></details>' : '')
+      + '</div>';
+  }
+  function renderBot() {
+    var j = S.bt, p = j.proc || {}, mm = j.mem, d = j.data || {}, t = j.tg || {}, v = j.ver || {}, box = $('bt'), o = openDetails(box), h = '';
+    var used = mm ? mm.total - mm.avail : 0;
+    var g = kv('Работает без перезапуска', upTxt(j.uptime) + '<small>с ' + dt(j.started) + '</small>')
+      + kv('Память бота', p.rss != null ? p.rss + ' МБ' + (p.peak ? '<small>пик ' + p.peak + ' МБ</small>' : '') : 'нет данных')
+      + kv('Память сервера', mm ? used + ' из ' + mm.total + ' МБ<small>' + (mm.swap_total ? 'подкачка ' + (mm.swap_total - mm.swap_free) + ' из ' + mm.swap_total + ' МБ' : 'подкачки нет') + '</small>' : 'нет данных')
+      + kv('Нагрузка', j.load ? j.load.map(function (x) { return String(x).replace('.', ','); }).join(' · ') + '<small>за 1 · 5 · 15 мин, ядер ' + (j.cpus || '?') + '</small>' : 'нет данных')
+      + kv('Диск', j.disk ? 'свободно ' + String(j.disk.free).replace('.', ',') + ' ГБ<small>из ' + String(j.disk.total).replace('.', ',') + ' ГБ</small>' : 'нет данных')
+      + kv('Данные', sizeTxt(d.size) + '<small>' + (d.saved_at ? 'сохранены ' + ago(d.saved_at) + ' за ' + d.save_ms + ' мс' : 'с запуска не сохранялись') + '</small>')
+      + kv('Telegram', t.last_update ? 'сообщение ' + ago(t.last_update) : 'с запуска тихо' + (t.polling_fails ? '<small>обрывов связи: ' + t.polling_fails + '</small>' : '<small>обрывов связи нет</small>'))
+      + kv('Копия данных', d.backup_last ? ago(d.backup_last) : 'ещё не было');
+    h += sec('Сейчас', (d.load_failed ? '<div class="note ban">⛔ Файл данных не прочитался при запуске — бот ничего не сохраняет и включил обслуживание. Восстанови bot_data.json из копии и перезапусти бота.</div>' : '')
+      + (mm && mm.avail < 120 ? '<div class="note ban">⚠️ На сервере почти не осталось памяти (свободно ' + mm.avail + ' МБ' + (mm.swap_total ? '' : ', подкачки нет') + ') — бот может упасть.</div>' : '')
+      + (j.maintenance ? '<div class="note wn">🔧 Включено обслуживание — игроки не могут пользоваться ботом.</div>' : '')
+      + '<div class="grid">' + g + '</div><div class="small">Потоков: ' + (p.threads || '—') + ' · Python ' + esc(p.py || '?') + '</div>');
+    var es = j.errors || [], ne = es.filter(function (e) { return e.lvl === 'err'; }), nw = es.filter(function (e) { return e.lvl !== 'err'; });
+    var sel = S.btLv === 'err' ? ne : nw;
+    h += sec('Ошибки и предупреждения', '<div class="chips"><button type="button" class="chip' + (S.btLv === 'err' ? ' on' : '') + '" data-btlv="err">Ошибки'
+        + (ne.length ? ' · ' + ne.length : '') + '</button><button type="button" class="chip' + (S.btLv === 'warn' ? ' on' : '') + '" data-btlv="warn">Предупреждения'
+        + (nw.length ? ' · ' + nw.length : '') + '</button></div>'
+      + '<div class="small">Одинаковые склеены: «×12» — сколько раз. Отсюда видно, что сломалось, без захода на сервер.</div>'
+      + (sel.length ? sel.map(errHtml).join('') : '<div class="empty" style="padding:16px 10px">' + (S.btLv === 'err' ? 'Ошибок нет 👍' : 'Предупреждений нет') + '</div>')
+      + (es.length ? '<div class="row"><button type="button" class="f1" data-btclear="1">Очистить список</button></div>' : ''));
+    h += sec('Перезапуски', (j.boots || []).length ? '<div class="hist">' + j.boots.map(function (b, i) {
+        return '<div>' + dt(b.t) + ' · ' + esc(b.ver || '?') + (i === 0 ? ' <span class="small">(сейчас)</span>' : '') + '</div>'; }).join('') + '</div>'
+      : '<div class="small">Журнал запусков появится после обновления</div>');
+    var nsfw = v.nsfw === true ? '✅ работает' : v.nsfw === false ? '❌ не загрузилась' : (v.nsfw_files ? 'ждёт первой аватарки' : '❌ нет файлов модели');
+    h += sec('Версии', '<div class="grid">' + kv('Бот', esc(v.bot || '—') + (v.file ? '<small>файл от ' + dt(v.file) + '</small>' : ''))
+      + kv('Страницы', 'ранги ' + esc(v.ranks || '—') + '<small>результат ' + esc(v.match || '—') + ' · аватарка ' + esc(v.avatar || '—') + ' · NFT и биржа ' + esc(v.pages || '—') + '</small>')
+      + kv('Проверка аватарок 18+', nsfw) + '</div>');
+    box.innerHTML = h;
+    reopen(box, o);
+  }
+  $('v-bot').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b || b.disabled) return;
+    if (b.hasAttribute('data-btlv')) { S.btLv = b.getAttribute('data-btlv'); renderBot(); return; }
+    if (b.hasAttribute('data-btclear')) {
+      doSect('/status', { op: 'clear' }, 'Очистить список ошибок и предупреждений?\nНовые появятся, если что-то случится снова.', b, setBot);
+    }
+  });
+
   // ── v331: режим обслуживания — кнопка в шапке, полоса предупреждения, панель ──
   S.mt = null;
   function setMt(m) {
@@ -2603,18 +2961,20 @@ window.addEventListener('error', function (e) {
       S.meta = cached.meta; S.items = cached.items; S.total = cached.total;
       renderStats(); renderList();
       $('cnt').innerHTML = 'Найдено: ' + fmt(S.total) + ' · <span class="upd">обновляю…</span>';
-      if (cached.meta.maintenance) setMt(cached.meta.maintenance);
+      applyRole();                                           // v338: модератор — сразу свои вкладки
+      if (cached.meta.maintenance && !isMod()) setMt(cached.meta.maintenance);
     } else $('list').innerHTML = skel(6);                  // v331: пока едет список — серые строки, а не пустота
     loadMeta().catch(function () {});
     loadList(false, !!cached);
     // v333: из сообщения бота о споре или жалобе («🗂 Открыть в админке») — сразу на нужной вкладке
-    var TAB0 = { duels: 'duels', reports: 'rep' }[Q.get('tab') || ''];
+    var TAB0 = { duels: 'duels', reports: 'rep', support: 'sup' }[Q.get('tab') || ''];      // v338: + поддержка
     if (TAB0) openTab(TAB0);
     // v333: раз в полминуты — свежие цифры в шапке и на вкладках (споры, жалобы), пока приложение на экране
     setInterval(function () { if (!document.hidden && S.view !== 'pl') loadMeta().catch(function () {}); }, 30000);
   }
 
   window.ADM = { state: function () { return S; }, open: openPlayer, tab: openTab, photo: bcSetFile, dpPhoto: dpSetFile, ver: VER };
+  botDot();
 })();
 </script>
 </body>
