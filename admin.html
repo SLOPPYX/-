@@ -287,6 +287,10 @@
   .err pre { font: 10.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word;
              color: var(--tx2); max-height: 280px; overflow: auto; background: #09090c; border: 1px solid var(--ln); border-radius: 10px; padding: 8px; }
   #bt .err { animation: rin .24s var(--ease) both; }
+  /* v339: доставка ответа и скриншот, который ещё грузится */
+  .dlv { font-size: 10.5px; margin-top: 4px; color: var(--tx3); }
+  .dlv.ok { color: var(--acc3); } .dlv.fail { color: #fca5a5; }
+  .spimg { display: block; width: 100%; margin-top: 6px; padding: 9px 10px; font-size: 12px; color: var(--tx2); text-align: left; }
 </style>
 </head>
 <body>
@@ -409,7 +413,21 @@
   <section id="v-sup" hidden>
     <div class="chips" id="sp-chips" style="margin-top:12px"></div>
     <div id="sp-list"></div>
-    <div id="sp-one" hidden></div>
+    <!-- v339: обращение — разметка постоянная. Обновление раз в 10 с меняет только переписку; поле ответа не
+         пересоздаётся, и печать не обрывается (раньше на телефоне закрывалась клавиатура) -->
+    <div id="sp-one" hidden>
+      <div class="row" style="margin-top:12px"><button type="button" class="xs" data-spback="1">← Все обращения</button></div>
+      <div class="sec"><div id="sp-head"></div><div class="chat" id="sp-msgs" style="margin-top:10px"></div></div>
+      <div class="sec" id="sp-reply"><h3>Ответ</h3><div class="v">
+        <div class="chips wrap" id="sp-quick"></div>
+        <textarea id="sp-txt" maxlength="2000" placeholder="Ответ придёт игроку в бот — с кнопками «Ответить» и «Вопрос решён»"></textarea>
+        <div class="row"><button type="button" class="b-acc f1" data-spsend="0">Отправить</button>
+          <button type="button" class="f1" data-spsend="1">Отправить и закрыть</button></div>
+        <div class="row"><button type="button" class="f1" data-spclose="1">Закрыть без ответа</button></div>
+      </div></div>
+      <div id="sp-closed" hidden><div class="note wn" style="margin-top:12px">Обращение закрыто<span id="sp-closed-by"></span>.</div>
+        <div class="row" style="margin-top:8px"><button type="button" class="f1" data-spreopen="1">Открыть снова</button></div></div>
+    </div>
   </section>
 
   <!-- v338: состояние бота -->
@@ -531,7 +549,7 @@ window.addEventListener('error', function (e) {
     document.getElementById('app').hidden = true;
     var f = document.getElementById('fatal'); f.hidden = false;
     document.getElementById('fatal-t').textContent = 'Ошибка на странице';
-    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v338';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v339';
   } catch (_) {}
 }, true);
 </script>
@@ -546,7 +564,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v338';
+  var VER = 'v339';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -744,6 +762,7 @@ window.addEventListener('error', function (e) {
   }
   function goBack() {
     if (lbClose()) return;                           // v333: открыт скриншот во весь экран — «Назад» закрывает его
+    if (S.view === 'sup' && S.spId) { S.spId = null; S.spT = null; renderSup(true); loadSup(true); return; }   // v339: из обращения — к списку обращений
     var to = S.view === 'pl' ? (S.from || 'list') : 'list';
     show(to);
     if (to === 'list') toList(); else loadView(to);
@@ -938,6 +957,9 @@ window.addEventListener('error', function (e) {
       if (denied(res)) return;
       if (!res.j || !res.j.ok) { $('pl').innerHTML = '<div class="empty">Игрок не найден</div>'; return; }
       S.views[uid] = res.j.player;
+      // v339: печатаешь в карточке — свежие данные ждут, пока выйдешь из поля (перерисовка закрыла бы клавиатуру)
+      if (typingIn($('pl'))) { S.plLater = uid; if (refresh && !quiet) toast('Обновлено'); return; }
+      S.plLater = null;
       S.cur = res.j.player;
       var st = formState(); renderPlayer(); formRestore(st);   // то, что уже начал вписывать, не пропадает
       if (refresh && !quiet) toast('Обновлено');
@@ -947,6 +969,22 @@ window.addEventListener('error', function (e) {
     });
   }
   function extend(a, b) { for (var k in b) if (Object.prototype.hasOwnProperty.call(b, k)) a[k] = b[k]; return a; }
+  // v339: человек сейчас печатает в этом блоке — перерисовывать его нельзя (на телефоне закроется клавиатура)
+  function typingIn(box) {
+    var a = document.activeElement;
+    return !!(a && box && box.contains(a) && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !/^(button|checkbox|radio|file)$/.test(a.type))));
+  }
+  // вышел из поля — отложенные свежие данные карточки рисуем (если в этот момент не идёт действие)
+  $('pl').addEventListener('focusout', function () {
+    setTimeout(function () {
+      var u = S.plLater;
+      if (!u || typingIn($('pl')) || $('pl').classList.contains('lock')) return;
+      S.plLater = null;
+      if (S.view !== 'pl' || !S.cur || S.cur.uid !== u || !S.views[u]) return;
+      S.cur = S.views[u];
+      var st = formState(); renderPlayer(); formRestore(st);
+    }, 600);
+  });
   function formState() {
     var st = { v: {}, open: [] }, els = $('pl').querySelectorAll('input[id],textarea[id],select[id]');
     for (var i = 0; i < els.length; i++) st.v[els[i].id] = els[i].value;
@@ -1199,6 +1237,7 @@ window.addEventListener('error', function (e) {
           delete S.views[p.uid]; S.from = 'list'; goBack(); return;
         }
         if (j.player) {
+          S.plLater = null;                                  // v339: свежее, чем отложенное
           S.views[p.uid] = j.player; S.cur = j.player; S.pick = {};
           var ds = formState().open; renderPlayer(); formRestore({ v: {}, open: ds });   // поля очищаются, раскрытые списки — нет
           patchRow(j.player);
@@ -2455,6 +2494,7 @@ window.addEventListener('error', function (e) {
   }
   function renderRep(anim) {
     var it = S.rp.items || [], dn = S.rp.done || [], box = $('rp-list'), o = openDetails(box), keepR = $('rb-r') ? $('rb-r').value : '';
+    if (!anim && typingIn(box)) return;                  // v339: печатают причину бана — не трогаем
     $('rp-cnt').textContent = it.length ? 'Ждут разбора: ' + it.length + ' ' + plural3(it.length, 'игрок', 'игрока', 'игроков')
       + '. Дольше всех ждущие — сверху. Одно действие закрывает все жалобы на игрока.' : '';
     box.classList.toggle('quiet', !anim);
@@ -2669,23 +2709,34 @@ window.addEventListener('error', function (e) {
   }
 
   // ══ v338: вкладка «Поддержка» — обращения игроков; ответ уходит игроку в бот ═══════════
+  // v339: обращение открыто — обновляется только переписка (и только если в ней что-то поменялось); поле ответа
+  // постоянное. Скриншоты — по одному запросу на картинку, каждая грузится один раз. У ответа — статус доставки.
   var SPS = [['wait', 'Ждут ответа'], ['answered', 'Отвечено'], ['closed', 'Закрыто']];
+  var SPQ = [['Проверим', 'Проверим и ответим в ближайшее время.'], ['Пришли скрин', 'Пришли, пожалуйста, скриншот — так быстрее разберёмся.'],
+             ['Готово', 'Готово, проверь, пожалуйста.'], ['Подробнее', 'Опиши, пожалуйста, подробнее: что случилось и когда.']];
   var spT0 = 0;
   S.sp = null; S.spSt = 'wait'; S.spId = null; S.spT = null; S.spSeq = 0;
+  S.spImg = {}; S.spDraft = {}; S.spOpenId = null; S.spKey = '';
+  $('sp-quick').innerHTML = SPQ.map(function (q, i) { return '<button type="button" class="chip" data-spq="' + i + '">' + esc(q[0]) + '</button>'; }).join('');
   function spStop() { clearTimeout(spT0); spT0 = 0; }
-  function spPoll() {
+  function spPoll(ms) {
     spStop();
     spT0 = setTimeout(function () {
       if (S.view !== 'sup') return;
       if (document.hidden) { spPoll(); return; }
       loadSup(true);
-    }, 10000);
+    }, ms || 10000);
   }
+  function spShowOne(one) { $('sp-chips').hidden = one; $('sp-list').hidden = one; $('sp-one').hidden = !one; }
   function loadSup(silent) {
     spStop();
     var my = ++S.spSeq;
     if (!silent && !S.sp) $('sp-list').innerHTML = skel(3);
-    if (!silent && S.spId && !S.spT) { $('sp-one').hidden = false; $('sp-list').hidden = true; $('sp-chips').hidden = true; $('sp-one').innerHTML = skel(2); }
+    if (!silent && S.spId && !S.spT) {                     // открывается обращение — заготовка вместо переписки
+      spShowOne(true); spDraftSwap(S.spId);
+      $('sp-head').innerHTML = skel(1); $('sp-msgs').innerHTML = ''; S.spKey = '';
+      $('sp-reply').hidden = true; $('sp-closed').hidden = true;
+    }
     var body = S.spId ? { op: 'open', id: S.spId, status: S.spSt } : { op: 'get', status: S.spSt };
     return sect('/support', body, 'sp-list', 'v338').then(function (j) {
       if (my !== S.spSeq) return;
@@ -2714,27 +2765,60 @@ window.addEventListener('error', function (e) {
     if (m.from === 'mod') return 'модератор ' + esc(m.by_name || '');
     return 'администратор';
   }
+  // черновик ответа у каждого обращения свой: перешёл к другому — написанное не пропало и не уехало не туда
+  function spDraftSwap(id) {
+    if (S.spOpenId === id) return;
+    if (S.spOpenId != null) S.spDraft[S.spOpenId] = $('sp-txt').value;
+    $('sp-txt').value = S.spDraft[id] || '';
+    S.spOpenId = id; S.spKey = '';
+  }
+  function spImgHtml(k, m) {
+    if (typeof m.img === 'string') return '<img src="' + m.img + '" alt="Скриншот" data-lb="1">';      // бот v338 присылал картинку сразу
+    var im = S.spImg[k];
+    if (im && im !== 'loading' && im !== 'err') return '<img src="' + im + '" alt="Скриншот" data-lb="1">';
+    return '<button type="button" class="spimg" data-spimg="' + k + '">' + (im === 'err' ? '📎 Скриншот не загрузился — нажми' : '📎 Загружаю скриншот…') + '</button>';
+  }
+  function spMsgHtml(m, t) {
+    var k = t.id + '|' + m.n;
+    var dl = m.from !== 'user' && m.dlv ? '<div class="dlv ' + esc(m.dlv) + '">' + (m.dlv === 'ok' ? '✓ доставлено' : m.dlv === 'wait' ? '⏳ отправляется…'
+      : '⚠️ не доставлено: ' + esc(m.err || '')) + '</div>' : '';
+    return '<div class="msg' + (m.from === 'user' ? '' : ' me') + '"><i>' + spWho(m, t) + ' · ' + dt(m.t) + '</i>' + esc(m.text)
+      + (m.img ? spImgHtml(k, m) : m.img_wait ? '<div class="small">📎 скриншот сохраняется…</div>' : '') + dl + '</div>';
+  }
+  function spImgs() {
+    var t = S.spT; if (!t) return;
+    (t.msgs || []).forEach(function (m) {
+      if (m.img !== true) return;
+      var k = t.id + '|' + m.n;
+      if (S.spImg[k]) return;
+      S.spImg[k] = 'loading';
+      api('/support', { op: 'img', id: t.id, n: m.n }).then(function (res) {
+        var j = res.j || {};
+        S.spImg[k] = j.ok && j.img ? j.img : 'err';
+      }, function () { S.spImg[k] = 'err'; }).then(function () {
+        var el = $('sp-msgs').querySelector('[data-spimg="' + k + '"]');
+        if (el) el.outerHTML = spImgHtml(k, m);
+      });
+    });
+  }
   function renderTicket() {
-    var t = S.spT, keep = $('sp-txt') ? $('sp-txt').value : '';
+    var t = S.spT;
+    spDraftSwap(t.id);
     var stt = t.wait ? '<span class="bd wn" style="margin:0">ждёт ответа</span>' : t.status === 'closed' ? 'закрыто' : 'отвечено';
-    var h = '<div class="row" style="margin-top:12px"><button type="button" class="xs" data-spback="1">← Все обращения</button></div>'
-      + '<div class="sec"><div class="rph"><div class="av lk" data-uid="' + t.uid + '">' + avHtml(t) + (t.online ? '<i class="dot"></i>' : '') + '</div>'
+    $('sp-head').innerHTML = '<div class="rph"><div class="av lk" data-uid="' + t.uid + '">' + avHtml(t) + (t.online ? '<i class="dot"></i>' : '') + '</div>'
       + '<div class="m"><div class="nm lk" data-uid="' + t.uid + '">' + pName(t) + (t.banned ? '<span class="bd ban">бан</span>' : '') + '</div>'
       + '<div class="sub">ID ' + esc(t.cid || '—') + ' · обращение #' + t.id + ' · с ' + dt(t.created) + '</div></div></div>'
-      + '<div class="small" style="margin-top:6px">' + stt + (t.other ? ' · ещё обращений у игрока: ' + t.other : '') + '</div>'
-      + '<div class="chat" style="margin-top:10px">' + (t.msgs || []).map(function (m) {
-          return '<div class="msg' + (m.from === 'user' ? '' : ' me') + '"><i>' + spWho(m, t) + ' · ' + dt(m.t) + '</i>' + esc(m.text)
-            + (m.img ? '<img src="' + m.img + '" alt="Скриншот" data-lb="1">' : m.img_wait ? '<div class="small">📎 скриншот загружается…</div>' : '') + '</div>';
-        }).join('') + '</div></div>';
-    if (t.status !== 'closed') h += '<div class="sec"><h3>Ответ</h3><div class="v">'
-      + '<textarea id="sp-txt" maxlength="2000" placeholder="Ответ придёт игроку в бот — с кнопками «Ответить» и «Вопрос решён»"></textarea>'
-      + '<div class="row"><button type="button" class="b-acc f1" data-spsend="0">Отправить</button>'
-      + '<button type="button" class="f1" data-spsend="1">Отправить и закрыть</button></div>'
-      + '<div class="row"><button type="button" class="f1" data-spclose="1">Закрыть без ответа</button></div></div></div>';
-    else h += '<div class="note wn" style="margin-top:12px">Обращение закрыто' + (t.closed_by === 'user' ? ' игроком — «вопрос решён»' : '') + '.</div>'
-      + '<div class="row" style="margin-top:8px"><button type="button" class="f1" data-spreopen="1">Открыть снова</button></div>';
-    $('sp-one').innerHTML = h;
-    if (keep && $('sp-txt')) $('sp-txt').value = keep;
+      + '<div class="small" style="margin-top:6px">' + stt + (t.other ? ' · ещё обращений у игрока: ' + t.other : '') + '</div>';
+    // переписку перерисовываем, только если в ней что-то поменялось (новое сообщение, доставка, картинка)
+    var key = JSON.stringify((t.msgs || []).map(function (m) { return [m.n, m.dlv || '', m.err || '', !!m.img, !!m.img_wait]; }));
+    if (key !== S.spKey) {
+      S.spKey = key;
+      $('sp-msgs').innerHTML = (t.msgs || []).map(function (m) { return spMsgHtml(m, t); }).join('');
+      spImgs();
+    }
+    var closed = t.status === 'closed';
+    $('sp-reply').hidden = closed; $('sp-closed').hidden = !closed;
+    $('sp-closed-by').textContent = closed && t.closed_by === 'user' ? ' игроком — «вопрос решён»' : '';
   }
   function renderSup(anim) {
     var j = S.sp || {}, c = j.counts || {}, one = !!(S.spId && S.spT);
@@ -2742,17 +2826,18 @@ window.addEventListener('error', function (e) {
     $('sp-chips').innerHTML = SPS.map(function (x) {
       return '<button type="button" class="chip' + (S.spSt === x[0] ? ' on' : '') + '" data-sps="' + x[0] + '">' + x[1] + (c[x[0]] ? ' · ' + c[x[0]] : '') + '</button>';
     }).join('');
-    $('sp-chips').hidden = one; $('sp-list').hidden = one; $('sp-one').hidden = !one;
+    spShowOne(one);
     if (one) { renderTicket(); return; }
     var it = j.items || [];
     $('sp-list').innerHTML = it.length ? it.map(spRow).join('') : '<div class="empty">' + ({ wait: 'Все обращения разобраны 🎉',
       answered: 'Нет отвеченных обращений, которые ещё открыты', closed: 'Закрытых обращений пока нет' }[S.spSt] || '') + '</div>';
   }
-  function spDo(body, confirmText, btn, after) {
+  function spDo(body, confirmText, btn, after, pollMs) {
     if (botVer() < 338) { toast('Заработает, когда бот на сервере обновится до v338', true); return; }
     S.spSeq++; spStop();
     body.status = S.spSt;
-    doSect('/support', body, confirmText, btn, function (j) { if (after) after(j); setSup(j, false); }).then(function () { if (S.view === 'sup') spPoll(); });
+    doSect('/support', body, confirmText, btn, function (j) { if (after) after(j); setSup(j, false); })
+      .then(function () { if (S.view === 'sup') spPoll(pollMs); });
   }
   $('v-sup').addEventListener('click', function (e) {
     var im = e.target.closest('[data-lb]');
@@ -2761,12 +2846,23 @@ window.addEventListener('error', function (e) {
     if (b && !b.disabled) {
       if (b.hasAttribute('data-sps')) { S.spSt = b.getAttribute('data-sps'); S.spId = null; S.spT = null; S.sp = null; loadSup(false); return; }
       if (b.hasAttribute('data-spback')) { S.spId = null; S.spT = null; renderSup(true); loadSup(true); return; }
+      if (b.hasAttribute('data-spimg')) { delete S.spImg[b.getAttribute('data-spimg')]; b.textContent = '📎 Загружаю скриншот…'; spImgs(); return; }
+      if (b.hasAttribute('data-spq')) {                    // v339: быстрый ответ — вставить в поле (не отправлять)
+        var q = SPQ[Number(b.getAttribute('data-spq'))][1], ta = $('sp-txt');
+        ta.value = ta.value.trim() ? ta.value.replace(/\s+$/, '') + ' ' + q : q;
+        ta.focus();
+        try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch (x) {}
+        return;
+      }
       var t = S.spT; if (!t) return;
       if (b.hasAttribute('data-spsend')) {
         var tx = $('sp-txt').value.trim();
         if (!tx) { toast('Напиши ответ', true); $('sp-txt').focus(); return; }
-        var cl = b.getAttribute('data-spsend') === '1';
-        spDo({ op: 'reply', id: t.id, text: tx, close: cl }, null, b, function () { $('sp-txt').value = ''; });
+        var cl = b.getAttribute('data-spsend') === '1', tid = t.id;
+        spDo({ op: 'reply', id: tid, text: tx, close: cl }, null, b, function () {
+          if (S.spOpenId === tid) $('sp-txt').value = '';
+          delete S.spDraft[tid];
+        }, 2500);                                          // через пару секунд — узнать, доставлено ли
         return;
       }
       if (b.hasAttribute('data-spclose')) { spDo({ op: 'close', id: t.id }, 'Закрыть обращение #' + t.id + ' без ответа?\nИгроку ничего не придёт.', b); return; }
@@ -2860,7 +2956,7 @@ window.addEventListener('error', function (e) {
     $('mt-state').innerHTML = on ? 'Сейчас: <b style="color:#fecaca">включено</b> — игроки видят сообщение ниже' : 'Сейчас: бот работает для всех';
     $('mt-toggle').textContent = on ? 'Выключить' : '🔧 Включить';
     $('mt-toggle').className = on ? 'b-acc f1' : 'b-no f1';
-    if (document.activeElement !== $('mt-text')) $('mt-text').value = m.text || '';
+    if (document.activeElement !== $('mt-text') && !S.mtDirty) $('mt-text').value = m.text || '';   // v339: + недописанный
   }
   function mtOpen(v) { $('mt-panel').classList.toggle('open', v === undefined ? !$('mt-panel').classList.contains('open') : v); }
   // действия шапки и акции: бот до v331 их не знает — говорим прямо, а не ошибкой сервера
@@ -2870,11 +2966,13 @@ window.addEventListener('error', function (e) {
   }
   function mtSend(on, confirmText, btn) {
     stDo({ op: 'maint', on: on, text: $('mt-text').value.trim() }, confirmText, btn, function (j) {
+      S.mtDirty = false;
       setMt(j.maintenance); if (j.promo) setDp(j.promo);
       if (!j.maintenance.on) mtOpen(false);
     });
   }
   $('mt-pill').addEventListener('click', function () { mtOpen(); });
+  $('mt-text').addEventListener('input', function () { S.mtDirty = true; });
   $('mt-toggle').addEventListener('click', function () {
     var on = !(S.mt && S.mt.on);
     mtSend(on, on ? 'Включить обслуживание?\nИгроки не смогут пользоваться ботом, пока не выключишь.' : null, this);
@@ -2973,7 +3071,8 @@ window.addEventListener('error', function (e) {
     setInterval(function () { if (!document.hidden && S.view !== 'pl') loadMeta().catch(function () {}); }, 30000);
   }
 
-  window.ADM = { state: function () { return S; }, open: openPlayer, tab: openTab, photo: bcSetFile, dpPhoto: dpSetFile, ver: VER };
+  window.ADM = { state: function () { return S; }, open: openPlayer, tab: openTab, photo: bcSetFile, dpPhoto: dpSetFile, ver: VER,
+                 poll: function () { if (S.view === 'sup') loadSup(true); if (S.view === 'duels') loadDuels(true); }, back: goBack };
   botDot();
 })();
 </script>
