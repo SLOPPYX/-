@@ -142,7 +142,7 @@
   /* v326: вкладки — все видны сразу и на узком экране. v328: шесть вкладок — две строки по три.
      v331: значки — тонкие линии вместо цветных эмодзи; выбранная вкладка — фиолетовая, переход плавный */
   /* v333: восемь вкладок — две строки по четыре, значок над подписью (так влезает и на узком телефоне) */
-  .tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-top: 12px; padding: 4px;
+  .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 12px; padding: 4px;
           background: var(--card); border: 1px solid var(--ln); border-radius: 16px; }
   .tabs button { position: relative; background: transparent; border: 0; border-radius: 12px; padding: 7px 2px 6px; font-size: 11.5px;
                  line-height: 1.15; color: var(--tx2); white-space: nowrap; overflow: hidden; box-shadow: none;
@@ -263,10 +263,26 @@
   .tbl th, .tbl td { padding: 5px 4px; text-align: right; border-bottom: 1px solid var(--ln); }
   .tbl th:first-child, .tbl td:first-child { text-align: left; }
   .tbl th { color: var(--tx3); font-weight: 600; font-size: 11px; }
-  /* v338: десять вкладок — две строки по пять; у модератора четыре — одной строкой. Узкий телефон — подпись мельче */
+  /* v338: у модератора четыре вкладки — одной строкой. v340: у администратора двенадцать — три ряда по четыре
+     (по пять в ряд подписи на узком телефоне уже не помещались) */
   .tabs.mod { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  @media (max-width: 370px) { .tabs button { font-size: 10.5px; } }
-  @media (max-width: 340px) { .tabs { gap: 2px; padding: 3px; } .tabs button { font-size: 9.6px; letter-spacing: -.02em; padding-left: 0; padding-right: 0; } }
+  /* v340: вкладка раздела, который ещё в разработке, — подпись приглушена, в углу «скоро» */
+  .tabs button.soon:not(.on) { color: var(--tx3); }
+  .tsoon { position: absolute; top: 3px; right: 3px; padding: 0 4px; border-radius: 6px; font-size: 8.5px; font-weight: 700; line-height: 13px;
+           letter-spacing: .02em; background: var(--accbg); color: var(--acc3); border: 1px solid rgba(139,92,246,.35); }
+  .tabs button.on .tsoon { background: rgba(255,255,255,.18); color: #fff; border-color: rgba(255,255,255,.35); }
+  /* на телефоне в углу метка наезжала бы на значок — там она строкой под подписью */
+  @media (max-width: 440px) { .tsoon { position: static; margin-top: -1px; font-size: 8px; line-height: 11px; padding: 0 4px; } }
+  .snh { display: flex; align-items: center; gap: 13px; }
+  .sni { width: 54px; height: 54px; flex: 0 0 54px; border-radius: 16px; display: grid; place-items: center; background: var(--grad);
+         box-shadow: 0 10px 26px -12px rgba(139,92,246,.95); }
+  .sni svg { width: 28px; height: 28px; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .snh .nm { font-size: 18px; white-space: normal; }
+  .sfl { margin: 12px 0 2px; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .sfl li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--tx2); line-height: 1.45; }
+  .sfl li b { color: var(--tx); font-weight: 600; }
+  .sfl li::before { content: ''; flex: 0 0 7px; height: 7px; margin-top: 6px; border-radius: 2px; transform: rotate(45deg);
+                    background: var(--acc2); box-shadow: 0 0 8px rgba(167,139,250,.7); }
   .tdot.err { background: #fca5a5; box-shadow: 0 0 8px rgba(248,113,113,.95); }
   .bd.md { background: rgba(139,92,246,.22); color: #ddd6fe; }
   /* v338: настройки матчей */
@@ -328,6 +344,9 @@
     <button type="button" data-tab="promo"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 6v12" stroke-dasharray="2 2.2"/></svg>Промо</button>
     <button type="button" data-tab="tour"><svg class="ic" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg>Турнир</button>
     <button type="button" data-tab="econ"><svg class="ic" viewBox="0 0 24 24"><path d="M4 19V11M10 19V6M16 19v-9M22 19H2"/></svg>Экономика</button>
+    <!-- v340: на будущее — разделы в разработке -->
+    <button type="button" data-tab="vip" class="soon"><svg class="ic" viewBox="0 0 24 24"><path d="M4 8l4 4 4-7 4 7 4-4-2 10H6z"/><path d="M6 21h12"/></svg>VIP<span class="tsoon">скоро</span></button>
+    <button type="button" data-tab="don" class="soon"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>Донаты<span class="tsoon">скоро</span></button>
     <button type="button" data-tab="log" id="journal"><svg class="ic" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r=".6"/><circle cx="4" cy="12" r=".6"/><circle cx="4" cy="18" r=".6"/></svg>Журнал</button>
     <!-- v338: состояние бота — работает ли, память, ошибки -->
     <button type="button" data-tab="bot"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9.5 13h.01M14.5 13h.01M9.5 16.5h5"/></svg>Бот<span class="tdot err" id="bot-dot" hidden></span></button>
@@ -432,6 +451,36 @@
 
   <!-- v338: состояние бота -->
   <section id="v-bot" hidden><div id="bt"></div></section>
+
+  <!-- v340: на будущее — VIP-подписка игроков (в разработке) -->
+  <section id="v-vip" hidden>
+    <div class="sec"><div class="snh"><div class="sni"><svg viewBox="0 0 24 24"><path d="M4 8l4 4 4-7 4 7 4-4-2 10H6z"/><path d="M6 21h12"/></svg></div>
+      <div class="m"><div class="nm">VIP-подписка</div><div class="sub">подписка игроков</div></div>
+      <span class="bd md" style="flex:0 0 auto">в разработке</span></div>
+      <ul class="sfl">
+        <li><span><b>Кто с VIP</b> — список подписчиков и до какого числа действует подписка.</span></li>
+        <li><span><b>Выдать, продлить, снять</b> — прямо из карточки игрока, на любой срок.</span></li>
+        <li><span><b>Что даёт VIP</b> — бонусы настраиваются здесь, без обновления бота.</span></li>
+        <li><span><b>Итоги</b> — сколько игроков подписано, сколько продлили, кто скоро закончится.</span></li>
+      </ul>
+    </div>
+    <div class="note mt" style="margin-top:12px">🛠 Раздел в разработке — появится в одном из следующих обновлений. Сейчас VIP бывает только призом колеса в казино («👑 VIP-группа на месяц»), его выдаёшь вручную.</div>
+  </section>
+
+  <!-- v340: на будущее — донаты игроков (в разработке) -->
+  <section id="v-don" hidden>
+    <div class="sec"><div class="snh"><div class="sni"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></div>
+      <div class="m"><div class="nm">Донаты</div><div class="sub">покупки игроков</div></div>
+      <span class="bd md" style="flex:0 0 auto">в разработке</span></div>
+      <ul class="sfl">
+        <li><span><b>Все донаты</b> — кто, сколько, когда и за что: пакет токенов, VIP.</span></li>
+        <li><span><b>Итоги</b> — за день, неделю и месяц, лучшие донатеры.</span></li>
+        <li><span><b>Зачислить оплату</b> — одной кнопкой: токены сразу на баланс, запись в историю.</span></li>
+        <li><span><b>История в карточке</b> — что игрок покупал и когда.</span></li>
+      </ul>
+    </div>
+    <div class="note mt" style="margin-top:12px">🛠 Раздел в разработке — появится в одном из следующих обновлений. Сейчас оплата идёт через @SloppyX, а токены начисляешь в карточке игрока («+ Начислить»).</div>
+  </section>
 
   <section id="v-log" hidden>
     <h2>Журнал действий</h2>
@@ -549,7 +598,7 @@ window.addEventListener('error', function (e) {
     document.getElementById('app').hidden = true;
     var f = document.getElementById('fatal'); f.hidden = false;
     document.getElementById('fatal-t').textContent = 'Ошибка на странице';
-    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v339';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v340';
   } catch (_) {}
 }, true);
 </script>
@@ -564,7 +613,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v339';
+  var VER = 'v340';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -731,7 +780,7 @@ window.addEventListener('error', function (e) {
   // ── переходы между экранами ─────────────────────────────────────────
   // v326: вкладки Игроки / Рассылка / Промо / Турнир / Журнал; карточка игрока открывается поверх любой из них
   // v328: + Экономика. v333: + 1vs1 (duels) и Жалобы (rep)
-  var VIEWS = ['list', 'pl', 'log', 'bc', 'promo', 'tour', 'econ', 'duels', 'rep', 'sup', 'bot'];   // v338: + поддержка, бот
+  var VIEWS = ['list', 'pl', 'log', 'bc', 'promo', 'tour', 'econ', 'duels', 'rep', 'sup', 'bot', 'vip', 'don'];   // v338: + поддержка, бот; v340: + VIP, донаты
   function show(view) {
     var changed = S.view !== view;
     S.view = view;
