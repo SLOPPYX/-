@@ -47,158 +47,185 @@
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#050507">
 <title>Моя аватарка</title>
 <style>
+  /* v341: новый вид — чёрный, белый и фиолетовый, плавно (как админка, которая понравилась Кириллу).
+     Готовые SVG-аватарки — файлы av/<id>.svg рядом со страницей; своя картинка — как раньше, с проверкой 18+.
+     Анимируются только opacity и transform — на телефоне это не тормозит. */
+  :root { color-scheme: dark;
+          --bg: #050507; --card: #0d0d11; --card2: #15151b; --ln: rgba(255,255,255,.07); --ln2: rgba(255,255,255,.13);
+          --tx: #f4f4f6; --tx2: #a1a1ab; --tx3: #6a6a75;
+          --acc: #8b5cf6; --acc2: #a78bfa; --acc3: #c4b5fd; --accbg: rgba(139,92,246,.13);
+          --grad: linear-gradient(135deg, #7c3aed, #9d6bff);
+          --no: #f87171; --wait: #fcd34d;
+          --ease: cubic-bezier(.22,.8,.2,1); }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  /* v320: фирменная пара казино — фиолетовый и циан — вместо прежней чёрно-белой темы.
-     Смысловые цвета (одобрено / ждёт / отклонено) остаются отдельными: по ним читается статус. */
-  @property --ang { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
-  :root {
-    --bg: #06060c; --ink: #fff; --ink2: #9d9db0; --ink3: #5e5e73;
-    --vio: #bf00ff; --cy: #00e5ff;
-    --line: rgba(255,255,255,.1); --line2: rgba(255,255,255,.18);
-    --ok: #2ff3a4; --no: #ff4d6d; --wait: #ffc84a;
-  }
-  html, body { background: var(--bg); color: var(--ink); overflow-x: hidden; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  /* overflow-x только у html: на body он делает body отдельной прокруткой, и кнопка «Поставить» перестаёт прилипать к низу экрана */
+  html { overflow-x: hidden; }
+  html, body { background: var(--bg); color: var(--tx); }
+  body { font: 14px/1.45 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  body::before { content: ''; position: fixed; top: -200px; left: 0; right: 0; height: 380px; z-index: 0; pointer-events: none;
+                 background: radial-gradient(380px 190px at 50% 50%, rgba(139,92,246,.18), transparent); }
   button, label { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; touch-action: manipulation; }
   [hidden] { display: none !important; }
+  @keyframes rin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes pop { 0% { opacity: 0; transform: scale(.9); } 100% { opacity: 1; transform: none; } }
+  @keyframes sk { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 
-  /* Фон: два больших цветных пятна, медленно дышат. Они дают глубину без единой картинки. */
-  .aurora { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-  .aurora i { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .5; }
-  .aurora i:nth-child(1) { width: 420px; height: 420px; top: -170px; left: -120px; background: radial-gradient(circle, rgba(191,0,255,.75), transparent 68%); animation: dr1 18s ease-in-out infinite; }
-  .aurora i:nth-child(2) { width: 380px; height: 380px; bottom: -160px; right: -130px; background: radial-gradient(circle, rgba(0,229,255,.6), transparent 68%); animation: dr2 22s ease-in-out infinite; }
-  .grain { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 0; pointer-events: none; opacity: .5;
-    background-image: radial-gradient(rgba(255,255,255,.09) 1px, transparent 1px); background-size: 24px 24px;
-    -webkit-mask: radial-gradient(ellipse 95% 55% at 50% 0, #000, transparent 78%); mask: radial-gradient(ellipse 95% 55% at 50% 0, #000, transparent 78%); }
-  @keyframes dr1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px,30px) scale(1.08); } }
-  @keyframes dr2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-36px,-28px) scale(1.06); } }
-  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-  @keyframes pop { 0% { opacity: 0; transform: scale(.86); } 60% { transform: scale(1.04); } 100% { opacity: 1; transform: none; } }
-  @keyframes ang { to { --ang: 360deg; } }
-  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
-  @keyframes sheen { to { background-position: 260% 0; } }
+  .app { position: relative; z-index: 1; max-width: 520px; margin: 0 auto;
+         padding: calc(18px + env(safe-area-inset-top, 0px)) 16px calc(28px + env(safe-area-inset-bottom, 0px)); }
 
-  .app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto;
-    padding: calc(20px + env(safe-area-inset-top, 0px)) 16px calc(30px + env(safe-area-inset-bottom, 0px)); }
+  /* шапка */
+  .hd { display: flex; align-items: center; gap: 12px; animation: rin .4s var(--ease) both; }
+  .hd-b { width: 44px; height: 44px; flex: 0 0 44px; border-radius: 14px; display: grid; place-items: center; background: var(--grad);
+          box-shadow: 0 10px 24px -12px rgba(139,92,246,.95); }
+  .hd-b svg { width: 23px; height: 23px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .hd h1 { font-size: 21px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
+  .hd p { font-size: 12.5px; color: var(--tx2); margin-top: 2px; }
 
-  /* Шапка: иконка в стеклянном квадрате с градиентной рамкой */
-  .hd { display: flex; align-items: center; gap: 13px; animation: rise .5s cubic-bezier(.2,.8,.2,1) both; }
-  .hd-b { position: relative; width: 52px; height: 52px; flex-shrink: 0; border-radius: 17px; display: grid; place-items: center;
-    background: linear-gradient(150deg, rgba(191,0,255,.28), rgba(0,229,255,.2)); box-shadow: 0 10px 30px -10px rgba(191,0,255,.8); }
-  .hd-b::before { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-radius: 17px; padding: 1px;
-    background: linear-gradient(150deg, rgba(191,0,255,.9), rgba(0,229,255,.7)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor; mask-composite: exclude; }
-  .hd-ic { width: 27px; height: 27px; }
-  .hd-w { font-size: 25px; font-weight: 900; letter-spacing: .02em; line-height: 1.05;
-    background: linear-gradient(95deg, #fff 10%, #e0b6ff 40%, #9ef0ff 75%, #fff 100%) 0 0 / 260% 100%;
-    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; animation: sheen 7s linear infinite; }
-  .hd-s { margin-top: 5px; font-size: 12px; color: var(--ink2); line-height: 1.4; }
+  .card { background: var(--card); border: 1px solid var(--ln); border-radius: 20px; }
 
-  /* Стеклянная карточка с тонкой градиентной обводкой — основной приём нового оформления */
-  .glass { position: relative; border-radius: 26px; background: rgba(255,255,255,.045);
-    -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: 0 26px 60px -34px rgba(0,0,0,.9); }
-  .glass::before { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-radius: 26px; padding: 1px; pointer-events: none;
-    background: linear-gradient(160deg, rgba(255,255,255,.28), rgba(255,255,255,.05) 45%, rgba(191,0,255,.35));
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+  /* что стоит сейчас (или предпросмотр выбранного) */
+  .hero { margin-top: 16px; padding: 18px 16px 16px; display: flex; align-items: center; gap: 16px; animation: rin .4s .05s var(--ease) both; }
+  .hav { position: relative; width: 104px; height: 104px; flex: 0 0 104px; border-radius: 50%; padding: 3px; background: var(--grad);
+         box-shadow: 0 16px 40px -16px rgba(139,92,246,.95); }
+  .hav.dim { background: linear-gradient(135deg, rgba(255,255,255,.35), rgba(255,255,255,.12)); box-shadow: none; }
+  .hav .in { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: #0b0b10; display: grid; place-items: center; font-size: 46px; }
+  .hav img { width: 100%; height: 100%; object-fit: cover; display: block; animation: pop .3s var(--ease) both; }
+  .hav .pv { position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%); padding: 2px 9px; border-radius: 999px; font-size: 10.5px;
+             font-weight: 700; color: #fff; background: #1b1530; border: 1px solid rgba(167,139,250,.6); white-space: nowrap; }
+  .hm { min-width: 0; flex: 1; }
+  .hm .nm { font-size: 19px; font-weight: 800; letter-spacing: -.01em; line-height: 1.2; }
+  .hm .sb { font-size: 12.5px; color: var(--tx2); margin-top: 3px; line-height: 1.4; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; margin-top: 9px; padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 700;
+          color: var(--acc3); background: var(--accbg); border: 1px solid rgba(139,92,246,.3); }
+  .pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--acc2); box-shadow: 0 0 8px rgba(167,139,250,.9); }
+  .pill.wait { color: #fde68a; background: rgba(252,211,77,.1); border-color: rgba(252,211,77,.35); }
+  .pill.wait i { background: var(--wait); box-shadow: 0 0 8px rgba(252,211,77,.8); }
+  .pill.no { color: #fecaca; background: rgba(248,113,113,.1); border-color: rgba(248,113,113,.35); }
+  .pill.no i { background: var(--no); box-shadow: 0 0 8px rgba(248,113,113,.8); }
+  .pill.pv { color: #fff; background: rgba(255,255,255,.07); border-color: var(--ln2); }
+  .pill.pv i { background: #fff; box-shadow: 0 0 8px rgba(255,255,255,.7); }
 
-  .now { margin-top: 18px; padding: 26px 18px 22px; display: flex; flex-direction: column; align-items: center; gap: 15px;
-    animation: rise .5s .05s cubic-bezier(.2,.8,.2,1) both; }
-  /* Кольцо вокруг аватарки: цвет статуса + мягкое свечение того же цвета под ней */
-  .ring { position: relative; width: 156px; height: 156px; border-radius: 50%; display: grid; place-items: center; isolation: isolate; }
-  .ring::before { content: ''; position: absolute; top: -7px; right: -7px; bottom: -7px; left: -7px; border-radius: 50%; z-index: -2;
-    background: conic-gradient(from var(--ang), transparent 8%, var(--rc, #fff) 45%, transparent 82%); animation: ang 6s linear infinite; }
-  .ring::after { content: ''; position: absolute; top: 4px; right: 4px; bottom: 4px; left: 4px; border-radius: 50%; z-index: -1;
-    box-shadow: 0 0 46px 6px var(--rc, rgba(255,255,255,.5)); opacity: .5; }
-  .ring img, .ring .ph { width: 142px; height: 142px; border-radius: 50%; object-fit: cover; display: block; background: #0c0c16; }
-  .ring .ph { display: grid; place-items: center; font-size: 54px; }
+  /* «Готовые» | «Своя картинка» — переключатель с бегущей подложкой */
+  .seg { position: relative; display: grid; grid-template-columns: 1fr 1fr; margin-top: 14px; padding: 4px; border-radius: 15px;
+         background: var(--card); border: 1px solid var(--ln); }
+  .seg i { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 11px; background: var(--grad);
+           box-shadow: 0 6px 16px -9px rgba(139,92,246,.95); transition: transform .32s var(--ease); }
+  .seg.own i { transform: translateX(100%); }
+  .seg button { position: relative; z-index: 1; padding: 10px 6px; border-radius: 11px; font-size: 13.5px; font-weight: 600; color: var(--tx2);
+                transition: color .25s var(--ease); }
+  .seg button.on { color: #fff; }
+  .pane { animation: rin .3s var(--ease) both; }
 
-  .st { display: inline-flex; align-items: center; gap: 9px; padding: 9px 17px; border-radius: 999px; font-size: 13px; font-weight: 800;
-    border: 1px solid var(--line2); background: rgba(255,255,255,.06); }
-  .st i { width: 9px; height: 9px; border-radius: 50%; background: var(--ink3); }
-  .st.ok { color: #a7fcdb; border-color: rgba(47,243,164,.5); background: rgba(47,243,164,.12); }
-  .st.ok i { background: var(--ok); box-shadow: 0 0 14px var(--ok); }
-  .st.wait { color: #ffe6ac; border-color: rgba(255,200,74,.5); background: rgba(255,200,74,.12); }
-  .st.wait i { background: var(--wait); box-shadow: 0 0 14px var(--wait); animation: blink 1.4s ease-in-out infinite; }
-  .st.no { color: #ffd0d8; border-color: rgba(255,77,109,.55); background: rgba(255,77,109,.12); }
-  .st.no i { background: var(--no); box-shadow: 0 0 14px var(--no); }
-  .st-d { font-size: 13px; line-height: 1.55; color: var(--ink2); text-align: center; max-width: 330px; }
-  .st-d b { color: #fff; }
+  /* готовые аватарки */
+  .grp { margin-top: 18px; }
+  .grp h3 { font-size: 11px; font-weight: 700; color: var(--tx3); text-transform: uppercase; letter-spacing: .1em; margin: 0 0 9px 2px; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+  @media (min-width: 430px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .tile { position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 12px 6px 10px; border-radius: 16px;
+          background: var(--card); border: 1px solid var(--ln);
+          transition: transform .15s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease), background-color .2s var(--ease); }
+  .tile:active { transform: scale(.96); }
+  @media (hover: hover) { .tile:hover { border-color: var(--ln2); } }
+  .tile img, .tile .emb { width: 62px; height: 62px; border-radius: 50%; display: block; box-shadow: 0 8px 18px -10px rgba(0,0,0,.9); }
+  .tile .emb { display: grid; place-items: center; font-size: 30px; background: #15151b; border: 1px solid var(--ln2); }
+  .tile span { font-size: 12px; line-height: 1.25; color: var(--tx2); text-align: center; max-width: 100%; overflow-wrap: anywhere; }   /* на 320 px «Эмблема ранга» — в две строки, не «Эмблема ра…» */
+  .tile.sel { background: #13101d; border-color: rgba(167,139,250,.8); box-shadow: 0 0 0 3px rgba(139,92,246,.16), 0 12px 26px -16px rgba(139,92,246,.95); }
+  .tile.sel span { color: #fff; font-weight: 600; }
+  .tile .ck { position: absolute; top: 7px; right: 7px; width: 19px; height: 19px; border-radius: 50%; display: grid; place-items: center;
+              background: var(--grad); opacity: 0; transform: scale(.5); transition: opacity .2s var(--ease), transform .25s var(--ease); }
+  .tile .ck svg { width: 11px; height: 11px; fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .tile.sel .ck { opacity: 1; transform: none; }
+  /* «сейчас» — на верхней кромке плитки, чтобы не закрывать картинку */
+  .tile .now { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); padding: 0 7px; border-radius: 6px; font-size: 9.5px;
+               font-weight: 700; line-height: 16px; white-space: nowrap; color: #0b0b0e; background: #f4f4f6; box-shadow: 0 3px 10px rgba(0,0,0,.55); }
+  .apply { position: sticky; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 5; margin-top: 16px;
+           transition: opacity .25s var(--ease), transform .25s var(--ease); }
+  .apply.off { opacity: 0; transform: translateY(14px); pointer-events: none; }
 
-  /* Зона выбора файла: пунктир + подсветка под пальцем */
-  .drop { position: relative; isolation: isolate; overflow: hidden; display: block; width: 100%; margin-top: 14px;
-    padding: 28px 18px 24px; border-radius: 26px; text-align: center; border: 1.5px dashed rgba(255,255,255,.22);
-    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgba(191,0,255,.28), transparent 68%), rgba(255,255,255,.03);
-    transition: transform .15s, border-color .2s, box-shadow .2s; }
-  .drop:active { transform: scale(.985); }
-  .drop.over { border-color: rgba(0,229,255,.8); box-shadow: 0 0 44px -12px rgba(0,229,255,.9); }
-  .drop .ic { width: 54px; height: 54px; margin: 0 auto 12px; display: block; opacity: .95; }
-  .drop .t1 { font-size: 17px; font-weight: 900; }
-  .drop .t2 { margin-top: 7px; font-size: 12.5px; color: var(--ink2); line-height: 1.5; }
-  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-
-  .prev { margin-top: 14px; display: flex; flex-direction: column; align-items: center; gap: 12px; animation: pop .35s both; }
-  .prev img { width: 172px; height: 172px; border-radius: 50%; object-fit: cover;
-    box-shadow: 0 0 0 1px rgba(255,255,255,.2), 0 0 56px -12px rgba(191,0,255,.9); }
-  .prev .meta { font-size: 11.5px; color: var(--ink3); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
-
-  .btn { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%;
-    min-height: 56px; padding: 15px 18px; border-radius: 19px; font-size: 15px; font-weight: 900; letter-spacing: .03em;
-    transition: transform .12s ease, box-shadow .2s, background .2s; }
+  /* кнопки */
+  .btn { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; padding: 13px 16px;
+         border-radius: 16px; font-size: 15px; font-weight: 700; letter-spacing: .01em;
+         transition: transform .14s var(--ease), box-shadow .2s var(--ease), background-color .2s var(--ease), opacity .2s; }
   .btn:active { transform: scale(.975); }
-  .btn.pri { color: #fff; background: linear-gradient(100deg, var(--vio), #7b3cff 55%, var(--cy));
-    box-shadow: 0 12px 38px -12px rgba(191,0,255,.95), inset 0 1px 0 rgba(255,255,255,.35); }
-  .btn.ghost { color: #fff; background: rgba(255,255,255,.06); border: 1px solid var(--line2); }
-  .btn.ghost:active { background: rgba(255,255,255,.13); }
-  .btn.dgr { color: #ffd0d8; background: rgba(255,77,109,.1); border: 1px solid rgba(255,77,109,.45); }
+  .btn.pri { color: #fff; background: var(--grad); box-shadow: 0 12px 30px -12px rgba(139,92,246,.95), inset 0 1px 0 rgba(255,255,255,.25); }
+  .btn.ghost { color: var(--tx); background: var(--card2); border: 1px solid var(--ln2); }
+  .btn.dgr { color: #fca5a5; background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.28); }
   .btn[disabled] { opacity: .45; }
-  .btn + .btn { margin-top: 10px; }
+  .btn + .btn { margin-top: 9px; }
+  .btn .mini { width: 28px; height: 28px; flex: 0 0 28px; margin: -4px 0; border-radius: 50%; overflow: hidden; display: grid; place-items: center;
+               font-size: 15px; background: rgba(255,255,255,.16); box-shadow: 0 0 0 2px rgba(255,255,255,.35); }
+  .btn .mini img { width: 100%; height: 100%; display: block; }
+  .btn.ld { color: transparent !important; }
+  .btn.ld > * { visibility: hidden; }
+  .btn.ld::after { content: ''; position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%;
+                   border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  .err { margin-top: 14px; padding: 14px 16px; border-radius: 18px; font-size: 13.5px; line-height: 1.5; color: #ffd0d8;
-    background: rgba(255,77,109,.12); border: 1px solid rgba(255,77,109,.5); animation: pop .35s both; }
+  /* своя картинка */
+  .mine { margin-top: 16px; padding: 14px; display: flex; align-items: center; gap: 13px; }
+  .mine .th { width: 60px; height: 60px; flex: 0 0 60px; border-radius: 50%; overflow: hidden; background: #0b0b10; border: 1px solid var(--ln2);
+              display: grid; place-items: center; font-size: 22px; color: var(--tx3); }
+  .mine .th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .mine .m { flex: 1; min-width: 0; }
+  .mine .t { font-weight: 700; }
+  .mine .d { font-size: 12.5px; color: var(--tx2); margin-top: 2px; line-height: 1.4; }
+  .drop { position: relative; display: block; width: 100%; margin-top: 14px; padding: 26px 16px 22px; border-radius: 20px; text-align: center;
+          border: 1.5px dashed rgba(255,255,255,.18); background: rgba(255,255,255,.02);
+          transition: border-color .2s var(--ease), background-color .2s var(--ease), transform .15s var(--ease); }
+  .drop:active { transform: scale(.985); }
+  .drop.over { border-color: rgba(167,139,250,.9); background: var(--accbg); }
+  .drop .ic { width: 50px; height: 50px; margin: 0 auto 11px; border-radius: 15px; display: grid; place-items: center; background: var(--accbg);
+              border: 1px solid rgba(139,92,246,.3); }
+  .drop .ic svg { width: 26px; height: 26px; fill: none; stroke: var(--acc3); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .drop .t1 { font-size: 16px; font-weight: 800; }
+  .drop .t2 { margin-top: 6px; font-size: 12.5px; color: var(--tx2); line-height: 1.5; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .prev { margin-top: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; animation: pop .3s var(--ease) both; }
+  .prev img { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px rgba(139,92,246,.45), 0 18px 44px -18px rgba(139,92,246,.95); }
+  .prev .meta { font-size: 11.5px; color: var(--tx3); font-variant-numeric: tabular-nums; }
 
-  .rules { margin-top: 16px; padding: 6px 4px; list-style: none; }
-  .rules li { display: flex; gap: 11px; align-items: flex-start; padding: 9px 2px; font-size: 12.5px; line-height: 1.45; color: var(--ink2);
-    border-bottom: 1px solid rgba(255,255,255,.055); }
+  /* сообщения */
+  .note { margin-top: 12px; padding: 11px 14px; border-radius: 14px; font-size: 13px; line-height: 1.5; border: 1px solid transparent; animation: pop .3s var(--ease) both; }
+  .note b { color: #fff; }
+  .note.err { color: #fecaca; background: rgba(248,113,113,.08); border-color: rgba(248,113,113,.3); }
+  .note.warn { color: #fde68a; background: rgba(252,211,77,.07); border-color: rgba(252,211,77,.28); }
+  .note.ban { color: #fecaca; background: rgba(248,113,113,.1); border-color: rgba(248,113,113,.4); }
+  .note.info { color: var(--acc3); background: var(--accbg); border-color: rgba(139,92,246,.28); }
+  .cdw { margin-top: 14px; padding: 20px 16px; border-radius: 20px; text-align: center; border: 1.5px dashed rgba(252,211,77,.4); background: rgba(252,211,77,.04); }
+  .cdw .t1 { font-size: 14px; font-weight: 700; color: #fde68a; }
+  .cdw .cd { margin-top: 6px; font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .03em; }
+  .cdw .t2 { margin-top: 4px; font-size: 12px; color: var(--tx2); }
+  .rules { margin-top: 16px; padding: 4px 14px; list-style: none; }
+  .rules li { display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; font-size: 12.5px; line-height: 1.45; color: var(--tx2); border-bottom: 1px solid var(--ln); }
   .rules li:last-child { border-bottom: 0; }
-  .rules li svg { width: 17px; height: 17px; flex-shrink: 0; margin-top: 1px; stroke: var(--cy); }
-  .rules li.warn svg { stroke: var(--wait); } .rules li.warn { color: #ded4bd; }
-  .foot { margin-top: 18px; text-align: center; font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink3); }
-  .sk { border-radius: 26px; background: linear-gradient(100deg, rgba(255,255,255,.04) 30%, rgba(255,255,255,.11) 50%, rgba(255,255,255,.04) 70%) 0 0 / 300% 100%; animation: sheen 1.6s linear infinite; }
-  .toast { position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px);
-    max-width: 88%; padding: 13px 20px; border-radius: 15px; font-size: 13px; font-weight: 700; text-align: center;
-    background: linear-gradient(100deg, var(--vio), var(--cy)); color: #fff; box-shadow: 0 14px 40px -14px rgba(191,0,255,.9);
-    opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 50; }
-  .toast.show { opacity: 1; transform: translate(-50%, 0); }
-  .fatal { display: none; padding: 40px 22px; text-align: center; }
-  .fatal .t1 { font-size: 19px; font-weight: 900; }
-  .fatal .t2 { margin-top: 10px; font-size: 13px; color: var(--ink2); line-height: 1.5; }
-  /* v324: нарушения, пауза после запрещённой картинки, бан и окно-предупреждение */
-  .strk { margin-top: 12px; padding: 11px 15px; border-radius: 16px; font-size: 12.5px; line-height: 1.5; color: #ffe6ac;
-    background: rgba(255,200,74,.1); border: 1px solid rgba(255,200,74,.4); animation: pop .35s both; }
-  .strk b { color: #fff; }
-  .ban { margin-top: 12px; padding: 13px 15px; border-radius: 16px; font-size: 13px; line-height: 1.5; color: #ffd0d8;
-    background: rgba(255,77,109,.14); border: 1px solid rgba(255,77,109,.55); }
-  .ban b { color: #fff; }
-  .cdw { margin-top: 14px; padding: 22px 18px; border-radius: 26px; text-align: center; border: 1.5px dashed rgba(255,200,74,.45);
-    background: rgba(255,200,74,.05); }
-  .cdw .t1 { font-size: 14px; font-weight: 800; color: #ffe6ac; }
-  .cdw .cd { margin-top: 8px; font-size: 34px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: .04em; }
-  .cdw .t2 { margin-top: 6px; font-size: 12px; color: var(--ink2); line-height: 1.5; }
+  .rules li::before { content: ''; flex: 0 0 6px; height: 6px; margin-top: 6px; border-radius: 2px; transform: rotate(45deg); background: var(--acc2); }
+  .rules li.warn::before { background: var(--wait); }
+  .foot { margin-top: 16px; text-align: center; font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--tx3); }
+  .sk { border-radius: 20px; border: 1px solid var(--ln); background: linear-gradient(90deg, var(--card) 0%, var(--card2) 50%, var(--card) 100%) 0 0 / 200% 100%;
+        animation: sk 1.3s ease-in-out infinite; }
+  /* сверху: снизу закреплена кнопка «Поставить», и сообщение не должно её закрывать */
+  .toast { position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top, 0px)); z-index: 50; max-width: 90%; padding: 11px 16px; border-radius: 14px;
+           transform: translate(-50%, -14px) scale(.98); opacity: 0; pointer-events: none; font-size: 13px; text-align: center;
+           background: rgba(18,17,26,.94); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid rgba(139,92,246,.45);
+           box-shadow: 0 16px 36px -12px rgba(0,0,0,.9); transition: opacity .24s var(--ease), transform .24s var(--ease); }
+  .toast.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  .toast.err { border-color: rgba(248,113,113,.5); color: #fecaca; }
+  .fatal { display: none; padding: 50px 20px; text-align: center; position: relative; z-index: 1; }
+  .fatal .t1 { font-size: 18px; font-weight: 800; }
+  .fatal .t2 { margin-top: 10px; font-size: 13px; color: var(--tx2); line-height: 1.5; }
   .modal { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 60; display: grid; place-items: center; padding: 20px;
-    background: rgba(0,0,0,.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-  .modal .mc { width: 100%; max-width: 360px; padding: 24px 20px 18px; border-radius: 24px; text-align: center;
-    background: #111120; border: 1px solid var(--line2); animation: pop .3s both; }
-  .modal .mi { font-size: 44px; line-height: 1; }
-  .modal .mt { margin-top: 12px; font-size: 19px; font-weight: 900; }
-  .modal .md { margin: 10px 0 18px; font-size: 13.5px; line-height: 1.55; color: var(--ink2); }
+           background: rgba(0,0,0,.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .modal .mc { width: 100%; max-width: 360px; padding: 22px 18px 16px; border-radius: 22px; text-align: center; background: var(--card);
+               border: 1px solid var(--ln2); animation: pop .3s var(--ease) both; }
+  .modal .mi { font-size: 42px; line-height: 1; }
+  .modal .mt { margin-top: 10px; font-size: 18px; font-weight: 800; }
+  .modal .md { margin: 9px 0 16px; font-size: 13.5px; line-height: 1.55; color: var(--tx2); }
 </style>
 </head>
 <body>
-<div class="aurora"><i></i><i></i></div><div class="grain"></div>
-
 <div class="fatal" id="fatal">
   <div class="t1">Что-то пошло не так</div>
   <div class="t2" id="fatal-d"></div>
@@ -206,68 +233,79 @@
 
 <main class="app" id="app">
   <header class="hd">
-    <div class="hd-b">
-      <svg class="hd-ic" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="9" r="3.6"/><path d="M4.6 20a7.4 7.4 0 0 1 14.8 0"/>
-      </svg>
-    </div>
-    <div>
-      <div class="hd-w" id="ttl">Моя аватарка</div>
-      <div class="hd-s" id="sub">Видна всем игрокам в топе «Рангов»</div>
-    </div>
+    <div class="hd-b"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.6"/><path d="M4.6 20a7.4 7.4 0 0 1 14.8 0"/></svg></div>
+    <div><h1 id="ttl">Моя аватарка</h1><p id="sub">Её видят все игроки в топе «Рангов»</p></div>
   </header>
 
-  <section id="v-load"><div class="sk" style="height:260px;margin-top:18px"></div></section>
+  <section id="v-load"><div class="sk" style="height:140px;margin-top:16px"></div><div class="sk" style="height:300px;margin-top:14px"></div></section>
 
   <section id="v-main" hidden>
-    <div class="now glass">
-      <div class="ring" id="ring"><div class="ph" id="ph">🎮</div></div>
-      <div class="st" id="st"><i></i><span id="st-t"></span></div>
-      <div class="st-d" id="st-d"></div>
+    <!-- что стоит сейчас; выбрал готовую — здесь её предпросмотр -->
+    <div class="hero card">
+      <div class="hav" id="hav"><div class="in" id="hav-in"></div><span class="pv" id="hav-pv" hidden></span></div>
+      <div class="hm"><div class="nm" id="h-nm"></div><div class="sb" id="h-sb"></div><div class="pill" id="h-pill"><i></i><span id="h-pill-t"></span></div></div>
     </div>
 
-    <div class="strk" id="strk" hidden></div>
-    <div class="ban" id="ban" hidden><b id="ban-t"></b><span id="ban-d"></span></div>
-    <div class="err" id="err" hidden></div>
+    <div class="note ban" id="ban" hidden><b id="ban-t"></b><span id="ban-d"></span></div>
+    <div class="note err" id="lerr" hidden></div>
 
-    <div class="cdw" id="cdw" hidden>
-      <div class="t1" id="cd-t"></div>
-      <div class="cd" id="cd">60:00</div>
-      <div class="t2" id="cd-d"></div>
+    <div class="seg" id="seg"><i></i>
+      <button type="button" class="on" data-seg="ready" id="seg-ready">Готовые</button>
+      <button type="button" data-seg="own" id="seg-own">Своя картинка</button>
     </div>
 
-    <label class="drop" id="drop" for="file">
-      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="url(#avg)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <defs><linearGradient id="avg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bf00ff"/><stop offset="1" stop-color="#00e5ff"/></linearGradient></defs>
-        <rect x="3" y="6" width="18" height="14" rx="4"/><circle cx="12" cy="13" r="3.4"/><path d="M8.5 6l1.2-2h4.6l1.2 2"/>
-      </svg>
-      <div class="t1" id="drop-t">Выбрать картинку</div>
-      <div class="t2" id="drop-d">Квадратная — лучше всего. Из любой сделаем круг.</div>
-    </label>
-    <input type="file" id="file" accept="image/*" class="vh">
-
-    <div class="prev" id="prev" hidden>
-      <img id="prev-img" alt="">
-      <span class="meta" id="prev-meta"></span>
+    <!-- готовые аватарки -->
+    <div class="pane" id="p-ready">
+      <div class="note info" id="old-bot" hidden></div>
+      <div id="groups"></div>
+      <div class="apply off" id="apply"><button class="btn pri" type="button" id="btn-apply"></button></div>
     </div>
 
-    <div style="margin-top:14px" id="acts" hidden>
-      <button class="btn pri" type="button" id="btn-send"></button>
-      <button class="btn ghost" type="button" id="btn-swap"></button>
-    </div>
+    <!-- своя картинка -->
+    <div class="pane" id="p-own" hidden>
+      <div class="mine card" id="mine" hidden>
+        <div class="th" id="mine-th"></div>
+        <div class="m"><div class="t" id="mine-t"></div><div class="d" id="mine-d"></div></div>
+      </div>
+      <div id="mine-acts" hidden style="margin-top:10px">
+        <button class="btn ghost" type="button" id="btn-use"></button>
+        <button class="btn dgr" type="button" id="btn-rm"></button>
+      </div>
 
-    <div style="margin-top:14px" id="rm-wrap" hidden>
-      <button class="btn dgr" type="button" id="btn-rm"></button>
-    </div>
+      <div class="note warn" id="strk" hidden></div>
+      <div class="note err" id="err" hidden></div>
 
-    <ul class="rules" id="rules"></ul>
+      <div class="cdw" id="cdw" hidden>
+        <div class="t1" id="cd-t"></div>
+        <div class="cd" id="cd">60:00</div>
+        <div class="t2" id="cd-d"></div>
+      </div>
+
+      <label class="drop" id="drop" for="file">
+        <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="4"/><circle cx="12" cy="13" r="3.4"/><path d="M8.5 6l1.2-2h4.6l1.2 2"/></svg></div>
+        <div class="t1" id="drop-t">Выбрать картинку</div>
+        <div class="t2" id="drop-d">Квадратная — лучше всего. Из любой сделаем круг.</div>
+      </label>
+      <input type="file" id="file" accept="image/*" class="vh">
+
+      <div class="prev" id="prev" hidden>
+        <img id="prev-img" alt="">
+        <span class="meta" id="prev-meta"></span>
+      </div>
+      <div style="margin-top:14px" id="acts" hidden>
+        <button class="btn pri" type="button" id="btn-send"></button>
+        <button class="btn ghost" type="button" id="btn-swap"></button>
+      </div>
+
+      <ul class="rules card" id="rules"></ul>
+    </div>
     <div class="foot" id="foot"></div>
   </section>
 
   <section id="v-none" hidden>
-    <div class="now glass" style="margin-top:24px">
-      <div class="st no"><i></i><span id="none-t"></span></div>
-      <div class="st-d" id="none-d"></div>
+    <div class="hero card" style="flex-direction:column;text-align:center;margin-top:24px">
+      <div class="pill no"><i></i><span id="none-t"></span></div>
+      <div class="sb" id="none-d" style="font-size:13px;color:var(--tx2)"></div>
     </div>
   </section>
 </main>
@@ -280,14 +318,13 @@
 
 <script>
 window.addEventListener('error', function (e) {
-  // v324: сбой загрузки файла (скрипт модели 18+, SDK Telegram, картинка) — не ошибка страницы. С capture сюда
-  // приходят и такие события, и раньше недоехавшая модель показывала «Что-то пошло не так» вместо того,
-  // чтобы молча пропустить необязательную проверку. Экран сбоя — только для настоящих ошибок кода.
+  // v324: сбой загрузки файла (скрипт модели 18+, SDK Telegram, картинка) — не ошибка страницы. Экран сбоя — только для
+  // настоящих ошибок кода.
   if (e && e.target && e.target !== window && e.target.nodeType === 1) return;
   try {
     document.getElementById('app').style.display = 'none';
     var f = document.getElementById('fatal'); f.style.display = 'block';
-    document.getElementById('fatal-d').textContent = 'Закрой и открой приложение заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v324';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой приложение заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v341';
   } catch (_) {}
 }, true);
 </script>
@@ -302,7 +339,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v324';
+  var VER = 'v341';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -318,106 +355,106 @@ window.addEventListener('error', function (e) {
       if (!tg) return;
       tg.ready(); tg.expand();
       INIT = tg.initData || '';
-      if (tg.setHeaderColor) tg.setHeaderColor('#000000');
+      if (tg.setHeaderColor) tg.setHeaderColor('#050507');
     } catch (e) {}
   };
   window.__avTg();
 
+  // v341: готовые аватарки — SVG-файлы av/<id>.svg рядом со страницей. Тот же список id знает бот (AVATAR_PRESETS):
+  // показываем только те, что он принимает (у старого бота готовых нет — тогда только смотреть).
+  var GROUPS = [
+    ['beasts', 'Звери', 'Beasts', [['fox', 'Лиса', 'Fox'], ['wolf', 'Волк', 'Wolf'], ['cat', 'Кот', 'Cat'], ['panda', 'Панда', 'Panda'],
+                                   ['tiger', 'Тигр', 'Tiger'], ['owl', 'Сова', 'Owl']]],
+    ['heroes', 'Герои', 'Heroes', [['ninja', 'Ниндзя', 'Ninja'], ['samurai', 'Самурай', 'Samurai'], ['viking', 'Викинг', 'Viking'],
+                                   ['robot', 'Робот', 'Robot'], ['astro', 'Астронавт', 'Astronaut'], ['alien', 'Пришелец', 'Alien']]],
+    ['signs', 'Символы', 'Symbols', [['crown', 'Корона', 'Crown'], ['flame', 'Пламя', 'Flame'], ['bolt', 'Молния', 'Bolt'],
+                                     ['crystal', 'Кристалл', 'Crystal'], ['scope', 'Прицел', 'Scope'], ['skull', 'Череп', 'Skull']]]
+  ];
+  var NAMES = {};
+  GROUPS.forEach(function (g) { g[3].forEach(function (p) { NAMES[p[0]] = [p[1], p[2]]; }); });
+
   var TX = {
     ru: {
-      ttl: 'Моя аватарка', sub: 'Видна всем игрокам в топе «Рангов»',
-      drop_t: 'Выбрать картинку', drop_d: 'Квадратная — лучше всего. Из любой сделаем круг.',
-      drop_alt: 'Нажми, перетащи файл или вставь из буфера (Ctrl+V)',
-      send: 'Поставить аватарку', swap: 'Выбрать другую', rm: 'Убрать мою картинку',
-      s_none: 'Своей картинки нет', s_none_d: 'В топе «Рангов» пока стоит эмблема твоего ранга. Загрузи картинку — её увидят все игроки.',
-      s_wait: 'Ждёт проверки', s_wait_d: 'Картинку видишь пока <b>только ты</b>.',
-      s_ok: 'Активна', s_ok_d: 'Её видят все игроки в топе «Рангов».',
-      s_no: 'Отклонена', s_no_d: 'Эта картинка не подошла под правила. Загрузи другую.',
-      r1: 'Без 18+ — такие картинки отклоняются автоматически.',
-      r2: 'Если картинку отклонили, прежняя аватарка остаётся на месте.',
-      p1: 'Отклонили — новую картинку можно поставить только через {cd} мин.',
-      p2: '{w}-е нарушение — предупреждение.',
-      p3: 'Дальше бан: {list}.',
-      p4: 'Нарушения считаются за последние {days} дней.',
-      p_ban_n: '{n}-е — на {d}', p_ban_forever: '{n}-е — навсегда',
+      ttl: 'Моя аватарка', sub: 'Её видят все игроки в топе «Рангов»',
+      seg_ready: 'Готовые', seg_own: 'Своя картинка', g_none: 'Без картинки', rank: 'Эмблема ранга',
+      now: 'сейчас', apply: 'Поставить «{n}»', apply_rank: 'Поставить эмблему ранга',
+      h_preset: 'Готовая аватарка', h_custom: 'Своя картинка', h_rank: 'Эмблема ранга',
+      sb_all: 'Её видят все в топе «Рангов»', sb_rank: 'В топе стоит эмблема твоего ранга', sb_wait: 'Пока её видишь только ты — ждёт проверки',
+      sb_prev: 'Предпросмотр — нажми «Поставить» внизу', pill_now: 'Сейчас стоит', pill_prev: 'Предпросмотр', pv: 'предпросмотр',
+      applied: 'Готово — аватарку видят все', applied_rank: 'Готово — в топе эмблема ранга',
+      old_bot: 'Готовые аватарки заработают, когда бот на сервере обновится. Пока можно поставить свою картинку.',
+      mine_ok: 'Своя картинка', mine_wait: 'Своя картинка · ждёт проверки', mine_no: 'Своя картинка · закрыта',
+      mine_ok_d: 'Принята. Её можно поставить снова — без проверки.', mine_act_d: 'Стоит сейчас — её видят все.',
+      mine_wait_d: 'Пока её видишь только ты.', mine_no_d: 'Эта картинка не подошла под правила. Загрузи другую.',
+      use: 'Поставить мою картинку', rm: 'Убрать мою картинку', rm_ask: 'Убрать твою картинку? Если она сейчас стоит, вместо неё будет эмблема ранга.',
+      rm_done: 'Картинка убрана',
+      drop_t: 'Выбрать картинку', drop_t2: 'Загрузить другую картинку', drop_d: 'Квадратная — лучше всего. Из любой сделаем круг.', drop_alt: 'Можно перетащить файл или вставить (Ctrl+V).',
+      send: 'Поставить картинку', swap: 'Выбрать другую', chk_run: 'Проверяю картинку…', chk_no: 'Картинка не подошла',
+      sent: 'Готово! Твою картинку видят все',
+      r1: 'Без 18+ — такие картинки отклоняются автоматически.', r2: 'Если картинку отклонили, прежняя аватарка остаётся на месте.',
+      r3: 'Картинку обрежем по центру в круг 256×256.', r4: 'Проверка мгновенная: ставишь — и её сразу видят все.',
+      p1: 'Отклонили — новую картинку можно поставить только через {cd} мин.', p2: '{w}-е нарушение — предупреждение.', p3: 'Дальше бан: {list}.',
+      p4: 'Нарушения считаются за последние {days} дней.', p_ban_n: '{n}-е — на {d}', p_ban_forever: '{n}-е — навсегда',
       d_day: 'дн', d_hour: 'ч', d_min: 'мин', forever: 'навсегда',
       strk: 'Нарушений за {days} дн: <b>{n}</b>', strk_next: ' · следующее — {x}',
       nx_pause: 'пауза {cd} мин', nx_warn: 'предупреждение', nx_ban: 'бан на {d}', nx_ban_forever: 'бан навсегда',
-      cd_t: 'Пауза после запрещённой картинки', cd_d: 'Новую аватарку можно поставить, когда отсчёт закончится.',
-      ban_t: 'Аккаунт заблокирован', ban_until: 'до {date}', ban_forever: 'навсегда',
-      m_ok: 'Понятно',
+      cd_t: 'Пауза после запрещённой картинки', cd_d: 'Свою картинку можно поставить, когда отсчёт закончится. Готовые — можно сейчас.',
+      ban_t: 'Аккаунт заблокирован', ban_until: 'до {date}', ban_forever: 'навсегда', m_ok: 'Понятно',
       m_warn_t: 'Предупреждение', m_warn_d: 'Это уже второе запрещённое изображение (18+). Следующее — {x}.',
       m_ban_t: 'Аккаунт заблокирован', m_ban_d: 'Нарушение №{n} за {days} дней — {x}.',
-      e_cd: 'После запрещённой картинки — пауза. Новую можно поставить через {t}.',
-      e_ban: 'Аккаунт заблокирован — поставить аватарку сейчас нельзя.',
-      r3: 'Картинку обрежем по центру в круг 256×256.',
-      r4: 'Проверка мгновенная: ставишь — и её сразу видят все.',
-      chk_run: 'Проверяю картинку…', chk_no: 'Картинка не подошла',
+      e_cd: 'После запрещённой картинки — пауза. Новую можно поставить через {t}.', e_ban: 'Аккаунт заблокирован — сменить аватарку сейчас нельзя.',
       e_nsfw_dev: 'Проверка на твоём телефоне сочла картинку взрослой (18+). Выбери другую.',
-      sent: 'Готово! Аватарку видят все',
-      rm_done: 'Картинка убрана', rm_ask: 'Убрать свою картинку и вернуться к аватарке из набора?',
-      e_big: 'Файл слишком большой даже после сжатия. Возьми картинку поменьше.',
-      e_img: 'Это не похоже на картинку. Нужен JPG или PNG.',
-      e_net: 'Нет связи с сервером — проверь интернет и попробуй ещё раз.',
-      e_auth: 'Доступ не подтверждён — открой приложение заново кнопкой в боте.',
-      e_rate: 'Слишком часто. Подожди немного и попробуй снова.',
-      e_nsfw: 'Картинка не прошла проверку на 18+. Новую можно поставить через {cd} мин.',
-      e_nsfw0: 'Картинка не прошла проверку на 18+. Выбери другую.',
-      e_check: 'Проверка сейчас недоступна — попробуй через пару минут.',
-      e_srv: 'Ошибка на сервере. Попробуй ещё раз позже.',
-      e_load: 'Не удалось получить данные. Проверь интернет.',
-      none_t: 'Приложение не открылось', none_d: 'Зайди в бот и нажми «🖼 Моя аватарка» в профиле.',
-      foot: 'Картинка хранится на сервере бота'
+      e_big: 'Файл слишком большой даже после сжатия. Возьми картинку поменьше.', e_img: 'Это не похоже на картинку. Нужен JPG или PNG.',
+      e_net: 'Нет связи с сервером — проверь интернет и попробуй ещё раз.', e_auth: 'Доступ не подтверждён — открой приложение заново кнопкой в боте.',
+      e_rate: 'Слишком часто. Подожди секунду и попробуй снова.',
+      e_nsfw: 'Картинка не прошла проверку на 18+. Новую можно поставить через {cd} мин.', e_nsfw0: 'Картинка не прошла проверку на 18+. Выбери другую.',
+      e_check: 'Проверка сейчас недоступна — попробуй через пару минут.', e_srv: 'Ошибка на сервере. Попробуй ещё раз позже.',
+      e_load: 'Не удалось получить данные. Проверь интернет.', e_nocustom: 'Своей принятой картинки нет — загрузи её во вкладке «Своя картинка».',
+      none_t: 'Приложение не открылось', none_d: 'Зайди в бот и нажми «🖼 Моя аватарка» в профиле.', foot: 'Аватарка хранится на сервере бота'
     },
     en: {
       ttl: 'My avatar', sub: 'Everyone sees it in the Ranks leaderboard',
-      drop_t: 'Choose a picture', drop_d: 'Square works best. Any image becomes a circle.',
-      drop_alt: 'Tap, drop a file, or paste from clipboard (Ctrl+V)',
-      send: 'Set avatar', swap: 'Choose another', rm: 'Remove my picture',
-      s_none: 'No custom picture', s_none_d: 'Your rank emblem is shown in the leaderboard for now. Upload a picture and everyone will see it.',
-      s_wait: 'Waiting for review', s_wait_d: 'Only <b>you</b> can see it so far.',
-      s_ok: 'Active', s_ok_d: 'Every player sees it in the Ranks leaderboard.',
-      s_no: 'Rejected', s_no_d: 'This picture did not fit the rules. Upload another one.',
-      r1: 'No 18+ — such pictures are rejected automatically.',
-      r2: 'If a picture is rejected, your current avatar stays as it is.',
-      p1: 'Rejected — you can set a new picture only in {cd} min.',
-      p2: 'Violation #{w} — a warning.',
-      p3: 'Then a ban: {list}.',
-      p4: 'Violations count over the last {days} days.',
-      p_ban_n: '#{n} — {d}', p_ban_forever: '#{n} — forever',
+      seg_ready: 'Ready-made', seg_own: 'My picture', g_none: 'No picture', rank: 'Rank emblem',
+      now: 'now', apply: 'Set «{n}»', apply_rank: 'Set the rank emblem',
+      h_preset: 'Ready-made avatar', h_custom: 'My picture', h_rank: 'Rank emblem',
+      sb_all: 'Everyone sees it in the leaderboard', sb_rank: 'Your rank emblem is shown in the leaderboard', sb_wait: 'Only you see it until it is checked',
+      sb_prev: 'Preview — tap «Set» below', pill_now: 'Current', pill_prev: 'Preview', pv: 'preview',
+      applied: 'Done — everyone sees your avatar', applied_rank: 'Done — the rank emblem is shown',
+      old_bot: 'Ready-made avatars will work after the bot is updated on the server. You can still set your own picture.',
+      mine_ok: 'My picture', mine_wait: 'My picture · being checked', mine_no: 'My picture · removed',
+      mine_ok_d: 'Accepted. You can set it again — no new check.', mine_act_d: 'Set now — everyone sees it.',
+      mine_wait_d: 'Only you can see it so far.', mine_no_d: 'This picture did not fit the rules. Upload another one.',
+      use: 'Set my picture', rm: 'Remove my picture', rm_ask: 'Remove your picture? If it is set now, the rank emblem will be shown instead.',
+      rm_done: 'Picture removed',
+      drop_t: 'Choose a picture', drop_t2: 'Upload another picture', drop_d: 'Square works best. Any image becomes a circle.', drop_alt: 'You can drop a file or paste it (Ctrl+V).',
+      send: 'Set the picture', swap: 'Choose another', chk_run: 'Checking the picture…', chk_no: 'Picture not suitable',
+      sent: 'Done! Everyone sees your picture',
+      r1: 'No 18+ — such pictures are rejected automatically.', r2: 'If a picture is rejected, your current avatar stays as it is.',
+      r3: 'The picture is cropped to a 256×256 circle.', r4: 'The check is instant: you set it and everyone sees it right away.',
+      p1: 'Rejected — you can set a new picture only in {cd} min.', p2: 'Violation #{w} — a warning.', p3: 'Then a ban: {list}.',
+      p4: 'Violations count over the last {days} days.', p_ban_n: '#{n} — {d}', p_ban_forever: '#{n} — forever',
       d_day: 'd', d_hour: 'h', d_min: 'min', forever: 'forever',
       strk: 'Violations in {days} d: <b>{n}</b>', strk_next: ' · next one — {x}',
       nx_pause: 'a {cd} min pause', nx_warn: 'a warning', nx_ban: 'a {d} ban', nx_ban_forever: 'a permanent ban',
-      cd_t: 'Pause after a forbidden picture', cd_d: 'You can set a new avatar when the countdown ends.',
-      ban_t: 'Account banned', ban_until: 'until {date}', ban_forever: 'permanently',
-      m_ok: 'Got it',
+      cd_t: 'Pause after a forbidden picture', cd_d: 'You can set your own picture when the countdown ends. Ready-made ones — right now.',
+      ban_t: 'Account banned', ban_until: 'until {date}', ban_forever: 'permanently', m_ok: 'Got it',
       m_warn_t: 'Warning', m_warn_d: 'This is the second forbidden (18+) picture. The next one means {x}.',
       m_ban_t: 'Account banned', m_ban_d: 'Violation #{n} in {days} days — {x}.',
-      e_cd: 'Pause after a forbidden picture. You can set a new one in {t}.',
-      e_ban: 'Your account is banned — you cannot set an avatar right now.',
-      r3: 'The picture is cropped to a 256×256 circle.',
-      r4: 'The check is instant: you set it and everyone sees it right away.',
-      chk_run: 'Checking the picture…', chk_no: 'Picture not suitable',
+      e_cd: 'Pause after a forbidden picture. You can set a new one in {t}.', e_ban: 'Your account is banned — you cannot change the avatar right now.',
       e_nsfw_dev: 'The check on your phone found this picture adult (18+). Choose another one.',
-      sent: 'Done! Everyone sees your avatar',
-      rm_done: 'Picture removed', rm_ask: 'Remove your picture and go back to a preset avatar?',
-      e_big: 'The file is too large even after compression. Pick a smaller image.',
-      e_img: 'That does not look like an image. JPG or PNG is needed.',
-      e_net: 'No connection to the server — check the internet and try again.',
-      e_auth: 'Access not confirmed — reopen the app from the bot.',
-      e_rate: 'Too often. Wait a bit and try again.',
-      e_nsfw: 'The picture did not pass the 18+ check. You can set a new one in {cd} min.',
-      e_nsfw0: 'The picture did not pass the 18+ check. Choose another one.',
-      e_check: 'The check is unavailable right now — try again in a couple of minutes.',
-      e_srv: 'Server error. Try again later.',
-      e_load: 'Could not load your data. Check the internet.',
-      none_t: 'The app did not open', none_d: 'Open the bot and tap "🖼 My avatar" in your profile.',
-      foot: 'The picture is stored on the bot server'
+      e_big: 'The file is too large even after compression. Pick a smaller image.', e_img: 'That does not look like an image. JPG or PNG is needed.',
+      e_net: 'No connection to the server — check the internet and try again.', e_auth: 'Access not confirmed — reopen the app from the bot.',
+      e_rate: 'Too often. Wait a second and try again.',
+      e_nsfw: 'The picture did not pass the 18+ check. You can set a new one in {cd} min.', e_nsfw0: 'The picture did not pass the 18+ check. Choose another one.',
+      e_check: 'The check is unavailable right now — try again in a couple of minutes.', e_srv: 'Server error. Try again later.',
+      e_load: 'Could not load your data. Check the internet.', e_nocustom: 'You have no accepted picture — upload one in «My picture».',
+      none_t: 'The app did not open', none_d: 'Open the bot and tap "🖼 My avatar" in your profile.', foot: 'The avatar is stored on the bot server'
     }
   };
   var L = TX[LANG];
 
-  var S = { status: 'none', url: null, shot: null, busy: false, check: null,
+  var S = { active: 'rank', preset: null, status: 'none', url: null, customUrl: null, tier: '🎮', presets: null,
+            pick: null, seg: 'ready', shot: null, busy: false, check: null,
             // v324: штрафы. Правила приходят с сервера (/casino/avatar/state), здесь — те же значения на случай старого бота
             rules: { cooldown_min: 60, warn_at: 2, window_days: 30, bans: [[3, 86400], [4, 604800], [5, 0]] },
             strikes: 0, cdUntil: 0, banUntil: null };
@@ -431,7 +468,6 @@ window.addEventListener('error', function (e) {
     if (sec % 3600 === 0) return (sec / 3600) + ' ' + L.d_hour;
     return Math.round(sec / 60) + ' ' + L.d_min;
   }
-  // бан за нарушение №n: секунды (0 — навсегда) или undefined — бана нет. Дальше последней ступени — как последняя.
   function banFor(n) {
     var b = S.rules.bans || [], top = null;
     for (var i = 0; i < b.length; i++) { if (b[i][0] === n) return b[i][1]; if (!top || b[i][0] > top[0]) top = b[i]; }
@@ -450,33 +486,44 @@ window.addEventListener('error', function (e) {
     $('m-ok').textContent = L.m_ok; $('modal').hidden = false; haptic('warning');
   }
   var toastT = 0;
-  function toast(t) { var el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { el.classList.remove('show'); }, 2600); }
+  function toast(t, err) {
+    var el = $('toast'); el.textContent = t; el.className = 'toast show' + (err ? ' err' : '');
+    clearTimeout(toastT); toastT = setTimeout(function () { el.className = 'toast'; }, 2600);
+  }
   function haptic(kind) { try { tg && tg.HapticFeedback && (kind ? tg.HapticFeedback.notificationOccurred(kind) : tg.HapticFeedback.selectionChanged()); } catch (e) {} }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function showErr(h) { var e = $('err'); if (!h) { e.hidden = true; e.innerHTML = ''; return; } e.innerHTML = h; e.hidden = false; }
+  function nameOf(id) { var n = NAMES[id]; return n ? n[LANG === 'ru' ? 0 : 1] : id; }
+  function curKey() { return S.active === 'preset' && S.preset ? S.preset : S.active === 'custom' ? 'custom' : 'rank'; }
+  function presetOk(id) { return !!(S.presets && S.presets.indexOf(id) >= 0); }
 
+  // ── тексты и неизменная разметка ────────────────────────────────────
   function texts() {
     $('ttl').textContent = L.ttl; $('sub').textContent = L.sub;
+    $('seg-ready').textContent = L.seg_ready; $('seg-own').textContent = L.seg_own;
     $('drop-t').textContent = L.drop_t; $('drop-d').textContent = L.drop_d + ' ' + L.drop_alt;
-    $('btn-send').textContent = L.send; $('btn-swap').textContent = L.swap; $('btn-rm').textContent = L.rm;
-    $('none-t').textContent = L.none_t; $('none-d').textContent = L.none_d;
-    $('foot').textContent = L.foot;
+    $('btn-send').textContent = L.send; $('btn-swap').textContent = L.swap; $('btn-rm').textContent = L.rm; $('btn-use').textContent = L.use;
+    $('none-t').textContent = L.none_t; $('none-d').textContent = L.none_d; $('foot').textContent = L.foot;
+    var ck = '<i class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i>';
+    $('groups').innerHTML = GROUPS.map(function (g) {
+      return '<div class="grp"><h3>' + esc(LANG === 'ru' ? g[1] : g[2]) + '</h3><div class="grid">' + g[3].map(function (p) {
+        return '<button type="button" class="tile" data-p="' + p[0] + '"><img src="av/' + p[0] + '.svg" alt="" loading="lazy"><span>'
+          + esc(LANG === 'ru' ? p[1] : p[2]) + '</span>' + ck + '</button>';
+      }).join('') + '</div></div>';
+    }).join('') + '<div class="grp"><h3>' + esc(L.g_none) + '</h3><div class="grid"><button type="button" class="tile" data-p="rank">'
+      + '<div class="emb" id="emb-rank">🎮</div><span>' + esc(L.rank) + '</span>' + ck + '</button></div></div>';
     renderRules();
   }
   // v324: правила — из того, что прислал бот: штрафы описаны в одном месте (на сервере), страница их только показывает
   function renderRules() {
     var R = S.rules;
-    var ic = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5M12 16v.5"/><circle cx="12" cy="12" r="9"/></svg>';
-    function li(cls, t) { return '<li' + (cls ? ' class="' + cls + '"' : '') + '>' + ic + '<span>' + esc(t) + '</span></li>'; }
-    var bans = (R.bans || []).map(function (b) {
-      return b[1] ? tpl(L.p_ban_n, { n: b[0], d: dur(b[1]) }) : tpl(L.p_ban_forever, { n: b[0] });
-    }).join(', ');
-    $('rules').innerHTML = li('warn', L.r1) + li('warn', tpl(L.p1, { cd: R.cooldown_min }))
-      + li('warn', tpl(L.p2, { w: R.warn_at })) + li('warn', tpl(L.p3, { list: bans }))
-      + li('', tpl(L.p4, { days: R.window_days })) + li('', L.r4) + li('', L.r2) + li('', L.r3);
+    function li(cls, t) { return '<li' + (cls ? ' class="' + cls + '"' : '') + '><span>' + esc(t) + '</span></li>'; }
+    var bans = (R.bans || []).map(function (b) { return b[1] ? tpl(L.p_ban_n, { n: b[0], d: dur(b[1]) }) : tpl(L.p_ban_forever, { n: b[0] }); }).join(', ');
+    $('rules').innerHTML = li('warn', L.r1) + li('warn', tpl(L.p1, { cd: R.cooldown_min })) + li('warn', tpl(L.p2, { w: R.warn_at }))
+      + li('warn', tpl(L.p3, { list: bans })) + li('', tpl(L.p4, { days: R.window_days })) + li('', L.r4) + li('', L.r2) + li('', L.r3);
   }
 
-  // ── Запросы ─────────────────────────────────────────────────────────
+  // ── запросы ─────────────────────────────────────────────────────────
   function jfetch(url, opts, limit) {
     var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
     var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, limit || 15000);
@@ -486,6 +533,10 @@ window.addEventListener('error', function (e) {
       return r.json().catch(function () { return null; }).then(function (j) { return { status: r.status, j: j }; });
     }, function (e) { clearTimeout(timer); throw e; });
   }
+  function post(path, body, limit) {
+    body.uid = UID; body.secret = SECRET; body.init_data = INIT || undefined;
+    return jfetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, limit || 20000);
+  }
   function getState() {
     var url = API + '/casino/avatar/state?uid=' + encodeURIComponent(UID) + '&secret=' + encodeURIComponent(SECRET) +
       (useInit && INIT ? '&init_data=' + encodeURIComponent(INIT) : '');
@@ -494,31 +545,77 @@ window.addEventListener('error', function (e) {
       return res;
     });
   }
+  // ответ сервера → состояние страницы (у бота до v341 нет active/presets — как раньше: своя картинка или ничего)
+  function applyState(j) {
+    S.loaded = true;
+    S.status = j.status || 'none';
+    S.url = j.url || null;
+    S.active = j.active || (S.status !== 'none' && S.status !== 'blocked' ? 'custom' : 'rank');
+    S.preset = j.my_preset || null;
+    S.customUrl = j.custom_url !== undefined ? (j.custom_url || null) : (S.active === 'custom' ? S.url : null);
+    if (j.tier) S.tier = j.tier;
+    S.presets = j.presets || null;
+    if (j.rules && j.rules.bans) { S.rules = j.rules; renderRules(); }
+    if (j.strikes !== undefined) S.strikes = j.strikes || 0;
+    if (j.cooldown_left !== undefined) S.cdUntil = j.cooldown_left ? Date.now() + j.cooldown_left * 1000 : 0;
+    if (j.banned_until !== undefined) S.banUntil = j.banned_until;
+  }
 
-  // ── Отрисовка состояния ─────────────────────────────────────────────
+  // ── отрисовка ───────────────────────────────────────────────────────
+  // картинка в кружке; не загрузилась (сервер недоступен, файл снят) — вместо значка «сломано» тихо ставим запасной знак.
+  // Пересоздаём только когда картинка сменилась — иначе каждое нажатие на плитку заново грузило бы её и мигало.
+  function putImg(box, src, fallback) {
+    var k = (src || '') + '|' + fallback;
+    if (box.getAttribute('data-k') === k) return;
+    box.setAttribute('data-k', k);
+    box.textContent = '';
+    if (!src) { box.textContent = fallback; return; }
+    var im = document.createElement('img'); im.alt = '';
+    im.onerror = function () { if (im.parentNode === box) box.textContent = fallback; };
+    im.src = src; box.appendChild(im);
+  }
+  function setHero(key, preview) {
+    var src = key === 'custom' ? (S.customUrl || S.url) : key === 'rank' ? null : 'av/' + key + '.svg';
+    putImg($('hav-in'), src, S.tier || '🎮');
+    $('hav').classList.toggle('dim', key === 'rank');
+    $('hav-pv').hidden = !preview; $('hav-pv').textContent = L.pv;
+    $('h-nm').textContent = key === 'custom' ? L.h_custom : key === 'rank' ? L.h_rank : nameOf(key);
+    var pill = $('h-pill'), cls = '', pt = L.pill_now, sb = key === 'rank' ? L.sb_rank : L.sb_all;
+    if (preview) { cls = 'pv'; pt = L.pill_prev; sb = L.sb_prev; }
+    else if (key === 'custom' && S.status === 'pending') { cls = 'wait'; sb = L.sb_wait; }
+    pill.className = 'pill' + (cls ? ' ' + cls : ''); $('h-pill-t').textContent = pt; $('h-sb').textContent = sb;
+  }
   function render() {
-    var st = S.status, ring = $('ring'), stEl = $('st');
-    var img = ring.querySelector('img'), ph = $('ph');
-    if (S.url) {
-      if (!img) { img = document.createElement('img'); img.alt = ''; ring.appendChild(img); }
-      img.src = S.url; if (ph) ph.hidden = true;
-    } else {
-      if (img) img.remove();
-      if (ph) ph.hidden = false;
+    var cur = curKey(), pick = S.pick && S.pick !== cur ? S.pick : null;
+    setHero(pick || cur, !!pick);
+    $('emb-rank').textContent = S.tier || '🎮';
+    // плитки: выбранная и та, что стоит сейчас
+    var tiles = $('groups').querySelectorAll('.tile');
+    for (var i = 0; i < tiles.length; i++) {
+      var k = tiles[i].getAttribute('data-p'), sel = (pick || cur) === k;
+      tiles[i].classList.toggle('sel', sel);
+      tiles[i].setAttribute('aria-pressed', sel ? 'true' : 'false');
+      var nw = tiles[i].querySelector('.now');
+      if (k === cur && !nw) { nw = document.createElement('i'); nw.className = 'now'; nw.textContent = L.now; tiles[i].appendChild(nw); }
+      else if (k !== cur && nw) nw.remove();
     }
-    var map = {
-      none: ['', L.s_none, L.s_none_d, 'rgba(255,255,255,.7)'],
-      pending: ['wait', L.s_wait, L.s_wait_d, '#ffcf5c'],
-      ok: ['ok', L.s_ok, L.s_ok_d, '#34f5a4'],
-      blocked: ['no', L.s_no, L.s_no_d, '#ff4d6d']
-    };
-    var m = map[st] || map.none;
-    stEl.className = 'st' + (m[0] ? ' ' + m[0] : '');
-    $('st-t').textContent = m[1];
-    $('st-d').innerHTML = m[2];
-    ring.style.setProperty('--rc', m[3]);
-    $('rm-wrap').hidden = (st === 'none');
-    // v324: нарушения, бан, пауза. Пока идёт пауза или бан — выбрать картинку нельзя
+    $('old-bot').hidden = !S.loaded || !!S.presets; $('old-bot').textContent = L.old_bot;
+    var ap = $('apply');
+    ap.classList.toggle('off', !pick);
+    if (pick) $('btn-apply').innerHTML = '<span class="mini">' + (pick === 'rank' ? esc(S.tier || '🎮') : '<img src="av/' + esc(pick) + '.svg" alt="">')
+      + '</span><span>' + esc(pick === 'rank' ? L.apply_rank : tpl(L.apply, { n: nameOf(pick) })) + '</span>';
+    renderOwn();
+  }
+  function renderOwn() {
+    var st = S.status, has = st !== 'none';
+    $('mine').hidden = !has;
+    if (has) {
+      putImg($('mine-th'), S.customUrl, S.customUrl ? '🖼' : '🚫');
+      $('mine-t').textContent = st === 'pending' ? L.mine_wait : st === 'blocked' ? L.mine_no : L.mine_ok;
+      $('mine-d').textContent = st === 'pending' ? L.mine_wait_d : st === 'blocked' ? L.mine_no_d : (S.active === 'custom' ? L.mine_act_d : L.mine_ok_d);
+    }
+    $('mine-acts').hidden = !has;
+    $('btn-use').hidden = !(st === 'ok' && S.active !== 'custom' && S.presets);
     var sk = $('strk');
     if (S.strikes > 0) {
       sk.innerHTML = tpl(L.strk, { days: S.rules.window_days, n: S.strikes }) + esc(tpl(L.strk_next, { x: nextText(S.strikes + 1) }));
@@ -526,10 +623,7 @@ window.addEventListener('error', function (e) {
     } else sk.hidden = true;
     var banned = isBanned();
     $('ban').hidden = !banned;
-    if (banned) {
-      $('ban-t').textContent = L.ban_t;
-      $('ban-d').textContent = ' · ' + (S.banUntil ? tpl(L.ban_until, { date: fdate(S.banUntil) }) : L.ban_forever);
-    }
+    if (banned) { $('ban-t').textContent = L.ban_t; $('ban-d').textContent = ' · ' + (S.banUntil ? tpl(L.ban_until, { date: fdate(S.banUntil) }) : L.ban_forever); }
     var cd = !banned && S.cdUntil > Date.now();
     $('cdw').hidden = !cd;
     if (cd) {
@@ -538,6 +632,7 @@ window.addEventListener('error', function (e) {
       if (!cdTimer) cdTimer = setInterval(tickCd, 1000);
     }
     $('drop').hidden = banned || cd || !!S.shot;
+    $('drop-t').textContent = (st === 'ok' || st === 'pending') ? L.drop_t2 : L.drop_t;     // своя уже есть — загрузка «другой»
   }
   var cdTimer = 0;
   function tickCd() {
@@ -545,23 +640,63 @@ window.addEventListener('error', function (e) {
     $('cd').textContent = mmss(left);
     if (left <= 0) { clearInterval(cdTimer); cdTimer = 0; S.cdUntil = 0; render(); }
   }
+  function setSeg(s) {
+    if (S.seg === s) return;
+    S.seg = s;
+    $('seg').classList.toggle('own', s === 'own');
+    $('seg-ready').classList.toggle('on', s === 'ready'); $('seg-own').classList.toggle('on', s === 'own');
+    $('p-ready').hidden = s !== 'ready'; $('p-own').hidden = s !== 'own';
+    if (s === 'own') S.pick = null;          // ушёл к своей картинке — предпросмотр готовой больше не нужен
+    render(); haptic();
+  }
+  $('seg').addEventListener('click', function (e) { var b = e.target.closest('[data-seg]'); if (b) setSeg(b.getAttribute('data-seg')); });
 
+  // ── готовые: выбрать → предпросмотр → «Поставить» ───────────────────
+  $('groups').addEventListener('click', function (e) {
+    var t = e.target.closest('.tile'); if (!t || S.busy) return;      // пока ставится выбранная — другую не выбираем
+    if (isBanned()) { toast(L.e_ban, true); return; }
+    var k = t.getAttribute('data-p');
+    S.pick = k === curKey() ? null : k;
+    render(); haptic();
+  });
+  function choose(key, btn, okText, retried) {
+    if (S.busy && !retried) return;
+    if (!S.loaded) { toast(L.e_load, true); return; }
+    if (key !== 'custom' && key !== 'rank' && !presetOk(key)) { toast(L.old_bot, true); return; }
+    S.busy = true; if (btn) btn.classList.add('ld');
+    post('/casino/avatar/preset', { preset: key }).then(function (res) {
+      var j = res.j || {};
+      // две смены подряд быстрее, чем разрешает сервер (0,6 с), — не ошибка для игрока: молча повторяем, когда можно
+      if (j.error === 'rate_limited' && !retried) {
+        setTimeout(function () { choose(key, btn, okText, true); }, Math.min(3000, (+j.retry_after || 0.6) * 1000 + 120));
+        return;
+      }
+      S.busy = false; if (btn) btn.classList.remove('ld');
+      if (res.status === 404 && !res.j) { toast(L.old_bot, true); return; }
+      if (j.ok) { applyState(j); S.pick = null; render(); toast(okText || L.applied); haptic('success'); return; }
+      var e = j.error;
+      if (e === 'banned') { S.banUntil = j.until || 0; render(); toast(L.e_ban, true); return; }
+      if (e === 'rate_limited') { toast(L.e_rate, true); return; }
+      if (e === 'no_custom') { toast(L.e_nocustom, true); return; }
+      if (e === 'unauthorized') { toast(L.e_auth, true); return; }
+      toast(L.e_srv, true); haptic('error');
+    }).catch(function () { S.busy = false; if (btn) btn.classList.remove('ld'); toast(L.e_net, true); haptic('error'); });
+  }
+  $('btn-apply').addEventListener('click', function () {
+    if (!S.pick) return;
+    choose(S.pick, this, S.pick === 'rank' ? L.applied_rank : L.applied);
+  });
+  $('btn-use').addEventListener('click', function () { choose('custom', this, L.sent); });
 
-  // ── Проверка на 18+ прямо в браузере ────────────────────────────────
-  /* v321: модель (MobileNetV2 из nsfwjs, 2.7 МБ) и tfjs лежат рядом со страницей и грузятся
-     ТОЛЬКО когда игрок выбрал картинку — иначе открытие мини-аппа платило бы 4 МБ впустую.
-     Считает телефон игрока: сервер бота с 889 МБ памяти такую модель не выдержит.
-     Обойти проверку в браузере можно, поэтому решает сервер (v322) — эта лишь не пускает очевидное
-     18+ в сеть и не даёт получить за него нарушение (v324). Любой сбой = 'unknown' = пропускаем
-     дальше: необязательный слой не имеет права мешать человеку поставить аватарку. */
+  // ── проверка на 18+ прямо в браузере ────────────────────────────────
+  /* v321: модель (MobileNetV2 из nsfwjs) и tfjs лежат рядом со страницей и грузятся ТОЛЬКО когда игрок выбрал картинку.
+     Обойти проверку в браузере можно, поэтому решает сервер (v322) — эта лишь не пускает очевидное 18+ в сеть и не даёт
+     получить за него нарушение (v324). Любой сбой = 'unknown' = пропускаем дальше. */
   var NSFW_BASE = 'nsfw/';
-  var NSFW_LIMIT = 40000;          // столько ждём модель, дальше считаем, что проверки нет
+  var NSFW_LIMIT = 40000;
   var NSFW_SIDE = 224;
-  // Пороги высокие намеренно. Аватарки здесь — арты и скриншоты из игры, а модель склонна
-  // видеть в рисунке «hentai». Лучше лишний раз показать картинку человеку, чем отклонить нормальную.
   var NSFW_PORN = 0.85, NSFW_HENTAI = 0.90, NSFW_BOTH = 0.92;
   var NSFW = { ready: null };
-
   function loadScript(src) {
     return new Promise(function (res, rej) {
       var s = document.createElement('script');
@@ -571,7 +706,6 @@ window.addEventListener('error', function (e) {
       (document.head || document.documentElement).appendChild(s);
     });
   }
-
   function nsfwModel() {
     if (NSFW.ready) return NSFW.ready;
     NSFW.ready = Promise.resolve()
@@ -582,28 +716,19 @@ window.addEventListener('error', function (e) {
       });
     return NSFW.ready;
   }
-
   function nsfwRun(canvas) {
     return nsfwModel().then(function (model) {
       var tf = window.tf;
-      // ровно тот препроцессинг, на котором модель обучалась: пиксели /255 и билинейный ресайз до 224
       var out = tf.tidy(function () {
         var img = tf.browser.fromPixels(canvas).toFloat().div(tf.scalar(255));
-        if (img.shape[0] !== NSFW_SIDE || img.shape[1] !== NSFW_SIDE) {
-          img = tf.image.resizeBilinear(img, [NSFW_SIDE, NSFW_SIDE], true);
-        }
+        if (img.shape[0] !== NSFW_SIDE || img.shape[1] !== NSFW_SIDE) img = tf.image.resizeBilinear(img, [NSFW_SIDE, NSFW_SIDE], true);
         return model.predict(img.reshape([1, NSFW_SIDE, NSFW_SIDE, 3]));
       });
-      return out.data().then(function (v) {
-        out.dispose();
-        return Array.prototype.slice.call(v);   // [Drawing, Hentai, Neutral, Porn, Sexy]
-      });
+      return out.data().then(function (v) { out.dispose(); return Array.prototype.slice.call(v); });   // [Drawing, Hentai, Neutral, Porn, Sexy]
     });
   }
-
   function nsfwCheck(canvas) {
-    var t0 = Date.now();
-    var timer;
+    var t0 = Date.now(), timer;
     var guard = new Promise(function (_, rej) { timer = setTimeout(function () { rej(new Error('timeout')); }, NSFW_LIMIT); });
     return Promise.race([nsfwRun(canvas), guard]).then(function (p) {
       clearTimeout(timer);
@@ -612,11 +737,9 @@ window.addEventListener('error', function (e) {
       return { v: bad ? 'block' : 'ok', p: p.map(function (x) { return Math.round(x * 1000) / 1000; }), ms: Date.now() - t0 };
     }, function (e) {
       clearTimeout(timer);
-      // молча: игрок не виноват, что модель не доехала, и пугать его нечем — решит человек
       return { v: 'unknown', why: String((e && e.message) || e).slice(0, 60), ms: Date.now() - t0 };
     });
   }
-
   function setSend(mode) {
     var b = $('btn-send');
     if (mode === 'check') { b.disabled = true; b.textContent = L.chk_run; }
@@ -624,7 +747,7 @@ window.addEventListener('error', function (e) {
     else { b.disabled = false; b.textContent = L.send; }
   }
 
-  // ── Картинка: сжимаем в браузере ────────────────────────────────────
+  // ── своя картинка: сжимаем в браузере ───────────────────────────────
   var MAXSIDE = 512, MAXBYTES = 400 * 1024;
   function readImage(file) {
     return new Promise(function (res, rej) {
@@ -635,7 +758,6 @@ window.addEventListener('error', function (e) {
         var im = new Image();
         im.onerror = function () { rej(new Error('decode')); };
         im.onload = function () {
-          // центральный квадрат — сервер сделает так же, но игрок должен видеть ровно то, что отправляет
           var side = Math.min(im.width, im.height);
           var sx = (im.width - side) / 2, sy = (im.height - side) / 2;
           var out = Math.min(MAXSIDE, side);
@@ -643,7 +765,6 @@ window.addEventListener('error', function (e) {
           c.getContext('2d').drawImage(im, sx, sy, side, side, 0, 0, out, out);
           var q = 0.9, url = c.toDataURL('image/jpeg', q);
           while (url.length * 0.75 > MAXBYTES && q > 0.4) { q -= 0.12; url = c.toDataURL('image/jpeg', q); }
-          // canvas отдаём наружу: проверка на 18+ возьмёт готовые пиксели, а не станет декодировать заново
           res({ dataUrl: url, bytes: Math.round(url.length * 0.75), side: out, canvas: c });
         };
         im.src = fr.result;
@@ -651,10 +772,10 @@ window.addEventListener('error', function (e) {
       fr.readAsDataURL(file);
     });
   }
-
   function handleFile(file) {
-    if (isLocked()) return Promise.resolve();      // v324: пауза или бан — выбирать нечего
+    if (isLocked()) return Promise.resolve();
     showErr('');
+    if (S.seg !== 'own') setSeg('own');
     return readImage(file).then(function (shot) {
       if (shot.bytes > MAXBYTES * 1.3) { showErr(esc(L.e_big)); return; }
       S.shot = shot;
@@ -662,39 +783,24 @@ window.addEventListener('error', function (e) {
       $('prev-meta').textContent = shot.side + '×' + shot.side + ' · ' + Math.round(shot.bytes / 1024) + ' KB';
       $('prev').hidden = false; $('acts').hidden = false; $('drop').hidden = true;
       haptic();
-      // Проверку запускаем сразу, пока игрок смотрит на превью: к моменту, когда он потянется
-      // к кнопке, вердикт обычно уже есть, и ждать ему нечего.
       S.check = null;
       setSend('check');
       nsfwCheck(shot.canvas).then(function (r) {
-        if (S.shot !== shot) return;        // игрок успел выбрать другую картинку — этот вердикт уже не про неё
+        if (S.shot !== shot) return;
         S.check = r;
         if (r.v === 'block') { setSend('block'); showErr(esc(L.e_nsfw_dev)); haptic('error'); return; }
         setSend('ok');
       });
     }).catch(function () { showErr(esc(L.e_img)); });
   }
-
   $('file').addEventListener('change', function (e) {
     var f = e.target.files && e.target.files[0];
     if (f) handleFile(f);
     e.target.value = '';
   });
-  $('drop').addEventListener('pointermove', function (e) {
-    var r = this.getBoundingClientRect();
-    this.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
-    this.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
-  });
-  ['dragenter', 'dragover'].forEach(function (ev) {
-    $('drop').addEventListener(ev, function (e) { e.preventDefault(); this.classList.add('over'); });
-  });
-  ['dragleave', 'drop'].forEach(function (ev) {
-    $('drop').addEventListener(ev, function (e) { e.preventDefault(); this.classList.remove('over'); });
-  });
-  $('drop').addEventListener('drop', function (e) {
-    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if (f) handleFile(f);
-  });
+  ['dragenter', 'dragover'].forEach(function (ev) { $('drop').addEventListener(ev, function (e) { e.preventDefault(); this.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function (ev) { $('drop').addEventListener(ev, function (e) { e.preventDefault(); this.classList.remove('over'); }); });
+  $('drop').addEventListener('drop', function (e) { var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) handleFile(f); });
   document.addEventListener('paste', function (e) {
     var it = e.clipboardData && e.clipboardData.items;
     if (!it) return;
@@ -709,32 +815,25 @@ window.addEventListener('error', function (e) {
     $('prev').hidden = true; $('acts').hidden = true; $('drop').hidden = isLocked(); showErr('');
     setSend('ok');
   }
-
-  // ── Отправка ────────────────────────────────────────────────────────
   $('btn-send').addEventListener('click', function () {
     if (S.busy || !S.shot) return;
-    if (S.check && S.check.v === 'block') return;   // страховка: кнопка и так заблокирована
-    S.busy = true; $('btn-send').disabled = true;
-    // check — только строка в логе сервера, а не решение: с устройства её можно подделать,
-    // поэтому сервер по ней ничего не блокирует и не одобряет.
-    var body = JSON.stringify({ uid: UID, secret: SECRET, init_data: INIT || undefined, image: S.shot.dataUrl,
-                                check: S.check || { v: 'unknown' } });
-    jfetch(API + '/casino/avatar/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body }, 30000)
+    if (S.check && S.check.v === 'block') return;
+    S.busy = true; $('btn-send').disabled = true; $('btn-send').classList.add('ld');
+    // check — только строка в логе сервера, а не решение: с устройства её можно подделать
+    post('/casino/avatar/upload', { image: S.shot.dataUrl, check: S.check || { v: 'unknown' } }, 30000)
       .then(function (res) {
-        S.busy = false; setSend('ok');
+        S.busy = false; $('btn-send').classList.remove('ld'); setSend('ok');
         var j = res.j || {};
         if (j.ok) {
-          S.status = j.status || 'ok';
-          S.url = S.shot.dataUrl;      // показываем сразу: сервер уже принял решение
-          backToPick(); render();
+          S.status = j.status || 'ok'; S.active = 'custom';
+          S.customUrl = S.shot.dataUrl; S.url = S.shot.dataUrl;      // показываем сразу: сервер уже принял решение
+          S.pick = null; backToPick(); render();
           toast(L.sent); haptic('success');
           return;
         }
         var e = j.error;
-        // v322: сервер не заменяет уже принятую аватарку, если новая не прошла, — значит и
-        // здесь ничего не стираем и не рисуем «Отклонена»: у игрока всё осталось как было.
+        // v322: сервер не заменяет уже принятую аватарку, если новая не прошла, — здесь тоже ничего не стираем
         if (e === 'nsfw') {
-          // v324: сервер засчитал нарушение и сказал, что за ним последовало — показываем сразу
           var sk = j.strike || null;
           if (sk) {
             S.strikes = sk.n || (S.strikes + 1);
@@ -765,24 +864,32 @@ window.addEventListener('error', function (e) {
         if (e === 'unauthorized') return showErr(esc(L.e_auth));
         showErr(esc(L.e_srv)); haptic('error');
       })
-      .catch(function () { S.busy = false; setSend('ok'); showErr(esc(L.e_net)); haptic('error'); });
+      .catch(function () { S.busy = false; $('btn-send').classList.remove('ld'); setSend('ok'); showErr(esc(L.e_net)); haptic('error'); });
   });
-
+  // подтверждение — окном Telegram, если оно есть (в старых клиентах и в браузере — обычное)
+  function ask(text, yes) {
+    try { if (tg && tg.showConfirm && tg.isVersionAtLeast && tg.isVersionAtLeast('6.2')) { tg.showConfirm(text, function (ok) { if (ok) yes(); }); return; } } catch (e) {}
+    if (confirm(text)) yes();
+  }
   $('btn-rm').addEventListener('click', function () {
     if (S.busy) return;
-    if (!confirm(L.rm_ask)) return;
-    S.busy = true; $('btn-rm').disabled = true;
-    var body = JSON.stringify({ uid: UID, secret: SECRET, init_data: INIT || undefined });
-    jfetch(API + '/casino/avatar/remove', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body }, 20000)
-      .then(function (res) {
-        S.busy = false; $('btn-rm').disabled = false;
-        if (res.j && res.j.ok) { S.status = 'none'; S.url = null; render(); toast(L.rm_done); haptic('success'); return; }
-        showErr(esc(L.e_srv));
-      })
-      .catch(function () { S.busy = false; $('btn-rm').disabled = false; showErr(esc(L.e_net)); });
+    var b = this;
+    ask(L.rm_ask, function () { removeOwn(b); });
   });
+  function removeOwn(b) {
+    if (S.busy) return;
+    S.busy = true; b.classList.add('ld');
+    post('/casino/avatar/remove', {}).then(function (res) {
+      S.busy = false; b.classList.remove('ld');
+      var j = res.j || {};
+      if (!j.ok) { showErr(esc(L.e_srv)); return; }
+      if (j.status !== undefined) applyState(j);
+      else { S.status = 'none'; S.customUrl = null; if (S.active === 'custom') { S.active = 'rank'; S.url = null; } }
+      render(); toast(L.rm_done); haptic('success');
+    }).catch(function () { S.busy = false; b.classList.remove('ld'); showErr(esc(L.e_net)); });
+  }
 
-  // ── Старт ───────────────────────────────────────────────────────────
+  // ── старт ───────────────────────────────────────────────────────────
   function show(v) { $('v-load').hidden = v !== 'load'; $('v-main').hidden = v !== 'main'; $('v-none').hidden = v !== 'none'; }
   function boot() {
     texts();
@@ -790,22 +897,21 @@ window.addEventListener('error', function (e) {
     getState().then(function (res) {
       if (res.status === 401) { show('none'); $('none-d').textContent = L.e_auth; return; }
       var j = res.j;
-      if (!j || j.ok !== true) { show('main'); render(); showErr(esc(L.e_load)); return; }
-      S.status = j.status || 'none';
-      S.url = j.url || null;
-      // v324: штрафы. У старого бота этих полей нет — остаются значения по умолчанию, ничего не ломается
-      if (j.rules && j.rules.bans) { S.rules = j.rules; renderRules(); }
-      S.strikes = j.strikes || 0;
-      S.cdUntil = j.cooldown_left ? Date.now() + j.cooldown_left * 1000 : 0;
-      S.banUntil = (j.banned_until === undefined) ? null : j.banned_until;
-      show('main'); render();
-    }).catch(function () { show('main'); render(); showErr(esc(L.e_load)); });
+      if (!j || j.ok !== true) { loadFail(); return; }
+      applyState(j);
+      show('main'); render();      // всегда с «Готовых»: что стоит сейчас, и так видно в карточке сверху
+    }).catch(loadFail);
+  }
+  // данные не пришли — показываем страницу (выбрать всё равно можно) и сообщение над вкладками, видное на обеих
+  function loadFail() {
+    show('main'); render();
+    $('lerr').textContent = L.e_load; $('lerr').hidden = false;
   }
   show('load');
   boot();
 
-  window.AV = { state: function () { return S; }, handleFile: handleFile, render: render, ver: VER,
-                nsfwCheck: nsfwCheck, nsfwModel: nsfwModel };
+  window.AV = { state: function () { return S; }, handleFile: handleFile, render: render, ver: VER, nsfwCheck: nsfwCheck, nsfwModel: nsfwModel,
+                seg: setSeg, choose: choose };
 })();
 </script>
 </body>
