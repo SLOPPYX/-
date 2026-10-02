@@ -598,7 +598,7 @@ window.addEventListener('error', function (e) {
     document.getElementById('app').hidden = true;
     var f = document.getElementById('fatal'); f.hidden = false;
     document.getElementById('fatal-t').textContent = 'Ошибка на странице';
-    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v340';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v341';
   } catch (_) {}
 }, true);
 </script>
@@ -613,7 +613,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v340';
+  var VER = 'v341';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -1190,10 +1190,15 @@ window.addEventListener('error', function (e) {
     if (!mod && p.slx) h += sec('Биржа SLX', slxHtml(p.slx));
 
     // аватарка
-    var img = a.data || a.url;
-    var st = { ok: 'принята, видна всем', blocked: 'закрыта', pending: 'ждёт перепроверки', none: 'своей картинки нет' }[a.status] || a.status;
+    // v341: в топе может стоять готовая аватарка (рисунок из набора) — тогда своя картинка, если есть, показана рядом маленькой
+    var shown = a.active === 'preset' ? 'готовая «' + (a.preset_name || '?') + '»' : a.active === 'rank' ? 'эмблема ранга' : a.active === 'custom' ? 'своя картинка' : '';
+    var img = a.active === 'preset' ? a.url : (a.data || a.url);
+    var st = { ok: 'принята', blocked: 'закрыта', pending: 'ждёт перепроверки', none: 'нет' }[a.status] || a.status;
+    if (!shown) st = { ok: 'принята, видна всем', none: 'своей картинки нет' }[a.status] || st;
+    var own = a.active === 'preset' && a.data ? '<img src="' + esc(a.data) + '" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-left:6px">' : '';
     h += sec('Аватарка', '<div class="row">' + (img ? '<img class="avbig" src="' + esc(img) + '" alt="">' : '<div class="avbig" style="display:grid;place-items:center;font-size:30px">' + esc(p.tier || '🎮') + '</div>')
-      + '<div class="m"><div>Статус: <b>' + esc(st) + '</b></div>'
+      + '<div class="m">' + (shown ? '<div>В топе: <b>' + esc(shown) + '</b></div><div class="sub">Своя картинка: <b>' + esc(st) + '</b>' + own + '</div>'
+                                   : '<div>Статус: <b>' + esc(st) + '</b></div>')
       + '<div class="sub">Нарушений за 30 дн: <b>' + (a.strikes || []).length + '</b></div>'
       + (a.cooldown_left ? '<div class="sub">Пауза ещё ' + Math.ceil(a.cooldown_left / 60) + ' мин</div>' : '')
       + (a.note ? '<div class="sub">' + esc(a.note) + '</div>' : '') + '</div></div>'
