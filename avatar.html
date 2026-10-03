@@ -324,7 +324,7 @@ window.addEventListener('error', function (e) {
   try {
     document.getElementById('app').style.display = 'none';
     var f = document.getElementById('fatal'); f.style.display = 'block';
-    document.getElementById('fatal-d').textContent = 'Закрой и открой приложение заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v341';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой приложение заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v342';
   } catch (_) {}
 }, true);
 </script>
@@ -339,7 +339,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v341';
+  var VER = 'v342';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -362,16 +362,22 @@ window.addEventListener('error', function (e) {
 
   // v341: готовые аватарки — SVG-файлы av/<id>.svg рядом со страницей. Тот же список id знает бот (AVATAR_PRESETS):
   // показываем только те, что он принимает (у старого бота готовых нет — тогда только смотреть).
+  // v342: минималистичный набор — 24 штуки, две группы по 12 (12 делится и на 3, и на 4: ряды полные и на телефоне, и на ПК).
   var GROUPS = [
-    ['beasts', 'Звери', 'Beasts', [['fox', 'Лиса', 'Fox'], ['wolf', 'Волк', 'Wolf'], ['cat', 'Кот', 'Cat'], ['panda', 'Панда', 'Panda'],
-                                   ['tiger', 'Тигр', 'Tiger'], ['owl', 'Сова', 'Owl']]],
-    ['heroes', 'Герои', 'Heroes', [['ninja', 'Ниндзя', 'Ninja'], ['samurai', 'Самурай', 'Samurai'], ['viking', 'Викинг', 'Viking'],
-                                   ['robot', 'Робот', 'Robot'], ['astro', 'Астронавт', 'Astronaut'], ['alien', 'Пришелец', 'Alien']]],
-    ['signs', 'Символы', 'Symbols', [['crown', 'Корона', 'Crown'], ['flame', 'Пламя', 'Flame'], ['bolt', 'Молния', 'Bolt'],
-                                     ['crystal', 'Кристалл', 'Crystal'], ['scope', 'Прицел', 'Scope'], ['skull', 'Череп', 'Skull']]]
+    ['chars', 'Персонажи', 'Characters', [['cat', 'Кот', 'Cat'], ['fox', 'Лиса', 'Fox'], ['panda', 'Панда', 'Panda'], ['owl', 'Сова', 'Owl'],
+      ['bear', 'Мишка', 'Bear'], ['penguin', 'Пингвин', 'Penguin'], ['frog', 'Лягушка', 'Frog'], ['ghost', 'Призрак', 'Ghost'],
+      ['robot', 'Робот', 'Robot'], ['alien', 'Пришелец', 'Alien'], ['ninja', 'Ниндзя', 'Ninja'], ['astro', 'Космонавт', 'Astronaut']]],
+    ['signs', 'Символы', 'Symbols', [['bolt', 'Молния', 'Bolt'], ['crown', 'Корона', 'Crown'], ['crystal', 'Кристалл', 'Crystal'],
+      ['heart', 'Сердце', 'Heart'], ['flame', 'Пламя', 'Flame'], ['star', 'Звезда', 'Star'], ['scope', 'Прицел', 'Scope'],
+      ['skull', 'Череп', 'Skull'], ['planet', 'Планета', 'Planet'], ['moon', 'Луна', 'Moon'], ['peak', 'Горы', 'Peaks'],
+      ['gamepad', 'Геймпад', 'Gamepad']]]
   ];
   var NAMES = {};
   GROUPS.forEach(function (g) { g[3].forEach(function (p) { NAMES[p[0]] = [p[1], p[2]]; }); });
+  // v342: старые id набора v341 — в похожие новые (так же делает бот); версия в адресе — чтобы телефон не взял картинку из кэша
+  var ALIAS = { wolf: 'fox', tiger: 'cat', samurai: 'ninja', viking: 'bear' };
+  var AV_V = '2';
+  function avSrc(id) { return 'av/' + id + '.svg?v=' + AV_V; }
 
   var TX = {
     ru: {
@@ -507,7 +513,7 @@ window.addEventListener('error', function (e) {
     var ck = '<i class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i>';
     $('groups').innerHTML = GROUPS.map(function (g) {
       return '<div class="grp"><h3>' + esc(LANG === 'ru' ? g[1] : g[2]) + '</h3><div class="grid">' + g[3].map(function (p) {
-        return '<button type="button" class="tile" data-p="' + p[0] + '"><img src="av/' + p[0] + '.svg" alt="" loading="lazy"><span>'
+        return '<button type="button" class="tile" data-p="' + p[0] + '"><img src="' + avSrc(p[0]) + '" alt="" loading="lazy"><span>'
           + esc(LANG === 'ru' ? p[1] : p[2]) + '</span>' + ck + '</button>';
       }).join('') + '</div></div>';
     }).join('') + '<div class="grp"><h3>' + esc(L.g_none) + '</h3><div class="grid"><button type="button" class="tile" data-p="rank">'
@@ -551,7 +557,7 @@ window.addEventListener('error', function (e) {
     S.status = j.status || 'none';
     S.url = j.url || null;
     S.active = j.active || (S.status !== 'none' && S.status !== 'blocked' ? 'custom' : 'rank');
-    S.preset = j.my_preset || null;
+    S.preset = j.my_preset ? (ALIAS[j.my_preset] || j.my_preset) : null;
     S.customUrl = j.custom_url !== undefined ? (j.custom_url || null) : (S.active === 'custom' ? S.url : null);
     if (j.tier) S.tier = j.tier;
     S.presets = j.presets || null;
@@ -575,7 +581,7 @@ window.addEventListener('error', function (e) {
     im.src = src; box.appendChild(im);
   }
   function setHero(key, preview) {
-    var src = key === 'custom' ? (S.customUrl || S.url) : key === 'rank' ? null : 'av/' + key + '.svg';
+    var src = key === 'custom' ? (S.customUrl || S.url) : key === 'rank' ? null : avSrc(key);
     putImg($('hav-in'), src, S.tier || '🎮');
     $('hav').classList.toggle('dim', key === 'rank');
     $('hav-pv').hidden = !preview; $('hav-pv').textContent = L.pv;
@@ -602,7 +608,7 @@ window.addEventListener('error', function (e) {
     $('old-bot').hidden = !S.loaded || !!S.presets; $('old-bot').textContent = L.old_bot;
     var ap = $('apply');
     ap.classList.toggle('off', !pick);
-    if (pick) $('btn-apply').innerHTML = '<span class="mini">' + (pick === 'rank' ? esc(S.tier || '🎮') : '<img src="av/' + esc(pick) + '.svg" alt="">')
+    if (pick) $('btn-apply').innerHTML = '<span class="mini">' + (pick === 'rank' ? esc(S.tier || '🎮') : '<img src="' + esc(avSrc(pick)) + '" alt="">')
       + '</span><span>' + esc(pick === 'rank' ? L.apply_rank : tpl(L.apply, { n: nameOf(pick) })) + '</span>';
     renderOwn();
   }
