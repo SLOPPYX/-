@@ -50,8 +50,8 @@
 <meta name="theme-color" content="#050507">
 <title>Моя аватарка</title>
 <style>
-  /* v341: новый вид — чёрный, белый и фиолетовый, плавно (как админка, которая понравилась Кириллу).
-     Готовые SVG-аватарки — файлы av/<id>.svg рядом со страницей; своя картинка — как раньше, с проверкой 18+.
+  /* v341: вид — чёрный, белый и фиолетовый, плавно (как админка, которая понравилась Кириллу).
+     v343: готовые аватарки убраны по решению Кирилла — только своя картинка (с проверкой 18+, как раньше).
      Анимируются только opacity и transform — на телефоне это не тормозит. */
   :root { color-scheme: dark;
           --bg: #050507; --card: #0d0d11; --card2: #15151b; --ln: rgba(255,255,255,.07); --ln2: rgba(255,255,255,.13);
@@ -61,8 +61,7 @@
           --no: #f87171; --wait: #fcd34d;
           --ease: cubic-bezier(.22,.8,.2,1); }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  /* overflow-x только у html: на body он делает body отдельной прокруткой, и кнопка «Поставить» перестаёт прилипать к низу экрана */
-  html { overflow-x: hidden; }
+  html { overflow-x: hidden; }      /* только у html: на body он делает body отдельной прокруткой (урок v341) */
   html, body { background: var(--bg); color: var(--tx); }
   body { font: 14px/1.45 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; }
   body::before { content: ''; position: fixed; top: -200px; left: 0; right: 0; height: 380px; z-index: 0; pointer-events: none;
@@ -86,15 +85,13 @@
 
   .card { background: var(--card); border: 1px solid var(--ln); border-radius: 20px; }
 
-  /* что стоит сейчас (или предпросмотр выбранного) */
+  /* что стоит сейчас */
   .hero { margin-top: 16px; padding: 18px 16px 16px; display: flex; align-items: center; gap: 16px; animation: rin .4s .05s var(--ease) both; }
   .hav { position: relative; width: 104px; height: 104px; flex: 0 0 104px; border-radius: 50%; padding: 3px; background: var(--grad);
          box-shadow: 0 16px 40px -16px rgba(139,92,246,.95); }
   .hav.dim { background: linear-gradient(135deg, rgba(255,255,255,.35), rgba(255,255,255,.12)); box-shadow: none; }
   .hav .in { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: #0b0b10; display: grid; place-items: center; font-size: 46px; }
   .hav img { width: 100%; height: 100%; object-fit: cover; display: block; animation: pop .3s var(--ease) both; }
-  .hav .pv { position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%); padding: 2px 9px; border-radius: 999px; font-size: 10.5px;
-             font-weight: 700; color: #fff; background: #1b1530; border: 1px solid rgba(167,139,250,.6); white-space: nowrap; }
   .hm { min-width: 0; flex: 1; }
   .hm .nm { font-size: 19px; font-weight: 800; letter-spacing: -.01em; line-height: 1.2; }
   .hm .sb { font-size: 12.5px; color: var(--tx2); margin-top: 3px; line-height: 1.4; }
@@ -105,45 +102,7 @@
   .pill.wait i { background: var(--wait); box-shadow: 0 0 8px rgba(252,211,77,.8); }
   .pill.no { color: #fecaca; background: rgba(248,113,113,.1); border-color: rgba(248,113,113,.35); }
   .pill.no i { background: var(--no); box-shadow: 0 0 8px rgba(248,113,113,.8); }
-  .pill.pv { color: #fff; background: rgba(255,255,255,.07); border-color: var(--ln2); }
-  .pill.pv i { background: #fff; box-shadow: 0 0 8px rgba(255,255,255,.7); }
-
-  /* «Готовые» | «Своя картинка» — переключатель с бегущей подложкой */
-  .seg { position: relative; display: grid; grid-template-columns: 1fr 1fr; margin-top: 14px; padding: 4px; border-radius: 15px;
-         background: var(--card); border: 1px solid var(--ln); }
-  .seg i { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 11px; background: var(--grad);
-           box-shadow: 0 6px 16px -9px rgba(139,92,246,.95); transition: transform .32s var(--ease); }
-  .seg.own i { transform: translateX(100%); }
-  .seg button { position: relative; z-index: 1; padding: 10px 6px; border-radius: 11px; font-size: 13.5px; font-weight: 600; color: var(--tx2);
-                transition: color .25s var(--ease); }
-  .seg button.on { color: #fff; }
-  .pane { animation: rin .3s var(--ease) both; }
-
-  /* готовые аватарки */
-  .grp { margin-top: 18px; }
-  .grp h3 { font-size: 11px; font-weight: 700; color: var(--tx3); text-transform: uppercase; letter-spacing: .1em; margin: 0 0 9px 2px; }
-  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
-  @media (min-width: 430px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-  .tile { position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 12px 6px 10px; border-radius: 16px;
-          background: var(--card); border: 1px solid var(--ln);
-          transition: transform .15s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease), background-color .2s var(--ease); }
-  .tile:active { transform: scale(.96); }
-  @media (hover: hover) { .tile:hover { border-color: var(--ln2); } }
-  .tile img, .tile .emb { width: 62px; height: 62px; border-radius: 50%; display: block; box-shadow: 0 8px 18px -10px rgba(0,0,0,.9); }
-  .tile .emb { display: grid; place-items: center; font-size: 30px; background: #15151b; border: 1px solid var(--ln2); }
-  .tile span { font-size: 12px; line-height: 1.25; color: var(--tx2); text-align: center; max-width: 100%; overflow-wrap: anywhere; }   /* на 320 px «Эмблема ранга» — в две строки, не «Эмблема ра…» */
-  .tile.sel { background: #13101d; border-color: rgba(167,139,250,.8); box-shadow: 0 0 0 3px rgba(139,92,246,.16), 0 12px 26px -16px rgba(139,92,246,.95); }
-  .tile.sel span { color: #fff; font-weight: 600; }
-  .tile .ck { position: absolute; top: 7px; right: 7px; width: 19px; height: 19px; border-radius: 50%; display: grid; place-items: center;
-              background: var(--grad); opacity: 0; transform: scale(.5); transition: opacity .2s var(--ease), transform .25s var(--ease); }
-  .tile .ck svg { width: 11px; height: 11px; fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-  .tile.sel .ck { opacity: 1; transform: none; }
-  /* «сейчас» — на верхней кромке плитки, чтобы не закрывать картинку */
-  .tile .now { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); padding: 0 7px; border-radius: 6px; font-size: 9.5px;
-               font-weight: 700; line-height: 16px; white-space: nowrap; color: #0b0b0e; background: #f4f4f6; box-shadow: 0 3px 10px rgba(0,0,0,.55); }
-  .apply { position: sticky; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 5; margin-top: 16px;
-           transition: opacity .25s var(--ease), transform .25s var(--ease); }
-  .apply.off { opacity: 0; transform: translateY(14px); pointer-events: none; }
+  .hacts { margin-top: 10px; }
 
   /* кнопки */
   .btn { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; padding: 13px 16px;
@@ -155,23 +114,12 @@
   .btn.dgr { color: #fca5a5; background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.28); }
   .btn[disabled] { opacity: .45; }
   .btn + .btn { margin-top: 9px; }
-  .btn .mini { width: 28px; height: 28px; flex: 0 0 28px; margin: -4px 0; border-radius: 50%; overflow: hidden; display: grid; place-items: center;
-               font-size: 15px; background: rgba(255,255,255,.16); box-shadow: 0 0 0 2px rgba(255,255,255,.35); }
-  .btn .mini img { width: 100%; height: 100%; display: block; }
   .btn.ld { color: transparent !important; }
-  .btn.ld > * { visibility: hidden; }
   .btn.ld::after { content: ''; position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%;
                    border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; animation: spin .7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* своя картинка */
-  .mine { margin-top: 16px; padding: 14px; display: flex; align-items: center; gap: 13px; }
-  .mine .th { width: 60px; height: 60px; flex: 0 0 60px; border-radius: 50%; overflow: hidden; background: #0b0b10; border: 1px solid var(--ln2);
-              display: grid; place-items: center; font-size: 22px; color: var(--tx3); }
-  .mine .th img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .mine .m { flex: 1; min-width: 0; }
-  .mine .t { font-weight: 700; }
-  .mine .d { font-size: 12.5px; color: var(--tx2); margin-top: 2px; line-height: 1.4; }
+  /* своя картинка: выбор, предпросмотр */
   .drop { position: relative; display: block; width: 100%; margin-top: 14px; padding: 26px 16px 22px; border-radius: 20px; text-align: center;
           border: 1.5px dashed rgba(255,255,255,.18); background: rgba(255,255,255,.02);
           transition: border-color .2s var(--ease), background-color .2s var(--ease), transform .15s var(--ease); }
@@ -193,7 +141,6 @@
   .note.err { color: #fecaca; background: rgba(248,113,113,.08); border-color: rgba(248,113,113,.3); }
   .note.warn { color: #fde68a; background: rgba(252,211,77,.07); border-color: rgba(252,211,77,.28); }
   .note.ban { color: #fecaca; background: rgba(248,113,113,.1); border-color: rgba(248,113,113,.4); }
-  .note.info { color: var(--acc3); background: var(--accbg); border-color: rgba(139,92,246,.28); }
   .cdw { margin-top: 14px; padding: 20px 16px; border-radius: 20px; text-align: center; border: 1.5px dashed rgba(252,211,77,.4); background: rgba(252,211,77,.04); }
   .cdw .t1 { font-size: 14px; font-weight: 700; color: #fde68a; }
   .cdw .cd { margin-top: 6px; font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .03em; }
@@ -206,7 +153,6 @@
   .foot { margin-top: 16px; text-align: center; font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--tx3); }
   .sk { border-radius: 20px; border: 1px solid var(--ln); background: linear-gradient(90deg, var(--card) 0%, var(--card2) 50%, var(--card) 100%) 0 0 / 200% 100%;
         animation: sk 1.3s ease-in-out infinite; }
-  /* сверху: снизу закреплена кнопка «Поставить», и сообщение не должно её закрывать */
   .toast { position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top, 0px)); z-index: 50; max-width: 90%; padding: 11px 16px; border-radius: 14px;
            transform: translate(-50%, -14px) scale(.98); opacity: 0; pointer-events: none; font-size: 13px; text-align: center;
            background: rgba(18,17,26,.94); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid rgba(139,92,246,.45);
@@ -237,68 +183,47 @@
     <div><h1 id="ttl">Моя аватарка</h1><p id="sub">Её видят все игроки в топе «Рангов»</p></div>
   </header>
 
-  <section id="v-load"><div class="sk" style="height:140px;margin-top:16px"></div><div class="sk" style="height:300px;margin-top:14px"></div></section>
+  <section id="v-load"><div class="sk" style="height:140px;margin-top:16px"></div><div class="sk" style="height:220px;margin-top:14px"></div></section>
 
   <section id="v-main" hidden>
-    <!-- что стоит сейчас; выбрал готовую — здесь её предпросмотр -->
+    <!-- что стоит сейчас: своя картинка или эмблема ранга -->
     <div class="hero card">
-      <div class="hav" id="hav"><div class="in" id="hav-in"></div><span class="pv" id="hav-pv" hidden></span></div>
+      <div class="hav" id="hav"><div class="in" id="hav-in"></div></div>
       <div class="hm"><div class="nm" id="h-nm"></div><div class="sb" id="h-sb"></div><div class="pill" id="h-pill"><i></i><span id="h-pill-t"></span></div></div>
+    </div>
+    <div class="hacts" id="hacts" hidden>
+      <button class="btn ghost" type="button" id="btn-use"></button>
+      <button class="btn dgr" type="button" id="btn-rm"></button>
     </div>
 
     <div class="note ban" id="ban" hidden><b id="ban-t"></b><span id="ban-d"></span></div>
     <div class="note err" id="lerr" hidden></div>
+    <div class="note warn" id="strk" hidden></div>
+    <div class="note err" id="err" hidden></div>
 
-    <div class="seg" id="seg"><i></i>
-      <button type="button" class="on" data-seg="ready" id="seg-ready">Готовые</button>
-      <button type="button" data-seg="own" id="seg-own">Своя картинка</button>
+    <div class="cdw" id="cdw" hidden>
+      <div class="t1" id="cd-t"></div>
+      <div class="cd" id="cd">60:00</div>
+      <div class="t2" id="cd-d"></div>
     </div>
 
-    <!-- готовые аватарки -->
-    <div class="pane" id="p-ready">
-      <div class="note info" id="old-bot" hidden></div>
-      <div id="groups"></div>
-      <div class="apply off" id="apply"><button class="btn pri" type="button" id="btn-apply"></button></div>
+    <label class="drop" id="drop" for="file">
+      <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="4"/><circle cx="12" cy="13" r="3.4"/><path d="M8.5 6l1.2-2h4.6l1.2 2"/></svg></div>
+      <div class="t1" id="drop-t">Выбрать картинку</div>
+      <div class="t2" id="drop-d">Квадратная — лучше всего. Из любой сделаем круг.</div>
+    </label>
+    <input type="file" id="file" accept="image/*" class="vh">
+
+    <div class="prev" id="prev" hidden>
+      <img id="prev-img" alt="">
+      <span class="meta" id="prev-meta"></span>
+    </div>
+    <div style="margin-top:14px" id="acts" hidden>
+      <button class="btn pri" type="button" id="btn-send"></button>
+      <button class="btn ghost" type="button" id="btn-swap"></button>
     </div>
 
-    <!-- своя картинка -->
-    <div class="pane" id="p-own" hidden>
-      <div class="mine card" id="mine" hidden>
-        <div class="th" id="mine-th"></div>
-        <div class="m"><div class="t" id="mine-t"></div><div class="d" id="mine-d"></div></div>
-      </div>
-      <div id="mine-acts" hidden style="margin-top:10px">
-        <button class="btn ghost" type="button" id="btn-use"></button>
-        <button class="btn dgr" type="button" id="btn-rm"></button>
-      </div>
-
-      <div class="note warn" id="strk" hidden></div>
-      <div class="note err" id="err" hidden></div>
-
-      <div class="cdw" id="cdw" hidden>
-        <div class="t1" id="cd-t"></div>
-        <div class="cd" id="cd">60:00</div>
-        <div class="t2" id="cd-d"></div>
-      </div>
-
-      <label class="drop" id="drop" for="file">
-        <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="4"/><circle cx="12" cy="13" r="3.4"/><path d="M8.5 6l1.2-2h4.6l1.2 2"/></svg></div>
-        <div class="t1" id="drop-t">Выбрать картинку</div>
-        <div class="t2" id="drop-d">Квадратная — лучше всего. Из любой сделаем круг.</div>
-      </label>
-      <input type="file" id="file" accept="image/*" class="vh">
-
-      <div class="prev" id="prev" hidden>
-        <img id="prev-img" alt="">
-        <span class="meta" id="prev-meta"></span>
-      </div>
-      <div style="margin-top:14px" id="acts" hidden>
-        <button class="btn pri" type="button" id="btn-send"></button>
-        <button class="btn ghost" type="button" id="btn-swap"></button>
-      </div>
-
-      <ul class="rules card" id="rules"></ul>
-    </div>
+    <ul class="rules card" id="rules"></ul>
     <div class="foot" id="foot"></div>
   </section>
 
@@ -324,7 +249,7 @@ window.addEventListener('error', function (e) {
   try {
     document.getElementById('app').style.display = 'none';
     var f = document.getElementById('fatal'); f.style.display = 'block';
-    document.getElementById('fatal-d').textContent = 'Закрой и открой приложение заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v342';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой приложение заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v343';
   } catch (_) {}
 }, true);
 </script>
@@ -339,7 +264,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v342';
+  var VER = 'v343';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -360,40 +285,15 @@ window.addEventListener('error', function (e) {
   };
   window.__avTg();
 
-  // v341: готовые аватарки — SVG-файлы av/<id>.svg рядом со страницей. Тот же список id знает бот (AVATAR_PRESETS):
-  // показываем только те, что он принимает (у старого бота готовых нет — тогда только смотреть).
-  // v342: минималистичный набор — 24 штуки, две группы по 12 (12 делится и на 3, и на 4: ряды полные и на телефоне, и на ПК).
-  var GROUPS = [
-    ['chars', 'Персонажи', 'Characters', [['cat', 'Кот', 'Cat'], ['fox', 'Лиса', 'Fox'], ['panda', 'Панда', 'Panda'], ['owl', 'Сова', 'Owl'],
-      ['bear', 'Мишка', 'Bear'], ['penguin', 'Пингвин', 'Penguin'], ['frog', 'Лягушка', 'Frog'], ['ghost', 'Призрак', 'Ghost'],
-      ['robot', 'Робот', 'Robot'], ['alien', 'Пришелец', 'Alien'], ['ninja', 'Ниндзя', 'Ninja'], ['astro', 'Космонавт', 'Astronaut']]],
-    ['signs', 'Символы', 'Symbols', [['bolt', 'Молния', 'Bolt'], ['crown', 'Корона', 'Crown'], ['crystal', 'Кристалл', 'Crystal'],
-      ['heart', 'Сердце', 'Heart'], ['flame', 'Пламя', 'Flame'], ['star', 'Звезда', 'Star'], ['scope', 'Прицел', 'Scope'],
-      ['skull', 'Череп', 'Skull'], ['planet', 'Планета', 'Planet'], ['moon', 'Луна', 'Moon'], ['peak', 'Горы', 'Peaks'],
-      ['gamepad', 'Геймпад', 'Gamepad']]]
-  ];
-  var NAMES = {};
-  GROUPS.forEach(function (g) { g[3].forEach(function (p) { NAMES[p[0]] = [p[1], p[2]]; }); });
-  // v342: старые id набора v341 — в похожие новые (так же делает бот); версия в адресе — чтобы телефон не взял картинку из кэша
-  var ALIAS = { wolf: 'fox', tiger: 'cat', samurai: 'ninja', viking: 'bear' };
-  var AV_V = '2';
-  function avSrc(id) { return 'av/' + id + '.svg?v=' + AV_V; }
-
   var TX = {
     ru: {
       ttl: 'Моя аватарка', sub: 'Её видят все игроки в топе «Рангов»',
-      seg_ready: 'Готовые', seg_own: 'Своя картинка', g_none: 'Без картинки', rank: 'Эмблема ранга',
-      now: 'сейчас', apply: 'Поставить «{n}»', apply_rank: 'Поставить эмблему ранга',
-      h_preset: 'Готовая аватарка', h_custom: 'Своя картинка', h_rank: 'Эмблема ранга',
-      sb_all: 'Её видят все в топе «Рангов»', sb_rank: 'В топе стоит эмблема твоего ранга', sb_wait: 'Пока её видишь только ты — ждёт проверки',
-      sb_prev: 'Предпросмотр — нажми «Поставить» внизу', pill_now: 'Сейчас стоит', pill_prev: 'Предпросмотр', pv: 'предпросмотр',
-      applied: 'Готово — аватарку видят все', applied_rank: 'Готово — в топе эмблема ранга',
-      old_bot: 'Готовые аватарки заработают, когда бот на сервере обновится. Пока можно поставить свою картинку.',
-      mine_ok: 'Своя картинка', mine_wait: 'Своя картинка · ждёт проверки', mine_no: 'Своя картинка · закрыта',
-      mine_ok_d: 'Принята. Её можно поставить снова — без проверки.', mine_act_d: 'Стоит сейчас — её видят все.',
-      mine_wait_d: 'Пока её видишь только ты.', mine_no_d: 'Эта картинка не подошла под правила. Загрузи другую.',
-      use: 'Поставить мою картинку', rm: 'Убрать мою картинку', rm_ask: 'Убрать твою картинку? Если она сейчас стоит, вместо неё будет эмблема ранга.',
-      rm_done: 'Картинка убрана',
+      h_custom: 'Своя картинка', h_rank: 'Эмблема ранга', pill_now: 'Сейчас стоит', pill_wait: 'Ждёт проверки',
+      sb_all: 'Её видят все в топе «Рангов»', sb_wait: 'Пока её видишь только ты',
+      sb_rank: 'Загрузи свою картинку — её увидят все в топе «Рангов»',
+      sb_saved: 'Твоя картинка сохранена — её можно поставить снова', sb_blocked: 'Твоя картинка не подошла под правила — загрузи другую',
+      use: 'Поставить мою картинку', rm: 'Убрать мою картинку', rm_ask: 'Убрать твою картинку? Вместо неё в топе будет эмблема ранга.',
+      rm_done: 'Картинка убрана', used: 'Готово — твою картинку снова видят все',
       drop_t: 'Выбрать картинку', drop_t2: 'Загрузить другую картинку', drop_d: 'Квадратная — лучше всего. Из любой сделаем круг.', drop_alt: 'Можно перетащить файл или вставить (Ctrl+V).',
       send: 'Поставить картинку', swap: 'Выбрать другую', chk_run: 'Проверяю картинку…', chk_no: 'Картинка не подошла',
       sent: 'Готово! Твою картинку видят все',
@@ -404,7 +304,7 @@ window.addEventListener('error', function (e) {
       d_day: 'дн', d_hour: 'ч', d_min: 'мин', forever: 'навсегда',
       strk: 'Нарушений за {days} дн: <b>{n}</b>', strk_next: ' · следующее — {x}',
       nx_pause: 'пауза {cd} мин', nx_warn: 'предупреждение', nx_ban: 'бан на {d}', nx_ban_forever: 'бан навсегда',
-      cd_t: 'Пауза после запрещённой картинки', cd_d: 'Свою картинку можно поставить, когда отсчёт закончится. Готовые — можно сейчас.',
+      cd_t: 'Пауза после запрещённой картинки', cd_d: 'Новую картинку можно поставить, когда отсчёт закончится.',
       ban_t: 'Аккаунт заблокирован', ban_until: 'до {date}', ban_forever: 'навсегда', m_ok: 'Понятно',
       m_warn_t: 'Предупреждение', m_warn_d: 'Это уже второе запрещённое изображение (18+). Следующее — {x}.',
       m_ban_t: 'Аккаунт заблокирован', m_ban_d: 'Нарушение №{n} за {days} дней — {x}.',
@@ -415,23 +315,17 @@ window.addEventListener('error', function (e) {
       e_rate: 'Слишком часто. Подожди секунду и попробуй снова.',
       e_nsfw: 'Картинка не прошла проверку на 18+. Новую можно поставить через {cd} мин.', e_nsfw0: 'Картинка не прошла проверку на 18+. Выбери другую.',
       e_check: 'Проверка сейчас недоступна — попробуй через пару минут.', e_srv: 'Ошибка на сервере. Попробуй ещё раз позже.',
-      e_load: 'Не удалось получить данные. Проверь интернет.', e_nocustom: 'Своей принятой картинки нет — загрузи её во вкладке «Своя картинка».',
+      e_load: 'Не удалось получить данные. Проверь интернет.', e_nocustom: 'Своей принятой картинки нет — загрузи её ниже.',
       none_t: 'Приложение не открылось', none_d: 'Зайди в бот и нажми «🖼 Моя аватарка» в профиле.', foot: 'Аватарка хранится на сервере бота'
     },
     en: {
       ttl: 'My avatar', sub: 'Everyone sees it in the Ranks leaderboard',
-      seg_ready: 'Ready-made', seg_own: 'My picture', g_none: 'No picture', rank: 'Rank emblem',
-      now: 'now', apply: 'Set «{n}»', apply_rank: 'Set the rank emblem',
-      h_preset: 'Ready-made avatar', h_custom: 'My picture', h_rank: 'Rank emblem',
-      sb_all: 'Everyone sees it in the leaderboard', sb_rank: 'Your rank emblem is shown in the leaderboard', sb_wait: 'Only you see it until it is checked',
-      sb_prev: 'Preview — tap «Set» below', pill_now: 'Current', pill_prev: 'Preview', pv: 'preview',
-      applied: 'Done — everyone sees your avatar', applied_rank: 'Done — the rank emblem is shown',
-      old_bot: 'Ready-made avatars will work after the bot is updated on the server. You can still set your own picture.',
-      mine_ok: 'My picture', mine_wait: 'My picture · being checked', mine_no: 'My picture · removed',
-      mine_ok_d: 'Accepted. You can set it again — no new check.', mine_act_d: 'Set now — everyone sees it.',
-      mine_wait_d: 'Only you can see it so far.', mine_no_d: 'This picture did not fit the rules. Upload another one.',
-      use: 'Set my picture', rm: 'Remove my picture', rm_ask: 'Remove your picture? If it is set now, the rank emblem will be shown instead.',
-      rm_done: 'Picture removed',
+      h_custom: 'My picture', h_rank: 'Rank emblem', pill_now: 'Current', pill_wait: 'Being checked',
+      sb_all: 'Everyone sees it in the leaderboard', sb_wait: 'Only you can see it so far',
+      sb_rank: 'Upload your own picture — everyone in the leaderboard will see it',
+      sb_saved: 'Your picture is saved — you can set it again', sb_blocked: 'Your picture did not fit the rules — upload another one',
+      use: 'Set my picture', rm: 'Remove my picture', rm_ask: 'Remove your picture? The rank emblem will be shown instead.',
+      rm_done: 'Picture removed', used: 'Done — everyone sees your picture again',
       drop_t: 'Choose a picture', drop_t2: 'Upload another picture', drop_d: 'Square works best. Any image becomes a circle.', drop_alt: 'You can drop a file or paste it (Ctrl+V).',
       send: 'Set the picture', swap: 'Choose another', chk_run: 'Checking the picture…', chk_no: 'Picture not suitable',
       sent: 'Done! Everyone sees your picture',
@@ -442,7 +336,7 @@ window.addEventListener('error', function (e) {
       d_day: 'd', d_hour: 'h', d_min: 'min', forever: 'forever',
       strk: 'Violations in {days} d: <b>{n}</b>', strk_next: ' · next one — {x}',
       nx_pause: 'a {cd} min pause', nx_warn: 'a warning', nx_ban: 'a {d} ban', nx_ban_forever: 'a permanent ban',
-      cd_t: 'Pause after a forbidden picture', cd_d: 'You can set your own picture when the countdown ends. Ready-made ones — right now.',
+      cd_t: 'Pause after a forbidden picture', cd_d: 'You can set a new picture when the countdown ends.',
       ban_t: 'Account banned', ban_until: 'until {date}', ban_forever: 'permanently', m_ok: 'Got it',
       m_warn_t: 'Warning', m_warn_d: 'This is the second forbidden (18+) picture. The next one means {x}.',
       m_ban_t: 'Account banned', m_ban_d: 'Violation #{n} in {days} days — {x}.',
@@ -453,14 +347,13 @@ window.addEventListener('error', function (e) {
       e_rate: 'Too often. Wait a second and try again.',
       e_nsfw: 'The picture did not pass the 18+ check. You can set a new one in {cd} min.', e_nsfw0: 'The picture did not pass the 18+ check. Choose another one.',
       e_check: 'The check is unavailable right now — try again in a couple of minutes.', e_srv: 'Server error. Try again later.',
-      e_load: 'Could not load your data. Check the internet.', e_nocustom: 'You have no accepted picture — upload one in «My picture».',
+      e_load: 'Could not load your data. Check the internet.', e_nocustom: 'You have no accepted picture — upload one below.',
       none_t: 'The app did not open', none_d: 'Open the bot and tap "🖼 My avatar" in your profile.', foot: 'The avatar is stored on the bot server'
     }
   };
   var L = TX[LANG];
 
-  var S = { active: 'rank', preset: null, status: 'none', url: null, customUrl: null, tier: '🎮', presets: null,
-            pick: null, seg: 'ready', shot: null, busy: false, check: null,
+  var S = { active: 'rank', status: 'none', url: null, customUrl: null, tier: '🎮', shot: null, busy: false, check: null,
             // v324: штрафы. Правила приходят с сервера (/casino/avatar/state), здесь — те же значения на случай старого бота
             rules: { cooldown_min: 60, warn_at: 2, window_days: 30, bans: [[3, 86400], [4, 604800], [5, 0]] },
             strikes: 0, cdUntil: 0, banUntil: null };
@@ -499,25 +392,13 @@ window.addEventListener('error', function (e) {
   function haptic(kind) { try { tg && tg.HapticFeedback && (kind ? tg.HapticFeedback.notificationOccurred(kind) : tg.HapticFeedback.selectionChanged()); } catch (e) {} }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function showErr(h) { var e = $('err'); if (!h) { e.hidden = true; e.innerHTML = ''; return; } e.innerHTML = h; e.hidden = false; }
-  function nameOf(id) { var n = NAMES[id]; return n ? n[LANG === 'ru' ? 0 : 1] : id; }
-  function curKey() { return S.active === 'preset' && S.preset ? S.preset : S.active === 'custom' ? 'custom' : 'rank'; }
-  function presetOk(id) { return !!(S.presets && S.presets.indexOf(id) >= 0); }
 
   // ── тексты и неизменная разметка ────────────────────────────────────
   function texts() {
     $('ttl').textContent = L.ttl; $('sub').textContent = L.sub;
-    $('seg-ready').textContent = L.seg_ready; $('seg-own').textContent = L.seg_own;
     $('drop-t').textContent = L.drop_t; $('drop-d').textContent = L.drop_d + ' ' + L.drop_alt;
     $('btn-send').textContent = L.send; $('btn-swap').textContent = L.swap; $('btn-rm').textContent = L.rm; $('btn-use').textContent = L.use;
     $('none-t').textContent = L.none_t; $('none-d').textContent = L.none_d; $('foot').textContent = L.foot;
-    var ck = '<i class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i>';
-    $('groups').innerHTML = GROUPS.map(function (g) {
-      return '<div class="grp"><h3>' + esc(LANG === 'ru' ? g[1] : g[2]) + '</h3><div class="grid">' + g[3].map(function (p) {
-        return '<button type="button" class="tile" data-p="' + p[0] + '"><img src="' + avSrc(p[0]) + '" alt="" loading="lazy"><span>'
-          + esc(LANG === 'ru' ? p[1] : p[2]) + '</span>' + ck + '</button>';
-      }).join('') + '</div></div>';
-    }).join('') + '<div class="grp"><h3>' + esc(L.g_none) + '</h3><div class="grid"><button type="button" class="tile" data-p="rank">'
-      + '<div class="emb" id="emb-rank">🎮</div><span>' + esc(L.rank) + '</span>' + ck + '</button></div></div>';
     renderRules();
   }
   // v324: правила — из того, что прислал бот: штрафы описаны в одном месте (на сервере), страница их только показывает
@@ -551,16 +432,17 @@ window.addEventListener('error', function (e) {
       return res;
     });
   }
-  // ответ сервера → состояние страницы (у бота до v341 нет active/presets — как раньше: своя картинка или ничего)
+  // ответ сервера → состояние страницы. v343: готовых аватарок нет — показывается своя картинка или эмблема ранга
+  // (бот v341/v342 ещё мог прислать active='preset' — тогда, если своя принята, считаем, что стоит она)
   function applyState(j) {
     S.loaded = true;
     S.status = j.status || 'none';
     S.url = j.url || null;
-    S.active = j.active || (S.status !== 'none' && S.status !== 'blocked' ? 'custom' : 'rank');
-    S.preset = j.my_preset ? (ALIAS[j.my_preset] || j.my_preset) : null;
+    var act = j.active || (S.status !== 'none' && S.status !== 'blocked' ? 'custom' : 'rank');
+    if (act === 'preset') act = S.status === 'ok' ? 'custom' : 'rank';
+    S.active = act;
     S.customUrl = j.custom_url !== undefined ? (j.custom_url || null) : (S.active === 'custom' ? S.url : null);
     if (j.tier) S.tier = j.tier;
-    S.presets = j.presets || null;
     if (j.rules && j.rules.bans) { S.rules = j.rules; renderRules(); }
     if (j.strikes !== undefined) S.strikes = j.strikes || 0;
     if (j.cooldown_left !== undefined) S.cdUntil = j.cooldown_left ? Date.now() + j.cooldown_left * 1000 : 0;
@@ -569,7 +451,7 @@ window.addEventListener('error', function (e) {
 
   // ── отрисовка ───────────────────────────────────────────────────────
   // картинка в кружке; не загрузилась (сервер недоступен, файл снят) — вместо значка «сломано» тихо ставим запасной знак.
-  // Пересоздаём только когда картинка сменилась — иначе каждое нажатие на плитку заново грузило бы её и мигало.
+  // Пересоздаём только когда картинка сменилась — иначе каждая перерисовка заново грузила бы её и мигала.
   function putImg(box, src, fallback) {
     var k = (src || '') + '|' + fallback;
     if (box.getAttribute('data-k') === k) return;
@@ -580,48 +462,19 @@ window.addEventListener('error', function (e) {
     im.onerror = function () { if (im.parentNode === box) box.textContent = fallback; };
     im.src = src; box.appendChild(im);
   }
-  function setHero(key, preview) {
-    var src = key === 'custom' ? (S.customUrl || S.url) : key === 'rank' ? null : avSrc(key);
-    putImg($('hav-in'), src, S.tier || '🎮');
-    $('hav').classList.toggle('dim', key === 'rank');
-    $('hav-pv').hidden = !preview; $('hav-pv').textContent = L.pv;
-    $('h-nm').textContent = key === 'custom' ? L.h_custom : key === 'rank' ? L.h_rank : nameOf(key);
-    var pill = $('h-pill'), cls = '', pt = L.pill_now, sb = key === 'rank' ? L.sb_rank : L.sb_all;
-    if (preview) { cls = 'pv'; pt = L.pill_prev; sb = L.sb_prev; }
-    else if (key === 'custom' && S.status === 'pending') { cls = 'wait'; sb = L.sb_wait; }
-    pill.className = 'pill' + (cls ? ' ' + cls : ''); $('h-pill-t').textContent = pt; $('h-sb').textContent = sb;
-  }
   function render() {
-    var cur = curKey(), pick = S.pick && S.pick !== cur ? S.pick : null;
-    setHero(pick || cur, !!pick);
-    $('emb-rank').textContent = S.tier || '🎮';
-    // плитки: выбранная и та, что стоит сейчас
-    var tiles = $('groups').querySelectorAll('.tile');
-    for (var i = 0; i < tiles.length; i++) {
-      var k = tiles[i].getAttribute('data-p'), sel = (pick || cur) === k;
-      tiles[i].classList.toggle('sel', sel);
-      tiles[i].setAttribute('aria-pressed', sel ? 'true' : 'false');
-      var nw = tiles[i].querySelector('.now');
-      if (k === cur && !nw) { nw = document.createElement('i'); nw.className = 'now'; nw.textContent = L.now; tiles[i].appendChild(nw); }
-      else if (k !== cur && nw) nw.remove();
-    }
-    $('old-bot').hidden = !S.loaded || !!S.presets; $('old-bot').textContent = L.old_bot;
-    var ap = $('apply');
-    ap.classList.toggle('off', !pick);
-    if (pick) $('btn-apply').innerHTML = '<span class="mini">' + (pick === 'rank' ? esc(S.tier || '🎮') : '<img src="' + esc(avSrc(pick)) + '" alt="">')
-      + '</span><span>' + esc(pick === 'rank' ? L.apply_rank : tpl(L.apply, { n: nameOf(pick) })) + '</span>';
-    renderOwn();
-  }
-  function renderOwn() {
-    var st = S.status, has = st !== 'none';
-    $('mine').hidden = !has;
-    if (has) {
-      putImg($('mine-th'), S.customUrl, S.customUrl ? '🖼' : '🚫');
-      $('mine-t').textContent = st === 'pending' ? L.mine_wait : st === 'blocked' ? L.mine_no : L.mine_ok;
-      $('mine-d').textContent = st === 'pending' ? L.mine_wait_d : st === 'blocked' ? L.mine_no_d : (S.active === 'custom' ? L.mine_act_d : L.mine_ok_d);
-    }
-    $('mine-acts').hidden = !has;
-    $('btn-use').hidden = !(st === 'ok' && S.active !== 'custom' && S.presets);
+    var st = S.status, own = S.active === 'custom' && (st === 'ok' || st === 'pending');
+    putImg($('hav-in'), own ? (S.customUrl || S.url) : null, S.tier || '🎮');
+    $('hav').classList.toggle('dim', !own);
+    $('h-nm').textContent = own ? L.h_custom : L.h_rank;
+    var pill = $('h-pill'), wait = own && st === 'pending';
+    pill.className = 'pill' + (wait ? ' wait' : '');
+    $('h-pill-t').textContent = wait ? L.pill_wait : L.pill_now;
+    $('h-sb').textContent = own ? (wait ? L.sb_wait : L.sb_all)
+      : st === 'ok' ? L.sb_saved : st === 'blocked' ? L.sb_blocked : L.sb_rank;
+    // кнопки под карточкой: убрать свою (если есть) и — редкий случай — вернуть сохранённую
+    var canUse = st === 'ok' && !own, canRm = st !== 'none';
+    $('btn-use').hidden = !canUse; $('btn-rm').hidden = !canRm; $('hacts').hidden = !(canUse || canRm);
     var sk = $('strk');
     if (S.strikes > 0) {
       sk.innerHTML = tpl(L.strk, { days: S.rules.window_days, n: S.strikes }) + esc(tpl(L.strk_next, { x: nextText(S.strikes + 1) }));
@@ -646,53 +499,24 @@ window.addEventListener('error', function (e) {
     $('cd').textContent = mmss(left);
     if (left <= 0) { clearInterval(cdTimer); cdTimer = 0; S.cdUntil = 0; render(); }
   }
-  function setSeg(s) {
-    if (S.seg === s) return;
-    S.seg = s;
-    $('seg').classList.toggle('own', s === 'own');
-    $('seg-ready').classList.toggle('on', s === 'ready'); $('seg-own').classList.toggle('on', s === 'own');
-    $('p-ready').hidden = s !== 'ready'; $('p-own').hidden = s !== 'own';
-    if (s === 'own') S.pick = null;          // ушёл к своей картинке — предпросмотр готовой больше не нужен
-    render(); haptic();
-  }
-  $('seg').addEventListener('click', function (e) { var b = e.target.closest('[data-seg]'); if (b) setSeg(b.getAttribute('data-seg')); });
 
-  // ── готовые: выбрать → предпросмотр → «Поставить» ───────────────────
-  $('groups').addEventListener('click', function (e) {
-    var t = e.target.closest('.tile'); if (!t || S.busy) return;      // пока ставится выбранная — другую не выбираем
-    if (isBanned()) { toast(L.e_ban, true); return; }
-    var k = t.getAttribute('data-p');
-    S.pick = k === curKey() ? null : k;
-    render(); haptic();
-  });
-  function choose(key, btn, okText, retried) {
-    if (S.busy && !retried) return;
-    if (!S.loaded) { toast(L.e_load, true); return; }
-    if (key !== 'custom' && key !== 'rank' && !presetOk(key)) { toast(L.old_bot, true); return; }
-    S.busy = true; if (btn) btn.classList.add('ld');
-    post('/casino/avatar/preset', { preset: key }).then(function (res) {
+  // ── вернуть сохранённую свою картинку (если раньше была выбрана эмблема ранга) ──
+  $('btn-use').addEventListener('click', function () {
+    if (S.busy) return;
+    var b = this;
+    S.busy = true; b.classList.add('ld');
+    post('/casino/avatar/preset', { preset: 'custom' }).then(function (res) {
+      S.busy = false; b.classList.remove('ld');
       var j = res.j || {};
-      // две смены подряд быстрее, чем разрешает сервер (0,6 с), — не ошибка для игрока: молча повторяем, когда можно
-      if (j.error === 'rate_limited' && !retried) {
-        setTimeout(function () { choose(key, btn, okText, true); }, Math.min(3000, (+j.retry_after || 0.6) * 1000 + 120));
-        return;
-      }
-      S.busy = false; if (btn) btn.classList.remove('ld');
-      if (res.status === 404 && !res.j) { toast(L.old_bot, true); return; }
-      if (j.ok) { applyState(j); S.pick = null; render(); toast(okText || L.applied); haptic('success'); return; }
+      if (j.ok) { applyState(j); render(); toast(L.used); haptic('success'); return; }
       var e = j.error;
       if (e === 'banned') { S.banUntil = j.until || 0; render(); toast(L.e_ban, true); return; }
       if (e === 'rate_limited') { toast(L.e_rate, true); return; }
       if (e === 'no_custom') { toast(L.e_nocustom, true); return; }
       if (e === 'unauthorized') { toast(L.e_auth, true); return; }
       toast(L.e_srv, true); haptic('error');
-    }).catch(function () { S.busy = false; if (btn) btn.classList.remove('ld'); toast(L.e_net, true); haptic('error'); });
-  }
-  $('btn-apply').addEventListener('click', function () {
-    if (!S.pick) return;
-    choose(S.pick, this, S.pick === 'rank' ? L.applied_rank : L.applied);
+    }).catch(function () { S.busy = false; b.classList.remove('ld'); toast(L.e_net, true); haptic('error'); });
   });
-  $('btn-use').addEventListener('click', function () { choose('custom', this, L.sent); });
 
   // ── проверка на 18+ прямо в браузере ────────────────────────────────
   /* v321: модель (MobileNetV2 из nsfwjs) и tfjs лежат рядом со страницей и грузятся ТОЛЬКО когда игрок выбрал картинку.
@@ -781,7 +605,6 @@ window.addEventListener('error', function (e) {
   function handleFile(file) {
     if (isLocked()) return Promise.resolve();
     showErr('');
-    if (S.seg !== 'own') setSeg('own');
     return readImage(file).then(function (shot) {
       if (shot.bytes > MAXBYTES * 1.3) { showErr(esc(L.e_big)); return; }
       S.shot = shot;
@@ -833,7 +656,7 @@ window.addEventListener('error', function (e) {
         if (j.ok) {
           S.status = j.status || 'ok'; S.active = 'custom';
           S.customUrl = S.shot.dataUrl; S.url = S.shot.dataUrl;      // показываем сразу: сервер уже принял решение
-          S.pick = null; backToPick(); render();
+          backToPick(); render();
           toast(L.sent); haptic('success');
           return;
         }
@@ -890,7 +713,7 @@ window.addEventListener('error', function (e) {
       var j = res.j || {};
       if (!j.ok) { showErr(esc(L.e_srv)); return; }
       if (j.status !== undefined) applyState(j);
-      else { S.status = 'none'; S.customUrl = null; if (S.active === 'custom') { S.active = 'rank'; S.url = null; } }
+      else { S.status = 'none'; S.customUrl = null; S.active = 'rank'; S.url = null; }
       render(); toast(L.rm_done); haptic('success');
     }).catch(function () { S.busy = false; b.classList.remove('ld'); showErr(esc(L.e_net)); });
   }
@@ -905,10 +728,10 @@ window.addEventListener('error', function (e) {
       var j = res.j;
       if (!j || j.ok !== true) { loadFail(); return; }
       applyState(j);
-      show('main'); render();      // всегда с «Готовых»: что стоит сейчас, и так видно в карточке сверху
+      show('main'); render();
     }).catch(loadFail);
   }
-  // данные не пришли — показываем страницу (выбрать всё равно можно) и сообщение над вкладками, видное на обеих
+  // данные не пришли — показываем страницу и сообщение под карточкой
   function loadFail() {
     show('main'); render();
     $('lerr').textContent = L.e_load; $('lerr').hidden = false;
@@ -916,8 +739,7 @@ window.addEventListener('error', function (e) {
   show('load');
   boot();
 
-  window.AV = { state: function () { return S; }, handleFile: handleFile, render: render, ver: VER, nsfwCheck: nsfwCheck, nsfwModel: nsfwModel,
-                seg: setSeg, choose: choose };
+  window.AV = { state: function () { return S; }, handleFile: handleFile, render: render, ver: VER, nsfwCheck: nsfwCheck, nsfwModel: nsfwModel };
 })();
 </script>
 </body>
