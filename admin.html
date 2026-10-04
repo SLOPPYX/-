@@ -176,7 +176,7 @@
   @keyframes vin { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
   @keyframes rin { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
   .vin { animation: vin .28s var(--ease) both; }
-  #list .it, #log .lg, #pr-list > .sec, #tr-card .it, #ec .sec { animation: rin .24s var(--ease) both; }
+  #list .it, #log .lg, #pr-list > .sec, #tr-card .it, #gw-card .it, #ec .sec { animation: rin .24s var(--ease) both; }
   /* заготовка вместо «Загрузка…»: серые строки с мерцанием */
   .sk { height: 60px; margin-top: 7px; border-radius: 14px; border: 1px solid var(--ln);
         background: linear-gradient(90deg, var(--card) 0%, var(--card2) 50%, var(--card) 100%); background-size: 200% 100%; animation: sk 1.3s ease-in-out infinite; }
@@ -341,7 +341,7 @@
     <!-- v338: обращения игроков в поддержку -->
     <button type="button" data-tab="sup"><svg class="ic" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12.5h5"/></svg>Поддержка<span class="tcnt" id="sup-cnt" hidden></span></button>
     <button type="button" data-tab="bc"><svg class="ic" viewBox="0 0 24 24"><path d="M4 10v4a1 1 0 0 0 1 1h2l7 4V5L7 9H5a1 1 0 0 0-1 1z"/><path d="M18 9a4 4 0 0 1 0 6"/></svg>Рассылка<span class="tdot" id="bc-dot" hidden></span></button>
-    <button type="button" data-tab="promo"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 6v12" stroke-dasharray="2 2.2"/></svg>Промо</button>
+    <button type="button" data-tab="promo"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 6v12" stroke-dasharray="2 2.2"/></svg>Промо<span class="tdot" id="pr-dot" hidden></span></button>
     <button type="button" data-tab="tour"><svg class="ic" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg>Турнир</button>
     <button type="button" data-tab="econ"><svg class="ic" viewBox="0 0 24 24"><path d="M4 19V11M10 19V6M16 19v-9M22 19H2"/></svg>Экономика</button>
     <!-- v340: на будущее — разделы в разработке -->
@@ -522,6 +522,23 @@
 
   <!-- v326: промокоды -->
   <section id="v-promo" hidden>
+    <!-- v345: розыгрыш услуги — запускаешь только ты; победителей выбирает кнопка (случайно), итоги объявляешь сам -->
+    <div class="sec" id="gw-box"><h3>🎁 Розыгрыш услуги</h3><div id="gw-card"><div class="small">Загрузка…</div></div></div>
+    <div class="sec" id="gw-form" hidden><h3>Новый розыгрыш</h3><div class="v">
+      <div class="lbl">Что разыгрываем</div>
+      <div class="chips wrap" id="gw-prize-c"></div>
+      <input id="gw-prize" maxlength="80" placeholder="Приз — выбери выше или впиши свой">
+      <textarea id="gw-desc" maxlength="500" placeholder="Описание (необязательно). Например: «Победителю лично настрою сенсу в Discord»"></textarea>
+      <div class="lbl">Сколько победителей</div>
+      <div class="chips wrap" id="gw-win-c"></div>
+      <div class="lbl">Кто может участвовать</div>
+      <div class="chips wrap" id="gw-mm-c"></div>
+      <div class="lbl">Когда закончить приём заявок</div>
+      <div class="v" id="gw-exp"></div>
+      <label class="ck"><input type="checkbox" id="gw-ann" checked><span>📢 Сообщить всем игрокам — с кнопкой «🎁 Участвовать»</span></label>
+      <div class="row"><button type="button" class="b-acc f1" id="gw-go">🚀 Запустить розыгрыш</button></div>
+      <div class="small">Игроки участвуют бесплатно: «Товары Free Fire» → «🎁 Розыгрыш». Когда выйдет время, запись закроется и бот напишет тебе. Победителей выбираешь сам — кнопкой, случайно среди участников.</div>
+    </div></div>
     <!-- v331: акция в Донате — раньше только командой /setpromo -->
     <div class="sec" id="dp-box"><h3>Акция в Донате</h3><div class="v">
       <div id="dp-state" class="small">Загрузка…</div>
@@ -598,7 +615,7 @@ window.addEventListener('error', function (e) {
     document.getElementById('app').hidden = true;
     var f = document.getElementById('fatal'); f.hidden = false;
     document.getElementById('fatal-t').textContent = 'Ошибка на странице';
-    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v341';
+    document.getElementById('fatal-d').textContent = String((e && e.message) || 'ошибка') + ' · v345';
   } catch (_) {}
 }, true);
 </script>
@@ -613,7 +630,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v341';
+  var VER = 'v345';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -838,6 +855,7 @@ window.addEventListener('error', function (e) {
       .map(function (x) { return '<span>' + x[0] + ' <b>' + fmt(x[1]) + '</b></span>'; }).join('');
     tabCnt('du-cnt', st.disputes); tabCnt('rp-tcnt', (st.reports || 0) + (st.fraud || 0));       // v333 (v334: + подозрения)
     tabCnt('sup-cnt', st.support); botDot();                                                      // v338
+    $('pr-dot').hidden = !(st.giveaway && st.giveaway.wait) || isMod();                           // v345: розыгрыш ждёт итогов
   }
   // ── v338: кто открыл — администратор или модератор. Модератору — только его вкладки и кнопки (права всё равно
   // проверяет сервер: спрятанная кнопка — для удобства, а не защита) ──
@@ -1468,9 +1486,12 @@ window.addEventListener('error', function (e) {
     bd: { chips: [[0, 'не удалять'], [3600, 'через 1 ч'], [21600, 'через 6 ч'], [43200, 'через 12 ч'], [86400, 'через сутки']],
           num: 'Своё число', noDt: true, zero: '♾ Останется у игроков',
           fmt: function (sec) { return sec > 47 * 3600 + 30 ? '⚠️ Дольше 47 ч нельзя — Telegram не даёт боту удалять старые сообщения'
-                                                            : '🗑 Удалится у всех через ' + leftTxt(sec) + ' после отправки'; } }
+                                                            : '🗑 Удалится у всех через ' + leftTxt(sec) + ' после отправки'; } },
+    // v345: когда закончить приём заявок в розыгрыш
+    gw: { chips: [[0, 'без срока'], [3600, '1 ч'], [21600, '6 ч'], [86400, '1 дн'], [259200, '3 дн'], [604800, '7 дн']], or: 'или до',
+          num: 'Через сколько', zero: '♾ Без срока — запись закроешь сам', lead: '⏰ Итоги: ', after: 'через ' }
   };
-  S.exp = { pc: 0, bw: 0, bd: 0 };   // выбранная кнопка; 0 — «без срока» / «сейчас» / «не удалять»; нет ключа — не выбрана
+  S.exp = { pc: 0, bw: 0, bd: 0, gw: 86400 };   // выбранная кнопка; 0 — «без срока» / «сейчас» / «не удалять»; нет ключа — не выбрана
   function leftTxt(sec) {
     sec = Math.max(0, sec);
     if (sec >= 86400) { var d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600); return d + ' дн' + (h ? ' ' + h + ' ч' : ''); }
@@ -1534,7 +1555,7 @@ window.addEventListener('error', function (e) {
       expHint(p);
     });
     function typed(e) {
-      var m = (e.target.id || '').match(/^(pc|pe|bw|bd)-(n|u|dt)$/); if (!m) return;
+      var m = (e.target.id || '').match(/^(pc|pe|bw|bd|gw)-(n|u|dt)$/); if (!m) return;
       if (m[2] === 'n' && e.target.value) { if ($(m[1] + '-dt')) $(m[1] + '-dt').value = ''; offChips(m[1]); }
       if (m[2] === 'dt' && e.target.value) { $(m[1] + '-n').value = ''; offChips(m[1]); }
       expHint(m[1]);
@@ -1581,7 +1602,7 @@ window.addEventListener('error', function (e) {
     if (run) {
       var pc = jb.total ? Math.round(jb.done / jb.total * 100) : 0;
       var el = Date.now() / 1000 - jb.started, left = jb.done ? el / jb.done * (jb.total - jb.done) : 0;
-      h = '<div class="sec"><h3>' + (jb.kind === 'tournament' ? 'Идёт объявление турнира' : 'Идёт рассылка') + '</h3><div class="v">'
+      h = '<div class="sec"><h3>' + (jb.kind === 'tournament' ? 'Идёт объявление турнира' : jb.kind === 'giveaway' ? 'Идёт объявление розыгрыша' : 'Идёт рассылка') + '</h3><div class="v">'
         + '<div class="bar"><i style="width:' + pc + '%"></i></div>'
         + '<div>Отправлено <b>' + fmt(jb.done) + '</b> из ' + fmt(jb.total) + ' · ' + pc + '%'
         + (left >= 5 ? ' · осталось ~' + durTxt(left) : '') + '</div>'
@@ -1613,7 +1634,7 @@ window.addEventListener('error', function (e) {
     var hs = j.history || [];
     $('bc-hist-box').hidden = !hs.length;
     $('bc-hist').innerHTML = hs.map(function (x) {
-      return '<div><b>' + dt(x.t) + '</b> · ' + esc(AUDN[x.aud] || x.aud) + (x.kind === 'tournament' ? ' · 🏆 объявление турнира' : '')
+      return '<div><b>' + dt(x.t) + '</b> · ' + esc(AUDN[x.aud] || x.aud) + (x.kind === 'tournament' ? ' · 🏆 объявление турнира' : x.kind === 'giveaway' ? ' · 🎁 объявление розыгрыша' : '')
         + (x.scheduled ? ' · 🗓' : '') + (x.photo ? ' · 🖼' : '') + (x.btn ? ' · 🔗 ' + esc(cut(x.btn, 30)) : '')
         + (x.state === 'cancelled' ? ' <span class="bd wn">остановлена</span>' : '')
         + '<br>✓ дошло ' + fmt(x.sent) + ' из ' + fmt(x.total) + (x.failed ? ' · ✗ ' + fmt(x.failed) : '')
@@ -1764,6 +1785,7 @@ window.addEventListener('error', function (e) {
   }
   function loadPromo() {
     loadDp();                                             // v331: акция в Донате — в этой же вкладке
+    loadGw();                                             // v345: розыгрыш услуги — сверху вкладки
     if (!S.pr) $('pr-list').innerHTML = skel(3);
     return sect('/promo', { op: 'list' }, 'pr-list').then(function (j) { if (j) { S.pr = j; renderPromo(); } })
       .catch(function () { toast('Нет связи с сервером', true); });
@@ -1854,6 +1876,150 @@ window.addEventListener('error', function (e) {
     doSect('/promo', { op: a, code: code }, a === 'delete' ? 'Удалить промокод ' + code + '? Ввести его больше будет нельзя.' : null, b,
       function (j) { S.pr = j; renderPromo(); });
   });
+
+  // ── v345: розыгрыш услуги ───────────────────────────────────────────
+  // Один за раз. Запускаешь сам; когда выйдет время, бот закроет запись и напишет. Победителей выбирает кнопка — случайно
+  // среди участников без бана; «🔄 Другой» меняет одного; «📣 Объявить итоги» — сообщения победителям и участникам.
+  var GST = { open: ['ok', 'идёт запись'], closed: ['wn', 'запись закрыта'], drawn: ['mt', 'победители выбраны'] };
+  var GW_WIN = [1, 2, 3, 5], GW_MM = [[0, 'все игроки'], [1, 'сыграл 1 матч'], [5, 'от 5 матчей'], [10, 'от 10 матчей']];
+  S.gwWin = 1; S.gwMm = 0;
+  function loadGw() {
+    if (!S.gw) $('gw-card').innerHTML = '<div class="small">Загрузка…</div>';
+    return sect('/giveaway', { op: 'get' }, 'gw-card', 'v345').then(function (j) { if (j) setGw(j); else $('gw-form').hidden = true; })
+      .catch(function () { toast('Нет связи с сервером', true); });
+  }
+  function setGw(j) { S.gw = j; renderGw(); }
+  function gwRow(p, right) {
+    return '<div class="it" data-uid="' + p.uid + '"><div class="av">' + avHtml(p) + (p.online ? '<i class="dot"></i>' : '') + '</div>'
+      + '<div class="m"><div class="nm">' + esc(p.name || 'без имени') + (p.banned ? ' <span class="bd ban">бан</span>' : '') + '</div>'
+      + '<div class="sub">ID ' + esc(p.cid || '—') + ' · 1vs1: ' + fmt(p.matches || 0) + '</div></div>' + (right || '') + '</div>';
+  }
+  function gwBtn(op, text, cls) { return '<button type="button" class="' + (cls || '') + ' f1" data-gop="' + op + '">' + text + '</button>'; }
+  function renderGw() {
+    var g = S.gw.g, hs = S.gw.history || [], h = '', open = {};
+    var ds = $('gw-card').querySelectorAll('details[data-k]');
+    for (var i = 0; i < ds.length; i++) if (ds[i].open) open[ds[i].getAttribute('data-k')] = 1;
+    if (!g) h += '<div class="small">Сейчас розыгрыша нет. Запусти новый ниже — игроки увидят его в боте: «Товары Free Fire» → «🎁 Розыгрыш».</div>';
+    else {
+      var st = GST[g.status] || ['auto', g.status], now = Date.now() / 1000, ws = g.winners || [], ps = g.participants || [];
+      // приз из готовых кнопок уже начинается со значка — свой значок ставим только к своему тексту
+      h += '<div class="row"><div class="nm f1 wrapt" style="font-size:17px">' + (/^[0-9A-Za-zА-Яа-яЁё«"]/.test(g.prize) ? '🎁 ' : '') + esc(g.prize) + '</div><span class="bd ' + st[0] + '">' + st[1] + '</span></div>'
+        + (g.desc ? '<div class="sub wrapt" style="margin-top:2px">' + esc(g.desc) + '</div>' : '')
+        + '<div class="grid" style="margin-top:10px">' + kv('Участников', fmt(g.n)) + kv('Победителей', g.winners_n)
+        + kv('Кто может', g.min_matches ? 'от ' + g.min_matches + ' ' + plural3(g.min_matches, 'матча', 'матчей', 'матчей') + ' 1vs1' : 'все игроки')
+        + kv('Итоги', !g.ends_at ? 'без срока' : dt(g.ends_at) + (g.status === 'open' && g.ends_at > now ? '<small>ещё ' + leftTxt(g.ends_at - now) + '</small>' : ''))
+        + '</div>';
+      if (g.status === 'drawn') {
+        h += '<div class="note mt" style="margin-top:10px">🎲 ' + (ws.length > 1 ? 'Победители выбраны' : 'Победитель выбран')
+          + '. Проверь и нажми «📣 Объявить итоги» — победителю придёт «Ты выиграл» с кнопкой «Написать @SloppyX», остальным участникам — кто победил.</div>'
+          + ws.map(function (p) { return gwRow(p, '<button type="button" class="xs" data-gre="' + p.uid + '">🔄 Другой</button>'); }).join('');
+        h += '<div class="row" style="margin-top:10px">' + gwBtn('announce', '📣 Объявить итоги', 'b-acc') + '</div>'
+          + '<div class="row" style="margin-top:8px">' + gwBtn('cancel', '✖️ Отменить розыгрыш', 'b-no') + '</div>';
+      } else {
+        if (g.status === 'closed') h += '<div class="note wn" style="margin-top:10px">⏰ Запись закрыта' + (g.closed_at ? ' ' + dt(g.closed_at) : '')
+          + '. ' + (g.n ? 'Выбери победителей — случайно среди участников без бана.' : 'Никто не записался — можно открыть запись снова или отменить.') + '</div>';
+        h += '<div class="row" style="margin-top:10px">' + gwBtn('draw', '🎲 Выбрать победителей', 'b-acc') + '</div>'
+          + '<div class="row" style="margin-top:8px">'
+          + (g.status === 'open' ? gwBtn('close', '🔒 Закрыть запись') + gwBtn('promote', '📢 Объявить всем') : gwBtn('reopen', '🔓 Открыть запись'))
+          + gwBtn('cancel', '✖️ Отменить', 'b-no') + '</div>';
+      }
+      var lock = {}; ws.forEach(function (p) { lock[p.uid] = 1; });
+      h += '<details data-k="gw-p" style="margin-top:12px"><summary>Участники (' + fmt(g.n) + ')</summary>'
+        + (ps.length ? ps.map(function (p) { return gwRow(p, lock[p.uid] ? '<span class="bd ok">победитель</span>' : '<button type="button" class="xs" data-gx="' + p.uid + '">Убрать</button>'); }).join('')
+          : '<div class="small">Пока никто не записался.</div>')
+        + (g.n > ps.length ? '<div class="small" style="margin-top:6px">Показаны последние ' + ps.length + ' из ' + fmt(g.n) + '</div>' : '')
+        + '</details>';
+    }
+    if (hs.length) {
+      h += '<details data-k="gw-h" style="margin-top:12px"><summary>Прошлые розыгрыши (' + hs.length + ')</summary><div class="hist">'
+        + hs.map(function (x) {
+            return '<div><b>' + esc(x.prize) + '</b> · ' + dt(x.finished) + (x.state === 'cancelled' ? ' <span class="bd wn">отменён</span>' : '')
+              + ' · 👥 ' + fmt(x.participants)
+              + (x.winners || []).map(function (w) {
+                  return '<div class="row" style="margin-top:6px"><span class="f1 lk wrapt" data-uid="' + w.uid + '">🥇 ' + esc(w.name || 'без имени')
+                    + ' <span class="small">ID ' + esc(w.cid || '—') + '</span></span>'
+                    + '<button type="button" class="xs' + (w.delivered ? ' b-acc' : '') + '" data-gdel="' + esc(x.id) + '" data-u="' + w.uid + '">'
+                    + (w.delivered ? '✅ Выдано' : 'Приз выдан?') + '</button></div>';
+                }).join('') + '</div>';
+          }).join('') + '</div></details>';
+    }
+    $('gw-card').innerHTML = h;
+    var ds2 = $('gw-card').querySelectorAll('details[data-k]');
+    for (var k = 0; k < ds2.length; k++) if (open[ds2[k].getAttribute('data-k')]) ds2[k].open = true;
+    $('gw-form').hidden = !!g;
+    if (!g) renderGwForm();
+  }
+  function renderGwForm() {
+    var pz = (S.gw && S.gw.prizes) || [], cur = $('gw-prize').value.trim();
+    $('gw-prize-c').innerHTML = pz.map(function (x) { return '<button type="button" class="chip' + (x === cur ? ' on' : '') + '" data-v="' + esc(x) + '">' + esc(x) + '</button>'; }).join('');
+    $('gw-win-c').innerHTML = GW_WIN.map(function (x) { return '<button type="button" class="chip' + (S.gwWin === x ? ' on' : '') + '" data-n="' + x + '">' + x + '</button>'; }).join('');
+    $('gw-mm-c').innerHTML = GW_MM.map(function (x) { return '<button type="button" class="chip' + (S.gwMm === x[0] ? ' on' : '') + '" data-n="' + x[0] + '">' + x[1] + '</button>'; }).join('');
+    if (!$('gw-n')) { $('gw-exp').innerHTML = expHtml('gw'); expHint('gw'); }      // один раз — выбранное время не сбрасываем
+  }
+  expWire($('gw-exp'));
+  $('gw-prize-c').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-v]'); if (!b) return;
+    $('gw-prize').value = b.getAttribute('data-v'); renderGwForm();
+  });
+  $('gw-prize').addEventListener('input', function () {
+    var cs = $('gw-prize-c').querySelectorAll('.chip'), v = this.value.trim();
+    for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('on', cs[i].getAttribute('data-v') === v);
+  });
+  $('gw-win-c').addEventListener('click', function (e) { var b = e.target.closest('[data-n]'); if (b) { S.gwWin = Number(b.getAttribute('data-n')); renderGwForm(); } });
+  $('gw-mm-c').addEventListener('click', function (e) { var b = e.target.closest('[data-n]'); if (b) { S.gwMm = Number(b.getAttribute('data-n')); renderGwForm(); } });
+  $('gw-go').addEventListener('click', function () {
+    var prize = $('gw-prize').value.trim();
+    if (!prize) { toast('Выбери или впиши приз', true); return; }
+    var x = readExp('gw');
+    if (x === null) return;
+    if (x === undefined) { toast('Выбери, когда закончить приём заявок', true); return; }
+    var ann = $('gw-ann').checked;
+    doSect('/giveaway', extend({ op: 'start', prize: prize, desc: $('gw-desc').value.trim(), winners_n: S.gwWin, min_matches: S.gwMm, announce: ann }, x),
+      'Запустить розыгрыш «' + prize + '»?\nПобедителей: ' + S.gwWin + (S.gwMm ? '. Участвуют сыгравшие от ' + S.gwMm + ' ' + plural3(S.gwMm, 'матча', 'матчей', 'матчей') + ' 1vs1' : '')
+        + (ann ? '\nОбъявление с кнопкой «🎁 Участвовать» уйдёт всем игрокам.' : ''),
+      this, function (j) {
+        $('gw-prize').value = ''; $('gw-desc').value = ''; setGw(j); $('gw-box').scrollIntoView({ block: 'start' });
+        if (ann) loadBc(true);        // объявление идёт рассылкой — пусть на вкладке появится точка хода
+      });
+  });
+  function gwName(uid) {
+    var g = S.gw && S.gw.g, all = g ? (g.participants || []).concat(g.winners || []) : [];
+    for (var i = 0; i < all.length; i++) if (all[i].uid === uid) return all[i].name || 'без имени';
+    return 'игрока';
+  }
+  $('gw-card').addEventListener('click', function (e) {
+    var g = S.gw && S.gw.g;
+    var b = e.target.closest('[data-gop]');
+    if (b && g) {
+      var op = b.getAttribute('data-gop'), n = g.n || 0;
+      var conf = {
+        draw: 'Выбрать ' + (g.winners_n > 1 ? g.winners_n + ' победителей' : 'победителя') + ' случайно среди ' + n + ' ' + plural3(n, 'участника', 'участников', 'участников') + '?' + (g.status === 'open' ? '\nЗапись закроется.' : '') + '\nИгрокам пока ничего не придёт — итоги объявишь сам.',
+        close: 'Закрыть запись? Новые игроки участвовать не смогут.',
+        promote: 'Отправить объявление о розыгрыше всем игрокам (у кого включены уведомления «Розыгрыши»)?',
+        announce: 'Объявить итоги?\nПобедителю придёт «Ты выиграл» с кнопкой «Написать @SloppyX», остальным участникам — кто победил.',
+        cancel: 'Отменить розыгрыш «' + g.prize + '»?' + (n ? '\nУчастникам (' + n + ') придёт, что он отменён.' : '')
+      }[op] || null;
+      doSect('/giveaway', { op: op, gid: g.id }, conf, b, function (j) { setGw(j); if (op === 'promote') loadBc(true); });
+      return;
+    }
+    var r = e.target.closest('[data-gre]');
+    if (r && g) {
+      var ru = Number(r.getAttribute('data-gre'));
+      doSect('/giveaway', { op: 'redraw', uid: ru, gid: g.id }, 'Выбрать другого победителя вместо ' + gwName(ru) + '?\nЕго в этом розыгрыше больше не выберет.', r, setGw);
+      return;
+    }
+    var x = e.target.closest('[data-gx]');
+    if (x && g) {
+      var xu = Number(x.getAttribute('data-gx'));
+      doSect('/giveaway', { op: 'remove', uid: xu, gid: g.id }, 'Убрать ' + gwName(xu) + ' из розыгрыша?\nЗаписаться снова он не сможет. Сообщение ему не придёт.', x, setGw);
+      return;
+    }
+    var d = e.target.closest('[data-gdel]');
+    if (d) { doSect('/giveaway', { op: 'delivered', gid: d.getAttribute('data-gdel'), uid: Number(d.getAttribute('data-u')) }, null, d, setGw); return; }
+    var u = e.target.closest('[data-uid]');
+    if (u) openPlayer(Number(u.getAttribute('data-uid')), 'promo');
+  });
+
 
   // ── турнир ──────────────────────────────────────────────────────────
   var TST = { open: ['ok', 'запись открыта'], locked: ['wn', 'запись закрыта'], closed: ['auto', 'завершён'] };
@@ -3119,7 +3285,7 @@ window.addEventListener('error', function (e) {
     loadMeta().catch(function () {});
     loadList(false, !!cached);
     // v333: из сообщения бота о споре или жалобе («🗂 Открыть в админке») — сразу на нужной вкладке
-    var TAB0 = { duels: 'duels', reports: 'rep', support: 'sup' }[Q.get('tab') || ''];      // v338: + поддержка
+    var TAB0 = { duels: 'duels', reports: 'rep', support: 'sup', promo: 'promo' }[Q.get('tab') || ''];   // v345: + промо (розыгрыш)      // v338: + поддержка
     if (TAB0) openTab(TAB0);
     // v333: раз в полминуты — свежие цифры в шапке и на вкладках (споры, жалобы), пока приложение на экране
     setInterval(function () { if (!document.hidden && S.view !== 'pl') loadMeta().catch(function () {}); }, 30000);
