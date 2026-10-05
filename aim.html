@@ -282,6 +282,57 @@
   .ideal b { display: block; font: 17px var(--hud); letter-spacing: .05em; color: var(--ye); }
   .ideal p { margin: 4px 0 12px; color: var(--tx2); font-size: 13.5px; }
 
+  /* v349: два теста — две кнопки; своя модель вручную */
+  .modes { display: grid; gap: 10px; margin-top: 18px; }
+  .modes .glow { margin-top: 0; }
+  .mode { flex-direction: column; gap: 3px; padding: 13px 20px 12px; }
+  .mode b { font: 17px var(--hud); letter-spacing: .06em; }
+  .mode small { font: 600 11.5px var(--ui); letter-spacing: .01em; opacity: .82; }
+  .inp { width: 100%; height: 44px; padding: 0 12px; background: #090b10; border: 1px solid var(--ln2); color: var(--tx); outline: 0;
+         font: 500 16px var(--ui); transition: border-color .2s, box-shadow .2s; }
+  .inp:focus { border-color: var(--or); box-shadow: 0 0 0 3px rgba(255,138,0,.14); }
+  .inp::placeholder { color: var(--tx3); }
+  .qlist .use { display: block; width: 100%; margin-top: 6px; padding: 11px 12px; text-align: left; color: var(--ye); background: rgba(255,138,0,.08);
+                border: 1px dashed rgba(255,150,0,.55); font: 600 13.5px var(--ui); }
+
+  /* v349: «Анализ оттяжки» — экран со следом пальца */
+  #swipe { position: fixed; inset: 0; z-index: 50; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
+           background: radial-gradient(90% 70% at 50% 62%, #1b2131, #0a0c12 72%); }
+  #sw-cv { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+  .sw-hint { position: absolute; left: 0; right: 0; top: 44%; text-align: center; pointer-events: none; transition: opacity .3s; }
+  .sw-hint b { display: block; margin-top: 14px; font: 16px var(--hud); letter-spacing: .05em; }
+  .sw-hint small { display: block; margin-top: 4px; color: var(--tx2); font-size: 13px; }
+  .sw-arrow { position: relative; width: 40px; height: 120px; margin: -60px auto 0; animation: swa 1.6s var(--ease) infinite; }
+  .sw-arrow::before { content: ''; position: absolute; left: 17px; top: 14px; bottom: 0; width: 6px; background: linear-gradient(0deg, rgba(255,90,0,0), #ffb000); }
+  .sw-arrow::after { content: ''; position: absolute; left: 6px; top: 0; width: 28px; height: 22px; background: #ffc400; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  @keyframes swa { 0% { transform: translateY(26px); opacity: 0; } 30% { opacity: 1; } 80% { transform: translateY(-26px); opacity: 1; } 100% { transform: translateY(-34px); opacity: 0; } }
+  .sw-live { position: absolute; left: 0; top: 0; z-index: 3; padding: 5px 10px; white-space: nowrap; pointer-events: none; opacity: 0;
+             font: 13px var(--hud); color: #170a00; background: var(--grad); clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+             transition: opacity .15s; }
+  .sw-card { position: absolute; left: 14px; right: 14px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 3; padding: 12px 14px;
+             background: rgba(15,18,26,.94); box-shadow: inset 0 0 0 1px rgba(255,150,0,.45); pointer-events: none; opacity: 0; transform: translateY(12px);
+             clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+             transition: opacity .25s, transform .25s var(--ease); }
+  .sw-card.show { opacity: 1; transform: none; }
+  .sw-card b { display: block; font: 13px var(--hud); letter-spacing: .08em; color: var(--or2); }
+  .sw-card.bad b { color: var(--red); }
+  .sw-card p { margin: 4px 0 0; color: var(--tx2); font-size: 13px; }
+  .sw-g { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 8px; text-align: center; }
+  .sw-g span { display: block; font: 18px var(--hud); color: var(--tx); }
+  .sw-g small { display: block; font: 700 9.5px var(--ui); letter-spacing: .07em; color: var(--tx3); text-transform: uppercase; }
+  .dots { display: flex; gap: 5px; margin-top: 7px; }
+  .dots i { width: 16px; height: 5px; background: rgba(255,255,255,.13); clip-path: polygon(3px 0, 100% 0, calc(100% - 3px) 100%, 0 100%); }
+  .dots i.on { background: var(--grad); }
+  .rescv { display: block; width: 100%; height: 150px; margin-top: 10px; background: #0a0c11; box-shadow: inset 0 0 0 1px var(--ln); }
+  .rk-n.sm { font-size: 22px; }
+  .demo .dtrail { display: none; }
+  .demo.swipe .dt, .demo.swipe .dx { display: none; }
+  .demo.swipe .dtrail { display: block; position: absolute; left: 50%; bottom: 26px; width: 7px; height: 112px; margin-left: -3px; transform-origin: 50% 100%;
+                        background: linear-gradient(0deg, #ff5a00, #ffc400); box-shadow: 0 0 16px rgba(255,140,0,.85); animation: dtr 2s var(--ease) infinite; }
+  .demo.swipe .df { animation: dfing3 2s var(--ease) infinite; }
+  @keyframes dtr { 0%, 15% { transform: scaleY(0); opacity: 1; } 55% { transform: scaleY(1); opacity: 1; } 85%, 100% { transform: scaleY(1); opacity: 0; } }
+  @keyframes dfing3 { 0%, 15% { transform: translate(30px, 28px); opacity: 0; } 18% { opacity: 1; } 55% { transform: translate(30px, -84px); opacity: 1; } 72%, 100% { transform: translate(30px, -84px); opacity: 0; } }
+
   /* сообщения */
   .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 80; max-width: 92%;
            transform: translate(-50%, 14px); opacity: 0; pointer-events: none; padding: 11px 16px; font: 600 13.5px var(--ui);
@@ -327,6 +378,8 @@
       <div id="man" hidden>
         <div class="lbl" id="l-dev"></div><div class="chips" id="c-dev"></div>
         <div class="lbl" id="l-scr"></div><div class="chips" id="c-scr"></div>
+        <div class="lbl" id="l-mname"></div>
+        <input id="m-name" class="inp" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false">
       </div>
     </div>
     <div class="panel">
@@ -335,7 +388,10 @@
       <div class="lbl" id="l-style"></div><div class="chips" id="c-style"></div>
     </div>
     <div class="panel last" id="last" hidden></div>
-    <div class="glow"><button type="button" class="btn big" id="go" disabled></button></div>
+    <div class="modes">
+      <div class="glow"><button type="button" class="btn big mode" id="go" disabled><b id="go-t"></b><small id="go-s"></small></button></div>
+      <button type="button" class="btn sec mode" id="go2" disabled><b id="go2-t"></b><small id="go2-s"></small></button>
+    </div>
     <div class="hint" id="go-h"></div>
   </section>
 
@@ -348,6 +404,7 @@
       <svg class="dt" viewBox="-15 -8 30 56"><circle cx="0" cy="0" r="7" fill="#20263a" stroke="#ff9500" stroke-width="2"/>
         <path d="M-11 11h22l-4 22h-14z" fill="#20263a" stroke="#ff9500" stroke-width="2" stroke-linejoin="round"/></svg>
       <svg class="dx" viewBox="-15 -15 30 30"><path d="M0-13v7M0 6v7M-13 0h7M6 0h7" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle r="2" fill="#ff3b30"/></svg>
+      <div class="dtrail"></div>
       <div class="df">👆</div>
     </div>
     <ul class="steps" id="br-l"></ul>
@@ -364,6 +421,7 @@
       <div class="rk-p" id="rk-p"></div>
     </div>
     <div class="stats" id="stats"></div>
+    <canvas class="rescv" id="res-cv" hidden></canvas>
     <div class="panel">
       <div class="ph"><span>⚙</span><b id="r1-t"></b></div>
       <div id="sl"></div>
@@ -414,6 +472,16 @@
   <button type="button" class="aquit" id="aquit">✕</button>
 </div>
 
+<!-- v349: «Анализ оттяжки» — поверх всего, пока игрок проводит пальцем -->
+<div id="swipe" hidden>
+  <canvas id="sw-cv"></canvas>
+  <div class="hud"><div class="hl"><b id="sw-t"></b><span id="sw-c"></span><div class="dots" id="sw-dots"></div></div></div>
+  <div class="sw-hint" id="sw-hint"><div class="sw-arrow"></div><b id="sw-h1"></b><small id="sw-h2"></small></div>
+  <div class="sw-live" id="sw-live"></div>
+  <div class="sw-card" id="sw-card"></div>
+  <button type="button" class="aquit" id="sw-quit">✕</button>
+</div>
+
 <div id="calc" hidden><div class="spin"></div><b id="calc-t"></b><small id="calc-d"></small></div>
 <div class="toast" id="toast"></div>
 
@@ -423,9 +491,10 @@ window.addEventListener('error', function (e) {
   if (e && e.target && e.target !== window && e.target.nodeType === 1) return;
   try {
     var a = document.getElementById('arena'); if (a) a.hidden = true;
+    var w = document.getElementById('swipe'); if (w) w.hidden = true;
     document.querySelectorAll('.scr').forEach(function (s) { s.hidden = true; });
     var f = document.getElementById('fatal'); f.hidden = false;
-    document.getElementById('fatal-d').textContent = 'Закрой и открой тест заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v348';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой тест заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v349';
   } catch (_) {}
 }, true);
 </script>
@@ -440,7 +509,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v348';
+  var VER = 'v349';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -477,7 +546,14 @@ window.addEventListener('error', function (e) {
       scr_names: ['компактный экран', 'обычный экран', 'большой экран', 'планшет'],
       p2: 'КАК ИГРАЕШЬ', l_grip: 'Сколькими пальцами', l_style: 'Стиль',
       grips: [['2 пальца', ''], ['3–4 пальца', 'коготь']], styles: [['Раш', 'ближний бой'], ['Универсал', ''], ['Снайпер', 'дальний бой']],
-      go: '▶ НАЧАТЬ ТЕСТ', go_need_ph: 'Выбери свой телефон', go_need_gs: 'Выбери пальцы и стиль', go_ok: 'Меньше минуты · 2 раунда',
+      go: '▶ ТЕСТ ПРИЦЕЛА', go_s: '2 раунда: флики и оттяжка в голову', go2: '🖐 АНАЛИЗ ОТТЯЖКИ', go2_s: 'проведи пальцем как в игре — 5 раз',
+      go_need_ph: 'Выбери свой телефон', go_need_gs: 'Выбери пальцы и стиль', go_ok: 'Выбери тест — каждый меньше минуты',
+      l_mname: 'Модель (если знаешь)', m_ph: 'Например: Itel A70', use: 'Нет в списке — указать «{q}» и выбрать экран самому',
+      sw_title: 'АНАЛИЗ ОТТЯЖКИ', rnd_sw: '{n} СВАЙПОВ',
+      sw_steps: ['Проведи пальцем <b>вверх</b> — как делаешь оттяжку в игре', 'Тяни с той же силой и длиной, что в бою', '<b>{n} раз</b> — бот измерит длину, скорость и ровность и подберёт сенсу под твоё касание'],
+      sw_h1: 'ПРОВЕДИ ВВЕРХ', sw_h2: 'как делаешь оттяжку в игре', sw_card: 'СВАЙП {i} / {n}', sw_bad: 'ЭТО НЕ ОТТЯЖКА', sw_bad_d: 'Проведи пальцем вверх — от груди к голове',
+      sw_len: 'длина, см', sw_time: 'время, с', sw_spd: 'пик, см/с', sw_str: 'ровно, %', sw_unit: 'см', sw_unit_v: 'см/с',
+      st_len: 'длина, см', st_spd: 'скорость, см/с', st_str: 'ровность', res_sw: '{n} оттяжек · сенса под твоё касание',
       last: 'ПРОШЛЫЙ ТЕСТ', last_btn: 'ОТКРЫТЬ', gen: 'Обзор', red: 'Коллиматор',
       rnd: 'РАУНД {n} / 2', flick: 'ФЛИКИ', drag: 'ОТТЯЖКА',
       fl_steps: ['Цель появится в случайном месте', 'Одним <b>быстрым свайпом</b> наведи прицел на голову — как в игре', 'Отпусти палец — это выстрел', '<b>Не подправляй</b> долго: важен первый рывок'],
@@ -515,7 +591,14 @@ window.addEventListener('error', function (e) {
       scr_names: ['compact screen', 'regular screen', 'large screen', 'tablet'],
       p2: 'HOW YOU PLAY', l_grip: 'Fingers', l_style: 'Style',
       grips: [['2 thumbs', ''], ['3–4 fingers', 'claw']], styles: [['Rush', 'close range'], ['All-round', ''], ['Sniper', 'long range']],
-      go: '▶ START THE TEST', go_need_ph: 'Pick your phone', go_need_gs: 'Pick fingers and style', go_ok: 'Under a minute · 2 rounds',
+      go: '▶ AIM TEST', go_s: '2 rounds: flicks and head drags', go2: '🖐 DRAG ANALYSIS', go2_s: 'swipe like in the game — 5 times',
+      go_need_ph: 'Pick your phone', go_need_gs: 'Pick fingers and style', go_ok: 'Pick a test — each takes under a minute',
+      l_mname: 'Model (if you know it)', m_ph: 'For example: Itel A70', use: 'Not listed — use «{q}» and pick the screen myself',
+      sw_title: 'DRAG ANALYSIS', rnd_sw: '{n} SWIPES',
+      sw_steps: ['Swipe <b>up</b> — the way you do a head drag in the game', 'Pull with the same force and length as in a fight', '<b>{n} times</b> — the bot measures length, speed and straightness and matches the sensitivity to your touch'],
+      sw_h1: 'SWIPE UP', sw_h2: 'the way you drag in the game', sw_card: 'SWIPE {i} / {n}', sw_bad: 'NOT A DRAG', sw_bad_d: 'Swipe up — from the chest to the head',
+      sw_len: 'length, cm', sw_time: 'time, s', sw_spd: 'peak, cm/s', sw_str: 'straight, %', sw_unit: 'cm', sw_unit_v: 'cm/s',
+      st_len: 'length, cm', st_spd: 'speed, cm/s', st_str: 'straightness', res_sw: '{n} drags · sensitivity for your touch',
       last: 'LAST TEST', last_btn: 'OPEN', gen: 'General', red: 'Red dot',
       rnd: 'ROUND {n} / 2', flick: 'FLICKS', drag: 'HEAD DRAG',
       fl_steps: ['A target appears at a random spot', 'Put the crosshair on the head with <b>one quick swipe</b> — like in the game', 'Lift your finger — that\'s the shot', '<b>Don\'t correct</b> for long: the first flick matters'],
@@ -546,7 +629,8 @@ window.addEventListener('error', function (e) {
 
   var S = { phones: [], idx: [], prof: { phone: '', dev: 0, scr: 0, grip: 0, style: 0 }, phone: null, manual: false,
             rounds: { flick: 10, drag: 8 }, gain: { flick: 1, drag: 1 }, base: null, res: null, last: null, view: 'prof',
-            orderUrl: 'https://t.me/SloppyX', price: 200, busy: false };
+            orderUrl: 'https://t.me/SloppyX', price: 200, busy: false,
+            mode: 'aim', swipes: 5, diag: { 1: 5.8, 2: 6.4, 3: 6.7, 4: 10.5 }, paths: null };
   function tpl(s, o) { return String(s).replace(/\{(\w+)\}/g, function (_, k) { return o[k] != null ? o[k] : ''; }); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function inch(v) { var s = String(Math.round(v * 100) / 100); return (LANG === 'ru' ? s.replace('.', ',') : s) + '″'; }
@@ -606,11 +690,12 @@ window.addEventListener('error', function (e) {
   function syncBack() {
     try {
       if (!tg || !tg.BackButton) return;
-      if (S.view === 'prof' && $('arena').hidden) tg.BackButton.hide(); else tg.BackButton.show();
+      if (S.view === 'prof' && $('arena').hidden && $('swipe').hidden) tg.BackButton.hide(); else tg.BackButton.show();
     } catch (e) {}
   }
   function goBack() {
     if (!$('arena').hidden) { quitArena(); return; }
+    if (!$('swipe').hidden) { quitSwipe(); return; }
     show('prof');
   }
 
@@ -620,7 +705,10 @@ window.addEventListener('error', function (e) {
     $('h-t').innerHTML = L.ht; $('h-d').textContent = L.hd;
     $('p1-t').textContent = L.p1; $('q').placeholder = L.q_ph; $('qs-x').textContent = L.chg;
     $('l-dev').textContent = L.l_dev; $('l-scr').textContent = L.l_scr; $('p2-t').textContent = L.p2;
-    $('l-grip').textContent = L.l_grip; $('l-style').textContent = L.l_style; $('go').textContent = L.go;
+    $('l-grip').textContent = L.l_grip; $('l-style').textContent = L.l_style;
+    $('go-t').textContent = L.go; $('go-s').textContent = L.go_s; $('go2-t').textContent = L.go2; $('go2-s').textContent = L.go2_s;
+    $('l-mname').textContent = L.l_mname; $('m-name').placeholder = L.m_ph;
+    $('sw-t').textContent = L.sw_title; $('sw-h1').textContent = L.sw_h1; $('sw-h2').textContent = L.sw_h2;
     $('br-go').textContent = L.ready; $('calc-t').textContent = L.calc_t; $('calc-d').textContent = L.calc_d;
     $('r1-t').textContent = L.r1; $('r2-t').textContent = L.r2; $('r3-t').textContent = L.r3; $('r3-d').textContent = L.r3d;
     $('copy').textContent = L.copy; $('id-t').textContent = L.id_t;
@@ -698,7 +786,8 @@ window.addEventListener('error', function (e) {
     var r = search(q);
     $('q-list').innerHTML = r.length ? r.map(function (p) {
       return '<button type="button" data-ph="' + esc(p[0]) + '"><span>' + esc(p[1] + ' ' + p[2]) + '</span><small>' + inch(p[3]) + '</small></button>';
-    }).join('') : '<div class="none">' + esc(L.q_none) + '</div>';
+    }).join('') : '<div class="none">' + esc(L.q_none) + '</div>'
+      + '<button type="button" class="use" data-use="1">' + esc(tpl(L.use, { q: q.slice(0, 40) })) + '</button>';
   }
   function pickPhone(key) {
     var p = null;
@@ -728,7 +817,7 @@ window.addEventListener('error', function (e) {
   }
   function syncGo() {
     var r = profReady();
-    $('go').disabled = !(r.ph && r.gs) || S.busy;
+    $('go').disabled = $('go2').disabled = !(r.ph && r.gs) || S.busy;
     $('go-h').textContent = !r.ph ? L.go_need_ph : !r.gs ? L.go_need_gs : L.go_ok;
   }
 
@@ -752,25 +841,28 @@ window.addEventListener('error', function (e) {
 
   // ── старт: стартовая сенса и «скорость» прицела для теста ───────────
   function body() {
-    return { phone: S.phone ? S.phone[0] : '', dev: S.prof.dev, scr: S.prof.scr, grip: S.prof.grip, style: S.prof.style };
+    return { phone: S.phone ? S.phone[0] : '', dev: S.prof.dev, scr: S.prof.scr, grip: S.prof.grip, style: S.prof.style,
+             model: (!S.phone && S.manual) ? $('m-name').value.trim().slice(0, 40) : '' };
   }
-  function begin() {
+  function begin(mode) {
     if (S.busy) return;
+    S.mode = mode === 'swipe' ? 'swipe' : 'aim';
     S.busy = true; syncGo();
     post('/casino/aim/start', body()).then(function (res) {
       S.busy = false; syncGo();
       if (!res.j || !res.j.ok) { toast(errText(res), true); haptic('error'); return; }
       S.gain = res.j.gain || S.gain; S.base = res.j.base;
       A.res = { flick: [], drag: [] }; A.hits = 0; A.heads = 0;
-      brief('flick');
+      brief(S.mode === 'swipe' ? 'swipe' : 'flick');
     }).catch(function () { S.busy = false; syncGo(); toast(L.e_net, true); });
   }
   function brief(kind) {
     A.kind = kind;
-    $('br-n').textContent = tpl(L.rnd, { n: kind === 'flick' ? 1 : 2 });
-    $('br-t').textContent = kind === 'flick' ? L.flick : L.drag;
+    var sw = kind === 'swipe';
+    $('br-n').textContent = sw ? tpl(L.rnd_sw, { n: S.swipes }) : tpl(L.rnd, { n: kind === 'flick' ? 1 : 2 });
+    $('br-t').textContent = sw ? L.sw_title : kind === 'flick' ? L.flick : L.drag;
     $('br-demo').className = 'demo ' + kind;
-    $('br-l').innerHTML = (kind === 'flick' ? L.fl_steps : L.dr_steps).map(function (s) { return '<li>' + s + '</li>'; }).join('');
+    $('br-l').innerHTML = (sw ? L.sw_steps : kind === 'flick' ? L.fl_steps : L.dr_steps).map(function (s) { return '<li>' + tpl(s, { n: S.swipes }) + '</li>'; }).join('');
     $('br-s').innerHTML = S.base ? tpl(L.sens, { k: kind === 'flick' ? L.gen : L.red, v: kind === 'flick' ? S.base.gen : S.base.red }) : '';
     $('br-s').hidden = !S.base;
     show('brief');
@@ -943,7 +1035,177 @@ window.addEventListener('error', function (e) {
   arena.addEventListener('pointerup', up);
   arena.addEventListener('pointercancel', up);
   $('aquit').addEventListener('click', function (e) { e.stopPropagation(); quitArena(); });
-  window.addEventListener('resize', function () { if (!$('arena').hidden) layout(); });
+  window.addEventListener('resize', function () { if (!$('arena').hidden) layout(); if (!$('swipe').hidden) swLayout(); });
+
+  // ── v349: «Анализ оттяжки» ──────────────────────────────────────────
+  // Игрок проводит пальцем вверх, как делает оттяжку. След рисуется на холсте; после каждого свайпа — длина в сантиметрах
+  // (по диагонали экрана его телефона), время, пиковая скорость и ровность. Считает бот, страница только меряет.
+  var W = { n: 5, list: [], cur: null, ptr: null, dpr: 1, pxcm: 40, ctx: null, raf: 0, done: false, last: null };
+  function pxPerCm() {
+    var d = S.phone ? S.phone[3] : (S.diag[S.prof.scr] || 6.4);
+    var w = (window.screen && screen.width) || window.innerWidth, h = (window.screen && screen.height) || window.innerHeight;
+    return Math.sqrt(w * w + h * h) / d / 2.54;
+  }
+  function startSwipe() {
+    W.n = S.swipes || 5; W.list = []; W.cur = null; W.ptr = null; W.done = false; W.last = null; W.pxcm = pxPerCm();
+    $('swipe').hidden = false; document.body.style.overflow = 'hidden';
+    try { if (tg && tg.enableClosingConfirmation) tg.enableClosingConfirmation(); } catch (e) {}
+    $('sw-hint').style.opacity = '1'; $('sw-card').className = 'sw-card'; $('sw-live').style.opacity = '0';
+    swCount(); swLayout(); syncBack();
+  }
+  function stopSwipe() {
+    $('swipe').hidden = true; document.body.style.overflow = ''; W.ptr = null;
+    try { if (tg && tg.disableClosingConfirmation) tg.disableClosingConfirmation(); } catch (e) {}
+  }
+  function quitSwipe() {
+    var go = function () { stopSwipe(); show('prof'); };
+    try { if (tg && tg.showConfirm && tg.isVersionAtLeast && tg.isVersionAtLeast('6.2')) { tg.showConfirm(L.quit, function (ok) { if (ok) go(); }); return; } } catch (e) {}
+    if (window.confirm(L.quit)) go();
+  }
+  function swCount() {
+    $('sw-c').textContent = tpl(L.of, { i: Math.min(W.list.length + 1, W.n), n: W.n });
+    var h = ''; for (var i = 0; i < W.n; i++) h += '<i' + (i < W.list.length ? ' class="on"' : '') + '></i>';
+    $('sw-dots').innerHTML = h;
+  }
+  function swLayout() {
+    var cv = $('sw-cv');
+    W.dpr = Math.min(3, window.devicePixelRatio || 1);
+    cv.width = Math.round(window.innerWidth * W.dpr); cv.height = Math.round(window.innerHeight * W.dpr);
+    W.ctx = cv.getContext('2d'); swDraw();
+  }
+  function swReq() { if (!W.raf) W.raf = requestAnimationFrame(swDraw); }
+  function stroke(c, pts, alpha, glow, width) {
+    if (pts.length < 2) return;
+    var a = pts[0], b = pts[pts.length - 1], g = c.createLinearGradient(a.x, a.y, b.x, b.y), i;
+    g.addColorStop(0, '#ff5a00'); g.addColorStop(1, '#ffd23f');
+    c.save(); c.globalAlpha = alpha; c.lineCap = 'round'; c.lineJoin = 'round';
+    c.beginPath(); c.moveTo(a.x, a.y); for (i = 1; i < pts.length; i++) c.lineTo(pts[i].x, pts[i].y);
+    c.strokeStyle = g; c.lineWidth = width || 10; c.shadowColor = 'rgba(255,140,0,.95)'; c.shadowBlur = glow; c.stroke();
+    c.shadowBlur = 0; c.lineWidth = Math.max(1.5, (width || 10) * 0.28); c.strokeStyle = 'rgba(255,255,255,.88)'; c.stroke();
+    c.restore();
+  }
+  function swDraw() {
+    W.raf = 0;
+    var c = W.ctx; if (!c) return;
+    var w = window.innerWidth, h = window.innerHeight, i;
+    c.setTransform(W.dpr, 0, 0, W.dpr, 0, 0); c.clearRect(0, 0, w, h);
+    // линейка слева: сантиметры этого экрана
+    var y0 = Math.round(h * 0.84);
+    c.save(); c.fillStyle = 'rgba(255,176,0,.75)'; c.font = '11px "Russo One", sans-serif';
+    for (i = 0; i <= 12; i++) {
+      var y = y0 - i * W.pxcm / 2; if (y < 80) break;
+      c.globalAlpha = i % 2 ? 0.45 : 0.9; c.fillRect(14, Math.round(y), i % 2 ? 7 : 14, 2);
+      if (!(i % 2)) c.fillText((i / 2) + ' ' + L.sw_unit, 32, Math.round(y) + 4);
+    }
+    c.restore();
+    for (i = 0; i < W.list.length; i++) stroke(c, W.list[i].pts, 0.16 + 0.05 * i, 6, 8);
+    if (W.cur) stroke(c, W.cur.pts, 1, 18, 10);
+    else if (W.last) {
+      stroke(c, W.last.pts, 1, 14, 10);
+      var p = W.last.pts, a = p[0], b = p[p.length - 1], k = W.last.peak;
+      c.save();
+      c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.arc(a.x, a.y, 9, 0, Math.PI * 2); c.stroke();
+      c.fillStyle = '#ffd23f'; c.beginPath(); c.arc(b.x, b.y, 6, 0, Math.PI * 2); c.fill();
+      if (k) { c.fillStyle = '#fff'; c.shadowColor = '#ffb000'; c.shadowBlur = 14; c.beginPath(); c.arc(k.x, k.y, 4, 0, Math.PI * 2); c.fill(); }
+      c.restore();
+    }
+  }
+  // скорость по отрезкам не короче 16 мс — иначе пик раздувают пары точек, пришедших почти одновременно
+  function swSpeed(p, from) {
+    var best = 0, at = null;
+    for (var i = Math.max(1, from || 1); i < p.length; i++) {
+      var j = i - 1;
+      while (j > 0 && p[i].t - p[j].t < 16) j--;
+      var dt = p[i].t - p[j].t; if (dt < 4) continue;
+      var v = Math.sqrt(Math.pow(p[i].x - p[j].x, 2) + Math.pow(p[i].y - p[j].y, 2)) / dt;
+      if (v > best) { best = v; at = p[i]; }
+    }
+    return { v: best, at: at };
+  }
+  function swMetrics(p) {
+    var a = p[0], b = p[p.length - 1], dx = b.x - a.x, dy = b.y - a.y, path = 0, i;
+    for (i = 1; i < p.length; i++) path += Math.sqrt(Math.pow(p[i].x - p[i - 1].x, 2) + Math.pow(p[i].y - p[i - 1].y, 2));
+    var sp = swSpeed(p);
+    return { len: Math.sqrt(dx * dx + dy * dy), path: Math.max(path, 0.01), dur: Math.max(0, b.t - a.t), vmax: sp.v, dx: dx, dy: dy, peak: sp.at, pts: p };
+  }
+  function swLive(x, y) {
+    var p = W.cur.pts, a = p[0], b = p[p.length - 1], len = Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2)) / W.pxcm;
+    var v = swSpeed(p, Math.max(1, p.length - 6)).v * 1000 / W.pxcm, el = $('sw-live');
+    el.textContent = dec(len, 1) + ' ' + L.sw_unit + ' · ' + Math.round(v) + ' ' + L.sw_unit_v;
+    el.style.transform = 'translate3d(' + Math.round(Math.max(8, Math.min(window.innerWidth - 150, x - 70))) + 'px,' + Math.round(Math.max(60, y - 76)) + 'px,0)';
+    el.style.opacity = '1';
+  }
+  function swCard(m, ok) {
+    var el = $('sw-card');
+    if (!ok) { el.innerHTML = '<b>' + esc(L.sw_bad) + '</b><p>' + esc(L.sw_bad_d) + '</p>'; el.className = 'sw-card bad show'; return; }
+    el.innerHTML = '<b>' + esc(tpl(L.sw_card, { i: W.list.length, n: W.n })) + '</b><div class="sw-g">'
+      + '<div><span>' + dec(m.len / W.pxcm, 1) + '</span><small>' + esc(L.sw_len) + '</small></div>'
+      + '<div><span>' + dec(m.dur / 1000, 2) + '</span><small>' + esc(L.sw_time) + '</small></div>'
+      + '<div><span>' + Math.round(m.vmax * 1000 / W.pxcm) + '</span><small>' + esc(L.sw_spd) + '</small></div>'
+      + '<div><span>' + Math.round(m.len / m.path * 100) + '</span><small>' + esc(L.sw_str) + '</small></div></div>';
+    el.className = 'sw-card show';
+  }
+  function swFinish() {
+    var p = W.cur ? W.cur.pts : [];
+    W.cur = null; $('sw-live').style.opacity = '0';
+    if (p.length < 2) { swReq(); return; }
+    var m = swMetrics(p), ok = m.len / W.pxcm >= 0.4 && -m.dy >= 0.5 * m.len && m.dur >= 15;
+    if (ok) { W.list.push(m); W.last = m; haptic(null, 'light'); } else { W.last = null; haptic('warning'); }
+    swCard(m, ok); swCount(); swReq();
+    if (W.list.length >= W.n) { W.done = true; setTimeout(function () { stopSwipe(); swSend(); }, 900); }
+  }
+  function swSend() {
+    $('calc').hidden = false;
+    var t0 = now(), b = body();
+    b.pxcm = Math.round(W.pxcm * 100) / 100;
+    b.swipes = W.list.map(function (m) { return { len: r1(m.len), path: r1(m.path), dur: Math.round(m.dur), vmax: Math.round(m.vmax * 1000) / 1000, dx: r1(m.dx), dy: r1(m.dy) }; });
+    S.paths = W.list.map(function (m) { return m.pts; });
+    post('/casino/aim/swipe', b).then(function (res) {
+      setTimeout(function () {
+        $('calc').hidden = true;
+        if (!res.j || !res.j.ok) { toast(errText(res), true); haptic('error'); show('prof'); return; }
+        S.last = res.j; renderLast();
+        renderRes(res.j, true); show('res'); haptic('success');
+      }, Math.max(0, 900 - (now() - t0)));
+    }).catch(function () { $('calc').hidden = true; toast(L.e_net, true); show('prof'); });
+  }
+  // рисунок всех свайпов на результате: каждый — от одной точки внизу, в одном масштабе
+  function drawPaths(cv, paths) {
+    var dpr = Math.min(3, window.devicePixelRatio || 1), w = cv.clientWidth || 300, h = cv.clientHeight || 150;
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
+    var maxd = 1;
+    paths.forEach(function (p) { p.forEach(function (q) { maxd = Math.max(maxd, Math.abs(q.x - p[0].x), Math.abs(q.y - p[0].y)); }); });
+    var k = (h - 26) / maxd, ox = w / 2, oy = h - 12;
+    c.save(); c.strokeStyle = 'rgba(255,255,255,.06)'; c.lineWidth = 1;
+    for (var gx = 0; gx < w; gx += 24) { c.beginPath(); c.moveTo(gx, 0); c.lineTo(gx, h); c.stroke(); }
+    for (var gy = h; gy > 0; gy -= 24) { c.beginPath(); c.moveTo(0, gy); c.lineTo(w, gy); c.stroke(); }
+    c.restore();
+    paths.forEach(function (p, i) {
+      stroke(c, p.map(function (q) { return { x: ox + (q.x - p[0].x) * k, y: oy + (q.y - p[0].y) * k }; }), 0.55 + 0.09 * i, 8, 5);
+    });
+  }
+  var swEl = $('swipe');
+  swEl.addEventListener('pointerdown', function (e) {
+    if (e.target && e.target.closest && e.target.closest('#sw-quit')) return;
+    if (W.done || W.ptr !== null || e.isPrimary === false) return;
+    W.ptr = e.pointerId;
+    try { swEl.setPointerCapture(e.pointerId); } catch (_) {}
+    W.cur = { pts: [{ t: e.timeStamp || now(), x: e.clientX, y: e.clientY }] }; W.last = null;
+    $('sw-hint').style.opacity = '0'; $('sw-card').classList.remove('show');
+    e.preventDefault(); swReq();
+  });
+  swEl.addEventListener('pointermove', function (e) {
+    if (W.ptr === null || e.pointerId !== W.ptr || !W.cur) return;
+    var evs = (e.getCoalescedEvents && e.getCoalescedEvents()) || [];
+    if (!evs.length) evs = [e];
+    for (var i = 0; i < evs.length; i++) W.cur.pts.push({ t: evs[i].timeStamp || now(), x: evs[i].clientX, y: evs[i].clientY });
+    swLive(e.clientX, e.clientY); swReq(); e.preventDefault();
+  });
+  function swUp(e) { if (W.ptr === null || e.pointerId !== W.ptr) return; W.ptr = null; swFinish(); }
+  swEl.addEventListener('pointerup', swUp);
+  swEl.addEventListener('pointercancel', swUp);
+  $('sw-quit').addEventListener('click', function (e) { e.stopPropagation(); quitSwipe(); });
 
   // ── результат ───────────────────────────────────────────────────────
   function finish() {
@@ -961,16 +1223,26 @@ window.addEventListener('error', function (e) {
     }).catch(function () { $('calc').hidden = true; toast(L.e_net, true); show('prof'); });
   }
   var KEYS = ['gen', 'red', 'x2', 'x4', 'snp', 'free'];
+  function dec(v, n) { return Number(v || 0).toFixed(n).replace('.', LANG === 'ru' ? ',' : '.'); }
   function renderRes(r, fresh) {
     S.res = r;
-    var st = r.st || {};
+    var st = r.st || {}, sw = r.kind === 'swipe';
+    S.mode = sw ? 'swipe' : 'aim';
     $('rk-i').textContent = (r.rank && r.rank.ico) || '🎯';
     $('rk-n').textContent = (r.rank && r.rank.name) || '';
-    $('rk-s').innerHTML = tpl(L.pts, { s: String(st.score || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') });
+    $('rk-n').classList.toggle('sm', sw);
+    $('rk-s').innerHTML = sw ? esc(tpl(L.res_sw, { n: st.n || 0 })) : tpl(L.pts, { s: String(st.score || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') });
     $('rk-p').textContent = r.summary || '';
-    $('stats').innerHTML = '<div><b>' + (st.hits || 0) + '/' + (st.total || 0) + '</b><small>' + esc(L.st_hit) + '</small></div>'
-      + '<div><b>' + (st.heads || 0) + '</b><small>' + esc(L.st_head) + '</small></div>'
-      + '<div><b>' + ((st.react || 0) / 1000).toFixed(2).replace('.', LANG === 'ru' ? ',' : '.') + '</b><small>' + esc(L.st_rt) + '</small></div>';
+    $('stats').innerHTML = sw
+      ? '<div><b>' + dec(st.len, 1) + '</b><small>' + esc(L.st_len) + '</small></div>'
+        + '<div><b>' + Math.round(st.v || 0) + '</b><small>' + esc(L.st_spd) + '</small></div>'
+        + '<div><b>' + Math.round((st.straight || 0) * 100) + '%</b><small>' + esc(L.st_str) + '</small></div>'
+      : '<div><b>' + (st.hits || 0) + '/' + (st.total || 0) + '</b><small>' + esc(L.st_hit) + '</small></div>'
+        + '<div><b>' + (st.heads || 0) + '</b><small>' + esc(L.st_head) + '</small></div>'
+        + '<div><b>' + dec((st.react || 0) / 1000, 2) + '</b><small>' + esc(L.st_rt) + '</small></div>';
+    var cv = $('res-cv'), paths = sw && fresh ? S.paths : null;
+    cv.hidden = !(paths && paths.length);
+    if (paths && paths.length) requestAnimationFrame(function () { drawPaths(cv, paths); });
     $('sl').innerHTML = KEYS.map(function (k) {
       var v = r.vals[k], b = r.base ? r.base[k] : v, d = v - b, max = 200;
       return '<div class="sl"><div class="sl-h"><span>' + esc(L.labels[k]) + '</span><span>'
@@ -1008,7 +1280,10 @@ window.addEventListener('error', function (e) {
 
   // ── события ─────────────────────────────────────────────────────────
   $('q').addEventListener('input', renderList);
-  $('q-list').addEventListener('click', function (e) { var b = e.target.closest('[data-ph]'); if (b) pickPhone(b.getAttribute('data-ph')); });
+  $('q-list').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-ph]'); if (b) { pickPhone(b.getAttribute('data-ph')); return; }
+    if (e.target.closest('[data-use]')) { var q = $('q').value.trim().slice(0, 40); setManual(true); $('m-name').value = q; haptic(null, 'light'); }
+  });
   $('qs-x').addEventListener('click', function () { unpick(); $('q').value = ''; renderList(); try { $('q').focus(); } catch (e) {} });
   $('q-man').addEventListener('click', function () { setManual(!S.manual); });
   document.addEventListener('click', function (e) {
@@ -1017,8 +1292,9 @@ window.addEventListener('error', function (e) {
     S.prof[c.getAttribute('data-k')] = Number(c.getAttribute('data-v'));
     syncChips(); syncGo(); haptic();
   });
-  $('go').addEventListener('click', begin);
-  $('br-go').addEventListener('click', function () { startArena(A.kind); });
+  $('go').addEventListener('click', function () { begin('aim'); });
+  $('go2').addEventListener('click', function () { begin('swipe'); });
+  $('br-go').addEventListener('click', function () { if (A.kind === 'swipe') startSwipe(); else startArena(A.kind); });
   $('last').addEventListener('click', function (e) { if (e.target.closest('#last-b') && S.last) { renderRes(S.last, false); show('res'); } });
   $('copy').addEventListener('click', function () {
     if (!S.res) return;
@@ -1041,14 +1317,15 @@ window.addEventListener('error', function (e) {
     try { if (tg && tg.openTelegramLink) { tg.openTelegramLink(S.orderUrl); return; } } catch (e) {}
     window.open(S.orderUrl, '_blank');
   });
-  $('again').addEventListener('click', begin);
+  $('again').addEventListener('click', function () { begin(S.mode); });
   $('toprof').addEventListener('click', function () { show('prof'); });
 
   // для проверки в браузере: где сейчас цель и с какой «скоростью» двигается прицел (только чтение)
   window.__aimDbg = {
     need: function () { return A.tgt ? { dx: A.tgt.x - A.cam.x, dy: A.tgt.y - A.cam.y, k: A.tgt.k, cx: A.cx, cy: A.cy,
                                            g: A.kind === 'flick' ? S.gain.flick : S.gain.drag, kind: A.kind, i: A.i, n: A.n, shot: A.shot } : null; },
-    view: function () { return { view: S.view, arena: !$('arena').hidden, calc: !$('calc').hidden }; }
+    view: function () { return { view: S.view, arena: !$('arena').hidden, swipe: !$('swipe').hidden, calc: !$('calc').hidden }; },
+    swipe: function () { return { open: !$('swipe').hidden, n: W.n, got: W.list.length, pxcm: W.pxcm, done: W.done }; }
   };
 
   // ── старт страницы ──────────────────────────────────────────────────
@@ -1069,6 +1346,8 @@ window.addEventListener('error', function (e) {
     if (j.rounds) S.rounds = j.rounds;
     if (j.order_url) S.orderUrl = j.order_url;
     if (j.ideal_price) S.price = j.ideal_price;
+    if (j.swipes) S.swipes = j.swipes;
+    if (j.diag) for (var dk in j.diag) S.diag[Number(dk)] = Number(j.diag[dk]);
     S.last = j.last || null; renderLast(); prefill(S.last); renderList();
   }).catch(function () { toast(L.e_ph, true); setManual(true); });
 })();
