@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script>
+/* v336: личный ключ игрока (tk) — в каждый запрос к боту. Бот вписывает его только в ссылку самого игрока, поэтому
+   действовать от чужого имени нельзя. Страница открыта со старой кнопкой (без ключа) и бот отказал — подсказка «открой заново». */
+(function () {
+  var TK = '';
+  try { TK = new URLSearchParams(location.search).get('tk') || ''; } catch (e) {}
+  window.__TK = TK;
+  function stale() {
+    try {
+      if (document.getElementById('__tkStale')) return;
+      var d = document.createElement('div'); d.id = '__tkStale';
+      d.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:2147483647;'
+        + 'padding:12px 14px;background:#151925;border:1px solid #ff8a00;color:#f6f6f7;'
+        + 'font:600 14px/1.4 -apple-system,system-ui,sans-serif;box-shadow:0 12px 30px rgba(0,0,0,.6);text-align:center';
+      d.textContent = 'Кнопка устарела после обновления бота. Закрой это окно и открой «🎯 Тест прицела» заново из меню бота.';
+      (document.body || document.documentElement).appendChild(d);
+    } catch (e) {}
+  }
+  window.__tkStale = stale;
+  var of = window.fetch;
+  if (!of) return;
+  window.fetch = function (u, o) {
+    var act = false;
+    try {
+      if (typeof u === 'string' && u.indexOf('/casino/') >= 0) {
+        o = o || {};
+        act = String(o.method || 'GET').toUpperCase() !== 'GET';
+        if (TK) {
+          if (!act) u += (u.indexOf('?') >= 0 ? '&' : '?') + 'tk=' + encodeURIComponent(TK);
+          else if (typeof o.body === 'string' && o.body.charAt(0) === '{') {
+            var b = JSON.parse(o.body);
+            if (b && typeof b === 'object' && !Array.isArray(b) && !b.tk) { b.tk = TK; o.body = JSON.stringify(b); }
+          }
+        }
+      }
+    } catch (e) {}
+    var p = of.call(this, u, o);
+    if (act && !TK) p.then(function (r) { if (r && r.status === 401) stale(); }, function () {});
+    return p;
+  };
+})();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#06070a">
+<title>Тест прицела</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+  /* v348: «Тест прицела» — оформление в духе Free Fire: почти чёрный фон, оранжево-жёлтый, скошенные кнопки и углы панелей,
+     прицел и мишени как на полигоне. Анимируются только transform и opacity — на телефоне это не тормозит (урок v332). */
+  :root { color-scheme: dark;
+          --bg: #06070a; --pan: #0f121a; --pan2: #151925; --ln: rgba(255,255,255,.07); --ln2: rgba(255,255,255,.13);
+          --or: #ff8a00; --or2: #ffb000; --ye: #ffd84a; --red: #ff4a3d; --grn: #5be38f;
+          --tx: #f6f6f7; --tx2: #aab0bd; --tx3: #6c7280;
+          --grad: linear-gradient(90deg, #ff5a00 0%, #ff9500 55%, #ffc400 100%);
+          --hud: 'Russo One', 'Rubik', system-ui, sans-serif; --ui: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+          --ease: cubic-bezier(.2,.7,.2,1); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { background: var(--bg); overflow-x: hidden; }
+  body { margin: 0; min-height: 100vh; color: var(--tx); background: var(--bg); font: 15px/1.45 var(--ui); -webkit-font-smoothing: antialiased;
+         padding: calc(10px + env(safe-area-inset-top, 0px)) 14px calc(26px + env(safe-area-inset-bottom, 0px)); }
+  body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+                 background: radial-gradient(130% 55% at 50% -12%, rgba(255,110,0,.24), transparent 62%),
+                             repeating-linear-gradient(135deg, rgba(255,255,255,.017) 0 2px, transparent 2px 12px); }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+  #app { max-width: 520px; margin: 0 auto; }
+  .scr { animation: vin .3s var(--ease) both; }
+  @keyframes vin { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  /* шапка */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand svg { width: 34px; height: 34px; flex: 0 0 34px; }
+  .brand b { display: block; font: 18px var(--hud); letter-spacing: .05em; line-height: 1.1; }
+  .brand small { display: block; font: 700 10.5px var(--ui); letter-spacing: .14em; color: var(--or2); text-transform: uppercase; }
+  .tag { flex: 0 0 auto; padding: 5px 12px; font: 11px var(--hud); letter-spacing: .12em; color: #170a00; background: var(--grad);
+         clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+
+  /* герой */
+  .hero { padding: 18px 2px 6px; }
+  .hero-k { display: inline-block; padding: 3px 10px; font: 700 11px var(--ui); letter-spacing: .18em; color: var(--or2);
+            border: 1px solid rgba(255,176,0,.4); clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
+  h1 { margin: 10px 0 6px; font: 27px/1.08 var(--hud); letter-spacing: .02em; }
+  h1 em { font-style: normal; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p { margin: 0; color: var(--tx2); font-size: 14.5px; }
+
+  /* панели — скошенный угол и уголки «прицела» */
+  .panel { position: relative; margin-top: 14px; padding: 15px 14px 14px; background: linear-gradient(180deg, var(--pan2), var(--pan));
+           border: 1px solid var(--ln);
+           clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px)); }
+  .panel::before, .panel::after { content: ''; position: absolute; width: 12px; height: 12px; border: 2px solid var(--or); pointer-events: none; }
+  .panel::before { top: 5px; left: 5px; border-right: 0; border-bottom: 0; }
+  .panel::after { bottom: 5px; right: 5px; border-left: 0; border-top: 0; }
+  .ph { display: flex; align-items: center; gap: 9px; margin: 0 0 11px; font: 13.5px var(--hud); letter-spacing: .07em; }
+  .ph span { display: inline-grid; place-items: center; min-width: 28px; height: 20px; padding: 0 7px; font-size: 11px; color: #170a00;
+             background: var(--grad); clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
+  .lbl { margin: 12px 0 7px; font: 700 11px var(--ui); letter-spacing: .12em; color: var(--tx3); text-transform: uppercase; }
+  .lbl:first-of-type { margin-top: 2px; }
+  .small { font-size: 12.5px; color: var(--tx3); }
+
+  /* поиск телефона */
+  .srch { display: flex; align-items: center; gap: 9px; padding: 0 12px; background: #090b10; border: 1px solid var(--ln2);
+          transition: border-color .2s, box-shadow .2s; }
+  .srch:focus-within { border-color: var(--or); box-shadow: 0 0 0 3px rgba(255,138,0,.14); }
+  .srch svg { width: 18px; height: 18px; flex: 0 0 18px; stroke: var(--tx3); }
+  .srch input { flex: 1; min-width: 0; height: 46px; padding: 0; background: none; border: 0; outline: 0; color: var(--tx);
+                font: 500 16px var(--ui); }
+  .srch input::placeholder { color: var(--tx3); }
+  .qlist { margin-top: 6px; }
+  .qlist button { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; margin-top: 4px; padding: 11px 12px;
+                  text-align: left; background: #10141c; border: 1px solid var(--ln); font: 500 14.5px var(--ui);
+                  animation: vin .2s var(--ease) both; }
+  .qlist button:active { background: #1a1f2b; }
+  .qlist small { flex: 0 0 auto; font: 13px var(--hud); color: var(--or2); }
+  .qlist .none { padding: 10px 2px; font-size: 13px; color: var(--tx3); }
+  .qsel { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,138,0,.08); border: 1px solid rgba(255,138,0,.45); }
+  .qsel svg { width: 26px; height: 26px; flex: 0 0 26px; }
+  .qs-m { flex: 1; min-width: 0; }
+  .qs-m b { display: block; font: 16px var(--hud); letter-spacing: .02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .qs-m small { display: block; color: var(--tx2); font-size: 12.5px; }
+  .qsel button { flex: 0 0 auto; padding: 7px 11px; background: none; border: 1px solid var(--ln2); font: 600 12.5px var(--ui); color: var(--tx2); }
+  .lnk { display: block; margin: 10px auto 0; padding: 6px 4px; background: none; border: 0; color: var(--or2); font: 600 13.5px var(--ui);
+         text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(255,176,0,.4); }
+
+  /* кнопки выбора */
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip { flex: 1 1 auto; min-width: 0; padding: 11px 14px; font: 600 13.5px var(--ui); color: var(--tx2); background: #11151e;
+          border: 0; box-shadow: inset 0 0 0 1px var(--ln2); clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+          transition: transform .14s var(--ease), color .2s; }
+  .chip:active { transform: scale(.96); }
+  .chip.on { color: #170a00; background: var(--grad); box-shadow: none; font-weight: 800; }
+  .chip small { display: block; font-weight: 500; font-size: 11px; opacity: .75; }
+
+  /* главные кнопки */
+  .btn { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px 20px;
+         border: 0; font: 16px var(--hud); letter-spacing: .06em; color: #170a00; background: var(--grad);
+         clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%); transition: transform .14s var(--ease), filter .25s; }
+  .btn:active { transform: scale(.97); }
+  .btn[disabled] { filter: grayscale(1) brightness(.5); }
+  .btn.big { padding: 17px 20px; font-size: 18px; }
+  .btn.sec { color: var(--ye); background: #141821; box-shadow: inset 0 0 0 2px rgba(255,150,0,.55); }
+  .glow { filter: drop-shadow(0 10px 22px rgba(255,110,0,.33)); margin-top: 18px; }
+  .hint { margin-top: 9px; text-align: center; font-size: 12.5px; color: var(--tx3); min-height: 18px; }
+  .row2 { display: flex; gap: 8px; margin-top: 12px; }
+  .row2 .btn { flex: 1; }
+
+  /* прошлый результат */
+  .last { display: flex; align-items: center; gap: 12px; }
+  .last .lr-m { flex: 1; min-width: 0; }
+  .last b { display: block; font: 15px var(--hud); letter-spacing: .04em; }
+  .last small { display: block; color: var(--tx2); font-size: 12.5px; }
+  .last button { flex: 0 0 auto; padding: 9px 14px; font: 13px var(--hud); letter-spacing: .05em; color: var(--ye); background: #141821;
+                 border: 0; box-shadow: inset 0 0 0 1.5px rgba(255,150,0,.5); clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+
+  /* брифинг раунда */
+  .rnd { margin-top: 26px; text-align: center; font: 12px var(--hud); letter-spacing: .3em; color: var(--or2); }
+  h2 { margin: 6px 0 0; text-align: center; font: 34px var(--hud); letter-spacing: .06em;
+       background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .demo { position: relative; height: 170px; margin: 16px 0 6px; overflow: hidden; background: #0b0e14; border: 1px solid var(--ln);
+          clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px)); }
+  .demo .dg { position: absolute; inset: -48px; background: linear-gradient(rgba(255,140,0,.12) 1px, transparent 1px) 0 0 / 48px 48px,
+              linear-gradient(90deg, rgba(255,140,0,.12) 1px, transparent 1px) 0 0 / 48px 48px; }
+  .demo .dx { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; }
+  .demo .dt { position: absolute; left: 50%; top: 50%; width: 30px; height: 56px; margin: -8px 0 0 -15px; }
+  .demo .df { position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; margin: 26px 0 0 -40px; font-size: 26px; opacity: .9; }
+  .demo.flick .dg, .demo.flick .dt { animation: dflick 2.4s var(--ease) infinite; }
+  .demo.flick .df { animation: dfing 2.4s var(--ease) infinite; }
+  .demo.drag .dg, .demo.drag .dt { animation: ddrag 2.2s var(--ease) infinite; }
+  .demo.drag .df { animation: dfing2 2.2s var(--ease) infinite; }
+  .demo.drag .dt { margin-top: -50px; }
+  @keyframes dflick { 0%, 18% { transform: translate(78px, -38px); } 55%, 100% { transform: translate(0, 0); } }
+  @keyframes dfing { 0%, 18% { transform: translate(-20px, 20px); opacity: 0; } 22% { opacity: 1; } 55% { transform: translate(58px, -18px); opacity: 1; } 70%, 100% { transform: translate(58px, -18px); opacity: 0; } }
+  @keyframes ddrag { 0%, 20% { transform: translateY(0); } 58%, 100% { transform: translateY(42px); } }
+  @keyframes dfing2 { 0%, 20% { transform: translate(30px, 30px); opacity: 0; } 24% { opacity: 1; } 58% { transform: translate(30px, -12px); opacity: 1; } 72%, 100% { transform: translate(30px, -12px); opacity: 0; } }
+  .steps { margin: 14px 0 0; padding: 0; list-style: none; }
+  .steps li { position: relative; padding: 7px 0 7px 26px; color: var(--tx2); font-size: 14.5px; }
+  .steps li::before { content: ''; position: absolute; left: 4px; top: 13px; width: 10px; height: 10px; background: var(--grad);
+                      clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  .steps b { color: var(--tx); }
+  .sens { margin-top: 10px; padding: 10px 12px; font-size: 13px; color: var(--tx2); background: rgba(255,138,0,.06); border-left: 3px solid var(--or); }
+  .sens b { color: var(--ye); font-family: var(--hud); font-weight: 400; }
+
+  /* арена */
+  #arena { position: fixed; inset: 0; z-index: 50; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
+           background: radial-gradient(90% 70% at 50% 42%, #1b2131, #0a0c12 70%); cursor: crosshair; }
+  #ground { position: absolute; left: -96px; top: -96px; right: -96px; bottom: -96px; will-change: transform;
+            background: linear-gradient(rgba(255,140,0,.13) 1px, transparent 1px) 0 0 / 96px 96px,
+                        linear-gradient(90deg, rgba(255,140,0,.13) 1px, transparent 1px) 0 0 / 96px 96px,
+                        linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px) 0 0 / 24px 24px,
+                        linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px) 0 0 / 24px 24px; }
+  #arena::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 52%, rgba(0,0,0,.62)); }
+  #tgt { position: absolute; left: 0; top: 0; width: 0; height: 0; will-change: transform; }
+  #tgt svg { position: absolute; left: -40px; top: -20px; width: 80px; height: 150px; overflow: visible; }
+  #tgt .hd { transition: fill .12s; }
+  #tgt.hh .hd { fill: #ffcf3d; }
+  #tgt.dead { opacity: 0; transition: opacity .35s .1s; }
+  #cross { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 3; pointer-events: none; }
+  #cross i { position: absolute; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.55); transition: background-color .12s; }
+  #cross .c1 { width: 2px; height: 9px; left: -1px; top: -16px; } #cross .c2 { width: 2px; height: 9px; left: -1px; top: 7px; }
+  #cross .c3 { width: 9px; height: 2px; left: -16px; top: -1px; } #cross .c4 { width: 9px; height: 2px; left: 7px; top: -1px; }
+  #cross .c5 { width: 4px; height: 4px; left: -2px; top: -2px; border-radius: 50%; background: #ff3b30; }
+  #cross.ob i { background: var(--or); } #cross.oh i { background: var(--ye); } #cross.ob .c5, #cross.oh .c5 { background: #fff; }
+  .hud { position: absolute; left: 0; right: 0; top: 0; z-index: 4; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+         padding: calc(12px + env(safe-area-inset-top, 0px)) 14px 0; pointer-events: none; }
+  .hud .hl b { display: block; font: 15px var(--hud); letter-spacing: .08em; }
+  .hud .hl span { font: 12px var(--hud); color: var(--or2); letter-spacing: .12em; }
+  .hud .hr { display: flex; gap: 8px; margin-right: 40px; }
+  .hud .hr span { padding: 4px 10px; font: 13px var(--hud); background: rgba(10,12,18,.72); box-shadow: inset 0 0 0 1px var(--ln2);
+                  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
+  .tbar { position: absolute; left: 0; right: 0; top: 0; z-index: 5; height: 3px; background: rgba(255,255,255,.06); }
+  .tbar i { display: block; height: 100%; background: var(--grad); transform-origin: 0 50%; }
+  .pop { position: absolute; left: 0; top: 0; z-index: 4; width: 260px; margin-left: -130px; text-align: center; pointer-events: none;
+         font: 26px var(--hud); letter-spacing: .06em; opacity: 0; text-shadow: 0 2px 10px rgba(0,0,0,.7); }
+  .pop.show { animation: popa .62s var(--ease) both; }
+  .pop.hd { color: var(--ye); } .pop.bd { color: #fff; } .pop.ms { color: var(--red); } .pop.to { color: var(--tx3); }
+  @keyframes popa { 0% { opacity: 0; transform: translate(var(--px), var(--py)) scale(.6); } 25% { opacity: 1; transform: translate(var(--px), var(--py)) scale(1.08); }
+                    70% { opacity: 1; transform: translate(var(--px), calc(var(--py) - 10px)) scale(1); } 100% { opacity: 0; transform: translate(var(--px), calc(var(--py) - 18px)) scale(1); } }
+  .ahint { position: absolute; left: 16px; right: 16px; bottom: calc(26px + env(safe-area-inset-bottom, 0px)); z-index: 4; text-align: center; pointer-events: none;
+           font: 600 13.5px var(--ui); color: var(--tx2); transition: opacity .3s; }
+  .ahint b { color: var(--ye); }
+  .aquit { position: absolute; z-index: 6; top: calc(8px + env(safe-area-inset-top, 0px)); right: 10px; width: 34px; height: 34px; padding: 0;
+           border: 0; font: 16px var(--hud); color: var(--tx2); background: rgba(10,12,18,.72); box-shadow: inset 0 0 0 1px var(--ln2); }
+
+  /* подсчёт */
+  #calc { position: fixed; inset: 0; z-index: 60; display: grid; place-content: center; justify-items: center; gap: 12px; text-align: center;
+          background: rgba(6,7,10,.94); animation: vin .25s var(--ease) both; }
+  #calc b { font: 18px var(--hud); letter-spacing: .08em; }
+  #calc small { color: var(--tx2); }
+  .spin { width: 64px; height: 72px; background: var(--grad); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+          animation: spn 1.1s linear infinite; }
+  @keyframes spn { to { transform: rotate(360deg); } }
+
+  /* результат */
+  .rk { padding: 16px 0 2px; text-align: center; }
+  .rk-emb { position: relative; width: 104px; height: 116px; margin: 0 auto; background: var(--grad);
+            clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); animation: emb .55s var(--ease) both; }
+  .rk-emb i { position: absolute; inset: 5px; display: grid; place-items: center; font-style: normal; font-size: 44px;
+              background: linear-gradient(180deg, #1b2030, #0d1017); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+  @keyframes emb { from { opacity: 0; transform: scale(.6) rotate(-12deg); } to { opacity: 1; transform: none; } }
+  .rk-n { margin-top: 10px; font: 30px var(--hud); letter-spacing: .07em; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .rk-s { color: var(--tx2); font-size: 13.5px; }
+  .rk-s b { font: 16px var(--hud); color: var(--tx); }
+  .rk-p { margin-top: 3px; color: var(--tx3); font-size: 12.5px; }
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 14px; }
+  .stats div { padding: 10px 6px 9px; text-align: center; background: #10141c; box-shadow: inset 0 0 0 1px var(--ln);
+               clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
+  .stats b { display: block; font: 20px var(--hud); color: var(--ye); }
+  .stats small { display: block; margin-top: 2px; font: 700 10px var(--ui); letter-spacing: .1em; color: var(--tx3); text-transform: uppercase; }
+  .sl { margin-top: 13px; }
+  .sl:first-child { margin-top: 2px; }
+  .sl-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font: 600 13.5px var(--ui); color: var(--tx2); }
+  .sl-h b { font: 19px var(--hud); color: var(--tx); }
+  .sl-h small { margin-right: 6px; font: 700 11.5px var(--ui); }
+  .sl-h .up { color: var(--grn); } .sl-h .dn { color: #ff9b6b; }
+  .sl-t { position: relative; height: 8px; margin-top: 6px; overflow: hidden; background: #090b10;
+          clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%); }
+  .sl-t::before { content: ''; position: absolute; inset: 0; z-index: 1; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), rgba(6,7,10,.9) calc(10% - 2px) 10%); }
+  .sl-t i { position: absolute; inset: 0; transform-origin: 0 50%; transform: scaleX(0); background: var(--grad); transition: transform .9s var(--ease); }
+  .sl-t u { position: absolute; z-index: 2; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; opacity: .8; }
+  .fire { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; padding: 10px 12px; background: rgba(255,138,0,.07);
+          border-left: 3px solid var(--or); font: 600 13.5px var(--ui); color: var(--tx2); }
+  .fire b { font: 19px var(--hud); color: var(--tx); }
+  .sent { margin-top: 10px; text-align: center; font-size: 12.5px; color: var(--grn); }
+  .why { margin: 0; padding: 0; list-style: none; }
+  .why li { position: relative; padding: 6px 0 6px 20px; color: var(--tx2); font-size: 13.5px; }
+  .why li::before { content: ''; position: absolute; left: 3px; top: 12px; width: 8px; height: 8px; background: var(--or); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  .why li:nth-child(-n+2) { color: var(--tx); }
+  .fb { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 10px; }
+  .fb button { padding: 12px 4px; border: 0; font: 600 13px var(--ui); color: var(--tx); background: #11151e; box-shadow: inset 0 0 0 1px var(--ln2);
+               clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); transition: transform .14s var(--ease); }
+  .fb button:active { transform: scale(.95); }
+  .fb button.on { color: #170a00; background: var(--grad); box-shadow: none; font-weight: 800; }
+  .fb button span { display: block; font-size: 19px; margin-bottom: 2px; }
+  .ideal { text-align: center; background: linear-gradient(180deg, rgba(255,130,0,.16), rgba(255,130,0,.04)); }
+  .ideal b { display: block; font: 17px var(--hud); letter-spacing: .05em; color: var(--ye); }
+  .ideal p { margin: 4px 0 12px; color: var(--tx2); font-size: 13.5px; }
+
+  /* сообщения */
+  .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 80; max-width: 92%;
+           transform: translate(-50%, 14px); opacity: 0; pointer-events: none; padding: 11px 16px; font: 600 13.5px var(--ui);
+           background: #151925; box-shadow: inset 0 0 0 1px rgba(255,138,0,.5), 0 16px 34px rgba(0,0,0,.7); transition: opacity .24s, transform .24s var(--ease); }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .toast.err { box-shadow: inset 0 0 0 1px rgba(255,74,61,.6), 0 16px 34px rgba(0,0,0,.7); color: #ffd0cb; }
+  #fatal { padding: 60px 18px; text-align: center; }
+  #fatal b { display: block; font: 19px var(--hud); letter-spacing: .04em; margin-bottom: 10px; }
+  #fatal span { color: var(--tx2); font-size: 14px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="13" stroke="#ff9500" stroke-width="2.4"/><circle cx="20" cy="20" r="3" fill="#ffc400"/>
+        <path d="M20 2v9M20 29v9M2 20h9M29 20h9" stroke="#ffc400" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <div><b id="t-ttl">ТЕСТ ПРИЦЕЛА</b><small id="t-sub">для Free Fire</small></div>
+    </div>
+    <div class="tag" id="t-tag">ПОЛИГОН</div>
+  </header>
+
+  <!-- 1. телефон и как играешь -->
+  <section id="s-prof" class="scr">
+    <div class="hero">
+      <div class="hero-k" id="h-k">ТРЕНИРОВКА</div>
+      <h1 id="h-t"></h1>
+      <p id="h-d"></p>
+    </div>
+    <div class="panel">
+      <div class="ph"><span>01</span><b id="p1-t"></b></div>
+      <div id="q-box">
+        <div class="srch"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.6-4.6"/></svg>
+          <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"></div>
+        <div id="q-list" class="qlist"></div>
+      </div>
+      <div id="q-sel" class="qsel" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffb000" stroke-width="1.8"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5h3" stroke-linecap="round"/></svg>
+        <div class="qs-m"><b id="qs-n"></b><small id="qs-d"></small></div>
+        <button type="button" id="qs-x"></button>
+      </div>
+      <button type="button" class="lnk" id="q-man"></button>
+      <div id="man" hidden>
+        <div class="lbl" id="l-dev"></div><div class="chips" id="c-dev"></div>
+        <div class="lbl" id="l-scr"></div><div class="chips" id="c-scr"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span>02</span><b id="p2-t"></b></div>
+      <div class="lbl" id="l-grip"></div><div class="chips" id="c-grip"></div>
+      <div class="lbl" id="l-style"></div><div class="chips" id="c-style"></div>
+    </div>
+    <div class="panel last" id="last" hidden></div>
+    <div class="glow"><button type="button" class="btn big" id="go" disabled></button></div>
+    <div class="hint" id="go-h"></div>
+  </section>
+
+  <!-- 2. брифинг раунда -->
+  <section id="s-brief" class="scr" hidden>
+    <div class="rnd" id="br-n"></div>
+    <h2 id="br-t"></h2>
+    <div class="demo" id="br-demo">
+      <div class="dg"></div>
+      <svg class="dt" viewBox="-15 -8 30 56"><circle cx="0" cy="0" r="7" fill="#20263a" stroke="#ff9500" stroke-width="2"/>
+        <path d="M-11 11h22l-4 22h-14z" fill="#20263a" stroke="#ff9500" stroke-width="2" stroke-linejoin="round"/></svg>
+      <svg class="dx" viewBox="-15 -15 30 30"><path d="M0-13v7M0 6v7M-13 0h7M6 0h7" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle r="2" fill="#ff3b30"/></svg>
+      <div class="df">👆</div>
+    </div>
+    <ul class="steps" id="br-l"></ul>
+    <div class="sens" id="br-s"></div>
+    <div class="glow"><button type="button" class="btn big" id="br-go"></button></div>
+  </section>
+
+  <!-- 3. результат -->
+  <section id="s-res" class="scr" hidden>
+    <div class="rk">
+      <div class="rk-emb"><i id="rk-i">🎯</i></div>
+      <div class="rk-n" id="rk-n"></div>
+      <div class="rk-s" id="rk-s"></div>
+      <div class="rk-p" id="rk-p"></div>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="panel">
+      <div class="ph"><span>⚙</span><b id="r1-t"></b></div>
+      <div id="sl"></div>
+      <div class="fire" id="fire"></div>
+      <div class="row2"><button type="button" class="btn sec" id="copy"></button></div>
+      <div class="sent" id="sent"></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span>?</span><b id="r2-t"></b></div>
+      <ul class="why" id="why"></ul>
+    </div>
+    <div class="panel">
+      <div class="ph"><span>!</span><b id="r3-t"></b></div>
+      <div class="small" id="r3-d"></div>
+      <div class="fb" id="fb"></div>
+    </div>
+    <div class="panel ideal">
+      <b id="id-t"></b><p id="id-d"></p>
+      <button type="button" class="btn sec" id="ideal"></button>
+    </div>
+    <div class="glow"><button type="button" class="btn big" id="again"></button></div>
+    <button type="button" class="lnk" id="toprof"></button>
+  </section>
+
+  <div id="fatal" hidden><b id="fatal-t">Тест не открылся</b><span id="fatal-d"></span></div>
+</div>
+
+<!-- арена: поверх всего, пока идёт раунд -->
+<div id="arena" hidden>
+  <div id="ground"></div>
+  <div id="tgt">
+    <svg viewBox="-40 -20 80 150">
+      <path d="M-24 22c4-5 13-7 24-7s20 2 24 7l-4 34c-1 7-5 12-8 14h-24c-3-2-7-7-8-14z" fill="#222838" stroke="#ff9500" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M-25 24l-10 30 6 3 9-24M25 24l10 30-6 3-9-24" fill="#1b2030" stroke="#ff9500" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M-14 70l-3 54h11l4-38 4 38h11l-3-54z" fill="#1b2030" stroke="#ff9500" stroke-width="1.6" stroke-linejoin="round"/>
+      <rect x="-5" y="10" width="10" height="8" fill="#1b2030"/>
+      <circle class="hd" cx="0" cy="0" r="13" fill="#2a3044" stroke="#ffb000" stroke-width="2.2"/>
+      <path d="M-13-1c1-9 6-13 13-13s12 4 13 13z" fill="#3a4258" stroke="#ffb000" stroke-width="1.6"/>
+      <rect x="-8" y="0" width="16" height="4" rx="1.5" fill="#ff7a00" opacity=".85"/>
+    </svg>
+  </div>
+  <div id="cross"><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i><i class="c5"></i></div>
+  <div class="hud"><div class="hl"><b id="a-r"></b><span id="a-c"></span></div>
+    <div class="hr"><span>🎯 <b id="a-hit">0</b></span><span>💀 <b id="a-head">0</b></span></div></div>
+  <div class="tbar"><i id="tbar"></i></div>
+  <div class="pop" id="pop"></div>
+  <div class="ahint" id="ahint"></div>
+  <button type="button" class="aquit" id="aquit">✕</button>
+</div>
+
+<div id="calc" hidden><div class="spin"></div><b id="calc-t"></b><small id="calc-d"></small></div>
+<div class="toast" id="toast"></div>
+
+<script>
+window.addEventListener('error', function (e) {
+  // сбой загрузки файла (шрифт, SDK Telegram) — не ошибка страницы. Экран сбоя — только для настоящих ошибок кода.
+  if (e && e.target && e.target !== window && e.target.nodeType === 1) return;
+  try {
+    var a = document.getElementById('arena'); if (a) a.hidden = true;
+    document.querySelectorAll('.scr').forEach(function (s) { s.hidden = true; });
+    var f = document.getElementById('fatal'); f.hidden = false;
+    document.getElementById('fatal-d').textContent = 'Закрой и открой тест заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v348';
+  } catch (_) {}
+}, true);
+</script>
+<script>
+/* SDK Telegram грузим НЕ блокируя страницу (урок v295): если telegram.org медленный, тест всё равно стартует. */
+(function () {
+  var s = document.createElement('script'); s.src = 'https://telegram.org/js/telegram-web-app.js'; s.async = true;
+  s.onload = function () { try { if (window.__aimTg) window.__aimTg(); } catch (e) {} };
+  (document.head || document.documentElement).appendChild(s);
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  var VER = 'v348';
+  function $(i) { return document.getElementById(i); }
+  var Q = new URLSearchParams(location.search);
+  var UID = Q.get('user_id') || '';
+  var API = (Q.get('api_url') || '').replace(/\/+$/, '');
+  var SECRET = Q.get('api_secret') || '';
+  var LANG = (Q.get('lang') === 'en') ? 'en' : 'ru';
+  var INIT = '', useInit = false, tg = null;
+
+  window.__aimTg = function () {
+    try {
+      tg = window.Telegram && window.Telegram.WebApp;
+      if (!tg) return;
+      tg.ready(); tg.expand();
+      INIT = tg.initData || '';
+      if (tg.setHeaderColor) tg.setHeaderColor('#06070a');
+      if (tg.setBackgroundColor) tg.setBackgroundColor('#06070a');
+      // вертикальный свайп в тесте не должен сворачивать приложение (Bot API 7.7+)
+      if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+      if (tg.BackButton && tg.BackButton.onClick) tg.BackButton.onClick(function () { goBack(); });
+      syncBack();
+    } catch (e) {}
+  };
+
+  var TX = {
+    ru: {
+      ttl: 'ТЕСТ ПРИЦЕЛА', sub: 'для Free Fire', tag: 'ПОЛИГОН', hk: 'ТРЕНИРОВКА',
+      ht: 'ПОДБЕРИ СЕНСУ<br><em>ПОД СВОЮ РУКУ</em>',
+      hd: 'Выбери телефон и пройди 2 коротких раунда — бот посчитает сенсу по твоим выстрелам.',
+      p1: 'ТВОЙ ТЕЛЕФОН', q_ph: 'Например: Redmi Note 12, iPhone 13', q_none: 'Не нашёл такой — нажми «Нет моего телефона» ниже',
+      q_more: 'Начни писать модель — например, «Note 12» или «A54»', man: 'Нет моего телефона — выберу сам', man_off: 'Найти свой телефон в списке',
+      chg: 'Сменить', l_dev: 'Телефон', l_scr: 'Экран',
+      devs: [['iPhone', ''], ['Samsung', ''], ['Xiaomi / Redmi / POCO', ''], ['Другой Android', '']],
+      scrs: [['Компактный', 'до 6,1″'], ['Обычный', '6,1–6,6″'], ['Большой', '6,7″ и больше'], ['Планшет', '']],
+      scr_names: ['компактный экран', 'обычный экран', 'большой экран', 'планшет'],
+      p2: 'КАК ИГРАЕШЬ', l_grip: 'Сколькими пальцами', l_style: 'Стиль',
+      grips: [['2 пальца', ''], ['3–4 пальца', 'коготь']], styles: [['Раш', 'ближний бой'], ['Универсал', ''], ['Снайпер', 'дальний бой']],
+      go: '▶ НАЧАТЬ ТЕСТ', go_need_ph: 'Выбери свой телефон', go_need_gs: 'Выбери пальцы и стиль', go_ok: 'Меньше минуты · 2 раунда',
+      last: 'ПРОШЛЫЙ ТЕСТ', last_btn: 'ОТКРЫТЬ', gen: 'Обзор', red: 'Коллиматор',
+      rnd: 'РАУНД {n} / 2', flick: 'ФЛИКИ', drag: 'ОТТЯЖКА',
+      fl_steps: ['Цель появится в случайном месте', 'Одним <b>быстрым свайпом</b> наведи прицел на голову — как в игре', 'Отпусти палец — это выстрел', '<b>Не подправляй</b> долго: важен первый рывок'],
+      dr_steps: ['Прицел будет на груди врага', 'Резко <b>свайпни вверх</b> — «оттяжка» в голову', 'Отпусти палец — это выстрел', 'Старайся не уйти выше головы'],
+      sens: 'Тест на стартовой сенсе: <b>{k} {v}</b>', ready: 'ГОТОВ', of: '{i} / {n}',
+      fl_hint: 'Свайпни к цели и <b>отпусти</b>', dr_hint: 'Свайпни <b>вверх</b> к голове и отпусти',
+      p_head: 'ХЕДШОТ!', p_body: 'ПОПАДАНИЕ', p_miss: 'МИМО', p_to: 'НЕ УСПЕЛ',
+      calc_t: 'АНАЛИЗ ВЫСТРЕЛОВ…', calc_d: 'Считаю сенсу под твою руку',
+      pts: '<b>{s}</b> очков', st_hit: 'попаданий', st_head: 'в голову', st_rt: 'реакция, с',
+      r1: 'ТВОЯ СЕНСА', r2: 'ПОЧЕМУ ТАК', r3: 'КАК ПРИЦЕЛ В ИГРЕ?', r3d: 'Сыграй 2–3 матча и скажи — поправлю.',
+      fbs: [['up', '⬆️', 'Перелетает'], ['down', '⬇️', 'Не долетает'], ['ok', '👍', 'Отлично']],
+      labels: { gen: 'Обзор', red: 'Коллиматор', x2: 'Прицел 2×', x4: 'Прицел 4×', snp: 'Снайперский прицел', free: 'Свободный обзор' },
+      fire: 'Кнопка огня', copy: '📋 СКОПИРОВАТЬ', copied: 'Скопировано — вставь в заметки или сразу в игру',
+      sent: '✓ Настройки отправлены тебе в чат', sent_last: 'Это твой последний результат — он есть и в чате',
+      id_t: '⭐ ХОЧЕШЬ ИДЕАЛЬНО?', id_d: 'Настрою сенсу лично, с моими фишками — <b>{p} ₽</b>', id_b: 'НАПИСАТЬ @SloppyX',
+      again: '🔁 ПРОЙТИ ЕЩЁ РАЗ', toprof: 'Сменить телефон или стиль',
+      fb_up: 'Поправил: сенса ниже на 7%', fb_down: 'Поправил: сенса выше на 7%', fb_ok: 'Отлично, записал!',
+      e_net: 'Нет связи с сервером — проверь интернет и попробуй ещё раз', e_auth: 'Доступ не подтверждён — открой тест заново кнопкой в боте',
+      e_reg: 'Сначала зарегистрируйся в боте — нажми /start', e_ban: 'Аккаунт заблокирован', e_rate: 'Слишком часто — подожди пару секунд',
+      e_few: 'Мало выстрелов — пройди тест ещё раз и стреляй по каждой цели', e_srv: 'Ошибка на сервере — попробуй позже',
+      e_ph: 'База телефонов не загрузилась — выбери телефон вручную',
+      none_t: 'Тест не открылся', none_d: 'Открой его кнопкой в боте: «Товары Free Fire» → «📱 Настройки на телефон» → «🎯 Тест прицела».',
+      quit: 'Выйти из теста? Результат этого раунда не сохранится.',
+      copyline: 'Обзор {gen} · Коллиматор {red} · 2× {x2} · 4× {x4} · Снайперский {snp} · Свободный обзор {free} · Кнопка огня {fire}%'
+    },
+    en: {
+      ttl: 'AIM TEST', sub: 'for Free Fire', tag: 'RANGE', hk: 'TRAINING',
+      ht: 'MATCH SENSITIVITY<br><em>TO YOUR HAND</em>',
+      hd: 'Pick your phone and play 2 short rounds — the bot works out the sensitivity from your shots.',
+      p1: 'YOUR PHONE', q_ph: 'For example: Redmi Note 12, iPhone 13', q_none: 'Not found — tap «My phone is not listed» below',
+      q_more: 'Start typing the model — e.g. «Note 12» or «A54»', man: 'My phone is not listed — I\'ll choose', man_off: 'Find my phone in the list',
+      chg: 'Change', l_dev: 'Phone', l_scr: 'Screen',
+      devs: [['iPhone', ''], ['Samsung', ''], ['Xiaomi / Redmi / POCO', ''], ['Other Android', '']],
+      scrs: [['Compact', 'up to 6.1″'], ['Regular', '6.1–6.6″'], ['Large', '6.7″ and up'], ['Tablet', '']],
+      scr_names: ['compact screen', 'regular screen', 'large screen', 'tablet'],
+      p2: 'HOW YOU PLAY', l_grip: 'Fingers', l_style: 'Style',
+      grips: [['2 thumbs', ''], ['3–4 fingers', 'claw']], styles: [['Rush', 'close range'], ['All-round', ''], ['Sniper', 'long range']],
+      go: '▶ START THE TEST', go_need_ph: 'Pick your phone', go_need_gs: 'Pick fingers and style', go_ok: 'Under a minute · 2 rounds',
+      last: 'LAST TEST', last_btn: 'OPEN', gen: 'General', red: 'Red dot',
+      rnd: 'ROUND {n} / 2', flick: 'FLICKS', drag: 'HEAD DRAG',
+      fl_steps: ['A target appears at a random spot', 'Put the crosshair on the head with <b>one quick swipe</b> — like in the game', 'Lift your finger — that\'s the shot', '<b>Don\'t correct</b> for long: the first flick matters'],
+      dr_steps: ['The crosshair starts on the enemy\'s chest', '<b>Swipe up</b> sharply — a head drag', 'Lift your finger — that\'s the shot', 'Try not to go above the head'],
+      sens: 'Test at your starting sensitivity: <b>{k} {v}</b>', ready: 'READY', of: '{i} / {n}',
+      fl_hint: 'Swipe to the target and <b>lift</b>', dr_hint: 'Swipe <b>up</b> to the head and lift',
+      p_head: 'HEADSHOT!', p_body: 'HIT', p_miss: 'MISS', p_to: 'TOO SLOW',
+      calc_t: 'ANALYSING SHOTS…', calc_d: 'Working out the sensitivity for your hand',
+      pts: '<b>{s}</b> points', st_hit: 'hits', st_head: 'headshots', st_rt: 'reaction, s',
+      r1: 'YOUR SENSITIVITY', r2: 'WHY THESE VALUES', r3: 'HOW IS YOUR AIM IN GAME?', r3d: 'Play 2–3 matches and tell me — I\'ll adjust.',
+      fbs: [['up', '⬆️', 'Overshoots'], ['down', '⬇️', 'Undershoots'], ['ok', '👍', 'All good']],
+      labels: { gen: 'General', red: 'Red dot', x2: '2× scope', x4: '4× scope', snp: 'Sniper scope', free: 'Free look' },
+      fire: 'Fire button', copy: '📋 COPY', copied: 'Copied — paste it into notes or straight into the game',
+      sent: '✓ Settings sent to your chat', sent_last: 'This is your latest result — it is in the chat too',
+      id_t: '⭐ WANT IT PERFECT?', id_d: 'A personal setup with my tricks — <b>{p} ₽</b>', id_b: 'MESSAGE @SloppyX',
+      again: '🔁 TAKE IT AGAIN', toprof: 'Change phone or style',
+      fb_up: 'Adjusted: 7% lower', fb_down: 'Adjusted: 7% higher', fb_ok: 'Great, noted!',
+      e_net: 'No connection to the server — check the internet and try again', e_auth: 'Access not confirmed — reopen the test from the bot',
+      e_reg: 'Register in the bot first — tap /start', e_ban: 'Your account is banned', e_rate: 'Too often — wait a couple of seconds',
+      e_few: 'Too few shots — take the test again and shoot at every target', e_srv: 'Server error — try again later',
+      e_ph: 'The phone list did not load — choose your phone manually',
+      none_t: 'The test did not open', none_d: 'Open it from the bot: «Free Fire Products» → «📱 Phone Settings» → «🎯 Aim test».',
+      quit: 'Leave the test? This round will not be saved.',
+      copyline: 'General {gen} · Red dot {red} · 2× {x2} · 4× {x4} · Sniper {snp} · Free look {free} · Fire button {fire}%'
+    }
+  };
+  var L = TX[LANG];
+
+  var S = { phones: [], idx: [], prof: { phone: '', dev: 0, scr: 0, grip: 0, style: 0 }, phone: null, manual: false,
+            rounds: { flick: 10, drag: 8 }, gain: { flick: 1, drag: 1 }, base: null, res: null, last: null, view: 'prof',
+            orderUrl: 'https://t.me/SloppyX', price: 200, busy: false };
+  function tpl(s, o) { return String(s).replace(/\{(\w+)\}/g, function (_, k) { return o[k] != null ? o[k] : ''; }); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function inch(v) { var s = String(Math.round(v * 100) / 100); return (LANG === 'ru' ? s.replace('.', ',') : s) + '″'; }
+  function haptic(kind, impact) {
+    try {
+      if (!tg || !tg.HapticFeedback) return;
+      if (impact) tg.HapticFeedback.impactOccurred(impact); else if (kind) tg.HapticFeedback.notificationOccurred(kind);
+      else tg.HapticFeedback.selectionChanged();
+    } catch (e) {}
+  }
+  var toastT = 0;
+  function toast(t, err) {
+    var el = $('toast'); el.textContent = t; el.className = 'toast show' + (err ? ' err' : '');
+    clearTimeout(toastT); toastT = setTimeout(function () { el.className = 'toast'; }, 2700);
+  }
+
+  // ── запросы ─────────────────────────────────────────────────────────
+  function jfetch(url, opts, limit) {
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, limit || 15000);
+    opts = opts || {}; opts.cache = 'no-store'; if (ctrl) opts.signal = ctrl.signal;
+    return fetch(url, opts).then(function (r) {
+      clearTimeout(timer);
+      return r.json().catch(function () { return null; }).then(function (j) { return { status: r.status, j: j }; });
+    }, function (e) { clearTimeout(timer); throw e; });
+  }
+  function post(path, body) {
+    body.uid = UID; body.secret = SECRET; body.init_data = INIT || undefined;
+    return jfetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, 20000);
+  }
+  function getState() {
+    var url = API + '/casino/aim/state?uid=' + encodeURIComponent(UID) + '&secret=' + encodeURIComponent(SECRET)
+      + (useInit && INIT ? '&init_data=' + encodeURIComponent(INIT) : '');
+    return jfetch(url, {}, 12000).then(function (res) {
+      if (res.status === 401 && !useInit && INIT) { useInit = true; return getState(); }
+      return res;
+    });
+  }
+  function errText(res) {
+    var c = (res && res.j && res.j.error) || '';
+    if (!res) return L.e_net;
+    if (res.status === 401) return L.e_auth;
+    if (c === 'unregistered') return L.e_reg;
+    if (c === 'banned') return L.e_ban;
+    if (res.status === 429) return L.e_rate;
+    if (c === 'not_enough') return L.e_few;
+    return L.e_srv;
+  }
+
+  // ── экраны ──────────────────────────────────────────────────────────
+  function show(v) {
+    S.view = v;
+    ['prof', 'brief', 'res'].forEach(function (k) { $('s-' + k).hidden = k !== v; });
+    window.scrollTo(0, 0);
+    syncBack();
+  }
+  function syncBack() {
+    try {
+      if (!tg || !tg.BackButton) return;
+      if (S.view === 'prof' && $('arena').hidden) tg.BackButton.hide(); else tg.BackButton.show();
+    } catch (e) {}
+  }
+  function goBack() {
+    if (!$('arena').hidden) { quitArena(); return; }
+    show('prof');
+  }
+
+  // ── тексты (постоянная разметка — поле поиска не перерисовывается, урок v339) ──
+  function texts() {
+    $('t-ttl').textContent = L.ttl; $('t-sub').textContent = L.sub; $('t-tag').textContent = L.tag; $('h-k').textContent = L.hk;
+    $('h-t').innerHTML = L.ht; $('h-d').textContent = L.hd;
+    $('p1-t').textContent = L.p1; $('q').placeholder = L.q_ph; $('qs-x').textContent = L.chg;
+    $('l-dev').textContent = L.l_dev; $('l-scr').textContent = L.l_scr; $('p2-t').textContent = L.p2;
+    $('l-grip').textContent = L.l_grip; $('l-style').textContent = L.l_style; $('go').textContent = L.go;
+    $('br-go').textContent = L.ready; $('calc-t').textContent = L.calc_t; $('calc-d').textContent = L.calc_d;
+    $('r1-t').textContent = L.r1; $('r2-t').textContent = L.r2; $('r3-t').textContent = L.r3; $('r3-d').textContent = L.r3d;
+    $('copy').textContent = L.copy; $('id-t').textContent = L.id_t;
+    $('ideal').textContent = L.id_b; $('again').textContent = L.again; $('toprof').textContent = L.toprof;
+    $('fb').innerHTML = L.fbs.map(function (f) { return '<button type="button" data-fb="' + f[0] + '"><span>' + f[1] + '</span>' + esc(f[2]) + '</button>'; }).join('');
+    chips('c-dev', L.devs, 'dev'); chips('c-scr', L.scrs, 'scr'); chips('c-grip', L.grips, 'grip'); chips('c-style', L.styles, 'style');
+  }
+  function chips(box, list, key) {
+    $(box).innerHTML = list.map(function (c, i) {
+      return '<button type="button" class="chip' + (S.prof[key] === i + 1 ? ' on' : '') + '" data-k="' + key + '" data-v="' + (i + 1) + '">'
+        + esc(c[0]) + (c[1] ? '<small>' + esc(c[1]) + '</small>' : '') + '</button>';
+    }).join('');
+  }
+  function syncChips() {
+    var bs = document.querySelectorAll('.chip[data-k]');
+    for (var i = 0; i < bs.length; i++) bs[i].classList.toggle('on', S.prof[bs[i].getAttribute('data-k')] === Number(bs[i].getAttribute('data-v')));
+  }
+
+  // ── поиск телефона: понимает «редми ноут 12», «а54» русскими буквами и набор в русской раскладке ──
+  var WORD = { 'редми': 'redmi', 'ксиоми': 'xiaomi', 'сяоми': 'xiaomi', 'ксяоми': 'xiaomi', 'шаоми': 'xiaomi', 'ксаоми': 'xiaomi', 'сиоми': 'xiaomi',
+    'поко': 'poco', 'самсунг': 'samsung', 'самсунк': 'samsung', 'галакси': 'galaxy', 'гэлакси': 'galaxy', 'галакс': 'galaxy',
+    'айфон': 'iphone', 'афон': 'iphone', 'айпад': 'ipad', 'эпл': 'apple', 'реалми': 'realme', 'риалми': 'realme', 'текно': 'tecno', 'техно': 'tecno',
+    'инфиникс': 'infinix', 'хонор': 'honor', 'хуавей': 'huawei', 'хуавэй': 'huawei', 'виво': 'vivo', 'оппо': 'oppo', 'моторола': 'motorola',
+    'мото': 'moto', 'пиксель': 'pixel', 'гугл': 'google', 'ноут': 'note', 'нот': 'note', 'нота': 'note', 'про': 'pro', 'макс': 'max', 'мини': 'mini',
+    'плюс': 'plus', 'лайт': 'lite', 'ультра': 'ultra', 'спарк': 'spark', 'хот': 'hot', 'пова': 'pova', 'камон': 'camon', 'смарт': 'smart',
+    'нова': 'nova', 'мейт': 'mate', 'таб': 'tab', 'пад': 'pad', 'эйр': 'air', 'аир': 'air', 'нфс': 'nfc', 'нфц': 'nfc', 'ванплюс': 'oneplus',
+    'зте': 'zte', 'блейд': 'blade', 'нотинг': 'nothing', 'ред': 'redmi', 'нате': 'note' };
+  var LOOK = { 'а': 'a', 'в': 'b', 'е': 'e', 'к': 'k', 'м': 'm', 'н': 'h', 'о': 'o', 'р': 'p', 'с': 'c', 'т': 't', 'у': 'y', 'х': 'x' };
+  var LAY = { 'й': 'q', 'ц': 'w', 'у': 'e', 'к': 'r', 'е': 't', 'н': 'y', 'г': 'u', 'ш': 'i', 'щ': 'o', 'з': 'p', 'ф': 'a', 'ы': 's', 'в': 'd',
+    'а': 'f', 'п': 'g', 'р': 'h', 'о': 'j', 'л': 'k', 'д': 'l', 'я': 'z', 'ч': 'x', 'с': 'c', 'м': 'v', 'и': 'b', 'т': 'n', 'ь': 'm' };
+  function normQ(s, layout) {
+    s = String(s || '').toLowerCase().replace(/ё/g, 'е').replace(/\+/g, ' plus ');
+    return s.split(/[^a-z0-9а-я]+/).filter(Boolean).map(function (t) {
+      if (layout) return t.split('').map(function (c) { return LAY[c] || c; }).join('');
+      if (WORD[t]) return WORD[t];
+      return t.split('').map(function (c) { return LOOK[c] || c; }).join('');
+    });
+  }
+  var ALIAS = { redmi: ['xiaomi'], poco: ['xiaomi'], iphone: ['apple'], ipad: ['apple'], google: ['pixel'] };
+  // при равных совпадениях выше — марки, которые у игроков встречаются чаще («a54» — сначала Samsung, потом Oppo)
+  var POP = { redmi: 0.35, samsung: 0.35, iphone: 0.35, poco: 0.3, xiaomi: 0.25, realme: 0.15, tecno: 0.15, honor: 0.15, infinix: 0.12, huawei: 0.1 };
+  function buildIdx() {
+    S.idx = S.phones.map(function (p) {
+      var name = (p[1] + ' ' + p[2]).toLowerCase().replace(/\+/g, ' plus ');
+      var toks = name.split(/[^a-z0-9]+/).filter(Boolean);
+      return { p: p, toks: toks.concat(ALIAS[p[1].toLowerCase()] || []), comp: toks.join('') };
+    });
+  }
+  function searchRun(qt) {
+    if (!qt.length) return [];
+    var qc = qt.join(''), out = [];
+    S.idx.forEach(function (it) {
+      var sc = 0, ok = true;
+      qt.forEach(function (t) {
+        if (it.toks.indexOf(t) >= 0) sc += 3;
+        else if (it.toks.some(function (x) { return x.indexOf(t) === 0; })) sc += 1;
+        else ok = false;
+      });
+      // слитно («note12», «a54pro»): совпадение по всей строке; выше — где модель идёт сразу после марки
+      if (!ok) { if (qc.length < 2 || it.comp.indexOf(qc) < 0) return; sc = 1 + (it.comp.indexOf(qc) === it.toks[0].length ? 1 : 0); }
+      out.push({ it: it, sc: sc - it.toks.length * 0.05 + (POP[it.p[1].toLowerCase()] || 0) });
+    });
+    out.sort(function (a, b) { return b.sc - a.sc || a.it.comp.length - b.it.comp.length; });
+    return out.map(function (x) { return x.it.p; });
+  }
+  function search(q) {
+    var r = searchRun(normQ(q, false));
+    if (!r.length && /[а-я]/.test(String(q).toLowerCase())) r = searchRun(normQ(q, true));
+    return r.slice(0, 8);
+  }
+  function scrClass(p) { return (p[1] === 'iPad' || p[3] >= 7.5) ? 4 : p[3] < 6.1 ? 1 : p[3] < 6.65 ? 2 : 3; }
+  function renderList() {
+    var q = $('q').value.trim();
+    if (!q) { $('q-list').innerHTML = S.phones.length ? '<div class="none">' + esc(L.q_more) + '</div>' : ''; return; }
+    var r = search(q);
+    $('q-list').innerHTML = r.length ? r.map(function (p) {
+      return '<button type="button" data-ph="' + esc(p[0]) + '"><span>' + esc(p[1] + ' ' + p[2]) + '</span><small>' + inch(p[3]) + '</small></button>';
+    }).join('') : '<div class="none">' + esc(L.q_none) + '</div>';
+  }
+  function pickPhone(key) {
+    var p = null;
+    for (var i = 0; i < S.phones.length; i++) if (S.phones[i][0] === key) p = S.phones[i];
+    if (!p) return;
+    S.phone = p; S.prof.phone = p[0]; S.manual = false;
+    $('qs-n').textContent = p[1] + ' ' + p[2];
+    $('qs-d').textContent = inch(p[3]) + ' · ' + L.scr_names[scrClass(p) - 1];
+    $('q-sel').hidden = false; $('q-box').hidden = true; $('man').hidden = true; $('q-man').hidden = true;
+    haptic(null, 'light'); syncGo();
+  }
+  function unpick() {
+    S.phone = null; S.prof.phone = '';
+    $('q-sel').hidden = true; $('q-box').hidden = false; $('q-man').hidden = false; $('q-man').textContent = L.man;
+    syncGo();
+  }
+  function setManual(on) {
+    S.manual = on;
+    if (on) { S.phone = null; S.prof.phone = ''; $('q-sel').hidden = true; }
+    $('man').hidden = !on; $('q-box').hidden = on;
+    $('q-man').hidden = false; $('q-man').textContent = on ? L.man_off : L.man;
+    syncGo();
+  }
+  function profReady() {
+    var ph = S.phone || (S.manual && S.prof.dev && S.prof.scr);
+    return { ph: !!ph, gs: !!(S.prof.grip && S.prof.style) };
+  }
+  function syncGo() {
+    var r = profReady();
+    $('go').disabled = !(r.ph && r.gs) || S.busy;
+    $('go-h').textContent = !r.ph ? L.go_need_ph : !r.gs ? L.go_need_gs : L.go_ok;
+  }
+
+  // ── прошлый результат ───────────────────────────────────────────────
+  function renderLast() {
+    var r = S.last;
+    if (!r) { $('last').hidden = true; return; }
+    $('last').hidden = false;
+    $('last').innerHTML = '<div class="lr-m"><b>' + esc(L.last) + ' · ' + esc(r.rank.ico + ' ' + r.rank.name) + '</b><small>'
+      + esc(L.gen) + ' ' + r.vals.gen + ' · ' + esc(L.red) + ' ' + r.vals.red + '</small></div>'
+      + '<button type="button" id="last-b">' + esc(L.last_btn) + '</button>';
+  }
+  function prefill(r) {
+    if (!r || !r.prof) return;
+    var p = r.prof;
+    S.prof.grip = p.g || 0; S.prof.style = p.st || 0;
+    if (p.phone) pickPhone(p.phone);
+    else if (p.d && p.s) { S.prof.dev = p.d; S.prof.scr = p.s; setManual(true); }
+    syncChips(); syncGo();
+  }
+
+  // ── старт: стартовая сенса и «скорость» прицела для теста ───────────
+  function body() {
+    return { phone: S.phone ? S.phone[0] : '', dev: S.prof.dev, scr: S.prof.scr, grip: S.prof.grip, style: S.prof.style };
+  }
+  function begin() {
+    if (S.busy) return;
+    S.busy = true; syncGo();
+    post('/casino/aim/start', body()).then(function (res) {
+      S.busy = false; syncGo();
+      if (!res.j || !res.j.ok) { toast(errText(res), true); haptic('error'); return; }
+      S.gain = res.j.gain || S.gain; S.base = res.j.base;
+      A.res = { flick: [], drag: [] }; A.hits = 0; A.heads = 0;
+      brief('flick');
+    }).catch(function () { S.busy = false; syncGo(); toast(L.e_net, true); });
+  }
+  function brief(kind) {
+    A.kind = kind;
+    $('br-n').textContent = tpl(L.rnd, { n: kind === 'flick' ? 1 : 2 });
+    $('br-t').textContent = kind === 'flick' ? L.flick : L.drag;
+    $('br-demo').className = 'demo ' + kind;
+    $('br-l').innerHTML = (kind === 'flick' ? L.fl_steps : L.dr_steps).map(function (s) { return '<li>' + s + '</li>'; }).join('');
+    $('br-s').innerHTML = S.base ? tpl(L.sens, { k: kind === 'flick' ? L.gen : L.red, v: kind === 'flick' ? S.base.gen : S.base.red }) : '';
+    $('br-s').hidden = !S.base;
+    show('brief');
+  }
+
+  // ── арена ───────────────────────────────────────────────────────────
+  // Камера двигается за пальцем с «скоростью» стартовой сенсы: свайп вправо — обзор вправо, как в игре. Прицел стоит
+  // в центре, мир едет под ним. По первому рывку пальца видно, пролетает игрок цель или не доходит до неё.
+  var A = { kind: 'flick', n: 0, i: 0, W: 0, H: 0, cx: 0, cy: 0, cam: { x: 0, y: 0 }, tgt: null, ptr: null, f0: null, c0: null,
+            smp: [], spawnT: 0, timer: 0, shot: false, raf: 0, res: { flick: [], drag: [] }, hits: 0, heads: 0, nextT: 0 };
+  var HEAD_R = 15, BODY_W = 22, BODY_T = 14, BODY_B = 128, CHEST = 46;
+  function now() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
+  function layout() {
+    A.W = window.innerWidth; A.H = window.innerHeight;
+    A.cx = Math.round(A.W / 2); A.cy = Math.round(A.H * 0.47);
+    $('cross').style.transform = 'translate3d(' + A.cx + 'px,' + A.cy + 'px,0)';
+    draw();
+  }
+  function mod(a, m) { return ((a % m) + m) % m; }
+  function draw() {
+    A.raf = 0;
+    $('ground').style.transform = 'translate3d(' + (-mod(A.cam.x, 96)) + 'px,' + (-mod(A.cam.y, 96)) + 'px,0)';
+    var t = A.tgt, el = $('tgt');
+    if (!t) { el.style.opacity = '0'; return; }
+    var sx = A.cx + t.x - A.cam.x, sy = A.cy + t.y - A.cam.y;
+    el.style.opacity = '';
+    el.style.transform = 'translate3d(' + sx.toFixed(1) + 'px,' + sy.toFixed(1) + 'px,0) scale(' + t.k + ')';
+    var h = hitAt(t);
+    $('cross').className = h === 2 ? 'oh' : h === 1 ? 'ob' : '';
+    el.classList.toggle('hh', h === 2);
+  }
+  function req() { if (!A.raf) A.raf = requestAnimationFrame(draw); }
+  function hitAt(t) {
+    var rx = A.cam.x - t.x, ry = A.cam.y - t.y, k = t.k;
+    if (Math.sqrt(rx * rx + ry * ry) <= HEAD_R * k) return 2;
+    if (Math.abs(rx) <= BODY_W * k && ry > BODY_T * k && ry <= BODY_B * k) return 1;
+    return 0;
+  }
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  function startArena(kind) {
+    A.kind = kind; A.n = kind === 'flick' ? S.rounds.flick : S.rounds.drag; A.i = 0;
+    A.cam = { x: 0, y: 0 }; A.tgt = null;
+    $('arena').hidden = false; document.body.style.overflow = 'hidden';
+    try { if (tg && tg.enableClosingConfirmation) tg.enableClosingConfirmation(); } catch (e) {}
+    $('a-r').textContent = kind === 'flick' ? L.flick : L.drag;
+    $('ahint').innerHTML = kind === 'flick' ? L.fl_hint : L.dr_hint; $('ahint').style.opacity = '1';
+    layout(); syncBack();
+    A.nextT = setTimeout(spawn, 450);
+  }
+  function stopArena() {
+    clearTimeout(A.timer); clearTimeout(A.nextT); A.tgt = null; A.ptr = null;
+    $('arena').hidden = true; document.body.style.overflow = '';
+    try { if (tg && tg.disableClosingConfirmation) tg.disableClosingConfirmation(); } catch (e) {}
+  }
+  function quitArena() {
+    var go = function () { stopArena(); show('prof'); };
+    try { if (tg && tg.showConfirm && tg.isVersionAtLeast && tg.isVersionAtLeast('6.2')) { tg.showConfirm(L.quit, function (ok) { if (ok) go(); }); return; } } catch (e) {}
+    if (window.confirm(L.quit)) go();
+  }
+  function counter() {
+    $('a-c').textContent = tpl(L.of, { i: Math.min(A.i + 1, A.n), n: A.n });
+    $('a-hit').textContent = A.hits; $('a-head').textContent = A.heads;
+  }
+  function spawn() {
+    if ($('arena').hidden) return;
+    counter();
+    var t;
+    if (A.kind === 'flick') {
+      var R = Math.max(80, Math.min(A.W / 2 - 46, A.H * 0.47 - 92, A.H * 0.53 - 150));
+      var D = rnd(0.42, 0.92) * R, a = rnd(0, Math.PI * 2);
+      t = { x: A.cam.x + Math.cos(a) * D, y: A.cam.y + Math.sin(a) * D, k: rnd(0.9, 1.1) };
+    } else {
+      var k = rnd(0.85, 1.25);
+      t = { x: A.cam.x, y: A.cam.y - CHEST * k, k: k };      // прицел — на груди, голова выше на CHEST·k
+    }
+    A.tgt = t; A.shot = false; A.smp = []; A.ptr = null;
+    $('tgt').classList.remove('dead');
+    A.spawnT = now();
+    var ms = A.kind === 'flick' ? 3000 : 2600;
+    var bar = $('tbar'); bar.style.transition = 'none'; bar.style.transform = 'scaleX(1)';
+    void bar.offsetWidth; bar.style.transition = 'transform ' + ms + 'ms linear'; bar.style.transform = 'scaleX(0)';
+    A.timer = setTimeout(function () { shoot(true); }, ms);
+    draw();
+  }
+  function pop(kind, text) {
+    var p = $('pop');
+    p.className = 'pop'; p.textContent = text;
+    p.style.setProperty('--px', A.cx + 'px'); p.style.setProperty('--py', (A.cy - 72) + 'px');
+    void p.offsetWidth; p.className = 'pop show ' + kind;
+  }
+  // конец первого рывка: после пика скорости она падает почти до нуля (или палец разворачивается) — там и смотрим,
+  // сколько прицел прошёл в сторону цели. Дальнейшие подправки на это число не влияют.
+  function primary(s, ux, uy) {
+    var x0 = s[0].x, y0 = s[0].y, P = [], i;
+    for (i = 0; i < s.length; i++) P.push((s[i].x - x0) * ux + (s[i].y - y0) * uy);
+    if (P.length < 3) return P[P.length - 1];
+    var V = [0];
+    for (i = 1; i < P.length; i++) V.push((P[i] - P[i - 1]) / Math.max(4, s[i].t - s[i - 1].t));
+    var Vs = V.map(function (_, j) { return (V[Math.max(0, j - 1)] + V[j] + V[Math.min(V.length - 1, j + 1)]) / 3; });
+    var ip = 0;
+    for (i = 1; i < Vs.length; i++) if (Vs[i] > Vs[ip]) ip = i;
+    if (Vs[ip] <= 0.02) return P[P.length - 1];
+    for (i = ip + 1; i < Vs.length; i++) if (Vs[i] < 0.15 * Vs[ip]) return P[i];
+    return P[P.length - 1];
+  }
+  function r1(v) { return Math.round(v * 10) / 10; }
+  function shoot(timeout) {
+    if (A.shot || !A.tgt) return;
+    A.shot = true; clearTimeout(A.timer);
+    var t = A.tgt, touched = A.smp.length > 0;
+    if (A.ptr !== null) { try { $('arena').releasePointerCapture(A.ptr); } catch (e) {} }
+    A.ptr = null;
+    if (!touched) {
+      pop('to', L.p_to); haptic('warning');
+    } else {
+      var hit = hitAt(t), rx = A.cam.x - t.x, ry = A.cam.y - t.y, e = r1(Math.sqrt(rx * rx + ry * ry)), dt = Math.round(now() - A.spawnT);
+      if (A.smp.length >= 2) {
+        if (A.kind === 'flick') {
+          var dx = t.x - A.c0.x, dy = t.y - A.c0.y, D = Math.sqrt(dx * dx + dy * dy);
+          A.res.flick.push({ d: r1(D), p: r1(primary(A.smp, dx / D, dy / D)), e: e, hit: hit, t: dt });
+        } else {
+          A.res.drag.push({ h: r1(A.c0.y - t.y), v: r1(primary(A.smp, 0, -1)), x: r1(Math.abs(rx)), e: e, hit: hit, t: dt });
+        }
+      }
+      if (hit) A.hits++;
+      if (hit === 2) A.heads++;
+      pop(hit === 2 ? 'hd' : hit === 1 ? 'bd' : 'ms', hit === 2 ? L.p_head : hit === 1 ? L.p_body : L.p_miss);
+      haptic(hit === 2 ? 'success' : hit === 0 ? 'error' : null, hit === 1 ? 'light' : null);
+      if (hit) $('tgt').classList.add('dead');
+    }
+    counter();
+    A.i++;
+    A.nextT = setTimeout(function () {
+      if (A.i >= A.n) { endRound(); return; }
+      spawn();
+    }, touched ? 560 : 420);
+  }
+  function endRound() {
+    stopArena();
+    if (A.kind === 'flick') { brief('drag'); return; }
+    finish();
+  }
+  var arena = $('arena');
+  arena.addEventListener('pointerdown', function (e) {
+    if (e.target && e.target.closest && e.target.closest('#aquit')) return;
+    if (!A.tgt || A.shot || A.ptr !== null) return;
+    if (e.isPrimary === false) return;
+    A.ptr = e.pointerId;
+    try { arena.setPointerCapture(e.pointerId); } catch (_) {}
+    A.f0 = { x: e.clientX, y: e.clientY }; A.c0 = { x: A.cam.x, y: A.cam.y };
+    A.smp = [{ t: e.timeStamp || now(), x: A.cam.x, y: A.cam.y }];
+    $('ahint').style.opacity = '0';
+    e.preventDefault();
+  });
+  arena.addEventListener('pointermove', function (e) {
+    if (A.ptr === null || e.pointerId !== A.ptr || A.shot) return;
+    var evs = (e.getCoalescedEvents && e.getCoalescedEvents()) || [];
+    if (!evs.length) evs = [e];
+    var g = A.kind === 'flick' ? S.gain.flick : S.gain.drag;
+    for (var i = 0; i < evs.length; i++) {
+      var ev = evs[i];
+      A.cam.x = A.c0.x + (ev.clientX - A.f0.x) * g;
+      A.cam.y = A.c0.y + (ev.clientY - A.f0.y) * g;
+      A.smp.push({ t: ev.timeStamp || now(), x: A.cam.x, y: A.cam.y });
+    }
+    req();
+    e.preventDefault();
+  });
+  function up(e) { if (A.ptr !== null && e.pointerId === A.ptr) shoot(false); }
+  arena.addEventListener('pointerup', up);
+  arena.addEventListener('pointercancel', up);
+  $('aquit').addEventListener('click', function (e) { e.stopPropagation(); quitArena(); });
+  window.addEventListener('resize', function () { if (!$('arena').hidden) layout(); });
+
+  // ── результат ───────────────────────────────────────────────────────
+  function finish() {
+    $('calc').hidden = false;
+    var t0 = now(), b = body();
+    b.flick = A.res.flick; b.drag = A.res.drag;
+    post('/casino/aim/result', b).then(function (res) {
+      var wait = Math.max(0, 900 - (now() - t0));
+      setTimeout(function () {
+        $('calc').hidden = true;
+        if (!res.j || !res.j.ok) { toast(errText(res), true); haptic('error'); show('prof'); return; }
+        S.last = res.j; renderLast();
+        renderRes(res.j, true); show('res'); haptic('success');
+      }, wait);
+    }).catch(function () { $('calc').hidden = true; toast(L.e_net, true); show('prof'); });
+  }
+  var KEYS = ['gen', 'red', 'x2', 'x4', 'snp', 'free'];
+  function renderRes(r, fresh) {
+    S.res = r;
+    var st = r.st || {};
+    $('rk-i').textContent = (r.rank && r.rank.ico) || '🎯';
+    $('rk-n').textContent = (r.rank && r.rank.name) || '';
+    $('rk-s').innerHTML = tpl(L.pts, { s: String(st.score || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') });
+    $('rk-p').textContent = r.summary || '';
+    $('stats').innerHTML = '<div><b>' + (st.hits || 0) + '/' + (st.total || 0) + '</b><small>' + esc(L.st_hit) + '</small></div>'
+      + '<div><b>' + (st.heads || 0) + '</b><small>' + esc(L.st_head) + '</small></div>'
+      + '<div><b>' + ((st.react || 0) / 1000).toFixed(2).replace('.', LANG === 'ru' ? ',' : '.') + '</b><small>' + esc(L.st_rt) + '</small></div>';
+    $('sl').innerHTML = KEYS.map(function (k) {
+      var v = r.vals[k], b = r.base ? r.base[k] : v, d = v - b, max = 200;
+      return '<div class="sl"><div class="sl-h"><span>' + esc(L.labels[k]) + '</span><span>'
+        + (d ? '<small class="' + (d > 0 ? 'up' : 'dn') + '">' + (d > 0 ? '+' : '−') + Math.abs(d) + '</small>' : '')
+        + '<b>' + v + '</b></span></div><div class="sl-t"><i data-v="' + Math.min(1, v / max) + '"></i>'
+        + (d ? '<u style="left:' + (Math.min(1, b / max) * 100).toFixed(1) + '%"></u>' : '') + '</div></div>';
+    }).join('');
+    $('fire').innerHTML = '<span>' + esc(L.fire) + '</span><b>' + r.vals.fire + '%</b>';
+    $('why').innerHTML = (r.why || []).map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('');
+    $('sent').textContent = fresh ? L.sent : L.sent_last;
+    $('id-d').innerHTML = tpl(L.id_d, { p: S.price });
+    var fbs = $('fb').querySelectorAll('button');
+    for (var i = 0; i < fbs.length; i++) fbs[i].classList.toggle('on', fbs[i].getAttribute('data-fb') === r.fb);
+    // полоски заполняются плавно (только transform)
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        var is = $('sl').querySelectorAll('.sl-t i');
+        for (var j = 0; j < is.length; j++) is[j].style.transform = 'scaleX(' + is[j].getAttribute('data-v') + ')';
+      });
+    });
+  }
+  function copyText(t) {
+    function fallback() {
+      try {
+        var ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0'; document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0, t.length); var ok = document.execCommand('copy'); document.body.removeChild(ta); return ok;
+      } catch (e) { return false; }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(t).then(function () { return true; }, function () { return fallback(); });
+    }
+    return Promise.resolve(fallback());
+  }
+
+  // ── события ─────────────────────────────────────────────────────────
+  $('q').addEventListener('input', renderList);
+  $('q-list').addEventListener('click', function (e) { var b = e.target.closest('[data-ph]'); if (b) pickPhone(b.getAttribute('data-ph')); });
+  $('qs-x').addEventListener('click', function () { unpick(); $('q').value = ''; renderList(); try { $('q').focus(); } catch (e) {} });
+  $('q-man').addEventListener('click', function () { setManual(!S.manual); });
+  document.addEventListener('click', function (e) {
+    var c = e.target.closest('.chip[data-k]');
+    if (!c) return;
+    S.prof[c.getAttribute('data-k')] = Number(c.getAttribute('data-v'));
+    syncChips(); syncGo(); haptic();
+  });
+  $('go').addEventListener('click', begin);
+  $('br-go').addEventListener('click', function () { startArena(A.kind); });
+  $('last').addEventListener('click', function (e) { if (e.target.closest('#last-b') && S.last) { renderRes(S.last, false); show('res'); } });
+  $('copy').addEventListener('click', function () {
+    if (!S.res) return;
+    var v = S.res.vals;
+    copyText(tpl(L.copyline, v)).then(function (ok) { toast(ok ? L.copied : tpl(L.copyline, v)); haptic(ok ? 'success' : null); });
+  });
+  $('fb').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-fb]');
+    if (!b || S.busy) return;
+    var kind = b.getAttribute('data-fb');
+    S.busy = true;
+    post('/casino/aim/feedback', { kind: kind }).then(function (res) {
+      S.busy = false;
+      if (!res.j || !res.j.ok) { toast(errText(res), true); return; }
+      S.last = res.j; renderLast(); renderRes(res.j, true);
+      toast(kind === 'up' ? L.fb_up : kind === 'down' ? L.fb_down : L.fb_ok); haptic('success');
+    }).catch(function () { S.busy = false; toast(L.e_net, true); });
+  });
+  $('ideal').addEventListener('click', function () {
+    try { if (tg && tg.openTelegramLink) { tg.openTelegramLink(S.orderUrl); return; } } catch (e) {}
+    window.open(S.orderUrl, '_blank');
+  });
+  $('again').addEventListener('click', begin);
+  $('toprof').addEventListener('click', function () { show('prof'); });
+
+  // для проверки в браузере: где сейчас цель и с какой «скоростью» двигается прицел (только чтение)
+  window.__aimDbg = {
+    need: function () { return A.tgt ? { dx: A.tgt.x - A.cam.x, dy: A.tgt.y - A.cam.y, k: A.tgt.k, cx: A.cx, cy: A.cy,
+                                           g: A.kind === 'flick' ? S.gain.flick : S.gain.drag, kind: A.kind, i: A.i, n: A.n, shot: A.shot } : null; },
+    view: function () { return { view: S.view, arena: !$('arena').hidden, calc: !$('calc').hidden }; }
+  };
+
+  // ── старт страницы ──────────────────────────────────────────────────
+  texts(); syncGo();
+  if (!UID || !API) {
+    $('s-prof').hidden = true; $('fatal').hidden = false;
+    $('fatal-t').textContent = L.none_t; $('fatal-d').textContent = L.none_d;
+    return;
+  }
+  renderList();
+  getState().then(function (res) {
+    var j = res && res.j;
+    if (!j || !j.ok) {
+      if (res && res.status === 401) toast(L.e_auth, true); else toast(L.e_ph, true);
+      setManual(true); return;
+    }
+    S.phones = j.phones || []; buildIdx();
+    if (j.rounds) S.rounds = j.rounds;
+    if (j.order_url) S.orderUrl = j.order_url;
+    if (j.ideal_price) S.price = j.ideal_price;
+    S.last = j.last || null; renderLast(); prefill(S.last); renderList();
+  }).catch(function () { toast(L.e_ph, true); setManual(true); });
+})();
+</script>
+</body>
+</html>
