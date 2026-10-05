@@ -271,7 +271,8 @@
   .why { margin: 0; padding: 0; list-style: none; }
   .why li { position: relative; padding: 6px 0 6px 20px; color: var(--tx2); font-size: 13.5px; }
   .why li::before { content: ''; position: absolute; left: 3px; top: 12px; width: 8px; height: 8px; background: var(--or); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
-  .why li:nth-child(-n+2) { color: var(--tx); }
+  .why li.hl { color: var(--tx); }
+  .why li.sum { color: var(--ye); font-weight: 600; }
   .fb { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 10px; }
   .fb button { padding: 12px 4px; border: 0; font: 600 13px var(--ui); color: var(--tx); background: #11151e; box-shadow: inset 0 0 0 1px var(--ln2);
                clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); transition: transform .14s var(--ease); }
@@ -330,6 +331,36 @@
   .demo.swipe .dtrail { display: block; position: absolute; left: 50%; bottom: 26px; width: 7px; height: 112px; margin-left: -3px; transform-origin: 50% 100%;
                         background: linear-gradient(0deg, #ff5a00, #ffc400); box-shadow: 0 0 16px rgba(255,140,0,.85); animation: dtr 2s var(--ease) infinite; }
   .demo.swipe .df { animation: dfing3 2s var(--ease) infinite; }
+
+  /* v350: этапы теста, калибровка экрана картой, радар навыков */
+  .stg { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+  .stg i { width: 44px; height: 5px; background: rgba(255,255,255,.12); clip-path: polygon(3px 0, 100% 0, calc(100% - 3px) 100%, 0 100%); }
+  .stg i.done { background: rgba(255,176,0,.5); }
+  .stg i.on { background: var(--grad); }
+  .lnk.cal { margin-top: 8px; font-size: 12.5px; color: var(--tx2); text-decoration-color: rgba(255,255,255,.22); }
+  .lnk.cal.on { color: var(--grn); text-decoration-color: rgba(91,227,143,.35); }
+  #cal { position: fixed; inset: 0; z-index: 70; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
+         background: #06070a; }
+  .cal-box { position: absolute; left: 14px; top: calc(18px + env(safe-area-inset-top, 0px)); width: 0; height: 0;
+             background: linear-gradient(160deg, rgba(255,150,0,.2), rgba(255,90,0,.05)); box-shadow: inset 0 0 0 1px rgba(255,176,0,.55); }
+  .cal-box i { position: absolute; background: #ffd84a; box-shadow: 0 0 8px rgba(255,190,0,.9); pointer-events: none; }
+  .cal-box .cl { left: -1px; top: -120vh; bottom: -120vh; width: 2px; }
+  .cal-box .cr { right: -1px; top: -120vh; bottom: -120vh; width: 2px; }
+  .cal-box .ct { left: -14px; right: -120vw; top: -1px; height: 2px; }
+  .cal-box b { position: absolute; left: 10px; top: 10px; font: 12px var(--hud); letter-spacing: .05em; color: var(--ye); }
+  .cal-box small { position: absolute; left: 10px; top: 30px; font: 600 11px var(--ui); color: var(--tx2); }
+  .cal-ctl { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+             background: rgba(10,12,18,.97); box-shadow: 0 -1px 0 var(--ln2); }
+  .cal-ctl > b { display: block; font: 14px var(--hud); letter-spacing: .07em; color: var(--or2); }
+  .cal-ctl > p { margin: 4px 0 10px; color: var(--tx2); font-size: 12.5px; line-height: 1.4; }
+  .cal-row { display: flex; align-items: center; gap: 10px; }
+  .cal-row button { flex: 0 0 44px; height: 40px; padding: 0; border: 0; font: 20px var(--hud); color: var(--ye); background: #141821;
+                    box-shadow: inset 0 0 0 1.5px rgba(255,150,0,.5); clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
+  .cal-row input { flex: 1; min-width: 0; height: 32px; margin: 0; accent-color: #ff9500; }
+  .cal-v { margin-top: 6px; text-align: center; font: 12px var(--ui); color: var(--tx3); }
+  .cal-ctl .row2 { margin-top: 10px; }
+  .radar { display: block; width: 100%; height: 250px; animation: rdin .6s var(--ease) both; }
+  @keyframes rdin { from { opacity: 0; transform: scale(.86); } to { opacity: 1; transform: none; } }
   @keyframes dtr { 0%, 15% { transform: scaleY(0); opacity: 1; } 55% { transform: scaleY(1); opacity: 1; } 85%, 100% { transform: scaleY(1); opacity: 0; } }
   @keyframes dfing3 { 0%, 15% { transform: translate(30px, 28px); opacity: 0; } 18% { opacity: 1; } 55% { transform: translate(30px, -84px); opacity: 1; } 72%, 100% { transform: translate(30px, -84px); opacity: 0; } }
 
@@ -381,6 +412,7 @@
         <div class="lbl" id="l-mname"></div>
         <input id="m-name" class="inp" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false">
       </div>
+      <button type="button" class="lnk cal" id="cal-b" hidden></button>
     </div>
     <div class="panel">
       <div class="ph"><span>02</span><b id="p2-t"></b></div>
@@ -390,7 +422,6 @@
     <div class="panel last" id="last" hidden></div>
     <div class="modes">
       <div class="glow"><button type="button" class="btn big mode" id="go" disabled><b id="go-t"></b><small id="go-s"></small></button></div>
-      <button type="button" class="btn sec mode" id="go2" disabled><b id="go2-t"></b><small id="go2-s"></small></button>
     </div>
     <div class="hint" id="go-h"></div>
   </section>
@@ -398,6 +429,7 @@
   <!-- 2. брифинг раунда -->
   <section id="s-brief" class="scr" hidden>
     <div class="rnd" id="br-n"></div>
+    <div class="stg" id="br-st"></div>
     <h2 id="br-t"></h2>
     <div class="demo" id="br-demo">
       <div class="dg"></div>
@@ -409,6 +441,7 @@
     </div>
     <ul class="steps" id="br-l"></ul>
     <div class="sens" id="br-s"></div>
+    <button type="button" class="lnk cal" id="br-cal" hidden></button>
     <div class="glow"><button type="button" class="btn big" id="br-go"></button></div>
   </section>
 
@@ -421,6 +454,11 @@
       <div class="rk-p" id="rk-p"></div>
     </div>
     <div class="stats" id="stats"></div>
+    <div class="panel" id="rd-p" hidden>
+      <div class="ph"><span>★</span><b id="r0-t"></b></div>
+      <canvas class="radar" id="radar"></canvas>
+      <div class="small" id="r0-d"></div>
+    </div>
     <canvas class="rescv" id="res-cv" hidden></canvas>
     <div class="panel">
       <div class="ph"><span>⚙</span><b id="r1-t"></b></div>
@@ -482,6 +520,17 @@
   <button type="button" class="aquit" id="sw-quit">✕</button>
 </div>
 
+<!-- v350: калибровка экрана банковской картой (ID-1: 85,6 × 53,98 мм) -->
+<div id="cal" hidden>
+  <div class="cal-box" id="cal-box"><i class="cl"></i><i class="cr"></i><i class="ct"></i><b id="cal-bx"></b><small id="cal-dm"></small></div>
+  <div class="cal-ctl">
+    <b id="cal-t"></b><p id="cal-d"></p>
+    <div class="cal-row"><button type="button" id="cal-m">−</button><input type="range" id="cal-r" min="25" max="95" step="0.05"><button type="button" id="cal-p">+</button></div>
+    <div class="cal-v" id="cal-v"></div>
+    <div class="row2"><button type="button" class="btn sec" id="cal-x"></button><button type="button" class="btn" id="cal-ok"></button></div>
+  </div>
+</div>
+
 <div id="calc" hidden><div class="spin"></div><b id="calc-t"></b><small id="calc-d"></small></div>
 <div class="toast" id="toast"></div>
 
@@ -492,9 +541,10 @@ window.addEventListener('error', function (e) {
   try {
     var a = document.getElementById('arena'); if (a) a.hidden = true;
     var w = document.getElementById('swipe'); if (w) w.hidden = true;
+    var c = document.getElementById('cal'); if (c) c.hidden = true;
     document.querySelectorAll('.scr').forEach(function (s) { s.hidden = true; });
     var f = document.getElementById('fatal'); f.hidden = false;
-    document.getElementById('fatal-d').textContent = 'Закрой и открой тест заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v349';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой тест заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v350';
   } catch (_) {}
 }, true);
 </script>
@@ -509,7 +559,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v349';
+  var VER = 'v350';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -537,7 +587,7 @@ window.addEventListener('error', function (e) {
     ru: {
       ttl: 'ТЕСТ ПРИЦЕЛА', sub: 'для Free Fire', tag: 'ПОЛИГОН', hk: 'ТРЕНИРОВКА',
       ht: 'ПОДБЕРИ СЕНСУ<br><em>ПОД СВОЮ РУКУ</em>',
-      hd: 'Выбери телефон и пройди 2 коротких раунда — бот посчитает сенсу по твоим выстрелам.',
+      hd: 'Выбери телефон и пройди тест из 3 этапов: флики, оттяжка в голову и свайпы. Бот посчитает сенсу по твоим выстрелам и движениям пальца.',
       p1: 'ТВОЙ ТЕЛЕФОН', q_ph: 'Например: Redmi Note 12, iPhone 13', q_none: 'Не нашёл такой — нажми «Нет моего телефона» ниже',
       q_more: 'Начни писать модель — например, «Note 12» или «A54»', man: 'Нет моего телефона — выберу сам', man_off: 'Найти свой телефон в списке',
       chg: 'Сменить', l_dev: 'Телефон', l_scr: 'Экран',
@@ -546,23 +596,30 @@ window.addEventListener('error', function (e) {
       scr_names: ['компактный экран', 'обычный экран', 'большой экран', 'планшет'],
       p2: 'КАК ИГРАЕШЬ', l_grip: 'Сколькими пальцами', l_style: 'Стиль',
       grips: [['2 пальца', ''], ['3–4 пальца', 'коготь']], styles: [['Раш', 'ближний бой'], ['Универсал', ''], ['Снайпер', 'дальний бой']],
-      go: '▶ ТЕСТ ПРИЦЕЛА', go_s: '2 раунда: флики и оттяжка в голову', go2: '🖐 АНАЛИЗ ОТТЯЖКИ', go2_s: 'проведи пальцем как в игре — 5 раз',
-      go_need_ph: 'Выбери свой телефон', go_need_gs: 'Выбери пальцы и стиль', go_ok: 'Выбери тест — каждый меньше минуты',
+      go: '▶ НАЧАТЬ ТЕСТ', go_s: '3 этапа: флики · оттяжка · свайпы — около минуты',
+      go_need_ph: 'Выбери свой телефон', go_need_gs: 'Выбери пальцы и стиль', go_ok: 'Всё готово — жми «Начать тест»',
       l_mname: 'Модель (если знаешь)', m_ph: 'Например: Itel A70', use: 'Нет в списке — указать «{q}» и выбрать экран самому',
-      sw_title: 'АНАЛИЗ ОТТЯЖКИ', rnd_sw: '{n} СВАЙПОВ',
-      sw_steps: ['Проведи пальцем <b>вверх</b> — как делаешь оттяжку в игре', 'Тяни с той же силой и длиной, что в бою', '<b>{n} раз</b> — бот измерит длину, скорость и ровность и подберёт сенсу под твоё касание'],
+      sw_title: '3/3 · СВАЙПЫ', stage: 'ЭТАП {n} / 3', swipe: 'СВАЙПЫ',
+      sw_steps: ['Проведи пальцем <b>вверх</b> — как делаешь оттяжку в игре', 'Тяни с той же силой и длиной, что в бою', '<b>{n} раз</b> — бот измерит длину в сантиметрах, скорость и ровность'],
       sw_h1: 'ПРОВЕДИ ВВЕРХ', sw_h2: 'как делаешь оттяжку в игре', sw_card: 'СВАЙП {i} / {n}', sw_bad: 'ЭТО НЕ ОТТЯЖКА', sw_bad_d: 'Проведи пальцем вверх — от груди к голове',
       sw_len: 'длина, см', sw_time: 'время, с', sw_spd: 'пик, см/с', sw_str: 'ровно, %', sw_unit: 'см', sw_unit_v: 'см/с',
       st_len: 'длина, см', st_spd: 'скорость, см/с', st_str: 'ровность', res_sw: '{n} оттяжек · сенса под твоё касание',
       last: 'ПРОШЛЫЙ ТЕСТ', last_btn: 'ОТКРЫТЬ', gen: 'Обзор', red: 'Коллиматор',
-      rnd: 'РАУНД {n} / 2', flick: 'ФЛИКИ', drag: 'ОТТЯЖКА',
+      flick: 'ФЛИКИ', drag: 'ОТТЯЖКА',
       fl_steps: ['Цель появится в случайном месте', 'Одним <b>быстрым свайпом</b> наведи прицел на голову — как в игре', 'Отпусти палец — это выстрел', '<b>Не подправляй</b> долго: важен первый рывок'],
       dr_steps: ['Прицел будет на груди врага', 'Резко <b>свайпни вверх</b> — «оттяжка» в голову', 'Отпусти палец — это выстрел', 'Старайся не уйти выше головы'],
       sens: 'Тест на стартовой сенсе: <b>{k} {v}</b>', ready: 'ГОТОВ', of: '{i} / {n}',
       fl_hint: 'Свайпни к цели и <b>отпусти</b>', dr_hint: 'Свайпни <b>вверх</b> к голове и отпусти',
       p_head: 'ХЕДШОТ!', p_body: 'ПОПАДАНИЕ', p_miss: 'МИМО', p_to: 'НЕ УСПЕЛ',
-      calc_t: 'АНАЛИЗ ВЫСТРЕЛОВ…', calc_d: 'Считаю сенсу под твою руку',
+      calc_t: 'АНАЛИЗ ТРЁХ ЭТАПОВ…', calc_d: 'Считаю сенсу и навыки под твою руку',
       pts: '<b>{s}</b> очков', st_hit: 'попаданий', st_head: 'в голову', st_rt: 'реакция, с',
+      st_miss: 'промах, мм', st_drag: 'оттяжка, см', st_v: 'скорость, см/с',
+      r0: 'ТВОИ НАВЫКИ', r0d: 'От 0 до 100 по трём этапам. Реакция — как быстро начинаешь движение, контроль — насколько точен первый рывок, стабильность — насколько одинаково от раза к разу.',
+      radar: { react: 'Реакция', acc: 'Точность', ctrl: 'Контроль', stab: 'Стабильность', speed: 'Скорость' },
+      cal_off: '📏 Уточнить размер экрана банковской картой', cal_on: '📏 Экран откалиброван картой ✓ — изменить',
+      cal_t: '📏 ТОЧНЫЙ РАЗМЕР ЭКРАНА', cal_d: 'Приложи любую банковскую карту к жёлтым линиям слева и сверху. Двигай ползунок, пока правая линия не совпадёт с правым краем карты.',
+      cal_v: '1 см на экране = {v} точек', cal_ok: 'Готово — свайпы теперь в точных сантиметрах', cal_no: 'ОТМЕНА', cal_yes: '✓ ГОТОВО',
+      cal_bx: 'ПРИЛОЖИ КАРТУ СЮДА', cal_dm: 'карта 54 × 85,6 мм',
       r1: 'ТВОЯ СЕНСА', r2: 'ПОЧЕМУ ТАК', r3: 'КАК ПРИЦЕЛ В ИГРЕ?', r3d: 'Сыграй 2–3 матча и скажи — поправлю.',
       fbs: [['up', '⬆️', 'Перелетает'], ['down', '⬇️', 'Не долетает'], ['ok', '👍', 'Отлично']],
       labels: { gen: 'Обзор', red: 'Коллиматор', x2: 'Прицел 2×', x4: 'Прицел 4×', snp: 'Снайперский прицел', free: 'Свободный обзор' },
@@ -576,13 +633,13 @@ window.addEventListener('error', function (e) {
       e_few: 'Мало выстрелов — пройди тест ещё раз и стреляй по каждой цели', e_srv: 'Ошибка на сервере — попробуй позже',
       e_ph: 'База телефонов не загрузилась — выбери телефон вручную',
       none_t: 'Тест не открылся', none_d: 'Открой его кнопкой в боте: «Товары Free Fire» → «📱 Настройки на телефон» → «🎯 Тест прицела».',
-      quit: 'Выйти из теста? Результат этого раунда не сохранится.',
+      quit: 'Выйти из теста? Результат не сохранится.',
       copyline: 'Обзор {gen} · Коллиматор {red} · 2× {x2} · 4× {x4} · Снайперский {snp} · Свободный обзор {free} · Кнопка огня {fire}%'
     },
     en: {
       ttl: 'AIM TEST', sub: 'for Free Fire', tag: 'RANGE', hk: 'TRAINING',
       ht: 'MATCH SENSITIVITY<br><em>TO YOUR HAND</em>',
-      hd: 'Pick your phone and play 2 short rounds — the bot works out the sensitivity from your shots.',
+      hd: 'Pick your phone and take a 3-stage test: flicks, head drags and swipes. The bot works out the sensitivity from your shots and finger moves.',
       p1: 'YOUR PHONE', q_ph: 'For example: Redmi Note 12, iPhone 13', q_none: 'Not found — tap «My phone is not listed» below',
       q_more: 'Start typing the model — e.g. «Note 12» or «A54»', man: 'My phone is not listed — I\'ll choose', man_off: 'Find my phone in the list',
       chg: 'Change', l_dev: 'Phone', l_scr: 'Screen',
@@ -591,23 +648,30 @@ window.addEventListener('error', function (e) {
       scr_names: ['compact screen', 'regular screen', 'large screen', 'tablet'],
       p2: 'HOW YOU PLAY', l_grip: 'Fingers', l_style: 'Style',
       grips: [['2 thumbs', ''], ['3–4 fingers', 'claw']], styles: [['Rush', 'close range'], ['All-round', ''], ['Sniper', 'long range']],
-      go: '▶ AIM TEST', go_s: '2 rounds: flicks and head drags', go2: '🖐 DRAG ANALYSIS', go2_s: 'swipe like in the game — 5 times',
-      go_need_ph: 'Pick your phone', go_need_gs: 'Pick fingers and style', go_ok: 'Pick a test — each takes under a minute',
+      go: '▶ START THE TEST', go_s: '3 stages: flicks · head drag · swipes — about a minute',
+      go_need_ph: 'Pick your phone', go_need_gs: 'Pick fingers and style', go_ok: 'All set — tap «Start the test»',
       l_mname: 'Model (if you know it)', m_ph: 'For example: Itel A70', use: 'Not listed — use «{q}» and pick the screen myself',
-      sw_title: 'DRAG ANALYSIS', rnd_sw: '{n} SWIPES',
-      sw_steps: ['Swipe <b>up</b> — the way you do a head drag in the game', 'Pull with the same force and length as in a fight', '<b>{n} times</b> — the bot measures length, speed and straightness and matches the sensitivity to your touch'],
+      sw_title: '3/3 · SWIPES', stage: 'STAGE {n} / 3', swipe: 'SWIPES',
+      sw_steps: ['Swipe <b>up</b> — the way you do a head drag in the game', 'Pull with the same force and length as in a fight', '<b>{n} times</b> — the bot measures the length in centimetres, speed and straightness'],
       sw_h1: 'SWIPE UP', sw_h2: 'the way you drag in the game', sw_card: 'SWIPE {i} / {n}', sw_bad: 'NOT A DRAG', sw_bad_d: 'Swipe up — from the chest to the head',
       sw_len: 'length, cm', sw_time: 'time, s', sw_spd: 'peak, cm/s', sw_str: 'straight, %', sw_unit: 'cm', sw_unit_v: 'cm/s',
       st_len: 'length, cm', st_spd: 'speed, cm/s', st_str: 'straightness', res_sw: '{n} drags · sensitivity for your touch',
       last: 'LAST TEST', last_btn: 'OPEN', gen: 'General', red: 'Red dot',
-      rnd: 'ROUND {n} / 2', flick: 'FLICKS', drag: 'HEAD DRAG',
+      flick: 'FLICKS', drag: 'HEAD DRAG',
       fl_steps: ['A target appears at a random spot', 'Put the crosshair on the head with <b>one quick swipe</b> — like in the game', 'Lift your finger — that\'s the shot', '<b>Don\'t correct</b> for long: the first flick matters'],
       dr_steps: ['The crosshair starts on the enemy\'s chest', '<b>Swipe up</b> sharply — a head drag', 'Lift your finger — that\'s the shot', 'Try not to go above the head'],
       sens: 'Test at your starting sensitivity: <b>{k} {v}</b>', ready: 'READY', of: '{i} / {n}',
       fl_hint: 'Swipe to the target and <b>lift</b>', dr_hint: 'Swipe <b>up</b> to the head and lift',
       p_head: 'HEADSHOT!', p_body: 'HIT', p_miss: 'MISS', p_to: 'TOO SLOW',
-      calc_t: 'ANALYSING SHOTS…', calc_d: 'Working out the sensitivity for your hand',
+      calc_t: 'ANALYSING 3 STAGES…', calc_d: 'Working out the sensitivity and skills for your hand',
       pts: '<b>{s}</b> points', st_hit: 'hits', st_head: 'headshots', st_rt: 'reaction, s',
+      st_miss: 'miss, mm', st_drag: 'drag, cm', st_v: 'speed, cm/s',
+      r0: 'YOUR SKILLS', r0d: 'From 0 to 100 across the three stages. Reaction — how fast you start moving, control — how precise your first flick is, stability — how consistent you are.',
+      radar: { react: 'Reaction', acc: 'Accuracy', ctrl: 'Control', stab: 'Stability', speed: 'Speed' },
+      cal_off: '📏 Calibrate the screen size with a bank card', cal_on: '📏 Screen calibrated with a card ✓ — change',
+      cal_t: '📏 EXACT SCREEN SIZE', cal_d: 'Put any bank card against the yellow lines on the left and at the top. Move the slider until the right line matches the right edge of the card.',
+      cal_v: '1 cm on screen = {v} points', cal_ok: 'Done — swipes are now in exact centimetres', cal_no: 'CANCEL', cal_yes: '✓ DONE',
+      cal_bx: 'PUT THE CARD HERE', cal_dm: 'card 54 × 85.6 mm',
       r1: 'YOUR SENSITIVITY', r2: 'WHY THESE VALUES', r3: 'HOW IS YOUR AIM IN GAME?', r3d: 'Play 2–3 matches and tell me — I\'ll adjust.',
       fbs: [['up', '⬆️', 'Overshoots'], ['down', '⬇️', 'Undershoots'], ['ok', '👍', 'All good']],
       labels: { gen: 'General', red: 'Red dot', x2: '2× scope', x4: '4× scope', snp: 'Sniper scope', free: 'Free look' },
@@ -621,7 +685,7 @@ window.addEventListener('error', function (e) {
       e_few: 'Too few shots — take the test again and shoot at every target', e_srv: 'Server error — try again later',
       e_ph: 'The phone list did not load — choose your phone manually',
       none_t: 'The test did not open', none_d: 'Open it from the bot: «Free Fire Products» → «📱 Phone Settings» → «🎯 Aim test».',
-      quit: 'Leave the test? This round will not be saved.',
+      quit: 'Leave the test? The result will not be saved.',
       copyline: 'General {gen} · Red dot {red} · 2× {x2} · 4× {x4} · Sniper {snp} · Free look {free} · Fire button {fire}%'
     }
   };
@@ -630,7 +694,7 @@ window.addEventListener('error', function (e) {
   var S = { phones: [], idx: [], prof: { phone: '', dev: 0, scr: 0, grip: 0, style: 0 }, phone: null, manual: false,
             rounds: { flick: 10, drag: 8 }, gain: { flick: 1, drag: 1 }, base: null, res: null, last: null, view: 'prof',
             orderUrl: 'https://t.me/SloppyX', price: 200, busy: false,
-            mode: 'aim', swipes: 5, diag: { 1: 5.8, 2: 6.4, 3: 6.7, 4: 10.5 }, paths: null };
+            swipes: 5, diag: { 1: 5.8, 2: 6.4, 3: 6.7, 4: 10.5 }, paths: null, calMem: 0 };
   function tpl(s, o) { return String(s).replace(/\{(\w+)\}/g, function (_, k) { return o[k] != null ? o[k] : ''; }); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function inch(v) { var s = String(Math.round(v * 100) / 100); return (LANG === 'ru' ? s.replace('.', ',') : s) + '″'; }
@@ -690,10 +754,11 @@ window.addEventListener('error', function (e) {
   function syncBack() {
     try {
       if (!tg || !tg.BackButton) return;
-      if (S.view === 'prof' && $('arena').hidden && $('swipe').hidden) tg.BackButton.hide(); else tg.BackButton.show();
+      if (S.view === 'prof' && $('arena').hidden && $('swipe').hidden && $('cal').hidden) tg.BackButton.hide(); else tg.BackButton.show();
     } catch (e) {}
   }
   function goBack() {
+    if (!$('cal').hidden) { calClose(); return; }
     if (!$('arena').hidden) { quitArena(); return; }
     if (!$('swipe').hidden) { quitSwipe(); return; }
     show('prof');
@@ -706,7 +771,10 @@ window.addEventListener('error', function (e) {
     $('p1-t').textContent = L.p1; $('q').placeholder = L.q_ph; $('qs-x').textContent = L.chg;
     $('l-dev').textContent = L.l_dev; $('l-scr').textContent = L.l_scr; $('p2-t').textContent = L.p2;
     $('l-grip').textContent = L.l_grip; $('l-style').textContent = L.l_style;
-    $('go-t').textContent = L.go; $('go-s').textContent = L.go_s; $('go2-t').textContent = L.go2; $('go2-s').textContent = L.go2_s;
+    $('go-t').textContent = L.go; $('go-s').textContent = L.go_s;
+    $('r0-t').textContent = L.r0; $('r0-d').textContent = L.r0d;
+    $('cal-t').textContent = L.cal_t; $('cal-d').textContent = L.cal_d; $('cal-x').textContent = L.cal_no; $('cal-ok').textContent = L.cal_yes;
+    $('cal-bx').textContent = L.cal_bx; $('cal-dm').textContent = L.cal_dm;
     $('l-mname').textContent = L.l_mname; $('m-name').placeholder = L.m_ph;
     $('sw-t').textContent = L.sw_title; $('sw-h1').textContent = L.sw_h1; $('sw-h2').textContent = L.sw_h2;
     $('br-go').textContent = L.ready; $('calc-t').textContent = L.calc_t; $('calc-d').textContent = L.calc_d;
@@ -735,7 +803,13 @@ window.addEventListener('error', function (e) {
     'мото': 'moto', 'пиксель': 'pixel', 'гугл': 'google', 'ноут': 'note', 'нот': 'note', 'нота': 'note', 'про': 'pro', 'макс': 'max', 'мини': 'mini',
     'плюс': 'plus', 'лайт': 'lite', 'ультра': 'ultra', 'спарк': 'spark', 'хот': 'hot', 'пова': 'pova', 'камон': 'camon', 'смарт': 'smart',
     'нова': 'nova', 'мейт': 'mate', 'таб': 'tab', 'пад': 'pad', 'эйр': 'air', 'аир': 'air', 'нфс': 'nfc', 'нфц': 'nfc', 'ванплюс': 'oneplus',
-    'зте': 'zte', 'блейд': 'blade', 'нотинг': 'nothing', 'ред': 'redmi', 'нате': 'note' };
+    'зте': 'zte', 'блейд': 'blade', 'нотинг': 'nothing', 'ред': 'redmi', 'нате': 'note',
+    // v350: новые марки, планшеты и складные
+    'нокиа': 'nokia', 'нокия': 'nokia', 'сони': 'sony', 'асус': 'asus', 'леново': 'lenovo', 'итель': 'itel', 'мейзу': 'meizu', 'мэйзу': 'meizu',
+    'алкатель': 'alcatel', 'блэквью': 'blackview', 'блеквью': 'blackview', 'дуги': 'doogee', 'улефон': 'ulefone', 'нубия': 'nubia',
+    'рог': 'rog', 'зенфон': 'zenfone', 'иксперия': 'xperia', 'эксперия': 'xperia', 'пиксел': 'pixel', 'рено': 'reno', 'нарзо': 'narzo',
+    'фантом': 'phantom', 'магик': 'magic', 'мэджик': 'magic', 'пура': 'pura', 'вижн': 'vision', 'эдж': 'edge', 'фолд': 'fold', 'флип': 'flip',
+    'турбо': 'turbo', 'нео': 'neo', 'таблет': 'tablet', 'матпад': 'matepad', 'мейтпад': 'matepad', 'айку': 'iqoo', 'айкью': 'iqoo', 'лджи': 'lg', 'элджи': 'lg' };
   var LOOK = { 'а': 'a', 'в': 'b', 'е': 'e', 'к': 'k', 'м': 'm', 'н': 'h', 'о': 'o', 'р': 'p', 'с': 'c', 'т': 't', 'у': 'y', 'х': 'x' };
   var LAY = { 'й': 'q', 'ц': 'w', 'у': 'e', 'к': 'r', 'е': 't', 'н': 'y', 'г': 'u', 'ш': 'i', 'щ': 'o', 'з': 'p', 'ф': 'a', 'ы': 's', 'в': 'd',
     'а': 'f', 'п': 'g', 'р': 'h', 'о': 'j', 'л': 'k', 'д': 'l', 'я': 'z', 'ч': 'x', 'с': 'c', 'м': 'v', 'и': 'b', 'т': 'n', 'ь': 'm' };
@@ -747,7 +821,7 @@ window.addEventListener('error', function (e) {
       return t.split('').map(function (c) { return LOOK[c] || c; }).join('');
     });
   }
-  var ALIAS = { redmi: ['xiaomi'], poco: ['xiaomi'], iphone: ['apple'], ipad: ['apple'], google: ['pixel'] };
+  var ALIAS = { redmi: ['xiaomi'], poco: ['xiaomi'], iphone: ['apple'], ipad: ['apple'], google: ['pixel'], iqoo: ['vivo'] };
   // при равных совпадениях выше — марки, которые у игроков встречаются чаще («a54» — сначала Samsung, потом Oppo)
   var POP = { redmi: 0.35, samsung: 0.35, iphone: 0.35, poco: 0.3, xiaomi: 0.25, realme: 0.15, tecno: 0.15, honor: 0.15, infinix: 0.12, huawei: 0.1 };
   function buildIdx() {
@@ -779,7 +853,8 @@ window.addEventListener('error', function (e) {
     if (!r.length && /[а-я]/.test(String(q).toLowerCase())) r = searchRun(normQ(q, true));
     return r.slice(0, 8);
   }
-  function scrClass(p) { return (p[1] === 'iPad' || p[3] >= 7.5) ? 4 : p[3] < 6.1 ? 1 : p[3] < 6.65 ? 2 : 3; }
+  // v350: класс экрана присылает бот (пятым полем) — он узнаёт планшет и по названию (Lenovo Tab M7 — 7″)
+  function scrClass(p) { return p[4] || ((p[1] === 'iPad' || p[3] >= 7.5) ? 4 : p[3] < 6.1 ? 1 : p[3] < 6.65 ? 2 : 3); }
   function renderList() {
     var q = $('q').value.trim();
     if (!q) { $('q-list').innerHTML = S.phones.length ? '<div class="none">' + esc(L.q_more) + '</div>' : ''; return; }
@@ -817,8 +892,9 @@ window.addEventListener('error', function (e) {
   }
   function syncGo() {
     var r = profReady();
-    $('go').disabled = $('go2').disabled = !(r.ph && r.gs) || S.busy;
+    $('go').disabled = !(r.ph && r.gs) || S.busy;
     $('go-h').textContent = !r.ph ? L.go_need_ph : !r.gs ? L.go_need_gs : L.go_ok;
+    $('cal-b').hidden = !r.ph;
   }
 
   // ── прошлый результат ───────────────────────────────────────────────
@@ -844,27 +920,31 @@ window.addEventListener('error', function (e) {
     return { phone: S.phone ? S.phone[0] : '', dev: S.prof.dev, scr: S.prof.scr, grip: S.prof.grip, style: S.prof.style,
              model: (!S.phone && S.manual) ? $('m-name').value.trim().slice(0, 40) : '' };
   }
-  function begin(mode) {
+  // v350: один тест — три этапа подряд (флики → оттяжка в голову → свайпы) и один результат
+  function begin() {
     if (S.busy) return;
-    S.mode = mode === 'swipe' ? 'swipe' : 'aim';
     S.busy = true; syncGo();
     post('/casino/aim/start', body()).then(function (res) {
       S.busy = false; syncGo();
       if (!res.j || !res.j.ok) { toast(errText(res), true); haptic('error'); return; }
       S.gain = res.j.gain || S.gain; S.base = res.j.base;
-      A.res = { flick: [], drag: [] }; A.hits = 0; A.heads = 0;
-      brief(S.mode === 'swipe' ? 'swipe' : 'flick');
+      A.res = { flick: [], drag: [] }; A.hits = 0; A.heads = 0; W.list = []; S.paths = null;
+      brief('flick');
     }).catch(function () { S.busy = false; syncGo(); toast(L.e_net, true); });
   }
+  var STAGE = { flick: 1, drag: 2, swipe: 3 };
   function brief(kind) {
     A.kind = kind;
-    var sw = kind === 'swipe';
-    $('br-n').textContent = sw ? tpl(L.rnd_sw, { n: S.swipes }) : tpl(L.rnd, { n: kind === 'flick' ? 1 : 2 });
-    $('br-t').textContent = sw ? L.sw_title : kind === 'flick' ? L.flick : L.drag;
+    var sw = kind === 'swipe', n = STAGE[kind];
+    $('br-n').textContent = tpl(L.stage, { n: n });
+    $('br-st').innerHTML = [1, 2, 3].map(function (i) { return '<i class="' + (i < n ? 'done' : i === n ? 'on' : '') + '"></i>'; }).join('');
+    $('br-t').textContent = sw ? L.swipe : kind === 'flick' ? L.flick : L.drag;
     $('br-demo').className = 'demo ' + kind;
     $('br-l').innerHTML = (sw ? L.sw_steps : kind === 'flick' ? L.fl_steps : L.dr_steps).map(function (s) { return '<li>' + tpl(s, { n: S.swipes }) + '</li>'; }).join('');
     $('br-s').innerHTML = S.base ? tpl(L.sens, { k: kind === 'flick' ? L.gen : L.red, v: kind === 'flick' ? S.base.gen : S.base.red }) : '';
     $('br-s').hidden = !S.base;
+    $('br-cal').hidden = !sw;
+    calLabel();
     show('brief');
   }
 
@@ -872,7 +952,8 @@ window.addEventListener('error', function (e) {
   // Камера двигается за пальцем с «скоростью» стартовой сенсы: свайп вправо — обзор вправо, как в игре. Прицел стоит
   // в центре, мир едет под ним. По первому рывку пальца видно, пролетает игрок цель или не доходит до неё.
   var A = { kind: 'flick', n: 0, i: 0, W: 0, H: 0, cx: 0, cy: 0, cam: { x: 0, y: 0 }, tgt: null, ptr: null, f0: null, c0: null,
-            smp: [], spawnT: 0, timer: 0, shot: false, raf: 0, res: { flick: [], drag: [] }, hits: 0, heads: 0, nextT: 0 };
+            smp: [], spawnT: 0, timer: 0, shot: false, raf: 0, res: { flick: [], drag: [] }, hits: 0, heads: 0, nextT: 0,
+            mv0: 0, thr: 6 };      // v350: mv0 — когда палец сдвинулся больше чем на 1,5 мм (начало движения), thr — эти 1,5 мм в точках
   var HEAD_R = 15, BODY_W = 22, BODY_T = 14, BODY_B = 128, CHEST = 46;
   function now() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
   function layout() {
@@ -904,10 +985,10 @@ window.addEventListener('error', function (e) {
   function rnd(a, b) { return a + Math.random() * (b - a); }
   function startArena(kind) {
     A.kind = kind; A.n = kind === 'flick' ? S.rounds.flick : S.rounds.drag; A.i = 0;
-    A.cam = { x: 0, y: 0 }; A.tgt = null;
+    A.cam = { x: 0, y: 0 }; A.tgt = null; A.thr = Math.max(3, 0.15 * pxPerCm());
     $('arena').hidden = false; document.body.style.overflow = 'hidden';
     try { if (tg && tg.enableClosingConfirmation) tg.enableClosingConfirmation(); } catch (e) {}
-    $('a-r').textContent = kind === 'flick' ? L.flick : L.drag;
+    $('a-r').textContent = kind === 'flick' ? '1/3 · ' + L.flick : '2/3 · ' + L.drag;
     $('ahint').innerHTML = kind === 'flick' ? L.fl_hint : L.dr_hint; $('ahint').style.opacity = '1';
     layout(); syncBack();
     A.nextT = setTimeout(spawn, 450);
@@ -938,7 +1019,7 @@ window.addEventListener('error', function (e) {
       var k = rnd(0.85, 1.25);
       t = { x: A.cam.x, y: A.cam.y - CHEST * k, k: k };      // прицел — на груди, голова выше на CHEST·k
     }
-    A.tgt = t; A.shot = false; A.smp = []; A.ptr = null;
+    A.tgt = t; A.shot = false; A.smp = []; A.ptr = null; A.mv0 = 0;
     $('tgt').classList.remove('dead');
     A.spawnT = now();
     var ms = A.kind === 'flick' ? 3000 : 2600;
@@ -953,20 +1034,32 @@ window.addEventListener('error', function (e) {
     p.style.setProperty('--px', A.cx + 'px'); p.style.setProperty('--py', (A.cy - 72) + 'px');
     void p.offsetWidth; p.className = 'pop show ' + kind;
   }
-  // конец первого рывка: после пика скорости она падает почти до нуля (или палец разворачивается) — там и смотрим,
-  // сколько прицел прошёл в сторону цели. Дальнейшие подправки на это число не влияют.
+  // конец первого рывка: после пика скорости она падает почти до нуля, палец разворачивается или начинается второй рывок
+  // (подправка) — там и смотрим, сколько прицел прошёл в сторону цели. Дальнейшие подправки на это число не влияют.
+  // v350: путь сначала переводится на равный шаг 8 мс, скорость — по окну ±16 мс: касания приходят неравномерно
+  // (60–240 раз в секунду, пачками), и скорость по соседним точкам скачет. → { p — путь до конца рывка, t — когда он закончился }.
   function primary(s, ux, uy) {
-    var x0 = s[0].x, y0 = s[0].y, P = [], i;
-    for (i = 0; i < s.length; i++) P.push((s[i].x - x0) * ux + (s[i].y - y0) * uy);
-    if (P.length < 3) return P[P.length - 1];
-    var V = [0];
-    for (i = 1; i < P.length; i++) V.push((P[i] - P[i - 1]) / Math.max(4, s[i].t - s[i - 1].t));
-    var Vs = V.map(function (_, j) { return (V[Math.max(0, j - 1)] + V[j] + V[Math.min(V.length - 1, j + 1)]) / 3; });
+    var n = s.length, t0 = s[0].t, T = [], P = [], i;
+    for (i = 0; i < n; i++) { T.push(s[i].t - t0); P.push((s[i].x - s[0].x) * ux + (s[i].y - s[0].y) * uy); }
+    if (n < 3 || T[n - 1] < 24) return { p: P[n - 1], t: s[n - 1].t };
+    var step = 8, U = [], j = 0, tt;
+    for (tt = 0; tt <= T[n - 1]; tt += step) {
+      while (j < n - 2 && T[j + 1] < tt) j++;
+      var span = T[j + 1] - T[j], k = span > 0 ? Math.max(0, Math.min(1, (tt - T[j]) / span)) : 1;
+      U.push(P[j] + (P[j + 1] - P[j]) * k);
+    }
+    var m = U.length, V = [];
+    for (i = 0; i < m; i++) { var lo = Math.max(0, i - 2), hi = Math.min(m - 1, i + 2); V.push(hi > lo ? (U[hi] - U[lo]) / ((hi - lo) * step) : 0); }
     var ip = 0;
-    for (i = 1; i < Vs.length; i++) if (Vs[i] > Vs[ip]) ip = i;
-    if (Vs[ip] <= 0.02) return P[P.length - 1];
-    for (i = ip + 1; i < Vs.length; i++) if (Vs[i] < 0.15 * Vs[ip]) return P[i];
-    return P[P.length - 1];
+    for (i = 1; i < m; i++) if (V[i] > V[ip]) ip = i;
+    if (V[ip] <= 0.02) return { p: P[n - 1], t: s[n - 1].t };
+    var end = m - 1, low = ip;
+    for (i = ip + 1; i < m; i++) {
+      if (V[i] <= 0.12 * V[ip]) { end = i; break; }                                 // остановился или развернулся
+      if (V[i] < V[low]) low = i;
+      if (V[low] < 0.5 * V[ip] && V[i] > 1.3 * V[low] + 0.01) { end = low; break; }  // пошёл второй рывок — первый кончился в самой низкой точке
+    }
+    return { p: U[end], t: t0 + end * step };
   }
   function r1(v) { return Math.round(v * 10) / 10; }
   function shoot(timeout) {
@@ -980,11 +1073,16 @@ window.addEventListener('error', function (e) {
     } else {
       var hit = hitAt(t), rx = A.cam.x - t.x, ry = A.cam.y - t.y, e = r1(Math.sqrt(rx * rx + ry * ry)), dt = Math.round(now() - A.spawnT);
       if (A.smp.length >= 2) {
+        // v350: rt — реакция (от появления цели до начала движения), mt — сколько длился первый рывок
+        var pr, rt = A.mv0 ? Math.max(0, Math.round(A.mv0 - A.spawnT)) : null;
         if (A.kind === 'flick') {
           var dx = t.x - A.c0.x, dy = t.y - A.c0.y, D = Math.sqrt(dx * dx + dy * dy);
-          A.res.flick.push({ d: r1(D), p: r1(primary(A.smp, dx / D, dy / D)), e: e, hit: hit, t: dt });
+          pr = primary(A.smp, dx / D, dy / D);
+          A.res.flick.push({ d: r1(D), p: r1(pr.p), e: e, hit: hit, t: dt, rt: rt, mt: A.mv0 && pr.t > A.mv0 ? Math.round(pr.t - A.mv0) : null });
         } else {
-          A.res.drag.push({ h: r1(A.c0.y - t.y), v: r1(primary(A.smp, 0, -1)), x: r1(Math.abs(rx)), e: e, hit: hit, t: dt });
+          pr = primary(A.smp, 0, -1);
+          A.res.drag.push({ h: r1(A.c0.y - t.y), v: r1(pr.p), x: r1(Math.abs(rx)), e: e, hit: hit, t: dt, rt: rt,
+                            mt: A.mv0 && pr.t > A.mv0 ? Math.round(pr.t - A.mv0) : null });
         }
       }
       if (hit) A.hits++;
@@ -1002,8 +1100,7 @@ window.addEventListener('error', function (e) {
   }
   function endRound() {
     stopArena();
-    if (A.kind === 'flick') { brief('drag'); return; }
-    finish();
+    brief(A.kind === 'flick' ? 'drag' : 'swipe');       // v350: после оттяжки — третий этап, свайпы
   }
   var arena = $('arena');
   arena.addEventListener('pointerdown', function (e) {
@@ -1023,10 +1120,11 @@ window.addEventListener('error', function (e) {
     if (!evs.length) evs = [e];
     var g = A.kind === 'flick' ? S.gain.flick : S.gain.drag;
     for (var i = 0; i < evs.length; i++) {
-      var ev = evs[i];
-      A.cam.x = A.c0.x + (ev.clientX - A.f0.x) * g;
-      A.cam.y = A.c0.y + (ev.clientY - A.f0.y) * g;
+      var ev = evs[i], fx = ev.clientX - A.f0.x, fy = ev.clientY - A.f0.y;
+      A.cam.x = A.c0.x + fx * g;
+      A.cam.y = A.c0.y + fy * g;
       A.smp.push({ t: ev.timeStamp || now(), x: A.cam.x, y: A.cam.y });
+      if (!A.mv0 && fx * fx + fy * fy > A.thr * A.thr) A.mv0 = ev.timeStamp || now();
     }
     req();
     e.preventDefault();
@@ -1035,17 +1133,25 @@ window.addEventListener('error', function (e) {
   arena.addEventListener('pointerup', up);
   arena.addEventListener('pointercancel', up);
   $('aquit').addEventListener('click', function (e) { e.stopPropagation(); quitArena(); });
-  window.addEventListener('resize', function () { if (!$('arena').hidden) layout(); if (!$('swipe').hidden) swLayout(); });
+  window.addEventListener('resize', function () {
+    if (!$('arena').hidden) layout(); if (!$('swipe').hidden) swLayout();
+    if (S.res && S.res.kind === 'full' && S.res.st && S.res.st.radar && S.view === 'res') drawRadar($('radar'), S.res.st.radar);
+  });
 
   // ── v349: «Анализ оттяжки» ──────────────────────────────────────────
   // Игрок проводит пальцем вверх, как делает оттяжку. След рисуется на холсте; после каждого свайпа — длина в сантиметрах
   // (по диагонали экрана его телефона), время, пиковая скорость и ровность. Считает бот, страница только меряет.
   var W = { n: 5, list: [], cur: null, ptr: null, dpr: 1, pxcm: 40, ctx: null, raf: 0, done: false, last: null };
-  function pxPerCm() {
-    var d = S.phone ? S.phone[3] : (S.diag[S.prof.scr] || 6.4);
+  // точек в сантиметре: по калибровке картой (если была на этом экране), иначе — по диагонали модели
+  function scrDims() {
     var w = (window.screen && screen.width) || window.innerWidth, h = (window.screen && screen.height) || window.innerHeight;
-    return Math.sqrt(w * w + h * h) / d / 2.54;
+    return { a: Math.min(w, h), b: Math.max(w, h) };
   }
+  function modelPxcm() {
+    var d = S.phone ? S.phone[3] : (S.diag[S.prof.scr] || 6.4), s = scrDims();
+    return Math.sqrt(s.a * s.a + s.b * s.b) / d / 2.54;
+  }
+  function pxPerCm() { return calGet() || S.calMem || modelPxcm(); }
   function startSwipe() {
     W.n = S.swipes || 5; W.list = []; W.cur = null; W.ptr = null; W.done = false; W.last = null; W.pxcm = pxPerCm();
     $('swipe').hidden = false; document.body.style.overflow = 'hidden';
@@ -1152,23 +1258,81 @@ window.addEventListener('error', function (e) {
     var m = swMetrics(p), ok = m.len / W.pxcm >= 0.4 && -m.dy >= 0.5 * m.len && m.dur >= 15;
     if (ok) { W.list.push(m); W.last = m; haptic(null, 'light'); } else { W.last = null; haptic('warning'); }
     swCard(m, ok); swCount(); swReq();
-    if (W.list.length >= W.n) { W.done = true; setTimeout(function () { stopSwipe(); swSend(); }, 900); }
+    if (W.list.length >= W.n) { W.done = true; setTimeout(function () { stopSwipe(); finishFull(); }, 900); }
   }
-  function swSend() {
-    $('calc').hidden = false;
-    var t0 = now(), b = body();
-    b.pxcm = Math.round(W.pxcm * 100) / 100;
-    b.swipes = W.list.map(function (m) { return { len: r1(m.len), path: r1(m.path), dur: Math.round(m.dur), vmax: Math.round(m.vmax * 1000) / 1000, dx: r1(m.dx), dy: r1(m.dy) }; });
-    S.paths = W.list.map(function (m) { return m.pts; });
-    post('/casino/aim/swipe', b).then(function (res) {
-      setTimeout(function () {
-        $('calc').hidden = true;
-        if (!res.j || !res.j.ok) { toast(errText(res), true); haptic('error'); show('prof'); return; }
-        S.last = res.j; renderLast();
-        renderRes(res.j, true); show('res'); haptic('success');
-      }, Math.max(0, 900 - (now() - t0)));
-    }).catch(function () { $('calc').hidden = true; toast(L.e_net, true); show('prof'); });
+  // ── v350: калибровка экрана картой ─────────────────────────────────
+  // Банковская карта — стандарт ID-1: 85,60 × 53,98 мм у любой карты. Игрок прикладывает её к жёлтым линиям слева и сверху
+  // и двигает ползунок, пока правая линия не совпадёт с краем карты. Так узнаём, сколько точек в сантиметре именно на этом
+  // экране, — и длина свайпов, и промах в миллиметрах становятся точными. Хранится в этом браузере, для этого же экрана.
+  var CAL_KEY = 'aim_cal_v1', CARD_W = 5.398, CARD_H = 8.56, C = { v: 50 };
+  function calGet() {
+    try {
+      var c = JSON.parse(localStorage.getItem(CAL_KEY) || 'null'), d = scrDims();
+      if (c && c.pxcm >= 15 && c.pxcm <= 250 && Math.abs(c.a - d.a) <= 2 && Math.abs(c.b - d.b) <= 2) return c.pxcm;
+    } catch (e) {}
+    return 0;
   }
+  function calSet(v) {
+    try { var d = scrDims(); localStorage.setItem(CAL_KEY, JSON.stringify({ pxcm: v, a: d.a, b: d.b, t: Date.now() })); } catch (e) {}
+  }
+  function calLabel() {
+    var on = !!(calGet() || S.calMem);
+    ['cal-b', 'br-cal'].forEach(function (id) { var b = $(id); b.textContent = on ? L.cal_on : L.cal_off; b.classList.toggle('on', on); });
+  }
+  function calDraw() {
+    var b = $('cal-box'), r = 3.18 * C.v / 10;
+    b.style.width = (CARD_W * C.v).toFixed(1) + 'px'; b.style.height = (CARD_H * C.v).toFixed(1) + 'px';
+    b.style.borderRadius = r.toFixed(1) + 'px';
+    $('cal-v').textContent = tpl(L.cal_v, { v: dec(C.v, 1) });
+  }
+  function calSetV(v) { C.v = Math.max(25, Math.min(95, v)); $('cal-r').value = C.v; calDraw(); }
+  function calOpen() {
+    C.v = Math.max(25, Math.min(95, pxPerCm()));
+    $('cal').hidden = false; document.body.style.overflow = 'hidden';
+    $('cal-r').value = C.v; calDraw(); syncBack(); haptic(null, 'light');
+  }
+  function calClose() { $('cal').hidden = true; document.body.style.overflow = ''; syncBack(); }
+  function calDone() {
+    var v = Math.round(C.v * 100) / 100;
+    S.calMem = v; calSet(v); calClose(); calLabel();
+    toast(L.cal_ok); haptic('success');
+  }
+  $('cal-r').addEventListener('input', function () { calSetV(Number(this.value)); });
+  $('cal-m').addEventListener('click', function () { calSetV(C.v - 0.1); haptic(); });
+  $('cal-p').addEventListener('click', function () { calSetV(C.v + 0.1); haptic(); });
+  $('cal-x').addEventListener('click', calClose);
+  $('cal-ok').addEventListener('click', calDone);
+  $('cal-b').addEventListener('click', calOpen);
+  $('br-cal').addEventListener('click', calOpen);
+
+  // ── v350: радар пяти навыков ─────────────────────────────────────────
+  var RKEYS = ['react', 'acc', 'ctrl', 'stab', 'speed'];
+  function drawRadar(cv, ra) {
+    var dpr = Math.min(3, window.devicePixelRatio || 1), w = cv.clientWidth || 300, h = cv.clientHeight || 250;
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
+    var cx = w / 2, cy = h / 2 + 8, R = Math.max(40, Math.min(w / 2 - 78, h / 2 - 34)), n = RKEYS.length, i, k, p;
+    function at(i, r) { var a = -Math.PI / 2 + i * 2 * Math.PI / n; return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r }; }
+    function ring(r) { c.beginPath(); for (var j = 0; j <= n; j++) { var q = at(j % n, r); if (j) c.lineTo(q.x, q.y); else c.moveTo(q.x, q.y); } }
+    c.lineWidth = 1;
+    for (k = 1; k <= 4; k++) { ring(R * k / 4); c.strokeStyle = k === 4 ? 'rgba(255,176,0,.38)' : 'rgba(255,255,255,.08)'; c.stroke(); }
+    c.strokeStyle = 'rgba(255,255,255,.08)';
+    for (i = 0; i < n; i++) { p = at(i, R); c.beginPath(); c.moveTo(cx, cy); c.lineTo(p.x, p.y); c.stroke(); }
+    var g = c.createLinearGradient(cx, cy - R, cx, cy + R); g.addColorStop(0, 'rgba(255,200,0,.55)'); g.addColorStop(1, 'rgba(255,90,0,.28)');
+    c.beginPath();
+    for (i = 0; i <= n; i++) { p = at(i % n, R * Math.max(4, ra[RKEYS[i % n]] || 0) / 100); if (i) c.lineTo(p.x, p.y); else c.moveTo(p.x, p.y); }
+    c.fillStyle = g; c.fill();
+    c.lineWidth = 2; c.strokeStyle = '#ffb000'; c.shadowColor = 'rgba(255,140,0,.9)'; c.shadowBlur = 12; c.stroke(); c.shadowBlur = 0;
+    c.textBaseline = 'middle';
+    for (i = 0; i < n; i++) {
+      var val = Math.round(ra[RKEYS[i]] || 0), pp = at(i, R * Math.max(4, val) / 100), lp = at(i, R + 18);
+      c.fillStyle = '#fff'; c.beginPath(); c.arc(pp.x, pp.y, 3.2, 0, Math.PI * 2); c.fill();
+      c.textAlign = Math.abs(lp.x - cx) < 6 ? 'center' : lp.x < cx ? 'right' : 'left';
+      c.font = '600 11.5px Rubik, system-ui, sans-serif'; c.fillStyle = '#aab0bd'; c.fillText(L.radar[RKEYS[i]], lp.x, lp.y - 8);
+      c.font = '15px "Russo One", Rubik, sans-serif'; c.fillStyle = '#ffd84a'; c.fillText(String(val), lp.x, lp.y + 8);
+    }
+  }
+
   // рисунок всех свайпов на результате: каждый — от одной точки внизу, в одном масштабе
   function drawPaths(cv, paths) {
     var dpr = Math.min(3, window.devicePixelRatio || 1), w = cv.clientWidth || 300, h = cv.clientHeight || 150;
@@ -1208,11 +1372,15 @@ window.addEventListener('error', function (e) {
   $('sw-quit').addEventListener('click', function (e) { e.stopPropagation(); quitSwipe(); });
 
   // ── результат ───────────────────────────────────────────────────────
-  function finish() {
+  // v350: три этапа — одним запросом: флики, оттяжка, свайпы, точек в сантиметре и была ли калибровка картой
+  function finishFull() {
     $('calc').hidden = false;
     var t0 = now(), b = body();
     b.flick = A.res.flick; b.drag = A.res.drag;
-    post('/casino/aim/result', b).then(function (res) {
+    b.pxcm = Math.round(W.pxcm * 100) / 100; b.cal = !!(calGet() || S.calMem);
+    b.swipes = W.list.map(function (m) { return { len: r1(m.len), path: r1(m.path), dur: Math.round(m.dur), vmax: Math.round(m.vmax * 1000) / 1000, dx: r1(m.dx), dy: r1(m.dy) }; });
+    S.paths = W.list.map(function (m) { return m.pts; });
+    post('/casino/aim/full', b).then(function (res) {
       var wait = Math.max(0, 900 - (now() - t0));
       setTimeout(function () {
         $('calc').hidden = true;
@@ -1224,25 +1392,33 @@ window.addEventListener('error', function (e) {
   }
   var KEYS = ['gen', 'red', 'x2', 'x4', 'snp', 'free'];
   function dec(v, n) { return Number(v || 0).toFixed(n).replace('.', LANG === 'ru' ? ',' : '.'); }
+  function tile(v, k) { return '<div><b>' + v + '</b><small>' + esc(k) + '</small></div>'; }
   function renderRes(r, fresh) {
     S.res = r;
-    var st = r.st || {}, sw = r.kind === 'swipe';
-    S.mode = sw ? 'swipe' : 'aim';
+    var st = r.st || {}, sw = r.kind === 'swipe', full = r.kind === 'full';
     $('rk-i').textContent = (r.rank && r.rank.ico) || '🎯';
     $('rk-n').textContent = (r.rank && r.rank.name) || '';
     $('rk-n').classList.toggle('sm', sw);
     $('rk-s').innerHTML = sw ? esc(tpl(L.res_sw, { n: st.n || 0 })) : tpl(L.pts, { s: String(st.score || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') });
     $('rk-p').textContent = r.summary || '';
-    $('stats').innerHTML = sw
+    var rt = st.rt != null ? st.rt : (st.react || 0);
+    $('stats').innerHTML = full
+      ? tile((st.hits || 0) + '/' + (st.total || 0), L.st_hit) + tile(st.heads || 0, L.st_head) + tile(dec(rt / 1000, 2), L.st_rt)
+        + tile(st.miss != null ? dec(st.miss, 1) : '—', L.st_miss) + tile(st.ns ? dec(st.len, 1) : '—', L.st_drag)
+        + tile(st.ns ? Math.round(st.v || 0) : '—', L.st_v)
+      : sw
       ? '<div><b>' + dec(st.len, 1) + '</b><small>' + esc(L.st_len) + '</small></div>'
         + '<div><b>' + Math.round(st.v || 0) + '</b><small>' + esc(L.st_spd) + '</small></div>'
         + '<div><b>' + Math.round((st.straight || 0) * 100) + '%</b><small>' + esc(L.st_str) + '</small></div>'
       : '<div><b>' + (st.hits || 0) + '/' + (st.total || 0) + '</b><small>' + esc(L.st_hit) + '</small></div>'
         + '<div><b>' + (st.heads || 0) + '</b><small>' + esc(L.st_head) + '</small></div>'
         + '<div><b>' + dec((st.react || 0) / 1000, 2) + '</b><small>' + esc(L.st_rt) + '</small></div>';
-    var cv = $('res-cv'), paths = sw && fresh ? S.paths : null;
+    var cv = $('res-cv'), paths = (sw || full) && fresh ? S.paths : null;
     cv.hidden = !(paths && paths.length);
     if (paths && paths.length) requestAnimationFrame(function () { drawPaths(cv, paths); });
+    var ra = full && st.radar;
+    $('rd-p').hidden = !ra;
+    if (ra) requestAnimationFrame(function () { drawRadar($('radar'), ra); });
     $('sl').innerHTML = KEYS.map(function (k) {
       var v = r.vals[k], b = r.base ? r.base[k] : v, d = v - b, max = 200;
       return '<div class="sl"><div class="sl-h"><span>' + esc(L.labels[k]) + '</span><span>'
@@ -1251,7 +1427,12 @@ window.addEventListener('error', function (e) {
         + (d ? '<u style="left:' + (Math.min(1, b / max) * 100).toFixed(1) + '%"></u>' : '') + '</div></div>';
     }).join('');
     $('fire').innerHTML = '<span>' + esc(L.fire) + '</span><b>' + r.vals.fire + '%</b>';
-    $('why').innerHTML = (r.why || []).map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('');
+    // ярче — то, что показал сам тест (у полного — до строки «Итог трёх этапов» включительно), остальное — про телефон и стиль
+    var why = r.why || [], hl = 2, sum = -1;
+    if (full) for (var wi = 0; wi < why.length; wi++) if (/^(Итог трёх этапов|All three stages)/.test(why[wi])) { hl = wi + 1; sum = wi; break; }
+    $('why').innerHTML = why.map(function (w, i) {
+      return '<li class="' + (i < hl ? 'hl' : '') + (i === sum ? ' sum' : '') + '">' + esc(w) + '</li>';
+    }).join('');
     $('sent').textContent = fresh ? L.sent : L.sent_last;
     $('id-d').innerHTML = tpl(L.id_d, { p: S.price });
     var fbs = $('fb').querySelectorAll('button');
@@ -1292,8 +1473,7 @@ window.addEventListener('error', function (e) {
     S.prof[c.getAttribute('data-k')] = Number(c.getAttribute('data-v'));
     syncChips(); syncGo(); haptic();
   });
-  $('go').addEventListener('click', function () { begin('aim'); });
-  $('go2').addEventListener('click', function () { begin('swipe'); });
+  $('go').addEventListener('click', function () { begin(); });
   $('br-go').addEventListener('click', function () { if (A.kind === 'swipe') startSwipe(); else startArena(A.kind); });
   $('last').addEventListener('click', function (e) { if (e.target.closest('#last-b') && S.last) { renderRes(S.last, false); show('res'); } });
   $('copy').addEventListener('click', function () {
@@ -1317,19 +1497,22 @@ window.addEventListener('error', function (e) {
     try { if (tg && tg.openTelegramLink) { tg.openTelegramLink(S.orderUrl); return; } } catch (e) {}
     window.open(S.orderUrl, '_blank');
   });
-  $('again').addEventListener('click', function () { begin(S.mode); });
+  $('again').addEventListener('click', function () { begin(); });
   $('toprof').addEventListener('click', function () { show('prof'); });
 
   // для проверки в браузере: где сейчас цель и с какой «скоростью» двигается прицел (только чтение)
   window.__aimDbg = {
     need: function () { return A.tgt ? { dx: A.tgt.x - A.cam.x, dy: A.tgt.y - A.cam.y, k: A.tgt.k, cx: A.cx, cy: A.cy,
                                            g: A.kind === 'flick' ? S.gain.flick : S.gain.drag, kind: A.kind, i: A.i, n: A.n, shot: A.shot } : null; },
-    view: function () { return { view: S.view, arena: !$('arena').hidden, swipe: !$('swipe').hidden, calc: !$('calc').hidden }; },
-    swipe: function () { return { open: !$('swipe').hidden, n: W.n, got: W.list.length, pxcm: W.pxcm, done: W.done }; }
+    view: function () { return { view: S.view, arena: !$('arena').hidden, swipe: !$('swipe').hidden, calc: !$('calc').hidden, cal: !$('cal').hidden }; },
+    swipe: function () { return { open: !$('swipe').hidden, n: W.n, got: W.list.length, pxcm: W.pxcm, done: W.done }; },
+    stage: function () { return A.kind; },
+    cal: function () { return { open: !$('cal').hidden, v: C.v, saved: calGet(), mem: S.calMem, pxcm: pxPerCm(), model: modelPxcm() }; },
+    res: function () { return { flick: A.res.flick.slice(), drag: A.res.drag.slice(), swipes: W.list.length }; }
   };
 
   // ── старт страницы ──────────────────────────────────────────────────
-  texts(); syncGo();
+  texts(); syncGo(); calLabel();
   if (!UID || !API) {
     $('s-prof').hidden = true; $('fatal').hidden = false;
     $('fatal-t').textContent = L.none_t; $('fatal-d').textContent = L.none_d;
