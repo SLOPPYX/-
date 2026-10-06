@@ -57,7 +57,8 @@
      v351: «Настройка оттяжки» — инструмент, а не игра: свои настройки из игры, замер горизонтально с кнопки огня,
      проверка в тренировке; без рангов и очков. Отступы учитывают вырезы экрана и кнопки Telegram в полноэкранном режиме.
      v353: этап 1 — «Кнопка огня» (игрок ставит кнопку, как у себя в игре), этап 2 — свайпы от неё. Эффекты — искры, плавное
-     появление, блик, волна от нажатия, конфетти — тоже только transform и opacity; при «уменьшить движение» их нет. */
+     появление, блик, волна от нажатия, конфетти — тоже только transform и opacity; при «уменьшить движение» их нет.
+     v354: этап 2 «как в игре» — полигон, манекен, прицел и стрельба; камера едет с сенсой игрока. Анкета — шаги и живые панели. */
   :root { color-scheme: dark;
           --bg: #06070a; --pan: #0f121a; --pan2: #151925; --ln: rgba(255,255,255,.07); --ln2: rgba(255,255,255,.13);
           --or: #ff8a00; --or2: #ffb000; --ye: #ffd84a; --red: #ff4a3d; --grn: #5be38f;
@@ -86,6 +87,10 @@
   .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .brand svg { width: 34px; height: 34px; flex: 0 0 34px; }
+  .brand svg .rg { transform-origin: 20px 20px; animation: spinr 9s linear infinite; }      /* v354: прицел в логотипе «сканирует» */
+  .brand svg .dt { transform-origin: 20px 20px; animation: dotp 1.8s var(--ease) infinite; }
+  @keyframes spinr { to { transform: rotate(360deg); } }
+  @keyframes dotp { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.55); } }
   .brand b { display: block; font: 18px var(--hud); letter-spacing: .05em; line-height: 1.1; }
   .brand small { display: block; font: 700 10.5px var(--ui); letter-spacing: .14em; color: var(--or2); text-transform: uppercase; }
   .tag { flex: 0 0 auto; padding: 5px 12px; font: 11px var(--hud); letter-spacing: .12em; color: #170a00; background: var(--grad);
@@ -98,6 +103,24 @@
   h1 { margin: 10px 0 6px; font: 27px/1.08 var(--hud); letter-spacing: .02em; }
   h1 em { font-style: normal; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .hero p { margin: 0; color: var(--tx2); font-size: 14.5px; }
+  /* v354: блик на значке, полоса под заголовком, шаги анкеты */
+  .hero-k { position: relative; overflow: hidden; }
+  .hero-k::after { content: ''; position: absolute; top: 0; bottom: 0; left: -45%; width: 32%; opacity: 0; pointer-events: none;
+                   background: linear-gradient(100deg, transparent, rgba(255,216,74,.55), transparent); transform: translate3d(0, 0, 0) skewX(-18deg);
+                   animation: sheen 4.4s var(--ease) .8s infinite; }
+  .h-bar { display: block; width: 120px; height: 3px; margin: 2px 0 10px; background: var(--grad); transform-origin: 0 50%; animation: hbar .9s var(--ease) .2s both; }
+  @keyframes hbar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .prog { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 14px; }
+  .pg { min-width: 0; }
+  .pg i { display: block; height: 5px; overflow: hidden; background: rgba(255,255,255,.08); clip-path: polygon(3px 0, 100% 0, calc(100% - 3px) 100%, 0 100%); }
+  .pg i b { display: block; height: 100%; background: var(--grad); transform-origin: 0 50%; transform: scaleX(0); transition: transform .55s var(--ease); }
+  .pg.cur i b { transform: scaleX(.4); animation: pgb 1.6s var(--ease) infinite; }
+  .pg.done i b { transform: scaleX(1); background: linear-gradient(90deg, #ff9500, #5be38f); animation: none; }
+  @keyframes pgb { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+  .pg span { display: block; margin-top: 5px; font: 700 10.5px var(--ui); letter-spacing: .1em; color: var(--tx3); text-transform: uppercase;
+             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color .3s; }
+  .pg.cur span { color: var(--ye); }
+  .pg.done span { color: var(--grn); }
 
   /* панели — скошенный угол и уголки «прицела» */
   .panel { position: relative; margin-top: 14px; padding: 15px 14px 14px; background: linear-gradient(180deg, var(--pan2), var(--pan));
@@ -106,6 +129,19 @@
   .panel::before, .panel::after { content: ''; position: absolute; width: 12px; height: 12px; border: 2px solid var(--or); pointer-events: none; }
   .panel::before { top: 5px; left: 5px; border-right: 0; border-bottom: 0; }
   .panel::after { bottom: 5px; right: 5px; border-left: 0; border-top: 0; }
+  /* v354: панель, которую сейчас заполнять, — «дышат» уголки прицела и по верхней кромке бежит свет; готовая — зелёная галочка */
+  .panel .scan { display: none; position: absolute; left: 0; top: 0; width: 45%; height: 2px; pointer-events: none;
+                 background: linear-gradient(90deg, transparent, #ffd84a, transparent); }
+  .panel.cur .scan { display: block; animation: scan 2.6s var(--ease) infinite; }
+  @keyframes scan { 0% { transform: translate3d(-100%, 0, 0); } 60%, 100% { transform: translate3d(230%, 0, 0); } }
+  .panel.cur::before { animation: brk1 1.6s var(--ease) infinite; }
+  .panel.cur::after { animation: brk2 1.6s var(--ease) infinite; }
+  @keyframes brk1 { 0%, 100% { transform: none; } 50% { transform: translate3d(-3px, -3px, 0); } }
+  @keyframes brk2 { 0%, 100% { transform: none; } 50% { transform: translate3d(3px, 3px, 0); } }
+  .panel.done .ph span { position: relative; color: transparent; background: linear-gradient(90deg, #2fbf71, #5be38f); }
+  .panel.done .ph span::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; color: #062010; font: 12px var(--hud);
+                                animation: pick .35s var(--ease); }
+  .panel.done { border-color: rgba(91,227,143,.16); }
   .ph { display: flex; align-items: center; gap: 9px; margin: 0 0 11px; font: 13.5px var(--hud); letter-spacing: .07em; }
   .ph span { display: inline-grid; place-items: center; min-width: 28px; height: 20px; padding: 0 7px; font-size: 11px; color: #170a00;
              background: var(--grad); clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
@@ -132,6 +168,8 @@
                 border: 1px dashed rgba(255,150,0,.55); font: 600 13.5px var(--ui); }
   .qsel { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,138,0,.08); border: 1px solid rgba(255,138,0,.45); }
   .qsel svg { width: 26px; height: 26px; flex: 0 0 26px; }
+  .qsel.pop svg { animation: ping .6s var(--ease); }
+  @keyframes ping { 0% { transform: scale(.6) rotate(-12deg); } 60% { transform: scale(1.18) rotate(4deg); } 100% { transform: none; } }
   .qs-m { flex: 1; min-width: 0; }
   .qs-m b { display: block; font: 16px var(--hud); letter-spacing: .02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .qs-m small { display: block; color: var(--tx2); font-size: 12.5px; }
@@ -152,6 +190,13 @@
   .chip:active { transform: scale(.96); }
   .chip.on { color: #170a00; background: var(--grad); box-shadow: none; font-weight: 800; }
   .chip small { display: block; font-weight: 500; font-size: 11px; opacity: .75; }
+  .chip::after { content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 45%; opacity: 0; pointer-events: none;
+                 background: linear-gradient(100deg, transparent, rgba(255,255,255,.6), transparent); transform: translate3d(0, 0, 0) skewX(-18deg); }
+  .chip.on::after { animation: chsh .75s var(--ease) .05s; }
+  @keyframes chsh { 0% { opacity: 0; transform: translate3d(0, 0, 0) skewX(-18deg); } 20% { opacity: 1; }
+                    100% { opacity: 0; transform: translate3d(380%, 0, 0) skewX(-18deg); } }
+  @keyframes chipin { from { opacity: 0; transform: translate3d(0, 8px, 0); } to { opacity: 1; transform: none; } }
+  .panel.rv.in .chips { animation: chipin .45s var(--ease) .12s both; }
 
   /* v351: свои настройки из игры */
   .og { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
@@ -165,6 +210,10 @@
               color: var(--tx); font: 19px var(--hud); }
   .oi input::placeholder { color: var(--tx3); font: 500 15px var(--ui); }
   .oi.wide { grid-column: 1 / -1; }
+  .oi { position: relative; }
+  .oi::after { content: '✓'; position: absolute; right: 10px; top: 50%; margin-top: -9px; font: 13px var(--hud); color: var(--grn); opacity: 0;
+               pointer-events: none; transform: scale(.4); transition: opacity .2s, transform .25s var(--ease); }
+  .oi.ok::after { opacity: 1; transform: none; }
 
   /* главные кнопки */
   .btn { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px 20px;
@@ -177,7 +226,12 @@
   .btn.mode { flex-direction: column; gap: 3px; padding: 13px 20px 12px; }
   .btn.mode b { font: 17px var(--hud); letter-spacing: .06em; }
   .btn.mode small { font: 600 11.5px var(--ui); letter-spacing: .01em; opacity: .82; }
-  .glow { filter: drop-shadow(0 10px 22px rgba(255,110,0,.33)); margin-top: 18px; }
+  /* v354: свечение под большой кнопкой — градиентом, а не фильтром: фильтр пересчитывался на каждом кадре блика */
+  .glow { position: relative; margin-top: 18px; }
+  .glow::before { content: ''; position: absolute; left: 6%; right: 6%; bottom: -14px; height: 34px; pointer-events: none; opacity: .6;
+                  background: radial-gradient(closest-side, rgba(255,110,0,.55), rgba(255,110,0,0)); }
+  .glow.rdy::before { animation: gbr 1.8s var(--ease) infinite; }
+  @keyframes gbr { 0%, 100% { opacity: .45; transform: scaleX(.88); } 50% { opacity: 1; transform: scaleX(1.06); } }
   .hint { margin-top: 9px; text-align: center; font-size: 12.5px; color: var(--tx3); min-height: 18px; }
   .row2 { display: flex; gap: 8px; margin-top: 12px; }
   .row2 .btn { flex: 1; }
@@ -219,6 +273,15 @@
   .fbtn.flash::before { opacity: 1; box-shadow: 0 0 24px 6px rgba(255,60,40,.9); animation: none; }
   @keyframes fglow { 0%, 100% { opacity: .15; } 50% { opacity: 1; } }
   .fbtn svg { position: absolute; left: 28%; top: 20%; width: 44%; height: 60%; }
+  .fbtn .fc { position: absolute; inset: 0; border-radius: 50%; transition: transform .1s var(--ease); }
+  .fbtn.on { box-shadow: inset 0 0 0 2px #fff3b0; }
+  .fbtn.on .fc { transform: scale(.86); }
+  .fbtn.on::before { opacity: 1; animation: none; box-shadow: 0 0 26px 8px rgba(255,170,0,.85); }
+  /* v354: рамка выбора, как в настройке HUD в игре */
+  .hsel { position: absolute; inset: -10px; border: 1.5px dashed rgba(255,216,74,.9); border-radius: 8px; opacity: .35; transition: opacity .15s; }
+  .hsel::before { content: attr(data-l); position: absolute; left: 50%; bottom: 100%; margin-bottom: 5px; transform: translateX(-50%); padding: 2px 8px;
+                  font: 10.5px var(--hud); letter-spacing: .1em; color: #170a00; background: var(--grad); white-space: nowrap; }
+  #hud.grab .hsel { opacity: 1; }
   /* большая надпись этапа — появляется и тает */
   .stpop { position: absolute; left: 0; right: 0; top: 30%; z-index: 6; text-align: center; pointer-events: none; opacity: 0;
            font: 30px var(--hud); letter-spacing: .08em; color: var(--ye); text-shadow: 0 4px 24px rgba(255,120,0,.55); }
@@ -340,39 +403,97 @@
   .hist li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; padding: 6px 2px; border-top: 1px solid var(--ln); font-size: 12.5px; color: var(--tx2); }
   .hist li span:last-child { margin-left: auto; white-space: nowrap; }
   .hist li b { font-family: var(--hud); font-weight: 400; color: var(--tx); }
-  .ideal { text-align: center; background: linear-gradient(180deg, rgba(255,130,0,.16), rgba(255,130,0,.04)); }
-  .ideal b { display: block; font: 17px var(--hud); letter-spacing: .05em; color: var(--ye); }
-  .ideal p { margin: 4px 0 12px; color: var(--tx2); font-size: 13.5px; }
+  /* v354: реклама «до идеала» — что входит: скрины, DPI, множество настроек */
+  .ideal { background: linear-gradient(160deg, rgba(255,130,0,.24), rgba(255,130,0,.05) 55%, rgba(255,130,0,.02)); }
+  .ideal::before, .ideal::after { border-color: var(--ye); }
+  .id-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .id-top b { font: 17px var(--hud); letter-spacing: .04em; color: var(--ye); }
+  .id-pr { flex: 0 0 auto; padding: 5px 12px; font: 17px var(--hud); color: #170a00; background: var(--grad);
+           clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); animation: prp 2.4s var(--ease) infinite; }
+  @keyframes prp { 0%, 100% { transform: none; } 50% { transform: scale(1.07); } }
+  .ideal p { margin: 6px 0 2px; color: var(--tx2); font-size: 13.5px; }
+  .id-l { margin: 4px 0 14px; padding: 0; list-style: none; }
+  .id-l li { position: relative; padding: 6px 0 6px 32px; font: 600 14px var(--ui); color: var(--tx); }
+  .id-l li i { position: absolute; left: 2px; top: 4px; font-style: normal; font-size: 18px; }
+  .panel.rv.in .id-l li { animation: chipin .45s var(--ease) both; }
+  .panel.rv.in .id-l li:nth-child(2) { animation-delay: .08s; } .panel.rv.in .id-l li:nth-child(3) { animation-delay: .16s; }
+  .panel.rv.in .id-l li:nth-child(4) { animation-delay: .24s; }
   .rescv { display: block; width: 100%; height: 150px; margin-top: 10px; background: #0a0c11; box-shadow: inset 0 0 0 1px var(--ln); }
 
-  /* свайпы — экран со следом пальца */
-  #swipe { background: radial-gradient(90% 70% at 50% 62%, #1b2131, #0a0c12 72%); }
-  #sw-cv { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
-  .sw-hint { position: absolute; left: 0; top: 0; width: 240px; text-align: center; pointer-events: none; transition: opacity .3s; }
-  .sw-hint b { display: block; margin-top: 14px; font: 16px var(--hud); letter-spacing: .05em; }
-  .sw-hint small { display: block; margin-top: 4px; color: var(--tx2); font-size: 13px; }
+  /* v354: этап 2 «Оттяжка» как в игре — полигон, манекен, прицел, стрельба; всё двигается через transform */
+  #swipe { background: linear-gradient(180deg, #0c1020 0%, #182036 55%, #241c2c 100%); }
+  .pw { position: absolute; inset: 0; overflow: hidden; }
+  .pw-far { position: absolute; left: -400px; top: 0; width: calc(100% + 800px); height: 90px; pointer-events: none; will-change: transform;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='90'%3E%3Cpath d='M0 90V62l38-22 30 14 46-34 34 26 32-16 44 32 36-30 40 22 36-16 64 26v36z' fill='%23221a24'/%3E%3C/svg%3E") 0 0 / 400px 90px repeat-x; }
+  .pw-gnd { position: absolute; left: -96px; top: 0; width: calc(100% + 192px); height: 160vh; pointer-events: none; will-change: transform;
+            background: linear-gradient(180deg, rgba(255,150,60,.16), transparent 140px),
+                        linear-gradient(rgba(255,170,80,.12) 1px, transparent 1px) 0 0 / 96px 48px,
+                        linear-gradient(90deg, rgba(255,170,80,.09) 1px, transparent 1px) 0 0 / 96px 48px, #141821;
+            box-shadow: 0 -1px 0 rgba(255,190,90,.6); }
+  .pw-gnd::before { content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: 150px; pointer-events: none;
+                    background: linear-gradient(0deg, rgba(255,120,40,.3), rgba(255,120,40,0)); }
+  .dm { position: absolute; left: 0; top: 0; width: 0; height: 0; will-change: transform; transition: opacity .22s; }
+  .dm.out { opacity: 0; }
+  .dm svg { position: absolute; left: -40px; top: -20px; width: 80px; height: 160px; overflow: visible; }
+  .dm .hd { transition: fill .1s; }
+  .dm.hh .hd { fill: #ffcf3d; }
+  .cr { position: absolute; left: 0; top: 0; z-index: 3; width: 0; height: 0; pointer-events: none; }
+  .cr i { position: absolute; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.55); transition: background-color .1s; }
+  .cr .c1 { width: 2px; height: 9px; left: -1px; top: -16px; } .cr .c2 { width: 2px; height: 9px; left: -1px; top: 7px; }
+  .cr .c3 { width: 9px; height: 2px; left: -16px; top: -1px; } .cr .c4 { width: 9px; height: 2px; left: 7px; top: -1px; }
+  .cr .c5 { width: 4px; height: 4px; left: -2px; top: -2px; border-radius: 50%; background: #ff3b30; }
+  .cr.ob i { background: #ff5a4d; } .cr.oh i { background: #ffd84a; } .cr.ob .c5, .cr.oh .c5 { background: #fff; }
+  .hm { position: absolute; left: 0; top: 0; z-index: 3; width: 0; height: 0; pointer-events: none; opacity: 0; }
+  .hm i { position: absolute; width: 9px; height: 2px; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.4); }
+  .hm i:nth-child(1) { left: -15px; top: -12px; transform: rotate(45deg); } .hm i:nth-child(2) { left: 6px; top: -12px; transform: rotate(-45deg); }
+  .hm i:nth-child(3) { left: -15px; top: 10px; transform: rotate(-45deg); } .hm i:nth-child(4) { left: 6px; top: 10px; transform: rotate(45deg); }
+  .hm.hd i { background: #ff3b30; }
+  .fxl { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
+  .tr { position: absolute; left: 0; top: 0; width: 100px; height: 2px; margin-top: -1px; transform-origin: 0 50%; opacity: 0;
+        background: linear-gradient(90deg, rgba(255,210,120,0), rgba(255,227,154,.85) 70%, #fff); }
+  .dn { position: absolute; left: 0; top: 0; font: 15px var(--hud); color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.85); opacity: 0; white-space: nowrap; }
+  .dn.hd { color: #ffd84a; font-size: 18px; }
+  .sp { position: absolute; left: 0; top: 0; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: #ffd27a;
+        box-shadow: 0 0 6px #ff9a00; opacity: 0; }
+  .du { position: absolute; left: 0; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: rgba(200,205,220,.35); opacity: 0; }
+  .mz { position: absolute; left: 0; top: 0; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; opacity: 0;
+        background: radial-gradient(circle, #fff6c8 0%, #ffb000 32%, rgba(255,90,0,0) 70%); }
+  .band { position: absolute; left: 0; top: 0; z-index: 3; width: 100px; height: 6px; margin-top: -3px; border-radius: 3px; transform-origin: 0 50%;
+          pointer-events: none; opacity: 0; background: linear-gradient(90deg, rgba(255,200,60,.9), rgba(255,120,0,.12)); }
+  .touch { position: absolute; left: 0; top: 0; z-index: 3; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; pointer-events: none;
+           opacity: 0; box-shadow: inset 0 0 0 2px rgba(255,255,255,.75), 0 0 16px rgba(255,180,60,.55); }
+  .ghost { position: absolute; left: 0; top: 0; z-index: 3; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; pointer-events: none;
+           opacity: 0; box-shadow: inset 0 0 0 2px #5be38f; transition: opacity .3s; }
+  .ghost.on { opacity: 1; } .ghost.over { box-shadow: inset 0 0 0 2px #ff7a4d; } .ghost.under { box-shadow: inset 0 0 0 2px #6cc0ff; }
+  .sw-s { display: block; margin-top: 2px; font: 600 11.5px var(--ui); color: var(--tx2); letter-spacing: .02em; }
+  .sw-hint { position: absolute; left: 0; top: 0; z-index: 4; width: 240px; text-align: center; pointer-events: none; transition: opacity .3s; }
+  .sw-hint b { display: block; margin-top: 14px; font: 16px var(--hud); letter-spacing: .05em; text-shadow: 0 2px 10px rgba(0,0,0,.75); }
+  .sw-hint small { display: block; margin-top: 4px; color: var(--tx2); font-size: 13px; text-shadow: 0 1px 6px rgba(0,0,0,.85); }
   .sw-arrow { position: relative; width: 40px; height: 100px; margin: -50px auto 0; animation: swa 1.6s var(--ease) infinite; }
   .sw-arrow::before { content: ''; position: absolute; left: 17px; top: 14px; bottom: 0; width: 6px; background: linear-gradient(0deg, rgba(255,90,0,0), #ffb000); }
   .sw-arrow::after { content: ''; position: absolute; left: 6px; top: 0; width: 28px; height: 22px; background: #ffc400; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
   @keyframes swa { 0% { transform: translateY(26px); opacity: 0; } 30% { opacity: 1; } 80% { transform: translateY(-26px); opacity: 1; } 100% { transform: translateY(-34px); opacity: 0; } }
-  .sw-live { position: absolute; left: 0; top: 0; z-index: 3; padding: 5px 10px; white-space: nowrap; pointer-events: none; opacity: 0;
-             font: 13px var(--hud); color: #170a00; background: var(--grad); clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
-             transition: opacity .15s; }
-  .sw-card { position: absolute; left: calc(14px + var(--sl)); right: calc(14px + var(--sr)); bottom: calc(18px + var(--sb)); z-index: 3; padding: 12px 14px;
-             max-width: 460px; margin: 0 auto;
-             background: rgba(15,18,26,.94); box-shadow: inset 0 0 0 1px rgba(255,150,0,.45); pointer-events: none; opacity: 0; transform: translateY(12px);
-             clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  .sw-card { position: absolute; left: 50%; top: calc(58px + var(--st) + var(--ct)); z-index: 5; width: min(340px, calc(100% - 28px)); padding: 10px 14px;
+             text-align: center; background: rgba(15,18,26,.92); box-shadow: inset 0 0 0 1px rgba(255,150,0,.45); pointer-events: none; opacity: 0;
+             transform: translate3d(-50%, -8px, 0); clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
              transition: opacity .25s, transform .25s var(--ease); }
-  .sw-card.show { opacity: 1; transform: none; }
-  .sw-card b { display: block; font: 13px var(--hud); letter-spacing: .08em; color: var(--or2); }
+  .sw-card.show { opacity: 1; transform: translate3d(-50%, 0, 0); }
+  .sw-card b { display: block; font: 12px var(--hud); letter-spacing: .12em; color: var(--or2); }
   .sw-card.bad b { color: var(--red); }
   .sw-card p { margin: 4px 0 0; color: var(--tx2); font-size: 13px; }
-  .sw-g { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 8px; text-align: center; }
-  .sw-g span { display: block; font: 18px var(--hud); color: var(--tx); }
-  .sw-g small { display: block; font: 700 9.5px var(--ui); letter-spacing: .07em; color: var(--tx3); text-transform: uppercase; }
+  .sw-card small { display: block; margin-top: 2px; color: var(--tx2); font-size: 12.5px; }
+  .pr-o { margin-top: 3px; font: 19px var(--hud); letter-spacing: .03em; }
+  .pr-o.head { color: var(--grn); } .pr-o.over { color: #ff8a5c; } .pr-o.under { color: #7cc4ff; }
   .dots { display: flex; gap: 5px; margin-top: 7px; }
   .dots i { width: 16px; height: 5px; background: rgba(255,255,255,.13); clip-path: polygon(3px 0, 100% 0, calc(100% - 3px) 100%, 0 100%); }
   .dots i.on { background: var(--grad); }
+  @media (orientation: portrait) { .sw-card { top: calc(100px + var(--st) + var(--ct)); } }
+  /* горизонтально — слева под заголовком: не закрывает голову манекена и колечко, где кончился рывок */
+  @media (orientation: landscape) {
+    .sw-card { left: calc(14px + var(--sl)); top: calc(100px + var(--st) + var(--ct)); width: min(290px, 34%); text-align: left; transform: translate3d(0, -8px, 0); }
+    .sw-card.show { transform: none; }
+    .pr-o { font-size: 16px; }
+  }
 
   /* v353: эффекты — только transform и opacity, чтобы ничего не тормозило */
   .fx { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
@@ -381,6 +502,11 @@
   @keyframes spark { 0% { transform: translate3d(0, 0, 0); opacity: 0; } 12% { opacity: .85; } 75% { opacity: .45; }
                      100% { transform: translate3d(var(--sx, 0px), -105vh, 0); opacity: 0; } }
   body.ovl .fx { display: none; }
+  .fx::before { content: ''; position: absolute; inset: -64px; will-change: transform;            /* v354: сетка медленно плывёт */
+                background: linear-gradient(rgba(255,140,0,.045) 1px, transparent 1px) 0 0 / 64px 64px,
+                            linear-gradient(90deg, rgba(255,140,0,.045) 1px, transparent 1px) 0 0 / 64px 64px;
+                animation: drift 22s linear infinite; }
+  @keyframes drift { to { transform: translate3d(64px, 64px, 0); } }
   .panel.rv { opacity: 0; transform: translate3d(0, 16px, 0); transition: opacity .5s var(--ease), transform .5s var(--ease); }
   .panel.rv.in { opacity: 1; transform: none; }
   .btn { overflow: hidden; }
@@ -401,6 +527,8 @@
     .fx, .btn::after { display: none; }
     .panel.rv { opacity: 1; transform: none; transition: none; }
     .ovl, .stpop.show, .chip.on { animation: none; }
+    .brand svg .rg, .brand svg .dt, .hero-k::after, .h-bar, .pg.cur i b, .panel.cur .scan, .panel.cur::before, .panel.cur::after,
+    .chip.on::after, .glow.rdy::before, .fx::before, .id-pr, .panel.rv.in .chips, .panel.rv.in .id-l li, .qsel.pop svg { animation: none !important; }
   }
 
   /* сообщения */
@@ -419,7 +547,8 @@
 <div id="app">
   <header class="top">
     <div class="brand">
-      <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="13" stroke="#ff9500" stroke-width="2.4"/><circle cx="20" cy="20" r="3" fill="#ffc400"/>
+      <svg viewBox="0 0 40 40" fill="none"><g class="rg"><circle cx="20" cy="20" r="13" stroke="#ff9500" stroke-width="2.4" stroke-dasharray="17 3.4"/></g>
+        <circle class="dt" cx="20" cy="20" r="3" fill="#ffc400"/>
         <path d="M20 2v9M20 29v9M2 20h9M29 20h9" stroke="#ffc400" stroke-width="2.4" stroke-linecap="round"/></svg>
       <div><b id="t-ttl">НАСТРОЙКА ОТТЯЖКИ</b><small id="t-sub">для Free Fire</small></div>
     </div>
@@ -431,9 +560,15 @@
     <div class="hero">
       <div class="hero-k" id="h-k"></div>
       <h1 id="h-t"></h1>
+      <i class="h-bar"></i>
       <p id="h-d"></p>
+      <div class="prog" aria-hidden="true">
+        <div class="pg" id="pg1"><i><b></b></i><span id="pg1-t"></span></div>
+        <div class="pg" id="pg2"><i><b></b></i><span id="pg2-t"></span></div>
+        <div class="pg" id="pg3"><i><b></b></i><span id="pg3-t"></span></div>
+      </div>
     </div>
-    <div class="panel">
+    <div class="panel" id="pn1"><i class="scan"></i>
       <div class="ph"><span>01</span><b id="p1-t"></b></div>
       <div id="q-box">
         <div class="srch"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.6-4.6"/></svg>
@@ -455,13 +590,13 @@
         <input id="m-inch" class="inp" maxlength="5" inputmode="decimal" autocomplete="off">
       </div>
     </div>
-    <div class="panel">
+    <div class="panel" id="pn2"><i class="scan"></i>
       <div class="ph"><span>02</span><b id="p2-t"></b></div>
       <div class="lbl" id="l-grip"></div><div class="chips" id="c-grip"></div>
       <div class="lbl" id="l-style"></div><div class="chips" id="c-style"></div>
       <div class="lbl" id="l-mode"></div><div class="chips" id="c-mode"></div>
     </div>
-    <div class="panel">
+    <div class="panel" id="pn3"><i class="scan"></i>
       <div class="ph"><span>03</span><b id="p3-t"></b></div>
       <div class="chips" id="c-own"></div>
       <div id="own" hidden>
@@ -526,7 +661,9 @@
       <ul class="why" id="why"></ul>
     </div>
     <div class="panel ideal">
-      <b id="id-t"></b><p id="id-d"></p>
+      <div class="id-top"><b id="id-t"></b><span class="id-pr" id="id-pr"></span></div>
+      <p id="id-d"></p>
+      <ul class="id-l" id="id-l"></ul>
       <button type="button" class="btn sec" id="ideal"></button>
     </div>
     <div class="glow"><button type="button" class="btn big" id="again"></button></div>
@@ -540,7 +677,7 @@
 <div id="hud" class="ovl" hidden>
   <i class="hd-grid"></i><i class="hd-hz"></i>
   <i class="dc dc-map"></i><i class="dc dc-joy"></i><i class="dc dc-b dc-b1"></i><i class="dc dc-b dc-b2"></i><i class="dc dc-b dc-b3"></i>
-  <div class="fbtn need" id="hd-fire"><svg viewBox="0 0 12 18"><path d="M6 0c1.6 1.5 2.6 3.3 2.6 5.6V13H3.4V5.6C3.4 3.3 4.4 1.5 6 0z" fill="#ffd23f"/><path d="M2.6 14h6.8v4H2.6z" fill="#ff9500"/></svg></div>
+  <div class="fbtn need" id="hd-fire"><i class="hsel"></i><i class="fc"><svg viewBox="0 0 12 18"><path d="M6 0c1.6 1.5 2.6 3.3 2.6 5.6V13H3.4V5.6C3.4 3.3 4.4 1.5 6 0z" fill="#ffd23f"/><path d="M2.6 14h6.8v4H2.6z" fill="#ff9500"/></svg></i></div>
   <div class="hud"><div class="hl"><b id="hd-t"></b></div></div>
   <div class="hd-card" id="hd-card"><b id="hd-h1"></b><small id="hd-h2"></small></div>
   <div class="hd-ctl" id="hd-ctl">
@@ -552,13 +689,31 @@
   <button type="button" class="aquit" id="hd-quit">✕</button>
 </div>
 
-<!-- свайпы: поверх всего, пока игрок проводит пальцем -->
+<!-- v354: этап 2 «Оттяжка» как в игре: полигон, манекен, прицел, стрельба -->
 <div id="swipe" class="ovl" hidden>
-  <canvas id="sw-cv"></canvas>
-  <div class="fbtn" id="sw-fire"><svg viewBox="0 0 12 18"><path d="M6 0c1.6 1.5 2.6 3.3 2.6 5.6V13H3.4V5.6C3.4 3.3 4.4 1.5 6 0z" fill="#ffd23f"/><path d="M2.6 14h6.8v4H2.6z" fill="#ff9500"/></svg></div>
-  <div class="hud"><div class="hl"><b id="sw-t"></b><span id="sw-c"></span><div class="dots" id="sw-dots"></div></div></div>
+  <div class="pw" id="pw">
+    <i class="pw-far" id="pw-far"></i>
+    <i class="pw-gnd" id="pw-gnd"></i>
+    <div class="dm out" id="dm"><svg viewBox="-40 -20 80 160">
+      <path d="M-3 126h6v22h-6z" fill="#262c3a"/><path d="M-18 150h36" stroke="#3a4256" stroke-width="5" stroke-linecap="round"/>
+      <path d="M-24 22c4-5 13-7 24-7s20 2 24 7l-4 34c-1 7-5 12-8 14h-24c-3-2-7-7-8-14z" fill="#2b3245" stroke="#ff9500" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M-25 24l-10 30 6 3 9-24M25 24l10 30-6 3-9-24" fill="#232a3b" stroke="#ff9500" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M-14 70l-3 56h34l-3-56z" fill="#232a3b" stroke="#ff9500" stroke-width="1.6" stroke-linejoin="round"/>
+      <circle cx="0" cy="46" r="9" fill="none" stroke="#ff5a00" stroke-width="1.6" opacity=".85"/><circle cx="0" cy="46" r="3" fill="#ff5a00" opacity=".9"/>
+      <rect x="-5" y="10" width="10" height="8" fill="#232a3b"/>
+      <circle class="hd" cx="0" cy="0" r="13" fill="#3a4258" stroke="#ffb000" stroke-width="2.2"/>
+      <path d="M-8-2h16" stroke="#ff7a00" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+    </svg></div>
+  </div>
+  <div class="fxl" id="fxl"><i class="mz" id="mz"></i></div>
+  <i class="ghost" id="ghost"></i>
+  <div class="cr" id="cross2"><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i><i class="c5"></i></div>
+  <div class="hm" id="hm"><i></i><i></i><i></i><i></i></div>
+  <i class="band" id="band"></i>
+  <i class="touch" id="touch"></i>
+  <div class="fbtn" id="sw-fire"><i class="fc"><svg viewBox="0 0 12 18"><path d="M6 0c1.6 1.5 2.6 3.3 2.6 5.6V13H3.4V5.6C3.4 3.3 4.4 1.5 6 0z" fill="#ffd23f"/><path d="M2.6 14h6.8v4H2.6z" fill="#ff9500"/></svg></i></div>
+  <div class="hud"><div class="hl"><b id="sw-t"></b><span id="sw-c"></span><small class="sw-s" id="sw-s"></small><div class="dots" id="sw-dots"></div></div></div>
   <div class="sw-hint" id="sw-hint"><div class="sw-arrow"></div><b id="sw-h1"></b><small id="sw-h2"></small></div>
-  <div class="sw-live" id="sw-live"></div>
   <div class="sw-card" id="sw-card"></div>
   <div class="stpop" id="sw-pop"></div>
   <button type="button" class="aquit" id="sw-quit">✕</button>
@@ -576,7 +731,7 @@ window.addEventListener('error', function (e) {
     ['hud', 'swipe', 'calc'].forEach(function (id) { var x = document.getElementById(id); if (x) x.hidden = true; });
     document.querySelectorAll('.scr').forEach(function (s) { s.hidden = true; });
     var f = document.getElementById('fatal'); f.hidden = false;
-    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v353';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v354';
   } catch (_) {}
 }, true);
 </script>
@@ -591,7 +746,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v353';
+  var VER = 'v354';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -619,7 +774,8 @@ window.addEventListener('error', function (e) {
     ru: {
       ttl: 'НАСТРОЙКА ОТТЯЖКИ', sub: 'для Free Fire', tag: 'FREE FIRE', hk: '🎯 ЗА 1 МИНУТУ',
       ht: 'НАСТРОИМ<br><em>ТВОЮ ОТТЯЖКУ</em>',
-      hd: 'Ответь на пару вопросов, поставь кнопку огня как в игре и потяни от неё пальцем. Я скажу, какие цифры поставить, а потом вместе проверим в тренировке.',
+      hd: 'Ответь на пару вопросов, поставь кнопку огня как в игре и потяни оттяжку — прицел поедет, как в тренировке. Я скажу, какие цифры поставить, а потом вместе проверим в игре.',
+      pg: ['Телефон', 'Как играешь', 'Настройки'],
       p1: 'ТВОЙ ТЕЛЕФОН', q_ph: 'Напиши модель: Redmi Note 12, iPhone 13…', q_none: 'Не нашёл — нажми «Нет моего телефона» ниже',
       q_more: 'Начни писать модель — например «Note 12» или «A54»', man: 'Нет моего телефона', man_off: 'Найти телефон в списке',
       chg: 'Сменить', l_dev: 'Какой телефон', l_scr: 'Какой экран',
@@ -642,10 +798,12 @@ window.addEventListener('error', function (e) {
       rot_t: 'ПОВЕРНИ ТЕЛЕФОН', rot_d: 'Держи телефон боком, как в Free Fire, — так получится точнее.',
       rot_skip: 'Не поворачивается — играть так',
       stage: 'ЭТАП {n} ИЗ 2', hd_t: '1/2 · КНОПКА ОГНЯ', hd_pop: 'КНОПКА ОГНЯ', sw_title: '2/2 · ОТТЯЖКА', sw_pop: 'ОТТЯЖКА',
-      hd_h1: 'ПОСТАВЬ КНОПКУ КАК В ИГРЕ', hd_h2: 'Нажми туда, где у тебя 🔥, или перетащи её. Размер — ползунком',
+      hd_h1: 'ПОСТАВЬ КНОПКУ КАК В ИГРЕ', hd_h2: 'Зажми кнопку и тащи — как в настройках HUD в игре. Размер — ползунком', hd_sel: 'ОГОНЬ',
       hd_sz: 'РАЗМЕР КНОПКИ', hd_ok: 'ГОТОВО ✓', of: '{i} / {n}', fire_need: 'Начни с кнопки огня 🔥',
-      sw_h1: 'ПРИЖМИ 🔥 И ТЯНИ ВВЕРХ', sw_h2: 'как делаешь оттяжку в голову', sw_card: 'СВАЙП {i} ИЗ {n}', sw_bad: 'ЭТО НЕ ОТТЯЖКА', sw_bad_d: 'Тяни вверх — от кнопки огня к голове',
-      sw_len: 'длина, см', sw_time: 'время, с', sw_spd: 'скорость', sw_str: 'ровно, %', sw_unit: 'см', sw_unit_v: 'см/с',
+      sw_h1: 'ЗАЖМИ 🔥 И ТЯНИ К ГОЛОВЕ', sw_h2: 'прицел поедет вверх — как в тренировке', sw_bad: 'ЭТО НЕ ОТТЯЖКА',
+      sw_bad_d: 'Зажми кнопку огня и тяни вверх — к голове', sw_warm: 'ПРИСТРЕЛКА', sw_sens: 'Сенса как у тебя: {v}',
+      pr_warm: 'ПРИСТРЕЛКА · 1 ИЗ {n}', pr_n: 'ОТТЯЖКА {i} ИЗ {n}', pr_head: 'РЫВОК В ГОЛОВУ ✅', pr_over: 'РЫВОК ВЫШЕ ГОЛОВЫ ⬆️',
+      pr_under: 'РЫВОК НЕ ДОТЯНУЛ ⬇️', pr_len: 'Протянул {cm} см',
       calc_t: 'СЧИТАЮ…', calc_d: 'Подбираю цифры под твою руку',
       off_t: 'НЕТ СВЯЗИ', off_d: 'Замер сохранён на телефоне — отправлю сам, как появится интернет', off_retry: '↻ ОТПРАВИТЬ ЕЩЁ РАЗ', off_exit: 'Выйти',
       pend_t: '📶 ЗАМЕР НЕ ОТПРАВИЛСЯ', pend_d: 'Он сохранён — отправь, когда будет интернет', pend_b: 'ОТПРАВИТЬ',
@@ -666,7 +824,8 @@ window.addEventListener('error', function (e) {
       labels: { gen: 'Обзор', red: 'Коллиматор', x2: 'Прицел 2×', x4: 'Прицел 4×', snp: 'Снайперский прицел', free: 'Свободный обзор' },
       fire: 'Кнопка огня', copy: '📋 СКОПИРОВАТЬ', copied: 'Скопировал — вставь в заметки или сразу в игру',
       sent: '✓ Отправил тебе в чат', sent_last: 'Это твоя последняя настройка — она есть и в чате',
-      id_t: '⭐ ХОЧЕШЬ ИДЕАЛЬНО?', id_d: 'Настрою сенсу лично, с моими фишками — <b>{p} ₽</b>', id_b: 'НАПИСАТЬ @SloppyX',
+      id_t: '⭐ ХОЧЕШЬ ДО ИДЕАЛА?', id_pr: '{p} ₽', id_d: 'Настрою лично под твой телефон — с моими фишками:', id_b: 'НАПИСАТЬ @SloppyX',
+      id_l: [['📸', 'Скрины всех настроек'], ['📲', 'DPI под твой телефон'], ['⚙️', 'Множество настроек на твой телефон'], ['🎯', 'Сенса до идеала']],
       again: '🔁 ЗАНОВО', toprof: 'Поменять ответы или телефон',
       fb_up: 'Проверка {n}: сенса ниже на {p}%', fb_down: 'Проверка {n}: сенса выше на {p}%', fb_ok: 'Записал — это твои настройки! 🔥',
       fb_up7: 'Поправил: сенса ниже на 7%', fb_down7: 'Поправил: сенса выше на 7%', fb_ok7: 'Отлично, записал!',
@@ -681,7 +840,8 @@ window.addEventListener('error', function (e) {
     en: {
       ttl: 'DRAG SETUP', sub: 'for Free Fire', tag: 'FREE FIRE', hk: '🎯 IN 1 MINUTE',
       ht: 'LET\'S TUNE<br><em>YOUR DRAG</em>',
-      hd: 'Answer a couple of questions, place the fire button like in the game and drag from it. I\'ll tell you which numbers to set, then we check it in training together.',
+      hd: 'Answer a couple of questions, place the fire button like in the game and pull — the aim moves like in training. I\'ll tell you which numbers to set, then we check it in the game together.',
+      pg: ['Phone', 'How you play', 'Settings'],
       p1: 'YOUR PHONE', q_ph: 'Type the model: Redmi Note 12, iPhone 13…', q_none: 'Not found — tap «My phone is not listed» below',
       q_more: 'Start typing the model — e.g. «Note 12» or «A54»', man: 'My phone is not listed', man_off: 'Find my phone in the list',
       chg: 'Change', l_dev: 'Which phone', l_scr: 'Which screen',
@@ -704,10 +864,12 @@ window.addEventListener('error', function (e) {
       rot_t: 'TURN YOUR PHONE', rot_d: 'Hold your phone sideways, like in Free Fire — it will be more precise.',
       rot_skip: 'It does not turn — play like this',
       stage: 'STAGE {n} OF 2', hd_t: '1/2 · FIRE BUTTON', hd_pop: 'FIRE BUTTON', sw_title: '2/2 · DRAG', sw_pop: 'DRAG',
-      hd_h1: 'PLACE THE BUTTON LIKE IN THE GAME', hd_h2: 'Tap where your 🔥 is, or drag it. Size — with the slider',
+      hd_h1: 'PLACE THE BUTTON LIKE IN THE GAME', hd_h2: 'Hold the button and drag it — like the HUD editor in the game. Size — with the slider', hd_sel: 'FIRE',
       hd_sz: 'BUTTON SIZE', hd_ok: 'DONE ✓', of: '{i} / {n}', fire_need: 'Start from the fire button 🔥',
-      sw_h1: 'PRESS 🔥 AND PULL UP', sw_h2: 'the way you drag to the head', sw_card: 'SWIPE {i} OF {n}', sw_bad: 'NOT A DRAG', sw_bad_d: 'Pull up — from the fire button to the head',
-      sw_len: 'length, cm', sw_time: 'time, s', sw_spd: 'speed', sw_str: 'straight, %', sw_unit: 'cm', sw_unit_v: 'cm/s',
+      sw_h1: 'HOLD 🔥 AND PULL TO THE HEAD', sw_h2: 'the aim goes up — like in training', sw_bad: 'NOT A DRAG',
+      sw_bad_d: 'Hold the fire button and pull up — to the head', sw_warm: 'WARM-UP', sw_sens: 'Your sensitivity: {v}',
+      pr_warm: 'WARM-UP · 1 OF {n}', pr_n: 'DRAG {i} OF {n}', pr_head: 'PULL ON THE HEAD ✅', pr_over: 'PULL ABOVE THE HEAD ⬆️',
+      pr_under: 'PULL FELL SHORT ⬇️', pr_len: 'Pulled {cm} cm',
       calc_t: 'COUNTING…', calc_d: 'Picking numbers for your hand',
       off_t: 'NO CONNECTION', off_d: 'The measurement is saved on your phone — I\'ll send it once the internet is back', off_retry: '↻ SEND AGAIN', off_exit: 'Leave',
       pend_t: '📶 MEASUREMENT NOT SENT', pend_d: 'It is saved — send it when you are online', pend_b: 'SEND',
@@ -728,7 +890,8 @@ window.addEventListener('error', function (e) {
       labels: { gen: 'General', red: 'Red dot', x2: '2× scope', x4: '4× scope', snp: 'Sniper scope', free: 'Free look' },
       fire: 'Fire button', copy: '📋 COPY', copied: 'Copied — paste it into notes or straight into the game',
       sent: '✓ Sent to your chat', sent_last: 'This is your latest setup — it is in the chat too',
-      id_t: '⭐ WANT IT PERFECT?', id_d: 'A personal setup with my tricks — <b>{p} ₽</b>', id_b: 'MESSAGE @SloppyX',
+      id_t: '⭐ WANT IT PERFECT?', id_pr: '{p} ₽', id_d: 'A personal setup for your phone — with my tricks:', id_b: 'MESSAGE @SloppyX',
+      id_l: [['📸', 'Screenshots of all settings'], ['📲', 'DPI for your phone'], ['⚙️', 'Lots of settings for your phone'], ['🎯', 'Sensitivity tuned to perfection']],
       again: '🔁 AGAIN', toprof: 'Change answers or phone',
       fb_up: 'Check {n}: sensitivity {p}% lower', fb_down: 'Check {n}: sensitivity {p}% higher', fb_ok: 'Saved — these are your settings! 🔥',
       fb_up7: 'Adjusted: 7% lower', fb_down7: 'Adjusted: 7% higher', fb_ok7: 'Great, noted!',
@@ -748,7 +911,7 @@ window.addEventListener('error', function (e) {
   var S = { phones: [], idx: [], prof: { phone: '', dev: 0, scr: 0, grip: 0, style: 0, mode: 0, own: 0, now: 0 }, phone: null, manual: false,
             rounds: { flick: 8, drag: 10 }, gain: { flick: 1, drag: 1 }, gain0: null, sf: 1, base: null, filled: [], res: null, last: null, view: 'prof',
             orderUrl: 'https://t.me/SloppyX', price: 200, busy: false, swipes: 5, diag: { 1: 5.8, 2: 6.4, 3: 6.7, 4: 10.5 }, paths: null,
-            orient: '', rotThen: null, hud: { x: null, y: null, size: 50 }, phHash: '', restored: false, pending: null, dT: 0 };
+            orient: '', rotThen: null, hud: { x: null, y: null, size: 50 }, phHash: '', restored: false, pending: null, dT: 0, dragS: 100, r0: 220 };
   // v353: запоминаем на телефоне (у каждого игрока своё): база телефонов, черновик ответов, место кнопки огня, неотправленный замер
   function lsGet(k) { try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -869,7 +1032,9 @@ window.addEventListener('error', function (e) {
     $('sw-t').textContent = L.sw_title; $('sw-h1').textContent = L.sw_h1; $('sw-h2').textContent = L.sw_h2;
     $('calc-t').textContent = L.calc_t; $('calc-d').textContent = L.calc_d;
     $('hd-t').textContent = L.hd_t; $('hd-h1').textContent = L.hd_h1; $('hd-h2').textContent = L.hd_h2; $('hd-sl').textContent = L.hd_sz;
-    $('hd-ok').textContent = L.hd_ok;
+    $('hd-ok').textContent = L.hd_ok; $('hd-fire').querySelector('.hsel').setAttribute('data-l', L.hd_sel);
+    for (var pi = 1; pi <= 3; pi++) $('pg' + pi + '-t').textContent = L.pg[pi - 1];
+    $('id-l').innerHTML = L.id_l.map(function (x) { return '<li><i>' + x[0] + '</i>' + esc(x[1]) + '</li>'; }).join('');
     $('hd-pop').innerHTML = '<small>' + esc(tpl(L.stage, { n: 1 })) + '</small>' + esc(L.hd_pop);
     $('sw-pop').innerHTML = '<small>' + esc(tpl(L.stage, { n: 2 })) + '</small>' + esc(L.sw_pop);
     $('calc-retry').textContent = L.off_retry; $('calc-exit').textContent = L.off_exit;
@@ -908,7 +1073,10 @@ window.addEventListener('error', function (e) {
     'фантом': 'phantom', 'магик': 'magic', 'мэджик': 'magic', 'пура': 'pura', 'вижн': 'vision', 'эдж': 'edge', 'фолд': 'fold', 'флип': 'flip',
     'турбо': 'turbo', 'нео': 'neo', 'таблет': 'tablet', 'матпад': 'matepad', 'мейтпад': 'matepad', 'медиапад': 'mediapad', 'айку': 'iqoo', 'айкью': 'iqoo',
     'лджи': 'lg', 'элджи': 'lg', 'текласт': 'teclast', 'тиклаcт': 'teclast', 'олдокьюб': 'alldocube', 'чуви': 'chuwi', 'хтс': 'htc', 'эйчтиси': 'htc',
-    'микромакс': 'micromax', 'лава': 'lava', 'айплей': 'iplay' };
+    'микромакс': 'micromax', 'лава': 'lava', 'айплей': 'iplay',
+    'хмд': 'hmd', 'фейрфон': 'fairphone', 'фэйрфон': 'fairphone', 'кубот': 'cubot', 'кьюбот': 'cubot', 'оукител': 'oukitel', 'укител': 'oukitel',
+    'умидиджи': 'umidigi', 'юмидиджи': 'umidigi', 'вико': 'wiko', 'шарп': 'sharp', 'аквос': 'aquos', 'пульс': 'pulse', 'скайлайн': 'skyline',
+    'бизон': 'bison', 'кингконг': 'kingkong', 'армор': 'armor', 'циви': 'civi', 'сиви': 'civi', 'микс': 'mix' };
   var LOOK = { 'а': 'a', 'в': 'b', 'е': 'e', 'к': 'k', 'м': 'm', 'н': 'h', 'о': 'o', 'р': 'p', 'с': 'c', 'т': 't', 'у': 'y', 'х': 'x' };
   var LAY = { 'й': 'q', 'ц': 'w', 'у': 'e', 'к': 'r', 'е': 't', 'н': 'y', 'г': 'u', 'ш': 'i', 'щ': 'o', 'з': 'p', 'ф': 'a', 'ы': 's', 'в': 'd',
     'а': 'f', 'п': 'g', 'р': 'h', 'о': 'j', 'л': 'k', 'д': 'l', 'я': 'z', 'ч': 'x', 'с': 'c', 'м': 'v', 'и': 'b', 'т': 'n', 'ь': 'm' };
@@ -972,6 +1140,7 @@ window.addEventListener('error', function (e) {
     $('qs-n').textContent = p[1] + ' ' + p[2];
     $('qs-d').textContent = inch(p[3]) + ' · ' + L.scr_names[scrClass(p) - 1];
     $('q-sel').hidden = false; $('q-box').hidden = true; $('man').hidden = true; $('q-man').hidden = true;
+    var qs = $('q-sel'); qs.classList.remove('pop'); void qs.offsetWidth; qs.classList.add('pop');        // v354: телефон «встал» — значок пружинит
     haptic(null, 'light'); syncGo(); draftSave();
   }
   function unpick() {
@@ -1001,6 +1170,7 @@ window.addEventListener('error', function (e) {
     OWN_KEYS.forEach(function (k) {
       var n = ownNum(k), bad = n !== n || ((k === 'gen' || k === 'red') && n === null);
       $('o-' + k).parentNode.classList.toggle('bad', n !== n);
+      $('o-' + k).parentNode.classList.toggle('ok', n === n && n !== null);          // v354: верное число — зелёная галочка
       if (bad) ok = false;
     });
     return ok;
@@ -1021,6 +1191,13 @@ window.addEventListener('error', function (e) {
     var lv = S.last && S.last.vals;
     $('own-last').hidden = !lv;
     if (lv) $('own-last').textContent = tpl(L.own_last, lv);
+    // v354: шаги анкеты — какая панель готова, какую заполнять сейчас
+    var done = [r.ph, r.gs, r.own && r.vals && r.now], cur = done.indexOf(false);
+    for (var i = 0; i < 3; i++) {
+      $('pn' + (i + 1)).classList.toggle('done', done[i]); $('pn' + (i + 1)).classList.toggle('cur', i === cur);
+      $('pg' + (i + 1)).classList.toggle('done', done[i]); $('pg' + (i + 1)).classList.toggle('cur', i === cur);
+    }
+    $('go').parentNode.classList.toggle('rdy', !$('go').disabled);
   }
 
   // ── прошлая настройка ───────────────────────────────────────────────
@@ -1090,7 +1267,10 @@ window.addEventListener('error', function (e) {
       S.busy = false; syncGo();
       if (!res.j || !res.j.ok) { toast(errText(res), true); haptic('error'); return; }
       S.base = res.j.base; S.filled = res.j.filled || [];
-      W.list = []; W.miss = 0; S.paths = null;
+      // v354: сенса, которой игрок тянет (обзор, коллиматор или среднее), и мерка «до головы — R0 / сенса см»
+      S.dragS = Math.max(20, Math.min(200, ((res.j.gain && Number(res.j.gain.drag)) || 1) * 100));
+      S.r0 = Number(res.j.r0) || 220;
+      W.list = []; W.res = []; W.miss = 0; S.paths = null;
       gate(startHud);                                   // v353: этап 1 — «Кнопка огня»
     }).catch(function () { S.busy = false; syncGo(); toast(L.e_net, true); });
   }
@@ -1098,7 +1278,7 @@ window.addEventListener('error', function (e) {
   // Игрок ставит кнопку туда, где она у него в игре: нажал в любом месте — кнопка прыгает под палец и едет за ним; размер —
   // ползунком, в % как в игре. Дальше свайпы идут от этой кнопки, а бот видит, сколько места от неё до верха экрана.
   var FMIN = 10, FMAX = 200;
-  var H = { ptr: null, g: { x: 0, y: 0, r: 26 }, raf: 0, nx: 0, ny: 0 };
+  var H = { ptr: null, g: { x: 0, y: 0, r: 26 }, raf: 0, nx: 0, ny: 0, ox: 0, oy: 0 };
   function fireR(size, pc) { return Math.max(0.7, Math.min(2.6, 1.3 * Math.sqrt(size / 50))) * pc / 2; }
   function fireDef(Wd, Hd, r) {
     var land = Wd > Hd, ir = inset('right'), ib = inset('bottom');
@@ -1178,21 +1358,25 @@ window.addEventListener('error', function (e) {
     if (H.ptr !== null || e.isPrimary === false) return;
     H.ptr = e.pointerId;
     try { hudEl.setPointerCapture(e.pointerId); } catch (_) {}
-    hudEl.classList.add('grab'); $('hd-fire').classList.remove('need');
-    hudMove(e.clientX, e.clientY);                       // прыгает под палец — плавно
+    // v354: схватил саму кнопку — она едет за пальцем, как в настройке HUD в игре (без прыжка); нажал мимо — плавно едет туда
+    var dx = e.clientX - H.g.x, dy = e.clientY - H.g.y, rr = H.g.r * 1.3 + 10, on = dx * dx + dy * dy <= rr * rr;
+    H.ox = on ? dx : 0; H.oy = on ? dy : 0;
+    hudEl.classList.add('grab'); if (on) hudEl.classList.add('drag');
+    $('hd-fire').classList.remove('need');
+    if (!on) hudMove(e.clientX, e.clientY);
     haptic(null, 'light'); e.preventDefault();
   });
   hudEl.addEventListener('pointermove', function (e) {
     if (H.ptr === null || e.pointerId !== H.ptr) return;
     hudEl.classList.add('drag');                         // дальше едет за пальцем без задержки
-    H.nx = e.clientX; H.ny = e.clientY;
+    H.nx = e.clientX - H.ox; H.ny = e.clientY - H.oy;
     if (!H.raf) H.raf = requestAnimationFrame(function () { H.raf = 0; hudMove(H.nx, H.ny); });
     e.preventDefault();
   });
   function hudUp(e) {
     if (H.ptr === null || e.pointerId !== H.ptr) return;
     if (H.raf) { cancelAnimationFrame(H.raf); H.raf = 0; if (e.type !== 'pointerup') hudMove(H.nx, H.ny); }
-    if (e.type === 'pointerup') hudMove(e.clientX, e.clientY);      // кнопка — ровно там, где отпустил палец
+    if (e.type === 'pointerup') hudMove(e.clientX - H.ox, e.clientY - H.oy);      // кнопка — ровно там, где отпустил палец
     H.ptr = null; hudEl.classList.remove('grab', 'drag'); haptic(null, 'medium'); ctlAvoid();
   }
   hudEl.addEventListener('pointerup', hudUp);
@@ -1221,11 +1405,17 @@ window.addEventListener('error', function (e) {
     rotCheck();
   });
 
-  // ── свайпы ──────────────────────────────────────────────────────────
-  // Игрок зажимает кнопку огня и проводит вверх, как делает оттяжку. След рисуется на холсте; после каждого свайпа — длина
-  // в сантиметрах (по диагонали телефона), время, пиковая скорость и ровность. Считает бот. v353: кнопка — там и такого
-  // размера, как игрок поставил на этапе 1; первый свайп из шести — пристрелочный (бот его не считает).
-  var W = { n: 5, list: [], cur: null, ptr: null, dpr: 1, pxcm: 40, ctx: null, raf: 0, done: false, last: null, fire: { x: 0, y: 0, r: 26 }, miss: 0 };
+  // ── этап 2 «Оттяжка» как в игре (v354) ─────────────────────────────
+  // Кирилл (v354): «сделай саму кнопку, чтобы её можно было тянуть прям как в игре». Полигон, как «Тренировка»: манекен,
+  // прицел на груди. Зажал кнопку огня — идёт стрельба (трассеры, попадания, урон), тянешь — камера поворачивается с сенсой
+  // игрока, и прицел едет вверх по манекену. «Скорость» камеры: чтобы довести прицел с груди до головы манекена обычного
+  // размера, нужно протянуть R0 / сенса сантиметров (сенса 110 → 2 см) — та же мерка, по которой бот советует сенсу: тянешь
+  // дальше — улетаешь выше головы, короче — не дотягиваешь. Каждая оттяжка — замер рывка (где кончился первый рывок) и свайп
+  // в сантиметрах. Первая — пристрелочная; манекены чуть ближе и дальше, чтобы рука не подстраивалась под одно расстояние.
+  var W = { n: 6, list: [], res: [], ptr: null, pxcm: 40, done: false, busy: true, fire: { x: 0, y: 0, r: 26 }, miss: 0,
+            cam: { x: 0, y: 0 }, c0: { x: 0, y: 0 }, f0: { x: 0, y: 0 }, smp: [], pts: [], mv0: 0, so: null, tgt: null, g: 0.5, U: 1, Z: 1.35,
+            cx: 0, cy: 0, raf: 0, tw: 0, fireT: 0, shots: 0, thr: 6 };
+  var HEAD_R = 15, BODY_W = 22, BODY_T = 14, BODY_B = 128, CHEST = 46, DM_Z = 1.35;
   // точек в сантиметре — по диагонали модели (из базы или вписанной вручную)
   function scrDims() {
     var w = (window.screen && screen.width) || window.innerWidth, h = (window.screen && screen.height) || window.innerHeight;
@@ -1236,75 +1426,174 @@ window.addEventListener('error', function (e) {
     return Math.sqrt(s.a * s.a + s.b * s.b) / d / 2.54;
   }
   function pxPerCm() { return modelPxcm(); }
+  function mod(a, m) { return ((a % m) + m) % m; }
+  function rnd(a, b) { return a + Math.random() * (b - a); }
   function startSwipe() {
-    W.n = S.swipes || 5; W.list = []; W.cur = null; W.ptr = null; W.done = false; W.last = null; W.pxcm = pxPerCm();
+    W.n = S.swipes || 6; W.list = []; W.res = []; W.ptr = null; W.done = false; W.busy = true; W.shots = 0; W.pxcm = pxPerCm();
+    W.cam = { x: 0, y: 0 }; W.tgt = null; W.thr = Math.max(3, 0.15 * W.pxcm);
     $('swipe').hidden = false; ovlOn();
-    $('sw-hint').style.opacity = '1'; $('sw-card').className = 'sw-card'; $('sw-live').style.opacity = '0';
-    $('sw-fire').classList.add('need');
+    $('sw-hint').style.opacity = '1'; $('sw-card').className = 'sw-card'; $('ghost').className = 'ghost'; bandOff();
+    $('sw-fire').classList.add('need'); $('dm').classList.add('out');
+    $('sw-s').textContent = tpl(L.sw_sens, { v: Math.round(S.dragS) });
     swCount(); swLayout(); syncBack(); stagePop($('sw-pop'));
+    setTimeout(nextDummy, RM ? 0 : 450);
   }
-  function stopSwipe() {
-    $('swipe').hidden = true; W.ptr = null; ovlOff();
-  }
+  function stopSwipe() { fireOff(); bandOff(); $('swipe').hidden = true; W.ptr = null; ovlOff(); }
   function quitSwipe() {
     var go = function () { stopSwipe(); fullOff(); show('prof'); };
     try { if (tg && tg.showConfirm && tg.isVersionAtLeast && tg.isVersionAtLeast('6.2')) { tg.showConfirm(L.quit, function (ok) { if (ok) go(); }); return; } } catch (e) {}
     if (window.confirm(L.quit)) go();
   }
   function swCount() {
-    $('sw-c').textContent = tpl(L.of, { i: Math.min(W.list.length + 1, W.n), n: W.n });
+    $('sw-c').textContent = W.list.length ? tpl(L.of, { i: Math.min(W.list.length + 1, W.n), n: W.n }) : L.sw_warm;
     var h = ''; for (var i = 0; i < W.n; i++) h += '<i' + (i < W.list.length ? ' class="on"' : '') + '></i>';
     $('sw-dots').innerHTML = h;
   }
   function swLayout() {
-    var cv = $('sw-cv');
-    W.dpr = Math.min(3, window.devicePixelRatio || 1);
-    cv.width = Math.round(window.innerWidth * W.dpr); cv.height = Math.round(window.innerHeight * W.dpr);
-    W.fire = fireGeo(window.innerWidth, window.innerHeight); placeFire($('sw-fire'), W.fire);
+    var vw = window.innerWidth, vh = window.innerHeight, land = vw > vh;
+    W.fire = fireGeo(vw, vh); placeFire($('sw-fire'), W.fire);
+    W.U = Math.max(0.8, Math.min(2.2, Math.min(vw, vh) / 390)); W.Z = DM_Z * W.U;
+    W.cx = Math.round(vw / 2); W.cy = Math.round(vh * (land ? 0.47 : 0.42));
+    W.g = Math.max(0.08, Math.min(3, CHEST * W.Z * S.dragS / (S.r0 * W.pxcm)));
+    $('cross2').style.transform = 'translate3d(' + W.cx + 'px,' + W.cy + 'px,0)';
     // подсказка — рядом с кнопкой: горизонтально слева от неё, вертикально над ней
-    var vw = window.innerWidth, hw = Math.min(240, vw - 24), land = vw > window.innerHeight, hint = $('sw-hint');
+    var hw = Math.min(240, vw - 24), hint = $('sw-hint');
     var hx = land ? W.fire.x - W.fire.r - 20 - hw : W.fire.x - hw / 2, hy = land ? W.fire.y - 150 : W.fire.y - W.fire.r - 190;
     if (land && hx < 12) hx = W.fire.x - hw / 2;
     hint.style.width = hw + 'px';
     hint.style.transform = 'translate3d(' + Math.round(Math.max(12, Math.min(vw - hw - 12, hx))) + 'px,' + Math.round(Math.max(56 + inset('top'), hy)) + 'px,0)';
-    W.ctx = cv.getContext('2d'); swDraw();
+    pwDraw();
   }
-  function swReq() { if (!W.raf) W.raf = requestAnimationFrame(swDraw); }
-  function stroke(c, pts, alpha, glow, width) {
-    if (pts.length < 2) return;
-    var a = pts[0], b = pts[pts.length - 1], g = c.createLinearGradient(a.x, a.y, b.x, b.y), i;
-    g.addColorStop(0, '#ff5a00'); g.addColorStop(1, '#ffd23f');
-    c.save(); c.globalAlpha = alpha; c.lineCap = 'round'; c.lineJoin = 'round';
-    c.beginPath(); c.moveTo(a.x, a.y); for (i = 1; i < pts.length; i++) c.lineTo(pts[i].x, pts[i].y);
-    c.strokeStyle = g; c.lineWidth = width || 10; c.shadowColor = 'rgba(255,140,0,.95)'; c.shadowBlur = glow; c.stroke();
-    c.shadowBlur = 0; c.lineWidth = Math.max(1.5, (width || 10) * 0.28); c.strokeStyle = 'rgba(255,255,255,.88)'; c.stroke();
-    c.restore();
-  }
-  function swDraw() {
+  function pwReq() { if (!W.raf) W.raf = requestAnimationFrame(pwDraw); }
+  // мир едет против камеры: земля — по модулю клетки, горы медленнее (они дальше), манекен — целиком
+  function pwDraw() {
     W.raf = 0;
-    var c = W.ctx; if (!c) return;
-    var w = window.innerWidth, h = window.innerHeight, i, x0 = 14 + inset('left');
-    c.setTransform(W.dpr, 0, 0, W.dpr, 0, 0); c.clearRect(0, 0, w, h);
-    // линейка слева: сантиметры этого экрана, ноль — на уровне кнопки огня
-    var y0 = Math.round(W.fire.y);
-    c.save(); c.fillStyle = 'rgba(255,176,0,.75)'; c.font = '11px "Russo One", sans-serif';
-    for (i = 0; i <= 14; i++) {
-      var y = y0 - i * W.pxcm / 2; if (y < 92 + inset('top')) break;          // выше — заголовок и счётчик свайпов
-      c.globalAlpha = i % 2 ? 0.45 : 0.9; c.fillRect(x0, Math.round(y), i % 2 ? 7 : 14, 2);
-      if (!(i % 2)) c.fillText((i / 2) + ' ' + L.sw_unit, x0 + 18, Math.round(y) + 4);
+    var cam = W.cam, hz = W.cy - CHEST * 2.2 * W.Z - cam.y;
+    $('pw-gnd').style.transform = 'translate3d(' + (-mod(cam.x, 96)).toFixed(1) + 'px,' + hz.toFixed(1) + 'px,0)';
+    $('pw-far').style.transform = 'translate3d(' + (-mod(cam.x * 0.35, 400)).toFixed(1) + 'px,' + (hz - 86).toFixed(1) + 'px,0)';
+    var t = W.tgt, el = $('dm');
+    if (!t) { $('cross2').className = 'cr'; return; }
+    var kz = t.k * W.Z;
+    el.style.transform = 'translate3d(' + (W.cx + t.x - cam.x).toFixed(1) + 'px,' + (W.cy + t.y - cam.y).toFixed(1) + 'px,0) scale(' + kz.toFixed(3) + ')';
+    var h = hitAt(t);
+    $('cross2').className = 'cr' + (h === 2 ? ' oh' : h === 1 ? ' ob' : '');
+    el.classList.toggle('hh', h === 2);
+  }
+  function hitAt(t) {
+    var kz = t.k * W.Z, rx = W.cam.x - t.x, ry = W.cam.y - t.y;
+    if (Math.sqrt(rx * rx + ry * ry) <= HEAD_R * kz) return 2;
+    if (Math.abs(rx) <= BODY_W * kz && ry > BODY_T * kz && ry <= BODY_B * kz) return 1;
+    return 0;
+  }
+  // новый манекен: прицел — на груди; пристрелочный — обычного размера, дальше — чуть ближе и дальше
+  function nextDummy() {
+    if ($('swipe').hidden || W.done) return;
+    var k = W.list.length ? rnd(0.82, 1.22) : 1;
+    W.tgt = { x: W.cam.x + rnd(-5, 5) * W.U, y: W.cam.y - CHEST * k * W.Z, k: k };
+    var el = $('dm'); el.classList.add('out'); pwDraw(); void el.offsetWidth; el.classList.remove('out');
+    W.busy = false; swCount();
+  }
+  // после оттяжки камера плавно возвращается к горизонту (кадры не идут — всё равно доедет по таймеру)
+  function recenter(done) {
+    var from = { x: W.cam.x, y: W.cam.y }, t0 = now(), ms = RM ? 0 : 280, fin = false;
+    $('dm').classList.add('out'); $('ghost').classList.remove('on'); W.tgt = null;
+    function end() { if (fin) return; fin = true; cancelAnimationFrame(W.tw); W.cam = { x: 0, y: 0 }; pwDraw(); done(); }
+    (function step() {
+      if (fin) return;
+      var k = ms ? Math.min(1, (now() - t0) / ms) : 1, e = 1 - Math.pow(1 - k, 3);
+      W.cam.x = from.x * (1 - e); W.cam.y = from.y * (1 - e); pwDraw();
+      if (k < 1) W.tw = requestAnimationFrame(step); else end();
+    })();
+    setTimeout(end, ms + 60);
+  }
+  // эффекты стрельбы: свои элементы на каждый вид (без создания новых на каждый выстрел), только transform и opacity
+  var POOL = {};
+  function pool(cls, n) {
+    var p = POOL[cls];
+    if (!p) {
+      p = POOL[cls] = { i: 0, els: [] };
+      for (var j = 0; j < n; j++) { var e = document.createElement(cls === 'dn' ? 'b' : 'i'); e.className = cls; $('fxl').appendChild(e); p.els.push(e); }
     }
-    c.restore();
-    for (i = 0; i < W.list.length; i++) stroke(c, W.list[i].pts, 0.16 + 0.05 * i, 0, 8);       // старые — без свечения: так быстрее
-    if (W.cur) stroke(c, W.cur.pts, 1, 18, 10);
-    else if (W.last) {
-      stroke(c, W.last.pts, 1, 14, 10);
-      var p = W.last.pts, a = p[0], b = p[p.length - 1], k = W.last.peak;
-      c.save();
-      c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.arc(a.x, a.y, 9, 0, Math.PI * 2); c.stroke();
-      c.fillStyle = '#ffd23f'; c.beginPath(); c.arc(b.x, b.y, 6, 0, Math.PI * 2); c.fill();
-      if (k) { c.fillStyle = '#fff'; c.shadowColor = '#ffb000'; c.shadowBlur = 14; c.beginPath(); c.arc(k.x, k.y, 4, 0, Math.PI * 2); c.fill(); }
-      c.restore();
+    p.i = (p.i + 1) % p.els.length;
+    return p.els[p.i];
+  }
+  function anim(el, kf, ms) { try { if (el.animate) el.animate(kf, { duration: ms, easing: 'cubic-bezier(.2,.7,.2,1)' }); } catch (e) {} }
+  function tl(x, y, s) { return 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0)' + (s ? ' scale(' + s + ')' : ''); }
+  function shot() {
+    if ($('swipe').hidden || W.ptr === null) { fireOff(); return; }
+    W.shots++;
+    var t = W.tgt, h = t ? hitAt(t) : 0;
+    if (!RM) {
+      var x = W.cx + rnd(-2, 2), y = W.cy + rnd(-2, 2), x0 = W.cx + 46 * W.U, y0 = window.innerHeight + 8;
+      var dx = x - x0, dy = y - y0, tr = pool('tr', 6);                  // трассер — от оружия (низ экрана) к прицелу
+      tr.style.transform = 'translate3d(' + x0.toFixed(1) + 'px,' + y0.toFixed(1) + 'px,0) rotate(' + Math.atan2(dy, dx).toFixed(3) + 'rad) scaleX('
+        + (Math.sqrt(dx * dx + dy * dy) / 100).toFixed(3) + ')';
+      anim(tr, [{ opacity: 1 }, { opacity: 0 }], 120);
+      anim($('mz'), [{ opacity: 1, transform: tl(x0, window.innerHeight - 22, 1) }, { opacity: 0, transform: tl(x0, window.innerHeight - 22, 1.5) }], 90);
+      if (h) {
+        var hm = $('hm'); hm.className = 'hm' + (h === 2 ? ' hd' : '');
+        anim(hm, [{ opacity: 1, transform: tl(W.cx, W.cy, 1.35) }, { opacity: 0, transform: tl(W.cx, W.cy, 1) }], 220);
+        var dn = pool('dn', 6), ox = x + rnd(12, 28) * (Math.random() < 0.5 ? -1 : 1), oy = y - rnd(8, 18);
+        dn.className = 'dn' + (h === 2 ? ' hd' : ''); dn.textContent = '-' + Math.round(h === 2 ? rnd(48, 66) : rnd(18, 27));
+        anim(dn, [{ opacity: 1, transform: tl(ox, oy, 0.8) }, { opacity: 1, transform: tl(ox, oy - 14, 1.05), offset: 0.35 },
+                  { opacity: 0, transform: tl(ox, oy - 30, 1) }], 620);
+        for (var s = 0; s < 2; s++) {
+          var sp = pool('sp', 8), a = rnd(0, Math.PI * 2), d = rnd(8, 20);
+          anim(sp, [{ opacity: 1, transform: tl(x, y) }, { opacity: 0, transform: tl(x + Math.cos(a) * d, y + Math.sin(a) * d) }], 260);
+        }
+        var sv = $('dm').firstElementChild;
+        if (sv) anim(sv, [{ transform: 'translate3d(0,0,0)' }, { transform: 'translate3d(' + rnd(-1.5, 1.5).toFixed(1) + 'px,-1px,0)' }, { transform: 'translate3d(0,0,0)' }], 80);
+      } else {
+        anim(pool('du', 4), [{ opacity: 0.9, transform: tl(x, y, 0.4) }, { opacity: 0, transform: tl(x, y - 6, 1.6) }], 420);
+      }
+      anim($('pw'), [{ transform: 'translate3d(0,0,0)' }, { transform: tl(rnd(-1.5, 1.5), rnd(-1.5, 1.5)) }, { transform: 'translate3d(0,0,0)' }], 70);
     }
+    if (W.shots % 2) haptic(null, h === 2 ? 'medium' : 'light');
+  }
+  function fireOn() { if (W.fireT) return; $('sw-fire').classList.add('on'); shot(); W.fireT = setInterval(shot, 110); }
+  function fireOff() { if (W.fireT) clearInterval(W.fireT); W.fireT = 0; $('sw-fire').classList.remove('on'); }
+  // «резинка» от кнопки к пальцу и колечко под пальцем — видно, что тянешь именно кнопку
+  function bandTo(x, y) {
+    var b = $('band'), dx = x - W.fire.x, dy = y - W.fire.y, len = Math.sqrt(dx * dx + dy * dy);
+    b.style.transform = 'translate3d(' + W.fire.x.toFixed(1) + 'px,' + W.fire.y.toFixed(1) + 'px,0) rotate(' + Math.atan2(dy, dx).toFixed(3) + 'rad) scaleX('
+      + (len / 100).toFixed(3) + ')';
+    b.style.opacity = String(Math.max(0.15, 1 - len / 420).toFixed(2));
+    $('touch').style.transform = tl(x, y); $('touch').style.opacity = '1';
+  }
+  function bandOff() { $('band').style.opacity = '0'; $('touch').style.opacity = '0'; }
+  function card(out, m) {
+    var el = $('sw-card');
+    if (!out) { el.innerHTML = '<b>' + esc(L.sw_bad) + '</b><p>' + esc(L.sw_bad_d) + '</p>'; el.className = 'sw-card bad show'; return; }
+    var i = W.list.length;
+    el.innerHTML = '<b>' + esc(i === 1 ? tpl(L.pr_warm, { n: W.n }) : tpl(L.pr_n, { i: i, n: W.n })) + '</b>'
+      + '<div class="pr-o ' + out + '">' + esc(L['pr_' + out]) + '</div><small>' + esc(tpl(L.pr_len, { cm: dec(m.len / W.pxcm, 1) })) + '</small>';
+    el.className = 'sw-card show';
+  }
+  // конец первого рывка: после пика скорости она падает почти до нуля, палец разворачивается или начинается второй рывок
+  // (подправка) — там и смотрим, сколько прицел прошёл к голове. Путь — на равный шаг 8 мс, скорость — по окну ±16 мс
+  // (касания приходят неравномерно). → { p — путь до конца рывка, t — когда он закончился }.
+  function primary(s, ux, uy) {
+    var n = s.length, t0 = s[0].t, T = [], P = [], i;
+    for (i = 0; i < n; i++) { T.push(s[i].t - t0); P.push((s[i].x - s[0].x) * ux + (s[i].y - s[0].y) * uy); }
+    if (n < 3 || T[n - 1] < 24) return { p: P[n - 1], t: s[n - 1].t };
+    var step = 8, U = [], j = 0, tt;
+    for (tt = 0; tt <= T[n - 1]; tt += step) {
+      while (j < n - 2 && T[j + 1] < tt) j++;
+      var span = T[j + 1] - T[j], k = span > 0 ? Math.max(0, Math.min(1, (tt - T[j]) / span)) : 1;
+      U.push(P[j] + (P[j + 1] - P[j]) * k);
+    }
+    var m = U.length, V = [];
+    for (i = 0; i < m; i++) { var lo = Math.max(0, i - 2), hi = Math.min(m - 1, i + 2); V.push(hi > lo ? (U[hi] - U[lo]) / ((hi - lo) * step) : 0); }
+    var ip = 0;
+    for (i = 1; i < m; i++) if (V[i] > V[ip]) ip = i;
+    if (V[ip] <= 0.02) return { p: P[n - 1], t: s[n - 1].t };
+    var end = m - 1, low = ip;
+    for (i = ip + 1; i < m; i++) {
+      if (V[i] <= 0.12 * V[ip]) { end = i; break; }                                 // остановился или развернулся
+      if (V[i] < V[low]) low = i;
+      if (V[low] < 0.5 * V[ip] && V[i] > 1.3 * V[low] + 0.01) { end = low; break; }  // пошёл второй рывок — первый кончился в самой низкой точке
+    }
+    return { p: U[end], t: t0 + end * step };
   }
   // скорость по отрезкам не короче 16 мс — иначе пик раздувают пары точек, пришедших почти одновременно
   function swSpeed(p, from) {
@@ -1324,34 +1613,35 @@ window.addEventListener('error', function (e) {
     var sp = swSpeed(p);
     return { len: Math.sqrt(dx * dx + dy * dy), path: Math.max(path, 0.01), dur: Math.max(0, b.t - a.t), vmax: sp.v, dx: dx, dy: dy, peak: sp.at, pts: p };
   }
-  function swLive(x, y) {
-    var p = W.cur.pts, a = p[0], b = p[p.length - 1], len = Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2)) / W.pxcm;
-    var v = swSpeed(p, Math.max(1, p.length - 6)).v * 1000 / W.pxcm, el = $('sw-live');
-    el.textContent = dec(len, 1) + ' ' + L.sw_unit + ' · ' + Math.round(v) + ' ' + L.sw_unit_v;
-    el.style.transform = 'translate3d(' + Math.round(Math.max(8, Math.min(window.innerWidth - 150, x - 150))) + 'px,' + Math.round(Math.max(60, y - 76)) + 'px,0)';
-    el.style.opacity = '1';
+  function pullEnd() {
+    var p = W.pts, t = W.tgt, m = p.length >= 2 ? swMetrics(p) : null;
+    var ok = !!(t && m && m.len / W.pxcm >= 0.4 && -m.dy >= 0.5 * m.len && m.dur >= 15);
+    W.busy = true;
+    if (!ok) { card(null); haptic('warning'); pwDraw(); setTimeout(function () { recenter(nextDummy); }, 650); return; }
+    m.so = W.so; m.top = Math.max(0, p[p.length - 1].y - inset('top'));      // сколько осталось до верха экрана
+    var pr = primary(W.smp, 0, -1), kz = t.k * W.Z, h = W.c0.y - t.y, v = pr.p, hit = hitAt(t), rx = W.cam.x - t.x, ry = W.cam.y - t.y;
+    var ph = Math.abs(v - h) <= HEAD_R * kz ? 1 : 0, out = ph ? 'head' : v > h ? 'over' : 'under';
+    W.res.push({ h: r1(h), v: r1(v), x: r1(Math.abs(rx)), e: r1(Math.sqrt(rx * rx + ry * ry)), hit: hit, t: Math.round(m.dur), rt: null,
+                 mt: W.mv0 && pr.t > W.mv0 ? Math.round(pr.t - W.mv0) : null, so: W.so != null ? Math.round(W.so * 100) / 100 : null, ph: ph });
+    W.list.push(m);
+    var g = $('ghost'); g.className = 'ghost on ' + out;                  // где кончился рывок — колечко
+    g.style.transform = tl(W.cx + W.c0.x - W.cam.x, W.cy + W.c0.y - v - W.cam.y);
+    card(out, m); swCount(); pwDraw();
+    if (out === 'head') haptic('success'); else haptic(null, 'light');
+    if (W.list.length >= W.n) { W.done = true; setTimeout(function () { stopSwipe(); finishTune(); }, 1100); return; }
+    setTimeout(function () { recenter(nextDummy); }, 900);
   }
-  function swCard(m, ok) {
-    var el = $('sw-card');
-    if (!ok) { el.innerHTML = '<b>' + esc(L.sw_bad) + '</b><p>' + esc(L.sw_bad_d) + '</p>'; el.className = 'sw-card bad show'; return; }
-    el.innerHTML = '<b>' + esc(tpl(L.sw_card, { i: W.list.length, n: W.n })) + '</b><div class="sw-g">'
-      + '<div><span>' + dec(m.len / W.pxcm, 1) + '</span><small>' + esc(L.sw_len) + '</small></div>'
-      + '<div><span>' + dec(m.dur / 1000, 2) + '</span><small>' + esc(L.sw_time) + '</small></div>'
-      + '<div><span>' + Math.round(m.vmax * 1000 / W.pxcm) + '</span><small>' + esc(L.sw_spd) + '</small></div>'
-      + '<div><span>' + Math.round(m.len / m.path * 100) + '</span><small>' + esc(L.sw_str) + '</small></div></div>';
-    el.className = 'sw-card show';
+  // рисунок всех оттяжек на результате: каждая — от одной точки внизу, в одном масштабе
+  function stroke(c, pts, alpha, glow, width) {
+    if (pts.length < 2) return;
+    var a = pts[0], b = pts[pts.length - 1], g = c.createLinearGradient(a.x, a.y, b.x, b.y), i;
+    g.addColorStop(0, '#ff5a00'); g.addColorStop(1, '#ffd23f');
+    c.save(); c.globalAlpha = alpha; c.lineCap = 'round'; c.lineJoin = 'round';
+    c.beginPath(); c.moveTo(a.x, a.y); for (i = 1; i < pts.length; i++) c.lineTo(pts[i].x, pts[i].y);
+    c.strokeStyle = g; c.lineWidth = width || 10; c.shadowColor = 'rgba(255,140,0,.95)'; c.shadowBlur = glow; c.stroke();
+    c.shadowBlur = 0; c.lineWidth = Math.max(1.5, (width || 10) * 0.28); c.strokeStyle = 'rgba(255,255,255,.88)'; c.stroke();
+    c.restore();
   }
-  function swFinish() {
-    var p = W.cur ? W.cur.pts : [], so = W.cur ? W.cur.so : null;
-    W.cur = null; $('sw-live').style.opacity = '0';
-    if (p.length < 2) { swReq(); return; }
-    var m = swMetrics(p), ok = m.len / W.pxcm >= 0.4 && -m.dy >= 0.5 * m.len && m.dur >= 15;
-    m.so = so; m.top = Math.max(0, p[p.length - 1].y - inset('top'));      // v353: сколько осталось до верха экрана
-    if (ok) { W.list.push(m); W.last = m; haptic(null, 'light'); } else { W.last = null; haptic('warning'); }
-    swCard(m, ok); swCount(); swReq();
-    if (W.list.length >= W.n) { W.done = true; setTimeout(function () { stopSwipe(); finishTune(); }, 900); }
-  }
-  // рисунок всех свайпов на результате: каждый — от одной точки внизу, в одном масштабе
   function drawPaths(cv, paths) {
     var dpr = Math.min(3, window.devicePixelRatio || 1), w = cv.clientWidth || 300, h = cv.clientHeight || 150;
     cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
@@ -1370,34 +1660,43 @@ window.addEventListener('error', function (e) {
   var swEl = $('swipe');
   swEl.addEventListener('pointerdown', function (e) {
     if (e.target && e.target.closest && e.target.closest('#sw-quit')) return;
-    if (W.done || W.ptr !== null || e.isPrimary === false) return;
+    if (W.done || W.busy || !W.tgt || W.ptr !== null || e.isPrimary === false) return;
     var fx = e.clientX - W.fire.x, fy = e.clientY - W.fire.y, rr = W.fire.r * 1.35 + 6;
-    if (fx * fx + fy * fy > rr * rr) { W.miss++; nudgeFire($('sw-fire')); e.preventDefault(); return; }       // v351: с кнопки огня
+    if (fx * fx + fy * fy > rr * rr) { W.miss++; nudgeFire($('sw-fire')); e.preventDefault(); return; }       // с кнопки огня
     W.ptr = e.pointerId;
     try { swEl.setPointerCapture(e.pointerId); } catch (_) {}
-    W.cur = { pts: [{ t: e.timeStamp || now(), x: e.clientX, y: e.clientY }], so: Math.sqrt(fx * fx + fy * fy) / Math.max(1, W.fire.r) }; W.last = null;
-    $('sw-hint').style.opacity = '0'; $('sw-card').classList.remove('show');
-    e.preventDefault(); swReq();
+    var t = e.timeStamp || now();
+    W.f0 = { x: e.clientX, y: e.clientY }; W.c0 = { x: W.cam.x, y: W.cam.y }; W.mv0 = 0;
+    W.so = Math.sqrt(fx * fx + fy * fy) / Math.max(1, W.fire.r);
+    W.smp = [{ t: t, x: W.cam.x, y: W.cam.y }]; W.pts = [{ t: t, x: e.clientX, y: e.clientY }];
+    $('sw-hint').style.opacity = '0'; $('sw-card').classList.remove('show'); $('sw-fire').classList.remove('need'); $('ghost').classList.remove('on');
+    bandTo(e.clientX, e.clientY); fireOn();
+    e.preventDefault();
   });
   swEl.addEventListener('pointermove', function (e) {
-    if (W.ptr === null || e.pointerId !== W.ptr || !W.cur) return;
+    if (W.ptr === null || e.pointerId !== W.ptr) return;
     var evs = (e.getCoalescedEvents && e.getCoalescedEvents()) || [];
     if (!evs.length) evs = [e];
-    for (var i = 0; i < evs.length; i++) W.cur.pts.push({ t: evs[i].timeStamp || now(), x: evs[i].clientX, y: evs[i].clientY });
-    swLive(e.clientX, e.clientY); swReq(); e.preventDefault();
+    for (var i = 0; i < evs.length; i++) {
+      var ev = evs[i], t = ev.timeStamp || now(), dx = ev.clientX - W.f0.x, dy = ev.clientY - W.f0.y;
+      W.cam.x = W.c0.x + dx * W.g; W.cam.y = W.c0.y + dy * W.g;              // камера — с сенсой игрока, как в игре
+      W.smp.push({ t: t, x: W.cam.x, y: W.cam.y }); W.pts.push({ t: t, x: ev.clientX, y: ev.clientY });
+      if (!W.mv0 && dx * dx + dy * dy > W.thr * W.thr) W.mv0 = t;
+    }
+    bandTo(e.clientX, e.clientY); pwReq(); e.preventDefault();
   });
-  function swUp(e) { if (W.ptr === null || e.pointerId !== W.ptr) return; W.ptr = null; swFinish(); }
+  function swUp(e) { if (W.ptr === null || e.pointerId !== W.ptr) return; W.ptr = null; fireOff(); bandOff(); pullEnd(); }
   swEl.addEventListener('pointerup', swUp);
   swEl.addEventListener('pointercancel', swUp);
   $('sw-quit').addEventListener('click', function (e) { e.stopPropagation(); quitSwipe(); });
 
   // ── результат ───────────────────────────────────────────────────────
   // v351: всё одним запросом; плюс ориентация и размер экрана; v352 — без фликов, с промахами мимо кнопки огня;
-  // v353 — где кнопка огня и какого размера, оттяжки по врагам больше нет
+  // v353 — где кнопка огня и какого размера; v354 — оттяжки «как в игре» (рывок к голове манекена) и свайпы, world=4
   function finishTune() {
     fullOff();
     var b = body();
-    b.flick = []; b.drag = []; b.miss = W.miss;
+    b.flick = []; b.drag = W.res.slice(); b.miss = W.miss; b.world = 4;
     b.pxcm = Math.round(W.pxcm * 100) / 100; b.orient = S.orient || (isLand() ? 'land' : 'port');
     b.sf = Math.round(sfac() * 1000) / 1000;
     b.hud = { x: Math.round(S.hud.x * 1000) / 1000, y: Math.round(S.hud.y * 1000) / 1000, size: S.hud.size,
@@ -1491,7 +1790,7 @@ window.addEventListener('error', function (e) {
     var why = r.why || [], hl = 2, sum = -1;
     for (var wi = 0; wi < why.length; wi++) if (/^(Итог|Result|Итог трёх этапов|All three stages)/.test(why[wi])) { hl = wi + 1; sum = wi; break; }
     $('why').innerHTML = why.map(function (w, n) { return '<li class="' + (n < hl ? 'hl' : '') + (n === sum ? ' sum' : '') + '">' + esc(w) + '</li>'; }).join('');
-    $('id-d').innerHTML = tpl(L.id_d, { p: S.price });
+    $('id-d').textContent = L.id_d; $('id-pr').textContent = tpl(L.id_pr, { p: S.price });
     // полоски заполняются плавно (только transform); v353: цифры «бегут» от того, что было, к новым
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
@@ -1645,6 +1944,9 @@ window.addEventListener('error', function (e) {
     view: function () { return { view: S.view, hud: !$('hud').hidden, swipe: !$('swipe').hidden, calc: !$('calc').hidden,
                                  off: $('calc').classList.contains('off') && !$('calc').hidden }; },
     swipe: function () { return { open: !$('swipe').hidden, n: W.n, got: W.list.length, pxcm: W.pxcm, done: W.done, fx: W.fire.x, fy: W.fire.y, fr: W.fire.r }; },
+    need: function () { var t = W.tgt; return { ready: !!t && !W.busy && W.ptr === null && !W.done && !$('swipe').hidden, h: t ? CHEST * t.k * W.Z : 0,
+                                                g: W.g, k: t ? t.k : 0, fx: W.fire.x, fy: W.fire.y, fr: W.fire.r, i: W.list.length, n: W.n,
+                                                cam: { x: W.cam.x, y: W.cam.y }, shots: W.shots, res: W.res.slice() }; },
     px: function () { return { pxcm: pxPerCm(), model: modelPxcm() }; },
     miss: function () { return { swipe: W.miss }; },
     ls: function () { return { ph: !!lsGet('aim_ph'), draft: lsGet('aim_draft_' + UID), pend: !!lsGet('aim_pend_' + UID), hud: lsGet('aim_hud_' + UID) }; },
