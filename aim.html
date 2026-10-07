@@ -58,7 +58,8 @@
      проверка в тренировке; без рангов и очков. Отступы учитывают вырезы экрана и кнопки Telegram в полноэкранном режиме.
      v353: этап 1 — «Кнопка огня» (игрок ставит кнопку, как у себя в игре), этап 2 — свайпы от неё. Эффекты — искры, плавное
      появление, блик, волна от нажатия, конфетти — тоже только transform и opacity; при «уменьшить движение» их нет.
-     v354: этап 2 «как в игре» — полигон, манекен, прицел и стрельба; камера едет с сенсой игрока. Анкета — шаги и живые панели. */
+     v354: этап 2 «как в игре» — полигон, манекен, прицел и стрельба; камера едет с сенсой игрока. Анкета — шаги и живые панели.
+     v355: манекены на трёх расстояниях и правила: вдали — тянуть плавно, вблизи — резко, прицел слева и вверх-вправо. */
   :root { color-scheme: dark;
           --bg: #06070a; --pan: #0f121a; --pan2: #151925; --ln: rgba(255,255,255,.07); --ln2: rgba(255,255,255,.13);
           --or: #ff8a00; --or2: #ffb000; --ye: #ffd84a; --red: #ff4a3d; --grn: #5be38f;
@@ -484,10 +485,28 @@
   .sw-card small { display: block; margin-top: 2px; color: var(--tx2); font-size: 12.5px; }
   .pr-o { margin-top: 3px; font: 19px var(--hud); letter-spacing: .03em; }
   .pr-o.head { color: var(--grn); } .pr-o.over { color: #ff8a5c; } .pr-o.under { color: #7cc4ff; }
+  /* v355: правило перед оттяжкой и проверка после */
+  .sw-rule { position: absolute; left: 50%; top: calc(12px + var(--st) + var(--ct)); z-index: 5; width: max-content; max-width: min(460px, calc(100% - 300px)); padding: 6px 14px;
+             text-align: center; font: 13px var(--hud); letter-spacing: .03em; color: #170a00; background: var(--grad); pointer-events: none; opacity: 0;
+             transform: translate3d(-50%, -10px, 0); clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); transition: opacity .25s, transform .3s var(--ease); }
+  .sw-rule.show { opacity: 1; transform: translate3d(-50%, 0, 0); }
+  .sw-rule.n { background: linear-gradient(90deg, #ff3d00, #ff9500); }
+  .sw-rule.f { background: linear-gradient(90deg, #3aa0ff, #7cd4ff); }
+  .pr-r { margin-top: 4px; font: 700 12.5px var(--ui); }
+  .pr-r.ok { color: var(--grn); } .pr-r.bad { color: #ffb36b; }
+  .rules { margin: 0; padding: 0; list-style: none; }
+  .rules li { position: relative; display: flex; align-items: center; gap: 8px; padding: 8px 0 8px 32px; border-top: 1px solid var(--ln);
+              font: 600 13.5px var(--ui); color: var(--tx); }
+  .rules li:first-child { border-top: 0; }
+  .rules li i { position: absolute; left: 2px; top: 7px; font-style: normal; font-size: 17px; }
+  .rules li span { flex: 1; min-width: 0; }
+  .rules em { flex: 0 0 auto; padding: 2px 7px; font: 700 11px var(--ui); font-style: normal; letter-spacing: .02em; white-space: nowrap; }
+  .rules em.ok { color: #062010; background: var(--grn); } .rules em.bad { color: #2a1200; background: #ffb36b; }
   .dots { display: flex; gap: 5px; margin-top: 7px; }
   .dots i { width: 16px; height: 5px; background: rgba(255,255,255,.13); clip-path: polygon(3px 0, 100% 0, calc(100% - 3px) 100%, 0 100%); }
   .dots i.on { background: var(--grad); }
-  @media (orientation: portrait) { .sw-card { top: calc(100px + var(--st) + var(--ct)); } }
+  @media (orientation: portrait) { .sw-card { top: calc(140px + var(--st) + var(--ct)); }
+                                   .sw-rule { top: calc(96px + var(--st) + var(--ct)); max-width: calc(100% - 28px); } }
   /* горизонтально — слева под заголовком: не закрывает голову манекена и колечко, где кончился рывок */
   @media (orientation: landscape) {
     .sw-card { left: calc(14px + var(--sl)); top: calc(100px + var(--st) + var(--ct)); width: min(290px, 34%); text-align: left; transform: translate3d(0, -8px, 0); }
@@ -651,6 +670,10 @@
       <div class="tstat" id="tstat"></div>
       <ul class="hist" id="hist"></ul>
     </div>
+    <div class="panel" id="rules-p">
+      <div class="ph"><span>📌</span><b id="r5-t"></b></div>
+      <ul class="rules" id="rules"></ul>
+    </div>
     <div class="panel" id="diag-p">
       <div class="ph"><span>≡</span><b id="r4-t"></b></div>
       <ul class="why" id="diag"></ul>
@@ -714,6 +737,7 @@
   <div class="fbtn" id="sw-fire"><i class="fc"><svg viewBox="0 0 12 18"><path d="M6 0c1.6 1.5 2.6 3.3 2.6 5.6V13H3.4V5.6C3.4 3.3 4.4 1.5 6 0z" fill="#ffd23f"/><path d="M2.6 14h6.8v4H2.6z" fill="#ff9500"/></svg></i></div>
   <div class="hud"><div class="hl"><b id="sw-t"></b><span id="sw-c"></span><small class="sw-s" id="sw-s"></small><div class="dots" id="sw-dots"></div></div></div>
   <div class="sw-hint" id="sw-hint"><div class="sw-arrow"></div><b id="sw-h1"></b><small id="sw-h2"></small></div>
+  <div class="sw-rule" id="sw-rule"></div>
   <div class="sw-card" id="sw-card"></div>
   <div class="stpop" id="sw-pop"></div>
   <button type="button" class="aquit" id="sw-quit">✕</button>
@@ -731,7 +755,7 @@ window.addEventListener('error', function (e) {
     ['hud', 'swipe', 'calc'].forEach(function (id) { var x = document.getElementById(id); if (x) x.hidden = true; });
     document.querySelectorAll('.scr').forEach(function (s) { s.hidden = true; });
     var f = document.getElementById('fatal'); f.hidden = false;
-    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v354';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v355';
   } catch (_) {}
 }, true);
 </script>
@@ -746,7 +770,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v354';
+  var VER = 'v355';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -804,6 +828,14 @@ window.addEventListener('error', function (e) {
       sw_bad_d: 'Зажми кнопку огня и тяни вверх — к голове', sw_warm: 'ПРИСТРЕЛКА', sw_sens: 'Сенса как у тебя: {v}',
       pr_warm: 'ПРИСТРЕЛКА · 1 ИЗ {n}', pr_n: 'ОТТЯЖКА {i} ИЗ {n}', pr_head: 'РЫВОК В ГОЛОВУ ✅', pr_over: 'РЫВОК ВЫШЕ ГОЛОВЫ ⬆️',
       pr_under: 'РЫВОК НЕ ДОТЯНУЛ ⬇️', pr_len: 'Протянул {cm} см',
+      dist: { n: 'БЛИЗКО · 5 м', m: 'СРЕДНЕ · 15 м', f: 'ДАЛЕКО · 30 м' },
+      rule: { n: '↗️ БЛИЗКО: прицел слева — тяни РЕЗКО вверх-вправо', m: '⬆️ СРЕДНЕ: тяни уверенно в голову', f: '🐢 ДАЛЕКО: тяни ПЛАВНО и коротко' },
+      spd: ['🐢 плавно', '⚡ быстро', '💥 резко'], cms: 'см/с',
+      rc: { f_ok: '✅ Вдали плавно — правильно!', f_bad: '⚠️ Вдали тяни плавнее', n_ok: '✅ Вблизи резко и вверх-вправо — правильно!',
+            n_slow: '⚠️ Вблизи тяни резче', n_dir: '⚠️ Вблизи тяни вверх и вправо ↗️', n_both: '⚠️ Вблизи тяни резче и вверх-вправо ↗️' },
+      r5: 'ПРАВИЛА ОТТЯЖКИ', rule_ok: '✅ у тебя так', rule_bad: '⚠️ попробуй',
+      rules: [['🎯', 'Наводи прицел на грудь — оттяжка дотянет до головы', ''], ['🐢', 'Далеко — тяни плавно и коротко', 'rfs'],
+              ['⚡', 'Близко — тяни резко', 'rns'], ['↗️', 'Близко — прицел слева от соперника, тяни вверх и вправо', 'rnd']],
       calc_t: 'СЧИТАЮ…', calc_d: 'Подбираю цифры под твою руку',
       off_t: 'НЕТ СВЯЗИ', off_d: 'Замер сохранён на телефоне — отправлю сам, как появится интернет', off_retry: '↻ ОТПРАВИТЬ ЕЩЁ РАЗ', off_exit: 'Выйти',
       pend_t: '📶 ЗАМЕР НЕ ОТПРАВИЛСЯ', pend_d: 'Он сохранён — отправь, когда будет интернет', pend_b: 'ОТПРАВИТЬ',
@@ -870,6 +902,14 @@ window.addEventListener('error', function (e) {
       sw_bad_d: 'Hold the fire button and pull up — to the head', sw_warm: 'WARM-UP', sw_sens: 'Your sensitivity: {v}',
       pr_warm: 'WARM-UP · 1 OF {n}', pr_n: 'DRAG {i} OF {n}', pr_head: 'PULL ON THE HEAD ✅', pr_over: 'PULL ABOVE THE HEAD ⬆️',
       pr_under: 'PULL FELL SHORT ⬇️', pr_len: 'Pulled {cm} cm',
+      dist: { n: 'CLOSE · 5 m', m: 'MID · 15 m', f: 'FAR · 30 m' },
+      rule: { n: '↗️ CLOSE: aim left — pull SHARPLY up and right', m: '⬆️ MID: pull confidently to the head', f: '🐢 FAR: pull SMOOTHLY and short' },
+      spd: ['🐢 smooth', '⚡ fast', '💥 sharp'], cms: 'cm/s',
+      rc: { f_ok: '✅ Smooth at range — right!', f_bad: '⚠️ Pull smoother at range', n_ok: '✅ Sharp and up-right up close — right!',
+            n_slow: '⚠️ Pull sharper up close', n_dir: '⚠️ Up close pull up and right ↗️', n_both: '⚠️ Up close pull sharper and up-right ↗️' },
+      r5: 'DRAG RULES', rule_ok: '✅ you do it', rule_bad: '⚠️ try it',
+      rules: [['🎯', 'Aim at the chest — the drag takes it to the head', ''], ['🐢', 'Far — pull smoothly and short', 'rfs'],
+              ['⚡', 'Close — pull sharply', 'rns'], ['↗️', 'Close — aim left of the enemy, pull up and right', 'rnd']],
       calc_t: 'COUNTING…', calc_d: 'Picking numbers for your hand',
       off_t: 'NO CONNECTION', off_d: 'The measurement is saved on your phone — I\'ll send it once the internet is back', off_retry: '↻ SEND AGAIN', off_exit: 'Leave',
       pend_t: '📶 MEASUREMENT NOT SENT', pend_d: 'It is saved — send it when you are online', pend_b: 'SEND',
@@ -1039,6 +1079,7 @@ window.addEventListener('error', function (e) {
     $('sw-pop').innerHTML = '<small>' + esc(tpl(L.stage, { n: 2 })) + '</small>' + esc(L.sw_pop);
     $('calc-retry').textContent = L.off_retry; $('calc-exit').textContent = L.off_exit;
     $('pend-t').textContent = L.pend_t; $('pend-d').textContent = L.pend_d; $('pend-b').textContent = L.pend_b;
+    $('r5-t').textContent = L.r5;
     $('r1-t').textContent = L.r1; $('r1-d').textContent = L.r1d; $('r2-t').textContent = L.r2; $('r3-t').textContent = L.r3; $('r4-t').textContent = L.r4;
     $('tsteps').innerHTML = L.tsteps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('');
     $('copy').textContent = L.copy; $('id-t').textContent = L.id_t;
@@ -1485,13 +1526,27 @@ window.addEventListener('error', function (e) {
     if (Math.abs(rx) <= BODY_W * kz && ry > BODY_T * kz && ry <= BODY_B * kz) return 1;
     return 0;
   }
-  // новый манекен: прицел — на груди; пристрелочный — обычного размера, дальше — чуть ближе и дальше
+  // v355: манекены на трёх расстояниях (Кирилл: «чем дальше — тяни плавнее, чем ближе — резче»): близко — большой, далеко —
+  // маленький; вблизи прицел встаёт слева от манекена — тянуть вверх-вправо. Первая оттяжка — пристрелочная (средне), дальше по
+  // очереди: близко, далеко, средне. Перед каждой — подсказка правила.
+  var DIST = { n: 1.45, m: 1.0, f: 0.62 }, SEQ = ['m', 'n', 'f', 'm', 'n', 'f', 'm'];
   function nextDummy() {
     if ($('swipe').hidden || W.done) return;
-    var k = W.list.length ? rnd(0.82, 1.22) : 1;
-    W.tgt = { x: W.cam.x + rnd(-5, 5) * W.U, y: W.cam.y - CHEST * k * W.Z, k: k };
+    var i = W.list.length, d = i ? SEQ[i % SEQ.length] : 'm', k = DIST[d] * (i ? rnd(0.95, 1.05) : 1), kz = k * W.Z;
+    var off = d === 'n' ? BODY_W * kz * 1.25 : rnd(-4, 4) * W.U;
+    W.tgt = { x: W.cam.x + off, y: W.cam.y - CHEST * kz, k: k, d: d };
     var el = $('dm'); el.classList.add('out'); pwDraw(); void el.offsetWidth; el.classList.remove('out');
+    var rp = $('sw-rule'); rp.textContent = L.rule[d]; rp.className = 'sw-rule ' + d; void rp.offsetWidth; rp.className = 'sw-rule show ' + d;
     W.busy = false; swCount();
+  }
+  function spdWord(v) { return v < 30 ? L.spd[0] : v <= 55 ? L.spd[1] : L.spd[2]; }
+  // правило этой оттяжки: вдали — не резче 40 см/с; вблизи — не плавнее 30 см/с и вверх-вправо (не дальше 15° от нужного)
+  function ruleOf(m) {
+    if (W.list.length === 1) return null;                    // пристрелка — без правил
+    if (m.dist === 'f') return m.vp <= 40 ? { ok: true, t: L.rc.f_ok } : { ok: false, t: L.rc.f_bad };
+    if (m.dist !== 'n') return null;
+    var fast = m.vp >= 30, diag = Math.abs(m.dev) <= 15;
+    return fast && diag ? { ok: true, t: L.rc.n_ok } : { ok: false, t: !fast && !diag ? L.rc.n_both : !fast ? L.rc.n_slow : L.rc.n_dir };
   }
   // после оттяжки камера плавно возвращается к горизонту (кадры не идут — всё равно доедет по таймеру)
   function recenter(done) {
@@ -1561,12 +1616,14 @@ window.addEventListener('error', function (e) {
     $('touch').style.transform = tl(x, y); $('touch').style.opacity = '1';
   }
   function bandOff() { $('band').style.opacity = '0'; $('touch').style.opacity = '0'; }
-  function card(out, m) {
+  function card(out, m, rule) {
     var el = $('sw-card');
     if (!out) { el.innerHTML = '<b>' + esc(L.sw_bad) + '</b><p>' + esc(L.sw_bad_d) + '</p>'; el.className = 'sw-card bad show'; return; }
     var i = W.list.length;
-    el.innerHTML = '<b>' + esc(i === 1 ? tpl(L.pr_warm, { n: W.n }) : tpl(L.pr_n, { i: i, n: W.n })) + '</b>'
-      + '<div class="pr-o ' + out + '">' + esc(L['pr_' + out]) + '</div><small>' + esc(tpl(L.pr_len, { cm: dec(m.len / W.pxcm, 1) })) + '</small>';
+    el.innerHTML = '<b>' + esc(i === 1 ? tpl(L.pr_warm, { n: W.n }) : tpl(L.pr_n, { i: i, n: W.n })) + (L.dist[m.dist] ? ' · ' + esc(L.dist[m.dist]) : '') + '</b>'
+      + '<div class="pr-o ' + out + '">' + esc(L['pr_' + out]) + '</div><small>' + esc(tpl(L.pr_len, { cm: dec(m.len / W.pxcm, 1) }))
+      + ' · ' + esc(spdWord(m.vp)) + ' ' + Math.round(m.vp) + ' ' + esc(L.cms) + '</small>'          // v355: и с какой скоростью
+      + (rule ? '<div class="pr-r ' + (rule.ok ? 'ok' : 'bad') + '">' + esc(rule.t) + '</div>' : '');
     el.className = 'sw-card show';
   }
   // конец первого рывка: после пика скорости она падает почти до нуля, палец разворачивается или начинается второй рывок
@@ -1617,16 +1674,20 @@ window.addEventListener('error', function (e) {
     var p = W.pts, t = W.tgt, m = p.length >= 2 ? swMetrics(p) : null;
     var ok = !!(t && m && m.len / W.pxcm >= 0.4 && -m.dy >= 0.5 * m.len && m.dur >= 15);
     W.busy = true;
-    if (!ok) { card(null); haptic('warning'); pwDraw(); setTimeout(function () { recenter(nextDummy); }, 650); return; }
+    if (!ok) { card(null); haptic('warning'); pwDraw(); $('sw-rule').classList.remove('show'); setTimeout(function () { recenter(nextDummy); }, 650); return; }
     m.so = W.so; m.top = Math.max(0, p[p.length - 1].y - inset('top'));      // сколько осталось до верха экрана
-    var pr = primary(W.smp, 0, -1), kz = t.k * W.Z, h = W.c0.y - t.y, v = pr.p, hit = hitAt(t), rx = W.cam.x - t.x, ry = W.cam.y - t.y;
+    // v355: куда нужно было тянуть — от прицела к голове (вблизи вверх-вправо); рывок меряем вдоль этого направления
+    var kz = t.k * W.Z, nx = t.x - W.c0.x, ny = t.y - W.c0.y, h = Math.sqrt(nx * nx + ny * ny), ux = nx / h, uy = ny / h;
+    var pr = primary(W.smp, ux, uy), v = pr.p, hit = hitAt(t), rx = W.cam.x - t.x, ry = W.cam.y - t.y;
     var ph = Math.abs(v - h) <= HEAD_R * kz ? 1 : 0, out = ph ? 'head' : v > h ? 'over' : 'under';
+    m.vp = m.vmax * 1000 / W.pxcm; m.dist = t.d; m.k = h / (CHEST * W.Z);                 // пик скорости (см/с), расстояние, «во сколько раз длиннее»
+    m.dev = (Math.atan2(m.dx, -m.dy) - Math.atan2(nx, -ny)) * 180 / Math.PI;               // насколько ушёл вбок от нужного, °
     W.res.push({ h: r1(h), v: r1(v), x: r1(Math.abs(rx)), e: r1(Math.sqrt(rx * rx + ry * ry)), hit: hit, t: Math.round(m.dur), rt: null,
-                 mt: W.mv0 && pr.t > W.mv0 ? Math.round(pr.t - W.mv0) : null, so: W.so != null ? Math.round(W.so * 100) / 100 : null, ph: ph });
+                 mt: W.mv0 && pr.t > W.mv0 ? Math.round(pr.t - W.mv0) : null, so: W.so != null ? Math.round(W.so * 100) / 100 : null, ph: ph, dist: t.d });
     W.list.push(m);
     var g = $('ghost'); g.className = 'ghost on ' + out;                  // где кончился рывок — колечко
-    g.style.transform = tl(W.cx + W.c0.x - W.cam.x, W.cy + W.c0.y - v - W.cam.y);
-    card(out, m); swCount(); pwDraw();
+    g.style.transform = tl(W.cx + W.c0.x + ux * v - W.cam.x, W.cy + W.c0.y + uy * v - W.cam.y);
+    card(out, m, ruleOf(m)); swCount(); pwDraw(); $('sw-rule').classList.remove('show');
     if (out === 'head') haptic('success'); else haptic(null, 'light');
     if (W.list.length >= W.n) { W.done = true; setTimeout(function () { stopSwipe(); finishTune(); }, 1100); return; }
     setTimeout(function () { recenter(nextDummy); }, 900);
@@ -1702,7 +1763,9 @@ window.addEventListener('error', function (e) {
     b.hud = { x: Math.round(S.hud.x * 1000) / 1000, y: Math.round(S.hud.y * 1000) / 1000, size: S.hud.size,
               room: Math.round(Math.max(0, W.fire.y - inset('top'))) };
     b.swipes = W.list.map(function (m) { return { len: r1(m.len), path: r1(m.path), dur: Math.round(m.dur), vmax: Math.round(m.vmax * 1000) / 1000, dx: r1(m.dx), dy: r1(m.dy),
-                                                  so: m.so != null ? Math.round(m.so * 100) / 100 : null, top: Math.round(m.top) }; });
+                                                  so: m.so != null ? Math.round(m.so * 100) / 100 : null, top: Math.round(m.top),
+                                                  dist: m.dist, k: m.k != null ? Math.round(m.k * 100) / 100 : null,
+                                                  dev: m.dev != null ? Math.round(m.dev) : null }; });
     S.paths = W.list.map(function (m) { return m.pts; });
     sendTune(b);
   }
@@ -1799,6 +1862,13 @@ window.addEventListener('error', function (e) {
       });
     });
     if (fresh && !RM) countUp($('sl').querySelectorAll('b[data-a]'));
+    // v355: правила оттяжки — с отметкой, как у игрока по замеру
+    $('rules').innerHTML = L.rules.map(function (x) {
+      var s = x[2] ? st[x[2]] : null;
+      return '<li><i>' + x[0] + '</i><span>' + esc(x[1]) + '</span>' + (s === true ? '<em class="ok">' + esc(L.rule_ok) + '</em>'
+        : s === false ? '<em class="bad">' + esc(L.rule_bad) + '</em>' : '') + '</li>';
+    }).join('');
+    $('rules-p').hidden = !tune;
   }
   function countUp(els) {
     var list = [], t0 = now(), ms = 700;
@@ -1946,6 +2016,8 @@ window.addEventListener('error', function (e) {
     swipe: function () { return { open: !$('swipe').hidden, n: W.n, got: W.list.length, pxcm: W.pxcm, done: W.done, fx: W.fire.x, fy: W.fire.y, fr: W.fire.r }; },
     need: function () { var t = W.tgt; return { ready: !!t && !W.busy && W.ptr === null && !W.done && !$('swipe').hidden, h: t ? CHEST * t.k * W.Z : 0,
                                                 g: W.g, k: t ? t.k : 0, fx: W.fire.x, fy: W.fire.y, fr: W.fire.r, i: W.list.length, n: W.n,
+                                                d: t ? t.d : '', nx: t ? (t.x - W.cam.x) / W.g : 0, ny: t ? (t.y - W.cam.y) / W.g : 0,
+                                                rule: $('sw-rule').textContent,
                                                 cam: { x: W.cam.x, y: W.cam.y }, shots: W.shots, res: W.res.slice() }; },
     px: function () { return { pxcm: pxPerCm(), model: modelPxcm() }; },
     miss: function () { return { swipe: W.miss }; },
