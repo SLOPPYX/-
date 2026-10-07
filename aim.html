@@ -367,12 +367,48 @@
              color: var(--tx2); }
   .hist li span:last-child { margin-left: auto; white-space: nowrap; }
   .hist li b { font-weight: 700; color: var(--tx); }
-  /* реклама «до идеала» — что входит: скрины, DPI, множество настроек */
-  .ideal { border-color: rgba(139,92,246,.35); background: linear-gradient(160deg, rgba(139,92,246,.15), rgba(139,92,246,.03) 60%), var(--card); }
+  /* реклама «до идеала» — что входит: скрины, DPI, множество настроек. v357: крупнее — метка, свечение, комбо со скидкой,
+     «Заказать» главной кнопкой и «Отзывы»; полоска под «Поставь в игре» ведёт сюда; маленькая карточка — на первом экране */
+  .ideal { padding: 18px; border-color: rgba(167,139,250,.5); box-shadow: 0 18px 46px -24px rgba(139,92,246,.8);
+           background: radial-gradient(120% 70% at 100% 0%, rgba(139,92,246,.24), transparent 60%),
+                       linear-gradient(160deg, rgba(139,92,246,.12), rgba(139,92,246,.02) 60%), var(--card); }
+  .id-tag { display: inline-block; margin-bottom: 9px; padding: 3px 10px; font-size: 11.5px; font-weight: 600; color: var(--acc3); background: var(--accbg);
+            border: 1px solid rgba(139,92,246,.28); border-radius: 999px; }
   .id-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .id-top b { font-size: 16px; font-weight: 800; letter-spacing: -.01em; }
-  .id-pr { flex: 0 0 auto; padding: 4px 12px; font-size: 15px; font-weight: 800; color: #0b0b0e; background: #f4f4f6; border-radius: 999px; }
+  .id-top b { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+  .id-pr { flex: 0 0 auto; padding: 5px 13px; font-size: 16px; font-weight: 800; color: #0b0b0e; background: #f4f4f6; border-radius: 999px; }
   .ideal p { margin: 6px 0 2px; color: var(--tx2); font-size: 13.5px; }
+  .ideal > .btn + .btn { margin-top: 8px; }
+  .id-cb { display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 12px; padding: 11px 12px; text-align: left; color: var(--tx);
+           background: rgba(255,255,255,.03); border: 1px dashed rgba(167,139,250,.55); border-radius: 14px; font: inherit;
+           transition: transform .14s var(--ease), background-color .2s; }
+  .id-cb:active { transform: scale(.98); background: rgba(139,92,246,.1); }
+  .id-cb .cb-i { flex: 0 0 auto; font-size: 20px; }
+  .id-cb .cb-m { flex: 1; min-width: 0; }
+  .id-cb .cb-m b { display: block; font-size: 13.5px; font-weight: 700; }
+  .id-cb .cb-m small { display: block; font-size: 12px; color: var(--tx2); }
+  .id-cb .cb-p { flex: 0 0 auto; text-align: right; }
+  .id-cb .cb-p s { display: block; font-size: 11.5px; color: var(--tx3); }
+  .id-cb .cb-p b { display: block; font-size: 16px; font-weight: 800; color: var(--acc3); }
+  .ideal.flash { animation: idfl 1.2s var(--ease); }
+  @keyframes idfl { 0% { box-shadow: 0 0 0 0 rgba(167,139,250,0); } 30% { box-shadow: 0 0 0 4px rgba(167,139,250,.6); }
+                    100% { box-shadow: 0 18px 46px -24px rgba(139,92,246,.8); } }
+  .ideal.mini { padding: 16px; }
+  .ideal.mini .id-top b { font-size: 16.5px; }
+  .ideal.mini p { margin: 5px 0 0; }
+  .ideal.mini .row2 { flex-wrap: wrap; }
+  .ideal.mini .btn { padding: 13px 14px; }
+  #adp-b { flex: 2 1 160px; white-space: nowrap; }          /* «Заказать — 200 ₽» в одну строку; узко — «Отзывы» уходят вниз */
+  #adp-rv { flex: 1 1 90px; }
+  .adstrip { display: flex; align-items: center; gap: 11px; width: 100%; margin-top: 12px; padding: 12px 14px; text-align: left; color: var(--tx);
+             background: linear-gradient(135deg, rgba(124,58,237,.3), rgba(157,107,255,.1)); border: 1px solid rgba(167,139,250,.45); border-radius: 16px;
+             font: inherit; transition: transform .14s var(--ease); }
+  .adstrip:active { transform: scale(.98); }
+  .adstrip > span { flex: 0 0 auto; font-size: 19px; }
+  .adstrip .as-m { flex: 1; min-width: 0; }
+  .adstrip b { display: block; font-size: 14px; font-weight: 700; }
+  .adstrip small { display: block; font-size: 12px; color: var(--acc3); }
+  .adstrip i { flex: 0 0 auto; font-style: normal; font-size: 18px; color: var(--acc3); }
   .id-l { margin: 6px 0 14px; padding: 0; list-style: none; }
   .id-l li { position: relative; padding: 8px 0 8px 32px; font-size: 14px; font-weight: 500; color: var(--tx); border-top: 1px solid var(--ln); }
   .id-l li:first-child { border-top: 0; }
@@ -422,10 +458,6 @@
   .fxl { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
   .tr { position: absolute; left: 0; top: 0; width: 100px; height: 1.5px; margin-top: -1px; transform-origin: 0 50%; opacity: 0;
         background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.45) 70%, rgba(255,255,255,.9)); }
-  .band { position: absolute; left: 0; top: 0; z-index: 3; width: 100px; height: 4px; margin-top: -2px; border-radius: 2px; transform-origin: 0 50%;
-          pointer-events: none; opacity: 0; background: linear-gradient(90deg, rgba(167,139,250,.85), rgba(167,139,250,.1)); }
-  .touch { position: absolute; left: 0; top: 0; z-index: 3; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; pointer-events: none;
-           opacity: 0; box-shadow: inset 0 0 0 2px rgba(255,255,255,.75); }
   .ghost { position: absolute; left: 0; top: 0; z-index: 3; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; pointer-events: none;
            opacity: 0; box-shadow: inset 0 0 0 2px var(--ok); transition: opacity .3s; }
   .ghost.on { opacity: 1; } .ghost.over { box-shadow: inset 0 0 0 2px var(--no); } .ghost.under { box-shadow: inset 0 0 0 2px var(--in); }
@@ -573,6 +605,11 @@
     <div class="panel last" id="pend" hidden><div class="lr-m"><b id="pend-t"></b><small id="pend-d"></small></div><button type="button" id="pend-b"></button></div>
     <div class="glow"><button type="button" class="btn big mode" id="go" disabled><b id="go-t"></b><small id="go-s"></small></button></div>
     <div class="hint" id="go-h"></div>
+    <div class="panel ideal mini" id="ad-prof">
+      <div class="id-top"><b id="adp-t"></b><span class="id-pr" id="adp-pr"></span></div>
+      <p id="adp-d"></p>
+      <div class="row2"><button type="button" class="btn" id="adp-b"></button><button type="button" class="btn sec" id="adp-rv" hidden></button></div>
+    </div>
   </section>
 
   <!-- 2. поверни телефон -->
@@ -599,6 +636,7 @@
       <div class="row2"><button type="button" class="btn sec" id="copy"></button></div>
       <div class="sent" id="sent"></div>
     </div>
+    <button type="button" class="adstrip" id="ad-top"><span>⭐</span><span class="as-m"><b id="ad-top-t"></b><small id="ad-top-d"></small></span><i>↓</i></button>
     <div class="panel" id="tune-p">
       <div class="ph"><span>✓</span><b id="r3-t"></b></div>
       <ol class="tsteps" id="tsteps"></ol>
@@ -625,11 +663,14 @@
       <div class="ph"><span>?</span><b id="r2-t"></b></div>
       <ul class="why" id="why"></ul>
     </div>
-    <div class="panel ideal">
+    <div class="panel ideal" id="ideal-p">
+      <span class="id-tag" id="id-tag"></span>
       <div class="id-top"><b id="id-t"></b><span class="id-pr" id="id-pr"></span></div>
       <p id="id-d"></p>
       <ul class="id-l" id="id-l"></ul>
-      <button type="button" class="btn sec" id="ideal"></button>
+      <button type="button" class="id-cb" id="id-cb" hidden></button>
+      <button type="button" class="btn" id="ideal"></button>
+      <button type="button" class="btn sec" id="ideal-rv" hidden></button>
     </div>
     <div class="glow"><button type="button" class="btn big" id="again"></button></div>
     <button type="button" class="lnk" id="toprof"></button>
@@ -674,8 +715,6 @@
   <i class="ghost" id="ghost"></i>
   <div class="cr" id="cross2"><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i><i class="c5"></i></div>
   <div class="hm" id="hm"><i></i><i></i><i></i><i></i></div>
-  <i class="band" id="band"></i>
-  <i class="touch" id="touch"></i>
   <div class="fbtn" id="sw-fire"><i class="fc"><svg viewBox="0 0 12 18"><path d="M6 0c1.6 1.5 2.6 3.3 2.6 5.6V13H3.4V5.6C3.4 3.3 4.4 1.5 6 0z" fill="#f4f4f6"/><path d="M2.6 14h6.8v4H2.6z" fill="#a78bfa"/></svg></i></div>
   <div class="hud"><div class="hl"><b id="sw-t"></b><span id="sw-c"></span><small class="sw-s" id="sw-s"></small><div class="dots" id="sw-dots"></div></div></div>
   <div class="sw-hint" id="sw-hint"><div class="sw-arrow"></div><b id="sw-h1"></b><small id="sw-h2"></small></div>
@@ -697,7 +736,7 @@ window.addEventListener('error', function (e) {
     ['hud', 'swipe', 'calc'].forEach(function (id) { var x = document.getElementById(id); if (x) x.hidden = true; });
     document.querySelectorAll('.scr').forEach(function (s) { s.hidden = true; });
     var f = document.getElementById('fatal'); f.hidden = false;
-    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v356';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v357';
   } catch (_) {}
 }, true);
 </script>
@@ -712,7 +751,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v356';
+  var VER = 'v357';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -806,7 +845,12 @@ window.addEventListener('error', function (e) {
       labels: { gen: 'Обзор', red: 'Коллиматор', x2: 'Прицел 2×', x4: 'Прицел 4×', snp: 'Снайперский прицел', free: 'Свободный обзор' },
       fire: 'Кнопка огня', copy: 'Скопировать значения', copied: 'Скопировал — вставь в заметки или сразу в игру',
       sent: '✓ Отправил тебе в чат', sent_last: 'Это твоя последняя настройка — она есть и в чате',
-      id_t: 'Хочешь до идеала?', id_pr: '{p} ₽', id_d: 'Настрою лично под твой телефон — с моими фишками:', id_b: 'Написать @SloppyX',
+      id_t: 'Хочешь до идеала?', id_pr: '{p} ₽', id_d: 'Настрою лично под твой телефон — с моими фишками:', id_b: 'Заказать до идеала — {p} ₽',
+      id_tag: 'Личная настройка', id_rv: '⭐ Отзывы покупателей', id_msg: 'Привет! Хочу настройки на телефон до идеала за {p} ₽',
+      cb_t: 'Комбо «{n}» — выгоднее', cb_msg: 'Привет! Хочу комбо «{n}» за {p} ₽',
+      adt_t: 'Хочешь до идеала? Настрою лично', adt_d: 'скрины, DPI и множество настроек · {p} ₽',
+      adp_t: 'Не хочешь настраивать сам?', adp_d: 'Настрою до идеала лично под твой телефон: скрины всех настроек, DPI и множество настроек.',
+      adp_b: 'Заказать — {p} ₽', adp_rv: 'Отзывы',
       id_l: [['📸', 'Скрины всех настроек'], ['📲', 'DPI под твой телефон'], ['⚙️', 'Множество настроек на твой телефон'], ['🎯', 'Сенса до идеала']],
       again: 'Пройти заново', toprof: 'Поменять ответы или телефон',
       fb_up: 'Проверка {n}: сенса ниже на {p}%', fb_down: 'Проверка {n}: сенса выше на {p}%', fb_ok: 'Записал — это твои настройки',
@@ -888,7 +932,12 @@ window.addEventListener('error', function (e) {
       labels: { gen: 'General', red: 'Red dot', x2: '2× scope', x4: '4× scope', snp: 'Sniper scope', free: 'Free look' },
       fire: 'Fire button', copy: 'Copy values', copied: 'Copied — paste it into notes or straight into the game',
       sent: '✓ Sent to your chat', sent_last: 'This is your latest setup — it is in the chat too',
-      id_t: 'Want it perfect?', id_pr: '{p} ₽', id_d: 'A personal setup for your phone — with my tricks:', id_b: 'Message @SloppyX',
+      id_t: 'Want it perfect?', id_pr: '{p} ₽', id_d: 'A personal setup for your phone — with my tricks:', id_b: 'Order the ideal setup — {p} ₽',
+      id_tag: 'Personal setup', id_rv: '⭐ Customer reviews', id_msg: 'Hi! I want the ideal phone settings for {p} ₽',
+      cb_t: '«{n}» combo — better value', cb_msg: 'Hi! I want the «{n}» combo for {p} ₽',
+      adt_t: 'Want it perfect? I\'ll tune it personally', adt_d: 'screenshots, DPI and lots of settings · {p} ₽',
+      adp_t: 'Don\'t want to tune it yourself?', adp_d: 'I\'ll tune it personally for your phone: screenshots of all settings, DPI and lots of settings.',
+      adp_b: 'Order — {p} ₽', adp_rv: 'Reviews',
       id_l: [['📸', 'Screenshots of all settings'], ['📲', 'DPI for your phone'], ['⚙️', 'Lots of settings for your phone'], ['🎯', 'Sensitivity tuned to perfection']],
       again: 'Start again', toprof: 'Change answers or phone',
       fb_up: 'Check {n}: sensitivity {p}% lower', fb_down: 'Check {n}: sensitivity {p}% higher', fb_ok: 'Saved — these are your settings',
@@ -908,7 +957,7 @@ window.addEventListener('error', function (e) {
 
   var S = { phones: [], idx: [], prof: { phone: '', dev: 0, scr: 0, grip: 0, style: 0, mode: 0, own: 0, now: 0, gfps: 0 }, phone: null, manual: false,
             rounds: { flick: 8, drag: 10 }, gain: { flick: 1, drag: 1 }, gain0: null, sf: 1, base: null, filled: [], res: null, last: null, view: 'prof',
-            orderUrl: 'https://t.me/SloppyX', price: 200, busy: false, swipes: 5, diag: { 1: 5.8, 2: 6.4, 3: 6.7, 4: 10.5 }, paths: null,
+            orderUrl: 'https://t.me/SloppyX', price: 200, reviewsUrl: '', combo: null, busy: false, swipes: 5, diag: { 1: 5.8, 2: 6.4, 3: 6.7, 4: 10.5 }, paths: null,
             orient: '', rotThen: null, hud: { x: null, y: null, size: 50 }, phHash: '', restored: false, pending: null, dT: 0, dragS: 100, r0: 220,
             fps: 0 };
   // v353: запоминаем на телефоне (у каждого игрока своё): база телефонов, черновик ответов, место кнопки огня, неотправленный замер
@@ -1046,8 +1095,9 @@ window.addEventListener('error', function (e) {
     $('r1-t').textContent = L.r1; $('r1-d').textContent = L.r1d; $('r2-t').textContent = L.r2; $('r3-t').textContent = L.r3; $('r4-t').textContent = L.r4;
     $('r6-t').textContent = L.r6; $('r6-d').textContent = L.r6d;
     $('tsteps').innerHTML = L.tsteps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('');
-    $('copy').textContent = L.copy; $('id-t').textContent = L.id_t;
-    $('ideal').textContent = L.id_b; $('again').textContent = L.again; $('toprof').textContent = L.toprof;
+    $('copy').textContent = L.copy; $('id-t').textContent = L.id_t; $('id-tag').textContent = L.id_tag; $('ideal-rv').textContent = L.id_rv;
+    $('adp-t').textContent = L.adp_t; $('adp-d').textContent = L.adp_d; $('adp-rv').textContent = L.adp_rv; $('ad-top-t').textContent = L.adt_t;
+    renderAds(); $('again').textContent = L.again; $('toprof').textContent = L.toprof;
     chips('c-dev', L.devs, 'dev'); chips('c-scr', L.scrs, 'scr'); chips('c-grip', L.grips, 'grip'); chips('c-style', L.styles, 'style');
     chips('c-mode', L.modes, 'mode'); chips('c-own', L.owns, 'own'); chips('c-now', L.nows, 'now'); chips('c-gfps', L.gfpss, 'gfps');
   }
@@ -1441,13 +1491,13 @@ window.addEventListener('error', function (e) {
     W.ext = false; W.dts = []; W.lt = 0; W.ps = { h: 0, b: 0, n: 0 }; measureFps();
     W.cam = { x: 0, y: 0 }; W.tgt = null; W.thr = Math.max(3, 0.15 * W.pxcm);
     $('swipe').hidden = false; ovlOn();
-    $('sw-hint').style.opacity = '1'; $('sw-card').className = 'sw-card'; $('ghost').className = 'ghost'; bandOff();
+    $('sw-hint').style.opacity = '1'; $('sw-card').className = 'sw-card'; $('ghost').className = 'ghost';
     $('sw-fire').classList.add('need'); $('dm').classList.add('out');
     $('sw-s').textContent = tpl(L.sw_sens, { v: Math.round(S.dragS) });
     swCount(); swLayout(); syncBack(); stagePop($('sw-pop'));
     setTimeout(nextDummy, RM ? 0 : 450);
   }
-  function stopSwipe() { fireOff(); bandOff(); $('swipe').hidden = true; W.ptr = null; ovlOff(); }
+  function stopSwipe() { fireOff(); $('swipe').hidden = true; W.ptr = null; ovlOff(); }
   // v356: частота кадров экрана — по 40 кадрам браузера (в фоне кадры не идут — тогда не знаем); частота касаний — по точкам пальца
   function measureFps() {
     if (S.fps || !window.requestAnimationFrame) return;
@@ -1574,15 +1624,8 @@ window.addEventListener('error', function (e) {
   }
   function fireOn() { if (W.fireT) return; $('sw-fire').classList.add('on'); shot(); W.fireT = setInterval(shot, 110); }
   function fireOff() { if (W.fireT) clearInterval(W.fireT); W.fireT = 0; $('sw-fire').classList.remove('on'); }
-  // «резинка» от кнопки к пальцу и колечко под пальцем — видно, что тянешь именно кнопку
-  function bandTo(x, y) {
-    var b = $('band'), dx = x - W.fire.x, dy = y - W.fire.y, len = Math.sqrt(dx * dx + dy * dy);
-    b.style.transform = 'translate3d(' + W.fire.x.toFixed(1) + 'px,' + W.fire.y.toFixed(1) + 'px,0) rotate(' + Math.atan2(dy, dx).toFixed(3) + 'rad) scaleX('
-      + (len / 100).toFixed(3) + ')';
-    b.style.opacity = String(Math.max(0.15, 1 - len / 420).toFixed(2));
-    $('touch').style.transform = tl(x, y); $('touch').style.opacity = '1';
-  }
-  function bandOff() { $('band').style.opacity = '0'; $('touch').style.opacity = '0'; }
+  // v357: как в Free Fire — кнопка огня стоит на месте (только «нажата», пока держишь), палец съезжает с неё, прицел едет за пальцем;
+  // ни «резинки» от кнопки к пальцу, ни кольца под пальцем (Кирилл: «сделай, чтобы тянулась прям как в Free Fire»)
   function card(out, m, rule) {
     var el = $('sw-card');
     if (!out) { el.innerHTML = '<b>' + esc(L.sw_bad) + '</b><p>' + esc(L.sw_bad_d) + '</p>'; el.className = 'sw-card bad show'; return; }
@@ -1724,7 +1767,7 @@ window.addEventListener('error', function (e) {
     W.so = Math.sqrt(fx * fx + fy * fy) / Math.max(1, W.fire.r);
     W.smp = [{ t: t, x: W.cam.x, y: W.cam.y }]; W.pts = [{ t: t, x: e.clientX, y: e.clientY }];
     $('sw-hint').style.opacity = '0'; $('sw-card').classList.remove('show'); $('sw-fire').classList.remove('need'); $('ghost').classList.remove('on');
-    bandTo(e.clientX, e.clientY); fireOn();
+    fireOn();
     e.preventDefault();
   });
   swEl.addEventListener('pointermove', function (e) {
@@ -1739,9 +1782,9 @@ window.addEventListener('error', function (e) {
       if (W.lt && t - W.lt >= 0.5 && t - W.lt <= 50 && W.dts.length < 3000) W.dts.push(t - W.lt);        // v356: как часто приходят касания
       W.lt = t;
     }
-    bandTo(e.clientX, e.clientY); pwReq(); e.preventDefault();
+    pwReq(); e.preventDefault();
   });
-  function swUp(e) { if (W.ptr === null || e.pointerId !== W.ptr) return; W.ptr = null; fireOff(); bandOff(); pullEnd(); }
+  function swUp(e) { if (W.ptr === null || e.pointerId !== W.ptr) return; W.ptr = null; fireOff(); pullEnd(); }
   swEl.addEventListener('pointerup', swUp);
   swEl.addEventListener('pointercancel', swUp);
   $('sw-quit').addEventListener('click', function (e) { e.stopPropagation(); quitSwipe(); });
@@ -1849,7 +1892,7 @@ window.addEventListener('error', function (e) {
     var why = r.why || [], hl = 2, sum = -1;
     for (var wi = 0; wi < why.length; wi++) if (/^(Итог|Result|Итог трёх этапов|All three stages)/.test(why[wi])) { hl = wi + 1; sum = wi; break; }
     $('why').innerHTML = why.map(function (w, n) { return '<li class="' + (n < hl ? 'hl' : '') + (n === sum ? ' sum' : '') + '">' + esc(w) + '</li>'; }).join('');
-    $('id-d').textContent = L.id_d; $('id-pr').textContent = tpl(L.id_pr, { p: S.price });
+    $('id-d').textContent = L.id_d; renderAds();
     // полоски заполняются плавно (только transform); v353: цифры «бегут» от того, что было, к новым
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
@@ -1903,6 +1946,29 @@ window.addEventListener('error', function (e) {
     $('dkv').hidden = !kv.length;
     $('data-p').hidden = !h && !kv.length;
   }
+  // v357: реклама «до идеала» — цена, комбо со скидкой (присылает бот), отзывы; без данных от бота — без комбо и отзывов
+  function rub(n) { return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₽'; }
+  function renderAds() {
+    var p = S.price, c = S.combo, cb = $('id-cb');
+    $('id-pr').textContent = tpl(L.id_pr, { p: p }); $('adp-pr').textContent = tpl(L.id_pr, { p: p });
+    $('ideal').textContent = tpl(L.id_b, { p: p }); $('adp-b').textContent = tpl(L.adp_b, { p: p }); $('ad-top-d').textContent = tpl(L.adt_d, { p: p });
+    $('ideal-rv').hidden = !S.reviewsUrl; $('adp-rv').hidden = !S.reviewsUrl;
+    if (c && c.price && c.full) {
+      var it = (LANG === 'ru' ? c.items_ru : c.items_en) || [];
+      cb.innerHTML = '<span class="cb-i">' + esc(c.icon || '📦') + '</span><span class="cb-m"><b>' + esc(tpl(L.cb_t, { n: LANG === 'ru' ? c.ru : c.en }))
+        + '</b><small>' + esc(it.map(function (x) { return String(x).split(' — ')[0]; }).join(' + ')) + '</small></span>'
+        + '<span class="cb-p"><s>' + esc(rub(c.full)) + '</s><b>' + esc(rub(c.price)) + '</b></span>';
+      cb.hidden = false;
+    } else cb.hidden = true;
+  }
+  function openLink(u) {
+    if (!u) return;
+    try { if (tg && tg.openTelegramLink && /^https:\/\/t\.me\//.test(u)) { tg.openTelegramLink(u); return; } } catch (e) {}
+    window.open(u, '_blank');
+  }
+  // чат с @SloppyX, где уже вписано, что и за сколько (как у кнопок комбо в боте)
+  function orderLink(msg) { return S.orderUrl + (msg ? (S.orderUrl.indexOf('?') >= 0 ? '&' : '?') + 'text=' + encodeURIComponent(msg) : ''); }
+  function orderIdeal() { haptic(null, 'light'); openLink(orderLink(tpl(L.id_msg, { p: S.price }))); }
   function countUp(els) {
     var list = [], t0 = now(), ms = 700;
     for (var i = 0; i < els.length; i++) {
@@ -1996,9 +2062,20 @@ window.addEventListener('error', function (e) {
       haptic('success');
     }).catch(function () { S.busy = false; toast(L.e_net, true); });
   });
-  $('ideal').addEventListener('click', function () {
-    try { if (tg && tg.openTelegramLink) { tg.openTelegramLink(S.orderUrl); return; } } catch (e) {}
-    window.open(S.orderUrl, '_blank');
+  $('ideal').addEventListener('click', orderIdeal);
+  $('adp-b').addEventListener('click', orderIdeal);
+  $('ideal-rv').addEventListener('click', function () { haptic(null, 'light'); openLink(S.reviewsUrl); });
+  $('adp-rv').addEventListener('click', function () { haptic(null, 'light'); openLink(S.reviewsUrl); });
+  $('id-cb').addEventListener('click', function () {
+    var c = S.combo; if (!c) return;
+    haptic(null, 'light'); openLink(orderLink(tpl(L.cb_msg, { n: LANG === 'ru' ? c.ru : c.en, p: c.price })));
+  });
+  $('ad-top').addEventListener('click', function () {            // v357: полоска под «Поставь в игре» — к большой рекламе
+    var p = $('ideal-p');
+    p.classList.add('in');
+    try { p.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' }); } catch (e) { p.scrollIntoView(); }
+    p.classList.remove('flash'); void p.offsetWidth; p.classList.add('flash');
+    haptic(null, 'light');
   });
   $('again').addEventListener('click', function () { begin(); });
   $('toprof').addEventListener('click', function () { show('prof'); });
@@ -2013,6 +2090,7 @@ window.addEventListener('error', function (e) {
     swipe: function () { return { open: !$('swipe').hidden, n: W.n, got: W.list.length, pxcm: W.pxcm, done: W.done, fx: W.fire.x, fy: W.fire.y, fr: W.fire.r,
                                    ext: !!W.ext, spread: spreadW() }; },
     env: function () { return { hz: touchHz(), fps: S.fps, gfps: GF[S.prof.gfps - 1] || 0 }; },
+    ads: function () { return { reviews: S.reviewsUrl, combo: S.combo ? S.combo.price : 0, order: orderLink(tpl(L.id_msg, { p: S.price })) }; },
     need: function () { var t = W.tgt; return { ready: !!t && !W.busy && W.ptr === null && !W.done && !$('swipe').hidden, h: t ? CHEST * t.k * W.Z : 0,
                                                 g: W.g, k: t ? t.k : 0, fx: W.fire.x, fy: W.fire.y, fr: W.fire.r, i: W.list.length, n: W.n,
                                                 d: t ? t.d : '', nx: t ? (t.x - W.cam.x) / W.g : 0, ny: t ? (t.y - W.cam.y) / W.g : 0,
@@ -2049,6 +2127,9 @@ window.addEventListener('error', function (e) {
     if (j.rounds) S.rounds = j.rounds;
     if (j.order_url) S.orderUrl = j.order_url;
     if (j.ideal_price) S.price = j.ideal_price;
+    if (j.reviews_url) S.reviewsUrl = String(j.reviews_url);          // v357: реклама — отзывы и комбо от бота
+    if (j.combo && j.combo.price && j.combo.full) S.combo = j.combo;
+    renderAds();
     if (j.swipes) S.swipes = j.swipes;
     if (j.diag) for (var dk in j.diag) S.diag[Number(dk)] = Number(j.diag[dk]);
     S.last = j.last || null; renderLast(); restore(true); renderList();
