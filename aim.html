@@ -497,6 +497,10 @@
   .rules li:first-child { border-top: 0; }
   .rules li i { position: absolute; left: 2px; top: 7px; font-style: normal; font-size: 16px; }
   .rules li span { flex: 1; min-width: 0; }
+  .rules li.wt { margin: 0 -10px 4px; padding: 10px 10px 10px 42px; border-top: 0; border-radius: 12px; background: var(--accbg); font-weight: 500; }
+  .rules li.wt i { left: 12px; top: 9px; }
+  .rules li.wt b { color: var(--acc3); }
+  .rules li.wt + li { border-top: 0; }
   .rules em { flex: 0 0 auto; padding: 2px 8px; font-size: 11px; font-weight: 700; font-style: normal; white-space: nowrap; border-radius: 999px; }
   .rules em.ok { color: #052e16; background: var(--ok); } .rules em.bad { color: #3b2300; background: var(--wn); }
   .dots { display: flex; gap: 4px; margin-top: 7px; }
@@ -581,6 +585,7 @@
       <div class="lbl" id="l-grip"></div><div class="chips" id="c-grip"></div>
       <div class="lbl" id="l-style"></div><div class="chips" id="c-style"></div>
       <div class="lbl" id="l-mode"></div><div class="chips" id="c-mode"></div>
+      <div class="lbl" id="l-wpn"></div><div class="chips" id="c-wpn"></div>
       <div class="lbl" id="l-gfps"></div><div class="chips" id="c-gfps"></div>
     </div>
     <div class="panel" id="pn3"><i class="scan"></i>
@@ -736,7 +741,7 @@ window.addEventListener('error', function (e) {
     ['hud', 'swipe', 'calc'].forEach(function (id) { var x = document.getElementById(id); if (x) x.hidden = true; });
     document.querySelectorAll('.scr').forEach(function (s) { s.hidden = true; });
     var f = document.getElementById('fatal'); f.hidden = false;
-    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v357';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v358';
   } catch (_) {}
 }, true);
 </script>
@@ -751,7 +756,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v357';
+  var VER = 'v358';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -792,6 +797,9 @@ window.addEventListener('error', function (e) {
       p2: 'Как играешь', l_grip: 'Сколькими пальцами?', l_style: 'Как любишь играть?', l_mode: 'Как тянешь оттяжку?',
       grips: [['2 пальца', ''], ['3–4 пальца', '']], styles: [['Раш', 'вблизи'], ['Универсал', ''], ['Снайпер', 'издалека']],
       modes: [['Без прицела', ''], ['С прицелом', 'коллиматор'], ['По-разному', '']],
+      l_wpn: 'Под какое оружие настраиваешь?',
+      wpns: [['Дробовик', 'M1887, M1014'], ['Пистолет', 'Desert Eagle'], ['Автомат / ПП', 'MP40, UMP, AK'], ['Всё подряд', '']],
+      wpn_names: ['дробовик', 'пистолет', 'автомат и ПП', ''],
       l_gfps: 'FPS в игре', opt: 'если знаешь', gfpss: [['30', ''], ['60', ''], ['90', ''], ['120', ''], ['Не знаю', '']],
       p3: 'Твои настройки', owns: [['Впишу свои', 'так точнее'], ['Не знаю', 'подберу сам']],
       own_h: 'Где смотреть: в игре Настройки → Чувствительность. Обязательно — обзор и коллиматор.',
@@ -879,6 +887,9 @@ window.addEventListener('error', function (e) {
       p2: 'How you play', l_grip: 'How many fingers?', l_style: 'How do you like to play?', l_mode: 'How do you drag?',
       grips: [['2 fingers', ''], ['3–4 fingers', '']], styles: [['Rush', 'up close'], ['All-round', ''], ['Sniper', 'from afar']],
       modes: [['Without scope', ''], ['With scope', 'red dot'], ['Both ways', '']],
+      l_wpn: 'Which weapon are you tuning for?',
+      wpns: [['Shotgun', 'M1887, M1014'], ['Pistol', 'Desert Eagle'], ['Rifle / SMG', 'MP40, UMP, AK'], ['Everything', '']],
+      wpn_names: ['shotgun', 'pistol', 'rifle and SMG', ''],
       l_gfps: 'FPS in the game', opt: 'if you know', gfpss: [['30', ''], ['60', ''], ['90', ''], ['120', ''], ['Not sure', '']],
       p3: 'Your settings', owns: [['I\'ll enter mine', 'more precise'], ['I don\'t know', 'pick for me']],
       own_h: 'Where to look: in the game Settings → Sensitivity. General and Red dot are required.',
@@ -953,9 +964,10 @@ window.addEventListener('error', function (e) {
   };
   var L = TX[LANG];
   var MODES = ['hip', 'red', 'both'], NOWS = ['up', 'down', 'ok', ''], GF = [30, 60, 90, 120, 0];      // v356: FPS в игре (0 — не знает)
+  var WPN = ['sg', 'pi', 'ar', 'mix'];                     // v358: под какое оружие настраивает
   var OWN_KEYS = ['gen', 'red', 'x2', 'x4', 'snp', 'free', 'fire'];
 
-  var S = { phones: [], idx: [], prof: { phone: '', dev: 0, scr: 0, grip: 0, style: 0, mode: 0, own: 0, now: 0, gfps: 0 }, phone: null, manual: false,
+  var S = { phones: [], idx: [], prof: { phone: '', dev: 0, scr: 0, grip: 0, style: 0, mode: 0, own: 0, now: 0, gfps: 0, wpn: 0 }, phone: null, manual: false,
             rounds: { flick: 8, drag: 10 }, gain: { flick: 1, drag: 1 }, gain0: null, sf: 1, base: null, filled: [], res: null, last: null, view: 'prof',
             orderUrl: 'https://t.me/SloppyX', price: 200, reviewsUrl: '', combo: null, busy: false, swipes: 5, diag: { 1: 5.8, 2: 6.4, 3: 6.7, 4: 10.5 }, paths: null,
             orient: '', rotThen: null, hud: { x: null, y: null, size: 50 }, phHash: '', restored: false, pending: null, dT: 0, dragS: 100, r0: 220,
@@ -1075,7 +1087,7 @@ window.addEventListener('error', function (e) {
     $('p1-t').textContent = L.p1; $('q').placeholder = L.q_ph; $('qs-x').textContent = L.chg;
     $('l-dev').textContent = L.l_dev; $('l-scr').textContent = L.l_scr; $('p2-t').textContent = L.p2;
     $('l-grip').textContent = L.l_grip; $('l-style').textContent = L.l_style; $('l-mode').textContent = L.l_mode;
-    $('l-gfps').innerHTML = esc(L.l_gfps) + ' <small>· ' + esc(L.opt) + '</small>';
+    $('l-gfps').innerHTML = esc(L.l_gfps) + ' <small>· ' + esc(L.opt) + '</small>'; $('l-wpn').textContent = L.l_wpn;
     $('l-mname').textContent = L.l_mname; $('m-name').placeholder = L.m_ph; $('l-minch').textContent = L.l_minch; $('m-inch').placeholder = L.mi_ph;
     $('p3-t').textContent = L.p3; $('own-h').textContent = L.own_h; $('l-now').textContent = L.l_now;
     OWN_KEYS.forEach(function (k) { $('ol-' + k).innerHTML = esc(L.ol[k]) + (k === 'gen' || k === 'red' ? ' <i>*</i>' : ''); $('o-' + k).placeholder = '—'; });
@@ -1099,7 +1111,7 @@ window.addEventListener('error', function (e) {
     $('adp-t').textContent = L.adp_t; $('adp-d').textContent = L.adp_d; $('adp-rv').textContent = L.adp_rv; $('ad-top-t').textContent = L.adt_t;
     renderAds(); $('again').textContent = L.again; $('toprof').textContent = L.toprof;
     chips('c-dev', L.devs, 'dev'); chips('c-scr', L.scrs, 'scr'); chips('c-grip', L.grips, 'grip'); chips('c-style', L.styles, 'style');
-    chips('c-mode', L.modes, 'mode'); chips('c-own', L.owns, 'own'); chips('c-now', L.nows, 'now'); chips('c-gfps', L.gfpss, 'gfps');
+    chips('c-mode', L.modes, 'mode'); chips('c-own', L.owns, 'own'); chips('c-now', L.nows, 'now'); chips('c-gfps', L.gfpss, 'gfps'); chips('c-wpn', L.wpns, 'wpn');
   }
   function chips(box, list, key) {
     $(box).innerHTML = list.map(function (c, i) {
@@ -1235,7 +1247,7 @@ window.addEventListener('error', function (e) {
   }
   function profReady() {
     var ph = !!(S.phone || (S.manual && S.prof.dev && S.prof.scr));
-    var gs = !!(S.prof.grip && S.prof.style && S.prof.mode);
+    var gs = !!(S.prof.grip && S.prof.style && S.prof.mode && S.prof.wpn);
     var vals = S.prof.own === 1 ? ownValid() : true;
     return { ph: ph, gs: gs, own: S.prof.own > 0, vals: vals, now: S.prof.own !== 1 || S.prof.now > 0 };
   }
@@ -1274,6 +1286,7 @@ window.addEventListener('error', function (e) {
     var p = r.prof;
     S.prof.grip = p.g || 0; S.prof.style = p.st || 0;
     if (p.mode) S.prof.mode = MODES.indexOf(p.mode) + 1;
+    if (p.wpn && WPN.indexOf(p.wpn) >= 0) S.prof.wpn = WPN.indexOf(p.wpn) + 1;           // v358: оружие — как в прошлый раз
     if (r.st && r.st.gfps && GF.indexOf(r.st.gfps) >= 0) S.prof.gfps = GF.indexOf(r.st.gfps) + 1;       // v356: FPS в игре — как в прошлый раз
     if (p.phone) pickPhone(p.phone);
     else if (p.d && p.s) { S.prof.dev = p.d; S.prof.scr = p.s; setManual(true); if (p.name) $('m-name').value = p.name; if (p.inch) $('m-inch').value = String(p.inch); }
@@ -1289,12 +1302,12 @@ window.addEventListener('error', function (e) {
     S.dT = setTimeout(function () {
       var v = {}; OWN_KEYS.forEach(function (k) { v[k] = $('o-' + k).value; });
       lsSet('aim_draft_' + UID, { t: Date.now(), phone: S.phone ? S.phone[0] : '', manual: S.manual, dev: S.prof.dev, scr: S.prof.scr,
-        grip: S.prof.grip, style: S.prof.style, mode: S.prof.mode, own: S.prof.own, now: S.prof.now, gfps: S.prof.gfps,
+        grip: S.prof.grip, style: S.prof.style, mode: S.prof.mode, own: S.prof.own, now: S.prof.now, gfps: S.prof.gfps, wpn: S.prof.wpn,
         name: $('m-name').value.slice(0, 40), inch: $('m-inch').value.slice(0, 5), vals: v });
     }, 300);
   }
   function applyDraft(d) {
-    ['dev', 'scr', 'grip', 'style', 'mode', 'own', 'now', 'gfps'].forEach(function (k) {
+    ['dev', 'scr', 'grip', 'style', 'mode', 'own', 'now', 'gfps', 'wpn'].forEach(function (k) {
       var n = Number(d[k]) || 0; if (n >= 0 && n <= (k === 'gfps' ? 5 : 4)) S.prof[k] = n;
     });
     if (d.phone) pickPhone(d.phone);
@@ -1312,7 +1325,8 @@ window.addEventListener('error', function (e) {
   // ── старт: свои настройки или подбор → «скорость» прицела в замере ──
   function body() {
     var b = { phone: S.phone ? S.phone[0] : '', dev: S.prof.dev, scr: S.prof.scr, grip: S.prof.grip, style: S.prof.style,
-              model: (!S.phone && S.manual) ? $('m-name').value.trim().slice(0, 40) : '', mode: MODES[S.prof.mode - 1] || 'both' };
+              model: (!S.phone && S.manual) ? $('m-name').value.trim().slice(0, 40) : '', mode: MODES[S.prof.mode - 1] || 'both',
+              wpn: WPN[S.prof.wpn - 1] || 'mix' };
     if (!S.phone && S.manual && manInch()) b.inch = manInch();
     if (S.prof.own === 1) { b.cur = ownRead(); b.now = NOWS[S.prof.now - 1] || ''; }
     return b;
@@ -1328,6 +1342,7 @@ window.addEventListener('error', function (e) {
       // v354: сенса, которой игрок тянет (обзор, коллиматор или среднее), и мерка «до головы — R0 / сенса см»
       S.dragS = Math.max(20, Math.min(200, ((res.j.gain && Number(res.j.gain.drag)) || 1) * 100));
       S.r0 = Number(res.j.r0) || 220;
+      S.seq = /^[nmf]{3,12}$/.test(String(res.j.seq || '')) ? String(res.j.seq).split('') : null;    // v358: расстояния под оружие
       W.list = []; W.res = []; W.miss = 0; S.paths = null;
       gate(startHud);                                   // v353: этап 1 — «Кнопка огня»
     }).catch(function () { S.busy = false; syncGo(); toast(L.e_net, true); });
@@ -1493,7 +1508,8 @@ window.addEventListener('error', function (e) {
     $('swipe').hidden = false; ovlOn();
     $('sw-hint').style.opacity = '1'; $('sw-card').className = 'sw-card'; $('ghost').className = 'ghost';
     $('sw-fire').classList.add('need'); $('dm').classList.add('out');
-    $('sw-s').textContent = tpl(L.sw_sens, { v: Math.round(S.dragS) });
+    var wn = L.wpn_names[S.prof.wpn - 1];
+    $('sw-s').textContent = tpl(L.sw_sens, { v: Math.round(S.dragS) }) + (wn ? ' · ' + wn : '');       // v358: под какое оружие
     swCount(); swLayout(); syncBack(); stagePop($('sw-pop'));
     setTimeout(nextDummy, RM ? 0 : 450);
   }
@@ -1562,7 +1578,7 @@ window.addEventListener('error', function (e) {
   var DIST = { n: 1.45, m: 1.0, f: 0.62 }, SEQ = ['m', 'n', 'f', 'm', 'n', 'f', 'm'];
   function nextDummy() {
     if ($('swipe').hidden || W.done) return;
-    var i = W.list.length, d = i ? SEQ[i % SEQ.length] : 'm', k = DIST[d] * (i ? rnd(0.95, 1.05) : 1), kz = k * W.Z;
+    var sq = S.seq || SEQ, i = W.list.length, d = sq[i % sq.length], k = DIST[d] * (i ? rnd(0.95, 1.05) : 1), kz = k * W.Z;   // v358: порядок под оружие
     var off = d === 'n' ? BODY_W * kz * 1.25 : rnd(-4, 4) * W.U;
     W.tgt = { x: W.cam.x + off, y: W.cam.y - CHEST * kz, k: k, d: d };
     var el = $('dm'); el.classList.add('out'); pwDraw(); void el.offsetWidth; el.classList.remove('out');
@@ -1902,11 +1918,13 @@ window.addEventListener('error', function (e) {
     });
     if (fresh && !RM) countUp($('sl').querySelectorAll('b[data-a]'));
     // v355: правила оттяжки — с отметкой, как у игрока по замеру
-    $('rules').innerHTML = L.rules.map(function (x) {
-      var s = x[2] ? st[x[2]] : null;
-      return '<li><i>' + x[0] + '</i><span>' + esc(x[1]) + '</span>' + (s === true ? '<em class="ok">' + esc(L.rule_ok) + '</em>'
-        : s === false ? '<em class="bad">' + esc(L.rule_bad) + '</em>' : '') + '</li>';
-    }).join('');
+    var wt = r.wtip && r.wtip.text ? r.wtip : null;              // v358: совет под оружие — первой строкой
+    $('rules').innerHTML = (wt ? '<li class="wt"><i>' + esc(wt.ico || '🎯') + '</i><span><b>' + esc(wt.title) + ':</b> ' + esc(wt.text) + '</span></li>' : '')
+      + L.rules.map(function (x) {
+        var s = x[2] ? st[x[2]] : null;
+        return '<li><i>' + x[0] + '</i><span>' + esc(x[1]) + '</span>' + (s === true ? '<em class="ok">' + esc(L.rule_ok) + '</em>'
+          : s === false ? '<em class="bad">' + esc(L.rule_bad) + '</em>' : '') + '</li>';
+      }).join('');
     $('rules-p').hidden = !tune;
     renderData(r);
   }
@@ -2094,6 +2112,7 @@ window.addEventListener('error', function (e) {
     need: function () { var t = W.tgt; return { ready: !!t && !W.busy && W.ptr === null && !W.done && !$('swipe').hidden, h: t ? CHEST * t.k * W.Z : 0,
                                                 g: W.g, k: t ? t.k : 0, fx: W.fire.x, fy: W.fire.y, fr: W.fire.r, i: W.list.length, n: W.n,
                                                 d: t ? t.d : '', nx: t ? (t.x - W.cam.x) / W.g : 0, ny: t ? (t.y - W.cam.y) / W.g : 0,
+                                                seq: (S.seq || SEQ).join(''),
                                                 rule: $('sw-rule').textContent,
                                                 cam: { x: W.cam.x, y: W.cam.y }, shots: W.shots, res: W.res.slice() }; },
     px: function () { return { pxcm: pxPerCm(), model: modelPxcm() }; },
