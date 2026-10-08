@@ -491,6 +491,14 @@
   <!-- v326: рассылка всем игрокам -->
   <section id="v-bc" hidden>
     <div id="bc-job"></div>
+    <!-- v358: после обновления игры — напомнить всем, кто настраивал оттяжку, проверить сенсу -->
+    <div class="sec" id="ap-box" hidden><h3>🔄 Вышло обновление Free Fire</h3><div class="v">
+      <div class="small">Всем, кто настраивал оттяжку, придёт: «после обновления сенса могла поплыть — проверь за минуту», их цифры
+        и кнопки «Улетает / Не дотягивает / В голову». Кто выключил напоминания или настраивался последние 12 часов — не получат.</div>
+      <div id="ap-info"></div>
+      <div class="row"><button type="button" class="f1" id="ap-test">Себе — проверить</button>
+        <button type="button" class="b-acc f1" id="ap-go">Отправить</button></div>
+    </div></div>
     <div class="sec"><h3>Новая рассылка</h3><div class="v">
       <textarea id="bc-text" maxlength="4000" placeholder="Текст — придёт каждому в бот с заголовком «📢 Сообщение от администратора»"></textarea>
       <div class="small" id="bc-len">0 / 4000</div>
@@ -630,7 +638,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v345';
+  var VER = 'v358';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -1567,9 +1575,10 @@ window.addEventListener('error', function (e) {
 
   // ── рассылка ────────────────────────────────────────────────────────
   // v335: + группы игроков (показываются, только если их знает бот на сервере)
-  var AUD = [['all', 'Всем'], ['week', 'За 7 дней'], ['day', 'За сутки'], ['new', 'Новичкам'], ['gone', 'Пропавшим'], ['nomatch', 'Без 1vs1']];
+  var AUD = [['all', 'Всем'], ['week', 'За 7 дней'], ['day', 'За сутки'], ['new', 'Новичкам'], ['gone', 'Пропавшим'], ['nomatch', 'Без 1vs1'],
+             ['aim', 'Настраивали оттяжку']];                     // v358
   var AUDN = { all: 'всем', week: 'заходившим за 7 дней', day: 'заходившим за сутки', new: 'новичкам (зарегистрировались за 7 дней)',
-               gone: 'пропавшим (не заходят 7+ дней)', nomatch: 'тем, кто ни разу не сыграл 1vs1' };
+               gone: 'пропавшим (не заходят 7+ дней)', nomatch: 'тем, кто ни разу не сыграл 1vs1', aim: 'тем, кто настраивал оттяжку' };
   var bcT = 0, DK = 'adm_bc_draft';
   S.bcAud = 'all';
   S.bcPhoto = '';              // v328: картинка — уже ужатая на телефоне, data:image/jpeg;base64,…
@@ -1602,7 +1611,8 @@ window.addEventListener('error', function (e) {
     if (run) {
       var pc = jb.total ? Math.round(jb.done / jb.total * 100) : 0;
       var el = Date.now() / 1000 - jb.started, left = jb.done ? el / jb.done * (jb.total - jb.done) : 0;
-      h = '<div class="sec"><h3>' + (jb.kind === 'tournament' ? 'Идёт объявление турнира' : jb.kind === 'giveaway' ? 'Идёт объявление розыгрыша' : 'Идёт рассылка') + '</h3><div class="v">'
+      h = '<div class="sec"><h3>' + (jb.kind === 'tournament' ? 'Идёт объявление турнира' : jb.kind === 'giveaway' ? 'Идёт объявление розыгрыша'
+        : jb.kind === 'aimpatch' ? 'Идёт напоминание «Вышло обновление Free Fire»' : 'Идёт рассылка') + '</h3><div class="v">'
         + '<div class="bar"><i style="width:' + pc + '%"></i></div>'
         + '<div>Отправлено <b>' + fmt(jb.done) + '</b> из ' + fmt(jb.total) + ' · ' + pc + '%'
         + (left >= 5 ? ' · осталось ~' + durTxt(left) : '') + '</div>'
@@ -1613,6 +1623,7 @@ window.addEventListener('error', function (e) {
         + '</button></div></div></div>';
     }
     $('bc-job').innerHTML = h;
+    renderAp(j.aimpatch, run);
     if (!(j.aud && j.aud[S.bcAud])) S.bcAud = 'all';
     $('bc-aud').innerHTML = AUD.filter(function (a) { return a[0] === 'all' || (j.aud && j.aud[a[0]]); }).map(function (a) {
       var n = j.aud && j.aud[a[0]] ? j.aud[a[0]].n : 0;
@@ -1634,7 +1645,8 @@ window.addEventListener('error', function (e) {
     var hs = j.history || [];
     $('bc-hist-box').hidden = !hs.length;
     $('bc-hist').innerHTML = hs.map(function (x) {
-      return '<div><b>' + dt(x.t) + '</b> · ' + esc(AUDN[x.aud] || x.aud) + (x.kind === 'tournament' ? ' · 🏆 объявление турнира' : x.kind === 'giveaway' ? ' · 🎁 объявление розыгрыша' : '')
+      return '<div><b>' + dt(x.t) + '</b> · ' + esc(AUDN[x.aud] || x.aud) + (x.kind === 'tournament' ? ' · 🏆 объявление турнира' : x.kind === 'giveaway' ? ' · 🎁 объявление розыгрыша'
+        : x.kind === 'aimpatch' ? ' · 🔄 обновление Free Fire' : '')
         + (x.scheduled ? ' · 🗓' : '') + (x.photo ? ' · 🖼' : '') + (x.btn ? ' · 🔗 ' + esc(cut(x.btn, 30)) : '')
         + (x.state === 'cancelled' ? ' <span class="bd wn">остановлена</span>' : '')
         + '<br>✓ дошло ' + fmt(x.sent) + ' из ' + fmt(x.total) + (x.failed ? ' · ✗ ' + fmt(x.failed) : '')
@@ -1646,6 +1658,23 @@ window.addEventListener('error', function (e) {
         + (x.can_delete ? '<div class="row" style="margin-top:6px"><button type="button" class="xs" data-bdel="' + esc(x.id) + '">🗑 Удалить у всех сейчас</button></div>' : '')
         + '</div>';
     }).join('');
+  }
+  // v358: «Вышло обновление Free Fire» — кому уйдёт, прошлый раз, кнопка
+  function apAgain(a) { return !!(a && a.last && a.last.t && Date.now() / 1000 - a.last.t < (a.again || 72000)); }
+  function renderAp(a, run) {
+    $('ap-box').hidden = !a;
+    if (!a) return;
+    var h = '<div>Получат: <b>' + fmt(a.n) + '</b></div>'
+      + ((a.off || a.recent) ? '<div class="small">Не получат: ' + [a.off ? fmt(a.off) + ' — выключили напоминания или в бане' : '',
+          a.recent ? fmt(a.recent) + ' — настраивались последние 12 часов' : ''].filter(Boolean).join(' · ') + '</div>' : '');
+    if (a.last && a.last.t) {
+      h += '<div class="small">Прошлый раз: ' + dt(a.last.t) + ' — ушло ' + (a.last.sent != null ? fmt(a.last.sent) : '…') + ' из ' + fmt(a.last.total || 0)
+        + ' · проверили после: <b>' + fmt(a.back || 0) + '</b></div>';
+    }
+    $('ap-info').innerHTML = h;
+    var g = $('ap-go');
+    g.textContent = run ? 'Дождись конца текущей рассылки' : (apAgain(a) ? '🔁 Ещё раз — ' : 'Отправить ') + fmt(a.n) + ' ' + plural(a.n, 'игроку', 'игрокам');
+    g.disabled = run || !a.n;
   }
   // надпись на главной кнопке: «Отправить N игрокам» или «🗓 Запланировать на …» — смотря что выбрано в «Когда»
   function bcGoLabel() {
@@ -1752,6 +1781,15 @@ window.addEventListener('error', function (e) {
     doSect('/broadcast', extend(extend({ op: 'schedule', aud: S.bcAud }, p), w),
       'Запланировать рассылку на ' + dt(at) + ' (' + AUDN[S.bcAud] + ')?\nОтменить можно до отправки — в списке «Запланированные».',
       this, function (j) { bcClear(); setBc(j); });
+  });
+  $('ap-test').addEventListener('click', function () { doSect('/broadcast', { op: 'aimpatch_test' }, null, this, setBc); });
+  $('ap-go').addEventListener('click', function () {
+    var a = S.bc && S.bc.aimpatch; if (!a || !a.n) return;
+    var again = apAgain(a);
+    doSect('/broadcast', { op: 'aimpatch', force: again },
+      again ? 'Уже отправлял ' + dt(a.last.t) + '. Отправить напоминание ещё раз — ' + fmt(a.n) + ' ' + plural(a.n, 'игроку', 'игрокам') + '?'
+            : 'Напомнить ' + fmt(a.n) + ' ' + plural(a.n, 'игроку', 'игрокам') + ', что вышло обновление Free Fire и сенсу стоит проверить?\nУже отправленное вернуть нельзя — сначала можно проверить на себе.',
+      this, setBc);
   });
   $('bc-job').addEventListener('click', function (e) {
     var b = e.target.closest('#bc-stop'); if (!b || b.disabled) return;
