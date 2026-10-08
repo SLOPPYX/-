@@ -523,6 +523,29 @@
     .ovl, .stpop.show, .scr, .qsel.pop, .rk-emb { animation: none; }
   }
 
+  /* v359: картинка «Мои настройки» — кнопка под цифрами и окно с картинкой */
+  .cardb { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 10px; padding: 12px 14px; text-align: left; color: var(--tx);
+           background: var(--card2); border: 1px solid var(--ln2); border-radius: 14px; font: inherit;
+           transition: transform .14s var(--ease), border-color .2s; }
+  .cardb:active { transform: scale(.98); border-color: rgba(167,139,250,.5); }
+  .cardb svg { flex: 0 0 auto; width: 22px; height: 22px; fill: none; stroke: var(--acc2); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .cardb .cb2 { flex: 1; min-width: 0; }
+  .cardb b { display: block; font-size: 14px; font-weight: 700; }
+  .cardb small { display: block; margin-top: 1px; font-size: 12px; color: var(--tx2); }
+  .cardb i { flex: 0 0 auto; font-style: normal; font-size: 20px; line-height: 1; color: var(--tx3); }
+  #cardm { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; overflow-y: auto;
+           padding: calc(16px + var(--st, 0px)) 16px calc(16px + var(--sb)); background: var(--bg); animation: vin .25s var(--ease) both; }
+  #cardm[hidden] { display: none; }
+  .cm-box { display: grid; gap: 10px; justify-items: center; width: 100%; max-width: 380px; text-align: center; }
+  .cm-img { display: grid; place-items: center; width: 100%; max-width: 330px; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 16px;
+            background: var(--card); border: 1px solid var(--ln2); box-shadow: 0 20px 50px -24px rgba(139,92,246,.7); }
+  .cm-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .cm-box b { margin-top: 4px; font-size: 16.5px; font-weight: 700; }
+  .cm-box p { margin: 0; color: var(--tx2); font-size: 13.5px; line-height: 1.45; }
+  .cm-box .btn { max-width: 330px; margin-top: 4px; }
+  .id-pr s { margin-right: 6px; font-weight: 600; opacity: .5; }
+  .id-tag.deal { color: #0b0b0e; background: var(--acc3); border-color: var(--acc3); border-radius: 10px; line-height: 1.35; }
+
   /* сообщения */
   .toast { position: fixed; left: 50%; bottom: calc(18px + var(--sb)); z-index: 80; max-width: 92%; padding: 11px 16px; font-size: 13.5px; font-weight: 600;
            background: var(--card2); border: 1px solid var(--ln2); border-radius: 14px; box-shadow: 0 16px 34px rgba(0,0,0,.7);
@@ -639,6 +662,7 @@
       <div id="sl"></div>
       <div class="fire" id="fire"></div>
       <div class="row2"><button type="button" class="btn sec" id="copy"></button></div>
+      <button type="button" class="cardb" id="card" hidden><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-8 8"/></svg><span class="cb2"><b id="card-t"></b><small id="card-d"></small></span><i>›</i></button>
       <div class="sent" id="sent"></div>
     </div>
     <button type="button" class="adstrip" id="ad-top"><span>⭐</span><span class="as-m"><b id="ad-top-t"></b><small id="ad-top-d"></small></span><i>↓</i></button>
@@ -731,6 +755,13 @@
 
 <div id="calc" hidden><div class="spin"></div><b id="calc-t"></b><small id="calc-d"></small>
   <div class="calc-off" id="calc-off" hidden><button type="button" class="btn" id="calc-retry"></button><button type="button" class="lnk" id="calc-exit"></button></div></div>
+<!-- v359: картинка «Мои настройки» — копия того, что бот прислал в чат -->
+<div id="cardm" hidden><div class="cm-box">
+  <div class="cm-img" id="cm-img"></div>
+  <b id="cm-t"></b><p id="cm-d"></p>
+  <button type="button" class="btn" id="cm-chat" hidden></button>
+  <button type="button" class="lnk" id="cm-x"></button>
+</div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -741,7 +772,7 @@ window.addEventListener('error', function (e) {
     ['hud', 'swipe', 'calc'].forEach(function (id) { var x = document.getElementById(id); if (x) x.hidden = true; });
     document.querySelectorAll('.scr').forEach(function (s) { s.hidden = true; });
     var f = document.getElementById('fatal'); f.hidden = false;
-    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v358';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v359';
   } catch (_) {}
 }, true);
 </script>
@@ -756,7 +787,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v358';
+  var VER = 'v359';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -852,6 +883,11 @@ window.addEventListener('error', function (e) {
       dq: ['высокая', 'средняя', 'низкая'], hz: 'Гц',
       labels: { gen: 'Обзор', red: 'Коллиматор', x2: 'Прицел 2×', x4: 'Прицел 4×', snp: 'Снайперский прицел', free: 'Свободный обзор' },
       fire: 'Кнопка огня', copy: 'Скопировать значения', copied: 'Скопировал — вставь в заметки или сразу в игру',
+      card_t: 'Картинка «Мои настройки»', card_d: 'Цифры одной картинкой — сохрани или скинь другу',
+      cm_wait: 'Рисую картинку…', cm_ok: 'Картинка уже в чате с ботом',
+      cm_how: 'Открой её в чате: «Сохранить» — в галерею, «Переслать» — другу. Под картинкой ссылка — друг бесплатно настроит свою оттяжку.',
+      cm_chat: 'Открыть чат', cm_x: 'Закрыть', e_card: 'Картинка сейчас не рисуется — попробуй через пару минут',
+      e_nores: 'Сначала пройди настройку', adt_was: '(было {f} ₽)',
       sent: '✓ Отправил тебе в чат', sent_last: 'Это твоя последняя настройка — она есть и в чате',
       id_t: 'Хочешь до идеала?', id_pr: '{p} ₽', id_d: 'Настрою лично под твой телефон — с моими фишками:', id_b: 'Заказать до идеала — {p} ₽',
       id_tag: 'Личная настройка', id_rv: '⭐ Отзывы покупателей', id_msg: 'Привет! Хочу настройки на телефон до идеала за {p} ₽',
@@ -942,6 +978,11 @@ window.addEventListener('error', function (e) {
       dq: ['high', 'medium', 'low'], hz: 'Hz',
       labels: { gen: 'General', red: 'Red dot', x2: '2× scope', x4: '4× scope', snp: 'Sniper scope', free: 'Free look' },
       fire: 'Fire button', copy: 'Copy values', copied: 'Copied — paste it into notes or straight into the game',
+      card_t: '«My settings» picture', card_d: 'Your numbers in one picture — save it or send it to a friend',
+      cm_wait: 'Drawing the picture…', cm_ok: 'The picture is in your chat with the bot',
+      cm_how: 'Open it in the chat: «Save» to the gallery or «Forward» to a friend. The link under it lets a friend tune their own drag for free.',
+      cm_chat: 'Open the chat', cm_x: 'Close', e_card: "Can't draw the picture right now — try again in a couple of minutes",
+      e_nores: 'Do the setup first', adt_was: '(was {f} ₽)',
       sent: '✓ Sent to your chat', sent_last: 'This is your latest setup — it is in the chat too',
       id_t: 'Want it perfect?', id_pr: '{p} ₽', id_d: 'A personal setup for your phone — with my tricks:', id_b: 'Order the ideal setup — {p} ₽',
       id_tag: 'Personal setup', id_rv: '⭐ Customer reviews', id_msg: 'Hi! I want the ideal phone settings for {p} ₽',
@@ -969,7 +1010,8 @@ window.addEventListener('error', function (e) {
 
   var S = { phones: [], idx: [], prof: { phone: '', dev: 0, scr: 0, grip: 0, style: 0, mode: 0, own: 0, now: 0, gfps: 0, wpn: 0 }, phone: null, manual: false,
             rounds: { flick: 8, drag: 10 }, gain: { flick: 1, drag: 1 }, gain0: null, sf: 1, base: null, filled: [], res: null, last: null, view: 'prof',
-            orderUrl: 'https://t.me/SloppyX', price: 200, reviewsUrl: '', combo: null, busy: false, swipes: 5, diag: { 1: 5.8, 2: 6.4, 3: 6.7, 4: 10.5 }, paths: null,
+            orderUrl: 'https://t.me/SloppyX', price: 200, full: 0, idealMsg: '', deal: null, cardOn: false, cardBusy: false,
+            reviewsUrl: '', combo: null, busy: false, swipes: 5, diag: { 1: 5.8, 2: 6.4, 3: 6.7, 4: 10.5 }, paths: null,
             orient: '', rotThen: null, hud: { x: null, y: null, size: 50 }, phHash: '', restored: false, pending: null, dT: 0, dragS: 100, r0: 220,
             fps: 0 };
   // v353: запоминаем на телефоне (у каждого игрока своё): база телефонов, черновик ответов, место кнопки огня, неотправленный замер
@@ -1049,6 +1091,7 @@ window.addEventListener('error', function (e) {
     } catch (e) {}
   }
   function goBack() {
+    if (!$('cardm').hidden) { cardClose(); return; }               // v359: окно с картинкой
     if (!$('hud').hidden) { quitHud(); return; }
     if (!$('swipe').hidden) { quitSwipe(); return; }
     S.rotThen = null; fullOff(); show('prof');
@@ -1107,6 +1150,7 @@ window.addEventListener('error', function (e) {
     $('r1-t').textContent = L.r1; $('r1-d').textContent = L.r1d; $('r2-t').textContent = L.r2; $('r3-t').textContent = L.r3; $('r4-t').textContent = L.r4;
     $('r6-t').textContent = L.r6; $('r6-d').textContent = L.r6d;
     $('tsteps').innerHTML = L.tsteps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('');
+    $('card-t').textContent = L.card_t; $('card-d').textContent = L.card_d; $('cm-x').textContent = L.cm_x; $('cm-chat').textContent = L.cm_chat;
     $('copy').textContent = L.copy; $('id-t').textContent = L.id_t; $('id-tag').textContent = L.id_tag; $('ideal-rv').textContent = L.id_rv;
     $('adp-t').textContent = L.adp_t; $('adp-d').textContent = L.adp_d; $('adp-rv').textContent = L.adp_rv; $('ad-top-t').textContent = L.adt_t;
     renderAds(); $('again').textContent = L.again; $('toprof').textContent = L.toprof;
@@ -1967,9 +2011,14 @@ window.addEventListener('error', function (e) {
   // v357: реклама «до идеала» — цена, комбо со скидкой (присылает бот), отзывы; без данных от бота — без комбо и отзывов
   function rub(n) { return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₽'; }
   function renderAds() {
-    var p = S.price, c = S.combo, cb = $('id-cb');
-    $('id-pr').textContent = tpl(L.id_pr, { p: p }); $('adp-pr').textContent = tpl(L.id_pr, { p: p });
-    $('ideal').textContent = tpl(L.id_b, { p: p }); $('adp-b').textContent = tpl(L.adp_b, { p: p }); $('ad-top-d').textContent = tpl(L.adt_d, { p: p });
+    var p = S.price, f = S.full > p ? S.full : 0, c = S.combo, cb = $('id-cb');
+    // v359: акция или промокод игрока — старая цена зачёркнута, вместо «Личная настройка» — откуда скидка
+    var pr = (f ? '<s>' + esc(rub(f)) + '</s>' : '') + esc(tpl(L.id_pr, { p: p }));
+    $('id-pr').innerHTML = pr; $('adp-pr').innerHTML = pr;
+    var dt = S.deal && S.deal.txt ? String(S.deal.txt) : '';
+    $('id-tag').textContent = dt || L.id_tag; $('id-tag').classList.toggle('deal', !!dt);
+    $('ideal').textContent = tpl(L.id_b, { p: p }); $('adp-b').textContent = tpl(L.adp_b, { p: p });
+    $('ad-top-d').textContent = tpl(L.adt_d, { p: p }) + (f ? ' ' + tpl(L.adt_was, { f: f }) : '');
     $('ideal-rv').hidden = !S.reviewsUrl; $('adp-rv').hidden = !S.reviewsUrl;
     if (c && c.price && c.full) {
       var it = (LANG === 'ru' ? c.items_ru : c.items_en) || [];
@@ -1986,7 +2035,8 @@ window.addEventListener('error', function (e) {
   }
   // чат с @SloppyX, где уже вписано, что и за сколько (как у кнопок комбо в боте)
   function orderLink(msg) { return S.orderUrl + (msg ? (S.orderUrl.indexOf('?') >= 0 ? '&' : '?') + 'text=' + encodeURIComponent(msg) : ''); }
-  function orderIdeal() { haptic(null, 'light'); openLink(orderLink(tpl(L.id_msg, { p: S.price }))); }
+  function idealMsg() { return S.idealMsg || tpl(L.id_msg, { p: S.price }); }          // v359: текст от бота — с акцией или промокодом
+  function orderIdeal() { haptic(null, 'light'); openLink(orderLink(idealMsg())); }
   function countUp(els) {
     var list = [], t0 = now(), ms = 700;
     for (var i = 0; i < els.length; i++) {
@@ -2060,6 +2110,32 @@ window.addEventListener('error', function (e) {
     if (!$('calc').hidden && $('calc').classList.contains('off') && S.pending) sendTune(S.pending.b);
   });
   $('last').addEventListener('click', function (e) { if (e.target.closest('#last-b') && S.last) { renderRes(S.last, false); show('res'); } });
+  // v359: картинка «Мои настройки» — рисует бот и сам шлёт в чат; здесь — копия и как сохранить или переслать
+  function cardOpen() {
+    if (!S.res || S.cardBusy) return;
+    S.cardBusy = true; haptic(null, 'light');
+    $('cm-img').innerHTML = '<div class="spin"></div>'; $('cm-t').textContent = L.cm_wait; $('cm-d').textContent = '';
+    $('cm-chat').hidden = true; $('cardm').hidden = false; syncBack();
+    post('/casino/aim/card', {}).then(function (res) {
+      S.cardBusy = false;
+      var j = res && res.j, c = j && j.error;
+      if (!j || !j.ok) {
+        cardClose();
+        toast(c === 'no_result' ? L.e_nores : (c === 'no_font' || c === 'error') ? L.e_card : errText(res), true);
+        return;
+      }
+      $('cm-img').innerHTML = j.img ? '<img alt="" src="' + esc(j.img) + '">' : '';
+      $('cm-t').textContent = L.cm_ok; $('cm-d').textContent = L.cm_how; $('cm-chat').hidden = false;
+      haptic('success');
+    }).catch(function () { S.cardBusy = false; cardClose(); toast(L.e_net, true); });
+  }
+  function cardClose() { $('cardm').hidden = true; syncBack(); }
+  $('card').addEventListener('click', cardOpen);
+  $('cm-x').addEventListener('click', cardClose);
+  $('cm-chat').addEventListener('click', function () {             // картинка — последним сообщением в чате
+    try { if (tg && tg.close) { tg.close(); return; } } catch (e) {}
+    cardClose();
+  });
   $('copy').addEventListener('click', function () {
     if (!S.res) return;
     var v = S.res.vals;
@@ -2086,7 +2162,7 @@ window.addEventListener('error', function (e) {
   $('adp-rv').addEventListener('click', function () { haptic(null, 'light'); openLink(S.reviewsUrl); });
   $('id-cb').addEventListener('click', function () {
     var c = S.combo; if (!c) return;
-    haptic(null, 'light'); openLink(orderLink(tpl(L.cb_msg, { n: LANG === 'ru' ? c.ru : c.en, p: c.price })));
+    haptic(null, 'light'); openLink(orderLink(c.msg || tpl(L.cb_msg, { n: LANG === 'ru' ? c.ru : c.en, p: c.price })));
   });
   $('ad-top').addEventListener('click', function () {            // v357: полоска под «Поставь в игре» — к большой рекламе
     var p = $('ideal-p');
@@ -2108,7 +2184,10 @@ window.addEventListener('error', function (e) {
     swipe: function () { return { open: !$('swipe').hidden, n: W.n, got: W.list.length, pxcm: W.pxcm, done: W.done, fx: W.fire.x, fy: W.fire.y, fr: W.fire.r,
                                    ext: !!W.ext, spread: spreadW() }; },
     env: function () { return { hz: touchHz(), fps: S.fps, gfps: GF[S.prof.gfps - 1] || 0 }; },
-    ads: function () { return { reviews: S.reviewsUrl, combo: S.combo ? S.combo.price : 0, order: orderLink(tpl(L.id_msg, { p: S.price })) }; },
+    ads: function () { return { reviews: S.reviewsUrl, combo: S.combo ? S.combo.price : 0, order: orderLink(idealMsg()), price: S.price, full: S.full,
+                                tag: $('id-tag').textContent, pr: $('id-pr').textContent, combo_order: S.combo ? orderLink(S.combo.msg || '') : '' }; },
+    card: function () { return { btn: !$('card').hidden, open: !$('cardm').hidden, img: !!$('cm-img').querySelector('img'), t: $('cm-t').textContent,
+                                 d: $('cm-d').textContent, chat: !$('cm-chat').hidden }; },
     need: function () { var t = W.tgt; return { ready: !!t && !W.busy && W.ptr === null && !W.done && !$('swipe').hidden, h: t ? CHEST * t.k * W.Z : 0,
                                                 g: W.g, k: t ? t.k : 0, fx: W.fire.x, fy: W.fire.y, fr: W.fire.r, i: W.list.length, n: W.n,
                                                 d: t ? t.d : '', nx: t ? (t.x - W.cam.x) / W.g : 0, ny: t ? (t.y - W.cam.y) / W.g : 0,
@@ -2145,7 +2224,9 @@ window.addEventListener('error', function (e) {
     }
     if (j.rounds) S.rounds = j.rounds;
     if (j.order_url) S.orderUrl = j.order_url;
-    if (j.ideal_price) S.price = j.ideal_price;
+    if (typeof j.ideal_price === 'number') S.price = j.ideal_price;        // v359: 0 — промокод «бесплатно»
+    S.full = Number(j.ideal_full) || 0; S.idealMsg = j.ideal_msg ? String(j.ideal_msg) : ''; S.deal = j.deal && j.deal.pct ? j.deal : null;
+    S.cardOn = !!j.card; $('card').hidden = !S.cardOn;                      // v359: старый бот картинку не умеет — кнопки нет
     if (j.reviews_url) S.reviewsUrl = String(j.reviews_url);          // v357: реклама — отзывы и комбо от бота
     if (j.combo && j.combo.price && j.combo.full) S.combo = j.combo;
     renderAds();
