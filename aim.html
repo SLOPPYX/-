@@ -535,9 +535,6 @@
              opacity: 0; transition: opacity .25s; }
   .sc-line.on { opacity: 1; }
   .sc-line span { position: absolute; right: 0; bottom: 4px; font-size: 11px; font-weight: 600; color: var(--acc3); }
-  #sc-fire .sc-ring { left: -9px; top: -9px; width: calc(100% + 18px); height: calc(100% + 18px); overflow: visible; transform: rotate(-90deg); }
-  .sc-ring circle { fill: none; stroke: var(--acc2); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 289; stroke-dashoffset: 289; opacity: 0; }
-  .sc-ring.run circle { opacity: 1; stroke-dashoffset: 0; transition: stroke-dashoffset 2s linear; }
   #sc-fire.go { background: rgba(74,222,128,.35); box-shadow: inset 0 0 0 2px var(--ok), 0 0 0 9px rgba(74,222,128,.2); }
   #sc-fire.go::before { opacity: 0; }
   .sc-pan { position: absolute; z-index: 5; left: calc(14px + var(--sl)); top: calc(74px + var(--st) + var(--ct)); bottom: calc(10px + var(--sb));
@@ -586,6 +583,26 @@
   .sk b { display: block; font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sk small { display: block; margin-top: 1px; font-size: 11px; line-height: 1.3; color: var(--acc3); }
   .sk-fx { margin-top: 10px; padding: 9px 12px; font-size: 13px; font-weight: 600; color: var(--acc3); background: var(--accbg); border-radius: 12px; }
+
+  /* v363: вкладки (Кирилл: «пользователь очень долго листает») — результат и анкета; спрятанное вкладкой — .toff */
+  .toff { display: none !important; }
+  .rtabs { position: sticky; top: calc(6px + var(--st) + var(--ct)); z-index: 20; display: grid;
+           grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.45fr);            /* «⭐ До идеала» длиннее — ей шире */
+           gap: 3px; margin-top: 14px; padding: 4px; background: rgba(9,9,12,.97); border: 1px solid var(--ln2); border-radius: 14px;
+           box-shadow: 0 10px 24px -14px rgba(0,0,0,.9); }
+  .rtabs button { min-width: 0; padding: 9px 2px; border: 0; border-radius: 10px; font: 600 12.5px var(--ui); color: var(--tx2); background: transparent;
+                  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color .2s, color .2s; }
+  .rtabs button.on { color: #fff; background: var(--acc); }
+  .rtabs button[data-rt="ideal"]:not(.on) { color: var(--acc3); }
+  .rt-a { display: block; height: 0; }
+  .pg { display: block; min-width: 0; padding: 6px 0 2px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .pg.on span { color: var(--tx); font-weight: 700; }
+  .pg.on i { box-shadow: 0 0 0 1px rgba(167,139,250,.55); }
+  .nx { margin-top: 16px; }
+  .fb { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fb button[data-fb="ok"] { grid-column: 1 / -1; }
+  .fb button[data-fb^="up"] span { color: var(--no); } .fb button[data-fb^="down"] span { color: var(--in); }
+  .lv-p { margin-top: 3px; padding-top: 3px; border-top: 1px solid var(--ln); font-size: 11.5px; font-weight: 600; color: var(--acc3); }
 
   /* плавное появление карточек при прокрутке */
   .panel.rv { opacity: 0; transform: translate3d(0, 10px, 0); transition: opacity .45s var(--ease), transform .45s var(--ease), border-color .3s var(--ease); }
@@ -648,9 +665,9 @@
       <i class="h-bar"></i>
       <p id="h-d"></p>
       <div class="prog" aria-hidden="true">
-        <div class="pg" id="pg1"><i><b></b></i><span id="pg1-t"></span></div>
-        <div class="pg" id="pg2"><i><b></b></i><span id="pg2-t"></span></div>
-        <div class="pg" id="pg3"><i><b></b></i><span id="pg3-t"></span></div>
+        <button type="button" class="pg" id="pg1" data-pt="1"><i><b></b></i><span id="pg1-t"></span></button>
+        <button type="button" class="pg" id="pg2" data-pt="2"><i><b></b></i><span id="pg2-t"></span></button>
+        <button type="button" class="pg" id="pg3" data-pt="3"><i><b></b></i><span id="pg3-t"></span></button>
       </div>
     </div>
     <div class="panel" id="pn1"><i class="scan"></i>
@@ -674,6 +691,7 @@
         <div class="lbl" id="l-minch"></div>
         <input id="m-inch" class="inp" maxlength="5" inputmode="decimal" autocomplete="off">
       </div>
+      <button type="button" class="btn sec nx" id="nx1" hidden></button>
     </div>
     <div class="panel" id="pn2"><i class="scan"></i>
       <div class="ph"><span>02</span><b id="p2-t"></b></div>
@@ -682,6 +700,7 @@
       <div class="lbl" id="l-mode"></div><div class="chips" id="c-mode"></div>
       <div class="lbl" id="l-wpn"></div><div class="chips" id="c-wpn"></div>
       <div class="lbl" id="l-gfps"></div><div class="chips" id="c-gfps"></div>
+      <button type="button" class="btn sec nx" id="nx2" hidden></button>
     </div>
     <div class="panel" id="pn3"><i class="scan"></i>
       <div class="ph"><span>03</span><b id="p3-t"></b></div>
@@ -728,7 +747,9 @@
       <div class="rk-s" id="rk-s"></div>
       <div class="rk-p" id="rk-p"></div>
     </div>
-    <div class="panel">
+    <i class="rt-a" id="rtabs-a"></i>
+    <div class="rtabs" id="rtabs"><button type="button" data-rt="sens" class="on"></button><button type="button" data-rt="why"></button><button type="button" data-rt="data"></button><button type="button" data-rt="ideal"></button></div>
+    <div class="panel" data-t="sens">
       <div class="ph"><span>⚙</span><b id="r1-t"></b></div>
       <div class="small" id="r1-d" style="margin:-4px 0 6px"></div>
       <div id="sl"></div>
@@ -737,19 +758,15 @@
       <button type="button" class="cardb" id="card" hidden><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-8 8"/></svg><span class="cb2"><b id="card-t"></b><small id="card-d"></small></span><i>›</i></button>
       <div class="sent" id="sent"></div>
     </div>
-    <button type="button" class="adstrip" id="ad-top"><span>⭐</span><span class="as-m"><b id="ad-top-t"></b><small id="ad-top-d"></small></span><i>↓</i></button>
-    <div class="panel" id="tune-p">
+    <button type="button" class="adstrip" id="ad-top" data-t="sens"><span>⭐</span><span class="as-m"><b id="ad-top-t"></b><small id="ad-top-d"></small></span><i>↓</i></button>
+    <div class="panel" id="tune-p" data-t="sens">
       <div class="ph"><span>✓</span><b id="r3-t"></b></div>
       <ol class="tsteps" id="tsteps"></ol>
       <div class="fb" id="fb"></div>
       <div class="tstat" id="tstat"></div>
       <ul class="hist" id="hist"></ul>
     </div>
-    <div class="panel" id="rules-p">
-      <div class="ph"><span>↗</span><b id="r5-t"></b></div>
-      <ul class="rules" id="rules"></ul>
-    </div>
-    <div class="panel" id="scan-p" hidden>
+    <div class="panel" id="scan-p" data-t="data" hidden>
       <div class="ph"><span>◎</span><b id="r7-t"></b></div>
       <div class="small" id="r7-d" style="margin:-4px 0 10px"></div>
       <div class="sk" id="sk"></div>
@@ -757,22 +774,26 @@
       <canvas class="rescv" id="sk-cv" hidden></canvas>
       <div class="small" id="sk-cap" style="margin-top:6px" hidden></div>
     </div>
-    <div class="panel" id="diag-p">
+    <div class="panel" id="diag-p" data-t="why">
       <div class="ph"><span>≡</span><b id="r4-t"></b></div>
       <ul class="why" id="diag"></ul>
       <canvas class="rescv" id="res-cv" hidden></canvas>
     </div>
-    <div class="panel" id="data-p" hidden>
+    <div class="panel" id="data-p" data-t="data" hidden>
       <div class="ph"><span>∑</span><b id="r6-t"></b></div>
       <div class="small" id="r6-d" style="margin:-4px 0 10px"></div>
       <table class="dt" id="dtab"></table>
       <div class="kv" id="dkv"></div>
     </div>
-    <div class="panel">
+    <div class="panel" data-t="why">
       <div class="ph"><span>?</span><b id="r2-t"></b></div>
       <ul class="why" id="why"></ul>
     </div>
-    <div class="panel ideal" id="ideal-p">
+    <div class="panel" id="rules-p" data-t="why">
+      <div class="ph"><span>↗</span><b id="r5-t"></b></div>
+      <ul class="rules" id="rules"></ul>
+    </div>
+    <div class="panel ideal" id="ideal-p" data-t="ideal">
       <span class="id-tag" id="id-tag"></span>
       <div class="id-top"><b id="id-t"></b><span class="id-pr" id="id-pr"></span></div>
       <p id="id-d"></p>
@@ -808,7 +829,7 @@
 <div id="scan" class="ovl" hidden>
   <i class="sc-grid"></i>
   <i class="sc-line" id="sc-line"><span id="sc-ll"></span></i>
-  <div class="fbtn" id="sc-fire"><svg class="sc-ring" id="sc-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg><i class="fc"><svg viewBox="0 0 12 18"><path d="M6 0c1.6 1.5 2.6 3.3 2.6 5.6V13H3.4V5.6C3.4 3.3 4.4 1.5 6 0z" fill="#f4f4f6"/><path d="M2.6 14h6.8v4H2.6z" fill="#a78bfa"/></svg></i></div>
+  <div class="fbtn" id="sc-fire"><i class="fc"><svg viewBox="0 0 12 18"><path d="M6 0c1.6 1.5 2.6 3.3 2.6 5.6V13H3.4V5.6C3.4 3.3 4.4 1.5 6 0z" fill="#f4f4f6"/><path d="M2.6 14h6.8v4H2.6z" fill="#a78bfa"/></svg></i></div>
   <div class="hud"><div class="hl"><b id="sc-t"></b><span id="sc-c"></span><div class="dots" id="sc-dots"></div></div></div>
   <div class="sc-pan" id="sc-pan">
     <div class="sc-card" id="sc-card"><b id="sc-h1"></b><small id="sc-h2"></small>
@@ -844,7 +865,7 @@
   <div class="hud"><div class="hl"><b id="sw-t"></b><span id="sw-c"></span><small class="sw-s" id="sw-s"></small><div class="dots" id="sw-dots"></div></div></div>
   <div class="sw-hint" id="sw-hint"><div class="sw-arrow"></div><b id="sw-h1"></b><small id="sw-h2"></small></div>
   <div class="sw-rule" id="sw-rule"></div>
-  <div class="sw-live" id="sw-live" hidden><b id="lv-t"></b><div id="lv-rows"></div></div>
+  <div class="sw-live" id="sw-live" hidden><b id="lv-t"></b><div id="lv-rows"></div><div class="lv-p" id="lv-p" hidden></div></div>
   <div class="sw-card" id="sw-card"></div>
   <div class="stpop" id="sw-pop"></div>
   <button type="button" class="aquit" id="sw-quit">✕</button>
@@ -869,7 +890,7 @@ window.addEventListener('error', function (e) {
     ['hud', 'scan', 'swipe', 'calc'].forEach(function (id) { var x = document.getElementById(id); if (x) x.hidden = true; });
     document.querySelectorAll('.scr').forEach(function (s) { s.hidden = true; });
     var f = document.getElementById('fatal'); f.hidden = false;
-    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v362';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v363';
   } catch (_) {}
 }, true);
 </script>
@@ -884,7 +905,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v362';
+  var VER = 'v363';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -912,7 +933,7 @@ window.addEventListener('error', function (e) {
     ru: {
       ttl: 'Настройка оттяжки', sub: 'Сенса под твою руку', tag: 'Free Fire', hk: 'Около минуты',
       ht: 'Настроим<br><em>твою оттяжку</em>',
-      hd: 'Ответь на пару вопросов, поставь кнопку огня как в игре, пройди скан пальца — скорость, реакция, дрожание — и потяни оттяжку: прицел поедет, как в тренировке. Я скажу, какие цифры поставить, а потом вместе проверим в игре.',
+      hd: 'Ответь на пару вопросов, поставь кнопку огня как в игре, пройди скан пальца — скорость и реакция — и потяни оттяжку: прицел поедет, как в тренировке. Я скажу, какие цифры поставить, а потом вместе проверим в игре.',
       pg: ['Телефон', 'Как играешь', 'Настройки'],
       p1: 'Твой телефон', q_ph: 'Напиши модель: Redmi Note 12, iPhone 13…', q_none: 'Не нашёл — нажми «Нет моего телефона» ниже',
       q_more: 'Начни писать модель — например «Note 12» или «A54»', man: 'Нет моего телефона', man_off: 'Найти телефон в списке',
@@ -949,26 +970,23 @@ window.addEventListener('error', function (e) {
       dist: { n: 'Близко · 5 м', m: 'Средне · 15 м', f: 'Далеко · 30 м' },
       lv_t0: 'Твои настройки · старт', lv_t: 'Твои настройки · оттяжек: {n}',
       sc_title: 'Шаг 2 из 3 · Скан пальца', sc_pop: 'Скан пальца', sc_test: 'Тест {i} из {n}',
-      sc_tn: ['Дрожание пальца', 'Скорость и реакция', 'Точность остановки'],
-      sc_h: { hold: ['Зажми кнопку огня и держи палец неподвижно', '2 секунды — меряю, дрожит ли палец'],
-              fast: ['Зажми кнопку огня и жди сигнала', 'Кнопка загорится зелёным — сразу резко тяни вверх'],
+      sc_tn: ['Скорость и реакция', 'Точность остановки'],
+      sc_h: { fast: ['Зажми кнопку огня и жди сигнала', 'Кнопка загорится зелёным — сразу резко тяни вверх'],
               ctl: ['Плавно проведи вверх до линии', 'и остановись точно на ней — меряю, как ты останавливаешь палец'] },
-      sc_hold: ['Держи… не двигай палец', 'Меряю дрожание'], sc_wait: ['Жди сигнала…', 'Не двигай палец, пока кнопка не загорится'],
+      sc_wait: ['Жди сигнала…', 'Не двигай палец, пока кнопка не загорится'],
       sc_go: 'Тяни!', sc_go2: 'Резко вверх',
-      sc_moved: ['Палец сдвинулся', 'Держи неподвижно — нажми ещё раз'], sc_short: ['Рано отпустил', 'Держи 2 секунды — пока не замкнётся круг'],
       sc_early: ['Рано! Жди сигнала', 'Тяни только когда кнопка загорится зелёным'], sc_wup: ['Отпустил до сигнала', 'Держи кнопку, пока не загорится, — потом тяни'],
       sc_late: ['Не успел', 'Тяни сразу, как кнопка загорится'], sc_notup: ['Это не рывок вверх', 'Резко тяни вверх от кнопки огня'],
       sc_ctl_bad: ['Проведи вверх до линии', 'Плавно, от кнопки огня, — и остановись на линии'],
-      sc_ok_hold: 'Готово — отпусти палец', sc_ok_hold2: 'Дрожание {j}',
       sc_ok_fast: 'Скорость пальца {v} см/с', sc_ok_fast2: 'Реакция {rt} мс · разгон {tp} мс',
       sc_ok_ctl: 'В {e} мм от линии', sc_ctl_w: ['точно на линии', 'палец проскочил выше', 'палец не дотянул'],
       sc_done: 'Скан готов ✓', sc_done_c: 'Скан готов', sc_np: 'Разобрал {n} точек касания',
       sc_next: 'Дальше: оттяжка', sc_skip: 'Пропустить — взять скан прошлого раза',
-      sc_k: { v: 'Скорость', tp: 'Разгон', rt: 'Реакция', jit: 'Дрожание', stop: 'Остановка', hz: 'Касания' },
-      sc_live: { hold: 'Дрожание пальца', fast: 'Скорость пальца', ctl: 'Палец до линии' },
+      sc_k: { v: 'Скорость', tp: 'Разгон', rt: 'Реакция', stop: 'Остановка', sm: 'Плавность', hz: 'Касания' },
+      sc_live: { fast: 'Скорость пальца', ctl: 'Палец до линии' }, sc_sm: ['плавно', 'с подправкой'],
       sc_w: { v: ['плавный палец', 'быстрый палец', 'очень быстрый палец'], rt: ['реакция быстрая', 'реакция обычная', 'реакция медленная'],
-              jit: ['рука стабильная', 'рука чуть дрожит', 'рука дрожит'], stop: ['останавливаешь точно', 'останавливаешь нормально', 'палец проскакивает'] },
-      sc_norm: 'норма', sc_line: 'линия', mm: 'мм', ms: 'мс', cm: 'см', sec: 'с',
+              stop: ['останавливаешь точно', 'останавливаешь нормально', 'палец проскакивает'] },
+      sc_line: 'линия', mm: 'мм', ms: 'мс', cm: 'см', sec: 'с',
       r7: 'Скан пальца', r7d: 'Замерил по {n} точкам касания твоего экрана — цифры подстроены под твою руку.',
       r7d0: 'Замерил по касаниям твоего экрана — цифры подстроены под твою руку.',
       sc_wt: { rt: ['быстрая', 'обычная', 'медленная'] },
@@ -978,7 +996,8 @@ window.addEventListener('error', function (e) {
       spd: ['плавно', 'быстро', 'резко'], cms: 'см/с',
       rc: { f_ok: '✓ Вдали плавно — правильно', f_bad: 'Вдали тяни плавнее', n_ok: '✓ Вблизи резко и вверх-вправо — правильно',
             n_slow: 'Вблизи тяни резче', n_dir: 'Вблизи тяни вверх и вправо ↗', n_both: 'Вблизи тяни резче и вверх-вправо ↗' },
-      ext: 'Оттяжки разные — ещё 3 для точности',
+      ext: 'Точность ±{p}% — ещё 3 оттяжки, чтобы было точнее', lv_p: 'Точность итога: ±{p}%',
+      rt: ['Сенса', 'Разбор', 'Замеры', '⭐ До идеала'], nx: 'Дальше →',
       r5: 'Правила оттяжки', rule_ok: 'у тебя так', rule_bad: 'попробуй',
       rules: [['🎯', 'Наводи прицел на грудь — оттяжка дотянет до головы', ''], ['🐢', 'Далеко — тяни плавно и коротко', 'rfs'],
               ['⚡', 'Близко — тяни резко', 'rns'], ['↗️', 'Близко — прицел слева от соперника, тяни вверх и вправо', 'rnd']],
@@ -992,7 +1011,9 @@ window.addEventListener('error', function (e) {
       r1: 'Поставь в игре', r1d: 'Настройки → Чувствительность. Кнопка огня — в «Управление → HUD».',
       was: 'было {v} →', filled: 'подобрал', same: 'как было',
       r3: 'Проверь в тренировке', tsteps: ['Поставь эти цифры в игре', 'Зайди в «Тренировку» и потяни 10 раз по манекенам', 'Нажми, что получилось — я подправлю'],
-      fbs: [['up', '↑', 'Улетает'], ['down', '↓', 'Не дотягивает'], ['ok', '✓', 'В голову']],
+      fbs: [['up2', '⬆', 'Сильно улетает'], ['up1', '↑', 'Чуть улетает'], ['ok', '✓', 'В голову'], ['down1', '↓', 'Чуть не дотягивает'],
+            ['down2', '⬇', 'Сильно не дотягивает']],
+      h_mag: { 1: 'чуть ', 2: 'сильно ' },
       fbs_old: [['up', '↑', 'Перелетает'], ['down', '↓', 'Не долетает'], ['ok', '✓', 'Отлично']],
       tnext: 'Следующая поправка — {p}%', tdone: 'Готово! Это твои настройки — нажми «Скопировать значения».', told: 'Сыграй 2–3 матча и скажи — поправлю.',
       tlim: 'Нашёл границы: твоя сенса между {lo} и {hi}. Следующая поправка — {p}%', tlim2: 'Нашёл границы — следующая поправка {p}%',
@@ -1003,7 +1024,7 @@ window.addEventListener('error', function (e) {
       dcol: { n: 'Близко', m: 'Средне', f: 'Далеко' },
       dr: { c: 'Оттяжек', len: 'Длина, см', v: 'Скорость, см/с', tp: 'Разгон, мс', b: 'Первый рывок', ph: 'Рывком в голову', dev: 'Вбок от нужного',
             cor: 'Доводка после' },
-      dk: { prec: 'Точность замера', n: 'Оттяжек', warm: 'пристрелка', hz: 'Касания', fps: 'Экран', gfps: 'FPS в игре', px: 'Точек в 1 см' },
+      dk: { prec: 'Точность замера', precr: 'Точность итога', n: 'Оттяжек', warm: 'пристрелка', hz: 'Касания', fps: 'Экран', gfps: 'FPS в игре', px: 'Точек в 1 см' },
       dq: ['высокая', 'средняя', 'низкая'], hz: 'Гц',
       labels: { gen: 'Обзор', red: 'Коллиматор', x2: 'Прицел 2×', x4: 'Прицел 4×', snp: 'Снайперский прицел', free: 'Свободный обзор' },
       fire: 'Кнопка огня', copy: 'Скопировать значения', copied: 'Скопировал — вставь в заметки или сразу в игру',
@@ -1034,7 +1055,7 @@ window.addEventListener('error', function (e) {
     en: {
       ttl: 'Drag setup', sub: 'Sensitivity for your hand', tag: 'Free Fire', hk: 'About a minute',
       ht: 'Let\'s tune<br><em>your drag</em>',
-      hd: 'Answer a couple of questions, place the fire button like in the game, pass the finger scan — speed, reaction, tremor — and pull: the aim moves like in training. I\'ll tell you which numbers to set, then we check it in the game together.',
+      hd: 'Answer a couple of questions, place the fire button like in the game, pass the finger scan — speed and reaction — and pull: the aim moves like in training. I\'ll tell you which numbers to set, then we check it in the game together.',
       pg: ['Phone', 'How you play', 'Settings'],
       p1: 'Your phone', q_ph: 'Type the model: Redmi Note 12, iPhone 13…', q_none: 'Not found — tap «My phone is not listed» below',
       q_more: 'Start typing the model — e.g. «Note 12» or «A54»', man: 'My phone is not listed', man_off: 'Find my phone in the list',
@@ -1071,26 +1092,23 @@ window.addEventListener('error', function (e) {
       dist: { n: 'Close · 5 m', m: 'Mid · 15 m', f: 'Far · 30 m' },
       lv_t0: 'Your settings · start', lv_t: 'Your settings · drags: {n}',
       sc_title: 'Step 2 of 3 · Finger scan', sc_pop: 'Finger scan', sc_test: 'Test {i} of {n}',
-      sc_tn: ['Finger tremor', 'Speed and reaction', 'Stopping precision'],
-      sc_h: { hold: ['Hold the fire button and keep your finger still', '2 seconds — I measure whether your finger trembles'],
-              fast: ['Hold the fire button and wait for the signal', 'The button turns green — pull up sharply right away'],
+      sc_tn: ['Speed and reaction', 'Stopping precision'],
+      sc_h: { fast: ['Hold the fire button and wait for the signal', 'The button turns green — pull up sharply right away'],
               ctl: ['Smoothly slide up to the line', 'and stop right on it — I measure how you stop your finger'] },
-      sc_hold: ['Hold… keep still', 'Measuring the tremor'], sc_wait: ['Wait for the signal…', 'Keep your finger still until the button lights up'],
+      sc_wait: ['Wait for the signal…', 'Keep your finger still until the button lights up'],
       sc_go: 'Pull!', sc_go2: 'Sharply up',
-      sc_moved: ['Your finger moved', 'Keep it still — press again'], sc_short: ['Released too early', 'Hold for 2 seconds — until the ring closes'],
       sc_early: ['Too early! Wait for the signal', 'Pull only when the button turns green'], sc_wup: ['Released before the signal', 'Hold the button until it lights up, then pull'],
       sc_late: ['Too late', 'Pull as soon as the button lights up'], sc_notup: ['That is not a pull up', 'Pull sharply up from the fire button'],
       sc_ctl_bad: ['Slide up to the line', 'Smoothly, from the fire button — and stop on the line'],
-      sc_ok_hold: 'Done — release your finger', sc_ok_hold2: 'Tremor {j}',
       sc_ok_fast: 'Finger speed {v} cm/s', sc_ok_fast2: 'Reaction {rt} ms · ramp-up {tp} ms',
       sc_ok_ctl: '{e} mm from the line', sc_ctl_w: ['right on the line', 'your finger went past it', 'your finger fell short'],
       sc_done: 'Scan done ✓', sc_done_c: 'Scan done', sc_np: 'Analysed {n} touch points',
       sc_next: 'Next: the drag', sc_skip: 'Skip — use last time\'s scan',
-      sc_k: { v: 'Speed', tp: 'Ramp-up', rt: 'Reaction', jit: 'Tremor', stop: 'Stopping', hz: 'Touch rate' },
-      sc_live: { hold: 'Finger tremor', fast: 'Finger speed', ctl: 'Finger to the line' },
+      sc_k: { v: 'Speed', tp: 'Ramp-up', rt: 'Reaction', stop: 'Stopping', sm: 'Smoothness', hz: 'Touch rate' },
+      sc_live: { fast: 'Finger speed', ctl: 'Finger to the line' }, sc_sm: ['smooth', 'with a correction'],
       sc_w: { v: ['smooth finger', 'fast finger', 'very fast finger'], rt: ['fast reaction', 'average reaction', 'slow reaction'],
-              jit: ['steady hand', 'slight tremor', 'tremor'], stop: ['you stop precisely', 'you stop okay', 'your finger overshoots'] },
-      sc_norm: 'normal', sc_line: 'line', mm: 'mm', ms: 'ms', cm: 'cm', sec: 's',
+              stop: ['you stop precisely', 'you stop okay', 'your finger overshoots'] },
+      sc_line: 'line', mm: 'mm', ms: 'ms', cm: 'cm', sec: 's',
       r7: 'Finger scan', r7d: 'Measured from {n} touch points of your screen — the numbers fit your hand.',
       r7d0: 'Measured from the touches of your screen — the numbers fit your hand.',
       sc_wt: { rt: ['fast', 'average', 'slow'] },
@@ -1100,7 +1118,8 @@ window.addEventListener('error', function (e) {
       spd: ['smooth', 'fast', 'sharp'], cms: 'cm/s',
       rc: { f_ok: '✓ Smooth at range — right', f_bad: 'Pull smoother at range', n_ok: '✓ Sharp and up-right up close — right',
             n_slow: 'Pull sharper up close', n_dir: 'Up close pull up and right ↗', n_both: 'Up close pull sharper and up-right ↗' },
-      ext: 'Your drags differ — 3 more for precision',
+      ext: 'Precision ±{p}% — 3 more drags to be more precise', lv_p: 'Result precision: ±{p}%',
+      rt: ['Sens', 'Analysis', 'Data', '⭐ Ideal'], nx: 'Next →',
       r5: 'Drag rules', rule_ok: 'you do it', rule_bad: 'try it',
       rules: [['🎯', 'Aim at the chest — the drag takes it to the head', ''], ['🐢', 'Far — pull smoothly and short', 'rfs'],
               ['⚡', 'Close — pull sharply', 'rns'], ['↗️', 'Close — aim left of the enemy, pull up and right', 'rnd']],
@@ -1114,7 +1133,9 @@ window.addEventListener('error', function (e) {
       r1: 'Set in the game', r1d: 'Settings → Sensitivity. Fire button — in «Controls → HUD».',
       was: 'was {v} →', filled: 'matched', same: 'same',
       r3: 'Check in training', tsteps: ['Set these numbers in the game', 'Go to «Training» and drag 10 times at dummies', 'Tap what happened — I\'ll fix it'],
-      fbs: [['up', '↑', 'Goes above'], ['down', '↓', 'Falls short'], ['ok', '✓', 'On the head']],
+      fbs: [['up2', '⬆', 'Way over'], ['up1', '↑', 'A bit over'], ['ok', '✓', 'On the head'], ['down1', '↓', 'A bit short'],
+            ['down2', '⬇', 'Way short']],
+      h_mag: { 1: 'slightly ', 2: 'way ' },
       fbs_old: [['up', '↑', 'Overshoots'], ['down', '↓', 'Undershoots'], ['ok', '✓', 'All good']],
       tnext: 'Next correction — {p}%', tdone: 'Done! These are your settings — tap «Copy values».', told: 'Play 2–3 matches and tell me — I\'ll adjust.',
       tlim: 'Found the limits: your sensitivity is between {lo} and {hi}. Next correction — {p}%', tlim2: 'Found the limits — next correction {p}%',
@@ -1125,7 +1146,7 @@ window.addEventListener('error', function (e) {
       dcol: { n: 'Close', m: 'Mid', f: 'Far' },
       dr: { c: 'Drags', len: 'Length, cm', v: 'Speed, cm/s', tp: 'Ramp-up, ms', b: 'First pull', ph: 'Pull on the head', dev: 'Off the line',
             cor: 'Fix after' },
-      dk: { prec: 'Precision', n: 'Drags', warm: 'warm-up', hz: 'Touch', fps: 'Screen', gfps: 'FPS in the game', px: 'Dots per 1 cm' },
+      dk: { prec: 'Precision', precr: 'Result precision', n: 'Drags', warm: 'warm-up', hz: 'Touch', fps: 'Screen', gfps: 'FPS in the game', px: 'Dots per 1 cm' },
       dq: ['high', 'medium', 'low'], hz: 'Hz',
       labels: { gen: 'General', red: 'Red dot', x2: '2× scope', x4: '4× scope', snp: 'Sniper scope', free: 'Free look' },
       fire: 'Fire button', copy: 'Copy values', copied: 'Copied — paste it into notes or straight into the game',
@@ -1294,6 +1315,9 @@ window.addEventListener('error', function (e) {
     $('hd-t').textContent = L.hd_t; $('hd-h1').textContent = L.hd_h1; $('hd-h2').textContent = L.hd_h2; $('hd-sl').textContent = L.hd_sz;
     $('hd-ok').textContent = L.hd_ok; $('hd-fire').querySelector('.hsel').setAttribute('data-l', L.hd_sel);
     for (var pi = 1; pi <= 3; pi++) $('pg' + pi + '-t').textContent = L.pg[pi - 1];
+    $('nx1').textContent = L.nx; $('nx2').textContent = L.nx;
+    var rb = $('rtabs').querySelectorAll('button');
+    for (var ri = 0; ri < rb.length; ri++) rb[ri].textContent = L.rt[ri];
     $('id-l').innerHTML = L.id_l.map(function (x) { return '<li><i>' + x[0] + '</i>' + esc(x[1]) + '</li>'; }).join('');
     $('hd-pop').innerHTML = '<small>' + esc(tpl(L.stage, { n: 1 })) + '</small>' + esc(L.hd_pop);
     $('sw-pop').innerHTML = '<small>' + esc(tpl(L.stage, { n: 3 })) + '</small>' + esc(L.sw_pop);
@@ -1343,12 +1367,16 @@ window.addEventListener('error', function (e) {
     'микромакс': 'micromax', 'лава': 'lava', 'айплей': 'iplay',
     'хмд': 'hmd', 'фейрфон': 'fairphone', 'фэйрфон': 'fairphone', 'кубот': 'cubot', 'кьюбот': 'cubot', 'оукител': 'oukitel', 'укител': 'oukitel',
     'умидиджи': 'umidigi', 'юмидиджи': 'umidigi', 'вико': 'wiko', 'шарп': 'sharp', 'аквос': 'aquos', 'пульс': 'pulse', 'скайлайн': 'skyline',
-    'бизон': 'bison', 'кингконг': 'kingkong', 'армор': 'armor', 'циви': 'civi', 'сиви': 'civi', 'микс': 'mix' };
+    'бизон': 'bison', 'кингконг': 'kingkong', 'армор': 'armor', 'циви': 'civi', 'сиви': 'civi', 'микс': 'mix',
+    '5г': '5g', '4г': '4g', 'лте': 'lte', 'дуал': 'dual' };
+  // v363: «a54 5g», «redmi note 12 4g nfc», «8/256» — такие слова и память не обязательны: есть в названии — выше, нет — всё равно найдём
+  var OPT_T = { '4g': 1, '5g': 1, 'lte': 1, 'nfc': 1, 'dual': 1, 'sim': 1, 'ds': 1, 'global': 1, 'version': 1, 'edition': 1 };
   var LOOK = { 'а': 'a', 'в': 'b', 'е': 'e', 'к': 'k', 'м': 'm', 'н': 'h', 'о': 'o', 'р': 'p', 'с': 'c', 'т': 't', 'у': 'y', 'х': 'x' };
   var LAY = { 'й': 'q', 'ц': 'w', 'у': 'e', 'к': 'r', 'е': 't', 'н': 'y', 'г': 'u', 'ш': 'i', 'щ': 'o', 'з': 'p', 'ф': 'a', 'ы': 's', 'в': 'd',
     'а': 'f', 'п': 'g', 'р': 'h', 'о': 'j', 'л': 'k', 'д': 'l', 'я': 'z', 'ч': 'x', 'с': 'c', 'м': 'v', 'и': 'b', 'т': 'n', 'ь': 'm' };
   function normQ(s, layout) {
-    s = String(s || '').toLowerCase().replace(/ё/g, 'е').replace(/\+/g, ' plus ');
+    s = String(s || '').toLowerCase().replace(/ё/g, 'е').replace(/\+/g, ' plus ')
+      .replace(/(^|[^a-z0-9а-я])\d+\s*\/\s*\d+(\s*(gb|гб))?(?![a-z0-9а-я])/g, '$1 ').replace(/(^|[^a-z0-9а-я])\d+\s*(gb|tb|гб|тб)(?![a-z0-9а-я])/g, '$1 ');
     return s.split(/[^a-z0-9а-я]+/).filter(Boolean).map(function (t) {
       if (layout) return t.split('').map(function (c) { return LAY[c] || c; }).join('');
       if (WORD[t]) return WORD[t];
@@ -1366,14 +1394,15 @@ window.addEventListener('error', function (e) {
     });
   }
   function searchRun(qt) {
-    if (!qt.length) return [];
-    var qc = qt.join(''), out = [];
+    var req = qt.filter(function (t) { return !OPT_T[t]; });
+    if (!req.length) return [];
+    var qc = req.join(''), out = [];
     S.idx.forEach(function (it) {
       var sc = 0, ok = true;
       qt.forEach(function (t) {
         if (it.toks.indexOf(t) >= 0) sc += 3;
         else if (it.toks.some(function (x) { return x.indexOf(t) === 0; })) sc += 1;
-        else ok = false;
+        else if (!OPT_T[t]) ok = false;
       });
       // слитно («note12», «a54pro»): совпадение по всей строке; выше — где модель идёт сразу после марки
       if (!ok) { if (qc.length < 2 || it.comp.indexOf(qc) < 0) return; sc = 1 + (it.comp.indexOf(qc) === it.toks[0].length ? 1 : 0); }
@@ -1460,6 +1489,7 @@ window.addEventListener('error', function (e) {
     if (lv) $('own-last').textContent = tpl(L.own_last, lv);
     // v354: шаги анкеты — какая панель готова, какую заполнять сейчас
     var done = [r.ph, r.gs, r.own && r.vals && r.now], cur = done.indexOf(false);
+    $('nx1').hidden = !done[0]; $('nx2').hidden = !done[1];                 // v363: «Дальше» — когда шаг заполнен
     for (var i = 0; i < 3; i++) {
       $('pn' + (i + 1)).classList.toggle('done', done[i]); $('pn' + (i + 1)).classList.toggle('cur', i === cur);
       $('pg' + (i + 1)).classList.toggle('done', done[i]); $('pg' + (i + 1)).classList.toggle('cur', i === cur);
@@ -1518,8 +1548,25 @@ window.addEventListener('error', function (e) {
   function restore(final) {
     if (S.restored) return;
     var d = lsGet('aim_draft_' + UID);
-    if (d && d.t && Date.now() - d.t < 30 * 86400000) { S.restored = true; applyDraft(d); return; }
-    if (final) { S.restored = true; prefill(S.last); }
+    if (d && d.t && Date.now() - d.t < 30 * 86400000) { S.restored = true; applyDraft(d); ptabFirst(); return; }
+    if (final) { S.restored = true; prefill(S.last); ptabFirst(); }
+  }
+  // v363: анкета вкладками (Кирилл: «пользователь очень долго листает») — видна одна панель; вкладки — полоски шагов
+  // «Телефон · Как играешь · Настройки» наверху; «Дальше» — когда шаг заполнен; «Начать замер» виден всегда
+  function ptab(n, user) {
+    S.ptab = n;
+    if (user) S.ptabUser = true;
+    for (var i = 1; i <= 3; i++) { $('pn' + i).classList.toggle('toff', i !== n); $('pg' + i).classList.toggle('on', i === n); }
+  }
+  function ptabFirst() {           // при открытии — первый незаполненный шаг; всё заполнено — «Настройки»
+    if (S.ptabUser) return;
+    var r = profReady(), i = [r.ph, r.gs, r.own && r.vals && r.now].indexOf(false);
+    ptab(i < 0 ? 3 : i + 1);
+  }
+  function ptabGo(n) {
+    ptab(n, true); haptic();
+    var y = $('h-k').getBoundingClientRect().bottom + window.pageYOffset;
+    if (window.pageYOffset > y) window.scrollTo(0, y);
   }
 
   // ── старт: свои настройки или подбор → «скорость» прицела в замере ──
@@ -1926,15 +1973,20 @@ window.addEventListener('error', function (e) {
     liveSend();                                                          // v360: цифры — в реальном времени
     if (out === 'head') haptic('success'); else haptic(null, 'light');
     if (W.list.length >= W.n) {
-      if (!W.ext && spreadW() > 0.2) {               // v356: на одном расстоянии оттяжки разные — ещё 3 (по одной на каждое) для точности
-        W.ext = true; W.n += 3; swCount();
-        $('sw-card').insertAdjacentHTML('beforeend', '<div class="pr-x">' + esc(L.ext) + '</div>');
+      // v363: пока итог не точнее ±7% — ещё 3 оттяжки, не больше двух раз (v356: +3 один раз, если оттяжки разные)
+      var pw = precW();
+      if ((W.ext || 0) < 2 && pw > PREC_GOAL) {
+        W.ext = (W.ext || 0) + 1; W.n += 3; swCount();
+        $('sw-card').insertAdjacentHTML('beforeend', '<div class="pr-x">' + esc(tpl(L.ext, { p: Math.round(pw * 100) })) + '</div>');
         setTimeout(function () { recenter(nextDummy); }, 1400); return;
       }
       W.done = true; setTimeout(function () { stopSwipe(); finishTune(); }, 1100); return;
     }
     setTimeout(function () { recenter(nextDummy); }, 900);
   }
+  // v363: насколько точен итог — ±2 × разброс / √оттяжек (95%), как считает бот; нет разброса — точно
+  var PREC_GOAL = 0.07;
+  function precW() { var n = W.res.length >= 6 ? W.res.length - 1 : W.res.length, sd = spreadW(); return n > 1 ? 2 * sd / Math.sqrt(n) : 0; }
   // разброс первого рывка среди оттяжек на ОДНОМ расстоянии (разные расстояния — не разброс), пристрелка не в счёт
   function spreadW() {
     var r = W.res.length >= 6 ? W.res.slice(1) : W.res, g = {}, ss = 0, df = 0, k;
@@ -2007,30 +2059,30 @@ window.addEventListener('error', function (e) {
   swEl.addEventListener('pointercancel', swUp);
   $('sw-quit').addEventListener('click', function (e) { e.stopPropagation(); quitSwipe(); });
 
-  // ── этап 2 «Скан пальца» (v362) ─────────────────────────────────────
+  // ── этап 2 «Скан пальца» (v362; v363 — без дрожания) ────────────────
   // Кирилл: «выглядит, как будто игра — пользователь не может поверить; добавь прогу, которая сканирует скорость самого
   // пальца, как серьёзная программа». Здесь нет манекенов и стрельбы — только прибор: график и замеры. Всё, что показываем, —
   // настоящие касания этого экрана, ничего «для вида»:
-  // 1) держи палец на кнопке огня 2 с — дрожание (разброс точек касания в мм, без медленного сползания);
-  // 2) три раза: зажми кнопку, жди сигнала и резко тяни вверх — реакция (мс от сигнала до начала движения), пик скорости пальца
+  // 1) три раза: зажми кнопку, жди сигнала и резко тяни вверх — реакция (мс от сигнала до начала движения), пик скорости пальца
   //    (см/с), разгон до пика (мс), как часто экран присылает касания (Гц);
-  // 3) два раза плавно тяни до линии и остановись — насколько точно останавливаешь палец (мм) и сколькими движениями.
+  // 2) два раза плавно тяни до линии и остановись — насколько точно останавливаешь палец (мм) и сколькими движениями.
+  // v363: тест «держи палец 2 с — дрожание» убран (Кирилл: «убери дрожание пальца»).
   // Числа уходят боту вместе с оттяжкой (scan); что они меняют в цифрах, решает и объясняет бот.
-  // Состояния: idle — ждём нажатия; hold — держит; wait — ждёт сигнала; go — сигнал был; ctl — тянет до линии; lift — попытка
-  // не засчитана, ждём, пока отпустит; next — тест готов, ждём, пока отпустит; pause — переход к следующему тесту; done — готово.
+  // Состояния: idle — ждём нажатия; wait — ждёт сигнала; go — сигнал был; ctl — тянет до линии; lift — попытка не засчитана,
+  // ждём, пока отпустит; pause — переход к следующему тесту; done — готово.
   // Ход теста держится на таймерах и касаниях, а не на кадрах (в фоне кадры не идут, урок v353) — кадры только рисуют график.
-  var SCN = [1, 3, 2], SC_HOLD = 2000, SC_SETTLE = 250, SC_SIG = [900, 2200];
-  var SCW = { v: [80, 180], rt: [300, 400], jit: [0.25, 0.5], stop: [1.5, 3] };      // как у бота (AIM_SCAN_*)
-  var SCK = ['v', 'tp', 'rt', 'jit', 'stop', 'hz'];
+  var SCN = [3, 2], SC_SIG = [900, 2200];
+  var SCW = { v: [80, 180], rt: [300, 400], stop: [1.5, 3] };      // как у бота (AIM_SCAN_*)
+  var SCK = ['v', 'tp', 'rt', 'stop', 'sm', 'hz'];
   var SC = { t: 0, i: 0, ptr: null, st: 'idle', fire: { x: 0, y: 0, r: 26 }, pxcm: 40, thr: 6, pts: [], dts: [], lt: 0, t0: 0, sigT: 0, mv: 0,
-             tm: 0, tm2: 0, raf: 0, hold: [], fast: [], ctl: [], curves: [], ctlc: [], np: 0, out: null, done: false, ly: 0, lc: 2, vpk: 0 };
+             tm: 0, tm2: 0, raf: 0, fast: [], ctl: [], curves: [], ctlc: [], np: 0, out: null, done: false, ly: 0, lc: 2, vpk: 0 };
   function evT(e) { var t = e && e.timeStamp, n = now(); return t && Math.abs(t - n) < 5000 ? t : n; }      // старые браузеры — время от 1970 года
   function lvl(x, lim) { return x <= lim[0] ? 0 : x <= lim[1] ? 1 : 2; }
   function fmtK(k, x) {
     if (k === 'v') return Math.round(x) + ' ' + L.cms;
     if (k === 'tp' || k === 'rt') return Math.round(x) + ' ' + L.ms;
-    if (k === 'jit') return (x < 0.05 ? '< ' + dec(0.05, 2) : dec(x, 2)) + ' ' + L.mm;
     if (k === 'stop') return '±' + dec(x, 1) + ' ' + L.mm;
+    if (k === 'sm') return x <= 1.3 ? L.sc_sm[0] : L.sc_sm[1];          // одним движением — плавно; дотягивал — с подправкой
     return Math.round(x) + ' ' + L.hz;
   }
   function scanOld() {          // скан прошлого раза (не старше 14 дней) — можно не проходить заново
@@ -2039,15 +2091,13 @@ window.addEventListener('error', function (e) {
   }
   function startScan() {
     clearTimeout(SC.tm); clearTimeout(SC.tm2);
-    SC.t = 0; SC.i = 0; SC.ptr = null; SC.st = 'idle'; SC.hold = []; SC.fast = []; SC.ctl = []; SC.curves = []; SC.ctlc = []; SC.np = 0;
+    SC.t = 0; SC.i = 0; SC.ptr = null; SC.st = 'idle'; SC.fast = []; SC.ctl = []; SC.curves = []; SC.ctlc = []; SC.np = 0;
     SC.out = null; SC.done = false; SC.dts = []; SC.pts = []; SC.pxcm = pxPerCm(); SC.thr = Math.max(3, 0.15 * SC.pxcm);
     $('scan').hidden = false; ovlOn();
     $('sc-next').hidden = true; $('sc-skip').hidden = !scanOld();
     scLayout(); scSet(); syncBack(); stagePop($('sc-pop'));
   }
-  function ringOn() { var r = $('sc-ring'); r.classList.remove('run'); r.getBoundingClientRect(); r.classList.add('run'); }
-  function ringOff() { $('sc-ring').classList.remove('run'); }
-  function stopScan() { clearTimeout(SC.tm); clearTimeout(SC.tm2); $('scan').hidden = true; SC.ptr = null; if (!SC.done) SC.st = 'idle'; ringOff(); }
+  function stopScan() { clearTimeout(SC.tm); clearTimeout(SC.tm2); $('scan').hidden = true; SC.ptr = null; if (!SC.done) SC.st = 'idle'; }
   function quitScan() {
     var go = function () { stopScan(); ovlOff(); fullOff(); show('prof'); };
     try { if (tg && tg.showConfirm && tg.isVersionAtLeast && tg.isVersionAtLeast('6.2')) { tg.showConfirm(L.quit, function (ok) { if (ok) go(); }); return; } } catch (e) {}
@@ -2069,27 +2119,27 @@ window.addEventListener('error', function (e) {
     $('sc-h1').textContent = h1; $('sc-h2').textContent = h2 || '';
     $('sc-card').className = 'sc-card' + (cls ? ' ' + cls : '');
   }
-  function scTest() { return ['hold', 'fast', 'ctl'][Math.min(2, SC.t)]; }
+  function scTest() { return ['fast', 'ctl'][Math.min(1, SC.t)]; }
   function scSet() {             // заголовок, «что делать» и подсветка замеров под текущий тест
     var k = scTest();
     scHead();
     scCard(L.sc_h[k][0], L.sc_h[k][1]);
-    $('sc-line').classList.toggle('on', SC.t === 2);
+    $('sc-line').classList.toggle('on', k === 'ctl');
     $('sc-fire').classList.add('need');
     $('sc-st').textContent = L.sc_live[k]; $('sc-v').textContent = '—';
     scDots(); scTiles(); scReq();
   }
-  function scHead() {            // «Тест 2 из 3 · Скорость и реакция · 2 / 3» — одной строкой под заголовком
+  function scHead() {            // «Тест 1 из 2 · Скорость и реакция · 2 / 3» — одной строкой под заголовком
     var n = SCN[SC.t];
-    $('sc-c').textContent = tpl(L.sc_test, { i: SC.t + 1, n: 3 }) + ' · ' + L.sc_tn[SC.t] + (n > 1 ? ' · ' + tpl(L.of, { i: Math.min(SC.i + 1, n), n: n }) : '');
+    $('sc-c').textContent = tpl(L.sc_test, { i: SC.t + 1, n: SCN.length }) + ' · ' + L.sc_tn[SC.t] + (n > 1 ? ' · ' + tpl(L.of, { i: Math.min(SC.i + 1, n), n: n }) : '');
   }
   function scDots() {
-    var done = SC.hold.length + SC.fast.length + SC.ctl.length, h = '';
-    for (var i = 0; i < 6; i++) h += '<i' + (i < done ? ' class="on"' : '') + '></i>';
+    var done = SC.fast.length + SC.ctl.length, all = SCN[0] + SCN[1], h = '';
+    for (var i = 0; i < all; i++) h += '<i' + (i < done ? ' class="on"' : '') + '></i>';
     $('sc-dots').innerHTML = h;
   }
   function scHz() { return SC.dts.length >= 20 ? Math.round(1000 / Math.max(0.5, med(SC.dts))) : null; }
-  // что уже намерили: скорость — лучшая из рывков, разгон и реакция — середина, остановка — в среднем
+  // что уже намерили: скорость — лучшая из рывков, разгон и реакция — середина, остановка и плавность — в среднем
   function scAgg() {
     var f = SC.fast, c = SC.ctl, o = {}, hz = scHz();
     if (f.length) {
@@ -2098,7 +2148,6 @@ window.addEventListener('error', function (e) {
       if (tps.length) o.tp = Math.round(med(tps));
       o.rt = Math.round(med(f.map(function (x) { return x.rt; })));
     }
-    if (SC.hold.length) o.jit = rn(SC.hold[SC.hold.length - 1].jit, 2);
     if (c.length) {
       o.stop = r1(c.reduce(function (a, x) { return a + Math.abs(x.e); }, 0) / c.length);
       o.sm = r1(c.reduce(function (a, x) { return a + x.sm; }, 0) / c.length);
@@ -2108,28 +2157,12 @@ window.addEventListener('error', function (e) {
     return o;
   }
   function scTiles() {
-    var o = scAgg(), act = { hold: ['jit'], fast: ['v', 'tp', 'rt'], ctl: ['stop'] }[scTest()] || [];
+    var o = scAgg(), act = { fast: ['v', 'tp', 'rt'], ctl: ['stop', 'sm'] }[scTest()] || [];
     $('sc-m').innerHTML = SCK.map(function (k) {
       var on = !SC.done && act.indexOf(k) >= 0;
       return '<div class="sc-k' + (on ? ' act' : '') + (o[k] != null ? ' ok' : '') + '" data-k="' + k + '"><i>' + esc(L.sc_k[k]) + '</i><b>'
         + (o[k] != null ? esc(fmtK(k, o[k])) : '—') + '</b></div>';
     }).join('');
-  }
-  // дрожание, мм: разброс точек касания вокруг прямой по времени (медленное сползание пальца — не дрожь)
-  function jitter(p, t0) {
-    var q = p.filter(function (x) { return x.t >= t0 + SC_SETTLE; }), n = q.length, i;
-    if (n < 4) return 0;            // экран не прислал ни одного сдвига — дрожь меньше, чем он различает
-    function res(k) {
-      var mt = 0, mv = 0, sxy = 0, sxx = 0, j;
-      for (j = 0; j < n; j++) { mt += q[j].t; mv += q[j][k]; }
-      mt /= n; mv /= n;
-      for (j = 0; j < n; j++) { sxy += (q[j].t - mt) * (q[j][k] - mv); sxx += (q[j].t - mt) * (q[j].t - mt); }
-      var b = sxx > 0 ? sxy / sxx : 0;
-      return q.map(function (x) { return x[k] - mv - b * (x.t - mt); });
-    }
-    var rx = res('x'), ry = res('y'), ss = 0;
-    for (i = 0; i < n; i++) ss += rx[i] * rx[i] + ry[i] * ry[i];
-    return Math.sqrt(ss / n) / SC.pxcm * 10;
   }
   // скорость пальца (см/с) и высота над точкой нажатия (см) по времени от t0 — шаг 8 мс, скорость по окну 16 мс (как в замере)
   function vSeries(p, t0) {
@@ -2162,15 +2195,6 @@ window.addEventListener('error', function (e) {
       else if (v >= 0.25 * mx && v > lo + 0.25 * mx) { st = 1; pk = v; n++; }
     }
     return Math.max(1, n);
-  }
-  function holdDone() {
-    if (SC.st !== 'hold') return;
-    var j = jitter(SC.pts, SC.t0);
-    SC.hold.push({ jit: j }); SC.np += SC.pts.length;
-    SC.i++; SC.st = 'next'; haptic('success');
-    scCard(L.sc_ok_hold, tpl(L.sc_ok_hold2, { j: fmtK('jit', j) }), 'ok');
-    $('sc-v').textContent = fmtK('jit', j);
-    scDots(); scTiles(); scReq();
   }
   function sigGo() {
     if (SC.st !== 'wait') return;
@@ -2221,17 +2245,16 @@ window.addEventListener('error', function (e) {
   function scNextTest() {
     if ($('scan').hidden) return;
     SC.t++; SC.i = 0;
-    if (SC.t > 2) { scFinish(); return; }
+    if (SC.t >= SCN.length) { scFinish(); return; }
     SC.st = 'idle'; scSet();
   }
   function scFinish() {
-    SC.t = 2; SC.done = true; SC.st = 'done';
+    SC.t = SCN.length - 1; SC.done = true; SC.st = 'done';
     var o = scAgg(), ws = [], s;
     SC.out = o;
     $('sc-line').classList.remove('on'); $('sc-fire').classList.remove('need');
     if (o.v != null) ws.push(L.sc_w.v[lvl(o.v, SCW.v)]);
     if (o.rt != null) ws.push(L.sc_w.rt[lvl(o.rt, SCW.rt)]);
-    if (o.jit != null) ws.push(L.sc_w.jit[lvl(o.jit, SCW.jit)]);
     if (o.stop != null) ws.push(L.sc_w.stop[lvl(o.stop, SCW.stop)]);
     s = ws.join(' · ');
     scCard(L.sc_done, s.charAt(0).toUpperCase() + s.slice(1), 'ok');
@@ -2242,7 +2265,6 @@ window.addEventListener('error', function (e) {
   }
   function scLive() {             // число над графиком — пока палец двигается
     var p = SC.pts, last = p[p.length - 1];
-    if (SC.st === 'hold') { $('sc-v').textContent = fmtK('jit', jitter(p, SC.t0)); return; }
     if (SC.st === 'go' && SC.mv) {
       var sp = swSpeed(p);
       SC.vpk = Math.max(SC.vpk, sp.v * 1000 / SC.pxcm);
@@ -2299,14 +2321,8 @@ window.addEventListener('error', function (e) {
   function scReq() { if (!SC.raf && !$('scan').hidden) SC.raf = requestAnimationFrame(scDraw); }
   function scDraw() {
     SC.raf = 0;
-    var cv = $('sc-cv'), k = SC.done ? 'fast' : scTest(), i;
-    if (k === 'hold') {
-      var p = SC.pts, ser = { t: [], v: [] };
-      if (SC.st === 'hold' || SC.st === 'next') for (i = 0; i < p.length; i++) {
-        ser.t.push(p[i].t - SC.t0); ser.v.push(Math.sqrt(Math.pow(p[i].x - p[0].x, 2) + Math.pow(p[i].y - p[0].y, 2)) / SC.pxcm * 10);
-      }
-      scope(cv, { xmax: SC_HOLD, ymax: 1, ylab: '1 ' + L.mm, xlab: '2 ' + L.sec, ref: SCW.jit[0], rlab: L.sc_norm, series: [ser] });
-    } else if (k === 'fast') {
+    var cv = $('sc-cv'), k = SC.done ? 'fast' : scTest();
+    if (k === 'fast') {
       var cs = SC.curves.slice();
       if (SC.st === 'go' && SC.mv) cs.push(vSeries(SC.pts, SC.mv));
       scope(cv, fastOpts(cs));
@@ -2330,8 +2346,7 @@ window.addEventListener('error', function (e) {
     clearTimeout(SC.tm2);
     SC.pts = [{ t: t, x: e.clientX, y: e.clientY }]; SC.t0 = t; SC.lt = 0; SC.mv = 0; SC.sigT = 0; SC.vpk = 0;
     $('sc-fire').classList.remove('need'); $('sc-fire').classList.add('on'); $('sc-skip').hidden = true; $('sc-v').textContent = '—';
-    if (k === 'hold') { SC.st = 'hold'; ringOn(); scCard(L.sc_hold[0], L.sc_hold[1]); SC.tm = setTimeout(holdDone, SC_HOLD); }
-    else if (k === 'fast') { SC.st = 'wait'; scCard(L.sc_wait[0], L.sc_wait[1], 'wt'); SC.tm = setTimeout(sigGo, SC_SIG[0] + Math.random() * (SC_SIG[1] - SC_SIG[0])); }
+    if (k === 'fast') { SC.st = 'wait'; scCard(L.sc_wait[0], L.sc_wait[1], 'wt'); SC.tm = setTimeout(sigGo, SC_SIG[0] + Math.random() * (SC_SIG[1] - SC_SIG[0])); }
     else { SC.st = 'ctl'; scCard(L.sc_h.ctl[0], L.sc_h.ctl[1]); }
     scReq(); e.preventDefault();
   });
@@ -2346,10 +2361,7 @@ window.addEventListener('error', function (e) {
       SC.lt = t;
       if (!SC.mv && dx * dx + dy * dy > SC.thr * SC.thr) SC.mv = t;                                          // начал двигаться
     }
-    var last = SC.pts[SC.pts.length - 1], d = Math.sqrt(Math.pow(last.x - p0.x, 2) + Math.pow(last.y - p0.y, 2));
-    if (SC.st === 'hold' && d > 0.5 * SC.pxcm) {                  // сдвинул палец больше чем на 5 мм — это уже не «держит»
-      clearTimeout(SC.tm); ringOff(); SC.st = 'lift'; scCard(L.sc_moved[0], L.sc_moved[1], 'bad'); haptic('warning');
-    } else if (SC.st === 'wait' && SC.mv) {                        // потянул до сигнала
+    if (SC.st === 'wait' && SC.mv) {                               // потянул до сигнала
       clearTimeout(SC.tm); SC.st = 'lift'; scCard(L.sc_early[0], L.sc_early[1], 'bad'); haptic('warning');
     }
     scLive(); scReq(); e.preventDefault();
@@ -2361,13 +2373,11 @@ window.addEventListener('error', function (e) {
       var lp = SC.pts[SC.pts.length - 1];
       if (lp && (lp.x !== e.clientX || lp.y !== e.clientY)) SC.pts.push({ t: Math.max(lp.t, evT(e)), x: e.clientX, y: e.clientY });
     }
-    $('sc-fire').classList.remove('on', 'go'); ringOff();
+    $('sc-fire').classList.remove('on', 'go');
     var st = SC.st;
-    if (st === 'hold') { clearTimeout(SC.tm); SC.st = 'idle'; scCard(L.sc_short[0], L.sc_short[1], 'bad'); haptic('warning'); }
-    else if (st === 'wait') { clearTimeout(SC.tm); SC.st = 'idle'; scCard(L.sc_wup[0], L.sc_wup[1], 'bad'); haptic('warning'); }
+    if (st === 'wait') { clearTimeout(SC.tm); SC.st = 'idle'; scCard(L.sc_wup[0], L.sc_wup[1], 'bad'); haptic('warning'); }
     else if (st === 'go') fastEnd();
     else if (st === 'ctl') ctlEnd();
-    else if (st === 'next') scAfter();
     else if (st === 'lift') SC.st = 'idle';
     scReq();
   }
@@ -2379,17 +2389,17 @@ window.addEventListener('error', function (e) {
     if (!SC.done) return;
     stopScan(); haptic(null, 'light'); startSwipe();
   });
-  $('sc-skip').addEventListener('click', function (e) {          // скан прошлого раза — его числа и уйдут боту
+  $('sc-skip').addEventListener('click', function (e) {          // скан прошлого раза — его числа и уйдут боту (дрожание — нет)
     e.stopPropagation();
     var o = scanOld();
     if (!o || SC.st !== 'idle') return;
-    SC.out = {}; ['v', 'tp', 'rt', 'jit', 'stop', 'sm', 'hz', 'np'].forEach(function (k) { if (o[k] != null) SC.out[k] = o[k]; });
+    SC.out = {}; ['v', 'tp', 'rt', 'stop', 'sm', 'hz', 'np'].forEach(function (k) { if (o[k] != null) SC.out[k] = o[k]; });
     SC.done = true; SC.curves = []; stopScan(); haptic(null, 'light'); startSwipe();
   });
   // v362: «Скан пальца» на результате — числа (их проверил и сохранил бот), оценки, что учтено в сенсе, график рывков
   function renderScan(r, fresh) {
     var sc = (r.kind === 'tune' && r.st && r.st.scan) || null, p = $('scan-p');
-    p.hidden = !sc;
+    p.hidden = !sc; S.cvCurves = null;
     if (!sc) return;
     $('r7-d').textContent = sc.np ? tpl(L.r7d, { n: sc.np }) : L.r7d0;
     $('sk').innerHTML = SCK.map(function (k) {
@@ -2399,10 +2409,11 @@ window.addEventListener('error', function (e) {
     }).join('');
     var fx = [];
     if (sc.kg) fx.push(tpl(L.sk_kg, { p: (sc.kg > 0 ? '+' : '−') + Math.abs(sc.kg) }));
-    if (sc.k4) fx.push(tpl(L.sk_k4, { a: '−' + Math.abs(sc.k2), b: '−' + Math.abs(sc.k4) }));
+    if (sc.k4) fx.push(tpl(L.sk_k4, { a: '−' + Math.abs(sc.k2), b: '−' + Math.abs(sc.k4) }));      // только результаты v362 (дрожание)
     $('sk-fx').innerHTML = fx.length ? '<b>' + esc(L.sk_fx) + '</b>' + fx.map(function (x) { return '<br>· ' + esc(x); }).join('') : esc(L.sk_fx0);
     var cv = $('sk-cv'), cur = fresh && SC.curves.length ? SC.curves : null;
     cv.hidden = !cur; $('sk-cap').hidden = !cur;
+    S.cvCurves = cur;
     if (cur) requestAnimationFrame(function () { scope(cv, fastOpts(cur)); });
   }
 
@@ -2432,7 +2443,7 @@ window.addEventListener('error', function (e) {
   }
   // v360: «Твои настройки» — после каждой оттяжки бот считает цифры так же, как в итоге (ничего не записывая), и они меняются здесь
   var LV = ['gen', 'red', 'x2', 'fire'];
-  function liveDraw(vals, n, base) {
+  function liveDraw(vals, n, base, prec) {
     var b = base || S.base || {}, old = S.lvVals || {};
     $('lv-t').textContent = n ? tpl(L.lv_t, { n: n }) : L.lv_t0;
     $('lv-rows').innerHTML = LV.map(function (k) {
@@ -2441,6 +2452,9 @@ window.addEventListener('error', function (e) {
         + v + (k === 'fire' ? '%' : '') + '</em>' + (d ? '<small>' + (d > 0 ? '+' : '−') + Math.abs(d) + '</small>' : '') + '</span></div>';
     }).join('');
     S.lvVals = vals;
+    var pe = $('lv-p');                       // v363: насколько точен итог сейчас — сходится к концу замера
+    pe.hidden = !(n >= 3 && typeof prec === 'number');
+    if (!pe.hidden) pe.textContent = tpl(L.lv_p, { p: Math.round(prec * 100) });
   }
   function liveReset() {
     S.lvVals = null; S.lvAgain = false;
@@ -2456,7 +2470,7 @@ window.addEventListener('error', function (e) {
       S.lvBusy = false;
       if (res.status === 404) { S.liveOn = false; $('sw-live').hidden = true; return; }        // бот ещё не умеет — панели нет
       var j = res.j;
-      if (j && j.ok && j.vals && !$('swipe').hidden) liveDraw(j.vals, Number(j.used) || 0, j.base);
+      if (j && j.ok && j.vals && !$('swipe').hidden) liveDraw(j.vals, Number(j.used) || 0, j.base, j.prec);
       if (S.lvAgain) liveSend();
     }).catch(function () { S.lvBusy = false; });
   }
@@ -2530,7 +2544,8 @@ window.addEventListener('error', function (e) {
     $('tstat').textContent = tune ? (t.done ? L.tdone : lim ? (t.close ? tpl(L.tclose, pp) : st.mode === 'both' ? tpl(L.tlim2, pp) : tpl(L.tlim, pp))
       : tpl(L.tnext, pp)) : L.told;
     $('hist').innerHTML = (tune ? (t.hist || []) : []).map(function (h, n) {
-      var what = h.v === 'ok' ? L.h_ok : (h.v === 'up' ? L.h_up : L.h_down) + ' · ' + (h.pct > 0 ? '+' : '−') + pct(h.pct) + '%';
+      var mg = (L.h_mag && L.h_mag[String(h.v).slice(-1)]) || '';                       // v363: чуть / сильно
+      var what = h.v === 'ok' ? L.h_ok : mg + (/^up/.test(h.v) ? L.h_up : L.h_down) + ' · ' + (h.pct > 0 ? '+' : '−') + pct(h.pct) + '%';
       return '<li><span>' + esc(tpl(L.h_n, { n: n + 1 })) + ' — ' + esc(what) + '</span><span>' + esc(L.gen) + ' <b>' + h.gen + '</b> · '
         + esc(L.red) + ' <b>' + h.red + '</b></span></li>';
     }).join('');
@@ -2564,6 +2579,26 @@ window.addEventListener('error', function (e) {
     $('rules-p').hidden = !tune;
     renderData(r);
     renderScan(r, fresh);
+    S.cvPaths = paths && paths.length ? paths : null;
+    rtab('sens');
+  }
+  // v363: результат вкладками (Кирилл: «пользователь очень долго листает»): «Сенса» — что поставить и проверка в тренировке;
+  // «Разбор» — что я увидел, почему так, правила; «Замеры» — скан пальца и данные оттяжки; «⭐ До идеала» — личная настройка
+  var RT = ['sens', 'why', 'data', 'ideal'];
+  function rtab(k, scroll) {
+    S.rtab = RT.indexOf(k) >= 0 ? k : 'sens';
+    var els = document.querySelectorAll('#s-res [data-t]'), bs = $('rtabs').querySelectorAll('button'), i;
+    for (i = 0; i < els.length; i++) els[i].classList.toggle('toff', els[i].getAttribute('data-t') !== S.rtab);
+    for (i = 0; i < bs.length; i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-rt') === S.rtab);
+    if (scroll) {                    // вкладки «прилипли» сверху — новая вкладка с начала
+      var y = $('rtabs-a').getBoundingClientRect().top + window.pageYOffset - 6;
+      if (window.pageYOffset > y) window.scrollTo(0, y);
+    }
+    requestAnimationFrame(rtabDraw);
+  }
+  function rtabDraw() {              // графики рисуются по размеру — в спрятанной вкладке его нет, рисуем, когда открыли
+    if (S.rtab === 'why' && S.cvPaths && !$('res-cv').hidden) drawPaths($('res-cv'), S.cvPaths);
+    if (S.rtab === 'data' && S.cvCurves && !$('sk-cv').hidden) scope($('sk-cv'), fastOpts(S.cvCurves));
   }
   // v356: «Данные оттяжки» — таблица по расстояниям (середина по оттяжкам) и сводка: точность замера, телефон в замере
   function renderData(r) {
@@ -2592,6 +2627,7 @@ window.addEventListener('error', function (e) {
     $('dtab').innerHTML = h; $('dtab').hidden = !h; $('r6-d').hidden = !h;
     var kv = [];
     if (st.bsd != null) kv.push([L.dk.prec, esc(st.bsd <= 0.12 ? L.dq[0] : st.bsd <= 0.22 ? L.dq[1] : L.dq[2]) + ' <small>±' + Math.round(st.bsd * 100) + '%</small>']);
+    if (st.prec != null) kv.push([L.dk.precr, '±' + Math.round(st.prec * 100) + '%']);               // v363: насколько точен итог
     if (st.nd) kv.push([L.dk.n, st.nd >= 6 ? (st.nd - 1) + ' <small>+ ' + esc(L.dk.warm) + '</small>' : String(st.nd)]);     // первая — пристрелка, не в счёт
     if (st.hz) kv.push([L.dk.hz, st.hz + ' <small>' + esc(L.hz) + '</small>']);
     if (st.fps) kv.push([L.dk.fps, st.fps + ' <small>' + esc(L.hz) + '</small>']);
@@ -2670,7 +2706,12 @@ window.addEventListener('error', function (e) {
   // ── события ─────────────────────────────────────────────────────────
   $('q').addEventListener('input', renderList);
   $('q-list').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-ph]'); if (b) { pickPhone(b.getAttribute('data-ph')); return; }
+    var b = e.target.closest('[data-ph]');
+    if (b) {
+      pickPhone(b.getAttribute('data-ph'));
+      if (S.ptab === 1) setTimeout(function () { if (S.ptab === 1) ptab(2); }, 300);       // v363: телефон выбран — к «Как играешь»
+      return;
+    }
     if (e.target.closest('[data-use]')) { var q = $('q').value.trim().slice(0, 40); setManual(true); $('m-name').value = q; haptic(null, 'light'); }
   });
   $('qs-x').addEventListener('click', function () { unpick(); $('q').value = ''; renderList(); try { $('q').focus(); } catch (e) {} });
@@ -2692,6 +2733,18 @@ window.addEventListener('error', function (e) {
     syncChips(); syncGo(); haptic(); draftSave();
   });
   $('go').addEventListener('click', function () { begin(); });
+  $('nx1').addEventListener('click', function () { ptabGo(2); });
+  $('nx2').addEventListener('click', function () { ptabGo(3); });
+  $('h-t').parentNode.querySelector('.prog').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-pt]'); if (b) ptabGo(Number(b.getAttribute('data-pt')));
+  });
+  $('go-h').addEventListener('click', function () {               // подсказка «Ответь, как играешь» — сразу к этому шагу
+    var r = profReady(), i = [r.ph, r.gs, r.own && r.vals && r.now].indexOf(false);
+    if (i >= 0) ptabGo(i + 1);
+  });
+  $('rtabs').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-rt]'); if (b) { rtab(b.getAttribute('data-rt'), true); haptic(); }
+  });
   $('rot-skip').addEventListener('click', function () {
     var f = S.rotThen; S.rotThen = null; S.orient = 'port';
     if (f) f();
@@ -2744,8 +2797,9 @@ window.addEventListener('error', function (e) {
       if (!res.j || !res.j.ok) { toast(errText(res), true); return; }
       S.last = res.j; renderLast(); renderRes(res.j, true);
       var t = res.j.tune, h = t && t.hist && t.hist[t.hist.length - 1];
-      if (res.j.kind === 'tune') toast(kind === 'ok' ? L.fb_ok : tpl(kind === 'up' ? L.fb_up : L.fb_down, { n: t.n, p: pct(h ? h.pct : 0) }) + (t.close ? L.fb_close : ''));
-      else toast(kind === 'up' ? L.fb_up7 : kind === 'down' ? L.fb_down7 : L.fb_ok7);
+      var up = /^up/.test(kind);
+      if (res.j.kind === 'tune') toast(kind === 'ok' ? L.fb_ok : tpl(up ? L.fb_up : L.fb_down, { n: t.n, p: pct(h ? h.pct : 0) }) + (t.close ? L.fb_close : ''));
+      else toast(up ? L.fb_up7 : kind === 'ok' ? L.fb_ok7 : L.fb_down7);
       haptic('success');
     }).catch(function () { S.busy = false; toast(L.e_net, true); });
   });
@@ -2757,10 +2811,9 @@ window.addEventListener('error', function (e) {
     var c = S.combo; if (!c) return;
     haptic(null, 'light'); openLink(orderLink(c.msg || tpl(L.cb_msg, { n: LANG === 'ru' ? c.ru : c.en, p: c.price })));
   });
-  $('ad-top').addEventListener('click', function () {            // v357: полоска под «Поставь в игре» — к большой рекламе
+  $('ad-top').addEventListener('click', function () {            // v357: полоска под «Поставь в игре» — к большой рекламе; v363 — вкладка
     var p = $('ideal-p');
-    p.classList.add('in');
-    try { p.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' }); } catch (e) { p.scrollIntoView(); }
+    rtab('ideal', true); p.classList.add('in');
     p.classList.remove('flash'); void p.offsetWidth; p.classList.add('flash');
     haptic(null, 'light');
   });
@@ -2779,7 +2832,7 @@ window.addEventListener('error', function (e) {
     env: function () { return { hz: touchHz(), fps: S.fps, gfps: GF[S.prof.gfps - 1] || 0 }; },
     ads: function () { return { reviews: S.reviewsUrl, combo: S.combo ? S.combo.price : 0, order: orderLink(idealMsg()), price: S.price, full: S.full,
                                 tag: $('id-tag').textContent, pr: $('id-pr').textContent, combo_order: S.combo ? orderLink(S.combo.msg || '') : '' }; },
-    live: function () { return { on: !$('sw-live').hidden, t: $('lv-t').textContent, vals: S.lvVals,
+    live: function () { return { on: !$('sw-live').hidden, t: $('lv-t').textContent, vals: S.lvVals, prec: $('lv-p').hidden ? '' : $('lv-p').textContent,
                                  rows: Array.prototype.map.call(document.querySelectorAll('#lv-rows .lv-r'), function (e) { return e.textContent; }) }; },
     card: function () { return { btn: !$('card').hidden, open: !$('cardm').hidden, img: !!$('cm-img').querySelector('img'), t: $('cm-t').textContent,
                                  d: $('cm-d').textContent, chat: !$('cm-chat').hidden }; },
@@ -2791,9 +2844,13 @@ window.addEventListener('error', function (e) {
                                                 cam: { x: W.cam.x, y: W.cam.y }, shots: W.shots, res: W.res.slice() }; },
     px: function () { return { pxcm: pxPerCm(), model: modelPxcm() }; },
     miss: function () { return { swipe: W.miss }; },
+    tabs: function () { return { ptab: S.ptab, rtab: S.rtab, nx1: !$('nx1').hidden, nx2: !$('nx2').hidden,
+                                 pn: [1, 2, 3].map(function (i) { return !$('pn' + i).classList.contains('toff'); }),
+                                 res: Array.prototype.filter.call(document.querySelectorAll('#s-res [data-t]'), function (e) { return !e.classList.contains('toff') && !e.hidden; })
+                                   .map(function (e) { return e.id || e.getAttribute('data-t'); }) }; },
     scan: function () { return { open: !$('scan').hidden, t: SC.t, i: SC.i, st: SC.st, done: SC.done, fx: SC.fire.x, fy: SC.fire.y, fr: SC.fire.r,
                                  pxcm: SC.pxcm, ly: SC.ly, lc: SC.lc, out: SC.out, h1: $('sc-h1').textContent, h2: $('sc-h2').textContent,
-                                 cls: $('sc-card').className, skip: !$('sc-skip').hidden, next: !$('sc-next').hidden, hold: SC.hold.slice(),
+                                 cls: $('sc-card').className, skip: !$('sc-skip').hidden, next: !$('sc-next').hidden,
                                  fast: SC.fast.slice(), ctl: SC.ctl.slice(), np: SC.np, line: $('sc-line').classList.contains('on'),
                                  go: $('sc-fire').classList.contains('go'), side: $('sc-pan').classList.contains('rt') ? 'right' : 'left',
                                  tiles: Array.prototype.map.call(document.querySelectorAll('#sc-m .sc-k'), function (e) { return e.textContent; }) }; },
@@ -2802,7 +2859,7 @@ window.addEventListener('error', function (e) {
   };
 
   // ── старт страницы ──────────────────────────────────────────────────
-  texts(); syncChips(); syncGo(); revealInit();
+  texts(); syncChips(); syncGo(); ptab(1); revealInit();
   if (!UID || !API) {
     $('s-prof').hidden = true; $('fatal').hidden = false;
     $('fatal-t').textContent = L.none_t; $('fatal-d').textContent = L.none_d;
