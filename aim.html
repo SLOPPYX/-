@@ -604,6 +604,102 @@
   .fb button[data-fb^="up"] span { color: var(--no); } .fb button[data-fb^="down"] span { color: var(--in); }
   .lv-p { margin-top: 3px; padding-top: 3px; border-top: 1px solid var(--ln); font-size: 11.5px; font-weight: 600; color: var(--acc3); }
 
+  /* v365: кнопка огня как в Free Fire (Кирилл: «когда человек тянет кнопку — чтобы тянулась, как в Free Fire»): зажал и
+     тянешь — кнопка едет за пальцем, отпустил — плавно встаёт на своё место */
+  .fbtn.back { transition: transform .22s var(--ease); }
+  /* v365: короткая анимация перед оттяжкой — как держать палец и куда тянуть (сцена 240×150: прицел стоит, мир едет, как в
+     замере; кнопка огня едет за пальцем). Двигаются только transform и opacity */
+  #swipe .hud { padding-right: calc(104px + var(--sr)); }
+  .aquit.hlp { right: calc(52px + var(--sr)); font-weight: 700; color: var(--acc3); }
+  .tut { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; overflow-y: auto; touch-action: pan-y;
+         padding: calc(10px + var(--st) + var(--ct)) calc(12px + var(--sr)) calc(10px + var(--sb)) calc(12px + var(--sl)); background: rgba(5,5,7,.8); }
+  .tut-box { display: flex; align-items: center; gap: 16px; width: min(580px, 100%); padding: 14px; background: var(--card); border: 1px solid var(--ln2);
+             border-radius: 18px; box-shadow: 0 20px 44px -18px rgba(0,0,0,.95); animation: vin .3s var(--ease) both; }
+  .tut-sc { position: relative; flex: 0 0 240px; width: 240px; height: 150px; overflow: hidden; border-radius: 12px; background: #0a0b10;
+            border: 1px solid var(--ln); }
+  .tut-sc > * { position: absolute; pointer-events: none; }
+  .tut-gd { left: -40px; top: 34px; width: 320px; height: 200px; box-shadow: 0 -1px 0 rgba(255,255,255,.2); animation: tgd 6.4s var(--ease) infinite;
+            background: linear-gradient(180deg, rgba(167,139,250,.07), transparent 60px), linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px) 0 0 / 40px 20px,
+                        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px) 0 0 / 40px 20px, #0e0f15; }
+  .tut-dm { left: 81.5px; top: 26.85px; width: 45px; height: 90px; transform-origin: 22.5px 11.25px; animation: tdm 6.4s var(--ease) infinite; }
+  .tut-dm svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .tut-hh { left: 92px; top: 52px; width: 24px; height: 24px; border-radius: 50%; opacity: 0; box-shadow: inset 0 0 0 2px var(--ok), 0 0 12px rgba(74,222,128,.55);
+            animation: thh 6.4s var(--ease) infinite; }
+  .cr.tut-cr { left: 104px; top: 64px; }
+  .tut-tr { left: 194.5px; width: 3px; border-radius: 2px; transform-origin: 50% 100%; opacity: 0; background: linear-gradient(0deg, rgba(167,139,250,.1), var(--acc3)); }
+  .tut-tr.ta { top: 89px; height: 31px; animation: tta 6.4s var(--ease) infinite; }
+  .tut-tr.tb { top: 69.75px; height: 50.25px; animation: ttb 6.4s var(--ease) infinite; }
+  .fbtn.tut-fb { left: 180px; top: 104px; width: 32px; height: 32px; animation: tfb 6.4s var(--ease) infinite; }
+  .tut-on { position: absolute; inset: 0; border-radius: 50%; opacity: 0; background: rgba(139,92,246,.42); box-shadow: inset 0 0 0 2px var(--acc3);
+            animation: ton 6.4s linear infinite; }
+  .tut-fg { left: 182px; top: 106px; width: 28px; height: 28px; border-radius: 50%; opacity: 0; animation: tfg 6.4s var(--ease) infinite;
+            background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.95), rgba(255,255,255,.72) 55%, rgba(255,255,255,.3));
+            box-shadow: 0 0 0 6px rgba(255,255,255,.12), 0 4px 10px rgba(0,0,0,.5); }
+  .tut-lb { left: 8px; top: 7px; padding: 2px 9px; font-size: 11px; font-weight: 600; color: var(--tx); white-space: nowrap; background: rgba(13,13,17,.92);
+            border: 1px solid rgba(167,139,250,.5); border-radius: 999px; }
+  .tut-lb.la { animation: tla 6.4s linear infinite; }
+  .tut-lb.lb { opacity: 0; border-color: rgba(248,113,113,.6); animation: tlb 6.4s linear infinite; }
+  .tut-tx { flex: 1; min-width: 0; }
+  .tut-tx > b { display: block; font-size: 15.5px; font-weight: 700; }
+  .tut-l { margin: 8px 0 12px; padding: 0; list-style: none; counter-reset: tl; }
+  .tut-l li { position: relative; padding: 3px 0 3px 27px; font-size: 13px; line-height: 1.4; color: var(--tx2); counter-increment: tl; }
+  .tut-l li::before { content: counter(tl); position: absolute; left: 0; top: 3px; width: 19px; height: 19px; display: grid; place-items: center;
+                      border-radius: 6px; font-size: 11px; font-weight: 700; color: var(--acc3); background: var(--accbg); }
+  #tut-ok { overflow: hidden; padding: 12px 16px; }
+  .tut-pr { position: absolute; left: 0; bottom: 0; width: 100%; height: 3px; background: rgba(255,255,255,.6); transform-origin: 0 50%; transform: scaleX(0); }
+  .tut.auto .tut-pr { animation: tpr 6.8s linear forwards; }
+  @keyframes tpr { to { transform: scaleX(1); } }
+  @keyframes tgd { 0%, 12% { transform: translate3d(0, 0, 0); } 28%, 43% { transform: translate3d(0, 25.9px, 0); } 49%, 62% { transform: translate3d(0, 0, 0); }
+                   78%, 93% { transform: translate3d(-21.7px, 36.2px, 0); } 99%, 100% { transform: translate3d(0, 0, 0); } }
+  @keyframes tdm { 0% { opacity: 0; transform: translate3d(0, 0, 0) scale(1); } 3%, 12% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+                   28%, 43% { opacity: 1; transform: translate3d(0, 25.9px, 0) scale(1); } 46% { opacity: 0; transform: translate3d(0, 25.9px, 0) scale(1); }
+                   47%, 50% { opacity: 0; transform: translate3d(21.7px, -10.3px, 0) scale(1.4); }
+                   53%, 62% { opacity: 1; transform: translate3d(21.7px, -10.3px, 0) scale(1.4); }
+                   78%, 93% { opacity: 1; transform: translate3d(0, 25.9px, 0) scale(1.4); } 96% { opacity: 0; transform: translate3d(0, 25.9px, 0) scale(1.4); }
+                   97%, 100% { opacity: 0; transform: translate3d(0, 0, 0) scale(1); } }
+  @keyframes tfg { 0% { opacity: 0; transform: translate3d(0, 0, 0) scale(1.3); } 6% { opacity: .95; transform: translate3d(0, 0, 0) scale(1); }
+                   9%, 12% { opacity: .95; transform: translate3d(0, 0, 0) scale(.88); } 28%, 40% { opacity: .95; transform: translate3d(0, -31px, 0) scale(.88); }
+                   44% { opacity: 0; transform: translate3d(0, -35px, 0) scale(1.15); } 50% { opacity: 0; transform: translate3d(0, 0, 0) scale(1.3); }
+                   56% { opacity: .95; transform: translate3d(0, 0, 0) scale(1); } 59%, 62% { opacity: .95; transform: translate3d(0, 0, 0) scale(.88); }
+                   78%, 90% { opacity: .95; transform: translate3d(26px, -43px, 0) scale(.88); } 94% { opacity: 0; transform: translate3d(28px, -47px, 0) scale(1.15); }
+                   100% { opacity: 0; transform: translate3d(0, 0, 0) scale(1.3); } }
+  @keyframes tfb { 0%, 12% { transform: translate3d(0, 0, 0); } 28%, 40% { transform: translate3d(0, -31px, 0); } 45%, 62% { transform: translate3d(0, 0, 0); }
+                   78%, 90% { transform: translate3d(26px, -43px, 0); } 95%, 100% { transform: translate3d(0, 0, 0); } }
+  @keyframes ton { 0%, 8% { opacity: 0; } 9%, 40% { opacity: 1; } 41%, 58% { opacity: 0; } 59%, 90% { opacity: 1; } 91%, 100% { opacity: 0; } }
+  @keyframes tta { 0%, 12% { opacity: 0; transform: scaleY(0); } 13% { opacity: .9; transform: scaleY(.05); } 28%, 40% { opacity: .9; transform: scaleY(1); }
+                   46%, 100% { opacity: 0; transform: scaleY(1); } }
+  @keyframes ttb { 0%, 62% { opacity: 0; transform: rotate(31.2deg) scaleY(0); } 63% { opacity: .9; transform: rotate(31.2deg) scaleY(.05); }
+                   78%, 90% { opacity: .9; transform: rotate(31.2deg) scaleY(1); } 96%, 100% { opacity: 0; transform: rotate(31.2deg) scaleY(1); } }
+  @keyframes thh { 0%, 27% { opacity: 0; transform: scale(.6); } 30% { opacity: 1; transform: scale(1.12); } 33%, 41% { opacity: 1; transform: scale(1); }
+                   45%, 77% { opacity: 0; transform: scale(.6); } 80% { opacity: 1; transform: scale(1.12); } 83%, 91% { opacity: 1; transform: scale(1); }
+                   95%, 100% { opacity: 0; transform: scale(.6); } }
+  @keyframes tla { 0%, 44% { opacity: 1; } 48%, 97% { opacity: 0; } 100% { opacity: 1; } }
+  @keyframes tlb { 0%, 46% { opacity: 0; } 50%, 94% { opacity: 1; } 98%, 100% { opacity: 0; } }
+  @media (max-width: 540px) { .tut-box { flex-direction: column; align-items: stretch; gap: 12px; } .tut-sc { align-self: center; } }
+  /* без анимаций (настройка телефона) — один кадр: потянул вверх, прицел на голове */
+  @media (prefers-reduced-motion: reduce) {
+    .tut-sc > *, .tut-on, .tut.auto .tut-pr { animation: none !important; }
+    .tut-gd, .tut-dm { transform: translate3d(0, 25.9px, 0); } .tut-dm { opacity: 1; }
+    .tut-fg { opacity: .95; transform: translate3d(0, -31px, 0) scale(.88); } .fbtn.tut-fb { transform: translate3d(0, -31px, 0); }
+    .tut-tr.ta, .tut-hh, .tut-on { opacity: .9; } .tut-lb.lb { opacity: 0; }
+  }
+  /* v365: профили под оружие — свои цифры под дробовик, пистолет, автомат; переключение одной кнопкой */
+  .pfs { margin-top: 12px; padding: 12px; background: var(--card); border: 1px solid var(--ln); border-radius: 16px; }
+  .pfs-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .pfs-h b { flex: 0 0 auto; font-size: 13.5px; font-weight: 700; }
+  .pfs-h small { min-width: 0; font-size: 11.5px; color: var(--tx3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pfs-r { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .pfs-r button { min-width: 0; padding: 8px 3px; border: 1px solid var(--ln2); border-radius: 12px; background: transparent; color: var(--tx2);
+                  font: 600 11.5px var(--ui); text-align: center; transition: background-color .2s, border-color .2s, color .2s, transform .14s var(--ease); }
+  .pfs-r button:active { transform: scale(.96); }
+  .pfs-r button span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pfs-r button b { display: block; margin-top: 1px; font-size: 13.5px; font-weight: 800; color: var(--tx); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pfs-r button.on { color: #fff; background: var(--accbg); border-color: rgba(167,139,250,.75); }
+  .pfs-r button.add { border-style: dashed; color: var(--tx3); }
+  .pfs-r button.add b { font-size: 12px; font-weight: 700; color: var(--acc2); }
+  /* v365: «умная» реклама — причина из замера; та же полоска, что и «до идеала» */
+  .adstrip.sm small s { margin-right: 3px; opacity: .6; }
+
   /* плавное появление карточек при прокрутке */
   .panel.rv { opacity: 0; transform: translate3d(0, 10px, 0); transition: opacity .45s var(--ease), transform .45s var(--ease), border-color .3s var(--ease); }
   .panel.rv.in { opacity: 1; transform: none; }
@@ -747,6 +843,7 @@
       <div class="rk-s" id="rk-s"></div>
       <div class="rk-p" id="rk-p"></div>
     </div>
+    <div class="pfs" id="pfs" hidden><div class="pfs-h"><b id="pfs-t"></b><small id="pfs-d"></small></div><div class="pfs-r" id="pfs-r"></div></div>
     <i class="rt-a" id="rtabs-a"></i>
     <div class="rtabs" id="rtabs"><button type="button" data-rt="sens" class="on"></button><button type="button" data-rt="why"></button><button type="button" data-rt="data"></button><button type="button" data-rt="ideal"></button></div>
     <div class="panel" data-t="sens">
@@ -758,6 +855,7 @@
       <button type="button" class="cardb" id="card" hidden><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-8 8"/></svg><span class="cb2"><b id="card-t"></b><small id="card-d"></small></span><i>›</i></button>
       <div class="sent" id="sent"></div>
     </div>
+    <div id="smart" data-t="sens" hidden></div>
     <button type="button" class="adstrip" id="ad-top" data-t="sens"><span>⭐</span><span class="as-m"><b id="ad-top-t"></b><small id="ad-top-d"></small></span><i>↓</i></button>
     <div class="panel" id="tune-p" data-t="sens">
       <div class="ph"><span>✓</span><b id="r3-t"></b></div>
@@ -867,7 +965,37 @@
   <div class="sw-rule" id="sw-rule"></div>
   <div class="sw-live" id="sw-live" hidden><b id="lv-t"></b><div id="lv-rows"></div><div class="lv-p" id="lv-p" hidden></div></div>
   <div class="sw-card" id="sw-card"></div>
+  <!-- v365: короткая анимация перед оттяжкой -->
+  <div class="tut" id="sw-tut" hidden>
+    <div class="tut-box">
+      <div class="tut-sc" aria-hidden="true">
+        <i class="tut-gd"></i>
+        <div class="tut-dm"><svg viewBox="-40 -20 80 160">
+          <path d="M-3 126h6v22h-6z" fill="#23252e"/><path d="M-18 150h36" stroke="#33353f" stroke-width="5" stroke-linecap="round"/>
+          <path d="M-24 22c4-5 13-7 24-7s20 2 24 7l-4 34c-1 7-5 12-8 14h-24c-3-2-7-7-8-14z" fill="#262832" stroke="rgba(255,255,255,.42)" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M-25 24l-10 30 6 3 9-24M25 24l10 30-6 3-9-24" fill="#1f2129" stroke="rgba(255,255,255,.34)" stroke-width="1.4" stroke-linejoin="round"/>
+          <path d="M-14 70l-3 56h34l-3-56z" fill="#1f2129" stroke="rgba(255,255,255,.34)" stroke-width="1.4" stroke-linejoin="round"/>
+          <circle cx="0" cy="46" r="9" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.4"/><circle cx="0" cy="46" r="2.5" fill="rgba(255,255,255,.55)"/>
+          <rect x="-5" y="10" width="10" height="8" fill="#1f2129"/>
+          <circle cx="0" cy="0" r="13" fill="#2e3040" stroke="#a78bfa" stroke-width="2"/>
+          <path d="M-8-2h16" stroke="rgba(255,255,255,.55)" stroke-width="2.5" stroke-linecap="round"/>
+        </svg></div>
+        <i class="tut-hh"></i>
+        <div class="cr tut-cr"><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i><i class="c5"></i></div>
+        <i class="tut-tr ta"></i><i class="tut-tr tb"></i>
+        <div class="fbtn tut-fb"><i class="tut-on"></i><i class="fc"><svg viewBox="0 0 12 18"><path d="M6 0c1.6 1.5 2.6 3.3 2.6 5.6V13H3.4V5.6C3.4 3.3 4.4 1.5 6 0z" fill="#f4f4f6"/><path d="M2.6 14h6.8v4H2.6z" fill="#a78bfa"/></svg></i></div>
+        <i class="tut-fg"></i>
+        <span class="tut-lb la" id="tut-la"></span><span class="tut-lb lb" id="tut-lb"></span>
+      </div>
+      <div class="tut-tx">
+        <b id="tut-t"></b>
+        <ol class="tut-l" id="tut-l"></ol>
+        <button type="button" class="btn" id="tut-ok"><span id="tut-okt"></span><i class="tut-pr"></i></button>
+      </div>
+    </div>
+  </div>
   <div class="stpop" id="sw-pop"></div>
+  <button type="button" class="aquit hlp" id="sw-help">?</button>
   <button type="button" class="aquit" id="sw-quit">✕</button>
 </div>
 
@@ -890,7 +1018,7 @@ window.addEventListener('error', function (e) {
     ['hud', 'scan', 'swipe', 'calc'].forEach(function (id) { var x = document.getElementById(id); if (x) x.hidden = true; });
     document.querySelectorAll('.scr').forEach(function (s) { s.hidden = true; });
     var f = document.getElementById('fatal'); f.hidden = false;
-    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v363';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v365';
   } catch (_) {}
 }, true);
 </script>
@@ -905,7 +1033,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v363';
+  var VER = 'v365';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -997,6 +1125,13 @@ window.addEventListener('error', function (e) {
       rc: { f_ok: '✓ Вдали плавно — правильно', f_bad: 'Вдали тяни плавнее', n_ok: '✓ Вблизи резко и вверх-вправо — правильно',
             n_slow: 'Вблизи тяни резче', n_dir: 'Вблизи тяни вверх и вправо ↗', n_both: 'Вблизи тяни резче и вверх-вправо ↗' },
       ext: 'Точность ±{p}% — ещё 3 оттяжки, чтобы было точнее', lv_p: 'Точность итога: ±{p}%',
+      // v365: анимация перед оттяжкой, профили под оружие
+      tut_t: 'Как тянуть оттяжку', tut_ok: 'Понятно — начать', tut_a: 'Средне · вверх ↑', tut_b: 'Близко · вверх-вправо ↗',
+      tut_l: ['Зажми кнопку огня — она поедет за пальцем, как в игре', 'Тяни вверх: прицел пойдёт с груди к голове',
+              'Близко прицел слева — тяни вверх-вправо ↗', 'Прицел на голове — отпускай'],
+      pf_t: 'Профили под оружие', pf_d: 'у каждого оружия свои цифры', pf_n: ['Дробовик', 'Пистолет', 'Автомат', 'Всё подряд'],
+      pf_add: '+ замерить', pf_on: 'Профиль «{w}» включён', pf_new: 'Замер под «{w}»',
+      own_lastw: 'Взять из профиля «{w}»: обзор {gen} · коллиматор {red}', last_pf: 'Профили: {l}', e_noprof: 'Такого профиля нет — пройди замер',
       rt: ['Сенса', 'Разбор', 'Замеры', '⭐ До идеала'], nx: 'Дальше →',
       r5: 'Правила оттяжки', rule_ok: 'у тебя так', rule_bad: 'попробуй',
       rules: [['🎯', 'Наводи прицел на грудь — оттяжка дотянет до головы', ''], ['🐢', 'Далеко — тяни плавно и коротко', 'rfs'],
@@ -1119,6 +1254,12 @@ window.addEventListener('error', function (e) {
       rc: { f_ok: '✓ Smooth at range — right', f_bad: 'Pull smoother at range', n_ok: '✓ Sharp and up-right up close — right',
             n_slow: 'Pull sharper up close', n_dir: 'Up close pull up and right ↗', n_both: 'Up close pull sharper and up-right ↗' },
       ext: 'Precision ±{p}% — 3 more drags to be more precise', lv_p: 'Result precision: ±{p}%',
+      tut_t: 'How to pull', tut_ok: 'Got it — start', tut_a: 'Mid · up ↑', tut_b: 'Close · up-right ↗',
+      tut_l: ['Hold the fire button — it moves with your finger, like in the game', 'Pull up: the aim goes from the chest to the head',
+              'Up close the aim is on the left — pull up and right ↗', 'Aim on the head — let go'],
+      pf_t: 'Weapon profiles', pf_d: 'each weapon has its own numbers', pf_n: ['Shotgun', 'Pistol', 'Rifle', 'Everything'],
+      pf_add: '+ measure', pf_on: 'Profile «{w}» is on', pf_new: 'Measuring for «{w}»',
+      own_lastw: 'Use the «{w}» profile: general {gen} · red dot {red}', last_pf: 'Profiles: {l}', e_noprof: 'No such profile — do the test',
       rt: ['Sens', 'Analysis', 'Data', '⭐ Ideal'], nx: 'Next →',
       r5: 'Drag rules', rule_ok: 'you do it', rule_bad: 'try it',
       rules: [['🎯', 'Aim at the chest — the drag takes it to the head', ''], ['🐢', 'Far — pull smoothly and short', 'rfs'],
@@ -1267,6 +1408,7 @@ window.addEventListener('error', function (e) {
     if (!$('cardm').hidden) { cardClose(); return; }               // v359: окно с картинкой
     if (!$('hud').hidden) { quitHud(); return; }
     if (!$('scan').hidden) { quitScan(); return; }
+    if (!$('sw-tut').hidden) { tutHide(); return; }                // v365: «Назад» сначала закрывает анимацию
     if (!$('swipe').hidden) { quitSwipe(); return; }
     S.rotThen = null; fullOff(); show('prof');
   }
@@ -1324,6 +1466,9 @@ window.addEventListener('error', function (e) {
     $('sc-pop').innerHTML = '<small>' + esc(tpl(L.stage, { n: 2 })) + '</small>' + esc(L.sc_pop);          // v362: скан пальца
     $('sc-t').textContent = L.sc_title; $('sc-next').textContent = L.sc_next; $('sc-skip').textContent = L.sc_skip; $('sc-ll').textContent = L.sc_line;
     $('r7-t').textContent = L.r7; $('sk-cap').textContent = L.sk_cap;
+    $('tut-t').textContent = L.tut_t; $('tut-okt').textContent = L.tut_ok; $('tut-la').textContent = L.tut_a; $('tut-lb').textContent = L.tut_b;   // v365
+    $('tut-l').innerHTML = L.tut_l.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join(''); $('sw-help').setAttribute('aria-label', L.tut_t);
+    $('pfs-t').textContent = L.pf_t; $('pfs-d').textContent = L.pf_d;
     $('calc-retry').textContent = L.off_retry; $('calc-exit').textContent = L.off_exit;
     $('pend-t').textContent = L.pend_t; $('pend-d').textContent = L.pend_d; $('pend-b').textContent = L.pend_b;
     $('r5-t').textContent = L.r5;
@@ -1484,9 +1629,9 @@ window.addEventListener('error', function (e) {
     var r = profReady();
     $('go').disabled = !(r.ph && r.gs && r.own && r.vals && r.now) || S.busy;
     $('go-h').textContent = !r.ph ? L.go_need_ph : !r.gs ? L.go_need_gs : !r.own ? L.go_need_own : !r.vals ? L.go_need_vals : !r.now ? L.go_need_now : L.go_ok;
-    var lv = S.last && S.last.vals;
+    var lp = lastPick(), lv = lp && lp.vals;             // v365: из профиля того оружия, что выбрано
     $('own-last').hidden = !lv;
-    if (lv) $('own-last').textContent = tpl(L.own_last, lv);
+    if (lv) $('own-last').textContent = lp.w ? tpl(L.own_lastw, { w: lp.w, gen: lv.gen, red: lv.red }) : tpl(L.own_last, lv);
     // v354: шаги анкеты — какая панель готова, какую заполнять сейчас
     var done = [r.ph, r.gs, r.own && r.vals && r.now], cur = done.indexOf(false);
     $('nx1').hidden = !done[0]; $('nx2').hidden = !done[1];                 // v363: «Дальше» — когда шаг заполнен
@@ -1498,6 +1643,14 @@ window.addEventListener('error', function (e) {
   }
 
   // ── прошлая настройка ───────────────────────────────────────────────
+  // v365: «Взять из прошлого раза» — цифры профиля того оружия, что выбрано в анкете (его нет — последняя настройка)
+  function lastPick() {
+    var ps = (S.last && S.last.profiles) || [], w = WPN[S.prof.wpn - 1], i;
+    for (i = 0; i < ps.length; i++) {
+      if (ps[i].wpn === w && ps[i].vals && ps[i].vals.gen) return { vals: ps[i].vals, w: ps.length > 1 ? L.pf_n[WPN.indexOf(w)] : '' };
+    }
+    return S.last && S.last.vals ? { vals: S.last.vals, w: '' } : null;
+  }
   function lastTitle(r) {
     if (r.kind === 'tune') return (r.tune && r.tune.done) ? L.last_done : tpl(L.last_step, { n: (r.tune && r.tune.n) || 0 });
     return r.rank ? r.rank.ico + ' ' + r.rank.name : '';
@@ -1507,7 +1660,9 @@ window.addEventListener('error', function (e) {
     if (!r) { $('last').hidden = true; syncGo(); return; }
     $('last').hidden = false;
     $('last').innerHTML = '<div class="lr-m"><b>' + esc(L.last) + ' · ' + esc(lastTitle(r)) + '</b><small>'
-      + esc(L.gen) + ' ' + r.vals.gen + ' · ' + esc(L.red) + ' ' + r.vals.red + '</small></div>'
+      + esc(L.gen) + ' ' + r.vals.gen + ' · ' + esc(L.red) + ' ' + r.vals.red + '</small>'
+      + ((r.profiles || []).length > 1 ? '<small>' + esc(tpl(L.last_pf, { l: r.profiles.map(function (p) {           // v365: профили
+        return L.pf_n[WPN.indexOf(p.wpn)] + ' ' + p.gen + '/' + p.red; }).join(' · ') })) + '</small>' : '') + '</div>'
       + '<button type="button" id="last-b">' + esc(L.last_btn) + '</button>';
     syncGo();
   }
@@ -1734,7 +1889,7 @@ window.addEventListener('error', function (e) {
   // в сантиметрах. Первая — пристрелочная; манекены чуть ближе и дальше, чтобы рука не подстраивалась под одно расстояние.
   var W = { n: 6, list: [], res: [], ptr: null, pxcm: 40, done: false, busy: true, fire: { x: 0, y: 0, r: 26 }, miss: 0,
             cam: { x: 0, y: 0 }, c0: { x: 0, y: 0 }, f0: { x: 0, y: 0 }, smp: [], pts: [], mv0: 0, so: null, tgt: null, g: 0.5, U: 1, Z: 1.35,
-            cx: 0, cy: 0, raf: 0, tw: 0, fireT: 0, shots: 0, thr: 6 };
+            cx: 0, cy: 0, raf: 0, tw: 0, fireT: 0, shots: 0, thr: 6, fo: { x: 0, y: 0 }, tut: false, tutT: 0 };
   var HEAD_R = 15, BODY_W = 22, BODY_T = 14, BODY_B = 128, CHEST = 46, DM_Z = 1.35;
   // точек в сантиметре — по диагонали модели (из базы или вписанной вручную)
   function scrDims() {
@@ -1758,10 +1913,11 @@ window.addEventListener('error', function (e) {
     $('sw-fire').classList.add('need'); $('dm').classList.add('out');
     var wn = L.wpn_names[S.prof.wpn - 1];
     $('sw-s').textContent = tpl(L.sw_sens, { v: Math.round(S.dragS) }) + (wn ? ' · ' + wn : '');       // v358: под какое оружие
-    swCount(); swLayout(); syncBack(); stagePop($('sw-pop'));
+    swCount(); swLayout(); syncBack();
+    if (tutAuto()) tutShow(true); else stagePop($('sw-pop'));            // v365: первые 3 раза — анимация, как тянуть
     setTimeout(nextDummy, RM ? 0 : 450);
   }
-  function stopSwipe() { fireOff(); $('swipe').hidden = true; W.ptr = null; ovlOff(); }
+  function stopSwipe() { fireOff(); clearTimeout(W.tutT); $('sw-tut').hidden = true; W.tut = false; $('swipe').hidden = true; W.ptr = null; ovlOff(); }
   // v356: частота кадров экрана — по 40 кадрам браузера (в фоне кадры не идут — тогда не знаем); частота касаний — по точкам пальца
   function measureFps() {
     if (S.fps || !window.requestAnimationFrame) return;
@@ -1888,8 +2044,36 @@ window.addEventListener('error', function (e) {
   }
   function fireOn() { if (W.fireT) return; $('sw-fire').classList.add('on'); shot(); W.fireT = setInterval(shot, 110); }
   function fireOff() { if (W.fireT) clearInterval(W.fireT); W.fireT = 0; $('sw-fire').classList.remove('on'); }
-  // v357: как в Free Fire — кнопка огня стоит на месте (только «нажата», пока держишь), палец съезжает с неё, прицел едет за пальцем;
-  // ни «резинки» от кнопки к пальцу, ни кольца под пальцем (Кирилл: «сделай, чтобы тянулась прям как в Free Fire»)
+  // v365: кнопка огня как в Free Fire (Кирилл: «когда человек тянет кнопку — чтобы тянулась, как в Free Fire»; в v357 стояла на
+  // месте): зажал и тянешь — кнопка едет за пальцем (где схватил — так и держится под ним), отпустил — плавно встаёт на место.
+  // Замер от этого не меняется: он идёт по касаниям пальца, а место кнопки для бота — то, где она стоит.
+  function fireDrag(el, home, x, y) {
+    var g = clampFire({ x: x, y: y, r: home.r }, window.innerWidth, window.innerHeight);
+    el.classList.remove('back');
+    el.style.transform = 'translate3d(' + (g.x - g.r).toFixed(1) + 'px,' + (g.y - g.r).toFixed(1) + 'px,0)';
+  }
+  function fireHome(el, home) { el.classList.add('back'); placeFire(el, home); }
+  // v365: короткая анимация перед оттяжкой (идея 8, выбрал Кирилл): как держать палец и куда тянуть — меньше «Это не оттяжка».
+  // Сама показывается первые 3 раза (счёт — на телефоне), дальше — кнопкой «?»; сама закрывается через 7 с или «Понятно».
+  var TUT_N = 3, TUT_MS = 6800;
+  function tutAuto() {
+    var n = Number(lsGet('aim_tut_' + UID)) || 0;
+    if (n >= TUT_N) return false;
+    lsSet('aim_tut_' + UID, n + 1);
+    return true;
+  }
+  function tutShow(auto) {
+    var el = $('sw-tut');
+    clearTimeout(W.tutT); W.tut = true;
+    el.hidden = false; el.classList.toggle('auto', !!auto);
+    if (auto) W.tutT = setTimeout(tutHide, TUT_MS);
+  }
+  function tutHide() {
+    clearTimeout(W.tutT);
+    if ($('sw-tut').hidden) return;
+    $('sw-tut').hidden = true; W.tut = false;
+    if (!$('swipe').hidden) stagePop($('sw-pop'));
+  }
   function card(out, m, rule) {
     var el = $('sw-card');
     if (!out) { el.innerHTML = '<b>' + esc(L.sw_bad) + '</b><p>' + esc(L.sw_bad_d) + '</p>'; el.className = 'sw-card bad show'; return; }
@@ -2026,8 +2210,8 @@ window.addEventListener('error', function (e) {
   }
   var swEl = $('swipe');
   swEl.addEventListener('pointerdown', function (e) {
-    if (e.target && e.target.closest && e.target.closest('#sw-quit')) return;
-    if (W.done || W.busy || !W.tgt || W.ptr !== null || e.isPrimary === false) return;
+    if (e.target && e.target.closest && e.target.closest('#sw-quit, #sw-help, #sw-tut')) return;
+    if (W.tut || W.done || W.busy || !W.tgt || W.ptr !== null || e.isPrimary === false) return;
     var fx = e.clientX - W.fire.x, fy = e.clientY - W.fire.y, rr = W.fire.r * 1.35 + 6;
     if (fx * fx + fy * fy > rr * rr) { W.miss++; nudgeFire($('sw-fire')); e.preventDefault(); return; }       // с кнопки огня
     W.ptr = e.pointerId;
@@ -2035,6 +2219,7 @@ window.addEventListener('error', function (e) {
     var t = e.timeStamp || now();
     W.f0 = { x: e.clientX, y: e.clientY }; W.c0 = { x: W.cam.x, y: W.cam.y }; W.mv0 = 0; W.ps = { h: 0, b: 0, n: 0 }; W.lt = 0;
     W.so = Math.sqrt(fx * fx + fy * fy) / Math.max(1, W.fire.r);
+    W.fo = { x: fx, y: fy }; $('sw-fire').classList.remove('back');      // v365: где схватил кнопку — так она и едет под пальцем
     W.smp = [{ t: t, x: W.cam.x, y: W.cam.y }]; W.pts = [{ t: t, x: e.clientX, y: e.clientY }];
     $('sw-hint').style.opacity = '0'; $('sw-card').classList.remove('show'); $('sw-fire').classList.remove('need'); $('ghost').classList.remove('on');
     fireOn();
@@ -2052,12 +2237,16 @@ window.addEventListener('error', function (e) {
       if (W.lt && t - W.lt >= 0.5 && t - W.lt <= 50 && W.dts.length < 3000) W.dts.push(t - W.lt);        // v356: как часто приходят касания
       W.lt = t;
     }
+    fireDrag($('sw-fire'), W.fire, e.clientX - W.fo.x, e.clientY - W.fo.y);         // v365: кнопка — за пальцем
     pwReq(); e.preventDefault();
   });
-  function swUp(e) { if (W.ptr === null || e.pointerId !== W.ptr) return; W.ptr = null; fireOff(); pullEnd(); }
+  function swUp(e) { if (W.ptr === null || e.pointerId !== W.ptr) return; W.ptr = null; fireOff(); fireHome($('sw-fire'), W.fire); pullEnd(); }
   swEl.addEventListener('pointerup', swUp);
   swEl.addEventListener('pointercancel', swUp);
   $('sw-quit').addEventListener('click', function (e) { e.stopPropagation(); quitSwipe(); });
+  $('sw-help').addEventListener('click', function (e) { e.stopPropagation(); if (W.ptr === null && !W.done) { tutShow(false); haptic(null, 'light'); } });
+  $('tut-ok').addEventListener('click', function (e) { e.stopPropagation(); tutHide(); haptic(null, 'light'); });
+  $('sw-tut').addEventListener('click', function (e) { if (e.target === this) tutHide(); });         // мимо карточки — тоже закрыть
 
   // ── этап 2 «Скан пальца» (v362; v363 — без дрожания) ────────────────
   // Кирилл: «выглядит, как будто игра — пользователь не может поверить; добавь прогу, которая сканирует скорость самого
@@ -2075,7 +2264,8 @@ window.addEventListener('error', function (e) {
   var SCW = { v: [80, 180], rt: [300, 400], stop: [1.5, 3] };      // как у бота (AIM_SCAN_*)
   var SCK = ['v', 'tp', 'rt', 'stop', 'sm', 'hz'];
   var SC = { t: 0, i: 0, ptr: null, st: 'idle', fire: { x: 0, y: 0, r: 26 }, pxcm: 40, thr: 6, pts: [], dts: [], lt: 0, t0: 0, sigT: 0, mv: 0,
-             tm: 0, tm2: 0, raf: 0, fast: [], ctl: [], curves: [], ctlc: [], np: 0, out: null, done: false, ly: 0, lc: 2, vpk: 0 };
+             tm: 0, tm2: 0, raf: 0, fast: [], ctl: [], curves: [], ctlc: [], np: 0, out: null, done: false, ly: 0, lc: 2, vpk: 0,
+             fo: { x: 0, y: 0 } };
   function evT(e) { var t = e && e.timeStamp, n = now(); return t && Math.abs(t - n) < 5000 ? t : n; }      // старые браузеры — время от 1970 года
   function lvl(x, lim) { return x <= lim[0] ? 0 : x <= lim[1] ? 1 : 2; }
   function fmtK(k, x) {
@@ -2346,6 +2536,7 @@ window.addEventListener('error', function (e) {
     clearTimeout(SC.tm2);
     SC.pts = [{ t: t, x: e.clientX, y: e.clientY }]; SC.t0 = t; SC.lt = 0; SC.mv = 0; SC.sigT = 0; SC.vpk = 0;
     $('sc-fire').classList.remove('need'); $('sc-fire').classList.add('on'); $('sc-skip').hidden = true; $('sc-v').textContent = '—';
+    SC.fo = { x: fx, y: fy }; $('sc-fire').classList.remove('back');                      // v365: кнопка поедет за пальцем
     if (k === 'fast') { SC.st = 'wait'; scCard(L.sc_wait[0], L.sc_wait[1], 'wt'); SC.tm = setTimeout(sigGo, SC_SIG[0] + Math.random() * (SC_SIG[1] - SC_SIG[0])); }
     else { SC.st = 'ctl'; scCard(L.sc_h.ctl[0], L.sc_h.ctl[1]); }
     scReq(); e.preventDefault();
@@ -2364,6 +2555,7 @@ window.addEventListener('error', function (e) {
     if (SC.st === 'wait' && SC.mv) {                               // потянул до сигнала
       clearTimeout(SC.tm); SC.st = 'lift'; scCard(L.sc_early[0], L.sc_early[1], 'bad'); haptic('warning');
     }
+    fireDrag($('sc-fire'), SC.fire, e.clientX - SC.fo.x, e.clientY - SC.fo.y);
     scLive(); scReq(); e.preventDefault();
   });
   function scUp(e) {
@@ -2373,7 +2565,7 @@ window.addEventListener('error', function (e) {
       var lp = SC.pts[SC.pts.length - 1];
       if (lp && (lp.x !== e.clientX || lp.y !== e.clientY)) SC.pts.push({ t: Math.max(lp.t, evT(e)), x: e.clientX, y: e.clientY });
     }
-    $('sc-fire').classList.remove('on', 'go');
+    $('sc-fire').classList.remove('on', 'go'); fireHome($('sc-fire'), SC.fire);          // v365: отпустил — кнопка на место
     var st = SC.st;
     if (st === 'wait') { clearTimeout(SC.tm); SC.st = 'idle'; scCard(L.sc_wup[0], L.sc_wup[1], 'bad'); haptic('warning'); }
     else if (st === 'go') fastEnd();
@@ -2579,6 +2771,7 @@ window.addEventListener('error', function (e) {
     $('rules-p').hidden = !tune;
     renderData(r);
     renderScan(r, fresh);
+    renderProfiles(r); renderSmart(r);                                   // v365
     S.cvPaths = paths && paths.length ? paths : null;
     rtab('sens');
   }
@@ -2636,6 +2829,34 @@ window.addEventListener('error', function (e) {
     $('dkv').innerHTML = kv.map(function (x) { return '<div><i>' + esc(x[0]) + '</i><b>' + x[1] + '</b></div>'; }).join('');
     $('dkv').hidden = !kv.length;
     $('data-p').hidden = !h && !kv.length;
+  }
+  // v365: профили под оружие (Кирилл: «профили под оружие тоже добавь») — у каждого оружия свои цифры. Нажал профиль — бот
+  // делает его текущим (проверки в тренировке, напоминания, картинка — по нему); нет профиля — замер под это оружие.
+  // Старый бот профилей не присылает — ряда нет.
+  function renderProfiles(r) {
+    var ps = r && r.kind === 'tune' && Array.isArray(r.profiles) ? r.profiles : null;
+    $('pfs').hidden = !ps;
+    if (!ps) return;
+    var by = {}, anyOn = ps.some(function (p) { return p.on; }), cur = r.prof && WPN.indexOf(r.prof.wpn) >= 0 ? r.prof.wpn : 'mix';
+    ps.forEach(function (p) { by[p.wpn] = p; });
+    $('pfs-r').innerHTML = WPN.map(function (w, i) {
+      var p = by[w], on = !!p && (anyOn ? !!p.on : w === cur);
+      return '<button type="button" data-pf="' + w + '" class="' + (on ? 'on' : p ? '' : 'add') + '"><span>' + esc(L.pf_n[i]) + '</span><b>'
+        + (p ? p.gen + ' / ' + p.red : esc(L.pf_add)) + '</b></button>';
+    }).join('');
+  }
+  // v365: «умная» реклама (идея 6): по тому, что видно в замере — FPS в игре, экран и касания, сенса у потолка 200. Причину
+  // и цену (с акцией или промокодом) присылает бот; та же услуга, что «до идеала», — одна полоска, с причиной
+  function renderSmart(r) {
+    var ads = (r && r.kind === 'tune' && Array.isArray(r.ads2) && r.ads2) || [];
+    S.smart = ads;
+    $('smart').innerHTML = ads.map(function (a, i) {
+      var p = (a.full ? '<s>' + esc(rub(a.full)) + '</s>' : '') + esc(rub(a.price));
+      return '<button type="button" class="adstrip sm" data-ad="' + i + '"><span>' + esc(a.ico || '⭐') + '</span><span class="as-m"><b>' + esc(a.title)
+        + '</b><small>' + esc(a.text) + ' · ' + p + '</small></span><i>›</i></button>';
+    }).join('');
+    $('smart').hidden = !ads.length;
+    $('ad-top').hidden = ads.some(function (a) { return a.prod === 'ideal_phone'; });
   }
   // v357: реклама «до идеала» — цена, комбо со скидкой (присылает бот), отзывы; без данных от бота — без комбо и отзывов
   function rub(n) { return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₽'; }
@@ -2725,7 +2946,7 @@ window.addEventListener('error', function (e) {
   OWN_KEYS.forEach(function (k) {
     $('o-' + k).addEventListener('input', function () { var s = this.value.replace(/\D/g, '').slice(0, 3); if (s !== this.value) this.value = s; syncGo(); draftSave(); });
   });
-  $('own-last').addEventListener('click', function () { if (S.last && S.last.vals) { ownFill(S.last.vals); syncGo(); haptic(null, 'light'); } });
+  $('own-last').addEventListener('click', function () { var lp = lastPick(); if (lp) { ownFill(lp.vals); syncGo(); haptic(null, 'light'); } });
   document.addEventListener('click', function (e) {
     var c = e.target.closest('.chip[data-k]');
     if (!c) return;
@@ -2817,6 +3038,28 @@ window.addEventListener('error', function (e) {
     p.classList.remove('flash'); void p.offsetWidth; p.classList.add('flash');
     haptic(null, 'light');
   });
+  $('smart').addEventListener('click', function (e) {             // v365: «умная» реклама — заказ с вписанным текстом
+    var b = e.target.closest('[data-ad]'), a = b && (S.smart || [])[Number(b.getAttribute('data-ad'))];
+    if (a) { haptic(null, 'light'); openLink(orderLink(a.msg)); }
+  });
+  $('pfs-r').addEventListener('click', function (e) {             // v365: профили под оружие
+    var b = e.target.closest('[data-pf]');
+    if (!b || S.busy) return;
+    var w = b.getAttribute('data-pf'), i = WPN.indexOf(w);
+    if (b.classList.contains('on')) { haptic(); return; }
+    if (b.classList.contains('add')) {                            // профиля нет — замер под это оружие, анкета та же
+      S.prof.wpn = i + 1; syncChips(); syncGo(); draftSave(); haptic(null, 'light');
+      if ($('go').disabled) { show('prof'); ptabFirst(); toast($('go-h').textContent); return; }
+      toast(tpl(L.pf_new, { w: L.pf_n[i] })); begin(); return;
+    }
+    S.busy = true;
+    post('/casino/aim/profile', { wpn: w }).then(function (res) {
+      S.busy = false;
+      if (!res.j || !res.j.ok) { toast(res.status === 404 ? L.e_noprof : errText(res), true); return; }
+      S.last = res.j; renderLast(); renderRes(res.j, false);
+      toast(tpl(L.pf_on, { w: L.pf_n[i] })); haptic('success');
+    }).catch(function () { S.busy = false; toast(L.e_net, true); });
+  });
   $('again').addEventListener('click', function () { begin(); });
   $('toprof').addEventListener('click', function () { show('prof'); });
   try { if (window.matchMedia) { var mq = window.matchMedia('(orientation: landscape)'); if (mq.addEventListener) mq.addEventListener('change', rotCheck); } } catch (e) {}
@@ -2836,7 +3079,7 @@ window.addEventListener('error', function (e) {
                                  rows: Array.prototype.map.call(document.querySelectorAll('#lv-rows .lv-r'), function (e) { return e.textContent; }) }; },
     card: function () { return { btn: !$('card').hidden, open: !$('cardm').hidden, img: !!$('cm-img').querySelector('img'), t: $('cm-t').textContent,
                                  d: $('cm-d').textContent, chat: !$('cm-chat').hidden }; },
-    need: function () { var t = W.tgt; return { ready: !!t && !W.busy && W.ptr === null && !W.done && !$('swipe').hidden, h: t ? CHEST * t.k * W.Z : 0,
+    need: function () { var t = W.tgt; return { ready: !!t && !W.busy && !W.tut && W.ptr === null && !W.done && !$('swipe').hidden, h: t ? CHEST * t.k * W.Z : 0,
                                                 g: W.g, k: t ? t.k : 0, fx: W.fire.x, fy: W.fire.y, fr: W.fire.r, i: W.list.length, n: W.n,
                                                 d: t ? t.d : '', nx: t ? (t.x - W.cam.x) / W.g : 0, ny: t ? (t.y - W.cam.y) / W.g : 0,
                                                 seq: (S.seq || SEQ).join(''),
@@ -2855,6 +3098,19 @@ window.addEventListener('error', function (e) {
                                  go: $('sc-fire').classList.contains('go'), side: $('sc-pan').classList.contains('rt') ? 'right' : 'left',
                                  tiles: Array.prototype.map.call(document.querySelectorAll('#sc-m .sc-k'), function (e) { return e.textContent; }) }; },
     ls: function () { return { ph: !!lsGet('aim_ph'), draft: lsGet('aim_draft_' + UID), pend: !!lsGet('aim_pend_' + UID), hud: lsGet('aim_hud_' + UID) }; },
+    // v365: кнопка огня (где нарисована сейчас), анимация перед оттяжкой, профили, «умная» реклама
+    fire: function () {
+      function at(id) { var m = /translate3d\(([-\d.]+)px,\s*([-\d.]+)px/.exec($(id).style.transform || ''), r = $(id).offsetWidth / 2;
+        return m ? { x: Number(m[1]) + r, y: Number(m[2]) + r, r: r, back: $(id).classList.contains('back') } : null; }
+      return { sw: at('sw-fire'), sc: at('sc-fire'), swHome: { x: W.fire.x, y: W.fire.y }, scHome: { x: SC.fire.x, y: SC.fire.y } };
+    },
+    tut: function () { return { open: !$('sw-tut').hidden, auto: $('sw-tut').classList.contains('auto'), blocked: !!W.tut, n: Number(lsGet('aim_tut_' + UID)) || 0,
+                                 t: $('tut-t').textContent, steps: $('tut-l').children.length, ok: $('tut-okt').textContent, help: !$('sw-help').hidden }; },
+    prof: function () { return { shown: !$('pfs').hidden, last: $('own-last').hidden ? '' : $('own-last').textContent, lastBox: $('last').textContent,
+                                 chips: Array.prototype.map.call(document.querySelectorAll('#pfs-r button'), function (b) {
+                                   return { w: b.getAttribute('data-pf'), on: b.classList.contains('on'), add: b.classList.contains('add'), t: b.textContent }; }) }; },
+    smart: function () { return { shown: !$('smart').hidden, keys: (S.smart || []).map(function (a) { return a.key; }), adtop: !$('ad-top').hidden, t: $('smart').textContent,
+                                  order: (S.smart || []).map(function (a) { return orderLink(a.msg); }) }; },
     res: function () { return { swipes: W.list.length, sf: sfac(), orient: S.orient, hud: S.hud, phHash: S.phHash }; }
   };
 
