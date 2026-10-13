@@ -613,6 +613,9 @@
 
   /* v363: вкладки (Кирилл: «пользователь очень долго листает») — результат и анкета; спрятанное вкладкой — .toff */
   .toff { display: none !important; }
+  /* v367: «прогрев» — спрятанное один раз раскладывается вне экрана и невидимо (warm в коде), первое открытие — без рывка */
+  .warm { position: absolute !important; left: -10000px !important; top: 0 !important; width: 100%; visibility: hidden !important;
+          pointer-events: none !important; animation: none !important; transition: none !important; }
   .rtabs { position: sticky; top: calc(6px + var(--st) + var(--ct)); z-index: 20;
            grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.45fr);            /* «⭐ До идеала» длиннее — ей шире */
            margin-top: 14px; background: linear-gradient(180deg, rgba(24,24,32,.82), rgba(12,12,17,.86)); }      /* v366: стекло (.seg) */
@@ -1042,7 +1045,7 @@ window.addEventListener('error', function (e) {
     ['hud', 'scan', 'swipe', 'calc'].forEach(function (id) { var x = document.getElementById(id); if (x) x.hidden = true; });
     document.querySelectorAll('.scr').forEach(function (s) { s.hidden = true; });
     var f = document.getElementById('fatal'); f.hidden = false;
-    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v366';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v367';
   } catch (_) {}
 }, true);
 </script>
@@ -1057,7 +1060,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v366';
+  var VER = 'v367';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -1423,6 +1426,53 @@ window.addEventListener('error', function (e) {
     if (segR) segR.sync();
     window.scrollTo(0, 0);
     syncBack();
+    if (v === 'res' && !S.warmT) {                                  // v367: остальные вкладки — пока игрок смотрит «Сенсу»
+      S.warmT = true;
+      setTimeout(function () { warm(Array.prototype.map.call(document.querySelectorAll('#s-res [data-t].toff:not([hidden])'), function (p) { return [p]; })); }, 1500);
+    }
+  }
+  // v367: «прогрев» (Кирилл: «где-то тормозит — нужно всё проверить»). Спрятанное — экран результата и его вкладки — один
+  // раз раскладываем вне экрана, пока игрок ждёт подсчёт или читает: браузер запоминает шрифты и размеры, и первое
+  // открытие потом без рывка. Процессор в 6 раз медленнее (дешёвый телефон): первая «Разбор / Замеры / До идеала»
+  // 110–160 → 10–16 мс, показ результата 380 → 200 мс. По одному блоку за раз; во время замера — никогда, сразу после
+  // нажатия или ввода — тоже нет (подождём).
+  var warmQ = [], warmOn = false, lastIn = 0, NONE = {};
+  ['pointerdown', 'keydown', 'input'].forEach(function (t) { document.addEventListener(t, function () { lastIn = Date.now(); }, true); });
+  // задание: [el, only] — only: внутри el на время показать только этот блок [data-t] (NONE — ни одного), чтобы куски были мелкие
+  function warm(jobs, soon) {
+    jobs.forEach(function (j) { if (j[0]) warmQ.push(j); });
+    if (!warmOn && warmQ.length) { warmOn = true; warmNext(soon); }
+  }
+  function warmNext(soon) {
+    if (soon) setTimeout(warmStep, 30);
+    else if (window.requestIdleCallback) requestIdleCallback(warmStep, { timeout: 4000 });
+    else setTimeout(warmStep, 300);
+  }
+  function warmStep() {
+    var calc = !$('calc').hidden;                                   // «Считаю…» — игрок просто ждёт, самое время
+    if (!calc && (!$('hud').hidden || !$('scan').hidden || !$('swipe').hidden || Date.now() - lastIn < 700)) {
+      setTimeout(function () { warmNext(false); }, 800);
+      return;
+    }
+    var j = warmQ.shift(), e = j && j[0], only = j && j[1], ps = [], was = [], hid, off, k;
+    if (e && (e.hidden || e.classList.contains('toff')) && e.parentNode && e.parentNode.offsetWidth) {
+      if (only) {
+        ps = e.querySelectorAll('[data-t]');
+        for (k = 0; k < ps.length; k++) { was.push(ps[k].classList.contains('toff')); ps[k].classList.toggle('toff', ps[k] !== only); }
+      }
+      hid = e.hidden; off = e.classList.contains('toff');
+      e.hidden = false; e.classList.remove('toff'); e.classList.add('warm');
+      void e.offsetHeight;
+      e.classList.remove('warm'); if (off) e.classList.add('toff'); e.hidden = hid;
+      for (k = 0; k < ps.length; k++) ps[k].classList.toggle('toff', was[k]);
+    }
+    if (warmQ.length) warmNext(calc); else warmOn = false;
+  }
+  function warmRes(soon) {           // экран результата: шапка, потом по одному блоку
+    var r = $('s-res');
+    if (!r.hidden || S.warmR) return;
+    S.warmR = true;
+    warm([[r, NONE]].concat(Array.prototype.map.call(r.querySelectorAll('[data-t]:not([hidden])'), function (p) { return [r, p]; })), soon);
   }
   function syncBack() {
     try {
@@ -1599,7 +1649,7 @@ window.addEventListener('error', function (e) {
     }).join('') : '<div class="none">' + esc(L.q_none) + '</div>'
       + '<button type="button" class="use" data-use="1">' + esc(tpl(L.use, { q: q.slice(0, 40) })) + '</button>';
   }
-  function pickPhone(key) {
+  function pickPhone(key, quiet) {    // quiet — восстановили при открытии страницы, игрок не нажимал (v367)
     var p = null;
     for (var i = 0; i < S.phones.length; i++) if (S.phones[i][0] === key) p = S.phones[i];
     if (!p) return;
@@ -1607,8 +1657,11 @@ window.addEventListener('error', function (e) {
     $('qs-n').textContent = p[1] + ' ' + p[2];
     $('qs-d').textContent = inch(p[3]) + ' · ' + L.scr_names[scrClass(p) - 1];
     $('q-sel').hidden = false; $('q-box').hidden = true; $('man').hidden = true; $('q-man').hidden = true;
-    var qs = $('q-sel'); qs.classList.remove('pop'); void qs.offsetWidth; qs.classList.add('pop');        // v354: телефон «встал» — значок пружинит
-    haptic(null, 'light'); syncGo(); draftSave();
+    if (!quiet) {                      // v367: раньше и при открытии страницы — пружинка, лишняя раскладка и вибрация телефона
+      var qs = $('q-sel'); qs.classList.remove('pop'); void qs.offsetWidth; qs.classList.add('pop');        // v354: телефон «встал» — значок пружинит
+      haptic(null, 'light');
+    }
+    syncGo(); draftSave();
   }
   function unpick() {
     S.phone = null; S.prof.phone = '';
@@ -1699,7 +1752,7 @@ window.addEventListener('error', function (e) {
     if (p.mode) S.prof.mode = MODES.indexOf(p.mode) + 1;
     if (p.wpn && WPN.indexOf(p.wpn) >= 0) S.prof.wpn = WPN.indexOf(p.wpn) + 1;           // v358: оружие — как в прошлый раз
     if (r.st && r.st.gfps && GF.indexOf(r.st.gfps) >= 0) S.prof.gfps = GF.indexOf(r.st.gfps) + 1;       // v356: FPS в игре — как в прошлый раз
-    if (p.phone) pickPhone(p.phone);
+    if (p.phone) pickPhone(p.phone, true);
     else if (p.d && p.s) { S.prof.dev = p.d; S.prof.scr = p.s; setManual(true); if (p.name) $('m-name').value = p.name; if (p.inch) $('m-inch').value = String(p.inch); }
     // свои настройки: после «в голову» в игре стоят наши значения, иначе — то, что игрок вписывал в прошлый раз
     if (r.kind === 'tune' && r.tune && r.tune.done) { S.prof.own = 1; ownFill(r.vals); }
@@ -1721,7 +1774,7 @@ window.addEventListener('error', function (e) {
     ['dev', 'scr', 'grip', 'style', 'mode', 'own', 'now', 'gfps', 'wpn'].forEach(function (k) {
       var n = Number(d[k]) || 0; if (n >= 0 && n <= (k === 'gfps' ? 5 : 4)) S.prof[k] = n;
     });
-    if (d.phone) pickPhone(d.phone);
+    if (d.phone) pickPhone(d.phone, true);
     else if (d.manual) { setManual(true); $('m-name').value = String(d.name || '').slice(0, 40); $('m-inch').value = String(d.inch || '').slice(0, 5); }
     OWN_KEYS.forEach(function (k) { $('o-' + k).value = d.vals && d.vals[k] ? String(d.vals[k]).replace(/\D/g, '').slice(0, 3) : ''; });
     syncChips(); syncGo();
@@ -1744,10 +1797,22 @@ window.addEventListener('error', function (e) {
     function place(x, w) { th.style.width = w.toFixed(1) + 'px'; th.style.transform = 'translate3d(' + x.toFixed(1) + 'px,0,0)'; }
     function on() { var b = bs(), i; for (i = 0; i < b.length; i++) if (b[i].classList.contains('on')) return i; return 0; }
     // cur: −1 — капсула не стоит (вкладки были спрятаны), −2 — её только что отпустили посреди пути (доедет пружинкой)
+    // v367: ставим в ближайшем кадре, а не сразу. Замер вкладки «сразу» заставлял браузер раскладывать всю страницу заново:
+    // при открытии — 2 лишних раза (на слабом телефоне по 0,15–0,2 с), при изменении размера окна (Telegram разворачивает
+    // окно — много раз подряд) — по 2 на каждый шаг. В кадре — одна раскладка на всё; несколько вызовов — последний.
+    // Запасной таймер 30 мс — если кадра нет (окно свёрнуто, тестовый браузер): что раньше, то и ставит, второй — впустую.
+    var want = null;
     function at(i, anim) {
-      var b = bs()[i];
+      if (!want) { requestAnimationFrame(atNow); setTimeout(atNow, 30); }
+      want = { i: i, anim: anim };
+    }
+    function atNow() {
+      var w = want, i, b;
+      want = null;
+      if (!w) return;
+      i = w.i; b = bs()[i];
       if (!b || !b.offsetWidth) { cur = -1; return; }             // спрятаны — встанет, когда покажутся (sync)
-      var go = !!anim && cur >= 0 && !RM, jump = !go && cur !== -2;
+      var go = !!w.anim && cur >= 0 && !RM, jump = !go && cur !== -2;
       if (jump) th.classList.add('drag');                          // без пружинки — сразу на место
       place(b.offsetLeft, b.offsetWidth);
       if (jump) { void th.offsetWidth; th.classList.remove('drag'); }
@@ -2780,6 +2845,7 @@ window.addEventListener('error', function (e) {
     $('calc').hidden = false; $('calc').classList.remove('off'); $('calc-off').hidden = true;
     $('calc-t').textContent = L.calc_t; $('calc-d').textContent = L.calc_d;
     var t0 = now(), copy = JSON.parse(JSON.stringify(b));
+    warmRes(true);                                                  // v367: пока «Считаю…» — экран результата
     post('/casino/aim/tune', b).then(function (res) {
       setTimeout(function () {
         S.busy = false;
@@ -3204,6 +3270,7 @@ window.addEventListener('error', function (e) {
         return m ? { x: Number(m[1]) + r, y: Number(m[2]) + r, r: r, back: el.classList.contains('back'), tx: f ? Number(f[1]) : 0, ty: f ? Number(f[2]) : 0 } : null; }
       return { sw: at('sw-fire'), sc: at('sc-fire'), swHome: { x: W.fire.x, y: W.fire.y }, scHome: { x: SC.fire.x, y: SC.fire.y }, tug: TUG };
     },
+    warm: function () { return { q: warmQ.length, on: warmOn, t: !!S.warmT, r: !!S.warmR }; },          // v367: прогрев
     seg: function () {                     // v366: капсулы вкладок — где стоят и где выбранная вкладка
       function g(id) { var b = $(id), th = b.querySelector('.seg-th'), m = /translate3d\(([-\d.]+)px/.exec(th.style.transform || ''), o = b.querySelector('button.on');
         return { x: m ? Number(m[1]) : null, w: parseFloat(th.style.width) || 0, onX: o ? o.offsetLeft : null, onW: o ? o.offsetWidth : null,
@@ -3256,6 +3323,10 @@ window.addEventListener('error', function (e) {
     if (j.swipes) S.swipes = j.swipes;
     if (j.diag) for (var dk in j.diag) S.diag[Number(dk)] = Number(j.diag[dk]);
     S.last = j.last || null; renderLast(); restore(true); renderList();
+    if (S.last) {                    // v367: есть прошлый результат — экран результата, когда шрифт загрузился и игрок ничего не нажимает
+      var wl = function () { setTimeout(function () { warmRes(false); }, 1500); };
+      try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(wl, wl); else wl(); } catch (e) { wl(); }
+    }
   }).catch(function () { toast(S.phones.length ? L.e_net : L.e_ph, true); if (!S.phones.length) setManual(true); else restore(true); });
 })();
 </script>
