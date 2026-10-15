@@ -360,15 +360,20 @@
   .sl-h small { margin-right: 6px; font-size: 11.5px; font-weight: 700; }
   .sl-h .up, .sl-h .dn { color: var(--acc3); }      /* выше или ниже — не «хорошо/плохо», поэтому один цвет */
   .sl-h .was { color: var(--tx3); font-size: 12.5px; font-weight: 500; }
+  .sl-h > span:last-child { flex: none; white-space: nowrap; }        /* v368: «подобрал 109» — в одну строку */
   .sl-h .tagf { margin-left: 6px; padding: 1px 7px; font-size: 10.5px; font-weight: 600; color: var(--acc3); background: var(--accbg); border-radius: 999px; }
   .sl-t { position: relative; height: 6px; margin-top: 7px; overflow: hidden; background: rgba(255,255,255,.06); border-radius: 6px; }
   .sl-t i { position: absolute; inset: 0; border-radius: inherit; transform-origin: 0 50%; transform: scaleX(0); background: var(--grad);
             transition: transform .9s var(--ease); }
   .sl-t u { position: absolute; z-index: 2; top: -1px; bottom: -1px; width: 2px; margin-left: -1px; border-radius: 1px; background: #fff; opacity: .85; }
-  .fire { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; padding: 11px 13px; background: var(--card2);
+  .fire { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-top: 14px; padding: 11px 13px; background: var(--card2);
           border: 1px solid var(--ln); border-radius: 12px; font-size: 13.5px; font-weight: 500; color: var(--tx2); }
   .fire b { font-size: 18px; font-weight: 800; color: var(--tx); }
   .fire .was { margin-right: 6px; color: var(--tx3); font-size: 12.5px; font-weight: 500; }
+  /* v368: совет под цифрой — кнопку огня игрок подбирает сам (Кирилл) */
+  .fire .ftip { flex-basis: 100%; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--ln); font-size: 12.5px; line-height: 1.45;
+                font-weight: 500; color: var(--tx2); }
+  .fire .ftip b { font-size: inherit; font-weight: 700; color: var(--acc3); }
   .sent { margin-top: 10px; text-align: center; font-size: 12.5px; color: var(--acc3); }
   .why { margin: 0; padding: 0; list-style: none; }
   .why li { position: relative; padding: 6px 0 6px 18px; color: var(--tx2); font-size: 13.5px; }
@@ -1045,7 +1050,7 @@ window.addEventListener('error', function (e) {
     ['hud', 'scan', 'swipe', 'calc'].forEach(function (id) { var x = document.getElementById(id); if (x) x.hidden = true; });
     document.querySelectorAll('.scr').forEach(function (s) { s.hidden = true; });
     var f = document.getElementById('fatal'); f.hidden = false;
-    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v367';
+    document.getElementById('fatal-d').textContent = 'Закрой и открой настройку заново. Причина: ' + String((e && e.message) || 'ошибка') + ' · v368';
   } catch (_) {}
 }, true);
 </script>
@@ -1060,7 +1065,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v367';
+  var VER = 'v368';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var UID = Q.get('user_id') || '';
@@ -1189,7 +1194,8 @@ window.addEventListener('error', function (e) {
       dk: { prec: 'Точность замера', precr: 'Точность итога', n: 'Оттяжек', warm: 'пристрелка', hz: 'Касания', fps: 'Экран', gfps: 'FPS в игре', px: 'Точек в 1 см' },
       dq: ['высокая', 'средняя', 'низкая'], hz: 'Гц',
       labels: { gen: 'Обзор', red: 'Коллиматор', x2: 'Прицел 2×', x4: 'Прицел 4×', snp: 'Снайперский прицел', free: 'Свободный обзор' },
-      fire: 'Кнопка огня', copy: 'Скопировать значения', copied: 'Скопировал — вставь в заметки или сразу в игру',
+      fire: 'Кнопка огня', ftip_b: 'Совет:', ftip: 'кнопку старайся подобрать сам — какая тебе удобнее! {v}% — с чего начать.',
+      copy: 'Скопировать значения', copied: 'Скопировал — вставь в заметки или сразу в игру',
       card_t: 'Картинка «Мои настройки»', card_d: 'Цифры одной картинкой — сохрани или скинь другу',
       cm_wait: 'Рисую картинку…', cm_ok: 'Картинка уже в чате с ботом',
       cm_how: 'Открой её в чате: «Сохранить» — в галерею, «Переслать» — другу. Под картинкой ссылка — друг бесплатно настроит свою оттяжку.',
@@ -1317,7 +1323,8 @@ window.addEventListener('error', function (e) {
       dk: { prec: 'Precision', precr: 'Result precision', n: 'Drags', warm: 'warm-up', hz: 'Touch', fps: 'Screen', gfps: 'FPS in the game', px: 'Dots per 1 cm' },
       dq: ['high', 'medium', 'low'], hz: 'Hz',
       labels: { gen: 'General', red: 'Red dot', x2: '2× scope', x4: '4× scope', snp: 'Sniper scope', free: 'Free look' },
-      fire: 'Fire button', copy: 'Copy values', copied: 'Copied — paste it into notes or straight into the game',
+      fire: 'Fire button', ftip_b: 'Tip:', ftip: 'try to pick the fire button size yourself — whatever is most comfortable for you! {v}% is a starting point.',
+      copy: 'Copy values', copied: 'Copied — paste it into notes or straight into the game',
       card_t: '«My settings» picture', card_d: 'Your numbers in one picture — save it or send it to a friend',
       cm_wait: 'Drawing the picture…', cm_ok: 'The picture is in your chat with the bot',
       cm_how: 'Open it in the chat: «Save» to the gallery or «Forward» to a friend. The link under it lets a friend tune their own drag for free.',
@@ -2884,7 +2891,8 @@ window.addEventListener('error', function (e) {
     }).join('');
     var fv = r.vals.fire, fb0 = r.base ? r.base.fire : fv, fown = tune && ((cur && filled.indexOf('fire') < 0) || !!st.hsize);   // v353: кнопку поставил сам
     $('fire').innerHTML = '<span>' + esc(L.fire) + '</span><span>' + (fown && fv !== fb0 ? '<small class="was">' + esc(tpl(L.was, { v: fb0 + '%' })) + '</small>' : '')
-      + '<b>' + fv + '%</b></span>';
+      + '<b>' + fv + '%</b></span>'
+      + '<small class="ftip"><b>' + esc(L.ftip_b) + '</b> ' + esc(tpl(L.ftip, { v: fv })) + '</small>';     // v368: совет
     $('r1-d').hidden = !tune;
     $('sent').textContent = fresh ? L.sent : L.sent_last;
     // проверка в тренировке
