@@ -547,6 +547,23 @@
       <div class="row"><button type="button" class="b-acc f1" id="gw-go">🚀 Запустить розыгрыш</button></div>
       <div class="small">Игроки участвуют бесплатно: «Товары Free Fire» → «🎁 Розыгрыш». Когда выйдет время, запись закроется и бот напишет тебе. Победителей выбираешь сам — кнопкой, случайно среди участников.</div>
     </div></div>
+    <!-- v371: конкурс рефералов — кто приведёт больше всех друзей; токенов бот не раздаёт, приз — твоя услуга; итоги объявляешь сам -->
+    <div class="sec" id="rc-box"><h3>👥 Конкурс рефералов</h3><div id="rc-card"><div class="small">Загрузка…</div></div></div>
+    <div class="sec" id="rc-form" hidden><h3>Новый конкурс</h3><div class="v">
+      <div class="lbl">Приз</div>
+      <div class="chips wrap" id="rc-prize-c"></div>
+      <input id="rc-prize" maxlength="80" placeholder="Приз — выбери выше или впиши свой">
+      <textarea id="rc-desc" maxlength="500" placeholder="Описание (необязательно). Например: «Победителю лично настрою сенсу в Discord»"></textarea>
+      <div class="lbl">Сколько призовых мест</div>
+      <div class="chips wrap" id="rc-win-c"></div>
+      <div class="lbl">Какой друг засчитывается</div>
+      <div class="chips wrap" id="rc-mm-c"></div>
+      <div class="lbl">Когда подвести итоги</div>
+      <div class="v" id="rc-exp"></div>
+      <label class="ck"><input type="checkbox" id="rc-ann" checked><span>📢 Сообщить всем игрокам — с кнопкой «🔗 Моя ссылка и место»</span></label>
+      <div class="row"><button type="button" class="b-acc f1" id="rc-go">🚀 Запустить конкурс</button></div>
+      <div class="small">Считаются друзья, которые зарегистрировались по ссылке игрока после запуска и до конца, не в бане и сыграли выбранное число матчей 1vs1 — пустые аккаунты не помогут. Игроки видят конкурс сверху «👥 Рефералы»: приз, срок, своё место и лидеров. Когда выйдет время, бот напишет тебе; итоги объявляешь сам — сначала можно убрать накрутчика.</div>
+    </div></div>
     <!-- v359: акции и промокоды на товары Free Fire — цена со скидкой видна игрокам везде, где бот показывает цену -->
     <div class="sec" id="ss-box"><h3>🔥 Акция на товары</h3><div id="ss-list"><div class="small">Загрузка…</div></div></div>
     <div class="sec" id="ss-form" hidden><h3>Новая акция</h3><div class="v">
@@ -676,7 +693,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v359';
+  var VER = 'v371';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -901,7 +918,7 @@ window.addEventListener('error', function (e) {
       .map(function (x) { return '<span>' + x[0] + ' <b>' + fmt(x[1]) + '</b></span>'; }).join('');
     tabCnt('du-cnt', st.disputes); tabCnt('rp-tcnt', (st.reports || 0) + (st.fraud || 0));       // v333 (v334: + подозрения)
     tabCnt('sup-cnt', st.support); botDot();                                                      // v338
-    $('pr-dot').hidden = !(st.giveaway && st.giveaway.wait) || isMod();                           // v345: розыгрыш ждёт итогов
+    $('pr-dot').hidden = !((st.giveaway && st.giveaway.wait) || (st.refcontest && st.refcontest.wait)) || isMod();   // v345 + v371: ждут итогов
   }
   // ── v338: кто открыл — администратор или модератор. Модератору — только его вкладки и кнопки (права всё равно
   // проверяет сервер: спрятанная кнопка — для удобства, а не защита) ──
@@ -1535,9 +1552,12 @@ window.addEventListener('error', function (e) {
                                                             : '🗑 Удалится у всех через ' + leftTxt(sec) + ' после отправки'; } },
     // v345: когда закончить приём заявок в розыгрыш
     gw: { chips: [[0, 'без срока'], [3600, '1 ч'], [21600, '6 ч'], [86400, '1 дн'], [259200, '3 дн'], [604800, '7 дн']], or: 'или до',
-          num: 'Через сколько', zero: '♾ Без срока — запись закроешь сам', lead: '⏰ Итоги: ', after: 'через ' }
+          num: 'Через сколько', zero: '♾ Без срока — запись закроешь сам', lead: '⏰ Итоги: ', after: 'через ' },
+    // v371: когда подвести итоги конкурса рефералов (без срока нельзя: конкурс — гонка до даты)
+    rc: { chips: [[86400, '1 дн'], [259200, '3 дн'], [604800, '7 дн'], [1209600, '14 дн']], or: 'или до',
+          num: 'Через сколько', zero: '', lead: '⏰ Итоги: ', after: 'через ' }
   };
-  S.exp = { pc: 0, bw: 0, bd: 0, gw: 86400 };   // выбранная кнопка; 0 — «без срока» / «сейчас» / «не удалять»; нет ключа — не выбрана
+  S.exp = { pc: 0, bw: 0, bd: 0, gw: 86400, rc: 604800 };   // выбранная кнопка; 0 — «без срока» / «сейчас» / «не удалять»; нет ключа — не выбрана
   function leftTxt(sec) {
     sec = Math.max(0, sec);
     if (sec >= 86400) { var d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600); return d + ' дн' + (h ? ' ' + h + ' ч' : ''); }
@@ -1601,7 +1621,7 @@ window.addEventListener('error', function (e) {
       expHint(p);
     });
     function typed(e) {
-      var m = (e.target.id || '').match(/^(pc|pe|bw|bd|gw|ss|sc|se)-(n|u|dt)$/); if (!m) return;      // v359: + ss, sc, se
+      var m = (e.target.id || '').match(/^(pc|pe|bw|bd|gw|ss|sc|se|rc)-(n|u|dt)$/); if (!m) return;      // v359: + ss, sc, se; v371: + rc
       if (m[2] === 'n' && e.target.value) { if ($(m[1] + '-dt')) $(m[1] + '-dt').value = ''; offChips(m[1]); }
       if (m[2] === 'dt' && e.target.value) { $(m[1] + '-n').value = ''; offChips(m[1]); }
       expHint(m[1]);
@@ -1649,7 +1669,7 @@ window.addEventListener('error', function (e) {
     if (run) {
       var pc = jb.total ? Math.round(jb.done / jb.total * 100) : 0;
       var el = Date.now() / 1000 - jb.started, left = jb.done ? el / jb.done * (jb.total - jb.done) : 0;
-      h = '<div class="sec"><h3>' + (jb.kind === 'tournament' ? 'Идёт объявление турнира' : jb.kind === 'giveaway' ? 'Идёт объявление розыгрыша'
+      h = '<div class="sec"><h3>' + (jb.kind === 'tournament' ? 'Идёт объявление турнира' : jb.kind === 'giveaway' ? 'Идёт объявление розыгрыша' : jb.kind === 'refcontest' ? 'Идёт объявление конкурса рефералов'
         : jb.kind === 'aimpatch' ? 'Идёт напоминание «Вышло обновление Free Fire»' : jb.kind === 'sale' ? 'Идёт объявление акции'
         : 'Идёт рассылка') + '</h3><div class="v">'
         + '<div class="bar"><i style="width:' + pc + '%"></i></div>'
@@ -1684,7 +1704,7 @@ window.addEventListener('error', function (e) {
     var hs = j.history || [];
     $('bc-hist-box').hidden = !hs.length;
     $('bc-hist').innerHTML = hs.map(function (x) {
-      return '<div><b>' + dt(x.t) + '</b> · ' + esc(AUDN[x.aud] || x.aud) + (x.kind === 'tournament' ? ' · 🏆 объявление турнира' : x.kind === 'giveaway' ? ' · 🎁 объявление розыгрыша'
+      return '<div><b>' + dt(x.t) + '</b> · ' + esc(AUDN[x.aud] || x.aud) + (x.kind === 'tournament' ? ' · 🏆 объявление турнира' : x.kind === 'giveaway' ? ' · 🎁 объявление розыгрыша' : x.kind === 'refcontest' ? ' · 👥 объявление конкурса рефералов'
         : x.kind === 'aimpatch' ? ' · 🔄 обновление Free Fire' : x.kind === 'sale' ? ' · 🔥 объявление акции' : '')
         + (x.scheduled ? ' · 🗓' : '') + (x.photo ? ' · 🖼' : '') + (x.btn ? ' · 🔗 ' + esc(cut(x.btn, 30)) : '')
         + (x.state === 'cancelled' ? ' <span class="bd wn">остановлена</span>' : '')
@@ -1863,6 +1883,7 @@ window.addEventListener('error', function (e) {
   function loadPromo() {
     loadDp();                                             // v331: акция в Донате — в этой же вкладке
     loadGw();                                             // v345: розыгрыш услуги — сверху вкладки
+    loadRc();                                             // v371: конкурс рефералов — под розыгрышем
     loadShop();                                           // v359: акции и промокоды на товары
     if (!S.pr) $('pr-list').innerHTML = skel(3);
     return sect('/promo', { op: 'list' }, 'pr-list').then(function (j) { if (j) { S.pr = j; renderPromo(); } })
@@ -2035,6 +2056,92 @@ window.addEventListener('error', function (e) {
     if (!$('gw-n')) { $('gw-exp').innerHTML = expHtml('gw'); expHint('gw'); }      // один раз — выбранное время не сбрасываем
   }
   expWire($('gw-exp'));
+
+  // ── v371: конкурс рефералов ─────────────────────────────────────────
+  // Один за раз. Кто приведёт больше всех друзей (зарегистрировались по ссылке за время конкурса, не в бане, сыграли
+  // выбранное число матчей 1vs1) — тот и победил; поровну — выше тот, кто набрал раньше. Время вышло — бот закроет конкурс
+  // и напишет; итоги объявляешь сам. «Убрать» — друзья этого игрока не считаются (накрутка).
+  var RCST = { open: ['ok', 'идёт'], closed: ['wn', 'время вышло — объяви итоги'] };
+  var RC_WIN = [1, 2, 3, 5], RC_MM = [[0, 'сразу после регистрации'], [1, 'сыграл 1 матч'], [3, 'от 3 матчей'], [5, 'от 5 матчей']];
+  var RC_MD = ['🥇', '🥈', '🥉'];
+  S.rcWin = 1; S.rcMm = 1;
+  function loadRc() {
+    if (!S.rc) $('rc-card').innerHTML = '<div class="small">Загрузка…</div>';
+    return sect('/refcontest', { op: 'get' }, 'rc-card', 'v371').then(function (j) { if (j) setRc(j); else $('rc-form').hidden = true; })
+      .catch(function () { toast('Нет связи с сервером', true); });
+  }
+  function setRc(j) { S.rc = j; renderRc(); }
+  function rcBtn(op, text, cls) { return '<button type="button" class="' + (cls || '') + ' f1" data-rop="' + op + '">' + text + '</button>'; }
+  function rcFriend(f, mm) {
+    var why = f.ok ? '<span class="bd ok">засчитан</span>' : f.banned ? '<span class="bd ban">бан</span>'
+      : '<span class="bd auto">' + fmt(f.matches || 0) + ' из ' + mm + ' ' + plural3(mm, 'матча', 'матчей', 'матчей') + '</span>';
+    return '<div class="row" style="margin-top:6px"><span class="f1 lk wrapt" data-uid="' + f.uid + '">' + esc(f.name || 'без имени')
+      + ' <span class="small">ID ' + esc(f.cid || '—') + ' · 1vs1: ' + fmt(f.matches || 0) + '</span></span>' + why + '</div>';
+  }
+  function rcRow(p, c) {
+    var plc = p.place ? (RC_MD[p.place - 1] || p.place + '.') : '—', win = p.place && p.place <= c.winners_n;
+    return '<div class="it" data-uid="' + p.uid + '"><div class="av">' + avHtml(p) + (p.online ? '<i class="dot"></i>' : '') + '</div>'
+      + '<div class="m"><div class="nm">' + plc + ' ' + esc(p.name || 'без имени') + (p.banned ? ' <span class="bd ban">бан</span>' : '')
+      + (win ? ' <span class="bd ok">призовое</span>' : '') + '</div>'
+      + '<div class="sub">ID ' + esc(p.cid || '—') + ' · засчитано <b>' + fmt(p.n) + '</b> из ' + fmt(p.all) + '</div>'
+      + '<details data-k="rc-f' + p.uid + '"><summary>Друзья (' + fmt(p.all) + ')</summary>'
+      + (p.friends || []).map(function (f) { return rcFriend(f, c.min_matches || 0); }).join('') + '</details></div>'
+      + '<button type="button" class="xs" data-rx="' + p.uid + '">Убрать</button></div>';
+  }
+  function renderRc() {
+    var c = S.rc.c, hs = S.rc.history || [], h = '', open = {};
+    var ds = $('rc-card').querySelectorAll('details[data-k]');
+    for (var i = 0; i < ds.length; i++) if (ds[i].open) open[ds[i].getAttribute('data-k')] = 1;
+    if (!c) h += '<div class="small">Сейчас конкурса нет. Запусти ниже — игроки увидят его сверху раздела «👥 Рефералы»: приз, срок, своё место и лидеров.</div>';
+    else {
+      var st = RCST[c.status] || ['auto', c.status], now = Date.now() / 1000, mm = c.min_matches || 0, bd = c.board || [];
+      h += '<div class="row"><div class="nm f1 wrapt" style="font-size:17px">' + (/^[0-9A-Za-zА-Яа-яЁё«"]/.test(c.prize) ? '🏆 ' : '') + esc(c.prize) + '</div><span class="bd ' + st[0] + '">' + st[1] + '</span></div>'
+        + (c.desc ? '<div class="sub wrapt" style="margin-top:2px">' + esc(c.desc) + '</div>' : '')
+        + '<div class="grid" style="margin-top:10px">' + kv('В таблице', fmt(c.players)) + kv('Друзей засчитано', fmt(c.friends)) + kv('Призовых мест', c.winners_n)
+        + kv('Друг засчитывается', mm ? 'после ' + mm + ' ' + plural3(mm, 'матча', 'матчей', 'матчей') + ' 1vs1' : 'сразу')
+        + kv('Итоги', dt(c.ends_at) + (c.status === 'open' && c.ends_at > now ? '<small>ещё ' + leftTxt(c.ends_at - now) + '</small>' : '')) + '</div>';
+      if (c.status === 'closed') h += '<div class="note wn" style="margin-top:10px">⏰ Конкурс закончился' + (c.closed_at ? ' ' + dt(c.closed_at) : '') + '. '
+        + (c.players ? 'Проверь таблицу: накрутчика можно убрать — его друзья не посчитаются. Потом «📣 Объявить итоги»: победителям — «Ты победил» с кнопкой «Написать @SloppyX», остальным — таблица.'
+          : 'Никто не привёл друзей по условию — конкурс можно отменить.') + '</div>';
+      h += '<div class="row" style="margin-top:10px">' + (c.status === 'open' ? rcBtn('close', '⏹ Завершить сейчас') + rcBtn('promote', '📢 Объявить всем')
+          : rcBtn('announce', '📣 Объявить итоги', 'b-acc')) + '</div>'
+        + '<div class="row" style="margin-top:8px">' + rcBtn('cancel', '✖️ Отменить конкурс', 'b-no') + '</div>';
+      h += '<div class="lbl" style="margin-top:12px">Таблица</div>'
+        + (bd.length ? bd.map(function (p) { return rcRow(p, c); }).join('') : '<div class="small">Пока никто не привёл друзей.</div>');
+      var rm = c.removed || [];
+      if (rm.length) h += '<details data-k="rc-rm" style="margin-top:12px"><summary>Убраны из конкурса (' + rm.length + ')</summary>'
+        + rm.map(function (p) {
+            return '<div class="row" style="margin-top:6px"><span class="f1 lk wrapt" data-uid="' + p.uid + '">' + esc(p.name || 'без имени')
+              + ' <span class="small">ID ' + esc(p.cid || '—') + '</span></span><button type="button" class="xs" data-rback="' + p.uid + '">Вернуть</button></div>';
+          }).join('') + '</details>';
+    }
+    if (hs.length) {
+      h += '<details data-k="rc-h" style="margin-top:12px"><summary>Прошлые конкурсы (' + hs.length + ')</summary><div class="hist">'
+        + hs.map(function (x) {
+            return '<div><b>' + esc(x.prize) + '</b> · ' + dt(x.finished) + (x.state === 'cancelled' ? ' <span class="bd wn">отменён</span>' : '')
+              + ' · 👥 ' + fmt(x.participants)
+              + (x.winners || []).map(function (w) {
+                  return '<div class="row" style="margin-top:6px"><span class="f1 lk wrapt" data-uid="' + w.uid + '">' + (RC_MD[w.place - 1] || '🏅') + ' ' + esc(w.name || 'без имени')
+                    + ' <span class="small">ID ' + esc(w.cid || '—') + ' · друзей ' + fmt(w.n || 0) + '</span></span>'
+                    + '<button type="button" class="xs' + (w.delivered ? ' b-acc' : '') + '" data-rdel="' + esc(x.id) + '" data-u="' + w.uid + '">'
+                    + (w.delivered ? '✅ Выдано' : 'Приз выдан?') + '</button></div>';
+                }).join('') + '</div>';
+          }).join('') + '</div></details>';
+    }
+    $('rc-card').innerHTML = h;
+    var ds2 = $('rc-card').querySelectorAll('details[data-k]');
+    for (var k = 0; k < ds2.length; k++) if (open[ds2[k].getAttribute('data-k')]) ds2[k].open = true;
+    $('rc-form').hidden = !!c;
+    if (!c) renderRcForm();
+  }
+  function renderRcForm() {
+    var pz = (S.rc && S.rc.prizes) || [], cur = $('rc-prize').value.trim();
+    $('rc-prize-c').innerHTML = pz.map(function (x) { return '<button type="button" class="chip' + (x === cur ? ' on' : '') + '" data-v="' + esc(x) + '">' + esc(x) + '</button>'; }).join('');
+    $('rc-win-c').innerHTML = RC_WIN.map(function (x) { return '<button type="button" class="chip' + (S.rcWin === x ? ' on' : '') + '" data-n="' + x + '">' + x + '</button>'; }).join('');
+    $('rc-mm-c').innerHTML = RC_MM.map(function (x) { return '<button type="button" class="chip' + (S.rcMm === x[0] ? ' on' : '') + '" data-n="' + x[0] + '">' + x[1] + '</button>'; }).join('');
+    if (!$('rc-n')) { $('rc-exp').innerHTML = expHtml('rc'); expHint('rc'); }      // один раз — выбранное время не сбрасываем
+  }
+  expWire($('rc-exp'));
 
   // ── v359: акции и промокоды на товары Free Fire ────────────────────
   // Акция — скидка всем на товар до срока («до идеала −20% до воскресенья»); промокод — для стримов и розыгрышей: игрок вводит
@@ -2297,6 +2404,67 @@ window.addEventListener('error', function (e) {
     }
     var d = e.target.closest('[data-gdel]');
     if (d) { doSect('/giveaway', { op: 'delivered', gid: d.getAttribute('data-gdel'), uid: Number(d.getAttribute('data-u')) }, null, d, setGw); return; }
+    var u = e.target.closest('[data-uid]');
+    if (u) openPlayer(Number(u.getAttribute('data-uid')), 'promo');
+  });
+
+
+  $('rc-prize-c').addEventListener('click', function (e) {                                    // v371: конкурс рефералов
+    var b = e.target.closest('[data-v]'); if (!b) return;
+    $('rc-prize').value = b.getAttribute('data-v'); renderRcForm();
+  });
+  $('rc-prize').addEventListener('input', function () {
+    var cs = $('rc-prize-c').querySelectorAll('.chip'), v = this.value.trim();
+    for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('on', cs[i].getAttribute('data-v') === v);
+  });
+  $('rc-win-c').addEventListener('click', function (e) { var b = e.target.closest('[data-n]'); if (b) { S.rcWin = Number(b.getAttribute('data-n')); renderRcForm(); } });
+  $('rc-mm-c').addEventListener('click', function (e) { var b = e.target.closest('[data-n]'); if (b) { S.rcMm = Number(b.getAttribute('data-n')); renderRcForm(); } });
+  $('rc-go').addEventListener('click', function () {
+    var prize = $('rc-prize').value.trim();
+    if (!prize) { toast('Выбери или впиши приз', true); return; }
+    var x = readExp('rc');
+    if (x === null) return;
+    if (x === undefined || !(x.until || x.seconds)) { toast('Выбери, когда подвести итоги', true); return; }
+    var ann = $('rc-ann').checked;
+    doSect('/refcontest', extend({ op: 'start', prize: prize, desc: $('rc-desc').value.trim(), winners_n: S.rcWin, min_matches: S.rcMm, announce: ann }, x),
+      'Запустить конкурс рефералов «' + prize + '»?\nПризовых мест: ' + S.rcWin + '. Друг засчитывается '
+        + (S.rcMm ? 'после ' + S.rcMm + ' ' + plural3(S.rcMm, 'матча', 'матчей', 'матчей') + ' 1vs1' : 'сразу после регистрации')
+        + (ann ? '\nОбъявление с кнопкой «🔗 Моя ссылка и место» уйдёт всем игрокам.' : ''),
+      this, function (j) {
+        $('rc-prize').value = ''; $('rc-desc').value = ''; setRc(j); $('rc-box').scrollIntoView({ block: 'start' });
+        if (ann) loadBc(true);        // объявление идёт рассылкой — пусть на вкладке появится точка хода
+      });
+  });
+  function rcName(uid) {
+    var c = S.rc && S.rc.c, all = c ? (c.board || []).concat(c.removed || []) : [];
+    for (var i = 0; i < all.length; i++) if (all[i].uid === uid) return all[i].name || 'без имени';
+    return 'игрока';
+  }
+  $('rc-card').addEventListener('click', function (e) {
+    var c = S.rc && S.rc.c;
+    var b = e.target.closest('[data-rop]');
+    if (b && c) {
+      var op = b.getAttribute('data-rop'), n = c.players || 0;
+      var conf = {
+        close: 'Завершить конкурс сейчас?\nНовые друзья больше не будут считаться. Итоги объявишь сам.',
+        promote: 'Отправить объявление о конкурсе всем игрокам (у кого включены уведомления «Рефералы»)?',
+        announce: 'Объявить итоги?\nПобедителям придёт «Ты победил» с кнопкой «Написать @SloppyX», остальным участникам — таблица.',
+        cancel: 'Отменить конкурс «' + c.prize + '»?' + (n ? '\nУчастникам придёт, что он отменён.' : '')
+      }[op] || null;
+      doSect('/refcontest', { op: op, cid: c.id }, conf, b, function (j) { setRc(j); if (op === 'promote') loadBc(true); });
+      return;
+    }
+    var x = e.target.closest('[data-rx]');
+    if (x && c) {
+      var xu = Number(x.getAttribute('data-rx'));
+      doSect('/refcontest', { op: 'remove', uid: xu, cid: c.id }, 'Убрать ' + rcName(xu) + ' из конкурса?\nЕго друзья не будут считаться. Вернуть можно ниже, в «Убраны из конкурса».', x, setRc);
+      return;
+    }
+    var r = e.target.closest('[data-rback]');
+    if (r && c) { doSect('/refcontest', { op: 'restore', uid: Number(r.getAttribute('data-rback')), cid: c.id }, null, r, setRc); return; }
+    var d = e.target.closest('[data-rdel]');
+    if (d) { doSect('/refcontest', { op: 'delivered', hid: d.getAttribute('data-rdel'), uid: Number(d.getAttribute('data-u')) }, null, d, setRc); return; }
+    if (e.target.closest('summary')) return;                       // раскрыть «Друзья» — не открывать карточку игрока
     var u = e.target.closest('[data-uid]');
     if (u) openPlayer(Number(u.getAttribute('data-uid')), 'promo');
   });
