@@ -392,6 +392,12 @@
       <div id="du-s-top"></div>
       <div id="du-s-last"></div>
     </div></div>
+    <!-- v375: ставка новичков — как работает и проверка на себе -->
+    <div class="sec" id="du-nb" hidden><h3>🆕 Ставка новичков</h3><div class="v">
+      <div id="du-nb-st"></div>
+      <div class="row"><button type="button" class="f1" id="nb-test"></button></div>
+      <div class="small">Проверка: бот на 2 часа считает тебя новичком — в 1vs1 появится «🆕 200К», экран «💰 Ставка» и поиск на 200К. Для матча нужен второй новичок: например, твой второй аккаунт, зарегистрированный меньше недели назад.</div>
+    </div></div>
     <!-- v338: настройки матчей — без обновления бота -->
     <div class="sec" id="du-set" hidden><h3>Настройки матчей</h3><div class="v">
       <div class="small">Меняются сразу, без обновления бота. Идущие матчи доиграют по старым — новые значения для матчей, которые начнутся после сохранения. Правила 1vs1 в боте обновятся сами.</div>
@@ -693,7 +699,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v371';
+  var VER = 'v375';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -2642,6 +2648,16 @@ window.addEventListener('error', function (e) {
         }).join('') : '')
       + ((d.active || []).length ? '<div class="lbl">Больше всех играли за неделю</div>'
           + d.active.map(function (p) { return erow(p, p.matches + ' матч.'); }).join('') : ''));
+    if (e.gift) {                                        // v375: подарок дня
+      var g = e.gift;
+      h += sec('🎁 Подарок дня', '<div class="grid">' + bigKv('Сейчас', g.amount ? String(g.amount) : '0', g.amount ? ' 💰' : ' — выключен')
+        + kv('Забрали сегодня', fmt(g.today) + '<small>' + bigS(g.today_sum_s) + ' 💰</small>')
+        + kv('За 7 дней', fmt(g.week) + '<small>' + bigS(g.week_sum_s) + ' 💰</small>') + kv('Забирали хоть раз', fmt(g.players)) + '</div>'
+        + '<div class="small">Игрок забирает раз в сутки (день по Москве): «🎁 Подарки» → «🎁 Подарок дня». Без серии — пропустил день, ничего не теряет. 0 — выключить.</div>'
+        + '<div class="chips wrap">' + [50000, 100000, 150000, 200000].map(function (v) {
+            return '<button type="button" class="chip' + (v === g.amount ? ' on' : '') + '" data-gift="' + v + '">' + short(v) + '</button>'; }).join('') + '</div>'
+        + '<div class="row"><input id="gift-amt" inputmode="numeric" placeholder="Своя сумма, напр. 120к; 0 — выключить" class="f1"><button type="button" data-gift="c">Поставить</button></div>');
+    }
     h += sec('🎰 Казино', '<div class="grid">' + bigKv('Выиграно всего', c.won_s, ' 💰') + '</div>'
       + ((c.top || []).length ? '<div class="lbl">Больше всех выиграли</div>' + c.top.map(function (p) { return erow(p, bigS(p.won_s) + ' 💰'); }).join('') : ''));
     // v329: сезон — награды топ-3 (текст видят игроки в «Рангах»), кто сейчас на пьедестале, кому вручено за прошлый.
@@ -2736,6 +2752,15 @@ window.addEventListener('error', function (e) {
   }
   $('ec').addEventListener('click', function (e) {
     var sx = e.target.closest('[data-sx]'); if (sx) { slxAct(sx); return; }
+    var gb = e.target.closest('[data-gift]');               // v375: подарок дня
+    if (gb) {
+      if (botVer() < 375) { toast('Заработает, когда бот на сервере обновится до v375', true); return; }
+      var gv = gb.getAttribute('data-gift'), ga = gv === 'c' ? parseAmount($('gift-amt').value) : Number(gv);
+      if (gv === 'c' && String($('gift-amt').value).trim() === '0') ga = 0;
+      if (!(ga >= 0) || ga > (((S.ec || {}).gift || {}).max || 5e6)) { toast('Впиши сумму: от 0 до ' + fmt(((S.ec || {}).gift || {}).max || 5e6), true); return; }
+      ecDo({ op: 'gift_amount', amount: ga }, ga ? 'Подарок дня: ' + fmt(ga) + ' токенов в сутки?' : 'Выключить подарок дня?', gb);
+      return;
+    }
     var bk = e.target.closest('[data-bk]');
     if (bk) {
       if (botVer() < 337) { toast('Заработает, когда бот на сервере обновится до v337', true); return; }
@@ -2868,9 +2893,25 @@ window.addEventListener('error', function (e) {
     if (anim || key !== S.duKey) { S.duKey = key; renderDuLive(anim); }
     renderSeason(fill);
     renderGs(fill);                                      // v338
+    renderNb();                                          // v375
+  }
+  // v375: ставка новичков — счётчики и проверка на себе
+  function renderNb() {
+    var n = S.du && S.du.newbie;
+    $('du-nb').hidden = !n;
+    if (!n) return;
+    $('du-nb-st').innerHTML = '<div class="grid">' + kv('Ставка', fmt(n.stake) + ' 💰')
+      + kv('Новичок', n.days ? 'первые ' + n.days + ' ' + plural3(n.days, 'день', 'дня', 'дней') : 'выключено')
+      + kv('Новичков сейчас', fmt(n.newbies)) + kv('Ждут на 200К', fmt(n.queue))
+      + kv('Матчей за сутки', fmt(n.day)) + kv('За 7 дней', fmt(n.week)) + '</div>'
+      + (n.days ? '' : '<div class="note wn">Выключено: в «Настройках матчей» ниже «Ставка 200К новичкам» = 0 дней</div>');
+    var b = $('nb-test'), left = n.test ? Math.max(1, Math.round((n.test - Date.now() / 1000) / 60)) : 0;
+    b.textContent = n.test ? '⏹ Выключить проверку (ещё ' + left + ' мин)' : '🧪 Проверить самому — стать новичком на 2 часа';
+    b.className = 'f1 ' + (n.test ? 'b-no' : 'b-acc');
+    b.disabled = !n.days && !n.test;
   }
   // v338: настройки матчей — поля заполняются при открытии и после сохранения, фоновое обновление их не трогает
-  var GSU = { rp: 'RP', n: 'шт', min: 'мин' };
+  var GSU = { rp: 'RP', n: 'шт', min: 'мин', d: 'дн' };   // v374: дни — «ставка 200К новичкам»
   function renderGs(fill) {
     var st = S.du && S.du.settings;
     $('du-set').hidden = !st;
@@ -3085,6 +3126,11 @@ window.addEventListener('error', function (e) {
         }
         if (!chg.length) { toast('Ничего не изменилось'); return; }
         duDo({ op: 'settings', values: vals }, 'Сохранить настройки матчей?\n' + chg.join('\n') + '\nИдущие матчи доиграют по старым.', b);
+        return;
+      }
+      if (b.id === 'nb-test') {                            // v375: проверка ставки новичков на себе
+        var nbOn = !(j.newbie && j.newbie.test);
+        duDo({ op: 'newbie_test', on: nbOn }, nbOn ? null : 'Выключить проверку? Ставка 200К у тебя пропадёт.', b);
         return;
       }
       if (b.id === 'ns-go') {
