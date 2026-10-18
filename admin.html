@@ -699,7 +699,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v375';
+  var VER = 'v376';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -2648,15 +2648,20 @@ window.addEventListener('error', function (e) {
         }).join('') : '')
       + ((d.active || []).length ? '<div class="lbl">Больше всех играли за неделю</div>'
           + d.active.map(function (p) { return erow(p, p.matches + ' матч.'); }).join('') : ''));
-    if (e.gift) {                                        // v375: подарок дня
-      var g = e.gift;
-      h += sec('🎁 Подарок дня', '<div class="grid">' + bigKv('Сейчас', g.amount ? String(g.amount) : '0', g.amount ? ' 💰' : ' — выключен')
-        + kv('Забрали сегодня', fmt(g.today) + '<small>' + bigS(g.today_sum_s) + ' 💰</small>')
+    if (e.gift) {                                        // v375/v376: подарок дня — каждый день случайная сумма «от–до»
+      var g = e.gift, glo = g.lo != null ? g.lo : g.amount, ghi = g.hi != null ? g.hi : g.amount;
+      h += sec('🎁 Подарок дня', '<div class="grid">'
+        + kv('Сейчас', ghi ? (glo >= ghi ? fmt(ghi) : fmt(glo) + ' – ' + fmt(ghi)) + ' 💰'
+            + (glo < ghi ? '<small>чаще около ' + fmt(Math.round((glo + ghi) / 2000) * 1000) + '</small>' : '') : 'выключен')
+        + kv('Забрали сегодня', fmt(g.today) + '<small>' + bigS(g.today_sum_s) + ' 💰' + (g.today_avg ? ' · в среднем ' + fmt(g.today_avg) : '') + '</small>')
         + kv('За 7 дней', fmt(g.week) + '<small>' + bigS(g.week_sum_s) + ' 💰</small>') + kv('Забирали хоть раз', fmt(g.players)) + '</div>'
-        + '<div class="small">Игрок забирает раз в сутки (день по Москве): «🎁 Подарки» → «🎁 Подарок дня». Без серии — пропустил день, ничего не теряет. 0 — выключить.</div>'
-        + '<div class="chips wrap">' + [50000, 100000, 150000, 200000].map(function (v) {
-            return '<button type="button" class="chip' + (v === g.amount ? ' on' : '') + '" data-gift="' + v + '">' + short(v) + '</button>'; }).join('') + '</div>'
-        + '<div class="row"><input id="gift-amt" inputmode="numeric" placeholder="Своя сумма, напр. 120к; 0 — выключить" class="f1"><button type="button" data-gift="c">Поставить</button></div>');
+        + '<div class="small">Каждый день — случайная сумма в этих пределах: чаще около середины, реже у краёв. Игрок забирает раз в сутки (день по Москве): «🎁 Подарки» → «🎁 Подарок дня». Без серии — пропустил день, ничего не теряет.</div>'
+        + '<div class="chips wrap">' + [[70000, 100000], [50000, 80000], [100000, 150000]].map(function (r) {
+            return '<button type="button" class="chip' + (r[0] === glo && r[1] === ghi ? ' on' : '') + '" data-glo="' + r[0] + '" data-ghi="' + r[1] + '">'
+              + short(r[0]) + '–' + short(r[1]) + '</button>'; }).join('')
+        + '<button type="button" class="chip' + (!ghi ? ' on' : '') + '" data-glo="0" data-ghi="0">Выключить</button></div>'
+        + '<div class="row"><input id="gift-lo" inputmode="numeric" placeholder="от, напр. 70к" class="f1">'
+        + '<input id="gift-hi" inputmode="numeric" placeholder="до, напр. 100к" class="f1"><button type="button" data-gift="c">Поставить</button></div>');
     }
     h += sec('🎰 Казино', '<div class="grid">' + bigKv('Выиграно всего', c.won_s, ' 💰') + '</div>'
       + ((c.top || []).length ? '<div class="lbl">Больше всех выиграли</div>' + c.top.map(function (p) { return erow(p, bigS(p.won_s) + ' 💰'); }).join('') : ''));
@@ -2726,6 +2731,15 @@ window.addEventListener('error', function (e) {
     if (botVer() < 329) { toast('Заработает, когда бот на сервере обновится до v329', true); return; }
     doSect('/economy', body, confirmText, btn, function (j) { S.ec = j; renderEcon(); });
   }
+  function giftSet(lo, hi, btn) {                         // v376: подарок дня — «от–до» (0–0 — выключить)
+    if (botVer() < 376) { toast('Заработает, когда бот на сервере обновится до v376', true); return; }
+    var mx = (((S.ec || {}).gift || {}).max) || 5e6;
+    if (!(lo >= 0) || !(hi >= 0)) { toast('Впиши «от» и «до» — напр. 70к и 100к', true); return; }
+    if (hi > mx) { toast('Не больше ' + fmt(mx), true); return; }
+    if (lo > hi) { toast('«От» должно быть не больше «до»', true); return; }
+    ecDo({ op: 'gift_range', lo: lo, hi: hi }, hi ? 'Подарок дня: от ' + fmt(lo) + ' до ' + fmt(hi)
+      + ' токенов?\nКаждый день — случайная сумма, чаще около середины.' : 'Выключить подарок дня?', btn);
+  }
   function slxAct(b) {
     var a = b.getAttribute('data-sx'), v = Number(b.getAttribute('data-v') || 0), x = (S.ec && S.ec.slx) || {};
     if (a === 'move' || a === 'move_c') {
@@ -2752,15 +2766,10 @@ window.addEventListener('error', function (e) {
   }
   $('ec').addEventListener('click', function (e) {
     var sx = e.target.closest('[data-sx]'); if (sx) { slxAct(sx); return; }
-    var gb = e.target.closest('[data-gift]');               // v375: подарок дня
-    if (gb) {
-      if (botVer() < 375) { toast('Заработает, когда бот на сервере обновится до v375', true); return; }
-      var gv = gb.getAttribute('data-gift'), ga = gv === 'c' ? parseAmount($('gift-amt').value) : Number(gv);
-      if (gv === 'c' && String($('gift-amt').value).trim() === '0') ga = 0;
-      if (!(ga >= 0) || ga > (((S.ec || {}).gift || {}).max || 5e6)) { toast('Впиши сумму: от 0 до ' + fmt(((S.ec || {}).gift || {}).max || 5e6), true); return; }
-      ecDo({ op: 'gift_amount', amount: ga }, ga ? 'Подарок дня: ' + fmt(ga) + ' токенов в сутки?' : 'Выключить подарок дня?', gb);
-      return;
-    }
+    var gr = e.target.closest('[data-glo]');                // v376: подарок дня — пределы кнопкой
+    if (gr) { giftSet(Number(gr.getAttribute('data-glo')), Number(gr.getAttribute('data-ghi')), gr); return; }
+    var gb = e.target.closest('[data-gift]');               // v376: свои «от» и «до»
+    if (gb) { giftSet(parseAmount($('gift-lo').value), parseAmount($('gift-hi').value), gb); return; }
     var bk = e.target.closest('[data-bk]');
     if (bk) {
       if (botVer() < 337) { toast('Заработает, когда бот на сервере обновится до v337', true); return; }
