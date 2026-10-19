@@ -699,7 +699,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v376';
+  var VER = 'v379';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -2663,6 +2663,32 @@ window.addEventListener('error', function (e) {
         + '<div class="row"><input id="gift-lo" inputmode="numeric" placeholder="от, напр. 70к" class="f1">'
         + '<input id="gift-hi" inputmode="numeric" placeholder="до, напр. 100к" class="f1"><button type="button" data-gift="c">Поставить</button></div>');
     }
+    if (e.transfers) {                                   // v379: переводы токенов между игроками
+      var tr = e.transfers;
+      h += sec('💸 Переводы токенов', '<div class="grid">'
+        + kv('Сейчас', tr.on ? 'включены' : 'выключены')
+        + kv('Комиссия', tr.fee + '%<small>сверху и сгорает: другу — сумма, с отправителя — сумма + ' + tr.fee + '%</small>')
+        + kv('Можно после', fmt(tr.min) + ' матч. 1vs1<small>таких игроков: ' + fmt(tr.eligible) + '</small>')
+        + kv('В день', tr.day ? fmt(tr.day) + ' перевод.' : 'без лимита')
+        + kv('Сегодня', fmt(tr.today) + '<small>' + bigS(tr.today_sum_s) + ' 💰 · комиссия ' + bigS(tr.today_fee_s) + '</small>')
+        + kv('За 7 дней', fmt(tr.week) + '<small>' + bigS(tr.week_sum_s) + ' 💰 · комиссия ' + bigS(tr.week_fee_s) + '</small>') + '</div>'
+        + '<div class="small">Игрок: «💎 Баланс» → «💸 Перевести» → ID друга → сумма → «✅ Перевести». Порог матчей — защита от '
+        + 'фейковых аккаунтов, комиссия сгорает (токенов в игре становится меньше). Минимум ' + fmt(tr.min_amount)
+        + '. Тебе — без порога и лимита, чтобы проверить.</div>'
+        + '<div class="lbl">Комиссия</div><div class="chips wrap">' + [5, 10, 15, 20, 25].map(function (v) {
+            return '<button type="button" class="chip' + (v === tr.fee ? ' on' : '') + '" data-tr="fee" data-v="' + v + '">' + v + '%</button>'; }).join('') + '</div>'
+        + '<div class="row"><input id="tr-fee" inputmode="numeric" placeholder="Свой %, напр. 12" class="f1"><button type="button" data-tr="fee_c">Поставить</button></div>'
+        + '<div class="lbl">Переводы — после скольких матчей 1vs1</div><div class="chips wrap">' + [20, 50, 100].map(function (v) {
+            return '<button type="button" class="chip' + (v === tr.min ? ' on' : '') + '" data-tr="min" data-v="' + v + '">' + v + '</button>'; }).join('') + '</div>'
+        + '<div class="lbl">Переводов в день у одного игрока</div><div class="chips wrap">' + [3, 5, 10, 0].map(function (v) {
+            return '<button type="button" class="chip' + (v === tr.day ? ' on' : '') + '" data-tr="day" data-v="' + v + '">' + (v || 'без лимита') + '</button>'; }).join('') + '</div>'
+        + '<div class="row"><button type="button" class="f1' + (tr.on ? '' : ' b-acc') + '" data-tr="on" data-v="' + (tr.on ? 0 : 1) + '">'
+        + (tr.on ? '⏸ Выключить переводы' : '▶️ Включить переводы') + '</button></div>'
+        + ((tr.last || []).length ? '<div class="lbl">Последние переводы</div>' + tr.last.map(function (x) {
+            return '<div class="it" data-uid="' + x.from.uid + '"><div class="m"><div class="nm">' + esc(x.from.name || 'ID ' + (x.from.cid || '—'))
+              + ' → ' + esc(x.to.name || 'ID ' + (x.to.cid || '—')) + '</div><div class="sub">' + dt(x.t) + ' · комиссия ' + bigS(x.fee_s)
+              + '</div></div><div class="er">' + bigS(x.a_s) + ' 💰</div></div>'; }).join('') : '<div class="small">Переводов ещё не было</div>'));
+    }
     h += sec('🎰 Казино', '<div class="grid">' + bigKv('Выиграно всего', c.won_s, ' 💰') + '</div>'
       + ((c.top || []).length ? '<div class="lbl">Больше всех выиграли</div>' + c.top.map(function (p) { return erow(p, bigS(p.won_s) + ' 💰'); }).join('') : ''));
     // v329: сезон — награды топ-3 (текст видят игроки в «Рангах»), кто сейчас на пьедестале, кому вручено за прошлый.
@@ -2740,6 +2766,21 @@ window.addEventListener('error', function (e) {
     ecDo({ op: 'gift_range', lo: lo, hi: hi }, hi ? 'Подарок дня: от ' + fmt(lo) + ' до ' + fmt(hi)
       + ' токенов?\nКаждый день — случайная сумма, чаще около середины.' : 'Выключить подарок дня?', btn);
   }
+  function trAct(b) {                                      // v379: переводы — комиссия, порог матчей, лимит в день, вкл/выкл
+    if (botVer() < 379) { toast('Заработает, когда бот на сервере обновится до v379', true); return; }
+    var a = b.getAttribute('data-tr'), v = Number(b.getAttribute('data-v') || 0);
+    if (a === 'fee_c') {
+      v = Math.round(Number(String($('tr-fee').value).replace(',', '.').replace('%', '').trim()));
+      if (!($('tr-fee').value.trim()) || !(v >= 0 && v <= 50)) { toast('Комиссия — от 0 до 50%', true); return; }
+      a = 'fee';
+    }
+    var body = { op: 'tr_cfg' };
+    body[a] = a === 'on' ? !!v : v;
+    ecDo(body, a === 'fee' ? 'Комиссия переводов — ' + v + '%?\nДругу приходит сумма, с отправителя — сумма + ' + v + '%.'
+      : a === 'min' ? 'Переводы — после ' + v + ' матчей 1vs1?'
+      : a === 'day' ? (v ? 'Не больше ' + v + ' переводов в день у одного игрока?' : 'Переводы без лимита в день?')
+      : (v ? 'Включить переводы токенов?' : 'Выключить переводы токенов?\nИгроки не смогут переводить, пока не включишь.'), b);
+  }
   function slxAct(b) {
     var a = b.getAttribute('data-sx'), v = Number(b.getAttribute('data-v') || 0), x = (S.ec && S.ec.slx) || {};
     if (a === 'move' || a === 'move_c') {
@@ -2770,6 +2811,8 @@ window.addEventListener('error', function (e) {
     if (gr) { giftSet(Number(gr.getAttribute('data-glo')), Number(gr.getAttribute('data-ghi')), gr); return; }
     var gb = e.target.closest('[data-gift]');               // v376: свои «от» и «до»
     if (gb) { giftSet(parseAmount($('gift-lo').value), parseAmount($('gift-hi').value), gb); return; }
+    var tb = e.target.closest('[data-tr]');                 // v379: переводы токенов
+    if (tb) { trAct(tb); return; }
     var bk = e.target.closest('[data-bk]');
     if (bk) {
       if (botVer() < 337) { toast('Заработает, когда бот на сервере обновится до v337', true); return; }
