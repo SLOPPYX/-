@@ -94,6 +94,13 @@
   .kv i { display: block; font-style: normal; font-size: 11px; color: var(--tx3); }
   .kv b { font-size: 14.5px; word-break: break-word; font-variant-numeric: tabular-nums; }
   .kv small { display: block; font-size: 11px; color: var(--tx3); font-weight: 400; }
+  /* v381: «🏦 Счёт комиссий» — сумма крупно */
+  .vault { padding: 13px 14px 12px; border-radius: 14px; border: 1px solid rgba(167,139,250,.32);
+           background: linear-gradient(135deg, rgba(139,92,246,.17), rgba(139,92,246,.04)); }
+  .vault i { display: block; font-style: normal; font-size: 11.5px; color: var(--acc3); letter-spacing: .02em; }
+  .vault b { display: block; margin-top: 2px; font-size: 26px; font-weight: 800; letter-spacing: -.02em;
+             font-variant-numeric: tabular-nums; word-break: break-word; }
+  .vault small { display: block; margin-top: 2px; font-size: 11.5px; color: var(--tx3); word-break: break-all; }
   .note { padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.45; border: 1px solid transparent; }
   .note.ban { background: rgba(248,113,113,.07); border-color: rgba(248,113,113,.2); color: #fecaca; }
   .note.frz { background: rgba(255,255,255,.04); border-color: var(--ln2); color: #e4e4e7; }
@@ -699,7 +706,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v380';
+  var VER = 'v381';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -2663,20 +2670,45 @@ window.addEventListener('error', function (e) {
         + '<div class="row"><input id="gift-lo" inputmode="numeric" placeholder="от, напр. 70к" class="f1">'
         + '<input id="gift-hi" inputmode="numeric" placeholder="до, напр. 100к" class="f1"><button type="button" data-gift="c">Поставить</button></div>');
     }
+    if (e.vault) {                                       // v381: счёт комиссий — копится с переводов, тратит только админ
+      var vt = e.vault, VK = { start: '🏦 Комиссия прошлых переводов', me: '💳 Себе на баланс', pool: '🔒 В пул биржи',
+                               back: '↩️ Возврат перевода', undo: '⚠️ Не прошло — вернули на счёт' };
+      h += sec('🏦 Счёт комиссий', '<div class="vault"><i>На счёте</i><b>' + bigS(vt.bal_s) + ' 💰</b>'
+          + (Number(vt.bal_s) >= 1e12 ? '<small>' + digits(String(vt.bal_s)) + '</small>' : '')
+          + (vt.since ? '<small>копится с ' + regTxt(vt.since) + '</small>' : '') + '</div>'
+        + '<div class="grid">' + kv('Пришло комиссией', bigS(vt.in_s) + '<small>сегодня ' + bigS(vt.today_s) + ' · комиссия ' + vt.fee + '%</small>')
+        + kv('Забрал себе', bigS(vt.me_s)) + kv('В пул биржи', bigS(vt.pool_s))
+        + kv('Ушло возвратами', bigS(vt.back_s) + '<small>вернул перевод — его комиссия обратно</small>') + '</div>'
+        + '<div class="small">Сюда идёт вся комиссия с переводов токенов (раньше сгорала). Счёт отдельный: его нет в рейтинге и в «токенах в обороте», '
+        + 'игроки его не видят. Потратить можно только здесь — себе на баланс или в пул биржи SLX (курс подрастёт).</div>'
+        + '<div class="lbl">Сколько взять</div>'
+        + '<div class="row"><input id="vault-amt" inputmode="numeric" placeholder="Сумма, напр. 500к или 2м" class="f1" autocomplete="off">'
+        + '<button type="button" data-vault="all">Всё</button></div>'
+        + '<div class="row"><button type="button" class="f1 b-acc" data-vault="me">💳 Себе на баланс</button>'
+        + '<button type="button" class="f1" data-vault="pool">🔒 В пул биржи</button></div>'
+        + ((vt.log || []).length ? '<div class="lbl">История счёта</div>' + vt.log.map(function (x) {
+            var neg = String(x.a_s).charAt(0) === '-';
+            return '<div class="it"><div class="m"><div class="nm">' + (VK[x.k] || esc(x.k)) + (x.n && x.k === 'back' ? ' · ' + esc(x.n) : '')
+              + '</div><div class="sub">' + dt(x.t) + ' · на счёте ' + bigS(x.b_s) + '</div></div>'
+              + '<div class="er">' + (neg ? '−' : '+') + bigS(String(x.a_s).replace('-', '')) + '</div></div>';
+          }).join('') : '<div class="small">Пока без движений — комиссия придёт с первым переводом.</div>'));
+    }
     if (e.transfers) {                                   // v379: переводы токенов между игроками
       var tr = e.transfers;
       h += sec('💸 Переводы токенов', '<div class="grid">'
         + kv('Сейчас', tr.on ? 'включены' : 'выключены')
-        + kv('Комиссия', tr.fee + '%<small>сверху и сгорает: другу — сумма, с отправителя — сумма + ' + tr.fee + '%</small>')
+        + kv('Комиссия', tr.fee + '%<small>сверху' + (e.vault ? ', копится на «🏦 Счёте комиссий»' : ' и сгорает')
+            + ': другу — сумма, с отправителя — сумма + ' + tr.fee + '%</small>')
         + kv('Можно после', fmt(tr.min) + ' матч. 1vs1<small>таких игроков: ' + fmt(tr.eligible) + '</small>')
         + kv('В день', tr.day ? fmt(tr.day) + ' перевод.' : 'без лимита')
         + kv('Сегодня', fmt(tr.today) + '<small>' + bigS(tr.today_sum_s) + ' 💰 · комиссия ' + bigS(tr.today_fee_s) + '</small>')
         + kv('За 7 дней', fmt(tr.week) + '<small>' + bigS(tr.week_sum_s) + ' 💰 · комиссия ' + bigS(tr.week_fee_s) + '</small>')
-        + (tr.total != null ? kv('За всё время', fmt(tr.total) + '<small>' + bigS(tr.total_sum_s) + ' 💰 · сгорело комиссией ' + bigS(tr.total_fee_s) + '</small>')
+        + (tr.total != null ? kv('За всё время', fmt(tr.total) + '<small>' + bigS(tr.total_sum_s) + ' 💰 · ' + (e.vault ? 'комиссией ' : 'сгорело комиссией ') + bigS(tr.total_fee_s) + '</small>')
             + kv('Получить в день', tr.rday ? fmt(tr.rday) + ' перевод.<small>одному игроку — фермы не сольют всё на один аккаунт</small>' : 'без лимита')
             + kv('За один перевод', tr.max ? 'до ' + fmt(tr.max) + ' 💰' : 'без лимита') : '') + '</div>'
         + '<div class="small">Игрок: «💎 Баланс» → «💸 Перевести» → кому → сколько → «✅ Перевести». Всё в одном сообщении, в конце — чек с номером. '
-        + 'Порог матчей — защита от фейковых аккаунтов, комиссия сгорает (токенов в игре становится меньше). Минимум ' + fmt(tr.min_amount)
+        + 'Порог матчей — защита от фейковых аккаунтов, ' + (e.vault ? 'комиссия копится на «🏦 Счёте комиссий» (выше).'
+            : 'комиссия сгорает (токенов в игре становится меньше).') + ' Минимум ' + fmt(tr.min_amount)
         + '. Тебе — без порога и лимита, чтобы проверить. Забаненным и замороженным переводы закрыты.</div>'
         + (tr.total != null ? '<div class="lbl">Проверить чек — если игрок прислал скриншот перевода</div>'
             + '<div class="row"><input id="tr-code" placeholder="Номер чека, напр. T-8F3A2C" class="f1" autocomplete="off"><button type="button" data-tr="check">Проверить</button></div>' : '')
@@ -2791,7 +2823,8 @@ window.addEventListener('error', function (e) {
       }
       var rc = b.getAttribute('data-code');
       return ecDo({ op: 'tr_reverse', code: rc }, 'Вернуть перевод ' + rc + '?\nУ получателя спишем ' + fmt(Number(b.getAttribute('data-a') || 0))
-        + ', отправителю вернём сумму и комиссию. Обоим придёт сообщение.', b);
+        + ', отправителю вернём сумму и комиссию' + (S.ec && S.ec.vault ? ' (она уйдёт со «🏦 Счёта комиссий»)' : '')
+        + '. Обоим придёт сообщение.', b);
     }
     if ((a === 'rday' || a === 'max') && botVer() < 380) { toast('Заработает, когда бот на сервере обновится до v380', true); return; }
     if (a === 'fee_c') {
@@ -2807,6 +2840,23 @@ window.addEventListener('error', function (e) {
       : a === 'rday' ? (v ? 'Одному игроку — получить не больше ' + v + ' переводов в день?' : 'Получать — без лимита в день?')
       : a === 'max' ? (v ? 'Один перевод — не больше ' + fmt(v) + '?' : 'Один перевод — без ограничения суммы?')
       : (v ? 'Включить переводы токенов?' : 'Выключить переводы токенов?\nИгроки не смогут переводить, пока не включишь.'), b);
+  }
+  function vaultAct(b) {                                   // v381: «🏦 Счёт комиссий» — себе на баланс / в пул биржи
+    if (botVer() < 381) { toast('Заработает, когда бот на сервере обновится до v381', true); return; }
+    var a = b.getAttribute('data-vault'), vt = (S.ec && S.ec.vault) || {}, inp = $('vault-amt');
+    if (a === 'all') { inp.value = digits(String(vt.bal_s || 0)); return; }
+    var s = String(inp.value || '').trim(), dg = s.replace(/\s/g, ''), body = { op: a === 'me' ? 'vault_me' : 'vault_pool' }, show;
+    if (/^\d+$/.test(dg)) {                                 // точно, цифрами (суммы больше 2^53 — только так)
+      if (dg === String(vt.bal_s)) body.all = true; else body.amount = dg;
+      show = dg;
+    } else {
+      var n = parseAmount(s);
+      if (!(n > 0)) { toast('Впиши сумму — напр. 500к или 2м, или нажми «Всё»', true); return; }
+      body.amount = n; show = String(n);
+    }
+    if (!(Number(show) > 0)) { toast('Сумма — больше нуля', true); return; }
+    ecDo(body, (a === 'me' ? 'Забрать ' : 'Отправить ') + bigS(show) + ' токенов со счёта комиссий'
+      + (a === 'me' ? ' себе на баланс?' : ' в пул биржи SLX?\nКурс SLX подрастёт.'), b);
   }
   function slxAct(b) {
     var a = b.getAttribute('data-sx'), v = Number(b.getAttribute('data-v') || 0), x = (S.ec && S.ec.slx) || {};
@@ -2838,6 +2888,8 @@ window.addEventListener('error', function (e) {
     if (gr) { giftSet(Number(gr.getAttribute('data-glo')), Number(gr.getAttribute('data-ghi')), gr); return; }
     var gb = e.target.closest('[data-gift]');               // v376: свои «от» и «до»
     if (gb) { giftSet(parseAmount($('gift-lo').value), parseAmount($('gift-hi').value), gb); return; }
+    var vb = e.target.closest('[data-vault]');              // v381: счёт комиссий
+    if (vb) { vaultAct(vb); return; }
     var tb = e.target.closest('[data-tr]');                 // v379: переводы токенов
     if (tb) { trAct(tb); return; }
     var bk = e.target.closest('[data-bk]');
