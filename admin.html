@@ -699,7 +699,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v379';
+  var VER = 'v380';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -2671,10 +2671,15 @@ window.addEventListener('error', function (e) {
         + kv('Можно после', fmt(tr.min) + ' матч. 1vs1<small>таких игроков: ' + fmt(tr.eligible) + '</small>')
         + kv('В день', tr.day ? fmt(tr.day) + ' перевод.' : 'без лимита')
         + kv('Сегодня', fmt(tr.today) + '<small>' + bigS(tr.today_sum_s) + ' 💰 · комиссия ' + bigS(tr.today_fee_s) + '</small>')
-        + kv('За 7 дней', fmt(tr.week) + '<small>' + bigS(tr.week_sum_s) + ' 💰 · комиссия ' + bigS(tr.week_fee_s) + '</small>') + '</div>'
-        + '<div class="small">Игрок: «💎 Баланс» → «💸 Перевести» → ID друга → сумма → «✅ Перевести». Порог матчей — защита от '
-        + 'фейковых аккаунтов, комиссия сгорает (токенов в игре становится меньше). Минимум ' + fmt(tr.min_amount)
-        + '. Тебе — без порога и лимита, чтобы проверить.</div>'
+        + kv('За 7 дней', fmt(tr.week) + '<small>' + bigS(tr.week_sum_s) + ' 💰 · комиссия ' + bigS(tr.week_fee_s) + '</small>')
+        + (tr.total != null ? kv('За всё время', fmt(tr.total) + '<small>' + bigS(tr.total_sum_s) + ' 💰 · сгорело комиссией ' + bigS(tr.total_fee_s) + '</small>')
+            + kv('Получить в день', tr.rday ? fmt(tr.rday) + ' перевод.<small>одному игроку — фермы не сольют всё на один аккаунт</small>' : 'без лимита')
+            + kv('За один перевод', tr.max ? 'до ' + fmt(tr.max) + ' 💰' : 'без лимита') : '') + '</div>'
+        + '<div class="small">Игрок: «💎 Баланс» → «💸 Перевести» → кому → сколько → «✅ Перевести». Всё в одном сообщении, в конце — чек с номером. '
+        + 'Порог матчей — защита от фейковых аккаунтов, комиссия сгорает (токенов в игре становится меньше). Минимум ' + fmt(tr.min_amount)
+        + '. Тебе — без порога и лимита, чтобы проверить. Забаненным и замороженным переводы закрыты.</div>'
+        + (tr.total != null ? '<div class="lbl">Проверить чек — если игрок прислал скриншот перевода</div>'
+            + '<div class="row"><input id="tr-code" placeholder="Номер чека, напр. T-8F3A2C" class="f1" autocomplete="off"><button type="button" data-tr="check">Проверить</button></div>' : '')
         + '<div class="lbl">Комиссия</div><div class="chips wrap">' + [5, 10, 15, 20, 25].map(function (v) {
             return '<button type="button" class="chip' + (v === tr.fee ? ' on' : '') + '" data-tr="fee" data-v="' + v + '">' + v + '%</button>'; }).join('') + '</div>'
         + '<div class="row"><input id="tr-fee" inputmode="numeric" placeholder="Свой %, напр. 12" class="f1"><button type="button" data-tr="fee_c">Поставить</button></div>'
@@ -2682,12 +2687,20 @@ window.addEventListener('error', function (e) {
             return '<button type="button" class="chip' + (v === tr.min ? ' on' : '') + '" data-tr="min" data-v="' + v + '">' + v + '</button>'; }).join('') + '</div>'
         + '<div class="lbl">Переводов в день у одного игрока</div><div class="chips wrap">' + [3, 5, 10, 0].map(function (v) {
             return '<button type="button" class="chip' + (v === tr.day ? ' on' : '') + '" data-tr="day" data-v="' + v + '">' + (v || 'без лимита') + '</button>'; }).join('') + '</div>'
+        + (tr.total != null ? '<div class="lbl">Получить в день — одному игроку</div><div class="chips wrap">' + [5, 10, 20, 0].map(function (v) {
+            return '<button type="button" class="chip' + (v === tr.rday ? ' on' : '') + '" data-tr="rday" data-v="' + v + '">' + (v || 'без лимита') + '</button>'; }).join('') + '</div>'
+          + '<div class="lbl">Максимум за один перевод</div><div class="chips wrap">' + [10000000, 50000000, 100000000, 0].map(function (v) {
+            return '<button type="button" class="chip' + (v === tr.max ? ' on' : '') + '" data-tr="max" data-v="' + v + '">' + (v ? (v / 1e6) + ' млн' : 'без лимита') + '</button>'; }).join('') + '</div>' : '')
         + '<div class="row"><button type="button" class="f1' + (tr.on ? '' : ' b-acc') + '" data-tr="on" data-v="' + (tr.on ? 0 : 1) + '">'
         + (tr.on ? '⏸ Выключить переводы' : '▶️ Включить переводы') + '</button></div>'
         + ((tr.last || []).length ? '<div class="lbl">Последние переводы</div>' + tr.last.map(function (x) {
             return '<div class="it" data-uid="' + x.from.uid + '"><div class="m"><div class="nm">' + esc(x.from.name || 'ID ' + (x.from.cid || '—'))
               + ' → ' + esc(x.to.name || 'ID ' + (x.to.cid || '—')) + '</div><div class="sub">' + dt(x.t) + ' · комиссия ' + bigS(x.fee_s)
-              + '</div></div><div class="er">' + bigS(x.a_s) + ' 💰</div></div>'; }).join('') : '<div class="small">Переводов ещё не было</div>'));
+              + (x.id ? ' · ' + esc(x.id) : '') + (x.note ? ' · ' + esc(x.note) : '')
+              + ((x.flags || []).length ? '<br><span class="dn">⚠️ ' + x.flags.map(esc).join(' · ') + '</span>' : '') + '</div></div>'
+              + '<div class="er">' + bigS(x.a_s) + ' 💰' + (x.id ? (x.rev ? '<br><small>↩️ возвращён</small>'
+                  : '<br><button type="button" class="xs" data-tr="rev" data-code="' + esc(x.id) + '" data-a="' + esc(x.a_s) + '">↩️ Вернуть</button>') : '')
+              + '</div></div>'; }).join('') : '<div class="small">Переводов ещё не было</div>'));
     }
     h += sec('🎰 Казино', '<div class="grid">' + bigKv('Выиграно всего', c.won_s, ' 💰') + '</div>'
       + ((c.top || []).length ? '<div class="lbl">Больше всех выиграли</div>' + c.top.map(function (p) { return erow(p, bigS(p.won_s) + ' 💰'); }).join('') : ''));
@@ -2769,6 +2782,18 @@ window.addEventListener('error', function (e) {
   function trAct(b) {                                      // v379: переводы — комиссия, порог матчей, лимит в день, вкл/выкл
     if (botVer() < 379) { toast('Заработает, когда бот на сервере обновится до v379', true); return; }
     var a = b.getAttribute('data-tr'), v = Number(b.getAttribute('data-v') || 0);
+    if (a === 'check' || a === 'rev') {                    // v380: проверить чек / вернуть перевод
+      if (botVer() < 380) { toast('Заработает, когда бот на сервере обновится до v380', true); return; }
+      if (a === 'check') {
+        var code = String($('tr-code').value || '').trim();
+        if (!code) { toast('Впиши номер чека, напр. T-8F3A2C', true); return; }
+        return ecDo({ op: 'tr_check', code: code }, null, b);
+      }
+      var rc = b.getAttribute('data-code');
+      return ecDo({ op: 'tr_reverse', code: rc }, 'Вернуть перевод ' + rc + '?\nУ получателя спишем ' + fmt(Number(b.getAttribute('data-a') || 0))
+        + ', отправителю вернём сумму и комиссию. Обоим придёт сообщение.', b);
+    }
+    if ((a === 'rday' || a === 'max') && botVer() < 380) { toast('Заработает, когда бот на сервере обновится до v380', true); return; }
     if (a === 'fee_c') {
       v = Math.round(Number(String($('tr-fee').value).replace(',', '.').replace('%', '').trim()));
       if (!($('tr-fee').value.trim()) || !(v >= 0 && v <= 50)) { toast('Комиссия — от 0 до 50%', true); return; }
@@ -2779,6 +2804,8 @@ window.addEventListener('error', function (e) {
     ecDo(body, a === 'fee' ? 'Комиссия переводов — ' + v + '%?\nДругу приходит сумма, с отправителя — сумма + ' + v + '%.'
       : a === 'min' ? 'Переводы — после ' + v + ' матчей 1vs1?'
       : a === 'day' ? (v ? 'Не больше ' + v + ' переводов в день у одного игрока?' : 'Переводы без лимита в день?')
+      : a === 'rday' ? (v ? 'Одному игроку — получить не больше ' + v + ' переводов в день?' : 'Получать — без лимита в день?')
+      : a === 'max' ? (v ? 'Один перевод — не больше ' + fmt(v) + '?' : 'Один перевод — без ограничения суммы?')
       : (v ? 'Включить переводы токенов?' : 'Выключить переводы токенов?\nИгроки не смогут переводить, пока не включишь.'), b);
   }
   function slxAct(b) {
