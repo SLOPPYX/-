@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script>
+/* v385: личный ключ игрока (tk) — в каждый GET-запрос к боту, как в «Рангах» и «🔴 LIVE» (бот вписывает его только в ссылку самого игрока). */
+(function () {
+  var TK = '';
+  try { TK = new URLSearchParams(location.search).get('tk') || ''; } catch (e) {}
+  window.__TK = TK;
+  var of = window.fetch;
+  if (!of) return;
+  window.fetch = function (u, o) {
+    try {
+      if (TK && typeof u === 'string' && u.indexOf('/casino/') >= 0 && String((o && o.method) || 'GET').toUpperCase() === 'GET') {
+        u += (u.indexOf('?') >= 0 ? '&' : '?') + 'tk=' + encodeURIComponent(TK);
+      }
+    } catch (e) {}
+    return of.call(this, u, o);
+  };
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#07060c">
+<title>Майнинг SLX</title>
+<style>
+  /* v385: «⛏ Майнинг SLX». Чёрный, фиолетовый, белый; у каждой главы свой свет. Двигаются только transform и opacity —
+     на телефоне не тормозит; за экраном и в свёрнутом окне всё стоит. */
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root { color-scheme: dark;
+          --bg: #07060c; --card: rgba(255,255,255,.04); --card2: rgba(255,255,255,.075); --ln: rgba(255,255,255,.085); --ln2: rgba(255,255,255,.16);
+          --tx: #fff; --tx2: rgba(255,255,255,.72); --tx3: rgba(255,255,255,.45);
+          --p1: #8b5cf6; --p2: #a78bfa; --p3: #c4b5fd; --p4: #4c1d95; --p5: #2e1065;
+          --cy: #22d3ee; --gr: #34d399; --gold: #fbbf24; --red: #f87171;
+          --a1: #f5c451; --a2: #8b5cf6;
+          --ease: cubic-bezier(.22,.8,.2,1); --spring: cubic-bezier(.34,1.56,.64,1); }
+  body[data-ch="2"] { --a1: #fb923c; --a2: #8b5cf6; }
+  body[data-ch="3"] { --a1: #2dd4bf; --a2: #6366f1; }
+  body[data-ch="4"] { --a1: #7dd3fc; --a2: #818cf8; }
+  body[data-ch="5"] { --a1: #60a5fa; --a2: #a855f7; }
+  body[data-ch="6"] { --a1: #f97316; --a2: #e11d48; }
+  body[data-ch="7"] { --a1: #c084fc; --a2: #22d3ee; }
+  html { background: var(--bg); overflow-x: hidden; }
+  body { min-height: 100vh; background: var(--bg); color: var(--tx);
+         font: 15px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+         -webkit-font-smoothing: antialiased; -webkit-user-select: none; user-select: none; padding-bottom: 86px; }
+  button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; touch-action: manipulation; }
+  input { font: inherit; color: inherit; }
+  [hidden] { display: none !important; }
+  .mono { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
+
+  /* ── фон: свет главы плывёт, сетка, звёзды на орбите ── */
+  .bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .bg .gl { position: absolute; border-radius: 50%; will-change: transform; transition: opacity 1.2s var(--ease); }
+  .bg .g1 { width: 560px; height: 560px; top: -300px; right: -240px; opacity: .55;
+            background: radial-gradient(closest-side, var(--a2), transparent); animation: dr1 16s ease-in-out infinite alternate; }
+  .bg .g2 { width: 480px; height: 480px; bottom: -280px; left: -240px; opacity: .32;
+            background: radial-gradient(closest-side, var(--a1), transparent); animation: dr2 19s ease-in-out infinite alternate; }
+  @keyframes dr1 { to { transform: translate3d(-60px, 70px, 0) scale(1.12); } }
+  @keyframes dr2 { to { transform: translate3d(70px, -60px, 0) scale(1.1); } }
+  .bg .grid { position: absolute; inset: 0; opacity: .7;
+              background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+              background-size: 28px 28px;
+              -webkit-mask-image: radial-gradient(ellipse 90% 40% at 50% 0%, #000 15%, transparent 70%);
+              mask-image: radial-gradient(ellipse 90% 40% at 50% 0%, #000 15%, transparent 70%); }
+  .bg .stars { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s; }
+  body[data-ch="7"] .bg .stars { opacity: 1; }
+  .bg .stars i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff; animation: tw 3s ease-in-out infinite; }
+  @keyframes tw { 50% { opacity: .2; } }
+  html.paused *, html.paused *::before, html.paused *::after { animation-play-state: paused !important; }
+  html.calm *, html.calm *::before, html.calm *::after { animation: none !important; transition: none !important; }
+
+  main { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 12px 14px 0; }
+
+  /* ── шапка ── */
+  .top { display: flex; align-items: center; gap: 10px; padding: 4px 0 10px; }
+  .loc { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  .loc .le { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; font-size: 22px; flex: 0 0 auto;
+             background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.03)); border: 1px solid var(--ln2); }
+  .loc b { display: block; font-size: 16.5px; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .loc small { display: block; font-size: 12px; color: var(--tx3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wal { flex: 0 0 auto; display: flex; align-items: center; gap: 7px; padding: 7px 11px 7px 7px; border-radius: 999px;
+         background: rgba(139,92,246,.14); border: 1px solid rgba(167,139,250,.34); font-size: 13.5px; }
+  .wal svg { flex: 0 0 auto; }
+  .wal b { font-weight: 800; }
+  .ev { margin: 0 0 10px; padding: 9px 12px; border-radius: 13px; font-size: 13.5px; text-align: center; font-weight: 600;
+        background: linear-gradient(90deg, rgba(251,191,36,.18), rgba(139,92,246,.2)); border: 1px solid rgba(251,191,36,.38); }
+  .pause { margin: 0 0 10px; padding: 11px 12px; border-radius: 13px; font-size: 13.5px; text-align: center;
+           background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.35); }
+
+  /* ── хранилище ── */
+  .card { position: relative; border-radius: 20px; background: var(--card); border: 1px solid var(--ln); padding: 14px; margin-bottom: 12px; }
+  .hero { overflow: hidden; background: linear-gradient(160deg, rgba(139,92,246,.16), rgba(255,255,255,.025) 55%); border-color: rgba(167,139,250,.26); }
+  .hero .hl { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--tx3); }
+  .hero .hl b { color: var(--tx2); font-weight: 600; }
+  .hero .big { margin-top: 6px; font-size: 31px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; white-space: nowrap; }
+  .hero .big small { font-size: 15px; font-weight: 700; color: var(--p3); margin-left: 4px; }
+  .hero .eq { font-size: 13px; color: var(--tx3); margin-top: 2px; }
+  .tank { position: relative; height: 12px; margin: 12px 0 8px; border-radius: 99px; background: rgba(255,255,255,.07); overflow: hidden; }
+  .tank i { position: absolute; inset: 0; transform-origin: 0 50%; transform: scaleX(0); border-radius: 99px;
+            background: linear-gradient(90deg, var(--p4), var(--p1) 55%, var(--cy)); transition: transform .5s var(--ease); }
+  .tank.full i { background: linear-gradient(90deg, #b45309, var(--gold)); }
+  .tank em { position: absolute; top: 0; bottom: 0; width: 40%; left: 0; transform: translateX(-120%);
+             background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation: sh 2.6s linear infinite; }
+  @keyframes sh { to { transform: translateX(320%); } }
+  .rate { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--tx2); }
+  .rate .fl { color: var(--tx3); text-align: right; }
+  .rate .fl.full { color: var(--gold); font-weight: 600; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 50px; border-radius: 15px;
+         font-weight: 750; font-size: 16px; letter-spacing: .01em; transition: transform .15s var(--ease), opacity .2s; }
+  .btn:active { transform: scale(.97); }
+  .btn.pri { background: linear-gradient(135deg, #9f7aea, #6d28d9); box-shadow: 0 8px 24px -10px rgba(139,92,246,.9); }
+  .btn.gold { background: linear-gradient(135deg, #fcd34d, #f59e0b); color: #1c1203; box-shadow: 0 8px 24px -10px rgba(251,191,36,.9); }
+  .btn.sec { background: var(--card2); border: 1px solid var(--ln2); }
+  .btn.sm { height: 40px; font-size: 14px; border-radius: 12px; }
+  .btn[disabled] { opacity: .45; pointer-events: none; }
+  .hero .btn { margin-top: 12px; }
+  .pulse { animation: pu 1.6s ease-in-out infinite; }
+  @keyframes pu { 50% { transform: scale(1.025); } }
+
+  /* ── комната с устройствами ── */
+  .room { padding: 12px; background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)); overflow: hidden; }
+  .room::before { content: ''; position: absolute; left: 50%; top: -60px; width: 240px; height: 140px; margin-left: -120px; pointer-events: none;
+                  background: radial-gradient(closest-side, var(--a1), transparent); opacity: .22; animation: bulb 5s ease-in-out infinite; }
+  @keyframes bulb { 50% { opacity: .1; } 53% { opacity: .26; } 56% { opacity: .14; } }
+  .rh { position: relative; display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; font-size: 13px; color: var(--tx3); }
+  .rh b { color: var(--tx); font-size: 15px; }
+  .rh .hs { color: var(--cy); font-weight: 700; font-size: 14px; }
+  .slots { position: relative; display: grid; grid-template-columns: repeat(var(--cols, 4), 1fr); gap: 8px; }
+  .sl { position: relative; aspect-ratio: 1; border-radius: 14px; display: grid; place-items: center; font-size: 25px;
+        background: rgba(255,255,255,.05); border: 1px solid var(--ln); }
+  .sl.em { border-style: dashed; color: var(--tx3); font-size: 18px; background: transparent; }
+  .sl .gw { position: absolute; inset: 14%; border-radius: 50%; background: radial-gradient(closest-side, var(--rc, var(--p1)), transparent);
+            opacity: .38; animation: hum 2.4s ease-in-out infinite; }
+  .sl .ic { position: relative; line-height: 1; }
+  .sl .led { position: absolute; top: 6px; right: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--gr);
+             box-shadow: 0 0 6px var(--gr); animation: led 1.3s steps(2, jump-none) infinite; }
+  .sl.off .led { background: var(--red); box-shadow: 0 0 6px var(--red); animation: none; }
+  .sl.off .gw { opacity: .08; animation: none; }
+  @keyframes hum { 50% { opacity: .62; transform: scale(1.12); } }
+  @keyframes led { 50% { opacity: .25; } }
+  .sl.new { animation: pop .6s var(--spring); }
+  @keyframes pop { from { transform: scale(.3); opacity: 0; } }
+  .sl:active { transform: scale(.94); }
+
+  /* ── ручной майнинг ── */
+  .tapw { display: flex; align-items: center; gap: 14px; }
+  .core { position: relative; flex: 0 0 auto; width: 108px; height: 108px; border-radius: 50%; display: grid; place-items: center;
+          background: radial-gradient(circle at 35% 30%, #2a1650, #0d0817 70%); border: 1px solid rgba(167,139,250,.45);
+          box-shadow: 0 0 0 6px rgba(139,92,246,.08), 0 10px 30px -12px rgba(139,92,246,.9); transition: transform .12s var(--ease); touch-action: manipulation; }
+  .core:active { transform: scale(.93); }
+  .core .ring { position: absolute; inset: -7px; border-radius: 50%; border: 2px solid transparent; border-top-color: var(--p2); border-right-color: rgba(167,139,250,.25);
+                animation: spin 3.2s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .core.dry { filter: grayscale(.6); opacity: .6; }
+  .tapi { flex: 1; min-width: 0; }
+  .tapi b { display: block; font-size: 15px; }
+  .tapi small { display: block; color: var(--tx3); font-size: 12.5px; margin-top: 2px; }
+  .enb { position: relative; height: 9px; border-radius: 99px; background: rgba(255,255,255,.07); overflow: hidden; margin: 9px 0 5px; }
+  .enb i { position: absolute; inset: 0; transform-origin: 0 50%; border-radius: 99px; background: linear-gradient(90deg, #ca8a04, var(--gold)); transition: transform .3s var(--ease); }
+  .enl { display: flex; justify-content: space-between; font-size: 12px; color: var(--tx3); }
+
+  /* ── цели (коротко) и сеть ── */
+  .gm { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .gm .ge { font-size: 26px; }
+  .gm .gt { flex: 1; min-width: 0; }
+  .gm .gt b { display: block; font-size: 14.5px; }
+  .gm .gt small { display: block; color: var(--tx3); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gm .ga { color: var(--p3); font-size: 20px; }
+  .netc { font-size: 12.5px; color: var(--tx3); line-height: 1.55; }
+  .netc b { color: var(--tx2); font-weight: 600; }
+
+  /* ── магазин ── */
+  .sh { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--tx3); margin: 16px 2px 8px; }
+  .it { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 17px; background: var(--card); border: 1px solid var(--ln); margin-bottom: 8px; }
+  .it .ie { width: 50px; height: 50px; flex: 0 0 auto; border-radius: 14px; display: grid; place-items: center; font-size: 27px;
+            background: radial-gradient(circle at 50% 40%, var(--rc, rgba(139,92,246,.4)), rgba(255,255,255,.03) 72%); border: 1px solid var(--ln2); }
+  .it .im { flex: 1; min-width: 0; }
+  .it .im b { display: block; font-size: 15px; }
+  .it .im small { display: block; font-size: 12.3px; color: var(--tx3); line-height: 1.35; }
+  .it .im .hs { color: var(--cy); font-weight: 650; }
+  .it .ib { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+  .it .ib .pr { font-size: 13px; font-weight: 750; white-space: nowrap; }
+  .it .ib .pr small { display: block; text-align: right; font-weight: 500; font-size: 11.5px; color: var(--tx3); }
+  .bb { height: 34px; padding: 0 14px; border-radius: 11px; font-weight: 700; font-size: 13.5px; background: linear-gradient(135deg, #9f7aea, #6d28d9); white-space: nowrap; }
+  .bb.ghost { background: var(--card2); border: 1px solid var(--ln2); color: var(--tx2); }
+  .bb:active { transform: scale(.95); }
+  .it.lock { opacity: .55; }
+  .it.lock .ie { filter: grayscale(1); }
+  .own { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 99px; font-size: 11.5px; font-weight: 700; background: rgba(139,92,246,.22); color: var(--p3); vertical-align: 1px; }
+
+  /* ── сюжет ── */
+  .chap { overflow: hidden; padding: 0; }
+  .chap .cv { position: relative; height: 128px; display: grid; place-items: center; font-size: 58px;
+              background: radial-gradient(ellipse at 50% 120%, var(--a1), transparent 70%), linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.25)); }
+  .chap .cv .cn { position: absolute; left: 14px; bottom: 10px; font-size: 12px; color: var(--tx2); letter-spacing: .08em; text-transform: uppercase; }
+  .chap .cb { padding: 14px; }
+  .chap h2 { font-size: 21px; letter-spacing: -.01em; }
+  .chap .tl { margin-top: 3px; font-size: 13px; color: var(--tx3); }
+  .goal { display: flex; align-items: center; gap: 11px; padding: 10px 0; border-top: 1px solid var(--ln); }
+  .goal:first-of-type { border-top: 0; }
+  .goal .gk { width: 26px; height: 26px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center; font-size: 14px;
+              border: 1.5px solid var(--ln2); color: transparent; }
+  .goal.ok .gk { background: var(--gr); border-color: var(--gr); color: #062e1f; font-weight: 900; }
+  .goal .gx { flex: 1; min-width: 0; }
+  .goal .gx b { display: block; font-size: 14px; font-weight: 600; }
+  .goal .gb { height: 5px; margin-top: 6px; border-radius: 99px; background: rgba(255,255,255,.07); overflow: hidden; }
+  .goal .gb i { display: block; height: 100%; transform-origin: 0 50%; background: linear-gradient(90deg, var(--p1), var(--cy)); border-radius: 99px; }
+  .goal.ok .gb i { background: var(--gr); }
+  .goal .gn { font-size: 12px; color: var(--tx3); white-space: nowrap; }
+  .rw { margin-top: 10px; padding: 10px 12px; border-radius: 13px; font-size: 13.5px; background: rgba(251,191,36,.09); border: 1px solid rgba(251,191,36,.28); }
+  .past { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: none; }
+  .past::-webkit-scrollbar { display: none; }
+  .pc { flex: 0 0 auto; width: 92px; padding: 10px 8px; border-radius: 15px; text-align: center; background: var(--card); border: 1px solid var(--ln); font-size: 12px; color: var(--tx2); }
+  .pc .pe { font-size: 26px; display: block; margin-bottom: 3px; }
+  .pc.cur { border-color: rgba(167,139,250,.55); background: rgba(139,92,246,.12); }
+  .pc.lk { opacity: .4; }
+
+  /* ── кошелёк ── */
+  .wb { text-align: center; padding: 18px 14px; background: linear-gradient(160deg, rgba(139,92,246,.2), rgba(255,255,255,.02) 60%); border-color: rgba(167,139,250,.3); }
+  .wb .wv { font-size: 34px; font-weight: 850; letter-spacing: -.02em; margin-top: 8px; }
+  .wb .wv small { font-size: 16px; color: var(--p3); margin-left: 4px; }
+  .wb .wt { color: var(--tx3); font-size: 13.5px; margin-top: 2px; }
+  .chips { display: flex; gap: 7px; flex-wrap: wrap; margin: 10px 0; }
+  .chip { height: 34px; padding: 0 13px; border-radius: 11px; font-size: 13.5px; font-weight: 650; background: var(--card2); border: 1px solid var(--ln2); }
+  .chip.on { background: rgba(139,92,246,.3); border-color: rgba(167,139,250,.6); }
+  .inp { width: 100%; height: 46px; padding: 0 14px; border-radius: 13px; background: rgba(255,255,255,.06); border: 1px solid var(--ln2); outline: none; font-size: 16px; }
+  .inp:focus { border-color: rgba(167,139,250,.7); }
+  .note { font-size: 12.5px; color: var(--tx3); line-height: 1.45; margin-top: 8px; }
+  .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kv div { padding: 10px 11px; border-radius: 13px; background: rgba(255,255,255,.035); border: 1px solid var(--ln); }
+  .kv i { display: block; font-style: normal; font-size: 11.5px; color: var(--tx3); }
+  .kv b { display: block; font-size: 14.5px; margin-top: 2px; word-break: break-word; }
+  .tg { display: flex; align-items: center; gap: 12px; }
+  .tg .tx { flex: 1; font-size: 14px; }
+  .tg .tx small { display: block; font-size: 12px; color: var(--tx3); }
+  .sw { position: relative; width: 50px; height: 30px; flex: 0 0 auto; border-radius: 99px; background: rgba(255,255,255,.14); transition: background .25s; }
+  .sw i { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .25s var(--spring); }
+  .sw.on { background: var(--p1); }
+  .sw.on i { transform: translateX(20px); }
+
+  /* ── топ ── */
+  .tr { display: flex; align-items: center; gap: 11px; padding: 11px 12px; border-radius: 15px; margin-bottom: 7px; background: var(--card); border: 1px solid var(--ln); }
+  .tr .tp { width: 28px; text-align: center; font-weight: 800; color: var(--tx3); flex: 0 0 auto; }
+  .tr .tn { flex: 1; min-width: 0; }
+  .tr .tn b { display: block; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tr .tn small { display: block; font-size: 12px; color: var(--tx3); }
+  .tr .th { color: var(--cy); font-weight: 750; font-size: 13.5px; white-space: nowrap; }
+  .tr.me { border-color: rgba(167,139,250,.6); background: rgba(139,92,246,.14); }
+  .tr.g1 .tp { color: var(--gold); } .tr.g2 .tp { color: #e5e7eb; } .tr.g3 .tp { color: #fb923c; }
+
+  /* ── нижнее меню ── */
+  .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: center;
+         padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, rgba(7,6,12,0), rgba(7,6,12,.94) 32%); }
+  .nav .in { display: flex; gap: 4px; width: 100%; max-width: 520px; padding: 5px; border-radius: 20px; background: rgba(22,18,34,.88);
+             border: 1px solid var(--ln2); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+  .nav button { position: relative; flex: 1; height: 50px; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+                font-size: 10.5px; color: var(--tx3); gap: 1px; transition: color .2s; }
+  .nav button .ni { font-size: 19px; line-height: 1.1; transition: transform .3s var(--spring); }
+  .nav button.on { color: #fff; background: rgba(139,92,246,.24); }
+  .nav button.on .ni { transform: translateY(-1px) scale(1.08); }
+  .nav button .dot { position: absolute; top: 6px; right: calc(50% - 17px); width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+
+  /* ── выдвижная карточка ── */
+  .shade { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.6); opacity: 0; pointer-events: none; transition: opacity .25s; }
+  .shade.on { opacity: 1; pointer-events: auto; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41; max-width: 520px; margin: 0 auto; padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+           border-radius: 24px 24px 0 0; background: #120f1d; border: 1px solid var(--ln2); border-bottom: 0;
+           transform: translateY(105%); transition: transform .32s var(--ease); max-height: 86vh; overflow-y: auto; }
+  .sheet.on { transform: none; }
+  .sheet .grab { width: 40px; height: 4px; border-radius: 99px; background: var(--ln2); margin: -8px auto 14px; }
+  .sheet h3 { font-size: 19px; margin-bottom: 4px; }
+  .sheet p { font-size: 14px; color: var(--tx2); margin-bottom: 12px; line-height: 1.45; }
+  .sheet .row { display: flex; gap: 8px; margin-top: 10px; }
+  .sheet .row .btn { flex: 1; }
+
+  /* ── сюжет поверх всего ── */
+  .ov { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; justify-content: flex-end; background: rgba(4,3,8,.97);
+        opacity: 0; pointer-events: none; transition: opacity .35s; }
+  .ov.on { opacity: 1; pointer-events: auto; }
+  .ov .scn { position: absolute; top: 0; left: 0; right: 0; height: 38vh; display: grid; place-items: center; font-size: 84px; overflow: hidden;
+             background: radial-gradient(ellipse at 50% 110%, var(--a1), transparent 65%); }
+  .ov .scn .st { position: absolute; top: calc(18px + env(safe-area-inset-top)); left: 0; right: 0; text-align: center; font-size: 12px; letter-spacing: .14em;
+                 text-transform: uppercase; color: var(--tx2); }
+  .ov .scn .se { animation: flo 5s ease-in-out infinite; }
+  @keyframes flo { 50% { transform: translateY(-8px); } }
+  .ov .dl { position: relative; max-width: 520px; width: 100%; margin: 0 auto; padding: 0 16px calc(18px + env(safe-area-inset-bottom)); }
+  .ln { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px; animation: lin .4s var(--ease) both; }
+  @keyframes lin { from { opacity: 0; transform: translateY(14px); } }
+  .ln .av { width: 38px; height: 38px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center; font-size: 20px;
+            background: rgba(255,255,255,.08); border: 1px solid var(--ln2); }
+  .ln .bu { flex: 1; padding: 11px 13px; border-radius: 16px 16px 16px 5px; background: rgba(255,255,255,.07); border: 1px solid var(--ln); font-size: 15px; line-height: 1.45; }
+  .ln .bu .who { display: block; font-size: 12px; font-weight: 750; margin-bottom: 2px; }
+  .ln.n .av { display: none; }
+  .ln.n .bu { background: transparent; border: 0; padding: 4px 2px; color: var(--tx2); font-style: italic; border-radius: 0; }
+  .ln.rw2 .bu { background: rgba(251,191,36,.12); border-color: rgba(251,191,36,.4); font-weight: 650; }
+  .ov .ctl { display: flex; gap: 8px; margin-top: 6px; }
+  .ov .ctl .btn { flex: 1; }
+  .ov .skip { position: absolute; top: calc(12px + env(safe-area-inset-top)); right: 12px; z-index: 2; padding: 7px 12px; border-radius: 99px; font-size: 13px;
+              color: var(--tx2); background: rgba(255,255,255,.08); }
+  .lines { max-height: 40vh; overflow-y: auto; padding-top: 6px; }
+
+  /* ── всплывашки, частицы, большие события ── */
+  .toast { position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top)); z-index: 90; max-width: calc(100% - 28px); padding: 11px 16px; border-radius: 14px;
+           background: rgba(30,24,48,.97); border: 1px solid var(--ln2); font-size: 14px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.5);
+           transform: translate(-50%, -150%); transition: transform .35s var(--spring); pointer-events: none; }
+  .toast.on { transform: translate(-50%, 0); }
+  .toast.err { border-color: rgba(248,113,113,.6); }
+  .fx { position: fixed; inset: 0; z-index: 70; pointer-events: none; overflow: hidden; }
+  .fx .pt { position: absolute; font-weight: 800; font-size: 14px; color: var(--p3); text-shadow: 0 0 8px rgba(139,92,246,.9); white-space: nowrap;
+            animation: up 1s var(--ease) forwards; }
+  @keyframes up { to { transform: translate(var(--dx, 0), -70px); opacity: 0; } }
+  .fx .cn { position: absolute; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 900; color: #2e1065;
+            background: radial-gradient(circle at 35% 30%, #f5f3ff, #a78bfa 60%, #6d28d9); box-shadow: 0 0 10px rgba(167,139,250,.9);
+            transition: transform .75s cubic-bezier(.5,-0.3,.6,1), opacity .75s; }
+  .big-ev { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; pointer-events: none; }
+  .big-ev .bx { text-align: center; padding: 22px 26px; border-radius: 24px; background: rgba(18,14,30,.94); border: 1px solid rgba(251,191,36,.6);
+                box-shadow: 0 0 60px rgba(251,191,36,.35); animation: bev 2.4s var(--ease) forwards; }
+  .big-ev .bx .be { font-size: 54px; display: block; }
+  .big-ev .bx b { display: block; font-size: 20px; margin-top: 6px; letter-spacing: .02em; }
+  .big-ev .bx small { display: block; font-size: 15px; color: var(--gold); margin-top: 4px; font-weight: 700; }
+  @keyframes bev { 0% { opacity: 0; transform: scale(.6); } 14% { opacity: 1; transform: scale(1.06); } 22% { transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(.96) translateY(-10px); } }
+  .coach { position: absolute; z-index: 30; padding: 8px 12px; border-radius: 12px; font-size: 13px; font-weight: 650; white-space: nowrap;
+           background: var(--gold); color: #1c1203; box-shadow: 0 6px 18px rgba(0,0,0,.4); pointer-events: none; animation: cbo 1.4s ease-in-out infinite; }
+  .coach::after { content: ''; position: absolute; left: 50%; bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-bottom: 0; border-top-color: var(--gold); }
+  @keyframes cbo { 50% { transform: translateY(-4px); } }
+
+  /* ── загрузка и ошибки ── */
+  .sk { background: linear-gradient(90deg, rgba(255,255,255,.05), rgba(255,255,255,.1), rgba(255,255,255,.05)); background-size: 200% 100%; animation: skl 1.4s linear infinite; border-radius: 12px; }
+  @keyframes skl { to { background-position: -200% 0; } }
+  body[data-state="loading"] .tab, body[data-state="loading"] .nav { visibility: hidden; }
+  .ld { display: none; }
+  body[data-state="loading"] .ld { display: block; }
+  .err { position: fixed; inset: 0; z-index: 95; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+         padding: 30px; background: var(--bg); }
+  .err .ic { font-size: 48px; margin-bottom: 12px; }
+  .err h2 { font-size: 20px; margin-bottom: 8px; }
+  .err p { color: var(--tx2); font-size: 14.5px; line-height: 1.5; max-width: 340px; margin-bottom: 18px; }
+  .err button { padding: 12px 22px; border-radius: 14px; background: var(--p1); font-weight: 700; }
+  .stale { margin: 0 0 10px; padding: 8px 12px; border-radius: 12px; font-size: 12.5px; text-align: center; color: var(--tx2); background: rgba(255,255,255,.05); border: 1px solid var(--ln); }
+  @media (max-width: 360px) {
+    main { padding-left: 10px; padding-right: 10px; }
+    .hero .big { font-size: 26px; }
+    .core { width: 92px; height: 92px; }
+    .slots { gap: 6px; }
+    .it .ie { width: 44px; height: 44px; font-size: 23px; }
+  }
+</style>
+</head>
+<body data-state="loading" data-ch="1">
+<div class="bg"><i class="gl g1"></i><i class="gl g2"></i><div class="grid"></div><div class="stars" id="stars"></div></div>
+<main>
+  <header class="top">
+    <div class="loc"><div class="le" id="loc-e">🏚</div><div style="min-width:0"><b id="loc-n">Майнинг SLX</b><small id="loc-c"></small></div></div>
+    <button type="button" class="wal" id="wal-chip"><span id="wal-logo"></span><b class="mono" id="w-slx">—</b></button>
+  </header>
+  <div class="ld">
+    <div class="card sk" style="height:210px"></div><div class="card sk" style="height:170px"></div><div class="card sk" style="height:120px"></div>
+  </div>
+  <div class="stale" id="stale" hidden></div>
+  <div class="pause" id="pause" hidden></div>
+  <div class="ev" id="ev" hidden></div>
+
+  <section class="tab" id="t-farm">
+    <div class="card hero" id="hero">
+      <div class="hl"><span>📦 <span id="h-lbl">Хранилище</span></span><b id="h-cap"></b></div>
+      <div class="big mono"><span id="h-val">0</span><small>SLX</small></div>
+      <div class="eq" id="h-eq"></div>
+      <div class="tank" id="tank"><i id="tank-i"></i><em></em></div>
+      <div class="rate"><span id="h-rate"></span><span class="fl" id="h-full"></span></div>
+      <button type="button" class="btn pri" id="b-col">⛏ <span id="b-col-t">Собрать</span></button>
+    </div>
+    <div class="card room" id="room">
+      <div class="rh"><span><b id="r-name"></b> · <span id="r-used"></span></span><span class="hs mono" id="r-hash"></span></div>
+      <div class="slots" id="slots"></div>
+    </div>
+    <div class="card">
+      <div class="tapw">
+        <button type="button" class="core" id="core" aria-label="tap"><i class="ring"></i><span id="core-logo"></span></button>
+        <div class="tapi">
+          <b id="tp-t">Ручной майнинг</b><small id="tp-s"></small>
+          <div class="enb"><i id="en-i"></i></div>
+          <div class="enl"><span id="en-v"></span><span id="en-r"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card gm" id="gmini"><span class="ge" id="gm-e">🎯</span><div class="gt"><b id="gm-t"></b><small id="gm-s"></small></div><span class="ga">›</span></div>
+    <div class="card netc" id="netc"></div>
+  </section>
+
+  <section class="tab" id="t-shop" hidden>
+    <div id="shop-move"></div>
+    <div class="sh" id="sh-st"></div>
+    <div id="shop-st"></div>
+    <div class="sh" id="sh-rigs"></div>
+    <div id="shop-rigs"></div>
+    <p class="note" id="shop-note"></p>
+  </section>
+
+  <section class="tab" id="t-story" hidden>
+    <div id="story-cur"></div>
+    <div class="sh" id="sh-past"></div>
+    <div class="past" id="past"></div>
+  </section>
+
+  <section class="tab" id="t-wallet" hidden>
+    <div class="card wb">
+      <div id="wb-logo"></div>
+      <div class="wv mono"><span id="wb-v">0</span><small>SLX</small></div>
+      <div class="wt" id="wb-t"></div>
+    </div>
+    <div class="card">
+      <div class="sh" style="margin-top:0" id="sell-h"></div>
+      <div class="chips" id="sell-chips"></div>
+      <input class="inp mono" id="sell-in" inputmode="decimal" autocomplete="off">
+      <div class="note" id="sell-eq"></div>
+      <button type="button" class="btn pri sm" id="b-sell" style="margin-top:10px"></button>
+    </div>
+    <div class="card">
+      <div class="sh" style="margin-top:0" id="buy-h"></div>
+      <input class="inp mono" id="buy-in" inputmode="decimal" autocomplete="off">
+      <div class="note" id="buy-eq"></div>
+      <button type="button" class="btn sec sm" id="b-buy" style="margin-top:10px"></button>
+    </div>
+    <div class="card"><div class="sh" style="margin-top:0" id="st-h"></div><div class="kv" id="stats"></div></div>
+    <div class="card tg" id="ntf"><div class="tx" id="ntf-t"></div><button type="button" class="sw" id="ntf-sw"><i></i></button></div>
+    <button type="button" class="btn sec" id="b-ex"></button>
+    <p class="note" id="ex-note"></p>
+  </section>
+
+  <section class="tab" id="t-top" hidden>
+    <div class="sh" style="margin-top:4px" id="top-h"></div>
+    <p class="note" id="top-note" style="margin:-2px 2px 10px"></p>
+    <div id="top-list"></div>
+  </section>
+</main>
+<nav class="nav" id="nav"><div class="in">
+  <button type="button" class="on" data-tab="farm"><span class="ni">⛏</span><span data-l="farm"></span></button>
+  <button type="button" data-tab="shop"><span class="ni">🛒</span><span data-l="shop"></span></button>
+  <button type="button" data-tab="story"><span class="ni">📖</span><span data-l="story"></span></button>
+  <button type="button" data-tab="wallet"><span class="ni">💼</span><span data-l="wallet"></span></button>
+  <button type="button" data-tab="top"><span class="ni">🏆</span><span data-l="top"></span></button>
+</div></nav>
+<div class="shade" id="shade"></div>
+<div class="sheet" id="sheet"><div class="grab"></div><div id="sheet-in"></div></div>
+<div class="ov" id="ov"><button type="button" class="skip" id="ov-skip"></button>
+  <div class="scn"><span class="st" id="ov-st"></span><span class="se" id="ov-e"></span></div>
+  <div class="dl"><div class="lines" id="ov-lines"></div><div class="ctl"><button type="button" class="btn pri" id="ov-next"></button></div></div>
+</div>
+<div class="fx" id="fx"></div>
+<div class="toast" id="toast"></div>
+<div class="err" id="err" hidden><div class="ic" id="err-ic">📡</div><h2 id="err-h"></h2><p id="err-p"></p><button type="button" id="err-retry"></button></div>
+<script>
+/* SDK Telegram — не блокируя страницу */
+(function () {
+  var s = document.createElement('script'); s.src = 'https://telegram.org/js/telegram-web-app.js'; s.async = true;
+  s.onload = function () { try { if (window.__mineTg) window.__mineTg(); } catch (e) {} };
+  (document.head || document.documentElement).appendChild(s);
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ── Telegram: необязателен ──
+  var tg = null, INIT = '';
+  function tgInit() {
+    try {
+      tg = window.Telegram && window.Telegram.WebApp;
+      if (tg) {
+        tg.ready(); tg.expand();
+        try { tg.setHeaderColor('#07060c'); tg.setBackgroundColor('#07060c'); } catch (e) {}
+        try { if (tg.setBottomBarColor) tg.setBottomBarColor('#07060c'); } catch (e) {}
+      }
+    } catch (e) {}
+    try { if (tg && !INIT && tg.initData) INIT = tg.initData; } catch (e) {}
+  }
+  function hap(k) {
+    try {
+      if (!tg || !tg.HapticFeedback) return;
+      if (k === 'sel') tg.HapticFeedback.selectionChanged();
+      else if (k === 'light' || k === 'soft' || k === 'medium' || k === 'heavy') tg.HapticFeedback.impactOccurred(k);
+      else tg.HapticFeedback.notificationOccurred(k);
+    } catch (e) {}
+  }
+
+  // ── параметры ссылки ──
+  var q = new URLSearchParams(location.search);
+  var UID = q.get('user_id') || q.get('uid') || '';
+  var SECRET = q.get('api_secret') || q.get('secret') || '';
+  var API = (q.get('api_url') || '').trim();
+  if (API && !/^https?:\/\//i.test(API)) { try { API = decodeURIComponent(API); } catch (e) {} }
+  API = API.replace(/\/+$/, '');
+  var TK = window.__TK || '';
+  try { INIT = new URLSearchParams(location.hash.replace(/^#/, '')).get('tgWebAppData') || ''; } catch (e) {}
+  if (!UID && INIT) { try { var uu = JSON.parse(new URLSearchParams(INIT).get('user') || '{}'); if (uu && uu.id) UID = String(uu.id); } catch (e) {} }
+  var useInit = !SECRET && !!INIT;
+  var EN = q.get('lang') === 'en';
+  if (q.get('motion') === 'reduce') document.documentElement.classList.add('calm');
+  tgInit(); if (!tg) window.__mineTg = tgInit;
+
+  // ── устройства, места, герои ──
+  var RIG = {
+    phone: { e: '📱', c: 'rgba(167,139,250,.55)' }, laptop: { e: '💻', c: 'rgba(96,165,250,.55)' }, pc: { e: '🖥', c: 'rgba(52,211,153,.5)' },
+    gpu: { e: '🎮', c: 'rgba(244,114,182,.5)' }, rig: { e: '🧰', c: 'rgba(251,191,36,.5)' }, asic: { e: '⚙️', c: 'rgba(34,211,238,.5)' },
+    hydro: { e: '🧊', c: 'rgba(56,189,248,.55)' }, quant: { e: '⚛️', c: 'rgba(192,132,252,.6)' }
+  };
+  var LOC_E = ['🏚', '🚗', '🏭', '❄️', '🏢', '🌋', '🛰'];
+  var SPK = { x: { e: '✖️', c: '#c084fc' }, ded: { e: '👴', c: '#fbbf24' }, lisa: { e: '🦊', c: '#fb923c' }, block: { e: '🕴', c: '#f87171' }, me: { e: '🙂', c: '#a78bfa' } };
+
+  var T = EN ? {
+    farm: 'Farm', shop: 'Shop', story: 'Story', wallet: 'Wallet', top: 'Top',
+    ch: function (n) { return 'Chapter ' + n + ' of 7'; }, storage: 'Storage', hours: function (h) { return h + ' h'; },
+    collect: 'Collect', collectFull: 'Collect — the farm has stopped!', perH: '/h', fullIn: function (s) { return 'full in ' + s; },
+    full: 'Storage is full — the farm stands still', stopped: 'The farm is paused', eq: function (t) { return '≈ ' + t + ' tokens'; },
+    slots: function (u, n) { return u + ' of ' + n + ' slots'; }, tapT: 'Manual mining', tapS: function (v) { return 'Each tap +' + v + ' SLX'; },
+    energy: function (e, m) { return '⚡ ' + e + ' / ' + m; }, regen: function (s) { return '+1 every ' + s + ' s'; }, noEnergy: 'Out of energy — it refills by itself',
+    tapsOff: 'Manual mining is turned off now',
+    net: function (n) { return '🌐 SLX network: <b>' + num(n.farms) + '</b> farms, <b>' + num(n.active) + '</b> mining now · difficulty <b>×' + n.diff + '</b><br>⛏ Mined by everyone today: <b>' + n.today + '</b> of <b>' + n.cap + '</b> SLX'; },
+    netHi: ' — the network is busy, everyone mines slower', goalAll: 'All goals done — move on!', goalOf: function (a, b) { return a + ' of ' + b + ' goals'; },
+    goalTap: 'Open the story', finale: 'Finale is ready!', doneAll: 'Story complete — you are the SLX Keeper 👑',
+    rigs: { phone: 'Old phone', laptop: 'Laptop', pc: 'Gaming PC', gpu: 'RTX graphics card', rig: 'Mining rig', asic: 'ASIC miner', hydro: 'Hydro farm', quant: 'Quantum node' },
+    rigd: { phone: 'Cracked screen — but it mines!', laptop: 'Hot as an iron', pc: 'RGB lights and three fans', gpu: "Every miner's favourite toy",
+            rig: 'Six graphics cards on one frame', asic: 'Built for mining only', hydro: 'Boards in liquid — no dust, no heat', quant: 'Computes in all universes at once' },
+    locs: ['Basement', 'Garage', 'Port warehouse', 'Northern hangar', 'Data center', 'Volcano', 'Orbit'],
+    titles: ['Rookie', 'Garage miner', 'Port farmer', 'Northern wolf', 'Data-center tycoon', 'Volcano lord', 'Orbit conqueror', 'SLX Keeper'],
+    buy: 'Buy', replace: 'Replace', noSlot: 'No slots', lockCh: function (n, l) { return '🔒 Opens in chapter ' + n + ' · ' + l; },
+    payback: function (s) { return 'pays back in ~' + s; }, owned: function (n) { return '×' + n; },
+    storT: 'Storage', storNow: function (h) { return 'Now: the farm works <b>' + h + ' h</b> without you'; }, storNext: function (h) { return 'Up to ' + h + ' h'; },
+    storMax: 'Biggest storage already', storLock: function (n) { return '🔒 Bigger storage — from chapter ' + n; },
+    shopNote: 'When all slots are taken, a stronger device replaces your weakest one — the weak one is sold for half price.',
+    moveT: function (l) { return 'Move to ' + l; }, moveGo: function (c) { return '🔑 Move — ' + c + ' SLX'; }, moveNeed: 'Finish all chapter goals first',
+    goalsH: 'Chapter goals', reward: 'Reward', past: 'Chapters', readAgain: 'Tap a chapter to read it again',
+    goal: {
+      col: function (n) { return 'Collect the mining ' + n + ' times'; }, rigs: function (n) { return 'Install ' + n + ' devices'; },
+      hash: function (n) { return 'Farm power — ' + hashS(n); }, own: function (n, w) { return (n > 1 ? n + ' × ' : 'Buy: ') + T.rigs[w]; },
+      stor: function (n) { return 'Storage — ' + n + ' hours'; }, lucky: function () { return 'Find a lucky block 🍀'; }, mined: function (n) { return 'Mine ' + n + ' SLX in total'; }
+    },
+    rwd: { rig: function (w) { return RIG[w].e + ' ' + T.rigs[w]; }, slx: function (x) { return '+' + slx(x) + ' SLX'; } },
+    walletH: 'SLX wallet', walletT: function (t, p) { return '≈ ' + t + ' tokens · 1 SLX = ' + p; },
+    sellH: 'Swap SLX for tokens', sellPh: 'How much SLX', sellB: function (t) { return '💱 Sell for ≈ ' + t + ' tokens'; }, sellNo: 'Enter how much SLX',
+    sellEq: function (f) { return 'Exchange rate minus ' + f + '% fee. Big sales get a slightly worse price (like on the exchange).'; },
+    buyH: 'Buy SLX for tokens', buyPh: 'How much SLX', buyB: function (t) { return '🛒 Buy for ≈ ' + t + ' tokens'; }, buyEq: function (b) { return 'Your tokens: ' + b; },
+    all: 'All', statsH: 'Your farm', st: { mined: 'Mined in total', tapped: 'By taps', lucky: 'Lucky blocks', col: 'Collections', spent: 'Spent on the farm', since: 'Farm since' },
+    ntf: 'Remind me in the bot', ntfS: 'When the storage is full (no more than twice a day, daytime)',
+    ex: '📈 Open the exchange', exNote: 'SLX from the farm lands in the same wallet as on the exchange (“Account 👤” → “📈 Invest”). The exchange opens right here; to come back — tap “⛏ SLX Mining” in the bot again.',
+    topH: 'Top farms by power', topNote: function (p, n) { return p ? 'You are #' + p + ' of ' + n + ' farms' : ''; }, you: 'you',
+    got: function (x) { return '+' + slx(x) + ' SLX to your wallet'; }, lucky: 'LUCKY BLOCK!', luckyS: function (x) { return '+' + slx(x) + ' SLX bonus'; },
+    bought: function (n) { return n + ' is installed ⚡'; }, sold: function (n, x) { return n + ' sold: +' + slx(x) + ' SLX'; },
+    storUp: function (h) { return 'Storage — now ' + h + ' h 📦'; }, soldSlx: function (q, t) { return 'Sold ' + slx(q) + ' SLX → +' + t + ' tokens'; },
+    boughtSlx: function (q, t) { return 'Bought ' + slx(q) + ' SLX for ' + t + ' tokens'; },
+    short: function (x) { return 'Not enough SLX: you need ' + slx(x) + ' more'; }, buyShort: function (x, t) { return '🛒 Buy ' + slx(x) + ' SLX for ≈ ' + t + ' tokens and get it'; },
+    sellRig: function (x) { return '💱 Sell for ' + slx(x) + ' SLX'; }, rigInfo: function (n, h) { return 'Here: ' + n + ' · ' + hashS(h) + ' each'; }, cancel: 'Cancel', ok: 'OK',
+    lastRig: 'This is your last device — it cannot be sold',
+    next: 'Next ›', skip: 'Skip', start: '⛏ Start the miner', go: "Let's go!", read: 'Close', startS: 'Prologue',
+    chT: function (n) { return 'Chapter ' + n; }, finaleT: 'Finale', finBtn: '👑 Complete the story — +10 SLX',
+    errs: { off: 'Mining is paused — back soon', not_started: 'The farm is not built yet', no_slx: 'Not enough SLX', locked: 'Opens in later chapters',
+            no_slot: 'All slots are taken — move on to get more', goals: 'Finish all chapter goals first', max: 'Nowhere further', last_rig: 'Your last device cannot be sold',
+            no_rig: 'No such device on the farm', taps_off: 'Manual mining is off', rate_limited: 'One second…', banned: '🚫 Your account is blocked',
+            frozen: '❄️ Your account is frozen', maintenance: '🔧 The bot is under maintenance', no_funds: 'Not enough tokens', no_coins: 'Not enough SLX',
+            bad_qty: 'How much SLX?', net: 'No connection — try again' },
+    errParams: ['Open it from the bot', 'This game opens with the “⛏ SLX Mining” button in “Gifts 🎁”.'],
+    errAuth: ['The button is outdated', 'Open “Gifts 🎁” in the bot and tap “⛏ SLX Mining” again.'],
+    errReg: ['Register first', 'Send /start to the bot and finish the registration — then the farm is yours.'],
+    errNet: ['No connection to the server', 'Check your internet — or the bot is restarting, it takes a couple of minutes.'], retry: 'Try again',
+    stale: 'No connection — showing the last data', evT: function (x, s) { return '⚡ Event: mining ×' + x + ' — ' + s + ' left'; },
+    paused: '⏸ Mining is paused by the administrator — your farm is safe, back soon', now: 'now',
+    coachTap: '👆 Tap to mine by hand', coachCol: '⛏ Collect the mining', coachShop: '🛒 Buy another device'
+  } : {
+    farm: 'Ферма', shop: 'Магазин', story: 'Сюжет', wallet: 'Кошелёк', top: 'Топ',
+    ch: function (n) { return 'Глава ' + n + ' из 7'; }, storage: 'Хранилище', hours: function (h) { return h + ' ч'; },
+    collect: 'Собрать', collectFull: 'Собрать — ферма стоит!', perH: '/ч', fullIn: function (s) { return 'полное через ' + s; },
+    full: 'Хранилище полное — ферма стоит', stopped: 'Ферма на паузе', eq: function (t) { return '≈ ' + t + ' ' + tw(t); },
+    slots: function (u, n) { return u + ' из ' + n + ' мест'; }, tapT: 'Ручной майнинг', tapS: function (v) { return 'Каждое нажатие +' + v + ' SLX'; },
+    energy: function (e, m) { return '⚡ ' + e + ' / ' + m; }, regen: function (s) { return '+1 каждые ' + s + ' с'; }, noEnergy: 'Энергия кончилась — копится сама',
+    tapsOff: 'Ручной майнинг сейчас выключен',
+    net: function (n) { return '🌐 Сеть SLX: <b>' + num(n.farms) + '</b> ' + plural(n.farms, 'ферма', 'фермы', 'ферм') + ', майнят сейчас <b>' + num(n.active) + '</b> · сложность <b>×' + n.diff + '</b><br>⛏ Добыто всеми сегодня: <b>' + n.today + '</b> из <b>' + n.cap + '</b> SLX'; },
+    netHi: ' — сеть перегружена, у всех добыча медленнее', goalAll: 'Все цели выполнены — переезжай!', goalOf: function (a, b) { return 'Цели главы: ' + a + ' из ' + b; },
+    goalTap: 'Открыть сюжет', finale: 'Финал готов!', doneAll: 'Сюжет пройден — ты Хранитель SLX 👑',
+    rigs: { phone: 'Старый телефон', laptop: 'Ноутбук', pc: 'Игровой ПК', gpu: 'Видеокарта RTX', rig: 'Майнинг-риг', asic: 'ASIC-майнер', hydro: 'Гидро-ферма', quant: 'Квантовый узел' },
+    rigd: { phone: 'С трещиной на экране — но майнит!', laptop: 'Греется, как утюг', pc: 'RGB-подсветка и три кулера', gpu: 'Любимая игрушка майнеров',
+            rig: 'Шесть видеокарт на одной раме', asic: 'Создан только для майнинга', hydro: 'Платы в жидкости — ни пылинки, ни перегрева', quant: 'Считает во всех вселенных сразу' },
+    locs: ['Подвал', 'Гараж', 'Склад в порту', 'Ангар на севере', 'Дата-центр', 'Вулкан', 'Орбита'],
+    titles: ['Новичок', 'Гаражный майнер', 'Портовый фермер', 'Северный волк', 'Магнат дата-центра', 'Повелитель вулкана', 'Покоритель орбиты', 'Хранитель SLX'],
+    buy: 'Купить', replace: 'Заменить', noSlot: 'Нет мест', lockCh: function (n, l) { return '🔒 Откроется в главе ' + n + ' · ' + l; },
+    payback: function (s) { return 'окупится за ~' + s; }, owned: function (n) { return '×' + n; },
+    storT: 'Хранилище', storNow: function (h) { return 'Сейчас ферма работает без тебя <b>' + h + ' ч</b>'; }, storNext: function (h) { return 'До ' + h + ' ч'; },
+    storMax: 'Хранилище уже самое большое', storLock: function (n) { return '🔒 Больше — с главы ' + n; },
+    shopNote: 'Когда места заняты, устройство посильнее встаёт вместо самого слабого — слабое уходит за полцены.',
+    moveT: function (l) { return 'Переезд: ' + l; }, moveGo: function (c) { return '🔑 Переехать — ' + c + ' SLX'; }, moveNeed: 'Сначала выполни все цели главы',
+    goalsH: 'Цели главы', reward: 'Награда', past: 'Главы', readAgain: 'Нажми на главу — прочитать снова',
+    goal: {
+      col: function (n) { return 'Собери добычу ' + n + ' ' + plural(n, 'раз', 'раза', 'раз'); }, rigs: function (n) { return 'Поставь ' + n + ' ' + plural(n, 'устройство', 'устройства', 'устройств'); },
+      hash: function (n) { return 'Мощность фермы — ' + hashS(n); }, own: function (n, w) { return (n > 1 ? n + ' × ' : 'Купи: ') + T.rigs[w]; },
+      stor: function (n) { return 'Хранилище — ' + n + ' ' + plural(n, 'час', 'часа', 'часов'); }, lucky: function () { return 'Найди удачный блок 🍀'; },
+      mined: function (n) { return 'Добудь всего ' + n + ' SLX'; }
+    },
+    rwd: { rig: function (w) { return RIG[w].e + ' ' + T.rigs[w]; }, slx: function (x) { return '+' + slx(x) + ' SLX'; } },
+    walletH: 'Кошелёк SLX', walletT: function (t, p) { return '≈ ' + t + ' ' + tw(t) + ' · 1 SLX = ' + p; },
+    sellH: 'Обменять SLX на токены', sellPh: 'Сколько SLX', sellB: function (t) { return '💱 Продать за ≈ ' + t + ' ' + tw(t); }, sellNo: 'Впиши, сколько SLX',
+    sellEq: function (f) { return 'По курсу биржи минус ' + f + '% комиссии. Крупная продажа — чуть ниже курса (как на бирже).'; },
+    buyH: 'Докупить SLX за токены', buyPh: 'Сколько SLX', buyB: function (t) { return '🛒 Купить за ≈ ' + t + ' ' + tw(t); }, buyEq: function (b) { return 'Твои токены: ' + b; },
+    all: 'Всё', statsH: 'Твоя ферма', st: { mined: 'Добыто всего', tapped: 'Нажатиями', lucky: 'Удачных блоков', col: 'Сборов', spent: 'Вложено в ферму', since: 'Ферма с' },
+    ntf: 'Напоминать в боте', ntfS: 'Когда хранилище полное (не чаще 2 раз в день, днём)',
+    ex: '📈 Открыть биржу', exNote: 'SLX с фермы лежат в том же кошельке, что на бирже («Аккаунт 👤» → «📈 Инвестиции»). Биржа откроется здесь же; вернуться — снова «⛏ Майнинг SLX» в боте.',
+    topH: 'Топ ферм по мощности', topNote: function (p, n) { return p ? 'Ты — #' + p + ' из ' + n + ' ' + plural(n, 'фермы', 'ферм', 'ферм') : ''; }, you: 'ты',
+    got: function (x) { return '+' + slx(x) + ' SLX в кошелёк'; }, lucky: 'УДАЧНЫЙ БЛОК!', luckyS: function (x) { return '+' + slx(x) + ' SLX сверху'; },
+    bought: function (n) { return n + ' — на ферме ⚡'; }, sold: function (n, x) { return n + ' продан: +' + slx(x) + ' SLX'; },
+    storUp: function (h) { return 'Хранилище — теперь ' + h + ' ч 📦'; }, soldSlx: function (q, t) { return 'Продано ' + slx(q) + ' SLX → +' + t + ' ' + tw(t); },
+    boughtSlx: function (q, t) { return 'Куплено ' + slx(q) + ' SLX за ' + t + ' ' + tw(t); },
+    short: function (x) { return 'Не хватает SLX: нужно ещё ' + slx(x); }, buyShort: function (x, t) { return '🛒 Докупить ' + slx(x) + ' SLX за ≈ ' + t + ' ' + tw(t) + ' и взять'; },
+    sellRig: function (x) { return '💱 Продать за ' + slx(x) + ' SLX'; }, rigInfo: function (n, h) { return 'На ферме: ' + n + ' · по ' + hashS(h); }, cancel: 'Отмена', ok: 'Понятно',
+    lastRig: 'Это последнее устройство — его не продать',
+    next: 'Дальше ›', skip: 'Пропустить', start: '⛏ Запустить майнер', go: 'Вперёд!', read: 'Закрыть', startS: 'Пролог',
+    chT: function (n) { return 'Глава ' + n; }, finaleT: 'Финал', finBtn: '👑 Завершить сюжет — +10 SLX',
+    errs: { off: 'Майнинг на паузе — скоро вернётся', not_started: 'Ферма ещё не построена', no_slx: 'Не хватает SLX', locked: 'Откроется в следующих главах',
+            no_slot: 'Все места заняты — переезжай, мест станет больше', goals: 'Сначала выполни все цели главы', max: 'Дальше некуда', last_rig: 'Последнее устройство продать нельзя',
+            no_rig: 'Такого устройства нет на ферме', taps_off: 'Ручной майнинг выключен', rate_limited: 'Секунду…', banned: '🚫 Аккаунт заблокирован',
+            frozen: '❄️ Аккаунт заморожен', maintenance: '🔧 Бот на обслуживании', no_funds: 'Не хватает токенов', no_coins: 'Не хватает SLX',
+            bad_qty: 'Сколько SLX?', net: 'Нет связи — попробуй ещё раз' },
+    errParams: ['Открой из бота', 'Игра открывается кнопкой «⛏ Майнинг SLX» в «Подарках 🎁».'],
+    errAuth: ['Кнопка устарела', 'Открой «Подарки 🎁» в боте и нажми «⛏ Майнинг SLX» заново.'],
+    errReg: ['Сначала регистрация', 'Напиши боту /start и пройди регистрацию — и ферма твоя.'],
+    errNet: ['Нет связи с сервером', 'Проверь интернет — или бот перезапускается, это пара минут.'], retry: 'Повторить',
+    stale: 'Нет связи — показываю последние данные', evT: function (x, s) { return '⚡ Ивент: добыча ×' + x + ' — ещё ' + s; },
+    paused: '⏸ Майнинг на паузе у администратора — ферма в сохранности, скоро вернётся', now: 'сейчас',
+    coachTap: '👆 Жми — майни вручную', coachCol: '⛏ Собери добычу', coachShop: '🛒 Купи ещё устройство'
+  };
+
+  // ── сюжет: [кто, текст]; n — рассказчик ──
+  var STORY = EN ? {
+    0: [['n', 'Night. Rain taps on the window. All you have is an old phone with a crack across the screen.'],
+        ['x', 'SLX is a coin for our own people. The network is growing. Start small — and you will rise above everyone. — X'],
+        ['n', 'You go down to the basement, put the phone on charge and start the miner. The screen blinks: “Hash found”.']],
+    1: [['n', 'A damp basement of an old house. The bulb flickers, water drips in the corner. But the socket works.'],
+        ['ded', 'Ho-ho! Mining on a phone? That’s how I started in 2009, when bitcoin was cheaper than a shawarma. I’ll teach you, neighbour.'],
+        ['ded', 'Rule one: collect the mining — storage isn’t endless. Rule two: put every coin to work. Show me you won’t quit — and my old laptop is yours.']],
+    '1o': [['ded', 'Well done! Here are the keys to my garage — no car there for ages, but lots of sockets. And take the laptop.']],
+    2: [['n', 'Old Byte’s garage: a workbench, worn tyres and six whole sockets. The fans hum so loud the neighbours knock on the wall.'],
+        ['lisa', 'Hi neighbour! I’m Lisa, two garages down. I can hear your farm from the street — your storage is tiny, everything is lost while you sleep.'],
+        ['lisa', 'Deal: upgrade the storage and build a gaming PC — and I’ll give you a graphics card. I solder them better than anyone around.']],
+    '2o': [['lisa', 'The garage is too small for you. There’s an empty warehouse in the port — sea wind cools the hardware for free. Shall we?']],
+    3: [['n', 'A huge warehouse by the sea. The wind roams between the shelves — you couldn’t wish for better cooling.'],
+        ['n', 'A black jeep stops at the gates. A man in an expensive suit gets out.'],
+        ['block', 'Mister Block, GigaHash corporation. We buy small farms. Sell us yours — 500 tokens, and forget about mining.'],
+        ['me', 'No, thanks. My farm is not for sale.'],
+        ['x', 'Don’t sell out. Hunt for lucky blocks — they come to those who mine.']],
+    '3o': [['ded', 'GigaHash bought up all the electricity in town. But a pilot friend of mine has an empty hangar up north — its own generator and −30° frost. Cold is a miner’s best friend!']],
+    4: [['n', 'A snowy airfield beyond the Arctic Circle. It’s −30° in the hangar — the hardware never heats up.'],
+        ['lisa', 'Here we can build real mining rigs — six graphics cards on a frame. And we need storage for the whole polar night!'],
+        ['block', 'The north? Brave. But GigaHash is everywhere. Let’s see how long you last.']],
+    '4o': [['x', 'You grow faster than they thought. Time to build your own data center.']],
+    5: [['n', 'Your own data center: rows of racks, blue lights, the hum of hundreds of fans.'],
+        ['n', 'At night the power goes out. Someone cut the cable — the GigaHash logo is on it.'],
+        ['lisa', 'Easy! I ran a backup line — the farm is back. Install ASIC miners, they are many times stronger than graphics cards.'],
+        ['ded', 'Don’t give up, neighbour. Collect the mining a hundred times — and you’ll see you’re no rookie anymore.']],
+    '5o': [['block', 'Fine. A million tokens for your farm. Last offer.'], ['n', 'You silently close the door.'],
+           ['lisa', 'There’s a volcano in Iceland. The energy of the Earth — free and endless…']],
+    6: [['n', 'Iceland. A farm at the foot of a volcano: magma boils underground, glacier water cools the hardware.'],
+        ['lisa', 'Hydro farms! Boards in liquid — no dust, no overheating. The most powerful hardware on Earth.'],
+        ['x', 'One more step — and we’ll meet. A whole day of storage, hydro farms — and look higher than the Earth.']],
+    '6o': [['n', 'At night an aurora lights up over the volcano. A capsule with the letters “SLX” descends from the sky.']],
+    7: [['n', 'An orbital station. The whole Earth below you, the silence of space and the cold of vacuum all around.'],
+        ['x', 'Hello. I am X. I created SLX for our own — for those who start small and never give up.'],
+        ['x', 'You came all the way from a damp basement to orbit. The last trial — quantum nodes. Become the Keeper of the network.']],
+    8: [['x', 'You are the SLX Keeper. GigaHash sold its farms — Mister Block now mines on a phone in a basement. And the SLX network is yours.'],
+        ['ded', 'Told you: start small!'], ['lisa', 'Shall we build a second farm? Just kidding. Or not 😉']]
+  } : {
+    0: [['n', 'Ночь. Дождь стучит по окну. У тебя — только старый телефон с трещиной через весь экран.'],
+        ['x', 'SLX — монета для своих. Сеть растёт. Начни с малого — и поднимешься выше всех. — X'],
+        ['n', 'Ты спускаешься в подвал, ставишь телефон на зарядку и запускаешь майнер. Экран мигает: «Хеш найден».']],
+    1: [['n', 'Сырой подвал старого дома. Лампочка мигает, в углу капает вода. Зато розетка работает.'],
+        ['ded', 'Хо-хо! Майнишь на телефоне? Я так в 2009-м начинал, когда биткоин стоил дешевле шаурмы. Наставлю тебя, сосед.'],
+        ['ded', 'Правило первое: собирай добычу — хранилище не резиновое. Правило второе: каждая монета — в дело. Покажешь, что не бросишь, — отдам свой старый ноутбук.']],
+    '1o': [['ded', 'Молодец! Держи ключи от моего гаража — машины там давно нет, а розеток много. И ноутбук забирай.']],
+    2: [['n', 'Гараж Деда Байта: верстак, старые покрышки и целых шесть розеток. Кулеры гудят так, что соседи стучат в стену.'],
+        ['lisa', 'Привет, сосед! Я Лиса, живу через два гаража. Слышу твою ферму с улицы — хранилище у тебя крошечное, всё пропадает, пока ты спишь.'],
+        ['lisa', 'Давай так: прокачаешь хранилище и соберёшь игровой ПК — подарю тебе видеокарту. Я их паяю лучше всех в районе.']],
+    '2o': [['lisa', 'Гараж тебе мал. В порту пустует склад — с моря дует ветер, железо охлаждается само. Едем?']],
+    3: [['n', 'Огромный склад у моря. Ветер гуляет между стеллажами — лучшего охлаждения не придумаешь.'],
+        ['n', 'У ворот тормозит чёрный джип. Из него выходит человек в дорогом костюме.'],
+        ['block', 'Мистер Блок, корпорация «ГигаХэш». Мы скупаем мелкие фермы. Продай нам свою — дадим 500 токенов, и забудь про майнинг.'],
+        ['me', 'Нет уж. Ферма не продаётся.'],
+        ['x', 'Не продавайся. Ищи удачные блоки — они приходят к тем, кто майнит.']],
+    '3o': [['ded', '«ГигаХэш» скупил всё электричество в городе. Но у меня есть друг-лётчик: на севере пустует ангар — свой генератор и мороз −30. Холод — лучший друг майнера!']],
+    4: [['n', 'Заснеженный аэродром за полярным кругом. В ангаре −30 — железо не греется вовсе.'],
+        ['lisa', 'Тут можно собрать настоящие майнинг-риги — по шесть видеокарт на раме. И хранилище нужно на всю полярную ночь!'],
+        ['block', 'Север? Смело. Но «ГигаХэш» везде. Посмотрим, долго ли ты протянешь.']],
+    '4o': [['x', 'Ты растёшь быстрее, чем они думали. Пора строить свой дата-центр.']],
+    5: [['n', 'Твой собственный дата-центр: ряды стоек, синие огни, гул сотен вентиляторов.'],
+        ['n', 'Ночью гаснет свет. Кто-то перерезал кабель — на нём логотип «ГигаХэш».'],
+        ['lisa', 'Спокойно! Я протянула резервную линию — ферма снова в строю. Ставь ASIC-майнеры, они в разы мощнее видеокарт.'],
+        ['ded', 'Не сдавайся, сосед. Собери добычу сто раз — и сам поймёшь, что ты уже не новичок.']],
+    '5o': [['block', 'Ладно. Миллион токенов за твою ферму. Последнее предложение.'], ['n', 'Ты молча закрываешь дверь.'],
+           ['lisa', 'В Исландии есть вулкан. Энергия земли — бесплатная и бесконечная…']],
+    6: [['n', 'Исландия. Ферма у подножия вулкана: под землёй кипит магма, ледниковая вода охлаждает железо.'],
+        ['lisa', 'Гидро-фермы! Платы в жидкости — ни пылинки, ни перегрева. Самая мощная техника на Земле.'],
+        ['x', 'Ещё шаг — и мы встретимся. Хранилище на сутки, гидро-фермы — и смотри выше, чем Земля.']],
+    '6o': [['n', 'Ночью над вулканом зажигается сияние. С неба спускается капсула с надписью «SLX».']],
+    7: [['n', 'Орбитальная станция. Под тобой — вся Земля, вокруг — тишина космоса и холод вакуума.'],
+        ['x', 'Привет. Я — X. Я создал SLX для своих — для тех, кто начинает с малого и не сдаётся.'],
+        ['x', 'Ты прошёл путь от сырого подвала до орбиты. Последнее испытание — квантовые узлы. Стань Хранителем сети.']],
+    8: [['x', 'Ты — Хранитель SLX. «ГигаХэш» продал свои фермы — Мистер Блок теперь майнит на телефоне в подвале. А сеть SLX — твоя.'],
+        ['ded', 'Я же говорил: начни с малого!'], ['lisa', 'Строим вторую ферму? Шучу. Или нет 😉']]
+  };
+  var SPK_N = EN ? { x: 'X', ded: 'Old Byte', lisa: 'Lisa', block: 'Mister Block', me: 'You' }
+                 : { x: 'X', ded: 'Дед Байт', lisa: 'Лиса', block: 'Мистер Блок', me: 'Ты' };
+
+  // ── числа ──
+  function tw(t) { return plural(Number(String(t).replace(/\D/g, '')) || 0, 'токен', 'токена', 'токенов'); }   // «1 токен», «22 токена», «9 700 токенов»
+  function plural(n, a, b, c) { n = Math.abs(n) % 100; var n1 = n % 10; if (n > 10 && n < 20) return c; if (n1 > 1 && n1 < 5) return b; if (n1 === 1) return a; return c; }
+  function num(n) {
+    var x = Math.round(Math.abs(Number(n) || 0)), s = x >= 1e21 ? x.toLocaleString('en-US', { useGrouping: false }) : String(x);
+    return ((Number(n) || 0) < 0 ? '−' : '') + s.replace(/\B(?=(\d{3})+(?!\d))/g, EN ? ',' : ' ');
+  }
+  function dec(x, d) { var s = (Number(x) || 0).toFixed(d); return EN ? s : s.replace('.', ','); }
+  function slxFix(x) { x = Number(x) || 0; var a = Math.abs(x); return dec(x, a >= 100 ? 2 : a >= 0.01 ? 4 : a > 0 ? 6 : 0); }
+  function slx(x) { var s = slxFix(x); return /[.,]/.test(s) ? s.replace(/0+$/, '').replace(/[.,]$/, '') : s; }   // цены и суммы — без хвоста нулей
+  function slxLive(x) { x = Number(x) || 0; return dec(x, x >= 10 ? 4 : 6); }
+  function hashS(h) {
+    h = Number(h) || 0;
+    if (h >= 1e6) return dec(h / 1e6, h >= 1e7 ? 1 : 2).replace(/[.,]?0+$/, '') + ' TH/s';
+    if (h >= 1e3) return dec(h / 1e3, h >= 1e4 ? 1 : 2).replace(/[.,]?0+$/, '') + ' GH/s';
+    return Math.round(h) + ' MH/s';
+  }
+  function dur(s) {
+    s = Math.max(0, Math.round(s));
+    var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+    if (EN) return d ? d + ' d ' + h + ' h' : h ? h + ' h ' + m + ' min' : m ? m + ' min' : s + ' s';
+    return d ? d + ' дн ' + h + ' ч' : h ? h + ' ч ' + m + ' мин' : m ? m + ' мин' : s + ' с';
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+  }
+  var _lg = 0;
+  function logo(size) {
+    var id = 'mlg' + (_lg++);
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 100 100" aria-hidden="true"><defs>'
+      + '<linearGradient id="' + id + 'r" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e8d9ff"/><stop offset="50%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#4c1d95"/></linearGradient>'
+      + '<linearGradient id="' + id + 't" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#fbf7ff"/><stop offset="50%" stop-color="#d8b4fe"/><stop offset="100%" stop-color="#a78bfa"/></linearGradient></defs>'
+      + '<circle cx="50" cy="50" r="46" fill="#0d0817" stroke="url(#' + id + 'r)" stroke-width="3"/><circle cx="50" cy="50" r="38" fill="none" stroke="url(#' + id + 'r)" stroke-width="1" opacity="0.4"/>'
+      + '<path d="M50 16 L62 30 L50 26 L38 30 Z" fill="url(#' + id + 'r)"/><text x="50" y="60" font-family="Arial,sans-serif" font-size="22" font-weight="900" fill="url(#' + id + 't)" text-anchor="middle" letter-spacing="1">SLX</text></svg>';
+  }
+
+  // ── состояние ──
+  var S = { d: null, cfg: null, ex: '', at: 0, loaded: false, busy: false, tries: 0, tab: 'farm', q: Promise.resolve(), pend: 0, fly: 0, flushT: 0,
+            seenRigs: null, lastCol: 0, coach: '', stale: false, ovOpen: false, sellPct: 0 };
+
+  function live() {                                   // хранилище, энергия, кошелёк — на «сейчас» (между опросами считает страница)
+    var d = S.d, el = (performance.now() - S.at) / 1000;
+    if (!d || !d.started) return null;
+    var st = d.stored, cap = d.cap;
+    if (d.on && st < cap) st = Math.min(cap, st + d.rate * el);
+    var cf = S.cfg || {}, emax = cf.en_max || 100, regen = cf.en_regen || 40;
+    var en = Math.min(emax, d.en + el / regen) - S.pend - S.fly;
+    return { st: st, cap: cap, full: cap > 0 && st >= cap * 0.999999, en: Math.max(0, en), emax: emax, regen: regen,
+             wallet: (d.wallet || 0) + (S.pend + S.fly) * (d.tap_val || 0) };
+  }
+  function price() { return (S.d && S.d.price) || 100000; }
+  function rigsSorted(own) {
+    var order = (S.cfg ? S.cfg.rigs : []).map(function (r) { return r[0]; }), out = [];
+    order.slice().reverse().forEach(function (id) { for (var i = 0; i < (own[id] || 0); i++) out.push(id); });
+    return out;
+  }
+  function rigCfg(id) { var r = (S.cfg ? S.cfg.rigs : []).filter(function (x) { return x[0] === id; })[0]; return r ? { id: r[0], hash: r[1], cost: r[2], ch: r[3] } : null; }
+  function slotsN() { return S.cfg && S.d ? S.cfg.locs[S.d.ch - 1][0] : 4; }
+  function usedN() { var n = 0, o = (S.d && S.d.own) || {}; for (var k in o) n += o[k]; return n; }
+  function weakest() {
+    var o = S.d.own, best = null;
+    for (var k in o) { if (o[k] > 0) { var r = rigCfg(k); if (r && (!best || r.hash < best.hash)) best = r; } }
+    return best;
+  }
+  function perMH() { return S.d && S.d.hash ? S.d.rate / S.d.hash : 0; }   // SLX/с на 1 MH/s сейчас (со сложностью)
+
+  // ── вкладки ──
+  function openTab(t) {
+    S.tab = t;
+    var c = document.querySelector('.coach'); if (c) c.remove(); S.coach = '';      // подсказка — только на ферме
+    ['farm', 'shop', 'story', 'wallet', 'top'].forEach(function (k) { $('t-' + k).hidden = k !== t; });
+    Array.prototype.forEach.call(document.querySelectorAll('.nav button'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
+    try { window.scrollTo(0, 0); } catch (e) {}
+    render();
+  }
+  $('nav').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-tab]'); if (!b) return;
+    hap('sel'); openTab(b.getAttribute('data-tab'));
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-l]'), function (el) { el.textContent = T[el.getAttribute('data-l')]; });
+  $('wal-logo').innerHTML = logo(22); $('core-logo').innerHTML = logo(70); $('wb-logo').innerHTML = logo(54);
+  $('wal-chip').addEventListener('click', function () { hap('sel'); openTab('wallet'); });
+
+  // ── отрисовка ──
+  function render() {
+    var d = S.d; if (!d) return;
+    document.body.setAttribute('data-ch', String(d.ch || 1));
+    $('pause').hidden = d.on !== false; $('pause').textContent = T.paused;
+    renderEv();
+    if (!d.started) { $('loc-n').textContent = EN ? 'SLX Mining' : 'Майнинг SLX'; $('loc-c').textContent = ''; return; }
+    $('loc-e').textContent = LOC_E[d.ch - 1];
+    $('loc-n').textContent = T.locs[d.ch - 1];
+    $('loc-c').textContent = T.ch(d.ch) + ' · ' + T.titles[d.title];
+    tick();
+    if (S.tab === 'farm') renderFarm();
+    else if (S.tab === 'shop') renderShop();
+    else if (S.tab === 'story') renderStory();
+    else if (S.tab === 'wallet') renderWallet();
+    else if (S.tab === 'top') renderTop();
+    var dot = goalsReady();
+    var sb = document.querySelector('.nav button[data-tab="story"]');
+    if (sb) { var dd = sb.querySelector('.dot'); if (dot && !dd) sb.insertAdjacentHTML('beforeend', '<i class="dot"></i>'); if (!dot && dd) dd.remove(); }
+  }
+  function goalsReady() { var d = S.d; return !!(d && d.started && !d.done && d.goals && d.goals.length && d.goals.every(function (g) { return g.ok; })); }
+  function renderEv() {
+    var d = S.d, ev = d && d.ev, el = $('ev');
+    if (ev && ev.x > 1 && ev.until * 1000 > Date.now()) { el.hidden = false; el.textContent = T.evT(String(ev.x).replace('.', EN ? '.' : ','), dur(ev.until - Date.now() / 1000)); }
+    else el.hidden = true;
+  }
+  function tick() {                                  // часто меняющееся: хранилище, энергия, кошелёк
+    var d = S.d, L = live(); if (!L) return;
+    $('w-slx').textContent = slxFix(L.wallet);
+    if (S.tab === 'farm') {
+      $('h-val').textContent = slxLive(L.st);
+      $('h-eq').textContent = T.eq(num(L.st * price()));
+      var pct = L.cap > 0 ? Math.min(1, L.st / L.cap) : 0;
+      $('tank-i').style.transform = 'scaleX(' + pct.toFixed(4) + ')';
+      $('tank').classList.toggle('full', L.full);
+      var fl = $('h-full');
+      if (d.on === false) { fl.textContent = T.stopped; fl.className = 'fl'; }
+      else if (L.full) { fl.textContent = T.full; fl.className = 'fl full'; }
+      else { fl.textContent = T.fullIn(dur((L.cap - L.st) / (d.rate || 1e-12))); fl.className = 'fl'; }
+      var bc = $('b-col');
+      bc.classList.toggle('gold', L.full); bc.classList.toggle('pri', !L.full); bc.classList.toggle('pulse', L.full);
+      $('b-col-t').textContent = L.full ? T.collectFull : T.collect;
+      bc.disabled = d.on === false;
+      var en = Math.floor(L.en + 1e-9);
+      $('en-i').style.transform = 'scaleX(' + (L.en / L.emax).toFixed(4) + ')';
+      $('en-v').textContent = T.energy(en, L.emax);
+      $('en-r').textContent = d.taps_on === false ? T.tapsOff : en < 1 ? T.noEnergy : T.regen(L.regen);
+      $('core').classList.toggle('dry', en < 1 || d.taps_on === false || d.on === false);
+      coach(L);
+    } else if (S.tab === 'wallet') {
+      $('wb-v').textContent = slxFix(L.wallet);
+      $('wb-t').textContent = T.walletT(num(L.wallet * price()), num(price()));
+    }
+  }
+  function renderFarm() {
+    var d = S.d;
+    $('h-lbl').textContent = T.storage;
+    $('h-cap').textContent = T.hours(S.cfg.storage[d.st][0]);
+    $('h-rate').innerHTML = '⛏ ' + esc(slx(d.rate * 3600)) + ' SLX' + T.perH;
+    $('r-name').textContent = LOC_E[d.ch - 1] + ' ' + T.locs[d.ch - 1];
+    $('r-used').textContent = T.slots(usedN(), slotsN());
+    $('r-hash').textContent = '⚡ ' + hashS(d.hash);
+    renderSlots();
+    $('tp-t').textContent = T.tapT; $('tp-s').textContent = T.tapS(slx(d.tap_val));
+    // цели коротко
+    var g = d.goals || [], ok = g.filter(function (x) { return x.ok; }).length;
+    if (d.done) { $('gm-e').textContent = '👑'; $('gm-t').textContent = T.doneAll; $('gm-s').textContent = T.titles[7]; }
+    else if (g.length && ok === g.length) { $('gm-e').textContent = d.ch >= 7 ? '👑' : '🔑'; $('gm-t').textContent = d.ch >= 7 ? T.finale : T.goalAll; $('gm-s').textContent = T.goalTap; }
+    else {
+      var nx = g.filter(function (x) { return !x.ok; })[0];
+      $('gm-e').textContent = '🎯'; $('gm-t').textContent = T.goalOf(ok, g.length); $('gm-s').textContent = nx ? goalText(nx) + ' · ' + goalProg(nx) : '';
+    }
+    var n = d.net || {};
+    $('netc').innerHTML = T.net({ farms: d.farms || n.miners || 0, active: n.active || 0, diff: String(n.diff || 1).replace('.', EN ? '.' : ','),
+                                  today: esc(slx(n.today || 0)), cap: esc(num(n.cap || 0)) }) + (n.diff > 1 ? '<span style="color:var(--gold)">' + T.netHi + '</span>' : '');
+  }
+  function renderSlots() {
+    var d = S.d, ids = rigsSorted(d.own), n = slotsN(), cols = n <= 4 ? 4 : n <= 12 ? 4 : n <= 20 ? 5 : 6;
+    var sig = ids.join(',') + '|' + n + '|' + (d.on === false ? 0 : 1);
+    var box = $('slots');
+    box.style.setProperty('--cols', cols);
+    if (box.getAttribute('data-sig') === sig) return;
+    var prev = S.seenRigs || {}, cnt = {}, h = '';
+    ids.forEach(function (id, i) {
+      cnt[id] = (cnt[id] || 0) + 1;
+      var isNew = S.seenRigs && cnt[id] > (prev[id] || 0);
+      h += '<button type="button" class="sl' + (d.on === false ? ' off' : '') + (isNew ? ' new' : '') + '" data-rig="' + id + '" style="--rc:' + RIG[id].c + '">'
+        + '<i class="gw" style="animation-delay:-' + (i * 0.37 % 2.4).toFixed(2) + 's"></i><span class="ic">' + RIG[id].e + '</span>'
+        + '<i class="led" style="animation-delay:-' + (i * 0.23 % 1.3).toFixed(2) + 's"></i></button>';
+    });
+    for (var k = ids.length; k < n; k++) h += '<button type="button" class="sl em" data-empty="1">+</button>';
+    box.innerHTML = h; box.setAttribute('data-sig', sig);
+    S.seenRigs = cnt;
+  }
+  $('slots').addEventListener('click', function (e) {
+    var b = e.target.closest('.sl'); if (!b) return;
+    hap('sel');
+    if (b.getAttribute('data-empty')) { openTab('shop'); return; }
+    rigSheet(b.getAttribute('data-rig'));
+  });
+  function goalText(g) { return (T.goal[g.k] || function () { return g.k; })(g.need, g.w); }
+  function goalProg(g) {
+    if (g.k === 'hash') {                            // «110 / 300 MH/s», «2,4 / 3,5 GH/s» — единица одна, в конце
+      var u = g.need >= 1e6 ? 1e6 : g.need >= 1e3 ? 1e3 : 1, un = u === 1e6 ? ' TH/s' : u === 1e3 ? ' GH/s' : ' MH/s';
+      var f = function (v) { v = v / u; return u === 1 ? String(Math.round(v)) : dec(v, v >= 100 ? 0 : 1).replace(/[.,]0$/, ''); };
+      return f(Math.min(g.have, g.need)) + ' / ' + f(g.need) + un;
+    }
+    if (g.k === 'mined') return slx(Math.min(g.have, g.need)) + ' / ' + g.need;
+    if (g.k === 'stor') return g.have + ' / ' + g.need + (EN ? ' h' : ' ч');
+    return Math.min(g.have, g.need) + ' / ' + g.need;
+  }
+
+  // ── магазин ──
+  function renderShop() {
+    var d = S.d, cf = S.cfg, L = live(), wl = L ? L.wallet : d.wallet;
+    // переезд
+    var mv = '';
+    if (d.ch < 7 && goalsReady()) {
+      var mc = cf.locs[d.ch][1];
+      mv = '<div class="card" style="border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.07)"><div class="gm"><span class="ge">' + LOC_E[d.ch] + '</span><div class="gt"><b>'
+        + esc(T.moveT(T.locs[d.ch])) + '</b><small>' + esc(T.goalAll) + '</small></div></div><button type="button" class="btn gold sm" style="margin-top:10px" data-move="1">'
+        + esc(T.moveGo(slx(mc))) + '</button></div>';
+    }
+    $('shop-move').innerHTML = mv;
+    // хранилище
+    $('sh-st').textContent = T.storT;
+    var st = cf.storage, nx = st[d.st + 1], sh = '<div class="it"><div class="ie" style="--rc:rgba(34,211,238,.45)">📦</div><div class="im"><b>' + esc(T.storT) + ' · '
+      + T.hours(st[d.st][0]) + '</b><small>' + T.storNow(st[d.st][0]) + '</small></div>';
+    if (!nx) sh += '<div class="ib"><span class="pr" style="color:var(--tx3);font-weight:500">' + esc(T.storMax) + '</span></div>';
+    else if (nx[2] > d.ch) sh += '<div class="ib"><span class="pr" style="color:var(--tx3);font-weight:500;font-size:12px">' + esc(T.storLock(nx[2])) + '</span></div>';
+    else sh += '<div class="ib"><span class="pr">' + esc(slx(nx[1])) + ' SLX<small>' + esc(T.storNext(nx[0])) + '</small></span><button type="button" class="bb' + (wl + 1e-12 < nx[1] ? ' ghost' : '')
+      + '" data-stor="1">' + esc(T.buy) + '</button></div>';
+    $('shop-st').innerHTML = sh + '</div>';
+    // устройства
+    $('sh-rigs').textContent = (EN ? 'Devices · ' : 'Устройства · ') + T.slots(usedN(), slotsN());
+    var full = usedN() >= slotsN(), wk = weakest(), pm = perMH(), h = '';
+    cf.rigs.forEach(function (r) {
+      var id = r[0], hs = r[1], unl = r[3], own = d.own[id] || 0, pr = d.prices[id];
+      if (unl > d.ch) {
+        h += '<div class="it lock"><div class="ie">' + RIG[id].e + '</div><div class="im"><b>' + esc(T.rigs[id]) + '</b><small>' + esc(T.lockCh(unl, T.locs[unl - 1])) + '</small></div></div>';
+        return;
+      }
+      var canRep = full && wk && wk.hash < hs, back = canRep ? (d.refunds[wk.id] || 0) : 0, need = pr - back, dh = canRep ? hs - wk.hash : hs;
+      var pb = pm > 0 && dh > 0 ? need / (dh * pm) : 0;
+      var btn = full && !canRep ? '<button type="button" class="bb ghost" disabled>' + esc(T.noSlot) + '</button>'
+        : '<button type="button" class="bb' + (wl + 1e-12 < need ? ' ghost' : '') + '" data-buy="' + id + '">' + esc(canRep ? T.replace + ' ' + RIG[wk.id].e : T.buy) + '</button>';
+      h += '<div class="it" style="--rc:' + RIG[id].c + '"><div class="ie">' + RIG[id].e + '</div><div class="im"><b>' + esc(T.rigs[id]) + (own ? '<span class="own">' + T.owned(own) + '</span>' : '')
+        + '</b><small><span class="hs">+' + hashS(hs) + '</span> · ' + esc(T.rigd[id]) + '</small>' + (pb > 0 ? '<small>' + esc(T.payback(dur(pb))) + '</small>' : '')
+        + '</div><div class="ib"><span class="pr mono">' + esc(slx(pr)) + ' SLX<small>≈ ' + num(pr * price()) + '</small></span>' + btn + '</div></div>';
+    });
+    $('shop-rigs').innerHTML = h;
+    $('shop-note').textContent = T.shopNote;
+  }
+  $('t-shop').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-buy]'); if (b) { buyRig(b.getAttribute('data-buy')); return; }
+    if (e.target.closest('[data-stor]')) { buyStorage(); return; }
+    if (e.target.closest('[data-move]')) { doMove(); return; }
+  });
+
+  // ── сюжет ──
+  function renderStory() {
+    var d = S.d, cf = S.cfg, g = d.goals || [], ch = d.ch;
+    var rw = cf.rewards[String(ch)], rwT = rw ? (rw[0] === 'rig' ? T.rwd.rig(rw[1]) : T.rwd.slx(rw[1])) : '';
+    var h = '<div class="card chap"><div class="cv"><span>' + LOC_E[ch - 1] + '</span><span class="cn">' + esc(T.chT(ch)) + '</span></div><div class="cb"><h2>'
+      + esc(T.locs[ch - 1]) + '</h2><div class="tl">' + esc(T.titles[d.title]) + '</div>';
+    h += '<div class="sh" style="margin:14px 0 2px">' + esc(T.goalsH) + '</div>';
+    g.forEach(function (x) {
+      var p = Math.max(0, Math.min(1, x.have / x.need));
+      h += '<div class="goal' + (x.ok ? ' ok' : '') + '"><span class="gk">✓</span><div class="gx"><b>' + esc(goalText(x)) + '</b><div class="gb"><i style="transform:scaleX(' + p.toFixed(3) + ')"></i></div></div><span class="gn">'
+        + esc(goalProg(x)) + '</span></div>';
+    });
+    if (rwT && !d.done) h += '<div class="rw">🎁 ' + esc(T.reward) + ': <b>' + esc(rwT) + (ch >= 7 ? ' · 👑 ' + esc(T.titles[7]) : '') + '</b></div>';
+    if (d.done) h += '<div class="rw">👑 ' + esc(T.doneAll) + '</div>';
+    else if (ch < 7) {
+      var mc = cf.locs[ch][1], ready = goalsReady();
+      h += '<button type="button" class="btn ' + (ready ? 'gold' : 'sec') + ' sm" style="margin-top:12px" data-move="1"' + (ready ? '' : ' disabled') + '>'
+        + esc(ready ? T.moveGo(slx(mc)) : T.moveNeed) + '</button>';
+    } else {
+      var rd = goalsReady();
+      h += '<button type="button" class="btn ' + (rd ? 'gold' : 'sec') + ' sm" style="margin-top:12px" data-fin="1"' + (rd ? '' : ' disabled') + '>' + esc(rd ? T.finBtn : T.moveNeed) + '</button>';
+    }
+    h += '<button type="button" class="btn sec sm" style="margin-top:8px" data-read="' + ch + '">📖 ' + esc(T.chT(ch)) + '</button></div></div>';
+    $('story-cur').innerHTML = h;
+    $('sh-past').textContent = T.past + ' · ' + T.readAgain;
+    var p = '<button type="button" class="pc" data-read="0"><span class="pe">🌧</span>' + esc(T.startS) + '</button>';
+    for (var i = 1; i <= 7; i++) {
+      var lk = i > ch;
+      p += '<button type="button" class="pc' + (i === ch ? ' cur' : '') + (lk ? ' lk' : '') + '"' + (lk ? ' disabled' : ' data-read="' + i + '"') + '><span class="pe">' + (lk ? '🔒' : LOC_E[i - 1])
+        + '</span>' + esc(T.chT(i)) + '</button>';
+    }
+    if (d.done) p += '<button type="button" class="pc" data-read="8"><span class="pe">👑</span>' + esc(T.finaleT) + '</button>';
+    $('past').innerHTML = p;
+  }
+  $('t-story').addEventListener('click', function (e) {
+    if (e.target.closest('[data-move]')) { doMove(); return; }
+    if (e.target.closest('[data-fin]')) { doFinish(); return; }
+    var r = e.target.closest('[data-read]');
+    if (r) { var n = Number(r.getAttribute('data-read')); hap('sel'); storyShow(storyLines(n, false), { ch: n, cta: T.read }); }
+  });
+
+  // ── кошелёк ──
+  function renderWallet() {
+    var d = S.d, L = live();
+    $('wb-v').textContent = slxFix(L ? L.wallet : d.wallet);
+    $('wb-t').textContent = T.walletT(num((L ? L.wallet : d.wallet) * price()), num(price()));
+    $('sell-h').textContent = T.sellH; $('sell-in').placeholder = T.sellPh; $('sell-eq').textContent = T.sellEq(d.fee || 3);
+    $('sell-chips').innerHTML = [25, 50, 100].map(function (p) { return '<button type="button" class="chip' + (S.sellPct === p ? ' on' : '') + '" data-pct="' + p + '">' + (p === 100 ? T.all : p + '%') + '</button>'; }).join('');
+    $('buy-h').textContent = T.buyH; $('buy-in').placeholder = T.buyPh;
+    sellBtn(); buyBtn();
+    $('st-h').textContent = T.statsH;
+    var sd = new Date((d.start || 0) * 1000);
+    $('stats').innerHTML = [[T.st.mined, slx(d.mined) + ' SLX'], [T.st.tapped, slx(d.tapped) + ' SLX'], [T.st.lucky, num(d.lucky) + (d.bonus ? ' · +' + slx(d.bonus) : '')],
+                            [T.st.col, num(d.col)], [T.st.spent, slx(Math.max(0, d.spent || 0)) + ' SLX'],
+                            [T.st.since, d.start ? ('0' + sd.getDate()).slice(-2) + '.' + ('0' + (sd.getMonth() + 1)).slice(-2) + '.' + sd.getFullYear() : '—']]
+      .map(function (x) { return '<div><i>' + esc(x[0]) + '</i><b class="mono">' + esc(x[1]) + '</b></div>'; }).join('');
+    $('ntf-t').innerHTML = esc(T.ntf) + '<small>' + esc(T.ntfS) + '</small>';
+    $('ntf-sw').classList.toggle('on', d.notify !== false);
+    $('b-ex').textContent = T.ex; $('b-ex').hidden = !S.ex; $('ex-note').textContent = T.exNote;
+  }
+  function parseQ(v) { var x = parseFloat(String(v || '').replace(/\s/g, '').replace(',', '.')); return isFinite(x) && x > 0 ? x : 0; }
+  function sellBtn() {
+    var x = parseQ($('sell-in').value), d = S.d, b = $('b-sell');
+    b.textContent = x > 0 ? T.sellB(num(x * price() * (1 - (d.fee || 3) / 100))) : T.sellNo; b.disabled = !(x > 0);
+  }
+  function buyBtn() {
+    var x = parseQ($('buy-in').value), d = S.d, b = $('b-buy');
+    $('buy-eq').textContent = T.buyEq(num(Number(d.balance_s || 0)));
+    b.textContent = x > 0 ? T.buyB(num(x * price() * (1 + (d.fee || 3) / 100))) : T.sellNo; b.disabled = !(x > 0);
+  }
+  $('sell-in').addEventListener('input', function () { S.sellPct = 0; Array.prototype.forEach.call(document.querySelectorAll('#sell-chips .chip'), function (c) { c.classList.remove('on'); }); sellBtn(); });
+  $('buy-in').addEventListener('input', buyBtn);
+  $('sell-chips').addEventListener('click', function (e) {
+    var c = e.target.closest('[data-pct]'); if (!c) return;
+    var p = Number(c.getAttribute('data-pct')), L = live(), w = L ? L.wallet : S.d.wallet;
+    S.sellPct = p; hap('sel');
+    $('sell-in').value = p === 100 ? String(Math.floor(w * 1e8) / 1e8) : String(Math.floor(w * p / 100 * 1e8) / 1e8);
+    Array.prototype.forEach.call(document.querySelectorAll('#sell-chips .chip'), function (x) { x.classList.toggle('on', x === c); });
+    sellBtn();
+  });
+  $('b-sell').addEventListener('click', function () {
+    var x = parseQ($('sell-in').value); if (!(x > 0)) return;
+    var body = S.sellPct === 100 ? { all: true } : { qty: x };
+    send('sell_slx', body, $('b-sell')).then(function (j) {
+      if (!j) return;
+      var r = j.res || {}; toast(T.soldSlx(r.sold || x, num(r.payout || 0))); hap('success');
+      $('sell-in').value = ''; S.sellPct = 0; renderWallet();
+    });
+  });
+  $('b-buy').addEventListener('click', function () {
+    var x = parseQ($('buy-in').value); if (!(x > 0)) return;
+    send('buy_slx', { qty: x }, $('b-buy')).then(function (j) {
+      if (!j) return;
+      var r = j.res || {}; toast(T.boughtSlx(r.bought || x, num(r.total || 0))); hap('success');
+      $('buy-in').value = ''; renderWallet();
+    });
+  });
+  $('ntf-sw').addEventListener('click', function () {
+    var on = !(S.d.notify !== false); hap('sel');
+    $('ntf-sw').classList.toggle('on', on);
+    send('notify', { on: on });
+  });
+  $('b-ex').addEventListener('click', function () { if (S.ex) { hap('sel'); location.href = S.ex; } });
+
+  // ── топ ──
+  function renderTop() {
+    var d = S.d, list = d.top || [];
+    $('top-h').textContent = T.topH;
+    $('top-list').innerHTML = list.map(function (r, i) {
+      return '<div class="tr' + (r.me ? ' me' : '') + (i < 3 ? ' g' + (i + 1) : '') + '"><span class="tp">' + (i < 3 ? ['🥇', '🥈', '🥉'][i] : i + 1) + '</span><div class="tn"><b>'
+        + esc(r.name) + (r.adm ? ' 🛡' : '') + (r.me ? ' · ' + esc(T.you) : '') + '</b><small>' + LOC_E[(r.ch || 1) - 1] + ' ' + esc(T.titles[r.title || 0]) + '</small></div><span class="th mono">'
+        + hashS(r.hash) + '</span></div>';
+    }).join('');
+    $('top-note').textContent = T.topNote(d.place, d.farms);
+  }
+
+  // ── выдвижная карточка ──
+  function sheet(html) { $('sheet-in').innerHTML = html; $('sheet').classList.add('on'); $('shade').classList.add('on'); }
+  function sheetClose() { $('sheet').classList.remove('on'); $('shade').classList.remove('on'); }
+  $('shade').addEventListener('click', sheetClose);
+  $('sheet').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-sa]'); if (!b) return;
+    var a = b.getAttribute('data-sa');
+    if (a === 'close') { sheetClose(); return; }
+    if (a === 'sellrig') { sheetClose(); sellRig(b.getAttribute('data-rig')); return; }
+    if (a === 'buyshort') { sheetClose(); buyShort(Number(b.getAttribute('data-q')), b.getAttribute('data-then')); return; }
+  });
+  function rigSheet(id) {
+    var d = S.d, r = rigCfg(id), n = d.own[id] || 0, back = d.refunds[id] || 0, last = usedN() <= 1;
+    sheet('<h3>' + RIG[id].e + ' ' + esc(T.rigs[id]) + '</h3><p>' + esc(T.rigd[id]) + '<br>' + esc(T.rigInfo(n, r.hash)) + '</p>'
+      + (last ? '<p style="color:var(--tx3)">' + esc(T.lastRig) + '</p>' : '')
+      + '<div class="row"><button type="button" class="btn sec sm" data-sa="close">' + esc(T.cancel) + '</button>'
+      + (last ? '' : '<button type="button" class="btn pri sm" data-sa="sellrig" data-rig="' + id + '">' + esc(T.sellRig(back)) + '</button>') + '</div>');
+  }
+  function shortSheet(need, have, then) {
+    var x = Math.ceil((need - have) * 1e8) / 1e8, cost = x * price() * (1 + (S.d.fee || 3) / 100);
+    sheet('<h3>💼 ' + esc(T.errs.no_slx) + '</h3><p>' + esc(T.short(x)) + '<br>' + esc(T.buyEq(num(Number(S.d.balance_s || 0)))) + '</p>'
+      + '<div class="row"><button type="button" class="btn sec sm" data-sa="close">' + esc(T.cancel) + '</button></div>'
+      + '<button type="button" class="btn pri sm" style="margin-top:8px" data-sa="buyshort" data-q="' + x + '" data-then="' + esc(then) + '"'
+      + (Number(S.d.balance_s || 0) < cost ? ' disabled' : '') + '>' + esc(T.buyShort(x, num(cost))) + '</button>');
+  }
+
+  // ── запросы ──
+  function canLoad() { return !!UID && /^https?:\/\//i.test(API) && !!(SECRET || INIT || TK); }
+  function post(op, body, tries) {
+    var b = { uid: Number(UID) || UID, secret: SECRET, tk: TK, op: op };
+    if (useInit && INIT) b.init_data = INIT;
+    for (var k in body) b[k] = body[k];
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null, tm = setTimeout(function () { if (ctrl) ctrl.abort(); }, 12000);
+    return fetch(API + '/casino/mine/act', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b), cache: 'no-store',
+                                             keepalive: op === 'tap', signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) { return r.json().catch(function () { return null; }).then(function (j) { return { status: r.status, j: j }; }); })
+      .then(function (res) {
+        clearTimeout(tm);
+        tries = tries || 0;
+        if (res.status === 429 && op !== 'tap' && tries < 3) {   // сервер просит паузу (два действия подряд) — подождать и повторить
+          var w = Math.min(2000, Math.max(200, ((res.j && res.j.retry_after) || 0.3) * 1000 + 60));
+          return new Promise(function (ok) { setTimeout(ok, w); }).then(function () { return post(op, body, tries + 1); });
+        }
+        return res;
+      }, function (e) { clearTimeout(tm); throw e; });
+  }
+  function send(op, body, btn, quiet) {             // по одному, в очередь: ответы приходят в том же порядке
+    var p = S.q.then(function () {
+      if (btn) btn.disabled = true;
+      return post(op, body || {}).then(function (res) {
+        if (btn) btn.disabled = false;
+        var j = res.j || {};
+        if (res.status === 401 && !useInit && INIT) { useInit = true; return post(op, body || {}).then(function (r2) { return fin(r2); }); }
+        return fin(res);
+        function fin(r) {
+          var jj = r.j || {};
+          if (r.status === 200 && jj.ok) { S.lastOp = op; S.lastRes = jj.res || {}; apply(jj); return jj; }
+          if (!quiet) {
+            if (jj.error === 'no_slx' && jj.need != null) shortSheet(jj.need, jj.have || 0, op === 'buy' ? 'buy:' + (body || {}).rig : op);
+            else toast((T.errs[jj.error] || jj.message || T.errs.net), true);
+            hap('error');
+          }
+          if (r.status !== 429) load(true);
+          return null;
+        }
+      }, function () {
+        if (btn) btn.disabled = false;
+        if (!quiet) { toast(T.errs.net, true); hap('error'); }
+        return null;
+      });
+    });
+    S.q = p.then(function () {}, function () {});
+    return p;
+  }
+  function apply(j, first) {
+    var prevCh = S.d && S.d.ch, prevDone = S.d && S.d.done;
+    if (j.cfg) S.cfg = j.cfg;
+    if (j.ex) S.ex = j.ex;
+    if (!S.cfg) return;
+    S.d = j; S.at = performance.now(); S.stale = false; $('stale').hidden = true;
+    if (!S.loaded) { S.loaded = true; document.body.setAttribute('data-state', 'ready'); $('err').hidden = true; }
+    cachePut();
+    render();
+    storyCheck(prevCh, prevDone, first);
+  }
+
+  // ── действия ──
+  $('b-col').addEventListener('click', function () {
+    var L = live(); if (!L) return;
+    hap('medium');
+    coinsFly($('b-col'), $('wal-chip'), L.st > 0 ? 6 : 0);
+    send('collect', {}, $('b-col')).then(function (j) {
+      if (!j) return;
+      var r = j.res || {};
+      if (r.lucky > 0) { bigEvent('🍀', T.lucky, T.luckyS(r.lucky)); hap('success'); }
+      if (r.got > 0) toast(T.got(r.got + (r.lucky || 0)));
+    });
+  });
+  function buyRig(id) {
+    var d = S.d, L = live(), full = usedN() >= slotsN(), wk = weakest(), r = rigCfg(id);
+    var back = full && wk && wk.hash < r.hash ? (d.refunds[wk.id] || 0) : 0, need = d.prices[id] - back;
+    if (L && L.wallet + 1e-12 < need) { shortSheet(need, L.wallet, 'buy:' + id); return; }
+    hap('light');
+    send('buy', { rig: id }).then(function (j) { if (j) { toast(T.bought(RIG[id].e + ' ' + T.rigs[id])); hap('success'); } });
+  }
+  function buyStorage() {
+    var d = S.d, nx = S.cfg.storage[d.st + 1], L = live();
+    if (!nx) return;
+    if (L && L.wallet + 1e-12 < nx[1]) { shortSheet(nx[1], L.wallet, 'storage'); return; }
+    send('storage', {}).then(function (j) { if (j) { toast(T.storUp(S.cfg.storage[j.st][0])); hap('success'); } });
+  }
+  function sellRig(id) {
+    send('sell', { rig: id }).then(function (j) { if (j) { toast(T.sold(RIG[id].e + ' ' + T.rigs[id], (j.res || {}).back || 0)); hap('success'); } });
+  }
+  function doMove() {
+    var d = S.d, mc = S.cfg.locs[d.ch][1], L = live();
+    if (L && L.wallet + 1e-12 < mc) { shortSheet(mc, L.wallet, 'move'); return; }
+    hap('medium');
+    send('move', {});
+  }
+  function doFinish() { hap('medium'); send('finish', {}); }
+  function buyShort(x, then) {
+    send('buy_slx', { qty: x }).then(function (j) {
+      if (!j) return;
+      toast(T.boughtSlx((j.res || {}).bought || x, num((j.res || {}).total || 0)));
+      if (!then) return;
+      if (then.indexOf('buy:') === 0) buyRig(then.slice(4));
+      else if (then === 'storage') buyStorage();
+      else if (then === 'move') doMove();
+    });
+  }
+
+  // ── ручной майнинг: нажатия копятся и уходят пачкой раз в секунду ──
+  function tapAt(x, y) {
+    var d = S.d, L = live();
+    if (!L || d.on === false || d.taps_on === false) { if (d && d.taps_on === false) toast(T.tapsOff, true); return; }
+    if (L.en < 1) { toast(T.noEnergy, true); hap('error'); return; }
+    S.pend++;
+    hap('light');
+    floatText('+' + slx(d.tap_val), x, y);
+    tick();
+    if (S.pend >= (S.cfg.tap_batch || 60)) flush();
+    else if (!S.flushT) S.flushT = setTimeout(flush, 1000);
+  }
+  function flush() {
+    clearTimeout(S.flushT); S.flushT = 0;
+    if (!S.pend) return;
+    var n = S.pend; S.pend = 0; S.fly += n;
+    S.q = S.q.then(function () {
+      return post('tap', { n: n }).then(function (r) {
+        S.fly = Math.max(0, S.fly - n);
+        if (r.status === 200 && r.j && r.j.ok) { S.lastOp = 'tap'; S.lastRes = r.j.res || {}; apply(r.j); }
+        else if (r.status === 429) S.pend += n;       // сервер просит паузу — эти нажатия уйдут со следующей пачкой
+        else { if (r.j && r.j.error) toast(T.errs[r.j.error] || r.j.message || T.errs.net, true); load(true); }
+      }, function () { S.fly = Math.max(0, S.fly - n); S.pend += n; });
+    }).then(function () {
+      tick();
+      if (S.pend && !S.flushT) S.flushT = setTimeout(flush, 1200);
+    }, function () {});
+  }
+  $('core').addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    var r = $('core').getBoundingClientRect();
+    tapAt(e.clientX || r.left + r.width / 2, e.clientY || r.top + r.height / 2);
+  });
+  window.addEventListener('pagehide', function () { if (S.pend) flush(); });
+
+  // ── эффекты ──
+  var fxN = 0;
+  function floatText(t, x, y) {
+    if (fxN > 14) return;
+    var el = document.createElement('div'); el.className = 'pt'; el.textContent = t;
+    el.style.left = (x - 30 + Math.random() * 30) + 'px'; el.style.top = (y - 26) + 'px'; el.style.setProperty('--dx', Math.round(Math.random() * 40 - 20) + 'px');
+    $('fx').appendChild(el); fxN++;
+    setTimeout(function () { el.remove(); fxN--; }, 1000);
+  }
+  function coinsFly(from, to, n) {
+    if (!n || document.documentElement.classList.contains('calm')) return;
+    var a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+    for (var i = 0; i < n; i++) (function (i) {
+      var c = document.createElement('div'); c.className = 'cn'; c.textContent = 'X';
+      var sx = a.left + a.width / 2 - 11 + (Math.random() * 60 - 30), sy = a.top + a.height / 2 - 11;
+      c.style.left = sx + 'px'; c.style.top = sy + 'px';
+      $('fx').appendChild(c);
+      setTimeout(function () {
+        c.style.transform = 'translate(' + (b.left + b.width / 2 - 11 - sx) + 'px,' + (b.top + b.height / 2 - 11 - sy) + 'px) scale(.6)'; c.style.opacity = '.2';
+      }, 30 + i * 70);
+      setTimeout(function () { c.remove(); var w = $('wal-chip'); if (w.animate) w.animate([{ transform: 'scale(1.1)' }, { transform: 'none' }], { duration: 260 }); }, 900 + i * 70);
+    })(i);
+  }
+  function bigEvent(e, title, sub) {
+    var w = document.createElement('div'); w.className = 'big-ev';
+    w.innerHTML = '<div class="bx"><span class="be">' + e + '</span><b>' + esc(title) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
+    document.body.appendChild(w);
+    setTimeout(function () { w.remove(); }, 2500);
+  }
+  var toastT = 0;
+  function toast(t, err) {
+    var el = $('toast'); el.textContent = t; el.classList.toggle('err', !!err); el.classList.add('on');
+    clearTimeout(toastT); toastT = setTimeout(function () { el.classList.remove('on'); }, 2400);
+  }
+  function coach(L) {                               // подсказки новичку в подвале — по одной
+    var d = S.d, t = '', el = null, old = document.querySelector('.coach');
+    if (d.ch === 1 && !S.ovOpen && d.on !== false) {
+      if (!d.taps && d.taps_on !== false && L.en >= 1 && !S.pend && !S.fly) { t = T.coachTap; el = $('core'); }
+      else if (!d.col && L.st > 0 && L.st * price() >= 1) { t = T.coachCol; el = $('b-col'); }
+      else if (usedN() < 2 && L.wallet >= (d.prices.phone || 1)) { t = T.coachShop; el = document.querySelector('.nav button[data-tab="shop"]'); }
+    }
+    if (S.coach === t && (old || !t)) return;
+    if (old) old.remove();
+    S.coach = t;
+    if (!t || !el) return;
+    var r = el.getBoundingClientRect(), c = document.createElement('div'), fixed = !!el.closest('.nav');
+    c.className = 'coach'; c.textContent = t; document.body.appendChild(c);
+    var x = Math.max(8, Math.min(window.innerWidth - c.offsetWidth - 8, r.left + r.width / 2 - c.offsetWidth / 2));
+    c.style.position = fixed ? 'fixed' : 'absolute';                    // над нижним меню — не уезжает при прокрутке
+    c.style.left = x + 'px'; c.style.top = (r.top + (fixed ? 0 : window.scrollY) - c.offsetHeight - 10) + 'px';
+  }
+
+  // ── сюжет поверх всего ──
+  function storyLines(n, outroBefore) {
+    var out = [];
+    if (outroBefore && STORY[(n - 1) + 'o']) out = out.concat(STORY[(n - 1) + 'o']);
+    return out.concat(STORY[n] || []);
+  }
+  var OV = { lines: [], i: 0, opts: null };
+  function storyShow(lines, opts) {
+    OV.lines = lines; OV.i = 0; OV.opts = opts || {};
+    S.ovOpen = true;
+    var n = OV.opts.ch;
+    $('ov-e').textContent = n === 0 ? '🌧' : n === 8 ? '👑' : LOC_E[(n || 1) - 1];
+    $('ov-st').textContent = n === 0 ? T.startS : n === 8 ? T.finaleT : T.chT(n) + ' · ' + T.locs[(n || 1) - 1];
+    if (n >= 1 && n <= 7) document.body.setAttribute('data-ch', String(n));
+    $('ov-lines').innerHTML = '';
+    $('ov-skip').textContent = T.skip; $('ov-skip').hidden = !!OV.opts.noSkip;
+    $('ov').classList.add('on');
+    var c = document.querySelector('.coach'); if (c) c.remove(); S.coach = '';
+    stepLine();
+  }
+  function lineHtml(l) {
+    if (l[0] === 'rw') return '<div class="ln rw2"><span class="av">🎁</span><div class="bu">' + esc(l[1]) + '</div></div>';
+    if (l[0] === 'n') return '<div class="ln n"><span class="av"></span><div class="bu">' + esc(l[1]) + '</div></div>';
+    var s = SPK[l[0]] || SPK.me;
+    return '<div class="ln"><span class="av">' + s.e + '</span><div class="bu"><span class="who" style="color:' + s.c + '">' + esc(SPK_N[l[0]] || '') + '</span>' + esc(l[1]) + '</div></div>';
+  }
+  function stepLine() {
+    if (OV.i < OV.lines.length) {
+      $('ov-lines').insertAdjacentHTML('beforeend', lineHtml(OV.lines[OV.i]));
+      OV.i++;
+      var box = $('ov-lines'); box.scrollTop = box.scrollHeight;
+    }
+    $('ov-next').textContent = OV.i < OV.lines.length ? T.next : (OV.opts.cta || T.go);
+  }
+  function storyEnd() {
+    $('ov').classList.remove('on'); S.ovOpen = false;
+    if (S.d) document.body.setAttribute('data-ch', String(S.d.ch || 1));
+    var cb = OV.opts.done; OV.opts = {};
+    if (cb) cb();
+  }
+  $('ov-next').addEventListener('click', function () {
+    hap('sel');
+    if (OV.i < OV.lines.length) stepLine(); else storyEnd();
+  });
+  $('ov-skip').addEventListener('click', function () {
+    while (OV.i < OV.lines.length) stepLine();
+    storyEnd();
+  });
+  function seen(n) { S.seenLocal = Math.max(S.seenLocal || 0, n); send('seen', { ch: n }, null, true); }
+  function storyCheck(prevCh, prevDone, first) {    // новая глава / финал / первая глава — показать один раз
+    var d = S.d; if (!d || S.ovOpen) return;
+    if (!d.started) {
+      if (d.on === false) return;                    // пауза у админа — ферму не построить, пролог не крутим по кругу
+      storyShow(STORY[0], { ch: 0, cta: T.start, done: function () {
+        send('start', {}).then(function (j) { if (!j && S.d) { S.d.started = false; } });
+      } });
+      return;
+    }
+    var st = Math.max(d.story || 0, S.seenLocal || 0), res = S.lastRes || {};
+    if (d.done && st < 8) {
+      var rw = (S.lastOp === 'finish' && res.reward) || S.cfg.rewards['7'] || null, ls = STORY[8].slice();
+      if (rw) ls.push(['rw', T.reward + ': ' + (rw[0] === 'rig' ? T.rwd.rig(rw[1]) : T.rwd.slx(rw[1])) + ' · 👑 ' + T.titles[7]]);
+      storyShow(ls, { ch: 8, done: function () { seen(8); } });
+      return;
+    }
+    if (st < d.ch) {
+      var moved = !!prevCh && prevCh < d.ch, lines = storyLines(d.ch, moved);
+      if (moved && S.lastOp === 'move' && res.reward) {
+        var r = res.reward, rt = r[0] === 'rig' ? T.rwd.rig(r[1]) : T.rwd.slx(r[1]);
+        lines.splice((STORY[(d.ch - 1) + 'o'] || []).length, 0, ['rw', T.reward + ': ' + rt]);
+      }
+      var ch = d.ch;
+      storyShow(lines, { ch: ch, done: function () { seen(ch); } });
+    }
+  }
+
+  // ── загрузка, опрос, кэш ──
+  var CK = 'mine_v1_' + UID;
+  function cachePut() { try { localStorage.setItem(CK, JSON.stringify({ t: Date.now(), d: S.d, cfg: S.cfg, ex: S.ex })); } catch (e) {} }
+  function cacheGet() {
+    try { var o = JSON.parse(localStorage.getItem(CK) || 'null'); if (!o || !o.d || !o.cfg || Date.now() - o.t > 7 * 86400000) return null; return o; } catch (e) { return null; }
+  }
+  function fail(kind) {
+    S.failKind = kind;
+    var m = kind === 'params' ? T.errParams : kind === 'auth' ? T.errAuth : kind === 'reg' ? T.errReg : T.errNet;
+    $('err-ic').textContent = kind === 'reg' ? '📝' : kind === 'auth' || kind === 'params' ? '🔑' : '📡';
+    $('err-h').textContent = m[0]; $('err-p').textContent = m[1]; $('err-retry').textContent = T.retry;
+    $('err-retry').hidden = kind === 'params';
+    $('err').hidden = false;
+  }
+  function staleOn() { if (!S.stale) { S.stale = true; $('stale').textContent = T.stale; $('stale').hidden = false; } }
+  var POLL = 25000, pollT = 0;
+  function schedule() { clearTimeout(pollT); if (!document.hidden && S.loaded) pollT = setTimeout(function () { load(true); }, POLL); }
+  function load(silent) {
+    if (S.busy) return;
+    if (!canLoad()) { if (!S.loaded) fail('params'); return; }
+    S.busy = true;
+    var again = false, ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var tm = setTimeout(function () { if (ctrl) ctrl.abort(); }, S.loaded ? 10000 : [9000, 9000, 12000, 15000][Math.min(S.tries, 3)]);
+    var url = API + '/casino/mine/state?uid=' + encodeURIComponent(UID) + '&secret=' + encodeURIComponent(SECRET) + (S.cfg && !S.needCfg ? '' : '&full=1')
+      + (useInit && INIT ? '&init_data=' + encodeURIComponent(INIT) : '');
+    fetch(url, { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) { return r.json().catch(function () { return null; }).then(function (j) { return { status: r.status, j: j }; }); })
+      .then(function (res) {
+        if (res.status === 401) {
+          if (!useInit && INIT) { useInit = true; again = true; return; }
+          if (S.loaded) staleOn(); else fail('auth');
+          return;
+        }
+        if (res.status === 403 && res.j && res.j.error === 'unregistered') { fail('reg'); return; }
+        if (res.status !== 200 || !res.j || !res.j.ok) throw new Error('HTTP ' + res.status);
+        S.tries = 0; S.needCfg = false;
+        apply(res.j, !silent);
+      })
+      .catch(function () {
+        if (S.loaded) { staleOn(); return; }
+        S.tries++;
+        if (S.tries < 4) setTimeout(function () { load(false); }, [1200, 2500, 4500][S.tries - 1]);
+        else fail('net');
+      })
+      .then(function () { clearTimeout(tm); S.busy = false; if (again) load(silent); else schedule(); });
+  }
+  document.addEventListener('visibilitychange', function () {
+    document.documentElement.classList.toggle('paused', document.hidden);
+    if (document.hidden) { clearTimeout(pollT); if (S.pend) flush(); }
+    else if (S.loaded && !S.busy) load(true);
+  });
+  setInterval(function () { if (!document.hidden && S.loaded) tick(); }, 150);
+  setInterval(function () { if (!document.hidden && S.loaded) renderEv(); }, 30000);
+  setInterval(function () { if (!S.loaded && !S.busy && S.failKind === 'net') { S.tries = 0; load(false); } }, 15000);
+  $('err-retry').addEventListener('click', function () { $('err').hidden = true; S.tries = 0; S.failKind = ''; load(false); });
+
+  // звёзды для орбиты
+  (function () {
+    var h = '';
+    for (var i = 0; i < 40; i++) h += '<i style="left:' + (Math.random() * 100).toFixed(1) + '%;top:' + (Math.random() * 100).toFixed(1) + '%;animation-delay:-' + (Math.random() * 3).toFixed(1) + 's;opacity:' + (0.3 + Math.random() * 0.7).toFixed(2) + '"></i>';
+    $('stars').innerHTML = h;
+  })();
+
+  // старт: сначала — последние данные из памяти телефона (мгновенно), потом — свежие с сервера
+  var c0 = cacheGet();
+  if (c0 && c0.d && c0.d.started) {
+    S.cfg = c0.cfg; S.ex = c0.ex || ''; S.d = c0.d; S.at = performance.now(); S.d.stored = c0.d.stored; S.loaded = true; S.needCfg = true;
+    document.body.setAttribute('data-state', 'ready');
+    render();
+  }
+  load(false);
+})();
+</script>
+</body>
+</html>
