@@ -101,6 +101,11 @@
   .vault b { display: block; margin-top: 2px; font-size: 26px; font-weight: 800; letter-spacing: -.02em;
              font-variant-numeric: tabular-nums; word-break: break-word; }
   .vault small { display: block; margin-top: 2px; font-size: 11.5px; color: var(--tx3); word-break: break-all; }
+  /* v384: «🔑 Код дня» — код крупно моноширинным; текст для канала — как будет в посте (с переносами строк) */
+  .vault .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .06em; }
+  .post { white-space: pre-line; word-break: break-word; }
+  .dcp { cursor: pointer; }                 /* не .cp: у .cp ниже высота 72px (график) — текст вылезал из рамки */
+  b.dcp { border-bottom: 1px dashed var(--tx3); }
   .note { padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.45; border: 1px solid transparent; }
   .note.ban { background: rgba(248,113,113,.07); border-color: rgba(248,113,113,.2); color: #fecaca; }
   .note.frz { background: rgba(255,255,255,.04); border-color: var(--ln2); color: #e4e4e7; }
@@ -543,6 +548,8 @@
 
   <!-- v326: промокоды -->
   <section id="v-promo" hidden>
+    <!-- v384: «🔑 Код дня» — каждый день новый код; выкладываешь в канал / TikTok, игроки присылают его боту -->
+    <div class="sec" id="dc-box"><h3>🔑 Код дня</h3><div id="dc-card"><div class="small">Загрузка…</div></div></div>
     <!-- v345: розыгрыш услуги — запускаешь только ты; победителей выбирает кнопка (случайно), итоги объявляешь сам -->
     <div class="sec" id="gw-box"><h3>🎁 Розыгрыш услуги</h3><div id="gw-card"><div class="small">Загрузка…</div></div></div>
     <div class="sec" id="gw-form" hidden><h3>Новый розыгрыш</h3><div class="v">
@@ -706,7 +713,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v381';
+  var VER = 'v384';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -1894,6 +1901,7 @@ window.addEventListener('error', function (e) {
     $('pr-exp').innerHTML = expHtml('pc'); expHint('pc');
   }
   function loadPromo() {
+    loadDc();                                             // v384: код дня — сверху вкладки (его выкладываешь каждый день)
     loadDp();                                             // v331: акция в Донате — в этой же вкладке
     loadGw();                                             // v345: розыгрыш услуги — сверху вкладки
     loadRc();                                             // v371: конкурс рефералов — под розыгрышем
@@ -1987,6 +1995,95 @@ window.addEventListener('error', function (e) {
     }
     doSect('/promo', { op: a, code: code }, a === 'delete' ? 'Удалить промокод ' + code + '? Ввести его больше будет нельзя.' : null, b,
       function (j) { S.pr = j; renderPromo(); });
+  });
+
+  // ── v384: «🔑 Код дня» ──────────────────────────────────────────────
+  // Каждый день новый код (бот придумывает сам, можно поставить свой). Выкладываешь его в канал / TikTok — игрок присылает
+  // код боту («Подарки 🎁» → «🔑 Код дня» или просто сообщением) и получает токены, раз в день. Код сменяется в 00:00 МСК.
+  // Утром бот сам присылает тебе код и готовый текст для канала.
+  var DC_AMT = [20000, 50000, 100000];
+  function loadDc() {
+    if (!S.dc) $('dc-card').innerHTML = '<div class="small">Загрузка…</div>';
+    return sect('/daycode', { op: 'get' }, 'dc-card', 'v384').then(function (j) { if (j) setDc(j); })
+      .catch(function () { toast('Нет связи с сервером', true); });
+  }
+  function setDc(j) { S.dc = j; renderDc(); }
+  function dcDay(d) { var m = /^\d{4}-(\d\d)-(\d\d)$/.exec(d || ''); return m ? m[2] + '.' + m[1] : ''; }
+  function renderDc() {
+    var j = S.dc, t = j.today || {}, w = j.tomorrow || {}, keep = { code: ($('dc-code') || {}).value || '',
+      amt: ($('dc-amt') || {}).value || '', link: ($('dc-link') || {}).value };
+    var h = '<div class="row"><div class="f1 small wrapt">' + (j.on
+        ? 'Игроки присылают код боту — «Подарки 🎁» → «🔑 Код дня» или просто сообщением. Раз в день; код сменяется в 00:00 МСК.'
+        : '⏸ Код дня выключен — игроки его не вводят.') + '</div>'
+      + '<span class="bd ' + (j.on ? 'ok' : 'wn') + '">' + (j.on ? 'включён' : 'выключен') + '</span></div>';
+    h += '<div class="vault dcp" style="margin-top:10px" data-copy="' + esc(t.code) + '"><i>Код на сегодня · ' + dcDay(t.day)
+      + ' — нажми, чтобы скопировать</i><b class="mono">' + esc(t.code) + '</b>'
+      + '<small>Ввели сегодня: ' + fmt(t.n) + ' · +' + bigS(t.sum_s) + ' 💰 · за код +' + fmt(j.amt) + '</small></div>';
+    h += '<div class="lbl" style="margin-top:12px">Текст для канала — нажми, чтобы скопировать</div>'
+      + '<div class="note mt post dcp" style="margin-top:6px" data-dc="post0">' + esc(t.post) + '</div>';
+    h += '<div class="row" style="margin-top:10px"><div class="f1 wrapt"><span class="small">Завтра · ' + dcDay(w.day) + ':</span> '
+      + '<b class="code dcp" data-copy="' + esc(w.code) + '">' + esc(w.code) + '</b></div>'
+      + '<button type="button" class="xs" data-dc="post1">📋 Текст</button><button type="button" class="xs" data-dc="regen1">🎲 Другой</button></div>';
+    h += '<div class="lbl" style="margin-top:12px">Свой код — латиница и цифры</div>'
+      + '<div class="row"><input id="dc-code" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Напр. BOOYAH" class="f1">'
+      + '<button type="button" data-dc="code0">На сегодня</button><button type="button" data-dc="code1">На завтра</button></div>';
+    h += '<div class="lbl" style="margin-top:12px">Сколько даёт код</div><div class="chips wrap">'
+      + DC_AMT.map(function (a) { return '<button type="button" class="chip' + (j.amt === a ? ' on' : '') + '" data-dca="' + a + '">+' + fmt(a) + '</button>'; }).join('')
+      + '</div><div class="row"><input id="dc-amt" inputmode="numeric" placeholder="Своя сумма, напр. 75к" class="f1" autocomplete="off">'
+      + '<button type="button" data-dc="amt">Поставить</button></div>';
+    h += '<div class="lbl" style="margin-top:12px">Где выкладываешь — кнопка «📢 Где взять код» у игроков</div>'
+      + '<div class="row"><input id="dc-link" placeholder="@канал или ссылка на TikTok" class="f1" autocomplete="off" value="' + esc(j.link_set ? j.link : '') + '">'
+      + '<button type="button" data-dc="link">Сохранить</button></div>'
+      + '<div class="small">Сейчас игроки видят: «' + esc(j.where) + '»' + (j.link_set ? '' : ' (канал по умолчанию)') + '</div>';
+    h += '<label class="ck" style="margin-top:12px"><input type="checkbox" data-dc="remind"' + (j.remind ? ' checked' : '') + '><span>Присылать мне код утром в '
+      + pad(j.hour || 10) + ':00 — вместе с текстом для канала</span></label>';
+    h += '<div class="grid" style="margin-top:10px">' + kv('Вчера ввели', fmt(j.yesterday)) + kv('За 7 дней', fmt(j.week) + '<small>+' + bigS(j.week_sum_s) + ' 💰</small>') + '</div>';
+    h += '<div class="row" style="margin-top:10px">' + (j.on ? '<button type="button" class="b-no f1" data-dc="off">⏸ Выключить код дня</button>'
+      : '<button type="button" class="b-acc f1" data-dc="on">▶️ Включить код дня</button>') + '</div>'
+      + '<div class="small">Сегодняшний код поменяется в 00:00 МСК сам — на завтрашний. «🎲 Другой» — новый случайный. Свой код не должен совпадать с промокодом. Команда в боте: /daycode.</div>';
+    $('dc-card').innerHTML = h;
+    if (keep.code) $('dc-code').value = keep.code;
+    if (keep.amt) $('dc-amt').value = keep.amt;
+    if (keep.link != null && keep.link !== '' ) $('dc-link').value = keep.link;
+  }
+  function dcDo(body, confirmText, btn) {
+    if (botVer() < 384) { toast('Заработает, когда бот на сервере обновится до v384', true); return; }
+    doSect('/daycode', body, confirmText, btn, setDc);
+  }
+  $('dc-card').addEventListener('click', function (e) {
+    var cp = e.target.closest('[data-copy]');
+    if (cp) { copy(cp.getAttribute('data-copy')); return; }
+    var ca = e.target.closest('[data-dca]');
+    if (ca) { dcDo({ op: 'set', amt: Number(ca.getAttribute('data-dca')) }, null, ca); return; }
+    var b = e.target.closest('[data-dc]'); if (!b || !S.dc) return;
+    var a = b.getAttribute('data-dc'), j = S.dc;
+    if (a === 'remind') return;                               // галочка — ниже, на change
+    if (a === 'post0') { copy(j.today.post); return; }
+    if (a === 'post1') { copy(j.tomorrow.post); return; }
+    if (a === 'regen1') { dcDo({ op: 'regen', day: 1 }, 'Придумать другой код на завтра?', b); return; }
+    if (a === 'code0' || a === 'code1') {
+      var c = String($('dc-code').value || '').trim();
+      if (!c) { toast('Впиши свой код — латиница и цифры', true); return; }
+      dcDo({ op: 'code', day: a === 'code1' ? 1 : 0, code: c }, a === 'code0'
+        ? 'Поставить код на сегодня: ' + c.toUpperCase() + '?\nСтарый код сегодня перестанет работать — кто его ещё не ввёл, введёт новый.' : null, b);
+      $('dc-code').value = '';
+      return;
+    }
+    if (a === 'amt') {
+      var n = parseAmount($('dc-amt').value);
+      if (!(n > 0)) { toast('Впиши сумму — напр. 75к', true); return; }
+      if (n > (j.max || 5e6)) { toast('Не больше ' + fmt(j.max || 5e6), true); return; }
+      dcDo({ op: 'set', amt: n }, 'За код дня — +' + fmt(n) + ' токенов?', b);
+      $('dc-amt').value = '';
+      return;
+    }
+    if (a === 'link') { dcDo({ op: 'set', link: String($('dc-link').value || '').trim() }, null, b); return; }
+    if (a === 'off') { dcDo({ op: 'set', on: false }, 'Выключить код дня?\nИгроки не смогут его вводить, пока не включишь.', b); return; }
+    if (a === 'on') { dcDo({ op: 'set', on: true }, null, b); return; }
+  });
+  $('dc-card').addEventListener('change', function (e) {
+    var r = e.target.closest('[data-dc="remind"]');
+    if (r) dcDo({ op: 'set', remind: !!r.checked }, null, null);
   });
 
   // ── v345: розыгрыш услуги ───────────────────────────────────────────
@@ -2668,7 +2765,8 @@ window.addEventListener('error', function (e) {
               + short(r[0]) + '–' + short(r[1]) + '</button>'; }).join('')
         + '<button type="button" class="chip' + (!ghi ? ' on' : '') + '" data-glo="0" data-ghi="0">Выключить</button></div>'
         + '<div class="row"><input id="gift-lo" inputmode="numeric" placeholder="от, напр. 70к" class="f1">'
-        + '<input id="gift-hi" inputmode="numeric" placeholder="до, напр. 100к" class="f1"><button type="button" data-gift="c">Поставить</button></div>');
+        + '<input id="gift-hi" inputmode="numeric" placeholder="до, напр. 100к" class="f1"><button type="button" data-gift="c">Поставить</button></div>'
+        + (g.wb ? wbHtml(g.wb) : ''));
     }
     if (e.vault) {                                       // v381: счёт комиссий — копится с переводов, тратит только админ
       var vt = e.vault, VK = { start: '🏦 Комиссия прошлых переводов', me: '💳 Себе на баланс', pool: '🔒 В пул биржи',
@@ -2802,6 +2900,48 @@ window.addEventListener('error', function (e) {
     if (botVer() < 329) { toast('Заработает, когда бот на сервере обновится до v329', true); return; }
     doSect('/economy', body, confirmText, btn, function (j) { S.ec = j; renderEcon(); });
   }
+  // v384: «💤 Мы скучали» — кто не заходил N+ дней, при возвращении получает подарок дня ×M (бот один раз говорит ему об этом)
+  function wbX(m) { return '×' + String(m).replace('.', ','); }
+  function wbHtml(w) {
+    return '<div class="lbl" style="margin-top:14px">💤 Мы скучали</div>'
+      + '<div class="note ' + (w.on ? 'mt' : 'wn') + '" style="margin-top:6px">' + (w.on
+        ? 'Кто не заходил <b>' + w.days + ' ' + plural3(w.days, 'день', 'дня', 'дней') + '</b> и больше, при возвращении получает подарок дня <b>' + wbX(w.mult)
+          + '</b>. Бот сам скажет ему об этом — с кнопкой «Забрать».'
+        : 'Выключено — вернувшиеся получают обычный подарок.') + '</div>'
+      + '<div class="grid" style="margin-top:8px">' + kv('Вернулись и забрали ' + wbX(w.mult), fmt(w.today) + ' сегодня<small>за 7 дней: ' + fmt(w.week) + '</small>')
+      + kv('Доплачено за 7 дней', bigS(w.week_extra_s) + ' 💰') + kv('Вернулись, ещё не забрали', fmt(w.waiting)) + '</div>'
+      + '<div class="small" style="margin-top:6px">Сколько дней не заходил</div><div class="chips wrap">'
+      + [2, 3, 5, 7].map(function (d) { return '<button type="button" class="chip' + (w.days === d ? ' on' : '') + '" data-wb="days" data-v="' + d + '">' + d + ' ' + plural3(d, 'день', 'дня', 'дней') + '</button>'; }).join('')
+      + '</div><div class="small">Во сколько раз подарок</div><div class="chips wrap">'
+      + [1.5, 2, 3].map(function (x) { return '<button type="button" class="chip' + (w.mult === x ? ' on' : '') + '" data-wb="mult" data-v="' + x + '">' + wbX(x) + '</button>'; }).join('')
+      + '</div><div class="row"><button type="button" class="f1' + (w.on ? '' : ' b-acc') + '" data-wb="on" data-v="' + (w.on ? 0 : 1) + '">'
+      + (w.on ? '⏸ Выключить' : '▶️ Включить') + '</button><button type="button" class="f1" data-wb="call">📢 Позвать пропавших</button></div>'
+      + '<div class="small">«📢 Позвать пропавших» — вкладка «Рассылка» с группой «Пропавшим (7+ дней)» и готовым текстом: проверь и отправь.</div>';
+  }
+  function wbAct(b) {
+    if (botVer() < 384) { toast('Заработает, когда бот на сервере обновится до v384', true); return; }
+    var a = b.getAttribute('data-wb'), v = Number(b.getAttribute('data-v')), w = (((S.ec || {}).gift || {}).wb) || {};
+    if (a === 'call') {                                    // черновик рассылки не теряем: есть свой — спросим, заменить ли
+      var tx = '💤 Мы скучали! Заходи в бота — сегодня подарок дня ' + wbX(w.mult || 2) + ': «Подарки 🎁» → «🎁 Подарок дня» 🎁';
+      var cur = String(($('bc-text') || {}).value || '').trim();
+      (cur && cur !== tx ? ask('В «Рассылке» уже есть черновик:\n«' + cut(cur, 80) + '»\nЗаменить его текстом «Мы скучали»?') : Promise.resolve(true))
+        .then(function (yes) {
+          S.bcAud = 'gone'; openTab('bc');
+          if (S.bc) renderBc();
+          if (yes && $('bc-text')) {
+            $('bc-text').value = tx;
+            try { $('bc-text').dispatchEvent(new Event('input')); } catch (e) {}
+          }
+          toast('Проверь текст и отправь — группа «Пропавшим (7+ дней)»');
+        });
+      return;
+    }
+    var body = { op: 'wb_cfg' };
+    body[a] = a === 'on' ? !!v : v;
+    ecDo(body, a === 'on' ? (v ? 'Включить «Мы скучали»?' : 'Выключить «Мы скучали»?\nВернувшиеся будут получать обычный подарок.')
+      : a === 'days' ? '«Мы скучали» — для тех, кто не заходил ' + v + ' ' + plural3(v, 'день', 'дня', 'дней') + ' и больше?'
+      : 'Подарок вернувшимся — ' + wbX(v) + '?', b);
+  }
   function giftSet(lo, hi, btn) {                         // v376: подарок дня — «от–до» (0–0 — выключить)
     if (botVer() < 376) { toast('Заработает, когда бот на сервере обновится до v376', true); return; }
     var mx = (((S.ec || {}).gift || {}).max) || 5e6;
@@ -2888,6 +3028,8 @@ window.addEventListener('error', function (e) {
     if (gr) { giftSet(Number(gr.getAttribute('data-glo')), Number(gr.getAttribute('data-ghi')), gr); return; }
     var gb = e.target.closest('[data-gift]');               // v376: свои «от» и «до»
     if (gb) { giftSet(parseAmount($('gift-lo').value), parseAmount($('gift-hi').value), gb); return; }
+    var wb = e.target.closest('[data-wb]');                 // v384: «💤 Мы скучали»
+    if (wb) { wbAct(wb); return; }
     var vb = e.target.closest('[data-vault]');              // v381: счёт комиссий
     if (vb) { vaultAct(vb); return; }
     var tb = e.target.closest('[data-tr]');                 // v379: переводы токенов
