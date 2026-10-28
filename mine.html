@@ -63,10 +63,31 @@
               background-size: 28px 28px;
               -webkit-mask-image: radial-gradient(ellipse 90% 40% at 50% 0%, #000 15%, transparent 70%);
               mask-image: radial-gradient(ellipse 90% 40% at 50% 0%, #000 15%, transparent 70%); }
-  .bg .stars { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s; }
-  body[data-ch="7"] .bg .stars { opacity: 1; }
+  .bg .stars { position: absolute; inset: 0; display: none; }
+  body[data-ch="7"] .bg .stars { display: block; animation: fin 1.2s; }     /* до орбиты звёзд нет совсем (а не прозрачные): 40 мигающих точек не тратят кадры */
+  @keyframes fin { from { opacity: 0; } }
   .bg .stars i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff; animation: tw 3s ease-in-out infinite; }
   @keyframes tw { 50% { opacity: .2; } }
+  /* v387: больше движения — искры поднимаются со дна и гаснут к верху, по экрану проходит полоса «скана». Искры — два слоя-узора
+     (дальний мельче и медленнее — глубина): два движущихся слоя вместо 18 отдельных точек, на слабом телефоне +6 кадров в секунду */
+  .bg .pz { position: absolute; inset: 0; -webkit-mask-image: linear-gradient(0deg, #000 25%, transparent 95%); mask-image: linear-gradient(0deg, #000 25%, transparent 95%); }
+  .bg .pz b { position: absolute; left: 0; right: 0; top: 0; height: calc(100% + 360px); will-change: transform; animation: pzl 9s linear infinite;
+              background-size: 390px 360px;
+              background-image: radial-gradient(circle at 34px 52px, rgba(237,233,254,.95) 0 1.3px, rgba(167,139,250,.35) 2.3px, transparent 4.6px),
+                                radial-gradient(circle at 118px 268px, rgba(237,233,254,.9) 0 1.1px, rgba(167,139,250,.3) 2px, transparent 4.2px),
+                                radial-gradient(circle at 205px 140px, rgba(165,243,252,.9) 0 1.2px, rgba(34,211,238,.3) 2.1px, transparent 4.4px),
+                                radial-gradient(circle at 296px 330px, rgba(237,233,254,.95) 0 1.4px, rgba(167,139,250,.35) 2.4px, transparent 4.8px),
+                                radial-gradient(circle at 362px 96px, rgba(237,233,254,.85) 0 1px, rgba(167,139,250,.3) 1.9px, transparent 4px); }
+  .bg .pz b + b { height: calc(100% + 420px); animation: pzl2 16s linear infinite; opacity: .6; background-size: 300px 420px;
+                  background-image: radial-gradient(circle at 70px 180px, rgba(237,233,254,.9) 0 1px, rgba(167,139,250,.3) 1.8px, transparent 3.6px),
+                                    radial-gradient(circle at 160px 40px, rgba(165,243,252,.85) 0 .9px, rgba(34,211,238,.28) 1.7px, transparent 3.4px),
+                                    radial-gradient(circle at 230px 310px, rgba(237,233,254,.9) 0 1px, rgba(167,139,250,.3) 1.8px, transparent 3.6px),
+                                    radial-gradient(circle at 285px 120px, rgba(237,233,254,.8) 0 .8px, rgba(167,139,250,.25) 1.6px, transparent 3.2px); }
+  @keyframes pzl { to { transform: translate3d(0, -360px, 0); } }          /* ровно на высоту узора — петля без шва */
+  @keyframes pzl2 { to { transform: translate3d(0, -420px, 0); } }
+  .bg .scan { position: absolute; left: 0; right: 0; top: 0; height: 150px; will-change: transform;
+              background: linear-gradient(180deg, transparent, rgba(139,92,246,.07) 70%, transparent); animation: bscan 9s linear infinite; }
+  @keyframes bscan { from { transform: translate3d(0, -170px, 0); } to { transform: translate3d(0, 110vh, 0); } }
   html.paused *, html.paused *::before, html.paused *::after { animation-play-state: paused !important; }
   html.calm *, html.calm *::before, html.calm *::after { animation: none !important; transition: none !important; }
 
@@ -79,10 +100,21 @@
              background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.03)); border: 1px solid var(--ln2); }
   .loc b { display: block; font-size: 16.5px; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .loc small { display: block; font-size: 12px; color: var(--tx3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .wal { position: relative; flex: 0 0 auto; display: flex; align-items: center; gap: 7px; padding: 7px 11px 7px 7px; border-radius: 999px;
+  .wal { position: relative; flex: 0 0 auto; display: flex; align-items: center; gap: 7px; padding: 7px 11px 7px 7px; border-radius: 999px; overflow: hidden;
          background: rgba(139,92,246,.14); border: 1px solid rgba(167,139,250,.34); font-size: 13.5px; }
   .wal svg { flex: 0 0 auto; }
   .wal b { font-weight: 800; }
+  .wal::after { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 45%; pointer-events: none; transform: translateX(-150%);
+                background: linear-gradient(100deg, transparent, rgba(255,255,255,.2), transparent); animation: wsh 6s ease-in-out infinite; }
+  @keyframes wsh { 0%, 72% { transform: translateX(-150%); } 100% { transform: translateX(330%); } }
+  .adm-btn { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; font-size: 18px;
+             background: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.42); }
+  .adm-btn:active { transform: scale(.94); }
+  .admgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .admgrid .btn { height: 46px; font-size: 13.5px; }
+  .admrow { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+  .admrow .tx { flex: 1; font-size: 14px; }
+  .admrow .tx small { display: block; font-size: 12px; color: var(--tx3); }
   .ev { margin: 0 0 10px; padding: 9px 12px; border-radius: 13px; font-size: 13.5px; text-align: center; font-weight: 600;
         background: linear-gradient(90deg, rgba(251,191,36,.18), rgba(139,92,246,.2)); border: 1px solid rgba(251,191,36,.38); }
   .pause { margin: 0 0 10px; padding: 11px 12px; border-radius: 13px; font-size: 13.5px; text-align: center;
@@ -123,6 +155,37 @@
   .room::before { content: ''; position: absolute; left: 50%; top: -60px; width: 240px; height: 140px; margin-left: -120px; pointer-events: none;
                   background: radial-gradient(closest-side, var(--a1), transparent); opacity: .22; animation: bulb 5s ease-in-out infinite; }
   @keyframes bulb { 50% { opacity: .1; } 53% { opacity: .26; } 56% { opacity: .14; } }
+  /* v387: луч-сканер проходит по ферме сверху вниз */
+  .room .beam { position: absolute; left: 0; right: 0; top: 0; height: 70px; z-index: 2; pointer-events: none;
+                background: linear-gradient(180deg, transparent, rgba(34,211,238,.10) 55%, rgba(34,211,238,.22) 60%, transparent 62%); animation: beam 7s ease-in-out infinite; }
+  @keyframes beam { 0%, 12% { transform: translateY(-90px); opacity: 0; } 18% { opacity: 1; } 78% { opacity: 1; } 90%, 100% { transform: translateY(640px); opacity: 0; } }
+  .room.stop .beam { display: none; }
+  /* v387: «⚡ Разгон» */
+  .occ { display: flex; align-items: center; gap: 12px; padding: 12px 14px; overflow: hidden; }
+  .occ .oci { width: 44px; height: 44px; flex: 0 0 auto; border-radius: 13px; display: grid; place-items: center; font-size: 22px;
+              background: radial-gradient(circle at 50% 40%, rgba(251,146,60,.5), rgba(255,255,255,.03) 72%); border: 1px solid rgba(251,146,60,.38); }
+  .occ .oct { flex: 1; min-width: 0; }
+  .occ .oct b { display: block; font-size: 14.5px; }
+  .occ .oct small { display: block; font-size: 12px; color: var(--tx3); }
+  .occ .ocb { height: 5px; margin-top: 7px; border-radius: 99px; background: rgba(255,255,255,.07); overflow: hidden; }
+  .occ .ocb i { display: block; height: 100%; transform-origin: 0 50%; border-radius: 99px; background: linear-gradient(90deg, #f59e0b, #ef4444); transition: transform .3s linear; }
+  .occ.ready { border-color: rgba(251,146,60,.5); }
+  .occ.ready .oci { animation: ocp 1.4s ease-in-out infinite; }
+  @keyframes ocp { 50% { transform: scale(1.12) rotate(-7deg); } }
+  .occ.on { border-color: rgba(239,68,68,.6); background: linear-gradient(120deg, rgba(239,68,68,.18), rgba(251,146,60,.08) 60%, rgba(255,255,255,.02)); }
+  .occ.on .oci { animation: ocf .45s ease-in-out infinite alternate; }
+  @keyframes ocf { to { transform: scale(1.2); } }
+  .bb.hot { background: linear-gradient(135deg, #fb923c, #dc2626); }
+  .slots.hot .fan { animation-duration: .26s; }
+  .slots.hot .scan b, .slots.hot .swp b { animation-duration: .9s; }
+  .slots.hot .orb { animation-duration: 1.6s; }
+  .slots.hot .sl { border-color: rgba(249,115,22,.5); }
+  /* жар — одно свечение на всю ферму, а не у каждого из 30 устройств (на слабом телефоне +4 кадра в секунду) */
+  .room.hot::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+                     box-shadow: inset 0 0 34px rgba(249,115,22,.55); animation: hot 1.1s ease-in-out infinite alternate; }
+  @keyframes hot { from { opacity: .3; } to { opacity: 1; } }
+  .hero.hot .tank i { background: linear-gradient(90deg, #f59e0b, #ef4444 60%, #fde047); }
+  .hero.hot { border-color: rgba(239,68,68,.45); }
   .rh { position: relative; display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; font-size: 13px; color: var(--tx3); }
   .rh b { color: var(--tx); font-size: 15px; }
   .rh .hs { color: var(--cy); font-weight: 700; font-size: 14px; }
@@ -175,6 +238,14 @@
           background: radial-gradient(circle at 35% 30%, #2a1650, #0d0817 70%); border: 1px solid rgba(167,139,250,.45);
           box-shadow: 0 0 0 6px rgba(139,92,246,.08), 0 10px 30px -12px rgba(139,92,246,.9); transition: transform .12s var(--ease); touch-action: manipulation; }
   .core:active { transform: scale(.93); }
+  /* v387: вокруг ядра — два спутника по орбите и «дыхание» свечения */
+  .core .sat { position: absolute; inset: -15px; border-radius: 50%; pointer-events: none; animation: spin 7s linear infinite; }
+  .core .sat::before, .core .sat::after { content: ''; position: absolute; top: 50%; left: -3px; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%;
+                                          background: var(--cy); box-shadow: 0 0 8px var(--cy); }
+  .core .sat::after { left: auto; right: -3px; background: var(--p3); box-shadow: 0 0 8px var(--p2); }
+  .core .brt { position: absolute; inset: -12px; border-radius: 50%; pointer-events: none;
+               background: radial-gradient(closest-side, rgba(139,92,246,.42), transparent); animation: brt 3s ease-in-out infinite; }
+  @keyframes brt { 50% { opacity: .3; transform: scale(.9); } }
   .core .ring { position: absolute; inset: -7px; border-radius: 50%; border: 2px solid transparent; border-top-color: var(--p2); border-right-color: rgba(167,139,250,.25);
                 animation: spin 3.2s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -292,8 +363,12 @@
   .nav button { position: relative; flex: 1; height: 50px; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center;
                 font-size: 10.5px; color: var(--tx3); gap: 1px; transition: color .2s; }
   .nav button .ni { font-size: 19px; line-height: 1.1; transition: transform .3s var(--spring); }
-  .nav button.on { color: #fff; background: rgba(139,92,246,.24); }
+  .nav button.on { color: #fff; }
   .nav button.on .ni { transform: translateY(-1px) scale(1.08); }
+  /* v387: подсветка выбранной вкладки переезжает к нажатой (а не появляется на месте) */
+  .nav .in { position: relative; }
+  .nav .pill { position: absolute; top: 5px; bottom: 5px; left: 5px; width: calc((100% - 26px) / 5); border-radius: 15px; pointer-events: none;
+               background: rgba(139,92,246,.26); box-shadow: inset 0 0 0 1px rgba(167,139,250,.3); transition: transform .42s var(--spring); }
   .nav button .dot { position: absolute; top: 6px; right: calc(50% - 17px); width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px var(--gold); }
 
   /* ── выдвижная карточка ── */
@@ -360,7 +435,7 @@
   .fx .wplus { position: absolute; font-weight: 800; font-size: 13px; color: #ede9fe; text-shadow: 0 0 10px rgba(139,92,246,.95); white-space: nowrap;
                animation: wpl 1.5s var(--ease) forwards; }
   @keyframes wpl { 0% { transform: translateY(6px); opacity: 0; } 18% { transform: none; opacity: 1; } 100% { transform: translateY(-26px); opacity: 0; } }
-  .wal .glw { position: absolute; inset: -3px; border-radius: 999px; box-shadow: 0 0 0 2px rgba(196,181,253,.9), 0 0 18px rgba(139,92,246,.95); opacity: 0; pointer-events: none; }
+  .wal .glw { position: absolute; inset: 0; border-radius: 999px; box-shadow: inset 0 0 0 2px rgba(196,181,253,.9), inset 0 0 16px rgba(139,92,246,.95); opacity: 0; pointer-events: none; }
   .big-ev { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; pointer-events: none; }
   .big-ev .bx { text-align: center; padding: 22px 26px; border-radius: 24px; background: rgba(18,14,30,.94); border: 1px solid rgba(251,191,36,.6);
                 box-shadow: 0 0 60px rgba(251,191,36,.35); animation: bev 2.4s var(--ease) forwards; }
@@ -492,10 +567,11 @@
     <circle cx="38.6" cy="13.6" r="1.5" fill="#f0abfc"/>
   </symbol>
 </svg>
-<div class="bg"><i class="gl g1"></i><i class="gl g2"></i><div class="grid"></div><div class="stars" id="stars"></div></div>
+<div class="bg"><i class="gl g1"></i><i class="gl g2"></i><div class="grid"></div><div class="scan"></div><div class="pz"><b></b><b></b></div><div class="stars" id="stars"></div></div>
 <main>
   <header class="top">
     <div class="loc"><div class="le" id="loc-e">🏚</div><div style="min-width:0"><b id="loc-n">Майнинг SLX</b><small id="loc-c"></small></div></div>
+    <button type="button" class="adm-btn" id="adm-btn" hidden aria-label="test">🛠</button>
     <button type="button" class="wal" id="wal-chip"><i class="glw" id="wal-glw"></i><span id="wal-logo"></span><b class="mono" id="w-slx">—</b></button>
   </header>
   <div class="ld">
@@ -514,13 +590,16 @@
       <div class="rate"><span id="h-rate"></span><span class="fl" id="h-full"></span></div>
       <button type="button" class="btn pri" id="b-col">⛏ <span id="b-col-t">Собрать</span></button>
     </div>
+    <div class="card occ" id="occ" hidden><div class="oci">⚡</div><div class="oct"><b id="oc-t"></b><small id="oc-s"></small><div class="ocb"><i id="oc-bar"></i></div></div>
+      <button type="button" class="bb" id="b-oc"></button></div>
     <div class="card room" id="room">
+      <i class="beam"></i>
       <div class="rh"><span><b id="r-name"></b> · <span id="r-used"></span></span><span class="hs mono" id="r-hash"></span></div>
       <div class="slots" id="slots"></div>
     </div>
     <div class="card">
       <div class="tapw">
-        <button type="button" class="core" id="core" aria-label="tap"><i class="ring"></i><span id="core-logo"></span></button>
+        <button type="button" class="core" id="core" aria-label="tap"><i class="brt"></i><i class="sat"></i><i class="ring"></i><span id="core-logo"></span></button>
         <div class="tapi">
           <b id="tp-t">Ручной майнинг</b><small id="tp-s"></small>
           <div class="enb"><i id="en-i"></i></div>
@@ -578,7 +657,7 @@
     <div id="top-list"></div>
   </section>
 </main>
-<nav class="nav" id="nav"><div class="in">
+<nav class="nav" id="nav"><div class="in"><i class="pill" id="pill"></i>
   <button type="button" class="on" data-tab="farm"><span class="ni">⛏</span><span data-l="farm"></span></button>
   <button type="button" data-tab="shop"><span class="ni">🛒</span><span data-l="shop"></span></button>
   <button type="button" data-tab="story"><span class="ni">📖</span><span data-l="story"></span></button>
@@ -683,9 +762,9 @@
     },
     rwd: { rig: function (w) { return RIG[w].e + ' ' + T.rigs[w]; }, slx: function (x) { return '+' + slx(x) + ' SLX'; } },
     walletH: 'SLX wallet', walletT: function (t, p) { return '≈ ' + t + ' tokens · 1 SLX = ' + p; },
-    sellH: 'Swap SLX for tokens', sellPh: 'How much SLX', sellB: function (t) { return '💱 Sell for ≈ ' + t + ' tokens'; }, sellNo: 'Enter how much SLX',
-    sellEq: function (f) { return 'Exchange rate minus ' + f + '% fee. Big sales get a slightly worse price (like on the exchange).'; },
-    buyH: 'Buy SLX for tokens', buyPh: 'How much SLX', buyB: function (t) { return '🛒 Buy for ≈ ' + t + ' tokens'; }, buyEq: function (b) { return 'Your tokens: ' + b; },
+    sellH: 'Sell SLX on the exchange', sellPh: 'How much SLX', sellB: function (t) { return '💱 Sell for ≈ ' + t + ' tokens'; }, sellNo: 'Enter how much SLX',
+    sellEq: function (f) { return 'It is a regular sale on the SLX exchange: same rate and ' + f + '% fee, the trade shows up in “📈 Invest” → “History”. Big sales get a slightly worse price.'; },
+    buyH: 'Buy SLX on the exchange', buyPh: 'How much SLX', buyB: function (t) { return '🛒 Buy for ≈ ' + t + ' tokens'; }, buyEq: function (b) { return 'Your tokens: ' + b; },
     all: 'All', statsH: 'Your farm', st: { mined: 'Mined in total', tapped: 'By taps', lucky: 'Lucky blocks', col: 'Collections', spent: 'Spent on the farm', since: 'Farm since' },
     ntf: 'Remind me in the bot', ntfS: 'When the storage is full (no more than twice a day, daytime)',
     ex: '📈 Open the exchange', exNote: 'SLX from the farm lands in the same wallet as on the exchange (“Account 👤” → “📈 Invest”). The exchange opens right here; to come back — tap “⛏ SLX Mining” in the bot again.',
@@ -703,7 +782,15 @@
             no_slot: 'All slots are taken — move on to get more', goals: 'Finish all chapter goals first', max: 'Nowhere further', last_rig: 'Your last device cannot be sold',
             no_rig: 'No such device on the farm', taps_off: 'Manual mining is off', rate_limited: 'One second…', banned: '🚫 Your account is blocked',
             frozen: '❄️ Your account is frozen', maintenance: '🔧 The bot is under maintenance', no_funds: 'Not enough tokens', no_coins: 'Not enough SLX',
-            bad_qty: 'How much SLX?', net: 'No connection — try again' },
+            bad_qty: 'How much SLX?', net: 'No connection — try again', oc_wait: 'The overclock is still cooling down', forbidden: 'Administrator only',
+            bad_ch: 'Chapter — from 1 to 7' },
+    ocT: 'Overclock ×3', ocReady: '10 minutes — the farm mines three times faster', ocOnT: '🔥 Overclock ×3 is on',
+    ocOn: function (s) { return s + ' left — collect more often, the storage fills faster'; }, ocCool: function (s) { return 'Cooling down — ' + s + ' left'; },
+    ocBtn: '⚡ Turn on', ocStart: 'OVERCLOCK!', ocStartS: '×3 for 10 minutes', ocFull: 'The storage is full — collect first, or the overclock is wasted',
+    adm: { title: '🛠 Test mode (only you see it)', open: '🔓 Everything unlocked', openS: 'Any devices and storage, moving and the finale — no goals needed',
+           ch: 'Jump to chapter', fill: '📦 Fill the storage', energy: '⚡ Energy 100', lucky: '🍀 Lucky block on collect', oc: '⚡ Overclock without waiting',
+           reset: '♻️ Start over (prologue)', resetQ: 'Delete your farm and start from the prologue?', note: 'Your farm is not part of the network — it does not affect players. Any chapter’s story — in the “Story” tab.',
+           done: 'Done ✓' },
     errParams: ['Open it from the bot', 'This game opens with the “⛏ SLX Mining” button in “Gifts 🎁”.'],
     errAuth: ['The button is outdated', 'Open “Gifts 🎁” in the bot and tap “⛏ SLX Mining” again.'],
     errReg: ['Register first', 'Send /start to the bot and finish the registration — then the farm is yours.'],
@@ -742,9 +829,9 @@
     },
     rwd: { rig: function (w) { return RIG[w].e + ' ' + T.rigs[w]; }, slx: function (x) { return '+' + slx(x) + ' SLX'; } },
     walletH: 'Кошелёк SLX', walletT: function (t, p) { return '≈ ' + t + ' ' + tw(t) + ' · 1 SLX = ' + p; },
-    sellH: 'Обменять SLX на токены', sellPh: 'Сколько SLX', sellB: function (t) { return '💱 Продать за ≈ ' + t + ' ' + tw(t); }, sellNo: 'Впиши, сколько SLX',
-    sellEq: function (f) { return 'По курсу биржи минус ' + f + '% комиссии. Крупная продажа — чуть ниже курса (как на бирже).'; },
-    buyH: 'Докупить SLX за токены', buyPh: 'Сколько SLX', buyB: function (t) { return '🛒 Купить за ≈ ' + t + ' ' + tw(t); }, buyEq: function (b) { return 'Твои токены: ' + b; },
+    sellH: 'Продать SLX на бирже', sellPh: 'Сколько SLX', sellB: function (t) { return '💱 Продать за ≈ ' + t + ' ' + tw(t); }, sellNo: 'Впиши, сколько SLX',
+    sellEq: function (f) { return 'Это обычная продажа на бирже SLX: тот же курс и комиссия ' + f + '%, сделка появится в «📈 Инвестиции» → «История». Крупная продажа — чуть ниже курса.'; },
+    buyH: 'Купить SLX на бирже', buyPh: 'Сколько SLX', buyB: function (t) { return '🛒 Купить за ≈ ' + t + ' ' + tw(t); }, buyEq: function (b) { return 'Твои токены: ' + b; },
     all: 'Всё', statsH: 'Твоя ферма', st: { mined: 'Добыто всего', tapped: 'Нажатиями', lucky: 'Удачных блоков', col: 'Сборов', spent: 'Вложено в ферму', since: 'Ферма с' },
     ntf: 'Напоминать в боте', ntfS: 'Когда хранилище полное (не чаще 2 раз в день, днём)',
     ex: '📈 Открыть биржу', exNote: 'SLX с фермы лежат в том же кошельке, что на бирже («Аккаунт 👤» → «📈 Инвестиции»). Биржа откроется здесь же; вернуться — снова «⛏ Майнинг SLX» в боте.',
@@ -762,7 +849,15 @@
             no_slot: 'Все места заняты — переезжай, мест станет больше', goals: 'Сначала выполни все цели главы', max: 'Дальше некуда', last_rig: 'Последнее устройство продать нельзя',
             no_rig: 'Такого устройства нет на ферме', taps_off: 'Ручной майнинг выключен', rate_limited: 'Секунду…', banned: '🚫 Аккаунт заблокирован',
             frozen: '❄️ Аккаунт заморожен', maintenance: '🔧 Бот на обслуживании', no_funds: 'Не хватает токенов', no_coins: 'Не хватает SLX',
-            bad_qty: 'Сколько SLX?', net: 'Нет связи — попробуй ещё раз' },
+            bad_qty: 'Сколько SLX?', net: 'Нет связи — попробуй ещё раз', oc_wait: 'Разгон ещё остывает', forbidden: 'Только для администратора',
+            bad_ch: 'Глава — от 1 до 7' },
+    ocT: 'Разгон ×3', ocReady: '10 минут — ферма майнит втрое быстрее', ocOnT: '🔥 Идёт разгон ×3',
+    ocOn: function (s) { return 'Ещё ' + s + ' — собирай чаще, хранилище копится быстрее'; }, ocCool: function (s) { return 'Остывает — ещё ' + s; },
+    ocBtn: '⚡ Включить', ocStart: 'РАЗГОН!', ocStartS: '×3 на 10 минут', ocFull: 'Хранилище полное — сначала собери, иначе разгон уйдёт впустую',
+    adm: { title: '🛠 Проверка (видишь только ты)', open: '🔓 Всё открыто', openS: 'Любые устройства и хранилище, переезд и финал — без целей',
+           ch: 'Перейти в главу', fill: '📦 Заполнить хранилище', energy: '⚡ Энергия 100', lucky: '🍀 Удачный блок при сборе', oc: '⚡ Разгон без ожидания',
+           reset: '♻️ Начать заново (пролог)', resetQ: 'Удалить свою ферму и начать с пролога?', note: 'Твоя ферма не входит в сеть — игрокам не мешает. Сюжет любой главы — во вкладке «Сюжет».',
+           done: 'Готово ✓' },
     errParams: ['Открой из бота', 'Игра открывается кнопкой «⛏ Майнинг SLX» в «Подарках 🎁».'],
     errAuth: ['Кнопка устарела', 'Открой «Подарки 🎁» в боте и нажми «⛏ Майнинг SLX» заново.'],
     errReg: ['Сначала регистрация', 'Напиши боту /start и пройди регистрацию — и ферма твоя.'],
@@ -858,6 +953,13 @@
   function slxFix(x) { x = Number(x) || 0; var a = Math.abs(x); return dec(x, a >= 100 ? 2 : a >= 0.01 ? 4 : a > 0 ? 6 : 0); }
   function slx(x) { var s = slxFix(x); return /[.,]/.test(s) ? s.replace(/0+$/, '').replace(/[.,]$/, '') : s; }   // цены и суммы — без хвоста нулей
   function slxLive(x) { x = Number(x) || 0; return dec(x, x >= 10 ? 4 : 6); }
+  function slxShort(x) {                            // v387: кошелёк — огромные суммы коротко («30,79 млрд» вместо «30785501498,49»)
+    x = Number(x) || 0; var a = Math.abs(x);
+    var U = EN ? [[1e12, 'T'], [1e9, 'B'], [1e6, 'M']] : [[1e12, ' трлн'], [1e9, ' млрд'], [1e6, ' млн']];
+    for (var i = 0; i < U.length; i++) if (a >= U[i][0]) return dec(x / U[i][0], 2).replace(/[.,]?0+$/, '') + U[i][1];
+    return a >= 1e4 ? num(x) : slxFix(x);
+  }
+  function mmss(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
   function hashS(h) {
     h = Number(h) || 0;
     if (h >= 1e6) return dec(h / 1e6, h >= 1e7 ? 1 : 2).replace(/[.,]?0+$/, '') + ' TH/s';
@@ -890,12 +992,20 @@
   function live() {                                   // хранилище, энергия, кошелёк — на «сейчас» (между опросами считает страница)
     var d = S.d, el = (performance.now() - S.at) / 1000;
     if (!d || !d.started) return null;
+    var cf = S.cfg || {}, ocx = cf.oc_x || 3, base = d.rate_base != null ? d.rate_base : d.rate;
+    var ocl0 = d.oc_until ? Math.max(0, d.oc_until - d.t) : 0, ocl = Math.max(0, ocl0 - el);   // v387: «⚡ Разгон» — сколько ещё
     var st = d.stored, cap = d.cap;
-    if (d.on && st < cap) st = Math.min(cap, st + d.rate * el);
-    var cf = S.cfg || {}, emax = cf.en_max || 100, regen = cf.en_regen || 40;
+    if (d.on && st < cap) st = Math.min(cap, st + base * (el + (ocx - 1) * Math.min(el, ocl0)));
+    var emax = cf.en_max || 100, regen = cf.en_regen || 60;
     var en = Math.min(emax, d.en + el / regen) - S.pend - S.fly;
     return { st: st, cap: cap, full: cap > 0 && st >= cap * 0.999999, en: Math.max(0, en), emax: emax, regen: regen,
-             wallet: (d.wallet || 0) + (S.pend + S.fly) * (d.tap_val || 0) };
+             wallet: (d.wallet || 0) + (S.pend + S.fly) * (d.tap_val || 0), base: base, ocl: ocl, ocx: ocx,
+             rate: base * (ocl > 0 ? ocx : 1), snow: (d.t || 0) + el };
+  }
+  function fullIn(cap, st, base, ocl, ocx) {        // через сколько хранилище полное — с учётом разгона
+    var need = cap - st; if (need <= 0 || !(base > 0)) return 0;
+    var fast = base * ocx * ocl;
+    return need <= fast ? need / (base * ocx) : ocl + (need - fast) / base;
   }
   function price() { return (S.d && S.d.price) || 100000; }
   function rigsSorted(own) {
@@ -914,13 +1024,23 @@
   function perMH() { return S.d && S.d.hash ? S.d.rate / S.d.hash : 0; }   // SLX/с на 1 MH/s сейчас (со сложностью)
 
   // ── вкладки ──
+  var TABS = ['farm', 'shop', 'story', 'wallet', 'top'];
   function openTab(t) {
+    var was = S.tab;
     S.tab = t;
     var c = document.querySelector('.coach'); if (c) c.remove(); S.coach = '';      // подсказка — только на ферме
-    ['farm', 'shop', 'story', 'wallet', 'top'].forEach(function (k) { $('t-' + k).hidden = k !== t; });
+    TABS.forEach(function (k) { $('t-' + k).hidden = k !== t; });
     Array.prototype.forEach.call(document.querySelectorAll('.nav button'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
+    $('pill').style.transform = 'translateX(calc(' + Math.max(0, TABS.indexOf(t)) + ' * (100% + 4px)))';     // v387: подсветка переезжает
     try { window.scrollTo(0, 0); } catch (e) {}
     render();
+    if (was !== t && document.body.animate && !document.documentElement.classList.contains('calm')) {
+      // v387: содержимое вкладки выезжает по очереди — анимацией из кода (без пересчёта всей страницы ради перезапуска CSS)
+      Array.prototype.forEach.call($('t-' + t).children, function (el, i) {
+        if (i < 6) el.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }],
+                              { duration: 420, delay: i * 40, easing: 'cubic-bezier(.22,.8,.2,1)', fill: 'backwards' });
+      });
+    }
   }
   $('nav').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-tab]'); if (!b) return;
@@ -936,6 +1056,7 @@
     document.body.setAttribute('data-ch', String(d.ch || 1));
     $('pause').hidden = d.on !== false; $('pause').textContent = T.paused;
     renderEv();
+    $('adm-btn').hidden = !(d.adm && d.started);                  // v387: «🛠 Проверка» — только администратору
     if (!d.started) { $('loc-n').textContent = EN ? 'SLX Mining' : 'Майнинг SLX'; $('loc-c').textContent = ''; return; }
     $('loc-e').textContent = LOC_E[d.ch - 1];
     $('loc-n').textContent = T.locs[d.ch - 1];
@@ -961,42 +1082,73 @@
     var now = performance.now(), Dr = S.drain;
     if (Dr && now - Dr.t0 > Dr.dur) Dr = S.drain = null;
     if (S.acc) accStep(0.5);                                         // пока летят монетки, цифру кошелька ведёт «накопление»
-    if (!S.acc) $('w-slx').textContent = slxFix(L.wallet);
+    if (!S.acc) setTxt('w-slx', slxShort(L.wallet));
     if (S.tab === 'farm') {
       var st = L.st, full = L.full;
       if (Dr) { st = Dr.amt * Math.max(0, 1 - (now - Dr.t0) / Dr.dur); full = false; }   // «Собрать»: хранилище плавно пустеет
-      $('h-val').textContent = slxLive(st);
-      $('h-eq').textContent = T.eq(num(st * price()));
+      setTxt('h-val', slxLive(st));
+      setTxt('h-eq', T.eq(num(st * price())));
       var pct = L.cap > 0 ? Math.min(1, st / L.cap) : 0;
-      $('tank-i').style.transform = 'scaleX(' + pct.toFixed(4) + ')';
+      setAttr('tank-i', 'tf', 'scaleX(' + pct.toFixed(3) + ')');
       $('tank').classList.toggle('full', full);
+      var hot = L.ocl > 0 && d.on !== false;
       var sb = $('slots');
       sb.classList.toggle('stop', d.on === false || full);
       sb.classList.toggle('off', d.on === false);
-      var fl = $('h-full');
-      if (d.on === false) { fl.textContent = T.stopped; fl.className = 'fl'; }
-      else if (full) { fl.textContent = T.full; fl.className = 'fl full'; }
-      else { fl.textContent = T.fullIn(dur((L.cap - st) / (d.rate || 1e-12))); fl.className = 'fl'; }
+      sb.classList.toggle('hot', hot && !full);
+      $('room').classList.toggle('stop', d.on === false || full);
+      $('room').classList.toggle('hot', hot && !full);
+      $('hero').classList.toggle('hot', hot);
+      setHtml('h-rate', '⛏ ' + esc(slx(L.rate * 3600)) + ' SLX' + T.perH + (hot ? ' <b style="color:#fb923c">×' + L.ocx + '</b>' : ''));
+      ocCard(L, full);
+      if (d.on === false) { setTxt('h-full', T.stopped); setAttr('h-full', 'cls', 'fl'); }
+      else if (full) { setTxt('h-full', T.full); setAttr('h-full', 'cls', 'fl full'); }
+      else { setTxt('h-full', T.fullIn(dur(fullIn(L.cap, st, L.base, L.ocl, L.ocx)))); setAttr('h-full', 'cls', 'fl'); }
       var bc = $('b-col');
       bc.classList.toggle('gold', full); bc.classList.toggle('pri', !full); bc.classList.toggle('pulse', full);
-      $('b-col-t').textContent = full ? T.collectFull : T.collect;
-      bc.disabled = d.on === false;
+      setTxt('b-col-t', full ? T.collectFull : T.collect);
+      if (bc.disabled !== (d.on === false)) bc.disabled = d.on === false;
       var en = Math.floor(L.en + 1e-9);
-      $('en-i').style.transform = 'scaleX(' + (L.en / L.emax).toFixed(4) + ')';
-      $('en-v').textContent = T.energy(en, L.emax);
-      $('en-r').textContent = d.taps_on === false ? T.tapsOff : en < 1 ? T.noEnergy : T.regen(L.regen);
+      setAttr('en-i', 'tf', 'scaleX(' + (L.en / L.emax).toFixed(3) + ')');
+      setTxt('en-v', T.energy(en, L.emax));
+      setTxt('en-r', d.taps_on === false ? T.tapsOff : en < 1 ? T.noEnergy : T.regen(L.regen));
       $('core').classList.toggle('dry', en < 1 || d.taps_on === false || d.on === false);
       coach(L);
     } else if (S.tab === 'wallet' && !S.acc) {
-      $('wb-v').textContent = slxFix(L.wallet);
-      $('wb-t').textContent = T.walletT(num(L.wallet * price()), num(price()));
+      setTxt('wb-v', slxShort(L.wallet));
+      setTxt('wb-t', T.walletT(num(L.wallet * price()), num(price())));
+    }
+  }
+  // раз в 150 мс пишем в страницу ТОЛЬКО то, что поменялось: каждая запись (даже того же текста) заставляет браузер
+  // пересчитывать вёрстку — на слабом телефоне это и есть «подтормаживания» (v387: так просело с 71 до 54 кадров)
+  var _dom = {};
+  function setHtml(id, h) { if (_dom['h' + id] !== h) { _dom['h' + id] = h; $(id).innerHTML = h; } }
+  function setTxt(id, t) { if (_dom['t' + id] !== t) { _dom['t' + id] = t; $(id).textContent = t; } }
+  function setAttr(id, k, v) { if (_dom[k + id] !== v) { _dom[k + id] = v; var e = $(id); if (k === 'cls') e.className = v; else if (k === 'dis') e.disabled = v; else e.style.transform = v; } }
+  function ocCard(L, full) {                        // v387: «⚡ Разгон» — готов / идёт (обратный отсчёт) / остывает
+    var d = S.d, cf = S.cfg || {}, box = $('occ'), hide = d.on === false;
+    if (box.hidden !== hide) box.hidden = hide;
+    if (hide) return;
+    var cd = d.oc_next ? Math.max(0, d.oc_next - L.snow) : 0, state = L.ocl > 0 ? 'on' : cd > 0 ? 'cool' : 'ready';
+    setAttr('occ', 'cls', 'card occ' + (state === 'on' ? ' on' : state === 'ready' ? ' ready' : ''));
+    if (state === 'on') {
+      setTxt('oc-t', T.ocOnT); setTxt('oc-s', T.ocOn(mmss(L.ocl)));
+      setAttr('oc-bar', 'tf', 'scaleX(' + Math.min(1, L.ocl / (cf.oc_sec || 600)).toFixed(3) + ')');
+      setTxt('b-oc', '🔥 ' + mmss(L.ocl)); setAttr('b-oc', 'cls', 'bb hot'); setAttr('b-oc', 'dis', true);
+    } else if (state === 'cool') {
+      setTxt('oc-t', T.ocT); setTxt('oc-s', T.ocCool(dur(cd)));
+      setAttr('oc-bar', 'tf', 'scaleX(' + Math.max(0, 1 - cd / (cf.oc_cd || 10800)).toFixed(3) + ')');
+      setTxt('b-oc', '⏳ ' + (cd >= 3600 ? dur(cd) : mmss(cd))); setAttr('b-oc', 'cls', 'bb ghost'); setAttr('b-oc', 'dis', true);
+    } else {
+      setTxt('oc-t', T.ocT); setTxt('oc-s', full ? T.ocFull : T.ocReady);
+      setAttr('oc-bar', 'tf', 'scaleX(1)');
+      setTxt('b-oc', T.ocBtn); setAttr('b-oc', 'cls', 'bb hot'); setAttr('b-oc', 'dis', false);
     }
   }
   function renderFarm() {
     var d = S.d;
     $('h-lbl').textContent = T.storage;
     $('h-cap').textContent = T.hours(S.cfg.storage[d.st][0]);
-    $('h-rate').innerHTML = '⛏ ' + esc(slx(d.rate * 3600)) + ' SLX' + T.perH;
     $('r-name').textContent = LOC_E[d.ch - 1] + ' ' + T.locs[d.ch - 1];
     $('r-used').textContent = T.slots(usedN(), slotsN());
     $('r-hash').textContent = '⚡ ' + hashS(d.hash);
@@ -1068,7 +1220,7 @@
     var d = S.d, cf = S.cfg, L = live(), wl = L ? L.wallet : d.wallet;
     // переезд
     var mv = '';
-    if (d.ch < 7 && goalsReady()) {
+    if (d.ch < 7 && (goalsReady() || d.open)) {                // v387: админу (всё открыто) — без целей
       var mc = cf.locs[d.ch][1];
       mv = '<div class="card" style="border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.07)"><div class="gm"><span class="ge">' + LOC_E[d.ch] + '</span><div class="gt"><b>'
         + esc(T.moveT(T.locs[d.ch])) + '</b><small>' + esc(T.goalAll) + '</small></div></div><button type="button" class="btn gold sm" style="margin-top:10px" data-move="1">'
@@ -1080,7 +1232,7 @@
     var st = cf.storage, nx = st[d.st + 1], sh = '<div class="it"><div class="ie" style="--rc:rgba(34,211,238,.45)">📦</div><div class="im"><b>' + esc(T.storT) + ' · '
       + T.hours(st[d.st][0]) + '</b><small>' + T.storNow(st[d.st][0]) + '</small></div>';
     if (!nx) sh += '<div class="ib"><span class="pr" style="color:var(--tx3);font-weight:500">' + esc(T.storMax) + '</span></div>';
-    else if (nx[2] > d.ch) sh += '<div class="ib"><span class="pr" style="color:var(--tx3);font-weight:500;font-size:12px">' + esc(T.storLock(nx[2])) + '</span></div>';
+    else if (nx[2] > d.ch && !d.open) sh += '<div class="ib"><span class="pr" style="color:var(--tx3);font-weight:500;font-size:12px">' + esc(T.storLock(nx[2])) + '</span></div>';
     else sh += '<div class="ib"><span class="pr">' + esc(slx(nx[1])) + ' SLX<small>' + esc(T.storNext(nx[0])) + '</small></span><button type="button" class="bb' + (wl + 1e-12 < nx[1] ? ' ghost' : '')
       + '" data-stor="1">' + esc(T.buy) + '</button></div>';
     $('shop-st').innerHTML = sh + '</div>';
@@ -1089,7 +1241,7 @@
     var full = usedN() >= slotsN(), wk = weakest(), pm = perMH(), h = '';
     cf.rigs.forEach(function (r) {
       var id = r[0], hs = r[1], unl = r[3], own = d.own[id] || 0, pr = d.prices[id];
-      if (unl > d.ch) {
+      if (unl > d.ch && !d.open) {
         h += '<div class="it lock"><div class="ie">' + rigIcon(id) + '</div><div class="im"><b>' + esc(T.rigs[id]) + '</b><small>' + esc(T.lockCh(unl, T.locs[unl - 1])) + '</small></div></div>';
         return;
       }
@@ -1125,11 +1277,11 @@
     if (rwT && !d.done) h += '<div class="rw">🎁 ' + esc(T.reward) + ': <b>' + esc(rwT) + (ch >= 7 ? ' · 👑 ' + esc(T.titles[7]) : '') + '</b></div>';
     if (d.done) h += '<div class="rw">👑 ' + esc(T.doneAll) + '</div>';
     else if (ch < 7) {
-      var mc = cf.locs[ch][1], ready = goalsReady();
+      var mc = cf.locs[ch][1], ready = goalsReady() || d.open;
       h += '<button type="button" class="btn ' + (ready ? 'gold' : 'sec') + ' sm" style="margin-top:12px" data-move="1"' + (ready ? '' : ' disabled') + '>'
         + esc(ready ? T.moveGo(slx(mc)) : T.moveNeed) + '</button>';
     } else {
-      var rd = goalsReady();
+      var rd = goalsReady() || d.open;
       h += '<button type="button" class="btn ' + (rd ? 'gold' : 'sec') + ' sm" style="margin-top:12px" data-fin="1"' + (rd ? '' : ' disabled') + '>' + esc(rd ? T.finBtn : T.moveNeed) + '</button>';
     }
     h += '<button type="button" class="btn sec sm" style="margin-top:8px" data-read="' + ch + '">📖 ' + esc(T.chT(ch)) + '</button></div></div>';
@@ -1137,11 +1289,11 @@
     $('sh-past').textContent = T.past + ' · ' + T.readAgain;
     var p = '<button type="button" class="pc" data-read="0"><span class="pe">🌧</span>' + esc(T.startS) + '</button>';
     for (var i = 1; i <= 7; i++) {
-      var lk = i > ch;
+      var lk = i > ch && !d.open;
       p += '<button type="button" class="pc' + (i === ch ? ' cur' : '') + (lk ? ' lk' : '') + '"' + (lk ? ' disabled' : ' data-read="' + i + '"') + '><span class="pe">' + (lk ? '🔒' : LOC_E[i - 1])
         + '</span>' + esc(T.chT(i)) + '</button>';
     }
-    if (d.done) p += '<button type="button" class="pc" data-read="8"><span class="pe">👑</span>' + esc(T.finaleT) + '</button>';
+    if (d.done || d.open) p += '<button type="button" class="pc" data-read="8"><span class="pe">👑</span>' + esc(T.finaleT) + '</button>';
     $('past').innerHTML = p;
   }
   $('t-story').addEventListener('click', function (e) {
@@ -1154,8 +1306,8 @@
   // ── кошелёк ──
   function renderWallet() {
     var d = S.d, L = live();
-    $('wb-v').textContent = slxFix(L ? L.wallet : d.wallet);
-    $('wb-t').textContent = T.walletT(num((L ? L.wallet : d.wallet) * price()), num(price()));
+    setTxt('wb-v', slxShort(L ? L.wallet : d.wallet));
+    setTxt('wb-t', T.walletT(num((L ? L.wallet : d.wallet) * price()), num(price())));
     $('sell-h').textContent = T.sellH; $('sell-in').placeholder = T.sellPh; $('sell-eq').textContent = T.sellEq(d.fee || 3);
     $('sell-chips').innerHTML = [25, 50, 100].map(function (p) { return '<button type="button" class="chip' + (S.sellPct === p ? ' on' : '') + '" data-pct="' + p + '">' + (p === 100 ? T.all : p + '%') + '</button>'; }).join('');
     $('buy-h').textContent = T.buyH; $('buy-in').placeholder = T.buyPh;
@@ -1236,6 +1388,9 @@
     if (a === 'close') { sheetClose(); return; }
     if (a === 'sellrig') { sheetClose(); sellRig(b.getAttribute('data-rig')); return; }
     if (a === 'buyshort') { sheetClose(); buyShort(Number(b.getAttribute('data-q')), b.getAttribute('data-then')); return; }
+  });
+  $('sheet').addEventListener('click', function (e) {
+    var ad = e.target.closest('[data-adm]'); if (ad) admAct(ad.getAttribute('data-adm'), ad.getAttribute('data-v'));
   });
   function rigSheet(id) {
     var d = S.d, r = rigCfg(id), n = d.own[id] || 0, back = d.refunds[id] || 0, last = usedN() <= 1;
@@ -1331,6 +1486,49 @@
       if (r.got > 0) toast(T.got(r.got + (r.lucky || 0)));
     });
   });
+  // v387: «⚡ Разгон» — ×3 на 10 минут; хранилище полное — сначала собрать (иначе разгон уйдёт впустую)
+  $('b-oc').addEventListener('click', function () {
+    var L = live(); if (!L) return;
+    if (L.full) { toast(T.ocFull); var bc = $('b-col'); if (bc.animate) bc.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.05)' }, { transform: 'scale(1)' }], { duration: 400 }); return; }
+    hap('heavy');
+    send('oc', {}, $('b-oc')).then(function (j) { if (j) { bigEvent('⚡', T.ocStart, T.ocStartS); hap('success'); } });
+  });
+
+  // v387: «🛠 Проверка» — администратору: всё открыто, любая глава, заполнить хранилище, энергия, удачный блок, разгон, заново
+  function admSheet() {
+    var d = S.d; if (!d || !d.adm) return;
+    sheet('<h3>' + esc(T.adm.title) + '</h3>'
+      + '<div class="admrow"><div class="tx">' + esc(T.adm.open) + '<small>' + esc(T.adm.openS) + '</small></div><button type="button" class="sw'
+      + (d.open ? ' on' : '') + '" data-adm="open"><i></i></button></div>'
+      + '<div class="sh" style="margin:6px 0 4px">' + esc(T.adm.ch) + '</div><div class="chips">' + [1, 2, 3, 4, 5, 6, 7].map(function (n) {
+          return '<button type="button" class="chip' + (d.ch === n ? ' on' : '') + '" data-adm="ch" data-v="' + n + '">' + LOC_E[n - 1] + ' ' + n + '</button>'; }).join('') + '</div>'
+      + '<div class="admgrid">' + [['fill', T.adm.fill], ['energy', T.adm.energy], ['lucky', T.adm.lucky + (d.lk_next ? ' ✓' : '')], ['oc', T.adm.oc]].map(function (x) {
+          return '<button type="button" class="btn sec" data-adm="' + x[0] + '">' + esc(x[1]) + '</button>'; }).join('') + '</div>'
+      + '<button type="button" class="btn sec sm" style="margin-top:8px;color:var(--red)" data-adm="reset">' + esc(T.adm.reset) + '</button>'
+      + '<p class="note">' + esc(T.adm.note) + '</p>');
+  }
+  function askYes(q) {                              // подтверждение: окно Telegram, иначе обычное
+    return new Promise(function (ok) {
+      try { if (tg && tg.showConfirm) { tg.showConfirm(q, function (y) { ok(!!y); }); return; } } catch (e) {}
+      try { ok(window.confirm(q)); } catch (e) { ok(false); }
+    });
+  }
+  function admAct(a, v) {
+    var ops = { open: ['adm_open', { on: !S.d.open }], ch: ['adm_ch', { ch: Number(v) }], fill: ['adm_fill', {}], energy: ['adm_energy', {}],
+                lucky: ['adm_lucky', {}], oc: ['adm_oc', {}], reset: ['adm_reset', {}] }, o = ops[a];
+    if (!o) return;
+    (a === 'reset' ? askYes(T.adm.resetQ) : Promise.resolve(true)).then(function (yes) {
+      if (!yes) return;
+      hap('medium');
+      if (a === 'ch' || a === 'reset') { sheetClose(); S.seenLocal = 0; }      // новая глава / пролог — история покажется заново
+      send(o[0], o[1]).then(function (j) {
+        if (!j) return;
+        toast(T.adm.done);
+        if (a !== 'ch' && a !== 'reset') admSheet();
+      });
+    });
+  }
+  $('adm-btn').addEventListener('click', function () { hap('sel'); admSheet(); });
   function buyRig(id) {
     var d = S.d, L = live(), full = usedN() >= slotsN(), wk = weakest(), r = rigCfg(id);
     var back = full && wk && wk.hash < r.hash ? (d.refunds[wk.id] || 0) : 0, need = d.prices[id] - back;
@@ -1467,7 +1665,7 @@
     A.got = Math.min(A.n, A.got + 1);
     var step = A.from + (A.to - A.from) * (A.got - 1) / A.n;          // цифра растёт с каждой монеткой, даже если кадров мало
     if (A.shown < step) A.shown = step;
-    $('w-slx').textContent = slxFix(A.shown);
+    setTxt('w-slx', slxShort(A.shown));
     hap('sel');
     var g = $('wal-glw'), c = $('wal-chip');
     if (g.animate) g.animate([{ opacity: .95 }, { opacity: 0 }], { duration: 420, easing: 'ease-out' });
@@ -1488,8 +1686,8 @@
     var target = A.from + (A.to - A.from) * (A.got / A.n);
     A.shown += (target - A.shown) * k;
     if (Math.abs(target - A.shown) < 1e-10 || document.hidden) A.shown = target;
-    $('w-slx').textContent = slxFix(A.shown);
-    if (S.tab === 'wallet') $('wb-v').textContent = slxFix(A.shown);
+    setTxt('w-slx', slxShort(A.shown));
+    if (S.tab === 'wallet') setTxt('wb-v', slxShort(A.shown));
     if (A.got >= A.n && A.shown === target && A.ok) { S.acc = null; return true; }
     return false;
   }
@@ -1500,8 +1698,12 @@
 
   // v386: «майнинг идёт» — искры добычи вылетают из устройств и летят в хранилище (не больше 4 сразу; ферма стоит / не видно — нет)
   var spkN = 0;
-  function spark() {
-    if (document.hidden || S.tab !== 'farm' || S.ovOpen || spkN >= 4 || !document.body.animate) return;
+  function spark() {                                // v387: на «⚡ Разгоне» искр втрое больше
+    var hot = $('slots').classList.contains('hot');
+    sparkOne(hot); if (hot) { sparkOne(hot); setTimeout(function () { sparkOne(hot); }, 320); }
+  }
+  function sparkOne(hot) {
+    if (document.hidden || S.tab !== 'farm' || S.ovOpen || spkN >= (hot ? 10 : 4) || !document.body.animate) return;
     if (document.documentElement.classList.contains('calm')) return;
     var d = S.d, L = live(), box = $('slots');
     if (!d || !L || d.on === false || L.full || S.drain || box.classList.contains('idle')) return;
@@ -1511,6 +1713,7 @@
     var sx = r.left + r.width / 2, sy = r.top + r.height * 0.35;
     var tx = t.left + t.width * Math.max(0.04, Math.min(1, L.st / (L.cap || 1))), ty = t.top + t.height / 2;
     var el = document.createElement('i'); el.className = 'spk'; el.style.left = sx + 'px'; el.style.top = sy + 'px';
+    if (hot) el.style.background = 'radial-gradient(circle, #fff 0 24%, #fdba74 50%, rgba(239,68,68,0) 76%)';   // на разгоне искры огненные
     $('fx').appendChild(el); spkN++;
     var dx = tx - sx, dy = ty - sy, side = Math.random() * 50 - 25, done = false;
     var fin = function () { if (done) return; done = true; el.remove(); spkN--; };
