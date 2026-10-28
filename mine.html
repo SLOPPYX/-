@@ -79,7 +79,7 @@
              background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.03)); border: 1px solid var(--ln2); }
   .loc b { display: block; font-size: 16.5px; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .loc small { display: block; font-size: 12px; color: var(--tx3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .wal { flex: 0 0 auto; display: flex; align-items: center; gap: 7px; padding: 7px 11px 7px 7px; border-radius: 999px;
+  .wal { position: relative; flex: 0 0 auto; display: flex; align-items: center; gap: 7px; padding: 7px 11px 7px 7px; border-radius: 999px;
          background: rgba(139,92,246,.14); border: 1px solid rgba(167,139,250,.34); font-size: 13.5px; }
   .wal svg { flex: 0 0 auto; }
   .wal b { font-weight: 800; }
@@ -127,18 +127,44 @@
   .rh b { color: var(--tx); font-size: 15px; }
   .rh .hs { color: var(--cy); font-weight: 700; font-size: 14px; }
   .slots { position: relative; display: grid; grid-template-columns: repeat(var(--cols, 4), 1fr); gap: 8px; }
-  .sl { position: relative; aspect-ratio: 1; border-radius: 14px; display: grid; place-items: center; font-size: 25px;
-        background: rgba(255,255,255,.05); border: 1px solid var(--ln); }
-  .sl.em { border-style: dashed; color: var(--tx3); font-size: 18px; background: transparent; }
-  .sl .gw { position: absolute; inset: 14%; border-radius: 50%; background: radial-gradient(closest-side, var(--rc, var(--p1)), transparent);
-            opacity: .38; animation: hum 2.4s ease-in-out infinite; }
-  .sl .ic { position: relative; line-height: 1; }
+  .sl { position: relative; aspect-ratio: 1; border-radius: 14px; overflow: hidden; border: 1px solid var(--ln);
+        background: radial-gradient(circle at 50% 46%, var(--rc, rgba(139,92,246,.35)), rgba(255,255,255,.03) 70%); }
+  .sl.em { display: grid; place-items: center; border-style: dashed; color: var(--tx3); font-size: 18px; background: transparent; }
+  .sl .dv { position: absolute; inset: 7%; }          /* v386: не .rw — так зовётся золотая плашка «🎁 Награда» в сюжете */
+  .sl .ri { position: absolute; inset: 0; width: 100%; height: 100%; }
   .sl .led { position: absolute; top: 6px; right: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--gr);
-             box-shadow: 0 0 6px var(--gr); animation: led 1.3s steps(2, jump-none) infinite; }
-  .sl.off .led { background: var(--red); box-shadow: 0 0 6px var(--red); animation: none; }
-  .sl.off .gw { opacity: .08; animation: none; }
-  @keyframes hum { 50% { opacity: .62; transform: scale(1.12); } }
+             box-shadow: 0 0 6px var(--gr); animation: led 1.3s steps(2, jump-none) infinite; animation-delay: var(--d, 0s); }
   @keyframes led { 50% { opacity: .25; } }
+  /* v386: движущиеся части устройств — отдельные слои поверх картинки (крутится или едет только слой — на телефоне дёшево) */
+  .sl .fan { position: absolute; border-radius: 50%; animation: spin .8s linear infinite; animation-delay: var(--d, 0s);
+             background: radial-gradient(circle, #2a2342 0 17%, transparent 18%),
+               conic-gradient(rgba(221,214,254,.9) 0 8%, transparent 0 20%, rgba(221,214,254,.9) 0 28%, transparent 0 40%, rgba(221,214,254,.9) 0 48%,
+                              transparent 0 60%, rgba(221,214,254,.9) 0 68%, transparent 0 80%, rgba(221,214,254,.9) 0 88%, transparent 0); }
+  .sl .fan.rv { animation-direction: reverse; }
+  .sl .scan, .sl .swp, .sl .bub { position: absolute; overflow: hidden; border-radius: 2px; }
+  .sl .scan b { position: absolute; left: 0; right: 0; top: 0; height: 32%; background: linear-gradient(180deg, transparent, rgba(255,255,255,.5), transparent);
+                animation: scn 2.2s linear infinite; animation-delay: var(--d, 0s); }
+  @keyframes scn { from { transform: translateY(-100%); } to { transform: translateY(320%); } }
+  .sl .swp b { position: absolute; top: 0; bottom: 0; left: 0; width: 34%; background: linear-gradient(90deg, transparent, rgba(196,181,253,.6), transparent);
+               animation: swp 2.4s ease-in-out infinite; animation-delay: var(--d, 0s); }
+  @keyframes swp { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+  .sl .bub i { position: absolute; top: 0; height: 100%; width: 3px; animation: bub 2.4s ease-in infinite; }
+  .sl .bub i::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 3px; border-radius: 50%; background: #e0f2fe; }
+  .sl .bub i:nth-child(1) { left: 18%; animation-delay: calc(var(--d, 0s) - .2s); }
+  .sl .bub i:nth-child(2) { left: 50%; animation-delay: calc(var(--d, 0s) - 1s); }
+  .sl .bub i:nth-child(3) { left: 80%; animation-delay: calc(var(--d, 0s) - 1.7s); }
+  @keyframes bub { 0% { transform: translateY(100%); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(4%); opacity: 0; } }
+  .sl .qg { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(233,213,255,.95), rgba(168,85,247,.35) 55%, transparent);
+            animation: qg 2s ease-in-out infinite; animation-delay: var(--d, 0s); }
+  @keyframes qg { 50% { opacity: .35; transform: scale(.82); } }
+  .sl .orb { position: absolute; animation: spin 5s linear infinite; animation-delay: var(--d, 0s); }
+  .sl .orb b { position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid rgba(103,232,249,.85); transform: scaleY(.36); }
+  .sl .orb b::after { content: ''; position: absolute; top: -7px; left: 50%; width: 5px; height: 14px; margin-left: -2.5px; border-radius: 50%; background: #67e8f9; box-shadow: 0 0 6px #67e8f9; }
+  /* ферма стоит (хранилище полное) — вентиляторы замирают, лампочки жёлтые; на паузе у админа — красные; комната за экраном — анимации на паузе */
+  .slots.stop .ri { opacity: .55; }
+  .slots.stop .led { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+  .slots.off .led { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  .slots.stop .sl *, .slots.idle .sl * { animation-play-state: paused !important; }
   .sl.new { animation: pop .6s var(--spring); }
   @keyframes pop { from { transform: scale(.3); opacity: 0; } }
   .sl:active { transform: scale(.94); }
@@ -153,6 +179,11 @@
                 animation: spin 3.2s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .core.dry { filter: grayscale(.6); opacity: .6; }
+  .core .rip { position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(196,181,253,.9); pointer-events: none; animation: rip .55s var(--ease) forwards; }
+  @keyframes rip { from { transform: scale(.7); opacity: 1; } to { transform: scale(1.45); opacity: 0; } }
+  .core.shake { animation: shk .4s ease; }
+  @keyframes shk { 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+  .enl.flash #en-r { color: var(--gold); }
   .tapi { flex: 1; min-width: 0; }
   .tapi b { display: block; font-size: 15px; }
   .tapi small { display: block; color: var(--tx3); font-size: 12.5px; margin-top: 2px; }
@@ -173,8 +204,12 @@
   /* ── магазин ── */
   .sh { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--tx3); margin: 16px 2px 8px; }
   .it { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 17px; background: var(--card); border: 1px solid var(--ln); margin-bottom: 8px; }
-  .it .ie { width: 50px; height: 50px; flex: 0 0 auto; border-radius: 14px; display: grid; place-items: center; font-size: 27px;
+  .it .ie { position: relative; width: 50px; height: 50px; flex: 0 0 auto; border-radius: 14px; display: grid; place-items: center; font-size: 27px;
             background: radial-gradient(circle at 50% 40%, var(--rc, rgba(139,92,246,.4)), rgba(255,255,255,.03) 72%); border: 1px solid var(--ln2); }
+  .it .ie .ri { position: absolute; inset: 5px; width: calc(100% - 10px); height: calc(100% - 10px); }
+  .rh3 { display: flex; align-items: center; gap: 8px; }
+  .rh3 .ri { width: 34px; height: 34px; flex: 0 0 auto; }
+  .bb .ri { width: 17px; height: 17px; vertical-align: -4px; }
   .it .im { flex: 1; min-width: 0; }
   .it .im b { display: block; font-size: 15px; }
   .it .im small { display: block; font-size: 12.3px; color: var(--tx3); line-height: 1.35; }
@@ -301,18 +336,31 @@
   .lines { max-height: 40vh; overflow-y: auto; padding-top: 6px; }
 
   /* ── всплывашки, частицы, большие события ── */
-  .toast { position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top)); z-index: 90; max-width: calc(100% - 28px); padding: 11px 16px; border-radius: 14px;
-           background: rgba(30,24,48,.97); border: 1px solid var(--ln2); font-size: 14px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.5);
-           transform: translate(-50%, -150%); transition: transform .35s var(--spring); pointer-events: none; }
-  .toast.on { transform: translate(-50%, 0); }
-  .toast.err { border-color: rgba(248,113,113,.6); }
+  /* v386: всплывашка — внизу, над меню: сверху она закрывала шапку и кошелёк, куда летят токены */
+  .toast { position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 90; max-width: calc(100% - 28px); padding: 11px 16px;
+           border-radius: 14px; background: rgba(30,24,48,.97); border: 1px solid var(--ln2); font-size: 14px; text-align: center;
+           box-shadow: 0 10px 30px rgba(0,0,0,.5); transform: translate(-50%, 14px); opacity: 0; transition: transform .35s var(--spring), opacity .25s;
+           pointer-events: none; }
+  .toast.on { transform: translate(-50%, 0); opacity: 1; }
+  /* v386: было .toast.err — а .err — это экран ошибки на весь экран (inset: 0, чёрный фон): красная всплывашка растягивалась
+     в огромный чёрный блок поверх игры. Теперь у всплывашки свой класс .bad, у экрана ошибки — .errs. */
+  .toast.bad { border-color: rgba(248,113,113,.6); }
   .fx { position: fixed; inset: 0; z-index: 70; pointer-events: none; overflow: hidden; }
   .fx .pt { position: absolute; font-weight: 800; font-size: 14px; color: var(--p3); text-shadow: 0 0 8px rgba(139,92,246,.9); white-space: nowrap;
             animation: up 1s var(--ease) forwards; }
   @keyframes up { to { transform: translate(var(--dx, 0), -70px); opacity: 0; } }
-  .fx .cn { position: absolute; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 900; color: #2e1065;
-            background: radial-gradient(circle at 35% 30%, #f5f3ff, #a78bfa 60%, #6d28d9); box-shadow: 0 0 10px rgba(167,139,250,.9);
-            transition: transform .75s cubic-bezier(.5,-0.3,.6,1), opacity .75s; }
+  /* v386: монетки — настоящий токен SLX (тот же значок, что на бирже), летят дугой и крутятся; искры — добыча летит в хранилище */
+  .fx .tok { position: absolute; left: 0; top: 0; width: 26px; height: 26px; margin: -13px 0 0 -13px; will-change: transform, opacity; }
+  .fx .tok b { position: absolute; inset: 0; border-radius: 50%; background: var(--tokimg) center / 100% 100% no-repeat;
+               box-shadow: 0 0 14px rgba(167,139,250,.8); animation: flip .6s linear infinite; }
+  @keyframes flip { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(.12); } }   /* монетка «крутится» сжатием — без зеркальной надписи */
+  .fx .spk { position: absolute; left: 0; top: 0; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; border-radius: 50%;
+             background: radial-gradient(circle, #fff 0 24%, #c4b5fd 50%, rgba(139,92,246,0) 76%); box-shadow: 0 0 10px 2px rgba(167,139,250,.55);
+             will-change: transform, opacity; }
+  .fx .wplus { position: absolute; font-weight: 800; font-size: 13px; color: #ede9fe; text-shadow: 0 0 10px rgba(139,92,246,.95); white-space: nowrap;
+               animation: wpl 1.5s var(--ease) forwards; }
+  @keyframes wpl { 0% { transform: translateY(6px); opacity: 0; } 18% { transform: none; opacity: 1; } 100% { transform: translateY(-26px); opacity: 0; } }
+  .wal .glw { position: absolute; inset: -3px; border-radius: 999px; box-shadow: 0 0 0 2px rgba(196,181,253,.9), 0 0 18px rgba(139,92,246,.95); opacity: 0; pointer-events: none; }
   .big-ev { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; pointer-events: none; }
   .big-ev .bx { text-align: center; padding: 22px 26px; border-radius: 24px; background: rgba(18,14,30,.94); border: 1px solid rgba(251,191,36,.6);
                 box-shadow: 0 0 60px rgba(251,191,36,.35); animation: bev 2.4s var(--ease) forwards; }
@@ -331,12 +379,12 @@
   body[data-state="loading"] .tab, body[data-state="loading"] .nav { visibility: hidden; }
   .ld { display: none; }
   body[data-state="loading"] .ld { display: block; }
-  .err { position: fixed; inset: 0; z-index: 95; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-         padding: 30px; background: var(--bg); }
-  .err .ic { font-size: 48px; margin-bottom: 12px; }
-  .err h2 { font-size: 20px; margin-bottom: 8px; }
-  .err p { color: var(--tx2); font-size: 14.5px; line-height: 1.5; max-width: 340px; margin-bottom: 18px; }
-  .err button { padding: 12px 22px; border-radius: 14px; background: var(--p1); font-weight: 700; }
+  .errs { position: fixed; inset: 0; z-index: 95; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+          padding: 30px; background: var(--bg); }
+  .errs .ic { font-size: 48px; margin-bottom: 12px; }
+  .errs h2 { font-size: 20px; margin-bottom: 8px; }
+  .errs p { color: var(--tx2); font-size: 14.5px; line-height: 1.5; max-width: 340px; margin-bottom: 18px; }
+  .errs button { padding: 12px 22px; border-radius: 14px; background: var(--p1); font-weight: 700; }
   .stale { margin: 0 0 10px; padding: 8px 12px; border-radius: 12px; font-size: 12.5px; text-align: center; color: var(--tx2); background: rgba(255,255,255,.05); border: 1px solid var(--ln); }
   @media (max-width: 360px) {
     main { padding-left: 10px; padding-right: 10px; }
@@ -348,11 +396,107 @@
 </style>
 </head>
 <body data-state="loading" data-ch="1">
+<!-- v386: значки устройств — один раз здесь, дальше <use href="#ic-…">. Градиенты в видимом (нулевого размера) SVG: в спрятанном
+     (display: none) браузер не рисует градиенты у ссылок на них. Движущиеся части (вентиляторы, экраны, пузырьки, орбита) — слоями в странице. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="mgB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2d2547"/><stop offset="1" stop-color="#120e22"/></linearGradient>
+    <linearGradient id="mgS" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset=".55" stop-color="#4f46e5"/><stop offset="1" stop-color="#06b6d4"/></linearGradient>
+    <linearGradient id="mgM" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#57506f"/><stop offset="1" stop-color="#28233d"/></linearGradient>
+    <linearGradient id="mgG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d97706"/><stop offset=".5" stop-color="#fde68a"/><stop offset="1" stop-color="#d97706"/></linearGradient>
+    <linearGradient id="mgR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset=".5" stop-color="#a855f7"/><stop offset="1" stop-color="#f472b6"/></linearGradient>
+    <linearGradient id="mgRh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22d3ee"/><stop offset=".5" stop-color="#a855f7"/><stop offset="1" stop-color="#f472b6"/></linearGradient>
+    <linearGradient id="mgL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#67e8f9" stop-opacity=".55"/><stop offset="1" stop-color="#2563eb" stop-opacity=".8"/></linearGradient>
+    <radialGradient id="mgC" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#e9d5ff"/><stop offset=".72" stop-color="#a855f7"/><stop offset="1" stop-color="#4c1d95"/></radialGradient>
+    <radialGradient id="mgF" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#231c3b"/><stop offset="1" stop-color="#09070f"/></radialGradient>
+  </defs>
+  <symbol id="ic-phone" viewBox="0 0 48 48">
+    <rect x="14.5" y="4" width="19" height="40" rx="4.5" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".75"/>
+    <rect x="16.5" y="8.5" width="15" height="29" rx="2" fill="url(#mgS)"/>
+    <path d="M18.2 31.5l3.1-4 2.6 2.2 3.3-5.6 2.6 2.3" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M19 11.5l3 3.6-1.6 3 3.6 3.4" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width=".75"/>
+    <rect x="21" y="5.6" width="6" height="1.2" rx=".6" fill="#453b63"/>
+    <circle cx="24" cy="40.7" r="1.4" fill="#453b63"/>
+  </symbol>
+  <symbol id="ic-laptop" viewBox="0 0 48 48">
+    <rect x="8" y="8" width="32" height="22.5" rx="2.6" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".75"/>
+    <rect x="10.5" y="10.5" width="27" height="17.5" rx="1.3" fill="url(#mgS)"/>
+    <path d="M15 16.5v7.5M20 14v8M25 17.5v6.5M30 12.8v7.5M34 14.5v6.5" stroke="#fff" stroke-opacity=".4" stroke-width=".6"/>
+    <rect x="13.8" y="18" width="2.4" height="4.2" rx=".4" fill="#34d399"/>
+    <rect x="18.8" y="15.4" width="2.4" height="4.8" rx=".4" fill="#34d399"/>
+    <rect x="23.8" y="19" width="2.4" height="3.6" rx=".4" fill="#fb7185"/>
+    <rect x="28.8" y="14.2" width="2.4" height="4.4" rx=".4" fill="#34d399"/>
+    <rect x="32.8" y="15.9" width="2.4" height="3.8" rx=".4" fill="#34d399"/>
+    <path d="M4 31.6h40l-3.2 5.1c-.4.6-1 .9-1.7.9H8.9c-.7 0-1.3-.3-1.7-.9z" fill="url(#mgM)" stroke="#8b80b3" stroke-opacity=".6"/>
+    <rect x="20" y="33" width="8" height="1.6" rx=".8" fill="#1a1530"/>
+  </symbol>
+  <symbol id="ic-pc" viewBox="0 0 48 48">
+    <rect x="11" y="3.5" width="26" height="41" rx="3.5" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".75"/>
+    <rect x="14.6" y="7" width="18.8" height="34" rx="2" fill="#0c0917" stroke="#a78bfa" stroke-opacity=".28"/>
+    <circle cx="24" cy="16" r="6.4" fill="url(#mgF)" stroke="#22d3ee" stroke-width="1.4"/>
+    <circle cx="24" cy="31" r="6.4" fill="url(#mgF)" stroke="#c084fc" stroke-width="1.4"/>
+    <rect x="12.4" y="7" width="1.2" height="34" rx=".6" fill="url(#mgR)"/>
+    <circle cx="34.6" cy="6.4" r=".9" fill="#34d399"/>
+  </symbol>
+  <symbol id="ic-gpu" viewBox="0 0 48 48">
+    <rect x="2.4" y="12.5" width="2.2" height="24" rx=".8" fill="#6b6585"/>
+    <rect x="5" y="13" width="40" height="21" rx="3.2" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".75"/>
+    <path d="M8 15.6h34" stroke="url(#mgRh)" stroke-width="1.3" stroke-linecap="round"/>
+    <circle cx="17" cy="24.5" r="7.3" fill="url(#mgF)" stroke="#fff" stroke-opacity=".22"/>
+    <circle cx="33" cy="24.5" r="7.3" fill="url(#mgF)" stroke="#fff" stroke-opacity=".22"/>
+    <rect x="11" y="34" width="22" height="3.2" rx=".6" fill="url(#mgG)"/>
+    <path d="M13.5 34v3.2M16 34v3.2M18.5 34v3.2M21 34v3.2M23.5 34v3.2M26 34v3.2M28.5 34v3.2M31 34v3.2" stroke="#92400e" stroke-width=".5"/>
+  </symbol>
+  <symbol id="ic-rig" viewBox="0 0 48 48">
+    <path d="M4 8h40M4 40h40M6.5 6v38M41.5 6v38" stroke="#6b6585" stroke-width="1.7" stroke-linecap="round" fill="none"/>
+    <rect x="9" y="11" width="9" height="27" rx="1.6" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".65"/>
+    <rect x="19.5" y="11" width="9" height="27" rx="1.6" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".65"/>
+    <rect x="30" y="11" width="9" height="27" rx="1.6" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".65"/>
+    <g fill="url(#mgF)" stroke="#fff" stroke-opacity=".28">
+      <circle cx="13.5" cy="20" r="3.3"/><circle cx="13.5" cy="30" r="3.3"/><circle cx="24" cy="20" r="3.3"/>
+      <circle cx="24" cy="30" r="3.3"/><circle cx="34.5" cy="20" r="3.3"/><circle cx="34.5" cy="30" r="3.3"/>
+    </g>
+    <g stroke="#ddd6fe" stroke-opacity=".55" stroke-width=".7">
+      <path d="M11.4 20h4.2M13.5 17.9v4.2M11.4 30h4.2M13.5 27.9v4.2M21.9 20h4.2M24 17.9v4.2M21.9 30h4.2M24 27.9v4.2M32.4 20h4.2M34.5 17.9v4.2M32.4 30h4.2M34.5 27.9v4.2"/>
+    </g>
+    <rect x="10.5" y="12.4" width="6" height=".9" rx=".45" fill="#22d3ee"/>
+    <rect x="21" y="12.4" width="6" height=".9" rx=".45" fill="#a855f7"/>
+    <rect x="31.5" y="12.4" width="6" height=".9" rx=".45" fill="#f472b6"/>
+  </symbol>
+  <symbol id="ic-asic" viewBox="0 0 48 48">
+    <path d="M5 16H2.6M5 33H2.6" stroke="#6b6585" stroke-width="1.6" stroke-linecap="round"/>
+    <rect x="5" y="11" width="38" height="27" rx="3" fill="url(#mgM)" stroke="#b4aed0" stroke-opacity=".7"/>
+    <path d="M9 15.5v18.5M12 15.5v18.5M15 15.5v18.5M18 15.5v18.5M21 15.5v18.5" stroke="#0e0b1a" stroke-opacity=".6" stroke-width="1.3"/>
+    <circle cx="32.5" cy="24.5" r="9" fill="url(#mgF)" stroke="#e5e7eb" stroke-opacity=".4"/>
+    <circle cx="32.5" cy="24.5" r="7.9" fill="none" stroke="#e5e7eb" stroke-opacity=".14" stroke-width="1.8" stroke-dasharray="1.2 1.5"/>
+    <rect x="7.5" y="35" width="3" height="1.2" rx=".6" fill="#34d399"/>
+    <rect x="12" y="35" width="3" height="1.2" rx=".6" fill="#fbbf24"/>
+  </symbol>
+  <symbol id="ic-hydro" viewBox="0 0 48 48">
+    <path d="M14 6.4h20M17.5 3.4v3M30.5 3.4v3" stroke="#7dd3fc" stroke-width="1.6" stroke-linecap="round"/>
+    <rect x="8" y="7" width="32" height="36" rx="4.5" fill="#0b1324" stroke="#7dd3fc" stroke-opacity=".8" stroke-width="1.2"/>
+    <rect x="9.5" y="14" width="29" height="27.5" rx="3" fill="url(#mgL)"/>
+    <rect x="13" y="17.5" width="5" height="21" rx="1" fill="#1e1b4b" stroke="#a78bfa" stroke-opacity=".75" stroke-width=".8"/>
+    <rect x="21.5" y="17.5" width="5" height="21" rx="1" fill="#1e1b4b" stroke="#a78bfa" stroke-opacity=".75" stroke-width=".8"/>
+    <rect x="30" y="17.5" width="5" height="21" rx="1" fill="#1e1b4b" stroke="#a78bfa" stroke-opacity=".75" stroke-width=".8"/>
+    <path d="M10 14h28" stroke="#e0f2fe" stroke-opacity=".75" stroke-width=".8"/>
+    <rect x="10.5" y="8.6" width="6" height="3" rx="1" fill="#22d3ee" fill-opacity=".3"/>
+  </symbol>
+  <symbol id="ic-quant" viewBox="0 0 48 48">
+    <ellipse cx="24" cy="41" rx="13" ry="3.2" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".65"/>
+    <path d="M24 29.5v8.4" stroke="#a78bfa" stroke-opacity=".65" stroke-width="1.6"/>
+    <ellipse cx="24" cy="21" rx="17" ry="6.4" fill="none" stroke="#22d3ee" stroke-opacity=".7" transform="rotate(-28 24 21)"/>
+    <ellipse cx="24" cy="21" rx="17" ry="6.4" fill="none" stroke="#c084fc" stroke-opacity=".7" transform="rotate(28 24 21)"/>
+    <circle cx="24" cy="21" r="7.6" fill="url(#mgC)"/>
+    <circle cx="9.4" cy="13.6" r="1.5" fill="#22d3ee"/>
+    <circle cx="38.6" cy="13.6" r="1.5" fill="#f0abfc"/>
+  </symbol>
+</svg>
 <div class="bg"><i class="gl g1"></i><i class="gl g2"></i><div class="grid"></div><div class="stars" id="stars"></div></div>
 <main>
   <header class="top">
     <div class="loc"><div class="le" id="loc-e">🏚</div><div style="min-width:0"><b id="loc-n">Майнинг SLX</b><small id="loc-c"></small></div></div>
-    <button type="button" class="wal" id="wal-chip"><span id="wal-logo"></span><b class="mono" id="w-slx">—</b></button>
+    <button type="button" class="wal" id="wal-chip"><i class="glw" id="wal-glw"></i><span id="wal-logo"></span><b class="mono" id="w-slx">—</b></button>
   </header>
   <div class="ld">
     <div class="card sk" style="height:210px"></div><div class="card sk" style="height:170px"></div><div class="card sk" style="height:120px"></div>
@@ -449,7 +593,7 @@
 </div>
 <div class="fx" id="fx"></div>
 <div class="toast" id="toast"></div>
-<div class="err" id="err" hidden><div class="ic" id="err-ic">📡</div><h2 id="err-h"></h2><p id="err-p"></p><button type="button" id="err-retry"></button></div>
+<div class="errs" id="err" hidden><div class="ic" id="err-ic">📡</div><h2 id="err-h"></h2><p id="err-p"></p><button type="button" id="err-retry"></button></div>
 <script>
 /* SDK Telegram — не блокируя страницу */
 (function () {
@@ -628,81 +772,77 @@
     coachTap: '👆 Жми — майни вручную', coachCol: '⛏ Собери добычу', coachShop: '🛒 Купи ещё устройство'
   };
 
-  // ── сюжет: [кто, текст]; n — рассказчик ──
+  // ── сюжет: [кто, текст]; n — рассказчик. v386: те же события, короче (Кирилл: «сюжет оставь, убери лишние слова») ──
   var STORY = EN ? {
-    0: [['n', 'Night. Rain taps on the window. All you have is an old phone with a crack across the screen.'],
-        ['x', 'SLX is a coin for our own people. The network is growing. Start small — and you will rise above everyone. — X'],
-        ['n', 'You go down to the basement, put the phone on charge and start the miner. The screen blinks: “Hash found”.']],
-    1: [['n', 'A damp basement of an old house. The bulb flickers, water drips in the corner. But the socket works.'],
-        ['ded', 'Ho-ho! Mining on a phone? That’s how I started in 2009, when bitcoin was cheaper than a shawarma. I’ll teach you, neighbour.'],
-        ['ded', 'Rule one: collect the mining — storage isn’t endless. Rule two: put every coin to work. Show me you won’t quit — and my old laptop is yours.']],
-    '1o': [['ded', 'Well done! Here are the keys to my garage — no car there for ages, but lots of sockets. And take the laptop.']],
-    2: [['n', 'Old Byte’s garage: a workbench, worn tyres and six whole sockets. The fans hum so loud the neighbours knock on the wall.'],
-        ['lisa', 'Hi neighbour! I’m Lisa, two garages down. I can hear your farm from the street — your storage is tiny, everything is lost while you sleep.'],
-        ['lisa', 'Deal: upgrade the storage and build a gaming PC — and I’ll give you a graphics card. I solder them better than anyone around.']],
-    '2o': [['lisa', 'The garage is too small for you. There’s an empty warehouse in the port — sea wind cools the hardware for free. Shall we?']],
-    3: [['n', 'A huge warehouse by the sea. The wind roams between the shelves — you couldn’t wish for better cooling.'],
-        ['n', 'A black jeep stops at the gates. A man in an expensive suit gets out.'],
-        ['block', 'Mister Block, GigaHash corporation. We buy small farms. Sell us yours — 500 tokens, and forget about mining.'],
-        ['me', 'No, thanks. My farm is not for sale.'],
-        ['x', 'Don’t sell out. Hunt for lucky blocks — they come to those who mine.']],
-    '3o': [['ded', 'GigaHash bought up all the electricity in town. But a pilot friend of mine has an empty hangar up north — its own generator and −30° frost. Cold is a miner’s best friend!']],
-    4: [['n', 'A snowy airfield beyond the Arctic Circle. It’s −30° in the hangar — the hardware never heats up.'],
-        ['lisa', 'Here we can build real mining rigs — six graphics cards on a frame. And we need storage for the whole polar night!'],
-        ['block', 'The north? Brave. But GigaHash is everywhere. Let’s see how long you last.']],
-    '4o': [['x', 'You grow faster than they thought. Time to build your own data center.']],
-    5: [['n', 'Your own data center: rows of racks, blue lights, the hum of hundreds of fans.'],
-        ['n', 'At night the power goes out. Someone cut the cable — the GigaHash logo is on it.'],
-        ['lisa', 'Easy! I ran a backup line — the farm is back. Install ASIC miners, they are many times stronger than graphics cards.'],
-        ['ded', 'Don’t give up, neighbour. Collect the mining a hundred times — and you’ll see you’re no rookie anymore.']],
-    '5o': [['block', 'Fine. A million tokens for your farm. Last offer.'], ['n', 'You silently close the door.'],
-           ['lisa', 'There’s a volcano in Iceland. The energy of the Earth — free and endless…']],
-    6: [['n', 'Iceland. A farm at the foot of a volcano: magma boils underground, glacier water cools the hardware.'],
-        ['lisa', 'Hydro farms! Boards in liquid — no dust, no overheating. The most powerful hardware on Earth.'],
-        ['x', 'One more step — and we’ll meet. A whole day of storage, hydro farms — and look higher than the Earth.']],
-    '6o': [['n', 'At night an aurora lights up over the volcano. A capsule with the letters “SLX” descends from the sky.']],
-    7: [['n', 'An orbital station. The whole Earth below you, the silence of space and the cold of vacuum all around.'],
-        ['x', 'Hello. I am X. I created SLX for our own — for those who start small and never give up.'],
-        ['x', 'You came all the way from a damp basement to orbit. The last trial — quantum nodes. Become the Keeper of the network.']],
-    8: [['x', 'You are the SLX Keeper. GigaHash sold its farms — Mister Block now mines on a phone in a basement. And the SLX network is yours.'],
-        ['ded', 'Told you: start small!'], ['lisa', 'Shall we build a second farm? Just kidding. Or not 😉']]
+    0: [['n', 'Night. All you have is an old phone with a cracked screen.'],
+        ['x', 'SLX is a coin for our own. Start small — rise above everyone. — X'],
+        ['n', 'You plug the phone in, down in the basement, and start the miner.']],
+    1: [['n', 'A damp basement. The bulb flickers, but the socket works.'],
+        ['ded', 'Mining on a phone? I started like that in 2009. I’ll teach you, neighbour!'],
+        ['ded', 'Collect on time and put every coin to work. Do well — and my laptop is yours.']],
+    '1o': [['ded', 'Well done! Here’s the laptop — and the keys to my garage.']],
+    2: [['n', 'Old Byte’s garage. The fans are so loud the neighbours knock on the wall.'],
+        ['lisa', 'Hi, I’m Lisa! Your storage is tiny — everything is lost while you sleep.'],
+        ['lisa', 'Upgrade the storage and build a gaming PC — I’ll give you a graphics card.']],
+    '2o': [['lisa', 'The garage is too small. There’s an empty port warehouse — sea wind cools the hardware. Let’s go?']],
+    3: [['n', 'A warehouse by the sea. The wind cools better than any fan.'],
+        ['block', 'Mister Block, GigaHash. 500 tokens for your farm — and forget mining.'],
+        ['me', 'My farm is not for sale.'],
+        ['x', 'Don’t sell out. Lucky blocks come to those who mine.']],
+    '3o': [['ded', 'GigaHash bought all the power in town. But up north there’s a hangar with its own generator. Cold is a miner’s friend!']],
+    4: [['n', 'An airfield beyond the Arctic Circle. −30° in the hangar — no overheating.'],
+        ['lisa', 'Time for real mining rigs. And storage for the whole polar night!'],
+        ['block', 'The north? Brave. Let’s see how long you last.']],
+    '4o': [['x', 'You grow faster than they thought. Time for your own data center.']],
+    5: [['n', 'Your data center: rows of racks and the hum of hundreds of fans.'],
+        ['n', 'At night the power dies — someone cut the cable. It has the GigaHash logo.'],
+        ['lisa', 'I ran a backup line! Install ASIC miners — they are many times stronger.']],
+    '5o': [['block', 'A million tokens for the farm. Last offer.'], ['n', 'You silently close the door.'],
+           ['lisa', 'There’s a volcano in Iceland — free energy of the Earth…']],
+    6: [['n', 'Iceland. Magma boils under the farm, glacier water cools the hardware.'],
+        ['lisa', 'Hydro farms! Boards in liquid — the most powerful hardware on Earth.'],
+        ['x', 'One more step and we’ll meet. Look higher than the Earth.']],
+    '6o': [['n', 'An aurora lights up over the volcano. A capsule marked “SLX” comes down.']],
+    7: [['n', 'An orbital station. The whole Earth below you.'],
+        ['x', 'I am X. I created SLX for our own — for those who never give up.'],
+        ['x', 'From a basement to orbit. The last trial — quantum nodes.']],
+    8: [['x', 'You are the SLX Keeper. GigaHash sold its farms — the SLX network is yours.'],
+        ['ded', 'Told you: start small!']]
   } : {
-    0: [['n', 'Ночь. Дождь стучит по окну. У тебя — только старый телефон с трещиной через весь экран.'],
-        ['x', 'SLX — монета для своих. Сеть растёт. Начни с малого — и поднимешься выше всех. — X'],
-        ['n', 'Ты спускаешься в подвал, ставишь телефон на зарядку и запускаешь майнер. Экран мигает: «Хеш найден».']],
-    1: [['n', 'Сырой подвал старого дома. Лампочка мигает, в углу капает вода. Зато розетка работает.'],
-        ['ded', 'Хо-хо! Майнишь на телефоне? Я так в 2009-м начинал, когда биткоин стоил дешевле шаурмы. Наставлю тебя, сосед.'],
-        ['ded', 'Правило первое: собирай добычу — хранилище не резиновое. Правило второе: каждая монета — в дело. Покажешь, что не бросишь, — отдам свой старый ноутбук.']],
-    '1o': [['ded', 'Молодец! Держи ключи от моего гаража — машины там давно нет, а розеток много. И ноутбук забирай.']],
-    2: [['n', 'Гараж Деда Байта: верстак, старые покрышки и целых шесть розеток. Кулеры гудят так, что соседи стучат в стену.'],
-        ['lisa', 'Привет, сосед! Я Лиса, живу через два гаража. Слышу твою ферму с улицы — хранилище у тебя крошечное, всё пропадает, пока ты спишь.'],
-        ['lisa', 'Давай так: прокачаешь хранилище и соберёшь игровой ПК — подарю тебе видеокарту. Я их паяю лучше всех в районе.']],
-    '2o': [['lisa', 'Гараж тебе мал. В порту пустует склад — с моря дует ветер, железо охлаждается само. Едем?']],
-    3: [['n', 'Огромный склад у моря. Ветер гуляет между стеллажами — лучшего охлаждения не придумаешь.'],
-        ['n', 'У ворот тормозит чёрный джип. Из него выходит человек в дорогом костюме.'],
-        ['block', 'Мистер Блок, корпорация «ГигаХэш». Мы скупаем мелкие фермы. Продай нам свою — дадим 500 токенов, и забудь про майнинг.'],
-        ['me', 'Нет уж. Ферма не продаётся.'],
-        ['x', 'Не продавайся. Ищи удачные блоки — они приходят к тем, кто майнит.']],
-    '3o': [['ded', '«ГигаХэш» скупил всё электричество в городе. Но у меня есть друг-лётчик: на севере пустует ангар — свой генератор и мороз −30. Холод — лучший друг майнера!']],
-    4: [['n', 'Заснеженный аэродром за полярным кругом. В ангаре −30 — железо не греется вовсе.'],
-        ['lisa', 'Тут можно собрать настоящие майнинг-риги — по шесть видеокарт на раме. И хранилище нужно на всю полярную ночь!'],
-        ['block', 'Север? Смело. Но «ГигаХэш» везде. Посмотрим, долго ли ты протянешь.']],
+    0: [['n', 'Ночь. У тебя только старый телефон с трещиной на экране.'],
+        ['x', 'SLX — монета для своих. Начни с малого — поднимешься выше всех. — X'],
+        ['n', 'Ты ставишь телефон на зарядку в подвале и запускаешь майнер.']],
+    1: [['n', 'Сырой подвал. Мигает лампочка, но розетка работает.'],
+        ['ded', 'Майнишь на телефоне? Я так начинал в 2009-м. Научу, сосед!'],
+        ['ded', 'Собирай добычу вовремя и вкладывай каждую монету. Справишься — отдам свой ноутбук.']],
+    '1o': [['ded', 'Молодец! Держи ноутбук и ключи от моего гаража.']],
+    2: [['n', 'Гараж Деда Байта. Кулеры гудят так, что соседи стучат в стену.'],
+        ['lisa', 'Привет, я Лиса! Хранилище у тебя крошечное — всё пропадает, пока ты спишь.'],
+        ['lisa', 'Прокачай хранилище и собери игровой ПК — подарю видеокарту.']],
+    '2o': [['lisa', 'Гараж тебе мал. В порту пустует склад — морской ветер охлаждает железо. Едем?']],
+    3: [['n', 'Склад у моря. Ветер охлаждает лучше любых кулеров.'],
+        ['block', 'Мистер Блок, «ГигаХэш». 500 токенов за ферму — и забудь про майнинг.'],
+        ['me', 'Ферма не продаётся.'],
+        ['x', 'Не продавайся. Удачные блоки приходят к тем, кто майнит.']],
+    '3o': [['ded', '«ГигаХэш» скупил всё электричество в городе. Но на севере есть ангар со своим генератором. Холод — друг майнера!']],
+    4: [['n', 'Аэродром за полярным кругом. В ангаре −30 — железо не греется.'],
+        ['lisa', 'Пора собирать настоящие майнинг-риги. И хранилище — на всю полярную ночь!'],
+        ['block', 'Север? Смело. Посмотрим, долго ли протянешь.']],
     '4o': [['x', 'Ты растёшь быстрее, чем они думали. Пора строить свой дата-центр.']],
-    5: [['n', 'Твой собственный дата-центр: ряды стоек, синие огни, гул сотен вентиляторов.'],
-        ['n', 'Ночью гаснет свет. Кто-то перерезал кабель — на нём логотип «ГигаХэш».'],
-        ['lisa', 'Спокойно! Я протянула резервную линию — ферма снова в строю. Ставь ASIC-майнеры, они в разы мощнее видеокарт.'],
-        ['ded', 'Не сдавайся, сосед. Собери добычу сто раз — и сам поймёшь, что ты уже не новичок.']],
-    '5o': [['block', 'Ладно. Миллион токенов за твою ферму. Последнее предложение.'], ['n', 'Ты молча закрываешь дверь.'],
-           ['lisa', 'В Исландии есть вулкан. Энергия земли — бесплатная и бесконечная…']],
-    6: [['n', 'Исландия. Ферма у подножия вулкана: под землёй кипит магма, ледниковая вода охлаждает железо.'],
-        ['lisa', 'Гидро-фермы! Платы в жидкости — ни пылинки, ни перегрева. Самая мощная техника на Земле.'],
-        ['x', 'Ещё шаг — и мы встретимся. Хранилище на сутки, гидро-фермы — и смотри выше, чем Земля.']],
-    '6o': [['n', 'Ночью над вулканом зажигается сияние. С неба спускается капсула с надписью «SLX».']],
-    7: [['n', 'Орбитальная станция. Под тобой — вся Земля, вокруг — тишина космоса и холод вакуума.'],
-        ['x', 'Привет. Я — X. Я создал SLX для своих — для тех, кто начинает с малого и не сдаётся.'],
-        ['x', 'Ты прошёл путь от сырого подвала до орбиты. Последнее испытание — квантовые узлы. Стань Хранителем сети.']],
-    8: [['x', 'Ты — Хранитель SLX. «ГигаХэш» продал свои фермы — Мистер Блок теперь майнит на телефоне в подвале. А сеть SLX — твоя.'],
-        ['ded', 'Я же говорил: начни с малого!'], ['lisa', 'Строим вторую ферму? Шучу. Или нет 😉']]
+    5: [['n', 'Твой дата-центр: ряды стоек и гул сотен вентиляторов.'],
+        ['n', 'Ночью гаснет свет — кто-то перерезал кабель с логотипом «ГигаХэш».'],
+        ['lisa', 'Я протянула резервную линию! Ставь ASIC-майнеры — они в разы мощнее.']],
+    '5o': [['block', 'Миллион токенов за ферму. Последнее предложение.'], ['n', 'Ты молча закрываешь дверь.'],
+           ['lisa', 'В Исландии есть вулкан — бесплатная энергия земли…']],
+    6: [['n', 'Исландия. Под фермой кипит магма, ледниковая вода охлаждает железо.'],
+        ['lisa', 'Гидро-фермы! Платы в жидкости — самая мощная техника на Земле.'],
+        ['x', 'Ещё шаг — и мы встретимся. Смотри выше Земли.']],
+    '6o': [['n', 'Над вулканом зажигается сияние. С неба спускается капсула с надписью «SLX».']],
+    7: [['n', 'Орбитальная станция. Под тобой — вся Земля.'],
+        ['x', 'Я — X. Я создал SLX для своих — для тех, кто не сдаётся.'],
+        ['x', 'От подвала до орбиты. Последнее испытание — квантовые узлы.']],
+    8: [['x', 'Ты — Хранитель SLX. «ГигаХэш» продал свои фермы, а сеть SLX — твоя.'],
+        ['ded', 'Я же говорил: начни с малого!']]
   };
   var SPK_N = EN ? { x: 'X', ded: 'Old Byte', lisa: 'Lisa', block: 'Mister Block', me: 'You' }
                  : { x: 'X', ded: 'Дед Байт', lisa: 'Лиса', block: 'Мистер Блок', me: 'Ты' };
@@ -818,20 +958,28 @@
   }
   function tick() {                                  // часто меняющееся: хранилище, энергия, кошелёк
     var d = S.d, L = live(); if (!L) return;
-    $('w-slx').textContent = slxFix(L.wallet);
+    var now = performance.now(), Dr = S.drain;
+    if (Dr && now - Dr.t0 > Dr.dur) Dr = S.drain = null;
+    if (S.acc) accStep(0.5);                                         // пока летят монетки, цифру кошелька ведёт «накопление»
+    if (!S.acc) $('w-slx').textContent = slxFix(L.wallet);
     if (S.tab === 'farm') {
-      $('h-val').textContent = slxLive(L.st);
-      $('h-eq').textContent = T.eq(num(L.st * price()));
-      var pct = L.cap > 0 ? Math.min(1, L.st / L.cap) : 0;
+      var st = L.st, full = L.full;
+      if (Dr) { st = Dr.amt * Math.max(0, 1 - (now - Dr.t0) / Dr.dur); full = false; }   // «Собрать»: хранилище плавно пустеет
+      $('h-val').textContent = slxLive(st);
+      $('h-eq').textContent = T.eq(num(st * price()));
+      var pct = L.cap > 0 ? Math.min(1, st / L.cap) : 0;
       $('tank-i').style.transform = 'scaleX(' + pct.toFixed(4) + ')';
-      $('tank').classList.toggle('full', L.full);
+      $('tank').classList.toggle('full', full);
+      var sb = $('slots');
+      sb.classList.toggle('stop', d.on === false || full);
+      sb.classList.toggle('off', d.on === false);
       var fl = $('h-full');
       if (d.on === false) { fl.textContent = T.stopped; fl.className = 'fl'; }
-      else if (L.full) { fl.textContent = T.full; fl.className = 'fl full'; }
-      else { fl.textContent = T.fullIn(dur((L.cap - L.st) / (d.rate || 1e-12))); fl.className = 'fl'; }
+      else if (full) { fl.textContent = T.full; fl.className = 'fl full'; }
+      else { fl.textContent = T.fullIn(dur((L.cap - st) / (d.rate || 1e-12))); fl.className = 'fl'; }
       var bc = $('b-col');
-      bc.classList.toggle('gold', L.full); bc.classList.toggle('pri', !L.full); bc.classList.toggle('pulse', L.full);
-      $('b-col-t').textContent = L.full ? T.collectFull : T.collect;
+      bc.classList.toggle('gold', full); bc.classList.toggle('pri', !full); bc.classList.toggle('pulse', full);
+      $('b-col-t').textContent = full ? T.collectFull : T.collect;
       bc.disabled = d.on === false;
       var en = Math.floor(L.en + 1e-9);
       $('en-i').style.transform = 'scaleX(' + (L.en / L.emax).toFixed(4) + ')';
@@ -839,7 +987,7 @@
       $('en-r').textContent = d.taps_on === false ? T.tapsOff : en < 1 ? T.noEnergy : T.regen(L.regen);
       $('core').classList.toggle('dry', en < 1 || d.taps_on === false || d.on === false);
       coach(L);
-    } else if (S.tab === 'wallet') {
+    } else if (S.tab === 'wallet' && !S.acc) {
       $('wb-v').textContent = slxFix(L.wallet);
       $('wb-t').textContent = T.walletT(num(L.wallet * price()), num(price()));
     }
@@ -866,9 +1014,23 @@
     $('netc').innerHTML = T.net({ farms: d.farms || n.miners || 0, active: n.active || 0, diff: String(n.diff || 1).replace('.', EN ? '.' : ','),
                                   today: esc(slx(n.today || 0)), cap: esc(num(n.cap || 0)) }) + (n.diff > 1 ? '<span style="color:var(--gold)">' + T.netHi + '</span>' : '');
   }
+  // v386: значок устройства — SVG из набора вверху страницы; движущиеся части поверх него (места — в долях значка 48×48)
+  var FX = {
+    phone: '<i class="scan" style="left:34.4%;top:17.7%;width:31.3%;height:60.4%"><b></b></i>',
+    laptop: '<i class="scan" style="left:21.9%;top:21.9%;width:56.3%;height:36.5%"><b></b></i>',
+    pc: '<i class="fan" style="left:38.5%;top:21.9%;width:22.9%;height:22.9%"></i><i class="fan rv" style="left:38.5%;top:53.1%;width:22.9%;height:22.9%"></i>',
+    gpu: '<i class="fan" style="left:22.3%;top:37.9%;width:26.3%;height:26.3%"></i><i class="fan" style="left:55.6%;top:37.9%;width:26.3%;height:26.3%"></i>',
+    rig: '<i class="swp" style="left:18.8%;top:22.9%;width:62.5%;height:56.3%"><b></b></i>',
+    asic: '<i class="fan" style="left:51%;top:34.4%;width:33.3%;height:33.3%"></i>',
+    hydro: '<i class="bub" style="left:19.8%;top:29.2%;width:60.4%;height:57.3%"><i></i><i></i><i></i></i>',
+    quant: '<i class="qg" style="left:28.1%;top:21.9%;width:43.8%;height:43.8%"></i><i class="orb" style="left:10.4%;top:4.2%;width:79.2%;height:79.2%"><b></b></i>'
+  };
+  function rigIcon(id) {
+    return '<svg class="ri" viewBox="0 0 48 48" aria-hidden="true"><use href="#ic-' + id + '" xlink:href="#ic-' + id + '"></use></svg>';
+  }
   function renderSlots() {
     var d = S.d, ids = rigsSorted(d.own), n = slotsN(), cols = n <= 4 ? 4 : n <= 12 ? 4 : n <= 20 ? 5 : 6;
-    var sig = ids.join(',') + '|' + n + '|' + (d.on === false ? 0 : 1);
+    var sig = ids.join(',') + '|' + n;
     var box = $('slots');
     box.style.setProperty('--cols', cols);
     if (box.getAttribute('data-sig') === sig) return;
@@ -876,9 +1038,8 @@
     ids.forEach(function (id, i) {
       cnt[id] = (cnt[id] || 0) + 1;
       var isNew = S.seenRigs && cnt[id] > (prev[id] || 0);
-      h += '<button type="button" class="sl' + (d.on === false ? ' off' : '') + (isNew ? ' new' : '') + '" data-rig="' + id + '" style="--rc:' + RIG[id].c + '">'
-        + '<i class="gw" style="animation-delay:-' + (i * 0.37 % 2.4).toFixed(2) + 's"></i><span class="ic">' + RIG[id].e + '</span>'
-        + '<i class="led" style="animation-delay:-' + (i * 0.23 % 1.3).toFixed(2) + 's"></i></button>';
+      h += '<button type="button" class="sl' + (isNew ? ' new' : '') + '" data-rig="' + id + '" style="--rc:' + RIG[id].c + ';--d:-' + (i * 0.37 % 2.4).toFixed(2) + 's">'
+        + '<span class="dv">' + rigIcon(id) + (FX[id] || '') + '</span><i class="led"></i></button>';
     });
     for (var k = ids.length; k < n; k++) h += '<button type="button" class="sl em" data-empty="1">+</button>';
     box.innerHTML = h; box.setAttribute('data-sig', sig);
@@ -929,14 +1090,14 @@
     cf.rigs.forEach(function (r) {
       var id = r[0], hs = r[1], unl = r[3], own = d.own[id] || 0, pr = d.prices[id];
       if (unl > d.ch) {
-        h += '<div class="it lock"><div class="ie">' + RIG[id].e + '</div><div class="im"><b>' + esc(T.rigs[id]) + '</b><small>' + esc(T.lockCh(unl, T.locs[unl - 1])) + '</small></div></div>';
+        h += '<div class="it lock"><div class="ie">' + rigIcon(id) + '</div><div class="im"><b>' + esc(T.rigs[id]) + '</b><small>' + esc(T.lockCh(unl, T.locs[unl - 1])) + '</small></div></div>';
         return;
       }
       var canRep = full && wk && wk.hash < hs, back = canRep ? (d.refunds[wk.id] || 0) : 0, need = pr - back, dh = canRep ? hs - wk.hash : hs;
       var pb = pm > 0 && dh > 0 ? need / (dh * pm) : 0;
       var btn = full && !canRep ? '<button type="button" class="bb ghost" disabled>' + esc(T.noSlot) + '</button>'
-        : '<button type="button" class="bb' + (wl + 1e-12 < need ? ' ghost' : '') + '" data-buy="' + id + '">' + esc(canRep ? T.replace + ' ' + RIG[wk.id].e : T.buy) + '</button>';
-      h += '<div class="it" style="--rc:' + RIG[id].c + '"><div class="ie">' + RIG[id].e + '</div><div class="im"><b>' + esc(T.rigs[id]) + (own ? '<span class="own">' + T.owned(own) + '</span>' : '')
+        : '<button type="button" class="bb' + (wl + 1e-12 < need ? ' ghost' : '') + '" data-buy="' + id + '">' + (canRep ? esc(T.replace) + ' ' + rigIcon(wk.id) : esc(T.buy)) + '</button>';
+      h += '<div class="it" style="--rc:' + RIG[id].c + '"><div class="ie">' + rigIcon(id) + '</div><div class="im"><b>' + esc(T.rigs[id]) + (own ? '<span class="own">' + T.owned(own) + '</span>' : '')
         + '</b><small><span class="hs">+' + hashS(hs) + '</span> · ' + esc(T.rigd[id]) + '</small>' + (pb > 0 ? '<small>' + esc(T.payback(dur(pb))) + '</small>' : '')
         + '</div><div class="ib"><span class="pr mono">' + esc(slx(pr)) + ' SLX<small>≈ ' + num(pr * price()) + '</small></span>' + btn + '</div></div>';
     });
@@ -1078,7 +1239,7 @@
   });
   function rigSheet(id) {
     var d = S.d, r = rigCfg(id), n = d.own[id] || 0, back = d.refunds[id] || 0, last = usedN() <= 1;
-    sheet('<h3>' + RIG[id].e + ' ' + esc(T.rigs[id]) + '</h3><p>' + esc(T.rigd[id]) + '<br>' + esc(T.rigInfo(n, r.hash)) + '</p>'
+    sheet('<h3 class="rh3">' + rigIcon(id) + esc(T.rigs[id]) + '</h3><p>' + esc(T.rigd[id]) + '<br>' + esc(T.rigInfo(n, r.hash)) + '</p>'
       + (last ? '<p style="color:var(--tx3)">' + esc(T.lastRig) + '</p>' : '')
       + '<div class="row"><button type="button" class="btn sec sm" data-sa="close">' + esc(T.cancel) + '</button>'
       + (last ? '' : '<button type="button" class="btn pri sm" data-sa="sellrig" data-rig="' + id + '">' + esc(T.sellRig(back)) + '</button>') + '</div>');
@@ -1155,10 +1316,17 @@
   $('b-col').addEventListener('click', function () {
     var L = live(); if (!L) return;
     hap('medium');
-    coinsFly($('b-col'), $('wal-chip'), L.st > 0 ? 6 : 0);
+    var A = null;
+    if (L.st > 0 && !S.drain && S.d.on !== false) {          // хранилище пустеет, токены летят в кошелёк, кошелёк набирает сумму
+      S.drain = { amt: L.st, t0: performance.now(), dur: 900 };
+      tokenFly($('tank'), L.st);
+      A = S.acc;
+    }
     send('collect', {}, $('b-col')).then(function (j) {
-      if (!j) return;
+      if (A) A.ok = true;
+      if (!j) { S.drain = null; if (A) A.to = A.from; return; }       // не собралось — кошелёк не растёт
       var r = j.res || {};
+      if (A) A.to = A.from + (r.got || 0) + (r.lucky || 0);          // точная сумма с сервера (с удачным блоком)
       if (r.lucky > 0) { bigEvent('🍀', T.lucky, T.luckyS(r.lucky)); hap('success'); }
       if (r.got > 0) toast(T.got(r.got + (r.lucky || 0)));
     });
@@ -1168,7 +1336,7 @@
     var back = full && wk && wk.hash < r.hash ? (d.refunds[wk.id] || 0) : 0, need = d.prices[id] - back;
     if (L && L.wallet + 1e-12 < need) { shortSheet(need, L.wallet, 'buy:' + id); return; }
     hap('light');
-    send('buy', { rig: id }).then(function (j) { if (j) { toast(T.bought(RIG[id].e + ' ' + T.rigs[id])); hap('success'); } });
+    send('buy', { rig: id }).then(function (j) { if (j) { toast(T.bought(T.rigs[id])); hap('success'); } });
   }
   function buyStorage() {
     var d = S.d, nx = S.cfg.storage[d.st + 1], L = live();
@@ -1177,7 +1345,7 @@
     send('storage', {}).then(function (j) { if (j) { toast(T.storUp(S.cfg.storage[j.st][0])); hap('success'); } });
   }
   function sellRig(id) {
-    send('sell', { rig: id }).then(function (j) { if (j) { toast(T.sold(RIG[id].e + ' ' + T.rigs[id], (j.res || {}).back || 0)); hap('success'); } });
+    send('sell', { rig: id }).then(function (j) { if (j) { toast(T.sold(T.rigs[id], (j.res || {}).back || 0)); hap('success'); } });
   }
   function doMove() {
     var d = S.d, mc = S.cfg.locs[d.ch][1], L = live();
@@ -1200,11 +1368,17 @@
   // ── ручной майнинг: нажатия копятся и уходят пачкой раз в секунду ──
   function tapAt(x, y) {
     var d = S.d, L = live();
-    if (!L || d.on === false || d.taps_on === false) { if (d && d.taps_on === false) toast(T.tapsOff, true); return; }
-    if (L.en < 1) { toast(T.noEnergy, true); hap('error'); return; }
+    if (!L || !d || d.on === false) return;
+    if (d.taps_on === false) { noTap(T.tapsOff); return; }
+    if (L.en < 1) { noTap(T.noEnergy); return; }
     S.pend++;
     hap('light');
     floatText('+' + slx(d.tap_val), x, y);
+    var c = $('core');
+    if (c.getElementsByClassName('rip').length < 4) {       // волна от нажатия
+      var rp = document.createElement('i'); rp.className = 'rip'; c.appendChild(rp);
+      setTimeout(function () { rp.remove(); }, 560);
+    }
     tick();
     if (S.pend >= (S.cfg.tap_batch || 60)) flush();
     else if (!S.flushT) S.flushT = setTimeout(flush, 1000);
@@ -1241,19 +1415,116 @@
     $('fx').appendChild(el); fxN++;
     setTimeout(function () { el.remove(); fxN--; }, 1000);
   }
-  function coinsFly(from, to, n) {
-    if (!n || document.documentElement.classList.contains('calm')) return;
-    var a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+  function noTap(t) {                               // энергии нет / нажатия выключены: ядро вздрагивает, строка мигает; всплывашка — не чаще раза в 4 с
+    var c = $('core'), en = document.querySelector('.enl');
+    c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
+    en.classList.add('flash'); clearTimeout(S.flashT); S.flashT = setTimeout(function () { en.classList.remove('flash'); }, 900);
+    hap('warning');
+    if (Date.now() - (S.hintT || 0) > 4000) { S.hintT = Date.now(); toast(t); }
+  }
+
+  // v386: «Собрать» — из хранилища вылетают настоящие токены SLX, медленно летят дугой и крутятся; каждый, долетев, «щёлкает»
+  // кошелёк, а цифра в нём набирается по монетке (accLoop) — эффект накопления. В конце над кошельком — «+0,0012 SLX».
+  function tokSvg() {
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="r" x1="0" y1="0" x2="1" y2="1">'
+      + '<stop offset="0" stop-color="#e8d9ff"/><stop offset=".5" stop-color="#8b5cf6"/><stop offset="1" stop-color="#4c1d95"/></linearGradient>'
+      + '<linearGradient id="t" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fbf7ff"/><stop offset=".5" stop-color="#d8b4fe"/><stop offset="1" stop-color="#a78bfa"/></linearGradient></defs>'
+      + '<circle cx="50" cy="50" r="46" fill="#0d0817" stroke="url(#r)" stroke-width="6"/><circle cx="50" cy="50" r="36" fill="none" stroke="url(#r)" stroke-width="2" opacity=".5"/>'
+      + '<path d="M50 14 L63 29 L50 25 L37 29 Z" fill="url(#r)"/><text x="50" y="63" font-family="Arial,sans-serif" font-size="27" font-weight="900" fill="url(#t)" text-anchor="middle">SLX</text></svg>';
+  }
+  try { document.documentElement.style.setProperty('--tokimg', 'url("data:image/svg+xml;charset=utf-8,' + encodeURIComponent(tokSvg()) + '")'); } catch (e) {}
+  function tokenFly(from, amt) {
+    var L = live(), n = Math.max(5, Math.min(10, Math.round(4 + Math.log(Math.max(1, amt * price())) / Math.LN10 * 1.3)));
+    var start = S.acc ? S.acc.shown : (L ? L.wallet : 0);
+    S.acc = { from: start, to: start + amt, n: n, got: 0, shown: start, plus: amt };
+    var fast = document.documentElement.classList.contains('calm') || !document.body.animate;
+    if (fast) { S.acc.got = n; requestAnimationFrame(accLoop); return; }
+    var a = from.getBoundingClientRect(), b = $('wal-logo').getBoundingClientRect();
+    var tx = b.left + b.width / 2, ty = b.top + b.height / 2;
     for (var i = 0; i < n; i++) (function (i) {
-      var c = document.createElement('div'); c.className = 'cn'; c.textContent = 'X';
-      var sx = a.left + a.width / 2 - 11 + (Math.random() * 60 - 30), sy = a.top + a.height / 2 - 11;
-      c.style.left = sx + 'px'; c.style.top = sy + 'px';
-      $('fx').appendChild(c);
       setTimeout(function () {
-        c.style.transform = 'translate(' + (b.left + b.width / 2 - 11 - sx) + 'px,' + (b.top + b.height / 2 - 11 - sy) + 'px) scale(.6)'; c.style.opacity = '.2';
-      }, 30 + i * 70);
-      setTimeout(function () { c.remove(); var w = $('wal-chip'); if (w.animate) w.animate([{ transform: 'scale(1.1)' }, { transform: 'none' }], { duration: 260 }); }, 900 + i * 70);
+        var el = document.createElement('i'); el.className = 'tok'; el.innerHTML = '<b></b>';
+        var sx = a.left + a.width * (0.15 + Math.random() * 0.7), sy = a.top + a.height / 2;
+        el.style.left = sx + 'px'; el.style.top = sy + 'px';
+        $('fx').appendChild(el);
+        var dx = tx - sx, dy = ty - sy, bend = Math.random() * 70 - 35, lift = -50 - Math.random() * 45, done = false;
+        var fin = function () { if (done) return; done = true; el.remove(); tokArrive(); };
+        var an = el.animate([
+          { transform: 'translate(0,0) scale(.25)', opacity: 0 },
+          { transform: 'translate(' + (dx * .12 + bend) + 'px,' + lift + 'px) scale(1.15)', opacity: 1, offset: .32 },
+          { transform: 'translate(' + (dx * .62 + bend * .4) + 'px,' + (dy * .55 + lift * .55) + 'px) scale(.95)', opacity: 1, offset: .68 },
+          { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(.5)', opacity: .85 }
+        ], { duration: 1300 + Math.random() * 300, easing: 'cubic-bezier(.42,0,.3,1)', fill: 'forwards' });
+        an.onfinish = fin;
+        setTimeout(fin, 2400);                              // свёрнутое окно и т.п. — монетка всё равно «долетит»
+      }, 140 * i);
     })(i);
+    requestAnimationFrame(accLoop);
+    setTimeout(function () { if (S.acc) S.acc.got = S.acc.n; }, 140 * n + 3200);
+  }
+  function tokArrive() {
+    var A = S.acc; if (!A) return;
+    A.got = Math.min(A.n, A.got + 1);
+    var step = A.from + (A.to - A.from) * (A.got - 1) / A.n;          // цифра растёт с каждой монеткой, даже если кадров мало
+    if (A.shown < step) A.shown = step;
+    $('w-slx').textContent = slxFix(A.shown);
+    hap('sel');
+    var g = $('wal-glw'), c = $('wal-chip');
+    if (g.animate) g.animate([{ opacity: .95 }, { opacity: 0 }], { duration: 420, easing: 'ease-out' });
+    if (c.animate) c.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.1)' }, { transform: 'scale(1)' }], { duration: 260, easing: 'ease-out' });
+    if (A.got >= A.n) {
+      var r = c.getBoundingClientRect(), p = document.createElement('div');
+      p.className = 'wplus'; p.textContent = '+' + slx(A.to - A.from) + ' SLX';
+      p.style.left = Math.max(8, r.left + r.width / 2 - 50) + 'px'; p.style.top = (r.bottom + 6) + 'px';
+      $('fx').appendChild(p);
+      setTimeout(function () { p.remove(); }, 1550);
+    }
+  }
+  // цифра кошелька догоняет «сколько долетело» — плавно, по монетке. Ведут и кадры (accLoop), и обычный таймер (tick, раз в 150 мс):
+  // кадры телефон может придержать (экономия батареи, свёрнутое окно) — цифра всё равно дойдёт. Конец — когда долетели все монетки
+  // И пришёл ответ сервера (A.ok): иначе при медленной связи цифра на миг падала бы обратно к старой.
+  function accStep(k) {
+    var A = S.acc; if (!A) return true;
+    var target = A.from + (A.to - A.from) * (A.got / A.n);
+    A.shown += (target - A.shown) * k;
+    if (Math.abs(target - A.shown) < 1e-10 || document.hidden) A.shown = target;
+    $('w-slx').textContent = slxFix(A.shown);
+    if (S.tab === 'wallet') $('wb-v').textContent = slxFix(A.shown);
+    if (A.got >= A.n && A.shown === target && A.ok) { S.acc = null; return true; }
+    return false;
+  }
+  function accLoop() {
+    if (!accStep(0.18)) requestAnimationFrame(accLoop);
+    else tick();
+  }
+
+  // v386: «майнинг идёт» — искры добычи вылетают из устройств и летят в хранилище (не больше 4 сразу; ферма стоит / не видно — нет)
+  var spkN = 0;
+  function spark() {
+    if (document.hidden || S.tab !== 'farm' || S.ovOpen || spkN >= 4 || !document.body.animate) return;
+    if (document.documentElement.classList.contains('calm')) return;
+    var d = S.d, L = live(), box = $('slots');
+    if (!d || !L || d.on === false || L.full || S.drain || box.classList.contains('idle')) return;
+    var rigs = box.querySelectorAll('.sl[data-rig]'); if (!rigs.length) return;
+    var t = $('tank').getBoundingClientRect(); if (t.bottom < 0 || t.top > window.innerHeight) return;
+    var r = rigs[(Math.random() * rigs.length) | 0].getBoundingClientRect(); if (r.bottom < 0 || r.top > window.innerHeight) return;
+    var sx = r.left + r.width / 2, sy = r.top + r.height * 0.35;
+    var tx = t.left + t.width * Math.max(0.04, Math.min(1, L.st / (L.cap || 1))), ty = t.top + t.height / 2;
+    var el = document.createElement('i'); el.className = 'spk'; el.style.left = sx + 'px'; el.style.top = sy + 'px';
+    $('fx').appendChild(el); spkN++;
+    var dx = tx - sx, dy = ty - sy, side = Math.random() * 50 - 25, done = false;
+    var fin = function () { if (done) return; done = true; el.remove(); spkN--; };
+    el.animate([
+      { transform: 'translate(0,0) scale(.3)', opacity: 0 },
+      { transform: 'translate(' + side + 'px,-16px) scale(1)', opacity: 1, offset: .2 },
+      { transform: 'translate(' + (dx * .55 + side) + 'px,' + (dy * .5) + 'px) scale(.9)', opacity: .95, offset: .6 },
+      { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(.4)', opacity: 0 }
+    ], { duration: 1150, easing: 'cubic-bezier(.4,0,.3,1)', fill: 'forwards' }).onfinish = fin;
+    setTimeout(fin, 1800);
+  }
+  setInterval(spark, 650);
+  if ('IntersectionObserver' in window) {           // комната ушла за край экрана — её анимации на паузе
+    try { new IntersectionObserver(function (es) { es.forEach(function (e) { $('slots').classList.toggle('idle', !e.isIntersecting); }); }).observe($('room')); } catch (e) {}
   }
   function bigEvent(e, title, sub) {
     var w = document.createElement('div'); w.className = 'big-ev';
@@ -1263,7 +1534,7 @@
   }
   var toastT = 0;
   function toast(t, err) {
-    var el = $('toast'); el.textContent = t; el.classList.toggle('err', !!err); el.classList.add('on');
+    var el = $('toast'); el.textContent = t; el.classList.toggle('bad', !!err); el.classList.add('on');
     clearTimeout(toastT); toastT = setTimeout(function () { el.classList.remove('on'); }, 2400);
   }
   function coach(L) {                               // подсказки новичку в подвале — по одной
