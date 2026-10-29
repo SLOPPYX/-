@@ -354,6 +354,79 @@
   .tr .th { color: var(--cy); font-weight: 750; font-size: 13.5px; white-space: nowrap; }
   .tr.me { border-color: rgba(167,139,250,.6); background: rgba(139,92,246,.14); }
   .tr.g1 .tp { color: var(--gold); } .tr.g2 .tp { color: #e5e7eb; } .tr.g3 .tp { color: #fb923c; }
+  .tr .tav { width: 34px; height: 34px; flex: 0 0 auto; border-radius: 50%; overflow: hidden; display: grid; place-items: center; font-weight: 800; font-size: 14px;
+             background: radial-gradient(circle at 35% 30%, #2a1650, #0d0817 70%); border: 1px solid var(--ln2); }
+  .tr .tav img, .pd .pav img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* v388: тройка лидеров на пьедестале — аватарки горят огнём, как в «Рангах» (языки пламени вокруг круга, свой цвет у места) */
+  .pdm { display: grid; grid-template-columns: 1fr 1.18fr 1fr; align-items: end; gap: 4px; margin: 2px 0 12px; padding: 40px 6px 14px; border-radius: 20px;
+         overflow-x: clip;                          /* огонь крайних мест не вылезает за экран на узких телефонах (вверх — можно) */
+         background: radial-gradient(ellipse 80% 70% at 50% 35%, rgba(251,146,60,.14), transparent 70%), var(--card); border: 1px solid rgba(251,191,36,.22); }
+  .pd { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
+  .pd .pw { position: relative; width: var(--s); height: var(--s); margin-bottom: 12px; }
+  .pd .pav { position: absolute; inset: 0; z-index: 2; border-radius: 50%; overflow: hidden; display: grid; place-items: center; font-weight: 800; color: #fff;
+             font-size: calc(var(--s) * .4); background: radial-gradient(circle at 35% 30%, #2a1650, #0d0817 70%); border: 2px solid rgb(var(--fc));
+             box-shadow: 0 0 16px -2px rgba(var(--fc), .8); }
+  .pd .pnum { position: absolute; z-index: 3; left: 50%; bottom: -10px; min-width: 22px; height: 22px; padding: 0 6px; margin-left: -11px; border-radius: 99px;
+              display: grid; place-items: center; font-size: 12px; font-weight: 850; color: #1c1203; background: rgb(var(--fc)); box-shadow: 0 2px 8px rgba(0,0,0,.5); }
+  .pd .crn { position: absolute; z-index: 3; left: 50%; top: -27px; width: 30px; height: 24px; margin-left: -15px; filter: drop-shadow(0 0 6px rgba(251,191,36,.85)); }
+  .pd .pn { margin-top: 4px; font-size: 13px; font-weight: 750; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pd .ph { font-size: 12.5px; color: var(--cy); font-weight: 750; white-space: nowrap; }
+  .pd .pl { font-size: 11px; color: var(--tx3); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pd.me .pn { color: var(--p3); }
+  .pd.em .pav { border: 1px dashed var(--ln2); box-shadow: none; color: var(--tx3); font-size: 18px; }
+  .fz { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .fz-a { position: absolute; inset: -55%; border-radius: 50%; animation: fza 2.6s ease-in-out infinite;
+          background: radial-gradient(circle, rgba(var(--fc), .42) 0%, rgba(var(--fc), .14) 42%, transparent 68%); }
+  .fz-g { position: absolute; inset: 0; -webkit-filter: blur(.6px); filter: blur(.6px); }
+  .fz-l { position: absolute; left: 50%; top: 50%; transform-origin: 50% 100%; }
+  .fz-x { position: absolute; inset: 0; transform-origin: 50% 100%; will-change: transform; animation: fzk var(--d, 1.2s) ease-in-out var(--dl, 0s) infinite; }
+  .fz-x i { position: absolute; display: block; bottom: 0;
+            -webkit-clip-path: polygon(50% 0%, 58% 16%, 68% 30%, 82% 46%, 94% 64%, 92% 82%, 78% 96%, 50% 100%, 22% 96%, 8% 82%, 6% 64%, 18% 46%, 32% 30%, 42% 16%);
+                    clip-path: polygon(50% 0%, 58% 16%, 68% 30%, 82% 46%, 94% 64%, 92% 82%, 78% 96%, 50% 100%, 22% 96%, 8% 82%, 6% 64%, 18% 46%, 32% 30%, 42% 16%); }
+  .fz-x .fb { left: 0; right: 0; top: 0; background: linear-gradient(to top, rgba(var(--fc), 1), rgba(var(--fc), .8) 42%, rgba(var(--fc), 0)); }
+  .fz-x .fm { left: 16%; right: 16%; top: 24%; background: linear-gradient(to top, rgba(var(--fk), .95), rgba(var(--fk), .45) 55%, rgba(var(--fk), 0)); }
+  .fz-x .fc { left: 33%; right: 33%; top: 50%; background: linear-gradient(to top, #fff, rgba(255,255,255,.6) 55%, rgba(255,255,255,0)); }
+  @keyframes fzk { 0% { transform: scale(1, .84) skewX(0deg); opacity: .86; } 22% { transform: scale(.9, 1.1) skewX(5deg); opacity: 1; }
+                   48% { transform: scale(1.06, .92) skewX(-4deg); opacity: .9; } 74% { transform: scale(.94, 1.16) skewX(3deg); opacity: 1; }
+                   100% { transform: scale(1, .84) skewX(0deg); opacity: .86; } }
+  @keyframes fza { 0%, 100% { opacity: .72; transform: scale(.95); } 50% { opacity: 1; transform: scale(1.07); } }
+
+  /* v388: значки глав (SVG) — размер от шрифта места, где стоят */
+  .chi { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -.22em; flex: 0 0 auto; }
+  .loc .le .chi { width: 30px; height: 30px; vertical-align: middle; }
+  .chap .cv .chi { filter: drop-shadow(0 6px 18px rgba(139,92,246,.45)); }
+  /* v388: настоящие SLX бывают крошечными — нули впереди бледнее, видны значащие цифры */
+  .zd { opacity: .38; }
+  /* v388: что из доната сейчас работает — плашки в хранилище */
+  .hbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .hbs .hb { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 9px; border-radius: 99px; font-size: 12px; font-weight: 700; white-space: nowrap;
+             background: rgba(56,189,248,.14); border: 1px solid rgba(56,189,248,.45); color: #bae6fd; }
+  .hbs .hb.g { background: rgba(251,191,36,.13); border-color: rgba(251,191,36,.5); color: #fde68a; }
+  .hbs .hb.a { background: rgba(52,211,153,.12); border-color: rgba(52,211,153,.45); color: #a7f3d0; }
+  .hero.tb { border-color: rgba(56,189,248,.5); }
+  /* v388: донат — карточка «Ускорь ферму» и окно покупок */
+  .dnc { display: flex; align-items: center; gap: 12px; cursor: pointer; overflow: hidden;
+         background: linear-gradient(120deg, rgba(251,191,36,.16), rgba(139,92,246,.12) 60%, rgba(255,255,255,.02)); border-color: rgba(251,191,36,.42); }
+  .dnc .de { width: 44px; height: 44px; flex: 0 0 auto; border-radius: 13px; display: grid; place-items: center; font-size: 23px;
+             background: radial-gradient(circle at 50% 40%, rgba(251,191,36,.45), rgba(255,255,255,.03) 72%); border: 1px solid rgba(251,191,36,.4); }
+  .dnc .dt { flex: 1; min-width: 0; }
+  .dnc .dt b { display: block; font-size: 14.5px; }
+  .dnc .dt small { display: block; font-size: 12px; color: var(--tx3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dnc .da { color: var(--gold); font-size: 20px; }
+  .dni { display: flex; align-items: center; gap: 11px; padding: 11px 0; border-top: 1px solid var(--ln); }
+  .dni:first-of-type { border-top: 0; }
+  .dni .de { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 12px; display: grid; place-items: center; font-size: 21px; background: var(--card2); border: 1px solid var(--ln2); }
+  .dni .dm { flex: 1; min-width: 0; }
+  .dni .dm b { display: block; font-size: 14.5px; }
+  .dni .dm small { display: block; font-size: 12px; color: var(--tx3); line-height: 1.35; }
+  .dni .dm .on { color: #7dd3fc; font-weight: 650; }
+  .dni .dr { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+  .dni .dr b { font-size: 14.5px; white-space: nowrap; }
+  .dsh { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--tx3); margin: 14px 0 2px; }
+  /* v388: «💎 Золотая видеокарта» на ферме — отдельный золотой слот (место не занимает) */
+  .sl.gld { border-color: rgba(251,191,36,.7); background: radial-gradient(circle at 50% 46%, rgba(251,191,36,.38), rgba(255,255,255,.03) 70%);
+            box-shadow: inset 0 0 14px rgba(251,191,36,.25); }
+  .sl.gld .led { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
 
   /* ── нижнее меню ── */
   .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: center;
@@ -484,6 +557,9 @@
     <linearGradient id="mgL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#67e8f9" stop-opacity=".55"/><stop offset="1" stop-color="#2563eb" stop-opacity=".8"/></linearGradient>
     <radialGradient id="mgC" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#e9d5ff"/><stop offset=".72" stop-color="#a855f7"/><stop offset="1" stop-color="#4c1d95"/></radialGradient>
     <radialGradient id="mgF" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#231c3b"/><stop offset="1" stop-color="#09070f"/></radialGradient>
+    <linearGradient id="mgLv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fde047"/><stop offset=".45" stop-color="#fb923c"/><stop offset="1" stop-color="#dc2626"/></linearGradient>
+    <radialGradient id="mgPl" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#67e8f9"/><stop offset=".45" stop-color="#6366f1"/><stop offset="1" stop-color="#1e1b4b"/></radialGradient>
+    <linearGradient id="mgGd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fcd34d"/><stop offset=".5" stop-color="#d97706"/><stop offset="1" stop-color="#92400e"/></linearGradient>
   </defs>
   <symbol id="ic-phone" viewBox="0 0 48 48">
     <rect x="14.5" y="4" width="19" height="40" rx="4.5" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".75"/>
@@ -566,6 +642,107 @@
     <circle cx="9.4" cy="13.6" r="1.5" fill="#22d3ee"/>
     <circle cx="38.6" cy="13.6" r="1.5" fill="#f0abfc"/>
   </symbol>
+  <!-- v388: «💎 Золотая видеокарта» (донат) -->
+  <symbol id="ic-gold" viewBox="0 0 48 48">
+    <rect x="2.4" y="12.5" width="2.2" height="24" rx=".8" fill="#b45309"/>
+    <rect x="5" y="13" width="40" height="21" rx="3.2" fill="url(#mgGd)" stroke="#fde68a" stroke-opacity=".9"/>
+    <path d="M8 15.6h34" stroke="#fff7d6" stroke-opacity=".85" stroke-width="1.3" stroke-linecap="round"/>
+    <circle cx="17" cy="24.5" r="7.3" fill="#1c1203" stroke="#fde68a" stroke-opacity=".7"/>
+    <circle cx="33" cy="24.5" r="7.3" fill="#1c1203" stroke="#fde68a" stroke-opacity=".7"/>
+    <rect x="11" y="34" width="22" height="3.2" rx=".6" fill="url(#mgG)"/>
+    <path d="M40.5 33.2l.9-2 2-.9-2-.9-.9-2-.9 2-2 .9 2 .9z" fill="#fff"/>
+  </symbol>
+  <!-- v388: главы — тот же стиль, что у устройств: тёмный корпус, фиолетовый контур, светящееся «окно» фермы -->
+  <symbol id="ic-c0" viewBox="0 0 48 48">
+    <path d="M13.5 27a6.5 6.5 0 0 1-.6-12.97A9 9 0 0 1 30.2 11.5a7 7 0 0 1 4.3 15.5z" fill="url(#mgM)" stroke="#a78bfa" stroke-opacity=".55"/>
+    <path d="M15 31l-2 4M22 31l-2 4M29 31l-2 4M36 31l-2 4M18.5 38l-2 4M25.5 38l-2 4M32.5 38l-2 4" stroke="#7dd3fc" stroke-opacity=".85" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M27.5 19.5l-3 4.2h3.4l-2.4 4.3" fill="none" stroke="#fde047" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="ic-c1" viewBox="0 0 48 48">
+    <path d="M12 27V16.5L24 8l12 8.5V27z" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".7"/>
+    <path d="M9.5 18L24 7.5 38.5 18" fill="none" stroke="#8b80b3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M27 9.8l-2 3.2 1.5 1.6-1.8 2.5" fill="none" stroke="#0c0917" stroke-width="1" stroke-linecap="round"/>
+    <rect x="21" y="19.5" width="6" height="7.5" rx="1" fill="#0c0917" stroke="#a78bfa" stroke-opacity=".35"/>
+    <path d="M6 28h36" stroke="#6b6585" stroke-width="1.4" stroke-linecap="round"/>
+    <rect x="11" y="30" width="26" height="12.5" rx="2.2" fill="#0c0917" stroke="#a78bfa" stroke-opacity=".45"/>
+    <rect x="14.5" y="33" width="19" height="6.5" rx="1.2" fill="url(#mgS)"/>
+    <path d="M17 37.6l2.6-2.4 2 1.4 3-3 2.4 1.8 2.8-2" fill="none" stroke="#fff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="ic-c2" viewBox="0 0 48 48">
+    <path d="M8 19.2v22h32v-22L24 10.6z" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".7"/>
+    <path d="M5 19.5L24 9l19 10.5" fill="none" stroke="#8b80b3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="12" y="22" width="24" height="19.2" rx="1.2" fill="url(#mgS)"/>
+    <g fill="url(#mgM)" stroke="#0c0917" stroke-opacity=".55" stroke-width=".6"><rect x="12" y="22" width="24" height="3"/><rect x="12" y="25" width="24" height="3"/><rect x="12" y="28" width="24" height="3"/></g>
+    <path d="M15.5 39.6v-3.2c0-.9.5-1.6 1.3-1.9l2.6-.9 2.2-2.6h6.4l2.5 2.6 2.4.9c.8.3 1.3 1 1.3 1.9v3.2z" fill="#120e22"/>
+    <circle cx="19.8" cy="39.6" r="1.9" fill="#0c0917" stroke="#a78bfa" stroke-opacity=".7"/>
+    <circle cx="29.9" cy="39.6" r="1.9" fill="#0c0917" stroke="#a78bfa" stroke-opacity=".7"/>
+    <path d="M6 41.6h36" stroke="#6b6585" stroke-width="1.4" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-c3" viewBox="0 0 48 48">
+    <path d="M41.5 38V8.5M41.5 9.5H27M41.5 14.5l-6-5" fill="none" stroke="#8b80b3" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M30 9.5v5" stroke="#6b6585" stroke-width=".9"/>
+    <rect x="27.8" y="14.5" width="4.4" height="3" rx=".5" fill="#f59e0b"/>
+    <path d="M4 37V24l6-4v4l6-4v4l6-4v17z" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".7" stroke-linejoin="round"/>
+    <rect x="7" y="28.5" width="12" height="5" rx=".8" fill="url(#mgS)"/>
+    <path d="M10 28.5v5M13 28.5v5M16 28.5v5" stroke="#0c0917" stroke-opacity=".55" stroke-width=".8"/>
+    <rect x="24" y="31" width="9" height="6" rx=".6" fill="#7c3aed" stroke="#c4b5fd" stroke-opacity=".5" stroke-width=".6"/>
+    <rect x="33.5" y="31" width="9" height="6" rx=".6" fill="#0891b2" stroke="#a5f3fc" stroke-opacity=".5" stroke-width=".6"/>
+    <rect x="28.7" y="25" width="9" height="6" rx=".6" fill="#be185d" stroke="#fbcfe8" stroke-opacity=".5" stroke-width=".6"/>
+    <path d="M3 40.5c2 0 2-1.4 4-1.4s2 1.4 4 1.4 2-1.4 4-1.4 2 1.4 4 1.4 2-1.4 4-1.4 2 1.4 4 1.4 2-1.4 4-1.4 2 1.4 4 1.4 2-1.4 4-1.4 2 1.4 4 1.4" fill="none" stroke="#22d3ee" stroke-opacity=".8" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M7 44c2 0 2-1.2 4-1.2s2 1.2 4 1.2 2-1.2 4-1.2 2 1.2 4 1.2 2-1.2 4-1.2 2 1.2 4 1.2 2-1.2 4-1.2 2 1.2 4 1.2" fill="none" stroke="#22d3ee" stroke-opacity=".4" stroke-width="1" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-c4" viewBox="0 0 48 48">
+    <path d="M2 30l9-11 6 6 7-10 9 11 4-4 9 8" fill="none" stroke="#7dd3fc" stroke-opacity=".45" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M6 41V30.5a18 14 0 0 1 36 0V41z" fill="url(#mgB)" stroke="#7dd3fc" stroke-opacity=".8" stroke-width="1.2"/>
+    <path d="M9.5 22.3a18 14 0 0 1 29 0" fill="none" stroke="#e0f2fe" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M14 41V31M19 41V28.5M29 41V28.5M34 41V31" stroke="#7dd3fc" stroke-opacity=".25" stroke-width=".8"/>
+    <rect x="17.5" y="33" width="13" height="8" rx="1" fill="url(#mgL)"/>
+    <path d="M4 41.5h40" stroke="#e0f2fe" stroke-opacity=".8" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M40 5v8M36.5 7l7 4M36.5 11l7-4" stroke="#e0f2fe" stroke-width="1" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-c5" viewBox="0 0 48 48">
+    <path d="M24 4v4.5" stroke="#8b80b3" stroke-width="1.4" stroke-linecap="round"/><circle cx="24" cy="3.4" r="1.3" fill="#f472b6"/>
+    <rect x="3.5" y="27" width="7.5" height="15.5" rx="1.4" fill="url(#mgM)" stroke="#8b80b3" stroke-opacity=".5"/>
+    <rect x="37" y="23" width="7.5" height="19.5" rx="1.4" fill="url(#mgM)" stroke="#8b80b3" stroke-opacity=".5"/>
+    <path d="M5.5 31h3.5M5.5 34.5h3.5M5.5 38h3.5M39 27h3.5M39 30.5h3.5M39 34h3.5M39 37.5h3.5" stroke="#22d3ee" stroke-opacity=".55" stroke-width="1"/>
+    <rect x="11" y="8.5" width="26" height="34" rx="2.6" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".75"/>
+    <g fill="#0c0917" stroke="#a78bfa" stroke-opacity=".35" stroke-width=".7"><rect x="14" y="12" width="20" height="6" rx="1"/><rect x="14" y="20" width="20" height="6" rx="1"/><rect x="14" y="28" width="20" height="6" rx="1"/></g>
+    <g fill="#34d399"><circle cx="16.6" cy="15" r=".9"/><circle cx="16.6" cy="23" r=".9"/><circle cx="16.6" cy="31" r=".9"/></g>
+    <circle cx="19.4" cy="15" r=".9" fill="#22d3ee"/><circle cx="19.4" cy="23" r=".9" fill="#fbbf24"/><circle cx="19.4" cy="31" r=".9" fill="#22d3ee"/>
+    <path d="M23 15h8.5" stroke="#22d3ee" stroke-width="1.2" stroke-linecap="round"/><path d="M23 23h8.5" stroke="#a855f7" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M23 31h8.5" stroke="#f472b6" stroke-width="1.2" stroke-linecap="round"/>
+    <rect x="20" y="36.5" width="8" height="6" rx=".8" fill="url(#mgS)"/>
+    <path d="M2 42.8h44" stroke="#6b6585" stroke-width="1.4" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-c6" viewBox="0 0 48 48">
+    <path d="M20 9c-2-2.6.4-5 2.6-4.4 1-2.5 4.6-2.2 5.2.3 2.6-.4 4 2.5 2.2 4.1" fill="none" stroke="#8b80b3" stroke-opacity=".75" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M3 42L17.5 15h13L45 42z" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".6" stroke-linejoin="round"/>
+    <path d="M17.5 15h13l-2.6 4.6-2.4-1.8-2.2 3.4-2.1-2.4-2.3 1.6z" fill="url(#mgLv)"/>
+    <path d="M22.3 19.2c-.6 4.4-3.5 7-3.2 11.2.3 3.4-2.4 5.8-2.2 8.6M26.2 18.6c.8 3.8 3.4 6.5 3 10.4-.4 3.2 2.8 5.4 3.6 9" fill="none" stroke="url(#mgLv)" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M33 42v-6.5h7.5V42" fill="url(#mgM)" stroke="#8b80b3" stroke-opacity=".6"/>
+    <path d="M36.7 35.5v-5" stroke="#8b80b3" stroke-width="1.6"/>
+    <path d="M2 42.5h44" stroke="#6b6585" stroke-width="1.4" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-c7" viewBox="0 0 48 48">
+    <circle cx="9" cy="45" r="17" fill="url(#mgPl)"/>
+    <path d="M-6 41a17 7 0 0 0 31 2" fill="none" stroke="#c4b5fd" stroke-opacity=".5" stroke-width="1"/>
+    <ellipse cx="25" cy="22" rx="21" ry="8" fill="none" stroke="#c084fc" stroke-opacity=".45" stroke-dasharray="2 2.4" transform="rotate(-20 25 22)"/>
+    <g transform="rotate(-20 31 17)">
+      <rect x="18" y="14.5" width="9" height="5" rx=".6" fill="url(#mgS)" stroke="#a5f3fc" stroke-opacity=".6" stroke-width=".6"/>
+      <rect x="35" y="14.5" width="9" height="5" rx=".6" fill="url(#mgS)" stroke="#a5f3fc" stroke-opacity=".6" stroke-width=".6"/>
+      <path d="M21 14.5v5M24 14.5v5M38 14.5v5M41 14.5v5" stroke="#0c0917" stroke-opacity=".5" stroke-width=".5"/>
+      <path d="M27 17h2M33 17h2" stroke="#8b80b3" stroke-width="1"/>
+      <rect x="29" y="13" width="4" height="8" rx="1" fill="url(#mgM)" stroke="#e5e7eb" stroke-opacity=".5" stroke-width=".6"/>
+      <path d="M31 13v-2.5" stroke="#e5e7eb" stroke-width=".8"/><circle cx="31" cy="10" r="1" fill="#f472b6"/>
+    </g>
+    <circle cx="7" cy="8" r=".8" fill="#fff"/><circle cx="43" cy="36" r=".7" fill="#fff" fill-opacity=".7"/><circle cx="14" cy="22" r=".6" fill="#fff" fill-opacity=".6"/>
+  </symbol>
+  <symbol id="ic-c8" viewBox="0 0 48 48">
+    <path d="M7 35L5 15l10.5 8.5L24 9l8.5 14.5L43 15l-2 20z" fill="url(#mgG)" stroke="#fde68a" stroke-opacity=".8" stroke-linejoin="round"/>
+    <rect x="7" y="35.5" width="34" height="5" rx="1.4" fill="url(#mgG)" stroke="#fde68a" stroke-opacity=".8"/>
+    <circle cx="24" cy="27" r="4.4" fill="url(#mgC)"/>
+    <circle cx="5" cy="14" r="2" fill="#fde68a"/><circle cx="24" cy="8" r="2" fill="#fde68a"/><circle cx="43" cy="14" r="2" fill="#fde68a"/>
+  </symbol>
 </svg>
 <div class="bg"><i class="gl g1"></i><i class="gl g2"></i><div class="grid"></div><div class="scan"></div><div class="pz"><b></b><b></b></div><div class="stars" id="stars"></div></div>
 <main>
@@ -584,14 +761,16 @@
   <section class="tab" id="t-farm">
     <div class="card hero" id="hero">
       <div class="hl"><span>📦 <span id="h-lbl">Хранилище</span></span><b id="h-cap"></b></div>
-      <div class="big mono"><span id="h-val">0</span><small>SLX</small></div>
+      <div class="big mono"><span id="h-val"><span class="zd" id="h-z"></span><span id="h-n">0</span></span><small>SLX</small></div>
       <div class="eq" id="h-eq"></div>
       <div class="tank" id="tank"><i id="tank-i"></i><em></em></div>
       <div class="rate"><span id="h-rate"></span><span class="fl" id="h-full"></span></div>
+      <div class="hbs" id="h-bs" hidden></div>
       <button type="button" class="btn pri" id="b-col">⛏ <span id="b-col-t">Собрать</span></button>
     </div>
     <div class="card occ" id="occ" hidden><div class="oci">⚡</div><div class="oct"><b id="oc-t"></b><small id="oc-s"></small><div class="ocb"><i id="oc-bar"></i></div></div>
       <button type="button" class="bb" id="b-oc"></button></div>
+    <div class="card dnc" id="dnc" hidden><div class="de">💎</div><div class="dt"><b id="dn-t"></b><small id="dn-s"></small></div><span class="da">›</span></div>
     <div class="card room" id="room">
       <i class="beam"></i>
       <div class="rh"><span><b id="r-name"></b> · <span id="r-used"></span></span><span class="hs mono" id="r-hash"></span></div>
@@ -612,6 +791,7 @@
   </section>
 
   <section class="tab" id="t-shop" hidden>
+    <div id="shop-don"></div>
     <div id="shop-move"></div>
     <div class="sh" id="sh-st"></div>
     <div id="shop-st"></div>
@@ -631,6 +811,7 @@
       <div id="wb-logo"></div>
       <div class="wv mono"><span id="wb-v">0</span><small>SLX</small></div>
       <div class="wt" id="wb-t"></div>
+      <div class="note" id="wb-k"></div>
     </div>
     <div class="card">
       <div class="sh" style="margin-top:0" id="sell-h"></div>
@@ -644,6 +825,7 @@
       <input class="inp mono" id="buy-in" inputmode="decimal" autocomplete="off">
       <div class="note" id="buy-eq"></div>
       <button type="button" class="btn sec sm" id="b-buy" style="margin-top:10px"></button>
+      <button type="button" class="btn sec sm" id="b-tok" style="margin-top:8px"></button>
     </div>
     <div class="card"><div class="sh" style="margin-top:0" id="st-h"></div><div class="kv" id="stats"></div></div>
     <div class="card tg" id="ntf"><div class="tx" id="ntf-t"></div><button type="button" class="sw" id="ntf-sw"><i></i></button></div>
@@ -654,6 +836,7 @@
   <section class="tab" id="t-top" hidden>
     <div class="sh" style="margin-top:4px" id="top-h"></div>
     <p class="note" id="top-note" style="margin:-2px 2px 10px"></p>
+    <div id="top-pod"></div>
     <div id="top-list"></div>
   </section>
 </main>
@@ -729,7 +912,6 @@
     gpu: { e: '🎮', c: 'rgba(244,114,182,.5)' }, rig: { e: '🧰', c: 'rgba(251,191,36,.5)' }, asic: { e: '⚙️', c: 'rgba(34,211,238,.5)' },
     hydro: { e: '🧊', c: 'rgba(56,189,248,.55)' }, quant: { e: '⚛️', c: 'rgba(192,132,252,.6)' }
   };
-  var LOC_E = ['🏚', '🚗', '🏭', '❄️', '🏢', '🌋', '🛰'];
   var SPK = { x: { e: '✖️', c: '#c084fc' }, ded: { e: '👴', c: '#fbbf24' }, lisa: { e: '🦊', c: '#fb923c' }, block: { e: '🕴', c: '#f87171' }, me: { e: '🙂', c: '#a78bfa' } };
 
   var T = EN ? {
@@ -758,7 +940,7 @@
     goal: {
       col: function (n) { return 'Collect the mining ' + n + ' times'; }, rigs: function (n) { return 'Install ' + n + ' devices'; },
       hash: function (n) { return 'Farm power — ' + hashS(n); }, own: function (n, w) { return (n > 1 ? n + ' × ' : 'Buy: ') + T.rigs[w]; },
-      stor: function (n) { return 'Storage — ' + n + ' hours'; }, lucky: function () { return 'Find a lucky block 🍀'; }, mined: function (n) { return 'Mine ' + n + ' SLX in total'; }
+      stor: function (n) { return 'Storage — ' + n + ' hours'; }, lucky: function () { return 'Find a lucky block 🍀'; }, mined: function (n) { return 'Mine ' + slx(n) + ' SLX in total'; }
     },
     rwd: { rig: function (w) { return RIG[w].e + ' ' + T.rigs[w]; }, slx: function (x) { return '+' + slx(x) + ' SLX'; } },
     walletH: 'SLX wallet', walletT: function (t, p) { return '≈ ' + t + ' tokens · 1 SLX = ' + p; },
@@ -777,20 +959,30 @@
     sellRig: function (x) { return '💱 Sell for ' + slx(x) + ' SLX'; }, rigInfo: function (n, h) { return 'Here: ' + n + ' · ' + hashS(h) + ' each'; }, cancel: 'Cancel', ok: 'OK',
     lastRig: 'This is your last device — it cannot be sold',
     next: 'Next ›', skip: 'Skip', start: '⛏ Start the miner', go: "Let's go!", read: 'Close', startS: 'Prologue',
-    chT: function (n) { return 'Chapter ' + n; }, finaleT: 'Finale', finBtn: '👑 Complete the story — +10 SLX',
+    chT: function (n) { return 'Chapter ' + n; }, finaleT: 'Finale', finBtn: function (x) { return '👑 Complete the story — +' + slx(x) + ' SLX'; },
     errs: { off: 'Mining is paused — back soon', not_started: 'The farm is not built yet', no_slx: 'Not enough SLX', locked: 'Opens in later chapters',
             no_slot: 'All slots are taken — move on to get more', goals: 'Finish all chapter goals first', max: 'Nowhere further', last_rig: 'Your last device cannot be sold',
             no_rig: 'No such device on the farm', taps_off: 'Manual mining is off', rate_limited: 'One second…', banned: '🚫 Your account is blocked',
             frozen: '❄️ Your account is frozen', maintenance: '🔧 The bot is under maintenance', no_funds: 'Not enough tokens', no_coins: 'Not enough SLX',
             bad_qty: 'How much SLX?', net: 'No connection — try again', oc_wait: 'The overclock is still cooling down', forbidden: 'Administrator only',
-            bad_ch: 'Chapter — from 1 to 7' },
+            bad_ch: 'Chapter — from 1 to 7', no_farm: 'Build the farm first', have: 'You already have it', bad_item: 'No such item' },
     ocT: 'Overclock ×3', ocReady: '10 minutes — the farm mines three times faster', ocOnT: '🔥 Overclock ×3 is on',
     ocOn: function (s) { return s + ' left — collect more often, the storage fills faster'; }, ocCool: function (s) { return 'Cooling down — ' + s + ' left'; },
     ocBtn: '⚡ Turn on', ocStart: 'OVERCLOCK!', ocStartS: '×3 for 10 minutes', ocFull: 'The storage is full — collect first, or the overclock is wasted',
     adm: { title: '🛠 Test mode (only you see it)', open: '🔓 Everything unlocked', openS: 'Any devices and storage, moving and the finale — no goals needed',
            ch: 'Jump to chapter', fill: '📦 Fill the storage', energy: '⚡ Energy 100', lucky: '🍀 Lucky block on collect', oc: '⚡ Overclock without waiting',
            reset: '♻️ Start over (prologue)', resetQ: 'Delete your farm and start from the prologue?', note: 'Your farm is not part of the network — it does not affect players. Any chapter’s story — in the “Story” tab.',
-           done: 'Done ✓' },
+           done: 'Done ✓', donH: '💎 Try the boosts on yourself', unb: '✖️ Remove all boosts' },
+    // v388: донат в майнинге и курс фермы
+    dnT: 'Speed up your farm', dnS: function (p) { return 'Turbo ×2 from ' + p + ' ₽ · golden graphics card · auto-collect'; },
+    dnH: '💎 Farm boosts', dnP: 'Payment — in a private chat with @SloppyX: tap “Buy”, the message is already typed. The admin gives it to you — the bot sends a message.',
+    dnBuy: 'Buy', dnHave: 'You have it ✓', dnOn: function (s) { return 'On — ' + s + ' left'; }, dnTok: '💰 Tokens', dnTokB: '💰 Buy tokens',
+    dnMsg: function (e, n, p, id) { return 'Hi! I want to buy in “⛏ SLX Mining”: ' + e + ' ' + n + ' for ' + p + ' ₽. My ID: ' + id; },
+    dnMsgT: function (n, t, p, id) { return 'Hi! I want to buy tokens: the “' + n + '” pack — ' + t + ' tokens for ' + p + ' ₽. My ID: ' + id; },
+    dnHow: '1) Tap “Buy” — a chat with @SloppyX opens. 2) Pay. 3) The admin gives it to you, the bot sends a message.',
+    hbT: function (s) { return '🚀 Turbo ×2 · ' + s; }, hbA: function (s) { return '🤖 Auto-collect · ' + s; }, hbG: '💎 +10%',
+    ocf: function (s) { return '⚡ no cooldown: ' + s; }, topEmpty: 'free',
+    farmK: function (p, t) { return '⛏ The farm pays at the farm rate — the average SLX price over a day (now 1 SLX = ' + p + ' tokens): 1 MH/s ≈ ' + t + ' tokens a day.'; },
     errParams: ['Open it from the bot', 'This game opens with the “⛏ SLX Mining” button in “Gifts 🎁”.'],
     errAuth: ['The button is outdated', 'Open “Gifts 🎁” in the bot and tap “⛏ SLX Mining” again.'],
     errReg: ['Register first', 'Send /start to the bot and finish the registration — then the farm is yours.'],
@@ -825,7 +1017,7 @@
       col: function (n) { return 'Собери добычу ' + n + ' ' + plural(n, 'раз', 'раза', 'раз'); }, rigs: function (n) { return 'Поставь ' + n + ' ' + plural(n, 'устройство', 'устройства', 'устройств'); },
       hash: function (n) { return 'Мощность фермы — ' + hashS(n); }, own: function (n, w) { return (n > 1 ? n + ' × ' : 'Купи: ') + T.rigs[w]; },
       stor: function (n) { return 'Хранилище — ' + n + ' ' + plural(n, 'час', 'часа', 'часов'); }, lucky: function () { return 'Найди удачный блок 🍀'; },
-      mined: function (n) { return 'Добудь всего ' + n + ' SLX'; }
+      mined: function (n) { return 'Добудь всего ' + slx(n) + ' SLX'; }
     },
     rwd: { rig: function (w) { return RIG[w].e + ' ' + T.rigs[w]; }, slx: function (x) { return '+' + slx(x) + ' SLX'; } },
     walletH: 'Кошелёк SLX', walletT: function (t, p) { return '≈ ' + t + ' ' + tw(t) + ' · 1 SLX = ' + p; },
@@ -844,20 +1036,30 @@
     sellRig: function (x) { return '💱 Продать за ' + slx(x) + ' SLX'; }, rigInfo: function (n, h) { return 'На ферме: ' + n + ' · по ' + hashS(h); }, cancel: 'Отмена', ok: 'Понятно',
     lastRig: 'Это последнее устройство — его не продать',
     next: 'Дальше ›', skip: 'Пропустить', start: '⛏ Запустить майнер', go: 'Вперёд!', read: 'Закрыть', startS: 'Пролог',
-    chT: function (n) { return 'Глава ' + n; }, finaleT: 'Финал', finBtn: '👑 Завершить сюжет — +10 SLX',
+    chT: function (n) { return 'Глава ' + n; }, finaleT: 'Финал', finBtn: function (x) { return '👑 Завершить сюжет — +' + slx(x) + ' SLX'; },
     errs: { off: 'Майнинг на паузе — скоро вернётся', not_started: 'Ферма ещё не построена', no_slx: 'Не хватает SLX', locked: 'Откроется в следующих главах',
             no_slot: 'Все места заняты — переезжай, мест станет больше', goals: 'Сначала выполни все цели главы', max: 'Дальше некуда', last_rig: 'Последнее устройство продать нельзя',
             no_rig: 'Такого устройства нет на ферме', taps_off: 'Ручной майнинг выключен', rate_limited: 'Секунду…', banned: '🚫 Аккаунт заблокирован',
             frozen: '❄️ Аккаунт заморожен', maintenance: '🔧 Бот на обслуживании', no_funds: 'Не хватает токенов', no_coins: 'Не хватает SLX',
             bad_qty: 'Сколько SLX?', net: 'Нет связи — попробуй ещё раз', oc_wait: 'Разгон ещё остывает', forbidden: 'Только для администратора',
-            bad_ch: 'Глава — от 1 до 7' },
+            bad_ch: 'Глава — от 1 до 7', no_farm: 'Сначала построй ферму', have: 'Это у тебя уже есть', bad_item: 'Такого товара нет' },
     ocT: 'Разгон ×3', ocReady: '10 минут — ферма майнит втрое быстрее', ocOnT: '🔥 Идёт разгон ×3',
     ocOn: function (s) { return 'Ещё ' + s + ' — собирай чаще, хранилище копится быстрее'; }, ocCool: function (s) { return 'Остывает — ещё ' + s; },
     ocBtn: '⚡ Включить', ocStart: 'РАЗГОН!', ocStartS: '×3 на 10 минут', ocFull: 'Хранилище полное — сначала собери, иначе разгон уйдёт впустую',
     adm: { title: '🛠 Проверка (видишь только ты)', open: '🔓 Всё открыто', openS: 'Любые устройства и хранилище, переезд и финал — без целей',
            ch: 'Перейти в главу', fill: '📦 Заполнить хранилище', energy: '⚡ Энергия 100', lucky: '🍀 Удачный блок при сборе', oc: '⚡ Разгон без ожидания',
            reset: '♻️ Начать заново (пролог)', resetQ: 'Удалить свою ферму и начать с пролога?', note: 'Твоя ферма не входит в сеть — игрокам не мешает. Сюжет любой главы — во вкладке «Сюжет».',
-           done: 'Готово ✓' },
+           done: 'Готово ✓', donH: '💎 Проверить донат на себе', unb: '✖️ Снять всё купленное' },
+    // v388: донат в майнинге и курс фермы
+    dnT: 'Ускорь ферму', dnS: function (p) { return 'Турбо ×2 от ' + p + ' ₽ · золотая видеокарта · автосбор'; },
+    dnH: '💎 Донат в майнинге', dnP: 'Оплата — в личке @SloppyX: нажми «Купить», сообщение уже вписано. Выдаст администратор — бот пришлёт сообщение.',
+    dnBuy: 'Купить', dnHave: 'Уже есть ✓', dnOn: function (s) { return 'Идёт — ещё ' + s; }, dnTok: '💰 Токены', dnTokB: '💰 Купить токены',
+    dnMsg: function (e, n, p, id) { return 'Привет! Хочу купить в «⛏ Майнинге SLX»: ' + e + ' ' + n + ' за ' + p + ' ₽. Мой ID: ' + id; },
+    dnMsgT: function (n, t, p, id) { return 'Привет! Хочу купить токены: пакет «' + n + '» — ' + t + ' токенов за ' + p + ' ₽. Мой ID: ' + id; },
+    dnHow: '1) Нажми «Купить» — откроется чат с @SloppyX. 2) Оплати. 3) Администратор выдаст покупку — бот пришлёт сообщение.',
+    hbT: function (s) { return '🚀 Турбо ×2 · ' + s; }, hbA: function (s) { return '🤖 Автосбор · ' + s; }, hbG: '💎 +10%',
+    ocf: function (s) { return '⚡ без остывания: ' + s; }, topEmpty: 'свободно',
+    farmK: function (p, t) { return '⛏ Ферма платит по курсу фермы — средней цене SLX за сутки (сейчас 1 SLX = ' + p + ' токенов): 1 MH/s ≈ ' + t + ' токенов в сутки.'; },
     errParams: ['Открой из бота', 'Игра открывается кнопкой «⛏ Майнинг SLX» в «Подарках 🎁».'],
     errAuth: ['Кнопка устарела', 'Открой «Подарки 🎁» в боте и нажми «⛏ Майнинг SLX» заново.'],
     errReg: ['Сначала регистрация', 'Напиши боту /start и пройди регистрацию — и ферма твоя.'],
@@ -950,9 +1152,12 @@
     return ((Number(n) || 0) < 0 ? '−' : '') + s.replace(/\B(?=(\d{3})+(?!\d))/g, EN ? ',' : ' ');
   }
   function dec(x, d) { var s = (Number(x) || 0).toFixed(d); return EN ? s : s.replace('.', ','); }
-  function slxFix(x) { x = Number(x) || 0; var a = Math.abs(x); return dec(x, a >= 100 ? 2 : a >= 0.01 ? 4 : a > 0 ? 6 : 0); }
+  // v388: настоящие SLX бывают крошечными (1 SLX — десятки миллионов токенов): маленькие суммы — 3 значащие цифры
+  function slxDp(a) { return a >= 100 ? 2 : a >= 0.01 ? 4 : a >= 0.0001 ? 6 : Math.min(12, 2 - Math.floor(Math.log10(a))); }
+  function slxFix(x) { x = Number(x) || 0; var a = Math.abs(x); return a < 1e-12 ? '0' : dec(x, slxDp(a)); }
   function slx(x) { var s = slxFix(x); return /[.,]/.test(s) ? s.replace(/0+$/, '').replace(/[.,]$/, '') : s; }   // цены и суммы — без хвоста нулей
-  function slxLive(x) { x = Number(x) || 0; return dec(x, x >= 10 ? 4 : 6); }
+  // счётчик хранилища: знаков столько, чтобы у полного хранилища было ~5 значащих цифр — последняя бежит
+  function slxLive(x, cap) { x = Number(x) || 0; return dec(x, cap > 0 ? Math.min(10, Math.max(4, 5 - Math.floor(Math.log10(cap)))) : x >= 10 ? 4 : 6); }
   function slxShort(x) {                            // v387: кошелёк — огромные суммы коротко («30,79 млрд» вместо «30785501498,49»)
     x = Number(x) || 0; var a = Math.abs(x);
     var U = EN ? [[1e12, 'T'], [1e9, 'B'], [1e6, 'M']] : [[1e12, ' трлн'], [1e9, ' млрд'], [1e6, ' млн']];
@@ -960,6 +1165,7 @@
     return a >= 1e4 ? num(x) : slxFix(x);
   }
   function mmss(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
+  function hms(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 3600) + ':' + ('0' + Math.floor(s % 3600 / 60)).slice(-2) + ':' + ('0' + s % 60).slice(-2); }
   function hashS(h) {
     h = Number(h) || 0;
     if (h >= 1e6) return dec(h / 1e6, h >= 1e7 ? 1 : 2).replace(/[.,]?0+$/, '') + ' TH/s';
@@ -989,23 +1195,40 @@
   var S = { d: null, cfg: null, ex: '', at: 0, loaded: false, busy: false, tries: 0, tab: 'farm', q: Promise.resolve(), pend: 0, fly: 0, flushT: 0,
             seenRigs: null, lastCol: 0, coach: '', stale: false, ovOpen: false, sellPct: 0 };
 
+  // v388: ускорения фермы — [до какого времени (часы сервера), во сколько раз]: «⚡ Разгон» ×3 и «🚀 Турбо» ×2, вместе ×6
+  function boosts() { var d = S.d; return (d && d.boosts) || (d && d.oc_until ? [[d.oc_until, (S.cfg || {}).oc_x || 3]] : []); }
+  function bMult(bs, t) { var m = 1; for (var i = 0; i < bs.length; i++) if (t < bs[i][0]) m *= bs[i][1]; return m; }
+  function bInt(bs, t0, t1) {                         // «обычные» секунды в [t0, t1]: каждая × ускорения, что в ней шли
+    var pts = [t0, t1], tot = 0;
+    for (var i = 0; i < bs.length; i++) if (bs[i][0] > t0 && bs[i][0] < t1) pts.push(bs[i][0]);
+    pts.sort(function (a, b) { return a - b; });
+    for (var j = 0; j + 1 < pts.length; j++) tot += (pts[j + 1] - pts[j]) * bMult(bs, pts[j]);
+    return tot;
+  }
   function live() {                                   // хранилище, энергия, кошелёк — на «сейчас» (между опросами считает страница)
     var d = S.d, el = (performance.now() - S.at) / 1000;
     if (!d || !d.started) return null;
-    var cf = S.cfg || {}, ocx = cf.oc_x || 3, base = d.rate_base != null ? d.rate_base : d.rate;
-    var ocl0 = d.oc_until ? Math.max(0, d.oc_until - d.t) : 0, ocl = Math.max(0, ocl0 - el);   // v387: «⚡ Разгон» — сколько ещё
+    var cf = S.cfg || {}, ocx = cf.oc_x || 3, base = d.rate_base != null ? d.rate_base : d.rate, bs = boosts(), now = (d.t || 0) + el;
+    var ocl = d.oc_until ? Math.max(0, d.oc_until - now) : 0;          // v387: «⚡ Разгон» — сколько ещё
+    var bsl = d.bst_until ? Math.max(0, d.bst_until - now) : 0;        // v388: «🚀 Турбо» — сколько ещё
     var st = d.stored, cap = d.cap;
-    if (d.on && st < cap) st = Math.min(cap, st + base * (el + (ocx - 1) * Math.min(el, ocl0)));
+    if (d.on && st < cap) st = Math.min(cap, st + base * bInt(bs, d.t || 0, now));
     var emax = cf.en_max || 100, regen = cf.en_regen || 60;
     var en = Math.min(emax, d.en + el / regen) - S.pend - S.fly;
+    var mx = bMult(bs, now);
     return { st: st, cap: cap, full: cap > 0 && st >= cap * 0.999999, en: Math.max(0, en), emax: emax, regen: regen,
-             wallet: (d.wallet || 0) + (S.pend + S.fly) * (d.tap_val || 0), base: base, ocl: ocl, ocx: ocx,
-             rate: base * (ocl > 0 ? ocx : 1), snow: (d.t || 0) + el };
+             wallet: (d.wallet || 0) + (S.pend + S.fly) * (d.tap_val || 0), base: base, ocl: ocl, ocx: ocx, bsl: bsl, bs: bs, mx: mx,
+             rate: base * mx, snow: now };
   }
-  function fullIn(cap, st, base, ocl, ocx) {        // через сколько хранилище полное — с учётом разгона
+  function fullIn(cap, st, base, bs, now) {         // через сколько хранилище полное — с разгоном и турбо, пока они идут
     var need = cap - st; if (need <= 0 || !(base > 0)) return 0;
-    var fast = base * ocx * ocl;
-    return need <= fast ? need / (base * ocx) : ocl + (need - fast) / base;
+    var ends = bs.map(function (b) { return b[0]; }).filter(function (u) { return u > now; }).sort(function (a, b) { return a - b; }), t = now;
+    for (var i = 0; i <= ends.length; i++) {
+      var sp = base * bMult(bs, t), end = ends[i];
+      if (end === undefined || sp * (end - t) >= need) return t - now + need / sp;
+      need -= sp * (end - t); t = end;
+    }
+    return 0;
   }
   function price() { return (S.d && S.d.price) || 100000; }
   function rigsSorted(own) {
@@ -1021,7 +1244,9 @@
     for (var k in o) { if (o[k] > 0) { var r = rigCfg(k); if (r && (!best || r.hash < best.hash)) best = r; } }
     return best;
   }
-  function perMH() { return S.d && S.d.hash ? S.d.rate / S.d.hash : 0; }   // SLX/с на 1 MH/s сейчас (со сложностью)
+  function perMH() { return S.d && S.d.hash ? (S.d.rate_base != null ? S.d.rate_base : S.d.rate) / S.d.hash : 0; }   // SLX/с на 1 MH/s (со сложностью, без разгона и турбо)
+  // v388: значок главы — SVG из набора вверху (0 — пролог, 8 — финал)
+  function chIco(n) { return '<svg class="chi" viewBox="0 0 48 48" aria-hidden="true"><use href="#ic-c' + n + '" xlink:href="#ic-c' + n + '"></use></svg>'; }
 
   // ── вкладки ──
   var TABS = ['farm', 'shop', 'story', 'wallet', 'top'];
@@ -1058,7 +1283,7 @@
     renderEv();
     $('adm-btn').hidden = !(d.adm && d.started);                  // v387: «🛠 Проверка» — только администратору
     if (!d.started) { $('loc-n').textContent = EN ? 'SLX Mining' : 'Майнинг SLX'; $('loc-c').textContent = ''; return; }
-    $('loc-e').textContent = LOC_E[d.ch - 1];
+    setHtml('loc-e', chIco(d.done ? 8 : d.ch));                     // v388: значок главы — SVG
     $('loc-n').textContent = T.locs[d.ch - 1];
     $('loc-c').textContent = T.ch(d.ch) + ' · ' + T.titles[d.title];
     tick();
@@ -1086,12 +1311,13 @@
     if (S.tab === 'farm') {
       var st = L.st, full = L.full;
       if (Dr) { st = Dr.amt * Math.max(0, 1 - (now - Dr.t0) / Dr.dur); full = false; }   // «Собрать»: хранилище плавно пустеет
-      setTxt('h-val', slxLive(st));
+      var sv = slxLive(st, L.cap), mz = /^(0[.,]0*)(\d.*)$/.exec(sv);   // v388: нули впереди бледнее (два текста — без пересборки HTML)
+      setTxt('h-z', mz ? mz[1] : ''); setTxt('h-n', mz ? mz[2] : sv);
       setTxt('h-eq', T.eq(num(st * price())));
       var pct = L.cap > 0 ? Math.min(1, st / L.cap) : 0;
       setAttr('tank-i', 'tf', 'scaleX(' + pct.toFixed(3) + ')');
       $('tank').classList.toggle('full', full);
-      var hot = L.ocl > 0 && d.on !== false;
+      var hot = L.ocl > 0 && d.on !== false, tb = L.bsl > 0 && d.on !== false;
       var sb = $('slots');
       sb.classList.toggle('stop', d.on === false || full);
       sb.classList.toggle('off', d.on === false);
@@ -1099,11 +1325,20 @@
       $('room').classList.toggle('stop', d.on === false || full);
       $('room').classList.toggle('hot', hot && !full);
       $('hero').classList.toggle('hot', hot);
-      setHtml('h-rate', '⛏ ' + esc(slx(L.rate * 3600)) + ' SLX' + T.perH + (hot ? ' <b style="color:#fb923c">×' + L.ocx + '</b>' : ''));
+      $('hero').classList.toggle('tb', tb && !hot);                   // v388: «🚀 Турбо» — голубая рамка
+      setHtml('h-rate', '⛏ ' + esc(slx(L.rate * 3600)) + ' SLX' + T.perH
+        + (L.mx > 1 && d.on !== false ? ' <b style="color:' + (hot ? '#fb923c' : '#38bdf8') + '">×' + L.mx + '</b>' : ''));
+      // v388: что из доната работает — турбо (обратный отсчёт), автосбор, золотая видеокарта
+      var bh = '';
+      if (tb) bh += '<span class="hb">' + esc(T.hbT(L.bsl >= 86400 ? dur(L.bsl) : hms(L.bsl))) + '</span>';
+      if (d.auto_until > L.snow) bh += '<span class="hb a">' + esc(T.hbA(dur(d.auto_until - L.snow))) + '</span>';
+      if (d.gold) bh += '<span class="hb g">' + esc(T.hbG) + '</span>';
+      setHtml('h-bs', bh);
+      if ($('h-bs').hidden !== !bh) $('h-bs').hidden = !bh;
       ocCard(L, full);
       if (d.on === false) { setTxt('h-full', T.stopped); setAttr('h-full', 'cls', 'fl'); }
       else if (full) { setTxt('h-full', T.full); setAttr('h-full', 'cls', 'fl full'); }
-      else { setTxt('h-full', T.fullIn(dur(fullIn(L.cap, st, L.base, L.ocl, L.ocx)))); setAttr('h-full', 'cls', 'fl'); }
+      else { setTxt('h-full', T.fullIn(dur(fullIn(L.cap, st, L.base, L.bs, L.snow)))); setAttr('h-full', 'cls', 'fl'); }
       var bc = $('b-col');
       bc.classList.toggle('gold', full); bc.classList.toggle('pri', !full); bc.classList.toggle('pulse', full);
       setTxt('b-col-t', full ? T.collectFull : T.collect);
@@ -1130,17 +1365,18 @@
     if (box.hidden !== hide) box.hidden = hide;
     if (hide) return;
     var cd = d.oc_next ? Math.max(0, d.oc_next - L.snow) : 0, state = L.ocl > 0 ? 'on' : cd > 0 ? 'cool' : 'ready';
+    var ocf = d.ocf_until > L.snow ? ' · ' + T.ocf(dur(d.ocf_until - L.snow)) : '';      // v388: донат «Разгон без остывания»
     setAttr('occ', 'cls', 'card occ' + (state === 'on' ? ' on' : state === 'ready' ? ' ready' : ''));
     if (state === 'on') {
       setTxt('oc-t', T.ocOnT); setTxt('oc-s', T.ocOn(mmss(L.ocl)));
       setAttr('oc-bar', 'tf', 'scaleX(' + Math.min(1, L.ocl / (cf.oc_sec || 600)).toFixed(3) + ')');
       setTxt('b-oc', '🔥 ' + mmss(L.ocl)); setAttr('b-oc', 'cls', 'bb hot'); setAttr('b-oc', 'dis', true);
     } else if (state === 'cool') {
-      setTxt('oc-t', T.ocT); setTxt('oc-s', T.ocCool(dur(cd)));
-      setAttr('oc-bar', 'tf', 'scaleX(' + Math.max(0, 1 - cd / (cf.oc_cd || 10800)).toFixed(3) + ')');
+      setTxt('oc-t', T.ocT); setTxt('oc-s', T.ocCool(dur(cd)) + ocf);
+      setAttr('oc-bar', 'tf', 'scaleX(' + Math.max(0, 1 - cd / (ocf ? cf.oc_cd_fast || 1800 : cf.oc_cd || 10800)).toFixed(3) + ')');
       setTxt('b-oc', '⏳ ' + (cd >= 3600 ? dur(cd) : mmss(cd))); setAttr('b-oc', 'cls', 'bb ghost'); setAttr('b-oc', 'dis', true);
     } else {
-      setTxt('oc-t', T.ocT); setTxt('oc-s', full ? T.ocFull : T.ocReady);
+      setTxt('oc-t', T.ocT); setTxt('oc-s', (full ? T.ocFull : T.ocReady) + ocf);
       setAttr('oc-bar', 'tf', 'scaleX(1)');
       setTxt('b-oc', T.ocBtn); setAttr('b-oc', 'cls', 'bb hot'); setAttr('b-oc', 'dis', false);
     }
@@ -1149,10 +1385,17 @@
     var d = S.d;
     $('h-lbl').textContent = T.storage;
     $('h-cap').textContent = T.hours(S.cfg.storage[d.st][0]);
-    $('r-name').textContent = LOC_E[d.ch - 1] + ' ' + T.locs[d.ch - 1];
+    setHtml('r-name', chIco(d.ch) + ' ' + esc(T.locs[d.ch - 1]));
     $('r-used').textContent = T.slots(usedN(), slotsN());
     $('r-hash').textContent = '⚡ ' + hashS(d.hash);
     renderSlots();
+    // v388: «💎 Ускорь ферму» — донат (если администратор не выключил все товары)
+    var sh = S.shop || [], dn = $('dnc');
+    if (dn.hidden !== !(sh.length && d.on !== false)) dn.hidden = !(sh.length && d.on !== false);
+    if (sh.length) {
+      $('dn-t').textContent = T.dnT;
+      $('dn-s').textContent = T.dnS(turboFrom(sh));
+    }
     $('tp-t').textContent = T.tapT; $('tp-s').textContent = T.tapS(slx(d.tap_val));
     // цели коротко
     var g = d.goals || [], ok = g.filter(function (x) { return x.ok; }).length;
@@ -1164,7 +1407,7 @@
     }
     var n = d.net || {};
     $('netc').innerHTML = T.net({ farms: d.farms || n.miners || 0, active: n.active || 0, diff: String(n.diff || 1).replace('.', EN ? '.' : ','),
-                                  today: esc(slx(n.today || 0)), cap: esc(num(n.cap || 0)) }) + (n.diff > 1 ? '<span style="color:var(--gold)">' + T.netHi + '</span>' : '');
+                                  today: esc(slx(n.today || 0)), cap: esc(slx(n.cap || 0)) }) + (n.diff > 1 ? '<span style="color:var(--gold)">' + T.netHi + '</span>' : '');
   }
   // v386: значок устройства — SVG из набора вверху страницы; движущиеся части поверх него (места — в долях значка 48×48)
   var FX = {
@@ -1182,11 +1425,13 @@
   }
   function renderSlots() {
     var d = S.d, ids = rigsSorted(d.own), n = slotsN(), cols = n <= 4 ? 4 : n <= 12 ? 4 : n <= 20 ? 5 : 6;
-    var sig = ids.join(',') + '|' + n;
+    var sig = ids.join(',') + '|' + n + (d.gold ? '|g' : '');
     var box = $('slots');
     box.style.setProperty('--cols', cols);
     if (box.getAttribute('data-sig') === sig) return;
     var prev = S.seenRigs || {}, cnt = {}, h = '';
+    if (d.gold) h += '<button type="button" class="sl gld" data-gold="1" style="--d:-.4s"><span class="dv"><svg class="ri" viewBox="0 0 48 48" aria-hidden="true">'   // v388: донат
+      + '<use href="#ic-gold" xlink:href="#ic-gold"></use></svg>' + FX.gpu + '</span><i class="led"></i></button>';
     ids.forEach(function (id, i) {
       cnt[id] = (cnt[id] || 0) + 1;
       var isNew = S.seenRigs && cnt[id] > (prev[id] || 0);
@@ -1201,6 +1446,7 @@
     var b = e.target.closest('.sl'); if (!b) return;
     hap('sel');
     if (b.getAttribute('data-empty')) { openTab('shop'); return; }
+    if (b.getAttribute('data-gold')) { donSheet(); return; }
     rigSheet(b.getAttribute('data-rig'));
   });
   function goalText(g) { return (T.goal[g.k] || function () { return g.k; })(g.need, g.w); }
@@ -1210,7 +1456,7 @@
       var f = function (v) { v = v / u; return u === 1 ? String(Math.round(v)) : dec(v, v >= 100 ? 0 : 1).replace(/[.,]0$/, ''); };
       return f(Math.min(g.have, g.need)) + ' / ' + f(g.need) + un;
     }
-    if (g.k === 'mined') return slx(Math.min(g.have, g.need)) + ' / ' + g.need;
+    if (g.k === 'mined') return slx(Math.min(g.have, g.need)) + ' / ' + slx(g.need);
     if (g.k === 'stor') return g.have + ' / ' + g.need + (EN ? ' h' : ' ч');
     return Math.min(g.have, g.need) + ' / ' + g.need;
   }
@@ -1218,11 +1464,15 @@
   // ── магазин ──
   function renderShop() {
     var d = S.d, cf = S.cfg, L = live(), wl = L ? L.wallet : d.wallet;
+    // v388: донат — карточка сверху, покупки в отдельном окне
+    var sh0 = S.shop || [];
+    setHtml('shop-don', sh0.length ? '<div class="card dnc" data-don="1"><div class="de">💎</div><div class="dt"><b>' + esc(T.dnH) + '</b><small>'
+      + esc(T.dnS(turboFrom(sh0))) + '</small></div><span class="da">›</span></div>' : '');
     // переезд
     var mv = '';
     if (d.ch < 7 && (goalsReady() || d.open)) {                // v387: админу (всё открыто) — без целей
       var mc = cf.locs[d.ch][1];
-      mv = '<div class="card" style="border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.07)"><div class="gm"><span class="ge">' + LOC_E[d.ch] + '</span><div class="gt"><b>'
+      mv = '<div class="card" style="border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.07)"><div class="gm"><span class="ge">' + chIco(d.ch + 1) + '</span><div class="gt"><b>'
         + esc(T.moveT(T.locs[d.ch])) + '</b><small>' + esc(T.goalAll) + '</small></div></div><button type="button" class="btn gold sm" style="margin-top:10px" data-move="1">'
         + esc(T.moveGo(slx(mc))) + '</button></div>';
     }
@@ -1257,6 +1507,7 @@
     $('shop-note').textContent = T.shopNote;
   }
   $('t-shop').addEventListener('click', function (e) {
+    if (e.target.closest('[data-don]')) { hap('sel'); donSheet(); return; }
     var b = e.target.closest('[data-buy]'); if (b) { buyRig(b.getAttribute('data-buy')); return; }
     if (e.target.closest('[data-stor]')) { buyStorage(); return; }
     if (e.target.closest('[data-move]')) { doMove(); return; }
@@ -1266,7 +1517,7 @@
   function renderStory() {
     var d = S.d, cf = S.cfg, g = d.goals || [], ch = d.ch;
     var rw = cf.rewards[String(ch)], rwT = rw ? (rw[0] === 'rig' ? T.rwd.rig(rw[1]) : T.rwd.slx(rw[1])) : '';
-    var h = '<div class="card chap"><div class="cv"><span>' + LOC_E[ch - 1] + '</span><span class="cn">' + esc(T.chT(ch)) + '</span></div><div class="cb"><h2>'
+    var h = '<div class="card chap"><div class="cv"><span>' + chIco(d.done ? 8 : ch) + '</span><span class="cn">' + esc(T.chT(ch)) + '</span></div><div class="cb"><h2>'
       + esc(T.locs[ch - 1]) + '</h2><div class="tl">' + esc(T.titles[d.title]) + '</div>';
     h += '<div class="sh" style="margin:14px 0 2px">' + esc(T.goalsH) + '</div>';
     g.forEach(function (x) {
@@ -1282,18 +1533,18 @@
         + esc(ready ? T.moveGo(slx(mc)) : T.moveNeed) + '</button>';
     } else {
       var rd = goalsReady() || d.open;
-      h += '<button type="button" class="btn ' + (rd ? 'gold' : 'sec') + ' sm" style="margin-top:12px" data-fin="1"' + (rd ? '' : ' disabled') + '>' + esc(rd ? T.finBtn : T.moveNeed) + '</button>';
+      h += '<button type="button" class="btn ' + (rd ? 'gold' : 'sec') + ' sm" style="margin-top:12px" data-fin="1"' + (rd ? '' : ' disabled') + '>' + esc(rd ? T.finBtn(((cf.rewards['7'] || [])[1]) || 0) : T.moveNeed) + '</button>';   // v388: награда — по курсу фермы
     }
     h += '<button type="button" class="btn sec sm" style="margin-top:8px" data-read="' + ch + '">📖 ' + esc(T.chT(ch)) + '</button></div></div>';
     $('story-cur').innerHTML = h;
     $('sh-past').textContent = T.past + ' · ' + T.readAgain;
-    var p = '<button type="button" class="pc" data-read="0"><span class="pe">🌧</span>' + esc(T.startS) + '</button>';
+    var p = '<button type="button" class="pc" data-read="0"><span class="pe">' + chIco(0) + '</span>' + esc(T.startS) + '</button>';
     for (var i = 1; i <= 7; i++) {
       var lk = i > ch && !d.open;
-      p += '<button type="button" class="pc' + (i === ch ? ' cur' : '') + (lk ? ' lk' : '') + '"' + (lk ? ' disabled' : ' data-read="' + i + '"') + '><span class="pe">' + (lk ? '🔒' : LOC_E[i - 1])
+      p += '<button type="button" class="pc' + (i === ch ? ' cur' : '') + (lk ? ' lk' : '') + '"' + (lk ? ' disabled' : ' data-read="' + i + '"') + '><span class="pe">' + (lk ? '🔒' : chIco(i))
         + '</span>' + esc(T.chT(i)) + '</button>';
     }
-    if (d.done || d.open) p += '<button type="button" class="pc" data-read="8"><span class="pe">👑</span>' + esc(T.finaleT) + '</button>';
+    if (d.done || d.open) p += '<button type="button" class="pc" data-read="8"><span class="pe">' + chIco(8) + '</span>' + esc(T.finaleT) + '</button>';
     $('past').innerHTML = p;
   }
   $('t-story').addEventListener('click', function (e) {
@@ -1312,9 +1563,12 @@
     $('sell-chips').innerHTML = [25, 50, 100].map(function (p) { return '<button type="button" class="chip' + (S.sellPct === p ? ' on' : '') + '" data-pct="' + p + '">' + (p === 100 ? T.all : p + '%') + '</button>'; }).join('');
     $('buy-h').textContent = T.buyH; $('buy-in').placeholder = T.buyPh;
     sellBtn(); buyBtn();
+    $('b-tok').textContent = T.dnTokB; $('b-tok').hidden = !(S.packs && S.packs.length && S.order);       // v388: пакеты токенов
+    // v388: курс фермы — почему SLX с фермы такие маленькие и сколько платит 1 MH/s
+    $('wb-k').textContent = d.pf && S.cfg && S.cfg.r ? T.farmK(num(d.pf), num(S.cfg.r * 24 * d.pf * (d.mult || 1))) : '';
     $('st-h').textContent = T.statsH;
     var sd = new Date((d.start || 0) * 1000);
-    $('stats').innerHTML = [[T.st.mined, slx(d.mined) + ' SLX'], [T.st.tapped, slx(d.tapped) + ' SLX'], [T.st.lucky, num(d.lucky) + (d.bonus ? ' · +' + slx(d.bonus) : '')],
+    $('stats').innerHTML = [[T.st.mined, slx(d.mined) + ' SLX' + (d.mined_tok ? ' ≈ ' + num(d.mined_tok) : '')], [T.st.tapped, slx(d.tapped) + ' SLX'], [T.st.lucky, num(d.lucky) + (d.bonus ? ' · +' + slx(d.bonus) : '')],
                             [T.st.col, num(d.col)], [T.st.spent, slx(Math.max(0, d.spent || 0)) + ' SLX'],
                             [T.st.since, d.start ? ('0' + sd.getDate()).slice(-2) + '.' + ('0' + (sd.getMonth() + 1)).slice(-2) + '.' + sd.getFullYear() : '—']]
       .map(function (x) { return '<div><i>' + esc(x[0]) + '</i><b class="mono">' + esc(x[1]) + '</b></div>'; }).join('');
@@ -1365,16 +1619,95 @@
     send('notify', { on: on });
   });
   $('b-ex').addEventListener('click', function () { if (S.ex) { hap('sel'); location.href = S.ex; } });
+  $('b-tok').addEventListener('click', function () { hap('sel'); donSheet(true); });
+  $('dnc').addEventListener('click', function () { hap('sel'); donSheet(); });
+
+  // ── v388: донат — бусты, золотая видеокарта, автосбор и токены. Оплата — в личке @SloppyX (сообщение уже вписано), выдаёт
+  // администратор; страница только показывает цены и открывает чат ──
+  function donSheet(packs) {
+    var d = S.d, sh = S.shop || [], pk = S.packs || [], now = live() ? live().snow : (d.t || 0), h = '<h3>' + esc(T.dnH) + '</h3><p>' + esc(T.dnP) + '</p>';
+    sh.forEach(function (x) {
+      var left = x.kind === 'bst' ? d.bst_until - now : x.kind === 'auto' ? d.auto_until - now : x.kind === 'ocf' ? d.ocf_until - now : 0;
+      var have = x.kind === 'gold' && d.gold;
+      h += '<div class="dni"><div class="de">' + esc(x.e) + '</div><div class="dm"><b>' + esc(EN ? x.en : x.ru) + '</b><small>' + esc(EN ? x.d_en : x.d_ru) + '</small>'
+        + (left > 0 ? '<small class="on">' + esc(T.dnOn(dur(left))) + '</small>' : '') + '</div><div class="dr"><b>' + num(x.price) + ' ₽</b>'
+        + (have ? '<button type="button" class="bb ghost" disabled>' + esc(T.dnHave) + '</button>'
+                : '<button type="button" class="bb hot" data-dbuy="' + esc(x.id) + '">' + esc(T.dnBuy) + '</button>') + '</div></div>';
+    });
+    if (pk.length) {
+      h += '<div class="dsh" id="dn-pk">' + esc(T.dnTok) + '</div>';
+      pk.forEach(function (p, i) {
+        h += '<div class="dni"><div class="de">' + esc(p[3]) + '</div><div class="dm"><b>' + esc(p[0]) + '</b><small>' + num(p[2]) + ' ' + esc(EN ? 'tokens' : tw(num(p[2]))) + '</small></div>'
+          + '<div class="dr"><b>' + num(p[1]) + ' ₽</b><button type="button" class="bb" data-dpk="' + i + '">' + esc(T.dnBuy) + '</button></div></div>';
+      });
+    }
+    h += '<p class="note" style="margin-top:12px">' + esc(T.dnHow) + '</p><div class="row"><button type="button" class="btn sec sm" data-sa="close">' + esc(T.cancel) + '</button></div>';
+    sheet(h);
+    if (packs && $('dn-pk')) try { $('dn-pk').scrollIntoView({ block: 'start' }); } catch (e) {}
+  }
+  function turboFrom(sh) {                          // «Турбо ×2 от N ₽» — самое дешёвое турбо (нет турбо — самое дешёвое вообще)
+    var t = sh.filter(function (x) { return x.kind === 'bst'; });
+    return Math.min.apply(null, (t.length ? t : sh).map(function (x) { return x.price; }));
+  }
+  function donOpen(text) {                          // чат с @SloppyX с уже вписанным сообщением
+    var url = (S.order || 'https://t.me/SloppyX') + '?text=' + encodeURIComponent(text);
+    try { if (tg && tg.openTelegramLink) { tg.openTelegramLink(url); return; } } catch (e) {}
+    try { window.open(url, '_blank'); } catch (e) { location.href = url; }
+  }
+  $('sheet').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-dbuy]'), p = e.target.closest('[data-dpk]'), id = S.cid || UID;
+    if (b) {
+      var x = (S.shop || []).filter(function (y) { return y.id === b.getAttribute('data-dbuy'); })[0]; if (!x) return;
+      hap('medium'); donOpen(T.dnMsg(x.e, EN ? x.en : x.ru, x.price, id));
+    } else if (p) {
+      var k = (S.packs || [])[Number(p.getAttribute('data-dpk'))]; if (!k) return;
+      hap('medium'); donOpen(T.dnMsgT(k[0], num(k[2]), k[1], id));
+    }
+  });
 
   // ── топ ──
+  // v388: огонь вокруг аватарки — тот же рисунок, что в «Рангах» (языки пламени по кругу, тянутся вверх), только компактный
+  var POD = [{ s: 74, lvl: 6, fc: '255,190,40', fk: '255,247,190' }, { s: 58, lvl: 4, fc: '196,181,253', fk: '240,236,255' },
+             { s: 58, lvl: 3, fc: '251,130,60', fk: '255,220,170' }];
+  function fzRnd(a, b) { return a + Math.random() * (b - a); }
+  function fzHtml(size, lvl) {
+    var t = lvl / 6, k = size * 1.15 / 150, n = Math.round((6 + t * 22) * 0.6), span = 105 + t * 75, hs = 0.55 + t * 1.05, ws = 0.85 + t * 0.3;
+    var dur0 = 1.7 - t * 0.75, hk = 1.3 + 0.5 * (1 - t), R = 62 * k, full = span >= 178, h = '';
+    for (var i = 0; i < n; i++) {
+      var a = (full ? -180 + (360 / n) * (i + 0.5) : -span + (2 * span) * (i / (n - 1))) + fzRnd(-5, 5);
+      var up = Math.max(0, Math.cos(a * Math.PI / 180)), w = fzRnd(13, 21) * ws * k * 1.45;
+      var ht = fzRnd(42, 58) * hs * k * hk * (Math.random() < 0.35 ? 1.25 : 1) * (0.5 + 0.5 * up);
+      h += '<div class="fz-l" style="width:' + w.toFixed(1) + 'px;height:' + ht.toFixed(1) + 'px;margin-left:' + (-w / 2).toFixed(1) + 'px;margin-top:' + (-ht).toFixed(1)
+        + 'px;transform:rotate(' + a.toFixed(1) + 'deg) translateY(' + (-R).toFixed(1) + 'px) rotate(' + (-a * 0.45).toFixed(1) + 'deg)"><div class="fz-x" style="--d:'
+        + (dur0 * fzRnd(0.8, 1.25)).toFixed(2) + 's;--dl:' + (-fzRnd(0, 1.5)).toFixed(2) + 's"><i class="fb"></i><i class="fm"></i><i class="fc"></i></div></div>';
+    }
+    return '<div class="fz"><div class="fz-a"></div><div class="fz-g">' + h + '</div></div>';
+  }
+  function avHtml(r) {                              // фото игрока (проверенная аватарка) или первая буква имени
+    var l = esc((String(r.name || '?').trim()[0] || '?').toUpperCase());
+    return r.av ? '<img src="' + esc(r.av) + '" alt="" loading="lazy" decoding="async" data-l="' + l + '" onerror="this.parentNode.textContent=this.getAttribute(\'data-l\')">' : l;
+  }
   function renderTop() {
     var d = S.d, list = d.top || [];
     $('top-h').textContent = T.topH;
-    $('top-list').innerHTML = list.map(function (r, i) {
-      return '<div class="tr' + (r.me ? ' me' : '') + (i < 3 ? ' g' + (i + 1) : '') + '"><span class="tp">' + (i < 3 ? ['🥇', '🥈', '🥉'][i] : i + 1) + '</span><div class="tn"><b>'
-        + esc(r.name) + (r.adm ? ' 🛡' : '') + (r.me ? ' · ' + esc(T.you) : '') + '</b><small>' + LOC_E[(r.ch || 1) - 1] + ' ' + esc(T.titles[r.title || 0]) + '</small></div><span class="th mono">'
+    // пьедестал: 2-е, 1-е, 3-е место — огонь вокруг аватарки; перерисовка — только когда тройка поменялась (иначе огонь «прыгал» бы)
+    var sig = list.slice(0, 3).map(function (r) { return [r.name, r.av, r.hash, r.me, r.ch].join('~'); }).join('|');
+    if (S.podSig !== sig) {
+      S.podSig = sig;
+      setHtml('top-pod', list.length ? '<div class="pdm">' + [1, 0, 2].map(function (i) {
+        var r = list[i], p = POD[i], st = 'style="--s:' + p.s + 'px;--fc:' + p.fc + ';--fk:' + p.fk + '"';
+        if (!r) return '<div class="pd em" ' + st + '><div class="pw"><div class="pav">?</div><span class="pnum">' + (i + 1) + '</span></div><div class="pn">' + esc(T.topEmpty) + '</div></div>';
+        return '<div class="pd' + (r.me ? ' me' : '') + '" ' + st + '><div class="pw">' + fzHtml(p.s, p.lvl)
+          + (i === 0 ? '<svg class="crn" viewBox="0 0 26 20" aria-hidden="true"><path d="M2 17 4 5 9.5 10 13 2 16.5 10 22 5 24 17Z" fill="url(#mgG)"/><rect x="2" y="17" width="22" height="2.5" rx="1" fill="url(#mgG)"/></svg>' : '')
+          + '<div class="pav">' + avHtml(r) + '</div><span class="pnum">' + (i + 1) + '</span></div><div class="pn">' + esc(r.name) + (r.gold ? ' 💎' : '') + (r.adm ? ' 🛡' : '')
+          + '</div><div class="ph mono">' + hashS(r.hash) + '</div><div class="pl">' + chIco(r.ch || 1) + ' ' + esc(T.titles[r.title || 0]) + '</div></div>';
+      }).join('') + '</div>' : '');
+    }
+    setHtml('top-list', list.slice(3).map(function (r, j) {
+      return '<div class="tr' + (r.me ? ' me' : '') + '"><span class="tp">' + (j + 4) + '</span><div class="tav">' + avHtml(r) + '</div><div class="tn"><b>'
+        + esc(r.name) + (r.gold ? ' 💎' : '') + (r.adm ? ' 🛡' : '') + (r.me ? ' · ' + esc(T.you) : '') + '</b><small>' + chIco(r.ch || 1) + ' ' + esc(T.titles[r.title || 0]) + '</small></div><span class="th mono">'
         + hashS(r.hash) + '</span></div>';
-    }).join('');
+    }).join(''));
     $('top-note').textContent = T.topNote(d.place, d.farms);
   }
 
@@ -1459,7 +1792,10 @@
     var prevCh = S.d && S.d.ch, prevDone = S.d && S.d.done;
     if (j.cfg) S.cfg = j.cfg;
     if (j.ex) S.ex = j.ex;
+    if (j.shop) { S.shop = j.shop; S.order = j.order; S.cid = j.cid; S.packs = j.packs; }     // v388: донат — приходит с full=1
     if (!S.cfg) return;
+    // v388: курс фермы сменился (раз в час) — цены в SLX тоже: сразу взять свежие
+    if (j.k && S.cfg.k && Math.abs(j.k / S.cfg.k - 1) > 1e-9 && !S.needCfg) { S.needCfg = true; setTimeout(function () { load(true); }, 60); }
     S.d = j; S.at = performance.now(); S.stale = false; $('stale').hidden = true;
     if (!S.loaded) { S.loaded = true; document.body.setAttribute('data-state', 'ready'); $('err').hidden = true; }
     cachePut();
@@ -1501,9 +1837,13 @@
       + '<div class="admrow"><div class="tx">' + esc(T.adm.open) + '<small>' + esc(T.adm.openS) + '</small></div><button type="button" class="sw'
       + (d.open ? ' on' : '') + '" data-adm="open"><i></i></button></div>'
       + '<div class="sh" style="margin:6px 0 4px">' + esc(T.adm.ch) + '</div><div class="chips">' + [1, 2, 3, 4, 5, 6, 7].map(function (n) {
-          return '<button type="button" class="chip' + (d.ch === n ? ' on' : '') + '" data-adm="ch" data-v="' + n + '">' + LOC_E[n - 1] + ' ' + n + '</button>'; }).join('') + '</div>'
+          return '<button type="button" class="chip' + (d.ch === n ? ' on' : '') + '" data-adm="ch" data-v="' + n + '">' + chIco(n) + ' ' + n + '</button>'; }).join('') + '</div>'
       + '<div class="admgrid">' + [['fill', T.adm.fill], ['energy', T.adm.energy], ['lucky', T.adm.lucky + (d.lk_next ? ' ✓' : '')], ['oc', T.adm.oc]].map(function (x) {
           return '<button type="button" class="btn sec" data-adm="' + x[0] + '">' + esc(x[1]) + '</button>'; }).join('') + '</div>'
+      // v388: донат — включить на себе и посмотреть, как работает (в продажи не идёт)
+      + (S.shop ? '<div class="sh" style="margin:12px 0 4px">' + esc(T.adm.donH) + '</div><div class="admgrid">' + (S.shop || []).map(function (x) {
+          return '<button type="button" class="btn sec" data-adm="give" data-v="' + esc(x.id) + '">' + esc(x.e + ' ' + (EN ? x.en : x.ru)) + '</button>'; }).join('')
+          + '<button type="button" class="btn sec" data-adm="unboost">' + esc(T.adm.unb) + '</button></div>' : '')
       + '<button type="button" class="btn sec sm" style="margin-top:8px;color:var(--red)" data-adm="reset">' + esc(T.adm.reset) + '</button>'
       + '<p class="note">' + esc(T.adm.note) + '</p>');
   }
@@ -1515,7 +1855,8 @@
   }
   function admAct(a, v) {
     var ops = { open: ['adm_open', { on: !S.d.open }], ch: ['adm_ch', { ch: Number(v) }], fill: ['adm_fill', {}], energy: ['adm_energy', {}],
-                lucky: ['adm_lucky', {}], oc: ['adm_oc', {}], reset: ['adm_reset', {}] }, o = ops[a];
+                lucky: ['adm_lucky', {}], oc: ['adm_oc', {}], reset: ['adm_reset', {}],
+                give: ['adm_give', { item: v }], unboost: ['adm_unboost', {}] }, o = ops[a];             // v388: донат на себе
     if (!o) return;
     (a === 'reset' ? askYes(T.adm.resetQ) : Promise.resolve(true)).then(function (yes) {
       if (!yes) return;
@@ -1769,7 +2110,7 @@
     OV.lines = lines; OV.i = 0; OV.opts = opts || {};
     S.ovOpen = true;
     var n = OV.opts.ch;
-    $('ov-e').textContent = n === 0 ? '🌧' : n === 8 ? '👑' : LOC_E[(n || 1) - 1];
+    $('ov-e').innerHTML = chIco(n === 0 ? 0 : Math.max(1, Math.min(8, n || 1)));      // v388: пролог, главы 1–7 и финал — SVG
     $('ov-st').textContent = n === 0 ? T.startS : n === 8 ? T.finaleT : T.chT(n) + ' · ' + T.locs[(n || 1) - 1];
     if (n >= 1 && n <= 7) document.body.setAttribute('data-ch', String(n));
     $('ov-lines').innerHTML = '';
@@ -1835,8 +2176,8 @@
   }
 
   // ── загрузка, опрос, кэш ──
-  var CK = 'mine_v1_' + UID;
-  function cachePut() { try { localStorage.setItem(CK, JSON.stringify({ t: Date.now(), d: S.d, cfg: S.cfg, ex: S.ex })); } catch (e) {} }
+  var CK = 'mine_v2_' + UID;                      // v388: v2 — суммы в настоящих SLX (старую память v1 не берём: там SLX фермы)
+  function cachePut() { try { localStorage.setItem(CK, JSON.stringify({ t: Date.now(), d: S.d, cfg: S.cfg, ex: S.ex, shop: S.shop, order: S.order, cid: S.cid, packs: S.packs })); } catch (e) {} }
   function cacheGet() {
     try { var o = JSON.parse(localStorage.getItem(CK) || 'null'); if (!o || !o.d || !o.cfg || Date.now() - o.t > 7 * 86400000) return null; return o; } catch (e) { return null; }
   }
@@ -1901,6 +2242,7 @@
   var c0 = cacheGet();
   if (c0 && c0.d && c0.d.started) {
     S.cfg = c0.cfg; S.ex = c0.ex || ''; S.d = c0.d; S.at = performance.now(); S.d.stored = c0.d.stored; S.loaded = true; S.needCfg = true;
+    S.shop = c0.shop; S.order = c0.order; S.cid = c0.cid; S.packs = c0.packs;          // v388: донат из памяти телефона
     document.body.setAttribute('data-state', 'ready');
     render();
   }
