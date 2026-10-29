@@ -761,7 +761,7 @@
   <section class="tab" id="t-farm">
     <div class="card hero" id="hero">
       <div class="hl"><span>📦 <span id="h-lbl">Хранилище</span></span><b id="h-cap"></b></div>
-      <div class="big mono"><span id="h-val"><span class="zd" id="h-z"></span><span id="h-n">0</span></span><small>SLX</small></div>
+      <div class="big mono"><span id="h-val"><span class="zd" id="h-z"></span><span id="h-n">0</span></span><small id="h-u">токенов</small></div>
       <div class="eq" id="h-eq"></div>
       <div class="tank" id="tank"><i id="tank-i"></i><em></em></div>
       <div class="rate"><span id="h-rate"></span><span class="fl" id="h-full"></span></div>
@@ -919,10 +919,10 @@
     ch: function (n) { return 'Chapter ' + n + ' of 7'; }, storage: 'Storage', hours: function (h) { return h + ' h'; },
     collect: 'Collect', collectFull: 'Collect — the farm has stopped!', perH: '/h', fullIn: function (s) { return 'full in ' + s; },
     full: 'Storage is full — the farm stands still', stopped: 'The farm is paused', eq: function (t) { return '≈ ' + t + ' tokens'; },
-    slots: function (u, n) { return u + ' of ' + n + ' slots'; }, tapT: 'Manual mining', tapS: function (v) { return 'Each tap +' + v + ' SLX'; },
+    slots: function (u, n) { return u + ' of ' + n + ' slots'; }, tapT: 'Manual mining', tapS: function (v) { return 'Each tap +' + v + ' tokens'; },
     energy: function (e, m) { return '⚡ ' + e + ' / ' + m; }, regen: function (s) { return '+1 every ' + s + ' s'; }, noEnergy: 'Out of energy — it refills by itself',
     tapsOff: 'Manual mining is turned off now',
-    net: function (n) { return '🌐 SLX network: <b>' + num(n.farms) + '</b> farms, <b>' + num(n.active) + '</b> mining now · difficulty <b>×' + n.diff + '</b><br>⛏ Mined by everyone today: <b>' + n.today + '</b> of <b>' + n.cap + '</b> SLX'; },
+    net: function (n) { return '🌐 SLX network: <b>' + num(n.farms) + '</b> farms, <b>' + num(n.active) + '</b> mining now · difficulty <b>×' + n.diff + '</b><br>⛏ Mined by everyone today: <b>' + n.today + '</b> of <b>' + n.cap + '</b> tokens'; },
     netHi: ' — the network is busy, everyone mines slower', goalAll: 'All goals done — move on!', goalOf: function (a, b) { return a + ' of ' + b + ' goals'; },
     goalTap: 'Open the story', finale: 'Finale is ready!', doneAll: 'Story complete — you are the SLX Keeper 👑',
     rigs: { phone: 'Old phone', laptop: 'Laptop', pc: 'Gaming PC', gpu: 'RTX graphics card', rig: 'Mining rig', asic: 'ASIC miner', hydro: 'Hydro farm', quant: 'Quantum node' },
@@ -935,14 +935,15 @@
     storT: 'Storage', storNow: function (h) { return 'Now: the farm works <b>' + h + ' h</b> without you'; }, storNext: function (h) { return 'Up to ' + h + ' h'; },
     storMax: 'Biggest storage already', storLock: function (n) { return '🔒 Bigger storage — from chapter ' + n; },
     shopNote: 'When all slots are taken, a stronger device replaces your weakest one — the weak one is sold for half price.',
-    moveT: function (l) { return 'Move to ' + l; }, moveGo: function (c) { return '🔑 Move — ' + c + ' SLX'; }, moveNeed: 'Finish all chapter goals first',
+    moveT: function (l) { return 'Move to ' + l; }, moveGo: function (c) { return '🔑 Move — ' + c + ' tokens'; }, moveNeed: 'Finish all chapter goals first',
     goalsH: 'Chapter goals', reward: 'Reward', past: 'Chapters', readAgain: 'Tap a chapter to read it again',
     goal: {
       col: function (n) { return 'Collect the mining ' + n + ' times'; }, rigs: function (n) { return 'Install ' + n + ' devices'; },
       hash: function (n) { return 'Farm power — ' + hashS(n); }, own: function (n, w) { return (n > 1 ? n + ' × ' : 'Buy: ') + T.rigs[w]; },
-      stor: function (n) { return 'Storage — ' + n + ' hours'; }, lucky: function () { return 'Find a lucky block 🍀'; }, mined: function (n) { return 'Mine ' + slx(n) + ' SLX in total'; }
+      stor: function (n) { return 'Storage — ' + n + ' hours'; }, lucky: function () { return 'Find a lucky block 🍀'; }, oc: function (n) { return 'Turn on “⚡ Overclock” ' + n + ' times'; },
+      mined: function (n) { return 'Mine ' + tkS(n) + ' tokens in total'; }
     },
-    rwd: { rig: function (w) { return RIG[w].e + ' ' + T.rigs[w]; }, slx: function (x) { return '+' + slx(x) + ' SLX'; } },
+    rwd: { rig: function (w) { return RIG[w].e + ' ' + T.rigs[w]; }, slx: function (x) { return '+' + tkS(x) + ' ' + tkW(tkS(x)) + (EN ? ' in SLX' : ' в SLX'); } },
     walletH: 'SLX wallet', walletT: function (t, p) { return '≈ ' + t + ' tokens · 1 SLX = ' + p; },
     sellH: 'Sell SLX on the exchange', sellPh: 'How much SLX', sellB: function (t) { return '💱 Sell for ≈ ' + t + ' tokens'; }, sellNo: 'Enter how much SLX',
     sellEq: function (f) { return 'It is a regular sale on the SLX exchange: same rate and ' + f + '% fee, the trade shows up in “📈 Invest” → “History”. Big sales get a slightly worse price.'; },
@@ -951,15 +952,15 @@
     ntf: 'Remind me in the bot', ntfS: 'When the storage is full (no more than twice a day, daytime)',
     ex: '📈 Open the exchange', exNote: 'SLX from the farm lands in the same wallet as on the exchange (“Account 👤” → “📈 Invest”). The exchange opens right here; to come back — tap “⛏ SLX Mining” in the bot again.',
     topH: 'Top farms by power', topNote: function (p, n) { return p ? 'You are #' + p + ' of ' + n + ' farms' : ''; }, you: 'you',
-    got: function (x) { return '+' + slx(x) + ' SLX to your wallet'; }, lucky: 'LUCKY BLOCK!', luckyS: function (x) { return '+' + slx(x) + ' SLX bonus'; },
-    bought: function (n) { return n + ' is installed ⚡'; }, sold: function (n, x) { return n + ' sold: +' + slx(x) + ' SLX'; },
+    got: function (x) { return '+' + tkS(x) + ' tokens to your SLX wallet'; }, lucky: 'LUCKY BLOCK!', luckyS: function (x) { return '+' + tkS(x) + ' tokens bonus'; },
+    bought: function (n) { return n + ' is installed ⚡'; }, sold: function (n, x) { return n + ' sold: +' + tkS(x) + ' tokens'; },
     storUp: function (h) { return 'Storage — now ' + h + ' h 📦'; }, soldSlx: function (q, t) { return 'Sold ' + slx(q) + ' SLX → +' + t + ' tokens'; },
     boughtSlx: function (q, t) { return 'Bought ' + slx(q) + ' SLX for ' + t + ' tokens'; },
-    short: function (x) { return 'Not enough SLX: you need ' + slx(x) + ' more'; }, buyShort: function (x, t) { return '🛒 Buy ' + slx(x) + ' SLX for ≈ ' + t + ' tokens and get it'; },
-    sellRig: function (x) { return '💱 Sell for ' + slx(x) + ' SLX'; }, rigInfo: function (n, h) { return 'Here: ' + n + ' · ' + hashS(h) + ' each'; }, cancel: 'Cancel', ok: 'OK',
+    short: function (x) { return 'Not enough SLX: you need ' + tkS(x) + ' tokens more'; }, buyShort: function (x, t) { return '🛒 Buy SLX for ≈ ' + t + ' tokens and get it'; },
+    sellRig: function (x) { return '💱 Sell for ' + tkS(x) + ' tokens'; }, rigInfo: function (n, h) { return 'Here: ' + n + ' · ' + hashS(h) + ' each'; }, cancel: 'Cancel', ok: 'OK',
     lastRig: 'This is your last device — it cannot be sold',
     next: 'Next ›', skip: 'Skip', start: '⛏ Start the miner', go: "Let's go!", read: 'Close', startS: 'Prologue',
-    chT: function (n) { return 'Chapter ' + n; }, finaleT: 'Finale', finBtn: function (x) { return '👑 Complete the story — +' + slx(x) + ' SLX'; },
+    chT: function (n) { return 'Chapter ' + n; }, finaleT: 'Finale', finBtn: function (x) { return '👑 Complete the story — +' + tkS(x) + ' tokens'; },
     errs: { off: 'Mining is paused — back soon', not_started: 'The farm is not built yet', no_slx: 'Not enough SLX', locked: 'Opens in later chapters',
             no_slot: 'All slots are taken — move on to get more', goals: 'Finish all chapter goals first', max: 'Nowhere further', last_rig: 'Your last device cannot be sold',
             no_rig: 'No such device on the farm', taps_off: 'Manual mining is off', rate_limited: 'One second…', banned: '🚫 Your account is blocked',
@@ -982,7 +983,8 @@
     dnHow: '1) Tap “Buy” — a chat with @SloppyX opens. 2) Pay. 3) The admin gives it to you, the bot sends a message.',
     hbT: function (s) { return '🚀 Turbo ×2 · ' + s; }, hbA: function (s) { return '🤖 Auto-collect · ' + s; }, hbG: '💎 +10%',
     ocf: function (s) { return '⚡ no cooldown: ' + s; }, topEmpty: 'free',
-    farmK: function (p, t) { return '⛏ The farm pays at the farm rate — the average SLX price over a day (now 1 SLX = ' + p + ' tokens): 1 MH/s ≈ ' + t + ' tokens a day.'; },
+    farmK: function (p, t) { return '⛏ The farm mines SLX: the amount of SLX is fixed, its token value follows the rate. Now (day average) 1 SLX = ' + p + ' tokens, so 1 MH/s ≈ ' + t + ' tokens a day. SLX goes up — your mining and devices are worth more tokens, goes down — less.'; },
+    tokU: 'tok.', inSlx: function (s) { return '≈ ' + s + ' SLX'; },
     errParams: ['Open it from the bot', 'This game opens with the “⛏ SLX Mining” button in “Gifts 🎁”.'],
     errAuth: ['The button is outdated', 'Open “Gifts 🎁” in the bot and tap “⛏ SLX Mining” again.'],
     errReg: ['Register first', 'Send /start to the bot and finish the registration — then the farm is yours.'],
@@ -995,10 +997,10 @@
     ch: function (n) { return 'Глава ' + n + ' из 7'; }, storage: 'Хранилище', hours: function (h) { return h + ' ч'; },
     collect: 'Собрать', collectFull: 'Собрать — ферма стоит!', perH: '/ч', fullIn: function (s) { return 'полное через ' + s; },
     full: 'Хранилище полное — ферма стоит', stopped: 'Ферма на паузе', eq: function (t) { return '≈ ' + t + ' ' + tw(t); },
-    slots: function (u, n) { return u + ' из ' + n + ' мест'; }, tapT: 'Ручной майнинг', tapS: function (v) { return 'Каждое нажатие +' + v + ' SLX'; },
+    slots: function (u, n) { return u + ' из ' + n + ' мест'; }, tapT: 'Ручной майнинг', tapS: function (v) { return 'Каждое нажатие +' + v + ' ' + tkW(v); },
     energy: function (e, m) { return '⚡ ' + e + ' / ' + m; }, regen: function (s) { return '+1 каждые ' + s + ' с'; }, noEnergy: 'Энергия кончилась — копится сама',
     tapsOff: 'Ручной майнинг сейчас выключен',
-    net: function (n) { return '🌐 Сеть SLX: <b>' + num(n.farms) + '</b> ' + plural(n.farms, 'ферма', 'фермы', 'ферм') + ', майнят сейчас <b>' + num(n.active) + '</b> · сложность <b>×' + n.diff + '</b><br>⛏ Добыто всеми сегодня: <b>' + n.today + '</b> из <b>' + n.cap + '</b> SLX'; },
+    net: function (n) { return '🌐 Сеть SLX: <b>' + num(n.farms) + '</b> ' + plural(n.farms, 'ферма', 'фермы', 'ферм') + ', майнят сейчас <b>' + num(n.active) + '</b> · сложность <b>×' + n.diff + '</b><br>⛏ Добыто всеми сегодня: <b>' + n.today + '</b> из <b>' + n.cap + '</b> ' + tkW(n.cap); },
     netHi: ' — сеть перегружена, у всех добыча медленнее', goalAll: 'Все цели выполнены — переезжай!', goalOf: function (a, b) { return 'Цели главы: ' + a + ' из ' + b; },
     goalTap: 'Открыть сюжет', finale: 'Финал готов!', doneAll: 'Сюжет пройден — ты Хранитель SLX 👑',
     rigs: { phone: 'Старый телефон', laptop: 'Ноутбук', pc: 'Игровой ПК', gpu: 'Видеокарта RTX', rig: 'Майнинг-риг', asic: 'ASIC-майнер', hydro: 'Гидро-ферма', quant: 'Квантовый узел' },
@@ -1011,15 +1013,16 @@
     storT: 'Хранилище', storNow: function (h) { return 'Сейчас ферма работает без тебя <b>' + h + ' ч</b>'; }, storNext: function (h) { return 'До ' + h + ' ч'; },
     storMax: 'Хранилище уже самое большое', storLock: function (n) { return '🔒 Больше — с главы ' + n; },
     shopNote: 'Когда места заняты, устройство посильнее встаёт вместо самого слабого — слабое уходит за полцены.',
-    moveT: function (l) { return 'Переезд: ' + l; }, moveGo: function (c) { return '🔑 Переехать — ' + c + ' SLX'; }, moveNeed: 'Сначала выполни все цели главы',
+    moveT: function (l) { return 'Переезд: ' + l; }, moveGo: function (c) { return '🔑 Переехать — ' + c + ' ' + tkW(c); }, moveNeed: 'Сначала выполни все цели главы',
     goalsH: 'Цели главы', reward: 'Награда', past: 'Главы', readAgain: 'Нажми на главу — прочитать снова',
     goal: {
       col: function (n) { return 'Собери добычу ' + n + ' ' + plural(n, 'раз', 'раза', 'раз'); }, rigs: function (n) { return 'Поставь ' + n + ' ' + plural(n, 'устройство', 'устройства', 'устройств'); },
       hash: function (n) { return 'Мощность фермы — ' + hashS(n); }, own: function (n, w) { return (n > 1 ? n + ' × ' : 'Купи: ') + T.rigs[w]; },
       stor: function (n) { return 'Хранилище — ' + n + ' ' + plural(n, 'час', 'часа', 'часов'); }, lucky: function () { return 'Найди удачный блок 🍀'; },
-      mined: function (n) { return 'Добудь всего ' + slx(n) + ' SLX'; }
+      oc: function (n) { return 'Включи «⚡ Разгон» ' + n + ' ' + plural(n, 'раз', 'раза', 'раз'); },
+      mined: function (n) { return 'Добудь всего на ' + tkS(n) + ' ' + tkW(tkS(n)); }
     },
-    rwd: { rig: function (w) { return RIG[w].e + ' ' + T.rigs[w]; }, slx: function (x) { return '+' + slx(x) + ' SLX'; } },
+    rwd: { rig: function (w) { return RIG[w].e + ' ' + T.rigs[w]; }, slx: function (x) { return '+' + tkS(x) + ' ' + tkW(tkS(x)) + (EN ? ' in SLX' : ' в SLX'); } },
     walletH: 'Кошелёк SLX', walletT: function (t, p) { return '≈ ' + t + ' ' + tw(t) + ' · 1 SLX = ' + p; },
     sellH: 'Продать SLX на бирже', sellPh: 'Сколько SLX', sellB: function (t) { return '💱 Продать за ≈ ' + t + ' ' + tw(t); }, sellNo: 'Впиши, сколько SLX',
     sellEq: function (f) { return 'Это обычная продажа на бирже SLX: тот же курс и комиссия ' + f + '%, сделка появится в «📈 Инвестиции» → «История». Крупная продажа — чуть ниже курса.'; },
@@ -1028,15 +1031,15 @@
     ntf: 'Напоминать в боте', ntfS: 'Когда хранилище полное (не чаще 2 раз в день, днём)',
     ex: '📈 Открыть биржу', exNote: 'SLX с фермы лежат в том же кошельке, что на бирже («Аккаунт 👤» → «📈 Инвестиции»). Биржа откроется здесь же; вернуться — снова «⛏ Майнинг SLX» в боте.',
     topH: 'Топ ферм по мощности', topNote: function (p, n) { return p ? 'Ты — #' + p + ' из ' + n + ' ' + plural(n, 'фермы', 'ферм', 'ферм') : ''; }, you: 'ты',
-    got: function (x) { return '+' + slx(x) + ' SLX в кошелёк'; }, lucky: 'УДАЧНЫЙ БЛОК!', luckyS: function (x) { return '+' + slx(x) + ' SLX сверху'; },
-    bought: function (n) { return n + ' — на ферме ⚡'; }, sold: function (n, x) { return n + ' продан: +' + slx(x) + ' SLX'; },
+    got: function (x) { return '+' + tkS(x) + ' ' + tkW(tkS(x)) + ' — в кошелёк SLX'; }, lucky: 'УДАЧНЫЙ БЛОК!', luckyS: function (x) { return '+' + tkS(x) + ' ' + tkW(tkS(x)) + ' сверху'; },
+    bought: function (n) { return n + ' — на ферме ⚡'; }, sold: function (n, x) { return n + ' продан: +' + tkS(x) + ' ' + tkW(tkS(x)); },
     storUp: function (h) { return 'Хранилище — теперь ' + h + ' ч 📦'; }, soldSlx: function (q, t) { return 'Продано ' + slx(q) + ' SLX → +' + t + ' ' + tw(t); },
     boughtSlx: function (q, t) { return 'Куплено ' + slx(q) + ' SLX за ' + t + ' ' + tw(t); },
-    short: function (x) { return 'Не хватает SLX: нужно ещё ' + slx(x); }, buyShort: function (x, t) { return '🛒 Докупить ' + slx(x) + ' SLX за ≈ ' + t + ' ' + tw(t) + ' и взять'; },
-    sellRig: function (x) { return '💱 Продать за ' + slx(x) + ' SLX'; }, rigInfo: function (n, h) { return 'На ферме: ' + n + ' · по ' + hashS(h); }, cancel: 'Отмена', ok: 'Понятно',
+    short: function (x) { return 'Не хватает SLX: нужно ещё на ' + tkS(x) + ' ' + tkW(tkS(x)); }, buyShort: function (x, t) { return '🛒 Докупить SLX за ≈ ' + t + ' ' + tw(t) + ' и взять'; },
+    sellRig: function (x) { return '💱 Продать за ' + tkS(x) + ' ' + tkW(tkS(x)); }, rigInfo: function (n, h) { return 'На ферме: ' + n + ' · по ' + hashS(h); }, cancel: 'Отмена', ok: 'Понятно',
     lastRig: 'Это последнее устройство — его не продать',
     next: 'Дальше ›', skip: 'Пропустить', start: '⛏ Запустить майнер', go: 'Вперёд!', read: 'Закрыть', startS: 'Пролог',
-    chT: function (n) { return 'Глава ' + n; }, finaleT: 'Финал', finBtn: function (x) { return '👑 Завершить сюжет — +' + slx(x) + ' SLX'; },
+    chT: function (n) { return 'Глава ' + n; }, finaleT: 'Финал', finBtn: function (x) { return '👑 Завершить сюжет — +' + tkS(x) + ' ' + tkW(tkS(x)); },
     errs: { off: 'Майнинг на паузе — скоро вернётся', not_started: 'Ферма ещё не построена', no_slx: 'Не хватает SLX', locked: 'Откроется в следующих главах',
             no_slot: 'Все места заняты — переезжай, мест станет больше', goals: 'Сначала выполни все цели главы', max: 'Дальше некуда', last_rig: 'Последнее устройство продать нельзя',
             no_rig: 'Такого устройства нет на ферме', taps_off: 'Ручной майнинг выключен', rate_limited: 'Секунду…', banned: '🚫 Аккаунт заблокирован',
@@ -1059,7 +1062,8 @@
     dnHow: '1) Нажми «Купить» — откроется чат с @SloppyX. 2) Оплати. 3) Администратор выдаст покупку — бот пришлёт сообщение.',
     hbT: function (s) { return '🚀 Турбо ×2 · ' + s; }, hbA: function (s) { return '🤖 Автосбор · ' + s; }, hbG: '💎 +10%',
     ocf: function (s) { return '⚡ без остывания: ' + s; }, topEmpty: 'свободно',
-    farmK: function (p, t) { return '⛏ Ферма платит по курсу фермы — средней цене SLX за сутки (сейчас 1 SLX = ' + p + ' токенов): 1 MH/s ≈ ' + t + ' токенов в сутки.'; },
+    farmK: function (p, t) { return '⛏ Ферма майнит SLX: сколько SLX — не меняется, а в токенах — по курсу. Сейчас (средний за сутки) 1 SLX = ' + p + ' токенов, поэтому 1 MH/s ≈ ' + t + ' ' + tkW(t) + ' в сутки. SLX дорожает — добыча и устройства стоят больше токенов, дешевеет — меньше.'; },
+    tokU: 'ток.', inSlx: function (s) { return '≈ ' + s + ' SLX'; },
     errParams: ['Открой из бота', 'Игра открывается кнопкой «⛏ Майнинг SLX» в «Подарках 🎁».'],
     errAuth: ['Кнопка устарела', 'Открой «Подарки 🎁» в боте и нажми «⛏ Майнинг SLX» заново.'],
     errReg: ['Сначала регистрация', 'Напиши боту /start и пройди регистрацию — и ферма твоя.'],
@@ -1157,12 +1161,27 @@
   function slxFix(x) { x = Number(x) || 0; var a = Math.abs(x); return a < 1e-12 ? '0' : dec(x, slxDp(a)); }
   function slx(x) { var s = slxFix(x); return /[.,]/.test(s) ? s.replace(/0+$/, '').replace(/[.,]$/, '') : s; }   // цены и суммы — без хвоста нулей
   // счётчик хранилища: знаков столько, чтобы у полного хранилища было ~5 значащих цифр — последняя бежит
-  function slxLive(x, cap) { x = Number(x) || 0; return dec(x, cap > 0 ? Math.min(10, Math.max(4, 5 - Math.floor(Math.log10(cap)))) : x >= 10 ? 4 : 6); }
   function slxShort(x) {                            // v387: кошелёк — огромные суммы коротко («30,79 млрд» вместо «30785501498,49»)
     x = Number(x) || 0; var a = Math.abs(x);
     var U = EN ? [[1e12, 'T'], [1e9, 'B'], [1e6, 'M']] : [[1e12, ' трлн'], [1e9, ' млрд'], [1e6, ' млн']];
     for (var i = 0; i < U.length; i++) if (a >= U[i][0]) return dec(x / U[i][0], 2).replace(/[.,]?0+$/, '') + U[i][1];
     return a >= 1e4 ? num(x) : slxFix(x);
+  }
+  // v389: в игре всё — в токенах по курсу фермы (SLX — мелкой строкой и во вкладке «Кошелёк»): одна валюта, как во всём боте
+  function fp() { var d = S.d; return (d && d.pf) || price(); }                 // курс фермы: токенов за 1 SLX
+  function tkF(t) {                                  // «3,4» · «45,37» · «1 234,5» · «123 456»
+    t = Number(t) || 0; var a = Math.abs(t);
+    if (a >= 1000) return num(t);
+    return dec(t, a >= 10 ? 1 : 2).replace(/([.,]\d*?)0+$/, '$1').replace(/[.,]$/, '');
+  }
+  function tkS(x) { return tkF((Number(x) || 0) * fp()); }                       // SLX → токены строкой
+  function tkW(s) { return EN ? 'tokens' : /[.,]/.test(String(s)) ? 'токена' : tw(s); }   // «3,4 токена», «22 токена», «9 700 токенов»
+  function tkShort(x) {                              // шапка: 525 012 · 1,23 млн · 4,5 млрд
+    var t = (Number(x) || 0) * fp(), a = Math.abs(t);
+    var U = EN ? [[1e18, 'Qi'], [1e15, 'Q'], [1e12, 'T'], [1e9, 'B'], [1e6, 'M']]
+               : [[1e18, ' квинтлн'], [1e15, ' квдрлн'], [1e12, ' трлн'], [1e9, ' млрд'], [1e6, ' млн']];   // как в боте (_tok_short)
+    for (var i = 0; i < U.length; i++) if (a >= U[i][0]) return dec(t / U[i][0], 2).replace(/[.,]?0+$/, '') + U[i][1];
+    return tkF(t);
   }
   function mmss(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
   function hms(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 3600) + ':' + ('0' + Math.floor(s % 3600 / 60)).slice(-2) + ':' + ('0' + s % 60).slice(-2); }
@@ -1237,7 +1256,9 @@
     return out;
   }
   function rigCfg(id) { var r = (S.cfg ? S.cfg.rigs : []).filter(function (x) { return x[0] === id; })[0]; return r ? { id: r[0], hash: r[1], cost: r[2], ch: r[3] } : null; }
-  function slotsN() { return S.cfg && S.d ? S.cfg.locs[S.d.ch - 1][0] : 4; }
+  // v389: фермы, собранные до новой экономики, могут стоять больше устройств, чем мест в главе: ничего не отбираем — мест
+  // показываем столько, сколько стоит (новые — только заменой слабого)
+  function slotsN() { return S.cfg && S.d ? Math.max(S.cfg.locs[S.d.ch - 1][0], usedN()) : 4; }
   function usedN() { var n = 0, o = (S.d && S.d.own) || {}; for (var k in o) n += o[k]; return n; }
   function weakest() {
     var o = S.d.own, best = null;
@@ -1305,15 +1326,15 @@
   function tick() {                                  // часто меняющееся: хранилище, энергия, кошелёк
     var d = S.d, L = live(); if (!L) return;
     var now = performance.now(), Dr = S.drain;
-    if (Dr && now - Dr.t0 > Dr.dur) Dr = S.drain = null;
+    if (Dr && now - Dr.t0 > Dr.dur && Dr.done) Dr = S.drain = null;    // v389: до ответа сервера — пусто
     if (S.acc) accStep(0.5);                                         // пока летят монетки, цифру кошелька ведёт «накопление»
-    if (!S.acc) setTxt('w-slx', slxShort(L.wallet));
+    if (!S.acc) setTxt('w-slx', tkShort(L.wallet));                 // v389: в шапке — токены (видно каждое нажатие)
     if (S.tab === 'farm') {
       var st = L.st, full = L.full;
       if (Dr) { st = Dr.amt * Math.max(0, 1 - (now - Dr.t0) / Dr.dur); full = false; }   // «Собрать»: хранилище плавно пустеет
-      var sv = slxLive(st, L.cap), mz = /^(0[.,]0*)(\d.*)$/.exec(sv);   // v388: нули впереди бледнее (два текста — без пересборки HTML)
-      setTxt('h-z', mz ? mz[1] : ''); setTxt('h-n', mz ? mz[2] : sv);
-      setTxt('h-eq', T.eq(num(st * price())));
+      var sv = tkF(st * fp());                                          // v389: в токенах по курсу фермы, SLX — строкой ниже
+      setTxt('h-n', sv); setTxt('h-u', tkW(sv));
+      setTxt('h-eq', T.inSlx(slx(st)));
       var pct = L.cap > 0 ? Math.min(1, st / L.cap) : 0;
       setAttr('tank-i', 'tf', 'scaleX(' + pct.toFixed(3) + ')');
       $('tank').classList.toggle('full', full);
@@ -1326,7 +1347,7 @@
       $('room').classList.toggle('hot', hot && !full);
       $('hero').classList.toggle('hot', hot);
       $('hero').classList.toggle('tb', tb && !hot);                   // v388: «🚀 Турбо» — голубая рамка
-      setHtml('h-rate', '⛏ ' + esc(slx(L.rate * 3600)) + ' SLX' + T.perH
+      setHtml('h-rate', '⛏ ' + esc(tkS(L.rate * 3600)) + ' ' + esc(T.tokU) + T.perH
         + (L.mx > 1 && d.on !== false ? ' <b style="color:' + (hot ? '#fb923c' : '#38bdf8') + '">×' + L.mx + '</b>' : ''));
       // v388: что из доната работает — турбо (обратный отсчёт), автосбор, золотая видеокарта
       var bh = '';
@@ -1396,7 +1417,7 @@
       $('dn-t').textContent = T.dnT;
       $('dn-s').textContent = T.dnS(turboFrom(sh));
     }
-    $('tp-t').textContent = T.tapT; $('tp-s').textContent = T.tapS(slx(d.tap_val));
+    $('tp-t').textContent = T.tapT; $('tp-s').textContent = T.tapS(tkS(d.tap_val));
     // цели коротко
     var g = d.goals || [], ok = g.filter(function (x) { return x.ok; }).length;
     if (d.done) { $('gm-e').textContent = '👑'; $('gm-t').textContent = T.doneAll; $('gm-s').textContent = T.titles[7]; }
@@ -1407,7 +1428,7 @@
     }
     var n = d.net || {};
     $('netc').innerHTML = T.net({ farms: d.farms || n.miners || 0, active: n.active || 0, diff: String(n.diff || 1).replace('.', EN ? '.' : ','),
-                                  today: esc(slx(n.today || 0)), cap: esc(slx(n.cap || 0)) }) + (n.diff > 1 ? '<span style="color:var(--gold)">' + T.netHi + '</span>' : '');
+                                  today: esc(tkS(n.today || 0)), cap: esc(tkS(n.cap || 0)) }) + (n.diff > 1 ? '<span style="color:var(--gold)">' + T.netHi + '</span>' : '');
   }
   // v386: значок устройства — SVG из набора вверху страницы; движущиеся части поверх него (места — в долях значка 48×48)
   var FX = {
@@ -1456,7 +1477,7 @@
       var f = function (v) { v = v / u; return u === 1 ? String(Math.round(v)) : dec(v, v >= 100 ? 0 : 1).replace(/[.,]0$/, ''); };
       return f(Math.min(g.have, g.need)) + ' / ' + f(g.need) + un;
     }
-    if (g.k === 'mined') return slx(Math.min(g.have, g.need)) + ' / ' + slx(g.need);
+    if (g.k === 'mined') return tkS(Math.min(g.have, g.need)) + ' / ' + tkS(g.need);
     if (g.k === 'stor') return g.have + ' / ' + g.need + (EN ? ' h' : ' ч');
     return Math.min(g.have, g.need) + ' / ' + g.need;
   }
@@ -1474,7 +1495,7 @@
       var mc = cf.locs[d.ch][1];
       mv = '<div class="card" style="border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.07)"><div class="gm"><span class="ge">' + chIco(d.ch + 1) + '</span><div class="gt"><b>'
         + esc(T.moveT(T.locs[d.ch])) + '</b><small>' + esc(T.goalAll) + '</small></div></div><button type="button" class="btn gold sm" style="margin-top:10px" data-move="1">'
-        + esc(T.moveGo(slx(mc))) + '</button></div>';
+        + esc(T.moveGo(tkS(mc))) + '</button></div>';
     }
     $('shop-move').innerHTML = mv;
     // хранилище
@@ -1483,7 +1504,7 @@
       + T.hours(st[d.st][0]) + '</b><small>' + T.storNow(st[d.st][0]) + '</small></div>';
     if (!nx) sh += '<div class="ib"><span class="pr" style="color:var(--tx3);font-weight:500">' + esc(T.storMax) + '</span></div>';
     else if (nx[2] > d.ch && !d.open) sh += '<div class="ib"><span class="pr" style="color:var(--tx3);font-weight:500;font-size:12px">' + esc(T.storLock(nx[2])) + '</span></div>';
-    else sh += '<div class="ib"><span class="pr">' + esc(slx(nx[1])) + ' SLX<small>' + esc(T.storNext(nx[0])) + '</small></span><button type="button" class="bb' + (wl + 1e-12 < nx[1] ? ' ghost' : '')
+    else sh += '<div class="ib"><span class="pr">' + esc(tkS(nx[1])) + ' ' + esc(T.tokU) + '<small>' + esc(T.storNext(nx[0])) + '</small></span><button type="button" class="bb' + (wl + 1e-12 < nx[1] ? ' ghost' : '')
       + '" data-stor="1">' + esc(T.buy) + '</button></div>';
     $('shop-st').innerHTML = sh + '</div>';
     // устройства
@@ -1501,7 +1522,7 @@
         : '<button type="button" class="bb' + (wl + 1e-12 < need ? ' ghost' : '') + '" data-buy="' + id + '">' + (canRep ? esc(T.replace) + ' ' + rigIcon(wk.id) : esc(T.buy)) + '</button>';
       h += '<div class="it" style="--rc:' + RIG[id].c + '"><div class="ie">' + rigIcon(id) + '</div><div class="im"><b>' + esc(T.rigs[id]) + (own ? '<span class="own">' + T.owned(own) + '</span>' : '')
         + '</b><small><span class="hs">+' + hashS(hs) + '</span> · ' + esc(T.rigd[id]) + '</small>' + (pb > 0 ? '<small>' + esc(T.payback(dur(pb))) + '</small>' : '')
-        + '</div><div class="ib"><span class="pr mono">' + esc(slx(pr)) + ' SLX<small>≈ ' + num(pr * price()) + '</small></span>' + btn + '</div></div>';
+        + '</div><div class="ib"><span class="pr mono">' + esc(tkS(pr)) + ' ' + esc(T.tokU) + '<small>' + esc(slx(pr)) + ' SLX</small></span>' + btn + '</div></div>';
     });
     $('shop-rigs').innerHTML = h;
     $('shop-note').textContent = T.shopNote;
@@ -1530,7 +1551,7 @@
     else if (ch < 7) {
       var mc = cf.locs[ch][1], ready = goalsReady() || d.open;
       h += '<button type="button" class="btn ' + (ready ? 'gold' : 'sec') + ' sm" style="margin-top:12px" data-move="1"' + (ready ? '' : ' disabled') + '>'
-        + esc(ready ? T.moveGo(slx(mc)) : T.moveNeed) + '</button>';
+        + esc(ready ? T.moveGo(tkS(mc)) : T.moveNeed) + '</button>';
     } else {
       var rd = goalsReady() || d.open;
       h += '<button type="button" class="btn ' + (rd ? 'gold' : 'sec') + ' sm" style="margin-top:12px" data-fin="1"' + (rd ? '' : ' disabled') + '>' + esc(rd ? T.finBtn(((cf.rewards['7'] || [])[1]) || 0) : T.moveNeed) + '</button>';   // v388: награда — по курсу фермы
@@ -1565,11 +1586,11 @@
     sellBtn(); buyBtn();
     $('b-tok').textContent = T.dnTokB; $('b-tok').hidden = !(S.packs && S.packs.length && S.order);       // v388: пакеты токенов
     // v388: курс фермы — почему SLX с фермы такие маленькие и сколько платит 1 MH/s
-    $('wb-k').textContent = d.pf && S.cfg && S.cfg.r ? T.farmK(num(d.pf), num(S.cfg.r * 24 * d.pf * (d.mult || 1))) : '';
+    $('wb-k').textContent = d.pf && S.cfg && S.cfg.r ? T.farmK(num(d.pf), tkF(S.cfg.r * 24 * d.pf * (d.mult || 1))) : '';
     $('st-h').textContent = T.statsH;
     var sd = new Date((d.start || 0) * 1000);
-    $('stats').innerHTML = [[T.st.mined, slx(d.mined) + ' SLX' + (d.mined_tok ? ' ≈ ' + num(d.mined_tok) : '')], [T.st.tapped, slx(d.tapped) + ' SLX'], [T.st.lucky, num(d.lucky) + (d.bonus ? ' · +' + slx(d.bonus) : '')],
-                            [T.st.col, num(d.col)], [T.st.spent, slx(Math.max(0, d.spent || 0)) + ' SLX'],
+    $('stats').innerHTML = [[T.st.mined, tkS(d.mined) + ' ' + T.tokU], [T.st.tapped, tkS(d.tapped) + ' ' + T.tokU], [T.st.lucky, num(d.lucky) + (d.bonus ? ' · +' + tkS(d.bonus) : '')],
+                            [T.st.col, num(d.col)], [T.st.spent, tkS(Math.max(0, d.spent || 0)) + ' ' + T.tokU],
                             [T.st.since, d.start ? ('0' + sd.getDate()).slice(-2) + '.' + ('0' + (sd.getMonth() + 1)).slice(-2) + '.' + sd.getFullYear() : '—']]
       .map(function (x) { return '<div><i>' + esc(x[0]) + '</i><b class="mono">' + esc(x[1]) + '</b></div>'; }).join('');
     $('ntf-t').innerHTML = esc(T.ntf) + '<small>' + esc(T.ntfS) + '</small>';
@@ -1816,6 +1837,7 @@
     send('collect', {}, $('b-col')).then(function (j) {
       if (A) A.ok = true;
       if (!j) { S.drain = null; if (A) A.to = A.from; return; }       // не собралось — кошелёк не растёт
+      if (S.drain) S.drain.done = true;                              // v389: ответ пришёл — хранилище снова живое (с нуля)
       var r = j.res || {};
       if (A) A.to = A.from + (r.got || 0) + (r.lucky || 0);          // точная сумма с сервера (с удачным блоком)
       if (r.lucky > 0) { bigEvent('🍀', T.lucky, T.luckyS(r.lucky)); hap('success'); }
@@ -1912,7 +1934,7 @@
     if (L.en < 1) { noTap(T.noEnergy); return; }
     S.pend++;
     hap('light');
-    floatText('+' + slx(d.tap_val), x, y);
+    floatText('+' + tkS(d.tap_val), x, y);
     var c = $('core');
     if (c.getElementsByClassName('rip').length < 4) {       // волна от нажатия
       var rp = document.createElement('i'); rp.className = 'rip'; c.appendChild(rp);
@@ -1943,7 +1965,16 @@
     var r = $('core').getBoundingClientRect();
     tapAt(e.clientX || r.left + r.width / 2, e.clientY || r.top + r.height / 2);
   });
-  window.addEventListener('pagehide', function () { if (S.pend) flush(); });
+  // v389: игру закрыли — остаток нажатий уходит sendBeacon (доходит, даже если страница уже закрывается)
+  function flushBeacon() {
+    if (!S.pend || !navigator.sendBeacon || !canLoad()) return false;
+    var n = Math.min(S.pend, (S.cfg && S.cfg.tap_batch) || 60), b = { uid: Number(UID) || UID, secret: SECRET, tk: TK, op: 'tap', n: n }, ok = false;
+    if (useInit && INIT) b.init_data = INIT;
+    try { ok = navigator.sendBeacon(API + '/casino/mine/act', new Blob([JSON.stringify(b)], { type: 'text/plain' })); } catch (e) {}
+    if (ok) { S.pend -= n; clearTimeout(S.flushT); S.flushT = 0; }
+    return ok;
+  }
+  window.addEventListener('pagehide', function () { if (S.pend && !flushBeacon()) flush(); });
 
   // ── эффекты ──
   var fxN = 0;
@@ -2006,14 +2037,14 @@
     A.got = Math.min(A.n, A.got + 1);
     var step = A.from + (A.to - A.from) * (A.got - 1) / A.n;          // цифра растёт с каждой монеткой, даже если кадров мало
     if (A.shown < step) A.shown = step;
-    setTxt('w-slx', slxShort(A.shown));
+    setTxt('w-slx', tkShort(A.shown));
     hap('sel');
     var g = $('wal-glw'), c = $('wal-chip');
     if (g.animate) g.animate([{ opacity: .95 }, { opacity: 0 }], { duration: 420, easing: 'ease-out' });
     if (c.animate) c.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.1)' }, { transform: 'scale(1)' }], { duration: 260, easing: 'ease-out' });
     if (A.got >= A.n) {
       var r = c.getBoundingClientRect(), p = document.createElement('div');
-      p.className = 'wplus'; p.textContent = '+' + slx(A.to - A.from) + ' SLX';
+      p.className = 'wplus'; p.textContent = '+' + tkS(A.to - A.from) + ' ' + T.tokU;
       p.style.left = Math.max(8, r.left + r.width / 2 - 50) + 'px'; p.style.top = (r.bottom + 6) + 'px';
       $('fx').appendChild(p);
       setTimeout(function () { p.remove(); }, 1550);
@@ -2027,7 +2058,7 @@
     var target = A.from + (A.to - A.from) * (A.got / A.n);
     A.shown += (target - A.shown) * k;
     if (Math.abs(target - A.shown) < 1e-10 || document.hidden) A.shown = target;
-    setTxt('w-slx', slxShort(A.shown));
+    setTxt('w-slx', tkShort(A.shown));
     if (S.tab === 'wallet') setTxt('wb-v', slxShort(A.shown));
     if (A.got >= A.n && A.shown === target && A.ok) { S.acc = null; return true; }
     return false;
@@ -2223,7 +2254,7 @@
   }
   document.addEventListener('visibilitychange', function () {
     document.documentElement.classList.toggle('paused', document.hidden);
-    if (document.hidden) { clearTimeout(pollT); if (S.pend) flush(); }
+    if (document.hidden) { clearTimeout(pollT); if (S.pend && !flushBeacon()) flush(); }
     else if (S.loaded && !S.busy) load(true);
   });
   setInterval(function () { if (!document.hidden && S.loaded) tick(); }, 150);
