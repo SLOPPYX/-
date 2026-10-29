@@ -427,6 +427,116 @@
   .sl.gld { border-color: rgba(251,191,36,.7); background: radial-gradient(circle at 50% 46%, rgba(251,191,36,.38), rgba(255,255,255,.03) 70%);
             box-shadow: inset 0 0 14px rgba(251,191,36,.25); }
   .sl.gld .led { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+  .hbs .hb.l { background: rgba(74,222,128,.12); border-color: rgba(74,222,128,.45); color: #bbf7d0; }        /* v390: «🍀 Удача ×3» */
+
+  /* v390: темы фермы (донат) — свет страницы, рамки, хранилище и искры своего цвета; добыча та же. [data-ch] в правиле — чтобы
+     тема была сильнее света главы. Всё неподвижное (картинки-градиенты), анимации те же, что без темы — кадров не отнимает */
+  body[data-skin="space"], body[data-skin="space"][data-ch] { --a1: #818cf8; --a2: #22d3ee; --sk: 129,140,248; --sk2: 103,232,249; }
+  body[data-skin="lava"], body[data-skin="lava"][data-ch] { --a1: #fb923c; --a2: #dc2626; --sk: 249,115,22; --sk2: 253,224,71; }
+  body[data-skin="ice"], body[data-skin="ice"][data-ch] { --a1: #e0f2fe; --a2: #38bdf8; --sk: 125,211,252; --sk2: 240,249,255; }
+  body[data-skin="gold"], body[data-skin="gold"][data-ch] { --a1: #fde68a; --a2: #f59e0b; --sk: 251,191,36; --sk2: 254,243,199; }
+  body[data-skin] .hero:not(.hot) { background: linear-gradient(160deg, rgba(var(--sk), .2), rgba(255,255,255,.025) 58%); border-color: rgba(var(--sk), .38); }
+  body[data-skin] .hero:not(.hot) .tank i { background: linear-gradient(90deg, rgba(var(--sk), .5), rgb(var(--sk)) 55%, rgb(var(--sk2))); }
+  body[data-skin] .hero .tank.full i { background: linear-gradient(90deg, #b45309, var(--gold)); }
+  body[data-skin] .room { border-color: rgba(var(--sk), .42); }
+  body[data-skin] .sl:not(.em):not(.gld) { border-color: rgba(var(--sk), .36); background: radial-gradient(circle at 50% 46%, rgba(var(--sk), .34), rgba(255,255,255,.03) 70%); }
+  body[data-skin] .room .beam { background: linear-gradient(180deg, transparent, rgba(var(--sk2), .10) 55%, rgba(var(--sk2), .24) 60%, transparent 62%); }
+  body[data-skin] .wal { background: rgba(var(--sk), .15); border-color: rgba(var(--sk), .45); }
+  body[data-skin="space"] .bg .stars { display: block; }
+  body[data-skin="space"] .room { background: radial-gradient(1px 1px at 12% 22%, #fff, transparent), radial-gradient(1px 1px at 38% 64%, #c7d2fe, transparent),
+    radial-gradient(1.5px 1.5px at 66% 18%, #fff, transparent), radial-gradient(1px 1px at 84% 72%, #a5f3fc, transparent), radial-gradient(1px 1px at 52% 88%, #fff, transparent),
+    radial-gradient(ellipse 70% 50% at 80% 0%, rgba(99,102,241,.22), transparent 70%), linear-gradient(180deg, rgba(30,27,75,.5), rgba(255,255,255,.012)); }
+  body[data-skin="lava"] .room { background: radial-gradient(ellipse 90% 45% at 50% 108%, rgba(249,115,22,.34), transparent 70%),
+    linear-gradient(0deg, rgba(220,38,38,.12), rgba(255,255,255,.02) 55%); }
+  body[data-skin="ice"] .room { background: radial-gradient(ellipse 90% 40% at 50% -8%, rgba(224,242,254,.26), transparent 70%),
+    linear-gradient(180deg, rgba(56,189,248,.12), rgba(255,255,255,.015) 60%); }
+  body[data-skin="gold"] .room { background: radial-gradient(ellipse 80% 55% at 50% 0%, rgba(251,191,36,.2), transparent 72%), linear-gradient(180deg, rgba(120,53,15,.22), rgba(255,255,255,.015));
+    box-shadow: inset 0 0 0 1px rgba(253,230,138,.18), inset 0 0 26px rgba(251,191,36,.16); }
+  body[data-skin="lava"] .bg .pz b { background-image: radial-gradient(circle at 34px 52px, rgba(254,240,138,.95) 0 1.3px, rgba(249,115,22,.4) 2.3px, transparent 4.6px),
+    radial-gradient(circle at 118px 268px, rgba(253,186,116,.9) 0 1.1px, rgba(239,68,68,.35) 2px, transparent 4.2px), radial-gradient(circle at 205px 140px, rgba(254,240,138,.9) 0 1.2px, rgba(249,115,22,.35) 2.1px, transparent 4.4px),
+    radial-gradient(circle at 296px 330px, rgba(253,186,116,.95) 0 1.4px, rgba(239,68,68,.4) 2.4px, transparent 4.8px), radial-gradient(circle at 362px 96px, rgba(254,240,138,.85) 0 1px, rgba(249,115,22,.3) 1.9px, transparent 4px); }
+  body[data-skin="ice"] .bg .pz b { background-image: radial-gradient(circle at 34px 52px, #fff 0 1.5px, rgba(186,230,253,.4) 2.5px, transparent 4.6px),
+    radial-gradient(circle at 118px 268px, #fff 0 1.2px, rgba(186,230,253,.35) 2.1px, transparent 4.2px), radial-gradient(circle at 205px 140px, #e0f2fe 0 1.3px, rgba(125,211,252,.35) 2.2px, transparent 4.4px),
+    radial-gradient(circle at 296px 330px, #fff 0 1.6px, rgba(186,230,253,.4) 2.6px, transparent 4.8px), radial-gradient(circle at 362px 96px, #fff 0 1.1px, rgba(186,230,253,.3) 2px, transparent 4px); }
+  body[data-skin="gold"] .bg .pz b { background-image: radial-gradient(circle at 34px 52px, rgba(254,243,199,.95) 0 1.3px, rgba(251,191,36,.4) 2.3px, transparent 4.6px),
+    radial-gradient(circle at 118px 268px, rgba(253,230,138,.9) 0 1.1px, rgba(245,158,11,.35) 2px, transparent 4.2px), radial-gradient(circle at 205px 140px, rgba(254,243,199,.9) 0 1.2px, rgba(251,191,36,.35) 2.1px, transparent 4.4px),
+    radial-gradient(circle at 296px 330px, rgba(253,230,138,.95) 0 1.4px, rgba(245,158,11,.4) 2.4px, transparent 4.8px), radial-gradient(circle at 362px 96px, rgba(254,243,199,.85) 0 1px, rgba(251,191,36,.3) 1.9px, transparent 4px); }
+  /* тема видна и в топе — кольцо её цвета вокруг аватарки */
+  .tr .tav[data-sk] { border-width: 2px; }
+  .tr .tav[data-sk="space"] { border-color: #818cf8; box-shadow: 0 0 10px -1px rgba(129,140,248,.8); }
+  .tr .tav[data-sk="lava"] { border-color: #fb923c; box-shadow: 0 0 10px -1px rgba(249,115,22,.85); }
+  .tr .tav[data-sk="ice"] { border-color: #7dd3fc; box-shadow: 0 0 10px -1px rgba(125,211,252,.85); }
+  .tr .tav[data-sk="gold"] { border-color: #fbbf24; box-shadow: 0 0 10px -1px rgba(251,191,36,.85); }
+
+  /* v390: окно доната заново — шапка с камнем, «🎁 Стартовый набор» в бегущей радужной рамке, разделы, карточки со значками,
+     темы с живым превью, SLX и токены плитками */
+  .dn-hd { text-align: center; margin: -2px 0 14px; }
+  .dn-hd svg { width: 58px; height: 58px; display: block; margin: 0 auto 4px; filter: drop-shadow(0 8px 18px rgba(167,139,250,.5)); animation: flo 4.5s ease-in-out infinite; }
+  .sheet .dn-hd h3 { font-size: 21px; margin: 0; background: linear-gradient(90deg, #fde68a, #f9a8d4 45%, #c4b5fd); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sheet .dn-hd p { font-size: 12.5px; color: var(--tx3); margin: 5px 0 0; line-height: 1.4; }
+  .dn-st { position: relative; overflow: hidden; border-radius: 20px; padding: 1.6px; margin-bottom: 6px; }
+  .dn-st::before { content: ''; position: absolute; left: 50%; top: 50%; width: 160%; aspect-ratio: 1; margin: -80% 0 0 -80%; will-change: transform;
+                   background: conic-gradient(#fbbf24, #f472b6, #8b5cf6, #22d3ee, #34d399, #fbbf24); animation: spin 6s linear infinite; }
+  .dn-st .in { position: relative; border-radius: 18.4px; padding: 14px; background: radial-gradient(ellipse 90% 70% at 85% 0%, rgba(251,191,36,.16), transparent 65%), #17112a; }
+  .dn-st .tg2 { position: absolute; top: 12px; right: 12px; padding: 3px 9px; border-radius: 99px; font-size: 12px; font-weight: 850; color: #1c1203;
+                background: linear-gradient(135deg, #fde047, #f59e0b); box-shadow: 0 4px 14px -4px rgba(251,191,36,.9); }
+  .dn-st .shd { display: flex; align-items: center; gap: 12px; padding-right: 54px; }     /* не .sh — так зовутся заголовки разделов (капсом) */
+  .dn-st .shd svg { width: 52px; height: 52px; flex: 0 0 auto; filter: drop-shadow(0 6px 14px rgba(244,114,182,.45)); }
+  .dn-st .shd b { display: block; font-size: 17px; }
+  .dn-st .shd small { display: block; font-size: 12px; color: var(--tx3); }
+  .dn-st .chs { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+  .dn-st .chs span { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 9px; border-radius: 99px; font-size: 12px; font-weight: 650;
+                     background: rgba(255,255,255,.06); border: 1px solid var(--ln2); }
+  .dn-st .ft { display: flex; align-items: center; gap: 10px; }
+  .dn-st .ft s { color: var(--tx3); font-size: 14px; }
+  .dn-st .ft b { font-size: 22px; font-weight: 850; }
+  .dn-st .ft .bb { margin-left: auto; height: 42px; padding: 0 20px; font-size: 15px; }
+  .dn-st.got .in { opacity: .75; }
+  .dn-sec { display: flex; align-items: center; gap: 8px; margin: 18px 2px 8px; font-size: 12px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; color: var(--tx2); }
+  .dn-sec::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--ln2), transparent); }
+  .dn-it { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px; margin-bottom: 8px; border-radius: 16px; overflow: hidden;
+           background: linear-gradient(120deg, rgba(var(--ic, 139,92,246), .12), rgba(255,255,255,.02) 55%); border: 1px solid rgba(var(--ic, 139,92,246), .26); }
+  .dn-it .ico { width: 46px; height: 46px; flex: 0 0 auto; border-radius: 14px; display: grid; place-items: center;
+                background: radial-gradient(circle at 50% 38%, rgba(var(--ic, 139,92,246), .45), rgba(255,255,255,.03) 72%); border: 1px solid rgba(var(--ic, 139,92,246), .4); }
+  .dn-it .ico svg { width: 32px; height: 32px; }
+  .dn-it .tx { flex: 1; min-width: 0; }
+  .dn-it .tx b { display: block; font-size: 14.5px; }
+  .dn-it .tx small { display: block; font-size: 12px; color: var(--tx3); line-height: 1.35; }
+  .dn-it .tx .on { color: #7dd3fc; font-weight: 650; }
+  .dn-it .pr { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+  .dn-it .pr b { font-size: 15px; white-space: nowrap; }
+  .dn-it .pr small { font-size: 11px; color: var(--tx3); white-space: nowrap; }
+  .dn-bd { position: absolute; top: 0; left: 0; padding: 2px 8px 3px; border-radius: 0 0 10px 0; font-size: 10px; font-weight: 850; letter-spacing: .04em; color: #052e16;
+           background: linear-gradient(135deg, #86efac, #22c55e); }
+  .dn-it.bd { padding-top: 24px; }                  /* под значком «ВЫГОДНО» — место, чтобы не налезал на картинку */
+  .dn-bd.g { color: #1c1203; background: linear-gradient(135deg, #fde047, #f59e0b); }
+  .dn-sk { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .dn-sk .sk { border-radius: 16px; overflow: hidden; background: var(--card); border: 1px solid var(--ln2); }
+  .dn-sk .sk.on { border-color: rgba(var(--skc), .85); box-shadow: 0 0 0 1px rgba(var(--skc), .5), 0 8px 22px -10px rgba(var(--skc), .9); }
+  .dn-sk .pv { position: relative; height: 74px; display: flex; align-items: center; justify-content: center; gap: 5px; overflow: hidden; border-bottom: 1px solid var(--ln); }
+  .dn-sk .pv i { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; border: 1px solid rgba(var(--skc), .5);
+                 background: radial-gradient(circle at 50% 46%, rgba(var(--skc), .4), rgba(255,255,255,.03) 72%); }
+  .dn-sk .pv i svg { width: 24px; height: 24px; }
+  .dn-sk .pv[data-p="space"] { background: radial-gradient(1px 1px at 15% 25%, #fff, transparent), radial-gradient(1px 1px at 70% 15%, #fff, transparent), radial-gradient(1px 1px at 85% 70%, #a5f3fc, transparent),
+                               radial-gradient(1px 1px at 35% 80%, #c7d2fe, transparent), radial-gradient(ellipse at 80% 0%, rgba(99,102,241,.45), transparent 70%), #12103a; }
+  .dn-sk .pv[data-p="lava"] { background: radial-gradient(ellipse 100% 60% at 50% 115%, rgba(249,115,22,.75), transparent 70%), linear-gradient(180deg, #1c0d0a, #3b0d0a); }
+  .dn-sk .pv[data-p="ice"] { background: radial-gradient(ellipse 100% 55% at 50% -15%, rgba(224,242,254,.55), transparent 70%), linear-gradient(180deg, #0c2a43, #0a1729); }
+  .dn-sk .pv[data-p="gold"] { background: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(251,191,36,.5), transparent 72%), linear-gradient(180deg, #2a1a05, #160d02); }
+  .dn-sk .pv[data-p="none"] { background: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(139,92,246,.35), transparent 72%), #120f1d; }
+  .dn-sk .sb { padding: 9px 10px 10px; }
+  .dn-sk .sb b { display: block; font-size: 13.5px; }
+  .dn-sk .sb small { display: block; font-size: 11.5px; color: var(--tx3); margin-bottom: 7px; }
+  .dn-sk .sb .bb { width: 100%; height: 34px; font-size: 13px; }
+  .dn-pk { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .dn-pk .pk { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 12px 8px 10px; border-radius: 16px;
+               background: radial-gradient(ellipse 90% 60% at 50% 0%, rgba(var(--pc), .2), transparent 70%), var(--card); border: 1px solid rgba(var(--pc), .3); }
+  .dn-pk .pk svg { width: 72px; height: 60px; margin: -4px 0 2px; }
+  .dn-pk .pk b { font-size: 13.5px; }
+  .dn-pk .pk .am { font-size: 15px; font-weight: 850; margin-top: 2px; white-space: nowrap; }
+  .dn-pk .pk small { font-size: 11px; color: var(--tx3); white-space: nowrap; }
+  .dn-pk .pk .bb { width: 100%; height: 36px; margin-top: 8px; font-size: 14px; }
+  .dn-ft { margin-top: 16px; padding: 12px; border-radius: 14px; font-size: 12.5px; line-height: 1.5; color: var(--tx2); background: rgba(255,255,255,.04); border: 1px solid var(--ln); }
+  .dnc .de svg { width: 30px; height: 30px; }
 
   /* ── нижнее меню ── */
   .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: center;
@@ -560,6 +670,10 @@
     <linearGradient id="mgLv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fde047"/><stop offset=".45" stop-color="#fb923c"/><stop offset="1" stop-color="#dc2626"/></linearGradient>
     <radialGradient id="mgPl" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#67e8f9"/><stop offset=".45" stop-color="#6366f1"/><stop offset="1" stop-color="#1e1b4b"/></radialGradient>
     <linearGradient id="mgGd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fcd34d"/><stop offset=".5" stop-color="#d97706"/><stop offset="1" stop-color="#92400e"/></linearGradient>
+    <!-- v390: донат -->
+    <linearGradient id="mgPk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f472b6"/><stop offset="1" stop-color="#7c3aed"/></linearGradient>
+    <linearGradient id="mgCl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#86efac"/><stop offset="1" stop-color="#15803d"/></linearGradient>
+    <linearGradient id="mgGm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0abfc"/><stop offset=".45" stop-color="#8b5cf6"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>
   </defs>
   <symbol id="ic-phone" viewBox="0 0 48 48">
     <rect x="14.5" y="4" width="19" height="40" rx="4.5" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".75"/>
@@ -743,6 +857,50 @@
     <circle cx="24" cy="27" r="4.4" fill="url(#mgC)"/>
     <circle cx="5" cy="14" r="2" fill="#fde68a"/><circle cx="24" cy="8" r="2" fill="#fde68a"/><circle cx="43" cy="14" r="2" fill="#fde68a"/>
   </symbol>
+  <!-- v390: донат — тот же стиль: тёмный корпус, цветной контур, светящиеся детали -->
+  <symbol id="ic-d-gem" viewBox="0 0 48 48">
+    <path d="M14 8h20l9 11-19 23L5 19z" fill="url(#mgGm)" stroke="#f5d0fe" stroke-opacity=".85" stroke-linejoin="round"/>
+    <path d="M5 19h38M14 8l5 11 5-11 5 11 5-11M19 19l5 23 5-23" fill="none" stroke="#fff" stroke-opacity=".42" stroke-linejoin="round"/>
+    <path d="M14.6 11l-3.4 5" stroke="#fff" stroke-opacity=".85" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M41 4.5l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z" fill="#fde68a"/>
+  </symbol>
+  <symbol id="ic-d-gift" viewBox="0 0 48 48">
+    <rect x="9.5" y="27" width="29" height="16" rx="2.2" fill="url(#mgB)" stroke="#f9a8d4" stroke-opacity=".75"/>
+    <rect x="6.5" y="19" width="35" height="9" rx="2.2" fill="url(#mgPk)" stroke="#fbcfe8" stroke-opacity=".75"/>
+    <rect x="21.5" y="19" width="5" height="24" fill="url(#mgG)"/>
+    <path d="M24 19c-3.2-6.4-10.4-8.4-11.8-4.6-1.3 3.7 5.6 4.6 11.8 4.6zm0 0c3.2-6.4 10.4-8.4 11.8-4.6 1.3 3.7-5.6 4.6-11.8 4.6z" fill="none" stroke="url(#mgG)" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M40 5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" fill="#fde68a"/><circle cx="7.5" cy="10.5" r="1.2" fill="#f9a8d4"/>
+  </symbol>
+  <symbol id="ic-d-rocket" viewBox="0 0 48 48">
+    <path d="M17 31l-4.5-4.5C16 17 26 8.5 41 7c-1.5 15-10 25-19.5 28.5z" fill="url(#mgB)" stroke="#7dd3fc" stroke-opacity=".85" stroke-width="1.2" stroke-linejoin="round"/>
+    <circle cx="30.5" cy="17.5" r="4" fill="url(#mgS)" stroke="#e0f2fe" stroke-opacity=".85"/>
+    <path d="M14.5 24.5l-7.5 1 4-6.5 8-1M23.5 33.5l-1 7.5 6.5-4 1-8" fill="url(#mgM)" stroke="#a78bfa" stroke-opacity=".75" stroke-linejoin="round"/>
+    <path d="M14.8 33.2c-3.2.4-5.8 2.6-7.3 7.8 5.2-1.5 7.4-4.1 7.8-7.3z" fill="url(#mgLv)"/>
+    <path d="M12 36l-3 3" stroke="#fde68a" stroke-width="1.2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-d-bolt" viewBox="0 0 48 48">
+    <path d="M28 4L9.5 27.5H22L18.5 44 38.5 19.5H26z" fill="url(#mgLv)" stroke="#fef08a" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M26.5 9.5l-9.8 12.6" stroke="#fff" stroke-opacity=".6" stroke-width="1.4" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-d-robot" viewBox="0 0 48 48">
+    <path d="M24 5.5V11" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round"/><circle cx="24" cy="4.6" r="2" fill="#34d399"/>
+    <rect x="9" y="11" width="30" height="22" rx="7" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".85"/>
+    <rect x="13" y="16" width="22" height="11" rx="5.5" fill="#0c0917" stroke="#22d3ee" stroke-opacity=".35"/>
+    <circle cx="19" cy="21.5" r="2.5" fill="#34d399"/><circle cx="29" cy="21.5" r="2.5" fill="#34d399"/>
+    <rect x="5" y="17.5" width="4" height="9" rx="1.6" fill="url(#mgM)"/><rect x="39" y="17.5" width="4" height="9" rx="1.6" fill="url(#mgM)"/>
+    <rect x="14" y="35" width="20" height="9" rx="3" fill="url(#mgM)" stroke="#8b80b3" stroke-opacity=".6"/>
+    <path d="M19 39.5h10" stroke="#22d3ee" stroke-width="1.6" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-d-clover" viewBox="0 0 48 48">
+    <path d="M24.5 25c1.2 6 3.8 10.4 8.5 14" fill="none" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round"/>
+    <g fill="url(#mgCl)" stroke="#dcfce7" stroke-opacity=".6" stroke-width=".8">
+      <path d="M24 23c-5.6-.8-8.6-5.5-6.5-8.6 1.8-2.6 5-1.5 6.5 1 1.5-2.5 4.7-3.6 6.5-1 2.1 3.1-.9 7.8-6.5 8.6z"/>
+      <path d="M24 23c-5.6-.8-8.6-5.5-6.5-8.6 1.8-2.6 5-1.5 6.5 1 1.5-2.5 4.7-3.6 6.5-1 2.1 3.1-.9 7.8-6.5 8.6z" transform="rotate(90 24 23)"/>
+      <path d="M24 23c-5.6-.8-8.6-5.5-6.5-8.6 1.8-2.6 5-1.5 6.5 1 1.5-2.5 4.7-3.6 6.5-1 2.1 3.1-.9 7.8-6.5 8.6z" transform="rotate(180 24 23)"/>
+      <path d="M24 23c-5.6-.8-8.6-5.5-6.5-8.6 1.8-2.6 5-1.5 6.5 1 1.5-2.5 4.7-3.6 6.5-1 2.1 3.1-.9 7.8-6.5 8.6z" transform="rotate(270 24 23)"/>
+    </g>
+    <circle cx="24" cy="23" r="1.6" fill="#f0fdf4"/>
+  </symbol>
 </svg>
 <div class="bg"><i class="gl g1"></i><i class="gl g2"></i><div class="grid"></div><div class="scan"></div><div class="pz"><b></b><b></b></div><div class="stars" id="stars"></div></div>
 <main>
@@ -770,7 +928,7 @@
     </div>
     <div class="card occ" id="occ" hidden><div class="oci">⚡</div><div class="oct"><b id="oc-t"></b><small id="oc-s"></small><div class="ocb"><i id="oc-bar"></i></div></div>
       <button type="button" class="bb" id="b-oc"></button></div>
-    <div class="card dnc" id="dnc" hidden><div class="de">💎</div><div class="dt"><b id="dn-t"></b><small id="dn-s"></small></div><span class="da">›</span></div>
+    <div class="card dnc" id="dnc" hidden><div class="de"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#ic-d-gem"/></svg></div><div class="dt"><b id="dn-t"></b><small id="dn-s"></small></div><span class="da">›</span></div>
     <div class="card room" id="room">
       <i class="beam"></i>
       <div class="rh"><span><b id="r-name"></b> · <span id="r-used"></span></span><span class="hs mono" id="r-hash"></span></div>
@@ -966,7 +1124,8 @@
             no_rig: 'No such device on the farm', taps_off: 'Manual mining is off', rate_limited: 'One second…', banned: '🚫 Your account is blocked',
             frozen: '❄️ Your account is frozen', maintenance: '🔧 The bot is under maintenance', no_funds: 'Not enough tokens', no_coins: 'Not enough SLX',
             bad_qty: 'How much SLX?', net: 'No connection — try again', oc_wait: 'The overclock is still cooling down', forbidden: 'Administrator only',
-            bad_ch: 'Chapter — from 1 to 7', no_farm: 'Build the farm first', have: 'You already have it', bad_item: 'No such item' },
+            bad_ch: 'Chapter — from 1 to 7', no_farm: 'Build the farm first', have: 'You already have it', bad_item: 'No such item',
+            no_skin: 'Buy this theme first' },
     ocT: 'Overclock ×3', ocReady: '10 minutes — the farm mines three times faster', ocOnT: '🔥 Overclock ×3 is on',
     ocOn: function (s) { return s + ' left — collect more often, the storage fills faster'; }, ocCool: function (s) { return 'Cooling down — ' + s + ' left'; },
     ocBtn: '⚡ Turn on', ocStart: 'OVERCLOCK!', ocStartS: '×3 for 10 minutes', ocFull: 'The storage is full — collect first, or the overclock is wasted',
@@ -981,6 +1140,18 @@
     dnMsg: function (e, n, p, id) { return 'Hi! I want to buy in “⛏ SLX Mining”: ' + e + ' ' + n + ' for ' + p + ' ₽. My ID: ' + id; },
     dnMsgT: function (n, t, p, id) { return 'Hi! I want to buy tokens: the “' + n + '” pack — ' + t + ' tokens for ' + p + ' ₽. My ID: ' + id; },
     dnHow: '1) Tap “Buy” — a chat with @SloppyX opens. 2) Pay. 3) The admin gives it to you, the bot sends a message.',
+    // v390: донат заново — стартовый набор, разделы, темы, SLX
+    dnHd: 'Mining shop', dnS2: function (p) { return '🎁 Starter pack for ' + p + ' ₽ · turbo · themes · SLX'; },
+    dnS3: function (p) { return 'Turbo ×2 from ' + p + ' ₽ · farm themes · SLX for rubles'; },
+    stS: 'Only once · the best price', stGot: 'Already received ✓', stCh: ['🚀 Turbo ×2 · 3 days', '🤖 Auto-collect · 3 days', '⚡ No cooldown · a day', '🍀 Luck ×3 · a day'],
+    secB: 'Boosts', secF: 'Forever', secK: 'Farm themes', secX: 'SLX for rubles', secT: 'Tokens',
+    bdBest: 'BEST DEAL', bdEver: '+10% MINING', perDay: function (p) { return p + ' ₽ a day'; },
+    skNone: 'Classic', skNoneS: 'No theme', skWear: 'Wear', skOn: 'On ✓', skBuy: function (p) { return 'Buy · ' + p + ' ₽'; }, skForever: 'forever',
+    skWorn: 'Theme is on 🎨', skOff: 'Theme removed',
+    slxAm: function (x) { return '≈ ' + x + ' SLX'; }, slxFor: function (t) { return 'worth ' + t + ' tokens'; }, tokAm: function (t) { return t + ' tokens'; },
+    xNote: 'Same packs and prices as tokens — just in SLX at the rate. SLX can be sold for tokens or spent on the farm.',
+    dnMsgS: function (n, t, x, p, id) { return 'Hi! I want to buy in “⛏ SLX Mining”: 💠 ' + n + ' — SLX worth ' + t + ' tokens (≈ ' + x + ' SLX) for ' + p + ' ₽. My ID: ' + id; },
+    hbL: function (s) { return '🍀 Luck ×3 · ' + s; },
     hbT: function (s) { return '🚀 Turbo ×2 · ' + s; }, hbA: function (s) { return '🤖 Auto-collect · ' + s; }, hbG: '💎 +10%',
     ocf: function (s) { return '⚡ no cooldown: ' + s; }, topEmpty: 'free',
     farmK: function (p, t) { return '⛏ The farm mines SLX: the amount of SLX is fixed, its token value follows the rate. Now (day average) 1 SLX = ' + p + ' tokens, so 1 MH/s ≈ ' + t + ' tokens a day. SLX goes up — your mining and devices are worth more tokens, goes down — less.'; },
@@ -1045,7 +1216,8 @@
             no_rig: 'Такого устройства нет на ферме', taps_off: 'Ручной майнинг выключен', rate_limited: 'Секунду…', banned: '🚫 Аккаунт заблокирован',
             frozen: '❄️ Аккаунт заморожен', maintenance: '🔧 Бот на обслуживании', no_funds: 'Не хватает токенов', no_coins: 'Не хватает SLX',
             bad_qty: 'Сколько SLX?', net: 'Нет связи — попробуй ещё раз', oc_wait: 'Разгон ещё остывает', forbidden: 'Только для администратора',
-            bad_ch: 'Глава — от 1 до 7', no_farm: 'Сначала построй ферму', have: 'Это у тебя уже есть', bad_item: 'Такого товара нет' },
+            bad_ch: 'Глава — от 1 до 7', no_farm: 'Сначала построй ферму', have: 'Это у тебя уже есть', bad_item: 'Такого товара нет',
+            no_skin: 'Эту тему сначала нужно купить' },
     ocT: 'Разгон ×3', ocReady: '10 минут — ферма майнит втрое быстрее', ocOnT: '🔥 Идёт разгон ×3',
     ocOn: function (s) { return 'Ещё ' + s + ' — собирай чаще, хранилище копится быстрее'; }, ocCool: function (s) { return 'Остывает — ещё ' + s; },
     ocBtn: '⚡ Включить', ocStart: 'РАЗГОН!', ocStartS: '×3 на 10 минут', ocFull: 'Хранилище полное — сначала собери, иначе разгон уйдёт впустую',
@@ -1060,6 +1232,19 @@
     dnMsg: function (e, n, p, id) { return 'Привет! Хочу купить в «⛏ Майнинге SLX»: ' + e + ' ' + n + ' за ' + p + ' ₽. Мой ID: ' + id; },
     dnMsgT: function (n, t, p, id) { return 'Привет! Хочу купить токены: пакет «' + n + '» — ' + t + ' токенов за ' + p + ' ₽. Мой ID: ' + id; },
     dnHow: '1) Нажми «Купить» — откроется чат с @SloppyX. 2) Оплати. 3) Администратор выдаст покупку — бот пришлёт сообщение.',
+    // v390: донат заново — стартовый набор, разделы, темы, SLX
+    dnHd: 'Донат в майнинге', dnS2: function (p) { return '🎁 Стартовый набор за ' + p + ' ₽ · турбо · темы · SLX'; },
+    dnS3: function (p) { return 'Турбо ×2 от ' + p + ' ₽ · темы фермы · SLX за рубли'; },
+    stS: 'Только один раз · самая низкая цена', stGot: 'Уже получен ✓', stCh: ['🚀 Турбо ×2 · 3 дня', '🤖 Автосбор · 3 дня', '⚡ Без остывания · сутки', '🍀 Удача ×3 · сутки'],
+    secB: 'Ускорители', secF: 'Навсегда', secK: 'Темы фермы', secX: 'SLX за рубли', secT: 'Токены',
+    bdBest: 'ВЫГОДНО', bdEver: '+10% К ДОБЫЧЕ', perDay: function (p) { return p + ' ₽ в сутки'; },
+    skNone: 'Обычная', skNoneS: 'Без темы', skWear: 'Надеть', skOn: 'Надета ✓', skBuy: function (p) { return 'Купить · ' + p + ' ₽'; }, skForever: 'навсегда',
+    skWorn: 'Тема надета 🎨', skOff: 'Тема снята',
+    slxAm: function (x) { return '≈ ' + x + ' SLX'; }, slxFor: function (t) { return 'на ' + t + ' ' + (/[а-я]/.test(t) ? 'токенов' : tw(t)); },   // «на 1 млрд токенов»
+    tokAm: function (t) { return t + ' ' + tw(t); },
+    xNote: 'Те же пакеты и цены, что у токенов, — только в SLX по курсу. SLX можно продать за токены или вложить в ферму.',
+    dnMsgS: function (n, t, x, p, id) { return 'Привет! Хочу купить в «⛏ Майнинге SLX»: 💠 ' + n + ' — SLX на ' + t + ' токенов (≈ ' + x + ' SLX) за ' + p + ' ₽. Мой ID: ' + id; },
+    hbL: function (s) { return '🍀 Удача ×3 · ' + s; },
     hbT: function (s) { return '🚀 Турбо ×2 · ' + s; }, hbA: function (s) { return '🤖 Автосбор · ' + s; }, hbG: '💎 +10%',
     ocf: function (s) { return '⚡ без остывания: ' + s; }, topEmpty: 'свободно',
     farmK: function (p, t) { return '⛏ Ферма майнит SLX: сколько SLX — не меняется, а в токенах — по курсу. Сейчас (средний за сутки) 1 SLX = ' + p + ' токенов, поэтому 1 MH/s ≈ ' + t + ' ' + tkW(t) + ' в сутки. SLX дорожает — добыча и устройства стоят больше токенов, дешевеет — меньше.'; },
@@ -1176,8 +1361,9 @@
   }
   function tkS(x) { return tkF((Number(x) || 0) * fp()); }                       // SLX → токены строкой
   function tkW(s) { return EN ? 'tokens' : /[.,]/.test(String(s)) ? 'токена' : tw(s); }   // «3,4 токена», «22 токена», «9 700 токенов»
-  function tkShort(x) {                              // шапка: 525 012 · 1,23 млн · 4,5 млрд
-    var t = (Number(x) || 0) * fp(), a = Math.abs(t);
+  function tkShort(x) { return tokShort((Number(x) || 0) * fp()); }             // SLX → токены коротко (шапка)
+  function tokShort(t) {                             // токены коротко: 525 012 · 1,23 млн · 4,5 млрд (v390: пакеты — сразу в токенах)
+    t = Number(t) || 0; var a = Math.abs(t);
     var U = EN ? [[1e18, 'Qi'], [1e15, 'Q'], [1e12, 'T'], [1e9, 'B'], [1e6, 'M']]
                : [[1e18, ' квинтлн'], [1e15, ' квдрлн'], [1e12, ' трлн'], [1e9, ' млрд'], [1e6, ' млн']];   // как в боте (_tok_short)
     for (var i = 0; i < U.length; i++) if (a >= U[i][0]) return dec(t / U[i][0], 2).replace(/[.,]?0+$/, '') + U[i][1];
@@ -1300,6 +1486,8 @@
   function render() {
     var d = S.d; if (!d) return;
     document.body.setAttribute('data-ch', String(d.ch || 1));
+    var sk = d.started && d.skin ? d.skin : '';                       // v390: тема фермы (донат)
+    if ((document.body.getAttribute('data-skin') || '') !== sk) { if (sk) document.body.setAttribute('data-skin', sk); else document.body.removeAttribute('data-skin'); }
     $('pause').hidden = d.on !== false; $('pause').textContent = T.paused;
     renderEv();
     $('adm-btn').hidden = !(d.adm && d.started);                  // v387: «🛠 Проверка» — только администратору
@@ -1353,6 +1541,7 @@
       var bh = '';
       if (tb) bh += '<span class="hb">' + esc(T.hbT(L.bsl >= 86400 ? dur(L.bsl) : hms(L.bsl))) + '</span>';
       if (d.auto_until > L.snow) bh += '<span class="hb a">' + esc(T.hbA(dur(d.auto_until - L.snow))) + '</span>';
+      if (d.luck_until > L.snow) bh += '<span class="hb l">' + esc(T.hbL(dur(d.luck_until - L.snow))) + '</span>';    // v390
       if (d.gold) bh += '<span class="hb g">' + esc(T.hbG) + '</span>';
       setHtml('h-bs', bh);
       if ($('h-bs').hidden !== !bh) $('h-bs').hidden = !bh;
@@ -1415,7 +1604,7 @@
     if (dn.hidden !== !(sh.length && d.on !== false)) dn.hidden = !(sh.length && d.on !== false);
     if (sh.length) {
       $('dn-t').textContent = T.dnT;
-      $('dn-s').textContent = T.dnS(turboFrom(sh));
+      $('dn-s').textContent = dnSub(sh);
     }
     $('tp-t').textContent = T.tapT; $('tp-s').textContent = T.tapS(tkS(d.tap_val));
     // цели коротко
@@ -1487,8 +1676,8 @@
     var d = S.d, cf = S.cfg, L = live(), wl = L ? L.wallet : d.wallet;
     // v388: донат — карточка сверху, покупки в отдельном окне
     var sh0 = S.shop || [];
-    setHtml('shop-don', sh0.length ? '<div class="card dnc" data-don="1"><div class="de">💎</div><div class="dt"><b>' + esc(T.dnH) + '</b><small>'
-      + esc(T.dnS(turboFrom(sh0))) + '</small></div><span class="da">›</span></div>' : '');
+    setHtml('shop-don', sh0.length ? '<div class="card dnc" data-don="1"><div class="de"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#ic-d-gem"/></svg></div><div class="dt"><b>'
+      + esc(T.dnH) + '</b><small>' + esc(dnSub(sh0)) + '</small></div><span class="da">›</span></div>' : '');
     // переезд
     var mv = '';
     if (d.ch < 7 && (goalsReady() || d.open)) {                // v387: админу (всё открыто) — без целей
@@ -1640,31 +1829,117 @@
     send('notify', { on: on });
   });
   $('b-ex').addEventListener('click', function () { if (S.ex) { hap('sel'); location.href = S.ex; } });
-  $('b-tok').addEventListener('click', function () { hap('sel'); donSheet(true); });
+  $('b-tok').addEventListener('click', function () { hap('sel'); donSheet('packs'); });
   $('dnc').addEventListener('click', function () { hap('sel'); donSheet(); });
 
   // ── v388: донат — бусты, золотая видеокарта, автосбор и токены. Оплата — в личке @SloppyX (сообщение уже вписано), выдаёт
   // администратор; страница только показывает цены и открывает чат ──
-  function donSheet(packs) {
-    var d = S.d, sh = S.shop || [], pk = S.packs || [], now = live() ? live().snow : (d.t || 0), h = '<h3>' + esc(T.dnH) + '</h3><p>' + esc(T.dnP) + '</p>';
-    sh.forEach(function (x) {
-      var left = x.kind === 'bst' ? d.bst_until - now : x.kind === 'auto' ? d.auto_until - now : x.kind === 'ocf' ? d.ocf_until - now : 0;
-      var have = x.kind === 'gold' && d.gold;
-      h += '<div class="dni"><div class="de">' + esc(x.e) + '</div><div class="dm"><b>' + esc(EN ? x.en : x.ru) + '</b><small>' + esc(EN ? x.d_en : x.d_ru) + '</small>'
-        + (left > 0 ? '<small class="on">' + esc(T.dnOn(dur(left))) + '</small>' : '') + '</div><div class="dr"><b>' + num(x.price) + ' ₽</b>'
-        + (have ? '<button type="button" class="bb ghost" disabled>' + esc(T.dnHave) + '</button>'
-                : '<button type="button" class="bb hot" data-dbuy="' + esc(x.id) + '">' + esc(T.dnBuy) + '</button>') + '</div></div>';
+  // v390: окно заново — «🎁 Стартовый набор» сверху, дальше разделы: ускорители, навсегда (золотая видеокарта), темы фермы с
+  // превью, SLX за рубли и токены плитками. Товары и цены — с сервера (администратор меняет цену и скрывает товар в админке)
+  var DN_ICO = { bst: 'ic-d-rocket', ocf: 'ic-d-bolt', auto: 'ic-d-robot', luck: 'ic-d-clover', gold: 'ic-gold', starter: 'ic-d-gift' };
+  var DN_RGB = { bst: '56,189,248', ocf: '249,115,22', auto: '52,211,153', luck: '74,222,128', gold: '251,191,36' };
+  var SKIN_RGB = { space: '129,140,248', lava: '249,115,22', ice: '125,211,252', gold: '251,191,36', none: '139,92,246' };
+  var PK_RGB = ['52,211,153', '56,189,248', '167,139,250', '251,191,36', '248,113,113', '250,204,21'];
+  function dnIco(id) { return '<svg viewBox="0 0 48 48" aria-hidden="true"><use href="#' + id + '"/></svg>'; }
+  function dnSub(sh) {                              // строка под «Ускорь ферму»: стартовый набор, пока не куплен; потом — турбо
+    var st = sh.filter(function (x) { return x.kind === 'starter'; })[0];
+    return st && !(S.d && S.d.starter) ? T.dnS2(num(st.price)) : T.dnS3(num(turboFrom(sh)));
+  }
+  function starterWorth(sh) {                      // сколько стоил бы набор по частям: турбо 3 дня + автосбор 3/7 + без остывания + удача
+    var by = {}; sh.forEach(function (x) { by[x.id] = x.price; });
+    return (by.turbo3 || 0) + Math.round((by.auto7 || 0) * 3 / 7) + (by.oc1 || 0) + (by.luck1 || 0);
+  }
+  function coinsSvg(i, gold) {                      // стопки монет: больше пакет — выше и шире стопка; снизу свет, у крупных — искры
+    var st = [[2], [3], [3, 2], [4, 3], [4, 3, 2], [6, 5, 3]][Math.min(i, 5)], xs = st.length === 1 ? [30] : st.length === 2 ? [22, 39] : [14, 30, 46];
+    var c1 = gold ? '#fef3c7' : '#ede9fe', c2 = gold ? '#f59e0b' : '#8b5cf6', c3 = gold ? '#92400e' : '#4c1d95', gl = gold ? '251,191,36' : '167,139,250';
+    var h = '<ellipse cx="30" cy="41" rx="26" ry="8" fill="rgba(' + gl + ',.13)"/><ellipse cx="30" cy="45.5" rx="23" ry="2.2" fill="rgba(0,0,0,.3)"/>';
+    st.forEach(function (n, k) {
+      for (var j = 0; j < n; j++) {
+        var x = xs[k], y = 45 - j * 5;
+        h += '<path d="M' + (x - 10.5) + ' ' + (y - 3.2) + 'V' + y + 'A10.5 3.8 0 0 0 ' + (x + 10.5) + ' ' + y + 'V' + (y - 3.2) + 'Z" fill="' + c3 + '"/>'
+          + '<ellipse cx="' + x + '" cy="' + (y - 3.2) + '" rx="10.5" ry="3.8" fill="' + c2 + '" stroke="' + c1 + '" stroke-opacity=".9" stroke-width=".9"/>'
+          + (j === n - 1 ? '<ellipse cx="' + x + '" cy="' + (y - 3.2) + '" rx="5.5" ry="1.8" fill="none" stroke="' + c1 + '" stroke-opacity=".7" stroke-width=".8"/>' : '');
+      }
     });
-    if (pk.length) {
-      h += '<div class="dsh" id="dn-pk">' + esc(T.dnTok) + '</div>';
-      pk.forEach(function (p, i) {
-        h += '<div class="dni"><div class="de">' + esc(p[3]) + '</div><div class="dm"><b>' + esc(p[0]) + '</b><small>' + num(p[2]) + ' ' + esc(EN ? 'tokens' : tw(num(p[2]))) + '</small></div>'
-          + '<div class="dr"><b>' + num(p[1]) + ' ₽</b><button type="button" class="bb" data-dpk="' + i + '">' + esc(T.dnBuy) + '</button></div></div>';
-      });
+    if (i >= 3) h += '<path d="M53 6l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" fill="#fff"/>' + (i >= 4 ? '<path d="M7 12l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z" fill="' + c1 + '"/>' : '');
+    return '<svg viewBox="0 0 60 50" aria-hidden="true">' + h + '</svg>';
+  }
+  function dnLeft(d, x, now) {
+    var f = { bst: 'bst_until', auto: 'auto_until', ocf: 'ocf_until', luck: 'luck_until' }[x.kind];
+    return f ? (d[f] || 0) - now : 0;
+  }
+  function donSheet(where) {
+    var d = S.d, sh = S.shop || [], pk = S.packs || [], now = live() ? live().snow : (d.t || 0), h = '';
+    var by = function (k) { return sh.filter(function (x) { return x.kind === k; }); };
+    h += '<div class="dn-hd">' + dnIco('ic-d-gem') + '<h3>' + esc(T.dnHd) + '</h3><p>' + esc(T.dnP) + '</p></div>';
+    var st = by('starter')[0];
+    if (st) {                                        // «🎁 Стартовый набор» — один раз, в радужной рамке
+      var worth = starterWorth(sh), off = worth > st.price ? Math.round((1 - st.price / worth) * 100) : 0;
+      h += '<div class="dn-st' + (d.starter ? ' got' : '') + '"><div class="in">' + (off && !d.starter ? '<span class="tg2">−' + off + '%</span>' : '')
+        + '<div class="shd">' + dnIco('ic-d-gift') + '<div><b>' + esc(EN ? st.en : st.ru) + '</b><small>' + esc(d.starter ? T.stGot : T.stS) + '</small></div></div>'
+        + '<div class="chs">' + T.stCh.map(function (c) { return '<span>' + esc(c) + '</span>'; }).join('') + '</div>'
+        + '<div class="ft">' + (off && !d.starter ? '<s>' + num(worth) + ' ₽</s>' : '') + '<b>' + num(st.price) + ' ₽</b>'
+        + (d.starter ? '<button type="button" class="bb ghost" disabled>' + esc(T.dnHave) + '</button>'
+                     : '<button type="button" class="bb hot" data-dbuy="' + esc(st.id) + '">' + esc(T.dnBuy) + '</button>') + '</div></div></div>';
     }
-    h += '<p class="note" style="margin-top:12px">' + esc(T.dnHow) + '</p><div class="row"><button type="button" class="btn sec sm" data-sa="close">' + esc(T.cancel) + '</button></div>';
+    var bs = sh.filter(function (x) { return ['bst', 'ocf', 'auto', 'luck'].indexOf(x.kind) >= 0; });
+    var bt = by('bst'), best = bt.length > 1 ? bt.reduce(function (a, x) { return x.price / x.h < a.price / a.h ? x : a; }) : null;
+    if (bs.length) h += '<div class="dn-sec">⚡ ' + esc(T.secB) + '</div>';
+    bs.forEach(function (x) {
+      var left = dnLeft(d, x, now);
+      h += '<div class="dn-it' + (x === best ? ' bd' : '') + '" style="--ic:' + DN_RGB[x.kind] + '">' + (x === best ? '<span class="dn-bd">' + esc(T.bdBest) + '</span>' : '')
+        + '<div class="ico">' + dnIco(DN_ICO[x.kind]) + '</div><div class="tx"><b>' + esc(EN ? x.en : x.ru) + '</b><small>' + esc(EN ? x.d_en : x.d_ru) + '</small>'
+        + (left > 0 ? '<small class="on">' + esc(T.dnOn(dur(left))) + '</small>' : '') + '</div><div class="pr"><b>' + num(x.price) + ' ₽</b>'
+        + (x.kind === 'bst' && x.h > 24 ? '<small>' + esc(T.perDay(num(Math.round(x.price / (x.h / 24))))) + '</small>' : '')
+        + '<button type="button" class="bb hot" data-dbuy="' + esc(x.id) + '">' + esc(T.dnBuy) + '</button></div></div>';
+    });
+    var gd = by('gold')[0], sk = by('skin');
+    if (gd || sk.length) h += '<div class="dn-sec">💎 ' + esc(T.secF) + '</div>';
+    if (gd) h += '<div class="dn-it bd" style="--ic:' + DN_RGB.gold + '"><span class="dn-bd g">' + esc(T.bdEver) + '</span><div class="ico">' + dnIco('ic-gold') + '</div><div class="tx"><b>'
+      + esc(EN ? gd.en : gd.ru) + '</b><small>' + esc(EN ? gd.d_en : gd.d_ru) + '</small></div><div class="pr"><b>' + num(gd.price) + ' ₽</b>'
+      + (d.gold ? '<button type="button" class="bb ghost" disabled>' + esc(T.dnHave) + '</button>' : '<button type="button" class="bb hot" data-dbuy="' + esc(gd.id) + '">' + esc(T.dnBuy) + '</button>')
+      + '</div></div>';
+    var own = d.skins || [], SKN = { space: ['🌌', 'Космос', 'Space'], lava: ['🔥', 'Лава', 'Lava'], ice: ['❄️', 'Арктика', 'Arctic'], gold: ['👑', 'Золото', 'Gold'] };
+    own.forEach(function (v) {                       // купленная тема, которую администратор скрыл из продажи, — всё равно в гардеробе
+      if (SKN[v] && !sk.some(function (x) { return x.val === v; })) sk.push({ val: v, e: SKN[v][0], ru: '«' + SKN[v][1] + '»', en: '“' + SKN[v][2] + '”', price: 0, id: '' });
+    });
+    if (sk.length || own.length) {                   // темы: превью комнаты с устройствами в цветах темы
+      var pv = function (p) { return '<div class="pv" data-p="' + p + '"><i>' + dnIco('ic-gpu') + '</i><i>' + dnIco('ic-asic') + '</i><i>' + dnIco('ic-quant') + '</i></div>'; };
+      h += '<div class="dn-sec" id="dn-sk">🎨 ' + esc(T.secK) + '</div><div class="dn-sk">';
+      if (own.length) h += '<div class="sk' + (!d.skin ? ' on' : '') + '" style="--skc:' + SKIN_RGB.none + '">' + pv('none') + '<div class="sb"><b>' + esc(T.skNone) + '</b><small>'
+        + esc(T.skNoneS) + '</small>' + (!d.skin ? '<button type="button" class="bb ghost" disabled>' + esc(T.skOn) + '</button>' : '<button type="button" class="bb" data-wear="">' + esc(T.skWear) + '</button>')
+        + '</div></div>';
+      sk.forEach(function (x) {
+        var has = own.indexOf(x.val) >= 0, on = d.skin === x.val, nm = (EN ? x.en : x.ru).match(/[«“]([^»”]+)[»”]/);     // «Тема «Лава»» → «Лава»
+        h += '<div class="sk' + (on ? ' on' : '') + '" style="--skc:' + SKIN_RGB[x.val] + '">' + pv(x.val) + '<div class="sb"><b>' + esc(x.e + ' ' + (nm ? nm[1] : EN ? x.en : x.ru)) + '</b><small>'
+          + esc(has ? T.skForever : num(x.price) + ' ₽ · ' + T.skForever) + '</small>'
+          + (on ? '<button type="button" class="bb ghost" disabled>' + esc(T.skOn) + '</button>' : has ? '<button type="button" class="bb" data-wear="' + esc(x.val) + '">' + esc(T.skWear) + '</button>'
+                : '<button type="button" class="bb hot" data-dbuy="' + esc(x.id) + '">' + esc(T.skBuy(num(x.price))) + '</button>') + '</div></div>';
+      });
+      h += '</div>';
+    }
+    var sx = by('slx'), pf = fp();
+    if (sx.length && pf > 0) {                       // SLX за рубли — те же пакеты, что токены, в SLX по курсу фермы
+      h += '<div class="dn-sec" id="dn-sx">💠 ' + esc(T.secX) + '</div><div class="dn-pk">';
+      sx.forEach(function (x, i) {
+        h += '<div class="pk" style="--pc:167,139,250">' + coinsSvg(i, false) + '<b>' + esc(EN ? x.en : x.ru) + '</b><div class="am mono">' + esc(T.slxAm(slx(x.val / pf))) + '</div><small>'
+          + esc(T.slxFor(tokShort(x.val))) + '</small><button type="button" class="bb hot" data-dbuy="' + esc(x.id) + '">' + num(x.price) + ' ₽</button></div>';
+      });
+      h += '</div><p class="note" style="margin-top:8px">' + esc(T.xNote) + '</p>';
+    }
+    if (pk.length) {
+      h += '<div class="dn-sec" id="dn-pk">💰 ' + esc(T.secT) + '</div><div class="dn-pk">';
+      pk.forEach(function (p, i) {
+        h += '<div class="pk" style="--pc:' + PK_RGB[i % PK_RGB.length] + '">' + coinsSvg(i, true) + '<b>' + esc(p[3] + ' ' + p[0]) + '</b><div class="am mono">' + esc(tokShort(p[2])) + '</div><small>'
+          + esc(EN ? 'tokens' : tw(num(p[2]))) + '</small><button type="button" class="bb" data-dpk="' + i + '">' + num(p[1]) + ' ₽</button></div>';
+      });
+      h += '</div>';
+    }
+    h += '<div class="dn-ft">' + esc(T.dnHow) + '</div><div class="row"><button type="button" class="btn sec sm" data-sa="close">' + esc(T.cancel) + '</button></div>';
     sheet(h);
-    if (packs && $('dn-pk')) try { $('dn-pk').scrollIntoView({ block: 'start' }); } catch (e) {}
+    S.donOpen = true;
+    var to = where === 'packs' ? $('dn-pk') : where === 'skins' ? $('dn-sk') : null;
+    if (to) try { to.scrollIntoView({ block: 'start' }); } catch (e) {}
   }
   function turboFrom(sh) {                          // «Турбо ×2 от N ₽» — самое дешёвое турбо (нет турбо — самое дешёвое вообще)
     var t = sh.filter(function (x) { return x.kind === 'bst'; });
@@ -1676,13 +1951,23 @@
     try { window.open(url, '_blank'); } catch (e) { location.href = url; }
   }
   $('sheet').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-dbuy]'), p = e.target.closest('[data-dpk]'), id = S.cid || UID;
+    var b = e.target.closest('[data-dbuy]'), p = e.target.closest('[data-dpk]'), w = e.target.closest('[data-wear]'), id = S.cid || UID;
     if (b) {
       var x = (S.shop || []).filter(function (y) { return y.id === b.getAttribute('data-dbuy'); })[0]; if (!x) return;
-      hap('medium'); donOpen(T.dnMsg(x.e, EN ? x.en : x.ru, x.price, id));
+      hap('medium');
+      if (x.kind === 'slx') donOpen(T.dnMsgS(EN ? x.en : x.ru, num(x.val), slx(x.val / fp()), x.price, id));
+      else donOpen(T.dnMsg(x.e, EN ? x.en : x.ru, x.price, id));
     } else if (p) {
       var k = (S.packs || [])[Number(p.getAttribute('data-dpk'))]; if (!k) return;
       hap('medium'); donOpen(T.dnMsgT(k[0], num(k[2]), k[1], id));
+    } else if (w) {                                  // v390: надеть свою тему (или обычную) — сразу на ферме и в топе
+      var v = w.getAttribute('data-wear');
+      hap('sel');
+      send('skin', { id: v }, w).then(function (j) {
+        if (!j) return;
+        toast(v ? T.skWorn : T.skOff);
+        if (S.donOpen && $('sheet').classList.contains('on')) { var sc = $('sheet').scrollTop; donSheet(); $('sheet').scrollTop = sc; }
+      });
     }
   });
 
@@ -1725,7 +2010,7 @@
       }).join('') + '</div>' : '');
     }
     setHtml('top-list', list.slice(3).map(function (r, j) {
-      return '<div class="tr' + (r.me ? ' me' : '') + '"><span class="tp">' + (j + 4) + '</span><div class="tav">' + avHtml(r) + '</div><div class="tn"><b>'
+      return '<div class="tr' + (r.me ? ' me' : '') + '"><span class="tp">' + (j + 4) + '</span><div class="tav"' + (r.skin ? ' data-sk="' + esc(r.skin) + '"' : '') + '>' + avHtml(r) + '</div><div class="tn"><b>'
         + esc(r.name) + (r.gold ? ' 💎' : '') + (r.adm ? ' 🛡' : '') + (r.me ? ' · ' + esc(T.you) : '') + '</b><small>' + chIco(r.ch || 1) + ' ' + esc(T.titles[r.title || 0]) + '</small></div><span class="th mono">'
         + hashS(r.hash) + '</span></div>';
     }).join(''));
@@ -1733,7 +2018,7 @@
   }
 
   // ── выдвижная карточка ──
-  function sheet(html) { $('sheet-in').innerHTML = html; $('sheet').classList.add('on'); $('shade').classList.add('on'); }
+  function sheet(html) { S.donOpen = false; $('sheet-in').innerHTML = html; $('sheet').classList.add('on'); $('shade').classList.add('on'); }
   function sheetClose() { $('sheet').classList.remove('on'); $('shade').classList.remove('on'); }
   $('shade').addEventListener('click', sheetClose);
   $('sheet').addEventListener('click', function (e) {
@@ -1863,7 +2148,7 @@
       + '<div class="admgrid">' + [['fill', T.adm.fill], ['energy', T.adm.energy], ['lucky', T.adm.lucky + (d.lk_next ? ' ✓' : '')], ['oc', T.adm.oc]].map(function (x) {
           return '<button type="button" class="btn sec" data-adm="' + x[0] + '">' + esc(x[1]) + '</button>'; }).join('') + '</div>'
       // v388: донат — включить на себе и посмотреть, как работает (в продажи не идёт)
-      + (S.shop ? '<div class="sh" style="margin:12px 0 4px">' + esc(T.adm.donH) + '</div><div class="admgrid">' + (S.shop || []).map(function (x) {
+      + (S.shop ? '<div class="sh" style="margin:12px 0 4px">' + esc(T.adm.donH) + '</div><div class="admgrid">' + (S.shop || []).filter(function (x) { return x.kind !== 'slx'; }).map(function (x) {   // v390: SLX пакеты — не на себе
           return '<button type="button" class="btn sec" data-adm="give" data-v="' + esc(x.id) + '">' + esc(x.e + ' ' + (EN ? x.en : x.ru)) + '</button>'; }).join('')
           + '<button type="button" class="btn sec" data-adm="unboost">' + esc(T.adm.unb) + '</button></div>' : '')
       + '<button type="button" class="btn sec sm" style="margin-top:8px;color:var(--red)" data-adm="reset">' + esc(T.adm.reset) + '</button>'
