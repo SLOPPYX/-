@@ -94,6 +94,8 @@
   .kv i { display: block; font-style: normal; font-size: 11px; color: var(--tx3); }
   .kv b { font-size: 14.5px; word-break: break-word; font-variant-numeric: tabular-nums; }
   .kv small { display: block; font-size: 11px; color: var(--tx3); font-weight: 400; }
+  .mst { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 11.5px; color: var(--tx3); }      /* v391: состав стартового набора */
+  .mst span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* v381: «🏦 Счёт комиссий» — сумма крупно */
   .vault { padding: 13px 14px 12px; border-radius: 14px; border: 1px solid rgba(167,139,250,.32);
            background: linear-gradient(135deg, rgba(139,92,246,.17), rgba(139,92,246,.04)); }
@@ -713,7 +715,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v390';
+  var VER = 'v391';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -1361,8 +1363,9 @@ window.addEventListener('error', function (e) {
     var sh = x.shop || [], h;
     if (!x.farm) return '<div class="small">Фермы нет — игрок ещё не открывал «⛏ Майнинг SLX». Выдать донат можно, когда он начнёт игру.</div>';
     var lf = function (s) { return s >= 86400 ? Math.floor(s / 86400) + ' дн ' + Math.floor(s % 86400 / 3600) + ' ч' : s >= 3600 ? Math.floor(s / 3600) + ' ч ' + Math.floor(s % 3600 / 60) + ' мин' : Math.ceil(s / 60) + ' мин'; };
-    var SKN = { space: '🌌 Космос', lava: '🔥 Лава', ice: '❄️ Арктика', gold: '👑 Золото' };
-    var act = [x.gold ? '💎 Золотая видеокарта (+10% навсегда)' : '', x.bst ? '🚀 Турбо ×2 — ещё ' + lf(x.bst) : '',
+    var SKN = { space: '🌌 Космос', lava: '🔥 Лава', ice: '❄️ Арктика', gold: '👑 Золото', sakura: '🌸 Сакура', neon: '🌃 Неон' };    // v391: + сакура, неон
+    var gm = x.gold_max || 10, gn = Number(x.gold) || 0;          // v391: золотых видеокарт — несколько (до gm), каждая +10%
+    var act = [gn ? '💎 Золотые видеокарты: ' + gn + ' из ' + gm + ' (+' + gn * 10 + '% навсегда)' : '', x.bst ? '🚀 Турбо ×2 — ещё ' + lf(x.bst) : '',
                x.auto ? '🤖 Автосбор — ещё ' + lf(x.auto) : '', x.ocf ? '⚡ Разгон без остывания — ещё ' + lf(x.ocf) : '',
                x.luck ? '🍀 Удача ×3 — ещё ' + lf(x.luck) : '', x.starter ? '🎁 Стартовый набор — уже получал' : '',          // v390
                (x.skins || []).length ? '🎨 Темы: ' + x.skins.map(function (k) { return (SKN[k] || k) + (k === x.skin ? ' (надета)' : ''); }).join(', ') : ''].filter(Boolean);
@@ -1370,11 +1373,13 @@ window.addEventListener('error', function (e) {
       + kv('Кошелёк SLX', mnS(x.wallet)) + kv('Добыто', '≈ ' + short(x.mined_tok) + ' 💰') + '</div>'
       + (act.length ? '<div class="note mt" style="margin-top:8px">' + act.join('<br>') + '</div>' : '')
       + '<div class="lbl">Выдать оплаченное</div><div class="chips wrap">' + sh.map(function (it) {
-          var got = (it.kind === 'gold' && x.gold) || (it.kind === 'starter' && x.starter) || (it.kind === 'skin' && (x.skins || []).indexOf(it.val) >= 0);   // v390
+          var got = (it.kind === 'gold' && gn + (Number(it.val) || 1) > gm) || (it.kind === 'starter' && x.starter)      // v391: карт — не больше gm
+            || (it.kind === 'skin' && (x.skins || []).indexOf(it.val) >= 0);   // v390
           return '<button type="button" class="chip" data-mng="' + esc(it.id) + '"' + (got ? ' disabled' : '') + '>' + esc(it.e + ' ' + it.ru)
             + ' · ' + fmt(it.price) + ' ₽</button>'; }).join('') + '</div>'
       + '<div class="small">Сначала проверь оплату в личке. Турбо, автосбор, удача и разгон без остывания добавляются к оставшемуся времени. '
-      + '💠 SLX — на сумму токенов пакета по курсу фермы в момент выдачи. Стартовый набор — один раз на игрока.</div>'
+      + '💠 SLX — на сумму токенов пакета по курсу фермы в момент выдачи. Стартовый набор — один раз на игрока. '
+      + 'Золотых видеокарт — до ' + gm + ' на ферме: набор, который не влезает, выдать нельзя.</div>'
       + list('Покупки в майнинге', 'mdon', x.dons, function (o) {
           var it = sh.filter(function (y) { return y.id === o.item; })[0];
           return dt(o.t) + ' — ' + esc(it ? it.e + ' ' + it.ru : o.item) + ' · ' + fmt(o.rub) + ' ₽'; });
@@ -2944,6 +2949,23 @@ window.addEventListener('error', function (e) {
   }
   function mnX(v) { return '×' + String(v).replace('.', ','); }
   function mnH(h) { h = Number(h) || 0; return h >= 1e6 ? mnS(h / 1e6) + ' TH/s' : h >= 1e3 ? mnS(h / 1e3) + ' GH/s' : Math.round(h) + ' MH/s'; }
+  // v391: состав «🎁 Стартового набора» — что получит игрок (часы, карты, SLX). Цена и «показывать» — строкой набора в списке ниже
+  var MN_ST = [['bst', '🚀 Турбо ×2', 'часов'], ['auto', '🤖 Автосбор', 'часов'], ['ocf', '⚡ Разгон без остывания', 'часов'], ['luck', '🍀 Удача ×3', 'часов'],
+               ['gold', '💎 Золотые видеокарты', 'штук'], ['slx', '💠 SLX на сумму', 'токенов']];
+  function mnStarterHtml(mi) {
+    var st = mi.starter || {}, df = mi.starter_def || {}, it = (mi.shop || []).filter(function (y) { return y.kind === 'starter'; })[0] || {};
+    var same = MN_ST.every(function (f) { return Number(st[f[0]] || 0) === Number(df[f[0]] || 0); });
+    return '<div class="lbl">🎁 Стартовый набор — что внутри</div>'
+      + '<div class="small">Игрок получает набор один раз. 0 — этой части в наборе нет. Часы: 24 — сутки, 72 — 3 дня (до ' + ((mi.starter_lim || {}).h || 720) + '). '
+      + 'Золотых видеокарт — до ' + (mi.gold_max || 10) + ', SLX — на сумму в токенах по курсу фермы в момент выдачи. Цену и «показывать» меняешь строкой «🎁 Стартовый набор» ниже.</div>'
+      + '<div class="grid" style="margin-top:6px">' + MN_ST.map(function (f) {
+          return '<label class="mst"><span>' + f[1] + ', ' + f[2] + '</span><input id="mst-' + f[0] + '" inputmode="numeric" value="' + Number(st[f[0]] || 0) + '" autocomplete="off"></label>';
+        }).join('') + '</div>'
+      + '<div class="note mt" style="margin-top:8px">Сейчас: <b>' + esc(it.d_ru || '—') + '</b>'
+      + (it.worth ? '<br>По частям ≈ ' + fmt(it.worth) + ' ₽ → игроку за ' + fmt(it.price || 0) + ' ₽' + (it.worth > it.price ? ' (скидка ' + Math.round((1 - it.price / it.worth) * 100) + '%)' : '') : '')
+      + (same ? '<br><span class="small">состав по умолчанию</span>' : '') + '</div>'
+      + '<div class="row"><button type="button" class="f1" data-mn="st_save">💾 Сохранить состав</button>' + (same ? '' : '<button type="button" data-mn="st_reset">По умолчанию</button>') + '</div>';
+  }
   function mineHtml(mi, price) {
     // v388: вся экономика игры — в «SLX фермы» (1 = mi.pref токенов), в кошелёк — настоящие SLX по курсу фермы. Статистика — в SLX фермы,
     // поэтому в токены она переводится по mi.pref (до v388 бот слал только курс биржи)
@@ -2977,7 +2999,7 @@ window.addEventListener('error', function (e) {
       + '<div class="small">Игрок: «Подарки 🎁» → «⛏ Майнинг SLX». Добытое — в его кошельке SLX (как на бирже), продаёт за токены там же или прямо в игре: '
       + 'токены при продаже появляются заново — поэтому добыча привязана к токенам, а не к курсу биржи. Устройства и переезды покупаются за SLX — эти SLX сжигаются. '
       + '«Предел» — сколько токенов в сутки могут намайнить все фермы вместе; игроков станет больше — у каждого будет меньше (как в настоящей сети). Твоя ферма в сеть не входит.</div>'
-      + '<div class="lbl">Предел добычи всех ферм за сутки, токенов</div><div class="chips wrap">' + [1e7, 2e7, 5e7, 1e8, 2e8].map(function (v) {   // v390: ×10
+      + '<div class="lbl">Предел добычи всех ферм за сутки, токенов</div><div class="chips wrap">' + [5e7, 1e8, 1.5e8, 3e8, 5e8].map(function (v) {   // v391: ×3 (по умолчанию 150 млн)
           return '<button type="button" class="chip' + (Math.abs(capT - v) < 1 ? ' on' : '') + '" data-mn="cap_tok" data-v="' + v + '">' + short(v) + '</button>'; }).join('') + '</div>'
       + '<div class="row"><input id="mn-cap" inputmode="numeric" placeholder="Свой предел, токенов в сутки (можно 7м)" class="f1" autocomplete="off"><button type="button" data-mn="cap_c">Поставить</button></div>'
       + '<div class="lbl">Добыча у всех</div><div class="chips wrap">' + [0.5, 0.75, 1, 1.5, 2].map(function (v) {
@@ -2997,6 +3019,7 @@ window.addEventListener('error', function (e) {
           + '<div class="small">Игрок жмёт «Купить» в игре — открывается личка @SloppyX с готовым сообщением: что купить, цена и его ID. Оплатил — найди его по ID '
           + '(вкладка «Игроки») → карточка → «⛏ Майнинг» → «Выдать». Бот сам напишет игроку, что покупка работает.</div>'
           + '<div class="grid" style="margin-top:8px">' + kv('Продано за 7 дней', fmt(mi.rub7 || 0) + ' ₽') + kv('Всего', fmt(mi.rub || 0) + ' ₽') + '</div>'
+          + (mi.starter ? mnStarterHtml(mi) : '')                                  // v391: состав стартового набора
           + mi.shop.map(function (x) {
               return '<div class="row" style="align-items:center"><span class="f1">' + esc(x.e + ' ' + x.ru) + (x.on ? '' : ' <span class="bd wn">скрыт</span>')
                 + '<br><span class="small">продано: за 7 дн — ' + fmt(x.n7) + ', всего — ' + fmt(x.n) + '</span></span>'
@@ -3023,6 +3046,21 @@ window.addEventListener('error', function (e) {
     var a = b.getAttribute('data-mn'), v = Number(b.getAttribute('data-v') || 0), mi = (S.ec && S.ec.mine) || {};
     // v388: предел — в токенах; донат — цена и «показывать»
     if ((a === 'cap_tok' || a === 'cap_c' || a === 'shop_price' || a === 'shop_on') && botVer() < 388) { toast('Заработает, когда бот на сервере обновится до v388', true); return; }
+    if (a === 'st_save' || a === 'st_reset') {                      // v391: состав «🎁 Стартового набора»
+      if (botVer() < 391) { toast('Заработает, когда бот на сервере обновится до v391', true); return; }
+      if (a === 'st_reset') return ecDo({ op: 'mine_starter', reset: true }, 'Вернуть стартовый набор по умолчанию?\nТурбо ×2 и автосбор на 3 дня, разгон без остывания и удача ×3 на сутки.', b);
+      var stb = { op: 'mine_starter' }, bad = '', lim = (mi.starter_lim || {}), parts = [];
+      MN_ST.forEach(function (f) {
+        var x = parseAmount(($('mst-' + f[0]) || {}).value);
+        var hi = f[0] === 'gold' ? (mi.gold_max || 10) : f[0] === 'slx' ? (lim.slx || 1e9) : (lim.h || 720);
+        if (!(x >= 0 && x <= hi)) bad = bad || (f[1] + ' — от 0 до ' + (f[0] === 'slx' ? short(hi) : fmt(hi)));
+        stb[f[0]] = x;
+        if (x > 0) parts.push(f[1] + ': ' + (f[0] === 'slx' ? short(x) + ' токенов' : f[0] === 'gold' ? x + ' шт.' : x + ' ч'));
+      });
+      if (bad) { toast(bad, true); return; }
+      if (!parts.length) { toast('Набор не может быть пустым — оставь хотя бы одну часть', true); return; }
+      return ecDo(stb, 'Сохранить состав стартового набора?\n' + parts.join('\n') + '\n\nКто набор уже получил — второй раз не получит.', b);
+    }
     if (a === 'cap_c') {
       v = parseAmount($('mn-cap').value);
       if (!(v >= 1e5 && v <= 1e10)) { toast('Предел — от 100 000 до 10 млрд токенов в сутки', true); return; }
