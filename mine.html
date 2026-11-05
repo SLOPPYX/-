@@ -467,6 +467,109 @@
   .tr .tav[data-sk="lava"] { border-color: #fb923c; box-shadow: 0 0 10px -1px rgba(249,115,22,.85); }
   .tr .tav[data-sk="ice"] { border-color: #7dd3fc; box-shadow: 0 0 10px -1px rgba(125,211,252,.85); }
   .tr .tav[data-sk="gold"] { border-color: #fbbf24; box-shadow: 0 0 10px -1px rgba(251,191,36,.85); }
+  .tr .tav[data-sk="sakura"] { border-color: #f472b6; box-shadow: 0 0 10px -1px rgba(244,114,182,.85); }
+  .tr .tav[data-sk="neon"] { border-color: #e879f9; box-shadow: 0 0 10px -1px rgba(34,211,238,.85); }
+
+  /* v391: «Сакура» и «Неон» — цвета страницы, хранилища и комнаты */
+  body[data-skin="sakura"], body[data-skin="sakura"][data-ch] { --a1: #f9a8d4; --a2: #c084fc; --sk: 244,114,182; --sk2: 253,224,239; }
+  body[data-skin="neon"], body[data-skin="neon"][data-ch] { --a1: #22d3ee; --a2: #e879f9; --sk: 217,70,239; --sk2: 103,232,249; }
+  body[data-skin="sakura"] .room { background: radial-gradient(ellipse 90% 50% at 50% -10%, rgba(251,207,232,.24), transparent 70%), linear-gradient(180deg, rgba(131,24,67,.22), rgba(255,255,255,.015)); }
+  body[data-skin="neon"] .room { background: linear-gradient(180deg, rgba(76,29,149,.3), rgba(255,255,255,.012)), repeating-linear-gradient(90deg, rgba(34,211,238,.05) 0 1px, transparent 1px 22px);
+    box-shadow: inset 0 0 0 1px rgba(232,121,249,.2), inset 0 0 24px rgba(217,70,239,.14); }
+
+  /* v391: у каждой темы — своя сцена в стиле аниме (неподвижная картинка SVG на весь экран, рисуется один раз) и своя особенность:
+     1–2 живых слоя поверх неё (падающие звёзды, извержение, северное сияние, лучи солнца, луна и туман, неоновая вывеска) и свои
+     частицы (угли летят вверх; снег, монеты, лепестки и дождь — вниз). Двигаются только transform и opacity; свет главы, сетка и
+     полоса «скана» под темой не нужны — их нет совсем (меньше слоёв, чем без темы). Живые слои стоят в точках картинки: JS кладёт
+     в --s/--ox/--oy масштаб и сдвиг картинки (она «обрезается» по экрану: xMidYMax slice). */
+  .bg .scene { position: absolute; inset: 0; display: none; }
+  body[data-skin] .bg .scene { display: block; animation: fin 1s; }
+  .bg .scene svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .bg .scene::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(7,6,12,.04) 0%, rgba(7,6,12,.34) 24%, rgba(7,6,12,.56) 48%, rgba(7,6,12,.4) 74%, rgba(7,6,12,.1) 100%); }
+  body[data-skin] .bg .grid, body[data-skin] .bg .scan, body[data-skin] .bg .gl { display: none; }
+  .scene .fa, .scene .fb { position: absolute; pointer-events: none; will-change: transform, opacity;
+    left: calc(var(--ox, 0px) + var(--x, 0) * var(--s, 1) * 1px); top: calc(var(--oy, 0px) + var(--y, 0) * var(--s, 1) * 1px);
+    width: calc(var(--w, 10) * var(--s, 1) * 1px); height: calc(var(--h, 10) * var(--s, 1) * 1px); }
+  /* 🌌 падающие звёзды */
+  body[data-skin="space"] .scene .fa, body[data-skin="space"] .scene .fb { --w: 150; --h: 2.6; border-radius: 3px; transform-origin: 100% 50%; opacity: 0;
+    background: linear-gradient(90deg, transparent, rgba(224,242,254,.15) 30%, rgba(224,242,254,.95) 88%, #fff); box-shadow: 0 0 6px rgba(165,243,252,.7); }
+  body[data-skin="space"] .scene .fa { --x: 10; --y: 70; animation: shoot 7s ease-in 1.5s infinite; }
+  body[data-skin="space"] .scene .fb { --x: 140; --y: 330; --w: 110; animation: shoot2 11s ease-in 5s infinite; }
+  @keyframes shoot { 0% { transform: rotate(27deg) translateX(-40%) scaleX(.2); opacity: 0; } 2% { opacity: 1; }
+                     11% { transform: rotate(27deg) translateX(190%) scaleX(1); opacity: 0; } 100% { transform: rotate(27deg) translateX(190%); opacity: 0; } }
+  @keyframes shoot2 { 0% { transform: rotate(21deg) translateX(-40%) scaleX(.2); opacity: 0; } 2% { opacity: .9; }
+                      9% { transform: rotate(21deg) translateX(210%) scaleX(1); opacity: 0; } 100% { transform: rotate(21deg) translateX(210%); opacity: 0; } }
+  /* 🔥 кратер дышит, раз в несколько секунд — выброс лавы */
+  body[data-skin="lava"] .scene .fa { --x: 168; --y: 548; --w: 140; --h: 104; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(254,249,195,.95), rgba(253,186,116,.6) 42%, rgba(239,68,68,.22) 70%, transparent); animation: crt 4.6s ease-in-out infinite; }
+  body[data-skin="lava"] .scene .fb { --x: 214; --y: 520; --w: 48; --h: 82; transform-origin: 50% 100%; border-radius: 50% 50% 40% 40%;
+    background: radial-gradient(ellipse 50% 60% at 50% 70%, #fff7cc, rgba(253,186,116,.85) 45%, rgba(239,68,68,0) 75%); animation: erupt 4.6s ease-out infinite; }
+  @keyframes crt { 0%, 100% { transform: scale(.86); opacity: .5; } 55% { transform: scale(1.14); opacity: 1; } }
+  @keyframes erupt { 0%, 46% { transform: scaleY(.15); opacity: 0; } 56% { transform: scaleY(1.15); opacity: 1; } 74%, 100% { transform: translateY(-14%) scaleY(.7); opacity: 0; } }
+  /* ❄️ северное сияние переливается */
+  body[data-skin="ice"] .scene .fa, body[data-skin="ice"] .scene .fb { border-radius: 50%; }
+  body[data-skin="ice"] .scene .fa { --x: -70; --y: 70; --w: 540; --h: 230; animation: aur 9s ease-in-out infinite alternate;
+    background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(74,222,128,.7), rgba(45,212,191,.32) 45%, transparent 72%); }
+  body[data-skin="ice"] .scene .fb { --x: -40; --y: 190; --w: 480; --h: 170; animation: aur2 12s ease-in-out -4s infinite alternate;
+    background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(192,132,252,.58), rgba(34,211,238,.26) 48%, transparent 72%); }
+  @keyframes aur { from { transform: rotate(-14deg) translateX(-7%) skewX(-14deg) scaleY(.8); opacity: .55; } to { transform: rotate(-7deg) translateX(7%) skewX(12deg) scaleY(1.22); opacity: 1; } }
+  @keyframes aur2 { from { transform: rotate(9deg) translateX(6%) skewX(10deg) scaleY(.85); opacity: .45; } to { transform: rotate(3deg) translateX(-6%) skewX(-12deg) scaleY(1.2); opacity: .95; } }
+  /* 👑 лучи солнца вращаются, солнце светится */
+  body[data-skin="gold"] .scene .fa { --x: 90; --y: 390; --w: 340; --h: 340; border-radius: 50%; animation: spin 48s linear infinite;
+    background: repeating-conic-gradient(rgba(254,243,199,.26) 0deg 5deg, transparent 5deg 15deg);
+    -webkit-mask-image: radial-gradient(closest-side, #000 22%, transparent); mask-image: radial-gradient(closest-side, #000 22%, transparent); }
+  body[data-skin="gold"] .scene .fb { --x: 170; --y: 470; --w: 180; --h: 180; border-radius: 50%; animation: brt 4s ease-in-out infinite;
+    background: radial-gradient(closest-side, rgba(255,251,235,.6), rgba(251,191,36,.2) 55%, transparent); }
+  /* 🌸 луна мерцает, у подножия горы плывёт розовый туман */
+  body[data-skin="sakura"] .scene .fa { --x: 172; --y: 130; --w: 240; --h: 240; border-radius: 50%; animation: halo 6s ease-in-out infinite;
+    background: radial-gradient(closest-side, rgba(255,241,247,.4), rgba(251,207,232,.13) 55%, transparent); }
+  body[data-skin="sakura"] .scene .fb { --x: -80; --y: 652; --w: 560; --h: 74; border-radius: 50%; animation: mist 15s ease-in-out infinite alternate;
+    background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(251,207,232,.3), transparent 72%); }
+  @keyframes halo { 0%, 100% { transform: scale(.92); opacity: .55; } 50% { transform: scale(1.06); opacity: 1; } }
+  @keyframes mist { from { transform: translateX(-9%); } to { transform: translateX(9%); } }
+  /* 🌃 вывеска SLX мигает, по эстакаде едет поезд */
+  body[data-skin="neon"] .scene .fa { --x: 232; --y: 540; --w: 146; --h: 82; border-radius: 50%; animation: flick 5s linear infinite;
+    background: radial-gradient(closest-side, rgba(240,171,252,.6), rgba(217,70,239,.22) 58%, transparent); }
+  body[data-skin="neon"] .scene .fb { --x: -70; --y: 686; --w: 64; --h: 4; border-radius: 3px; animation: train 9s linear infinite;
+    background: linear-gradient(90deg, transparent, rgba(103,232,249,.85), #fff); box-shadow: 0 0 8px rgba(103,232,249,.8); }
+  @keyframes flick { 0%, 100% { opacity: 1; } 4% { opacity: .2; } 6% { opacity: 1; } 8% { opacity: .35; } 10% { opacity: 1; } 61% { opacity: .9; } 63% { opacity: .15; } 65% { opacity: .95; } }
+  @keyframes train { from { transform: translateX(0); opacity: 0; } 6% { opacity: 1; } 92% { opacity: 1; } to { transform: translateX(860%); opacity: 0; } }
+  /* частицы фона: снег, монеты и дождь падают; лепестки летят по ветру (слой шире экрана — петля без шва) */
+  body[data-skin="ice"] .bg .pz, body[data-skin="gold"] .bg .pz, body[data-skin="sakura"] .bg .pz, body[data-skin="neon"] .bg .pz {
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 12%, #000 80%, transparent); mask-image: linear-gradient(180deg, transparent, #000 12%, #000 80%, transparent); }
+  body[data-skin="ice"] .bg .pz b { animation: pzd 15s linear infinite; }
+  body[data-skin="ice"] .bg .pz b + b { animation: pzd2 22s linear infinite; }
+  body[data-skin="gold"] .bg .pz b { animation: pzd 12s linear infinite; }
+  body[data-skin="gold"] .bg .pz b + b { animation: pzd2 18s linear infinite; }
+  @keyframes pzd { from { transform: translate3d(0, -360px, 0); } to { transform: none; } }
+  @keyframes pzd2 { from { transform: translate3d(0, -420px, 0); } to { transform: none; } }
+  body[data-skin="sakura"] .bg .pz b { left: -390px; animation: pzs 12s linear infinite;
+    background-image: radial-gradient(4.6px 3px at 34px 52px, #fdf2f8 0, rgba(249,168,212,.95) 55%, transparent),
+      radial-gradient(3.6px 2.4px at 118px 268px, #fce7f3 0, rgba(244,114,182,.9) 55%, transparent), radial-gradient(4px 2.8px at 205px 140px, #fdf2f8 0, rgba(249,168,212,.9) 55%, transparent),
+      radial-gradient(5px 3.2px at 296px 330px, #fff 0, rgba(251,207,232,.95) 55%, transparent), radial-gradient(3.4px 2.2px at 362px 96px, #fce7f3 0, rgba(244,114,182,.85) 55%, transparent); }
+  body[data-skin="sakura"] .bg .pz b + b { left: -300px; animation: pzs2 17s linear infinite;
+    background-image: radial-gradient(3.4px 2.2px at 70px 180px, #fdf2f8 0, rgba(249,168,212,.85) 55%, transparent), radial-gradient(3px 2px at 160px 40px, #fce7f3 0, rgba(244,114,182,.8) 55%, transparent),
+      radial-gradient(3.6px 2.4px at 230px 310px, #fff 0, rgba(251,207,232,.85) 55%, transparent), radial-gradient(2.8px 1.9px at 285px 120px, #fce7f3 0, rgba(244,114,182,.8) 55%, transparent); }
+  @keyframes pzs { from { transform: translate3d(0, -360px, 0); } to { transform: translate3d(390px, 0, 0); } }
+  @keyframes pzs2 { from { transform: translate3d(0, -420px, 0); } to { transform: translate3d(300px, 0, 0); } }
+  body[data-skin="neon"] .bg .pz b { animation: pzd 1.5s linear infinite;
+    background-image: radial-gradient(1px 10px at 34px 52px, rgba(165,243,252,.7) 0, transparent), radial-gradient(1px 8px at 118px 268px, rgba(240,171,252,.6) 0, transparent),
+      radial-gradient(1px 11px at 205px 140px, rgba(165,243,252,.65) 0, transparent), radial-gradient(1px 9px at 296px 330px, rgba(224,242,254,.6) 0, transparent),
+      radial-gradient(1px 8px at 362px 96px, rgba(240,171,252,.55) 0, transparent); }
+  body[data-skin="neon"] .bg .pz b + b { animation: pzd2 2.1s linear infinite; opacity: .5;
+    background-image: radial-gradient(1px 7px at 70px 180px, rgba(165,243,252,.6) 0, transparent), radial-gradient(1px 6px at 160px 40px, rgba(240,171,252,.5) 0, transparent),
+      radial-gradient(1px 7px at 230px 310px, rgba(165,243,252,.55) 0, transparent), radial-gradient(1px 6px at 285px 120px, rgba(224,242,254,.5) 0, transparent); }
+  /* частицы от нажатия и сбора — у каждой темы свои */
+  .fx .tpc { position: absolute; left: 0; top: 0; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; will-change: transform, opacity; }
+  body[data-skin="space"] .fx .tpc { width: 14px; height: 14px; margin: -7px 0 0 -7px; background: radial-gradient(circle, #fff 0 22%, #a5f3fc 48%, rgba(129,140,248,.6) 70%);
+    -webkit-clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); }
+  body[data-skin="lava"] .fx .tpc { border-radius: 50%; background: radial-gradient(circle, #fff7cc 0 25%, #fb923c 55%, rgba(239,68,68,0) 76%); }
+  body[data-skin="ice"] .fx .tpc { width: auto; height: auto; margin: -8px 0 0 -6px; font-size: 14px; line-height: 1; color: #e0f2fe; text-shadow: 0 0 6px rgba(125,211,252,.95); }
+  body[data-skin="gold"] .fx .tpc { border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fffbeb 0 18%, #fbbf24 48%, #b45309 82%); box-shadow: 0 0 6px rgba(251,191,36,.8); }
+  body[data-skin="sakura"] .fx .tpc { width: 11px; height: 7px; border-radius: 80% 0 80% 0; background: linear-gradient(135deg, #fdf2f8, #f9a8d4 55%, #ec4899); }
+  body[data-skin="neon"] .fx .tpc { width: 3px; height: 13px; margin: -6px 0 0 -1.5px; border-radius: 2px; background: #67e8f9; box-shadow: 0 0 8px #22d3ee; }
+  body[data-skin="neon"] .fx .tpc.alt { background: #f0abfc; box-shadow: 0 0 8px #e879f9; }
 
   /* v390: окно доната заново — шапка с камнем, «🎁 Стартовый набор» в бегущей радужной рамке, разделы, карточки со значками,
      темы с живым превью, SLX и токены плитками */
@@ -527,6 +630,24 @@
   .dn-sk .sb b { display: block; font-size: 13.5px; }
   .dn-sk .sb small { display: block; font-size: 11.5px; color: var(--tx3); margin-bottom: 7px; }
   .dn-sk .sb .bb { width: 100%; height: 34px; font-size: 13px; }
+  /* v391: превью темы — её сцена (та же картинка, что на фоне, крупным планом) */
+  .dn-sk .pv.scn { height: 96px; }
+  .dn-sk .pv.scn svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .dn-sk .pv.scn::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(7,6,12,.35)); pointer-events: none; }
+  /* v391: золотые видеокарты — сколько есть (ячейки до предела) и наборы кнопками */
+  .dn-it.gd { flex-wrap: wrap; }
+  .dn-it.gd .gsl { flex: 1 0 100%; display: flex; gap: 4px; }
+  .dn-it.gd .gsl i { flex: 1; height: 14px; border-radius: 4px; border: 1px dashed rgba(251,191,36,.38); background: rgba(251,191,36,.05); }
+  .dn-it.gd .gsl i.on { border-style: solid; border-color: rgba(253,230,138,.9); background: linear-gradient(180deg, #fde68a, #d97706); box-shadow: 0 0 8px -2px rgba(251,191,36,.9); }
+  .dn-it.gd .gpk { flex: 1 0 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .dn-it.gd .gpk .bb { height: auto; min-height: 44px; padding: 5px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+                       line-height: 1.2; white-space: normal; text-align: center; }
+  .dn-it.gd .gpk .bb small { display: block; font-size: 11px; font-weight: 650; opacity: .9; }
+  .dn-it.gd .gpk .bb em { font-style: normal; font-size: 10.5px; font-weight: 850; color: #1c1203; background: #fde047; border-radius: 99px; padding: 0 5px; margin-left: 4px; }
+  .dn-it.gd .gpk .bb[disabled] { opacity: .38; }
+  .dn-it.gd .gfull { flex: 1 0 100%; text-align: center; font-size: 13px; font-weight: 750; color: #fde68a; padding: 6px 0 2px; }
+  .sl.gld .gcnt { position: absolute; left: 5px; bottom: 4px; z-index: 3; padding: 0 5px; border-radius: 99px; font-size: 10.5px; font-weight: 850; line-height: 15px;
+                  color: #1c1203; background: linear-gradient(135deg, #fde047, #f59e0b); }
   .dn-pk { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .dn-pk .pk { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 12px 8px 10px; border-radius: 16px;
                background: radial-gradient(ellipse 90% 60% at 50% 0%, rgba(var(--pc), .2), transparent 70%), var(--card); border: 1px solid rgba(var(--pc), .3); }
@@ -902,7 +1023,7 @@
     <circle cx="24" cy="23" r="1.6" fill="#f0fdf4"/>
   </symbol>
 </svg>
-<div class="bg"><i class="gl g1"></i><i class="gl g2"></i><div class="grid"></div><div class="scan"></div><div class="pz"><b></b><b></b></div><div class="stars" id="stars"></div></div>
+<div class="bg"><i class="gl g1"></i><i class="gl g2"></i><div class="scene" id="scene"></div><div class="grid"></div><div class="scan"></div><div class="pz"><b></b><b></b></div><div class="stars" id="stars"></div></div>
 <main>
   <header class="top">
     <div class="loc"><div class="le" id="loc-e">🏚</div><div style="min-width:0"><b id="loc-n">Майнинг SLX</b><small id="loc-c"></small></div></div>
@@ -983,7 +1104,6 @@
       <input class="inp mono" id="buy-in" inputmode="decimal" autocomplete="off">
       <div class="note" id="buy-eq"></div>
       <button type="button" class="btn sec sm" id="b-buy" style="margin-top:10px"></button>
-      <button type="button" class="btn sec sm" id="b-tok" style="margin-top:8px"></button>
     </div>
     <div class="card"><div class="sh" style="margin-top:0" id="st-h"></div><div class="kv" id="stats"></div></div>
     <div class="card tg" id="ntf"><div class="tx" id="ntf-t"></div><button type="button" class="sw" id="ntf-sw"><i></i></button></div>
@@ -1136,23 +1256,25 @@
     // v388: донат в майнинге и курс фермы
     dnT: 'Speed up your farm', dnS: function (p) { return 'Turbo ×2 from ' + p + ' ₽ · golden graphics card · auto-collect'; },
     dnH: '💎 Farm boosts', dnP: 'Payment — in a private chat with @SloppyX: tap “Buy”, the message is already typed. The admin gives it to you — the bot sends a message.',
-    dnBuy: 'Buy', dnHave: 'You have it ✓', dnOn: function (s) { return 'On — ' + s + ' left'; }, dnTok: '💰 Tokens', dnTokB: '💰 Buy tokens',
+    dnBuy: 'Buy', dnHave: 'You have it ✓', dnOn: function (s) { return 'On — ' + s + ' left'; },
     dnMsg: function (e, n, p, id) { return 'Hi! I want to buy in “⛏ SLX Mining”: ' + e + ' ' + n + ' for ' + p + ' ₽. My ID: ' + id; },
-    dnMsgT: function (n, t, p, id) { return 'Hi! I want to buy tokens: the “' + n + '” pack — ' + t + ' tokens for ' + p + ' ₽. My ID: ' + id; },
     dnHow: '1) Tap “Buy” — a chat with @SloppyX opens. 2) Pay. 3) The admin gives it to you, the bot sends a message.',
     // v390: донат заново — стартовый набор, разделы, темы, SLX
     dnHd: 'Mining shop', dnS2: function (p) { return '🎁 Starter pack for ' + p + ' ₽ · turbo · themes · SLX'; },
     dnS3: function (p) { return 'Turbo ×2 from ' + p + ' ₽ · farm themes · SLX for rubles'; },
     stS: 'Only once · the best price', stGot: 'Already received ✓', stCh: ['🚀 Turbo ×2 · 3 days', '🤖 Auto-collect · 3 days', '⚡ No cooldown · a day', '🍀 Luck ×3 · a day'],
-    secB: 'Boosts', secF: 'Forever', secK: 'Farm themes', secX: 'SLX for rubles', secT: 'Tokens',
-    bdBest: 'BEST DEAL', bdEver: '+10% MINING', perDay: function (p) { return p + ' ₽ a day'; },
+    secB: 'Boosts', secF: 'Forever', secK: 'Farm themes', secX: 'SLX for rubles',
+    bdBest: 'BEST DEAL', bdEver: '+10% EACH', perDay: function (p) { return p + ' ₽ a day'; },
+    gdHave: function (n, m, p) { return n ? 'You have ' + n + ' of ' + m + ' · +' + p + '% mining' : 'You have none yet · up to ' + m + ' on a farm'; },
+    gdPk: function (n) { return n === 1 ? '1 card' : n + ' cards'; }, gdFull: function (m) { return 'All ' + m + ' cards are on your farm ✓'; },
+    gdNoFit: 'won’t fit', skLive: 'Live scene',
     skNone: 'Classic', skNoneS: 'No theme', skWear: 'Wear', skOn: 'On ✓', skBuy: function (p) { return 'Buy · ' + p + ' ₽'; }, skForever: 'forever',
     skWorn: 'Theme is on 🎨', skOff: 'Theme removed',
     slxAm: function (x) { return '≈ ' + x + ' SLX'; }, slxFor: function (t) { return 'worth ' + t + ' tokens'; }, tokAm: function (t) { return t + ' tokens'; },
     xNote: 'Same packs and prices as tokens — just in SLX at the rate. SLX can be sold for tokens or spent on the farm.',
     dnMsgS: function (n, t, x, p, id) { return 'Hi! I want to buy in “⛏ SLX Mining”: 💠 ' + n + ' — SLX worth ' + t + ' tokens (≈ ' + x + ' SLX) for ' + p + ' ₽. My ID: ' + id; },
     hbL: function (s) { return '🍀 Luck ×3 · ' + s; },
-    hbT: function (s) { return '🚀 Turbo ×2 · ' + s; }, hbA: function (s) { return '🤖 Auto-collect · ' + s; }, hbG: '💎 +10%',
+    hbT: function (s) { return '🚀 Turbo ×2 · ' + s; }, hbA: function (s) { return '🤖 Auto-collect · ' + s; }, hbG: function (p) { return '💎 +' + p + '%'; },
     ocf: function (s) { return '⚡ no cooldown: ' + s; }, topEmpty: 'free',
     farmK: function (p, t) { return '⛏ The farm mines SLX: the amount of SLX is fixed, its token value follows the rate. Now (day average) 1 SLX = ' + p + ' tokens, so 1 MH/s ≈ ' + t + ' tokens a day. SLX goes up — your mining and devices are worth more tokens, goes down — less.'; },
     tokU: 'tok.', inSlx: function (s) { return '≈ ' + s + ' SLX'; },
@@ -1228,16 +1350,18 @@
     // v388: донат в майнинге и курс фермы
     dnT: 'Ускорь ферму', dnS: function (p) { return 'Турбо ×2 от ' + p + ' ₽ · золотая видеокарта · автосбор'; },
     dnH: '💎 Донат в майнинге', dnP: 'Оплата — в личке @SloppyX: нажми «Купить», сообщение уже вписано. Выдаст администратор — бот пришлёт сообщение.',
-    dnBuy: 'Купить', dnHave: 'Уже есть ✓', dnOn: function (s) { return 'Идёт — ещё ' + s; }, dnTok: '💰 Токены', dnTokB: '💰 Купить токены',
+    dnBuy: 'Купить', dnHave: 'Уже есть ✓', dnOn: function (s) { return 'Идёт — ещё ' + s; },
     dnMsg: function (e, n, p, id) { return 'Привет! Хочу купить в «⛏ Майнинге SLX»: ' + e + ' ' + n + ' за ' + p + ' ₽. Мой ID: ' + id; },
-    dnMsgT: function (n, t, p, id) { return 'Привет! Хочу купить токены: пакет «' + n + '» — ' + t + ' токенов за ' + p + ' ₽. Мой ID: ' + id; },
     dnHow: '1) Нажми «Купить» — откроется чат с @SloppyX. 2) Оплати. 3) Администратор выдаст покупку — бот пришлёт сообщение.',
     // v390: донат заново — стартовый набор, разделы, темы, SLX
     dnHd: 'Донат в майнинге', dnS2: function (p) { return '🎁 Стартовый набор за ' + p + ' ₽ · турбо · темы · SLX'; },
     dnS3: function (p) { return 'Турбо ×2 от ' + p + ' ₽ · темы фермы · SLX за рубли'; },
     stS: 'Только один раз · самая низкая цена', stGot: 'Уже получен ✓', stCh: ['🚀 Турбо ×2 · 3 дня', '🤖 Автосбор · 3 дня', '⚡ Без остывания · сутки', '🍀 Удача ×3 · сутки'],
-    secB: 'Ускорители', secF: 'Навсегда', secK: 'Темы фермы', secX: 'SLX за рубли', secT: 'Токены',
-    bdBest: 'ВЫГОДНО', bdEver: '+10% К ДОБЫЧЕ', perDay: function (p) { return p + ' ₽ в сутки'; },
+    secB: 'Ускорители', secF: 'Навсегда', secK: 'Темы фермы', secX: 'SLX за рубли',
+    bdBest: 'ВЫГОДНО', bdEver: '+10% ЗА КАЖДУЮ', perDay: function (p) { return p + ' ₽ в сутки'; },
+    gdHave: function (n, m, p) { return n ? 'У тебя ' + n + ' из ' + m + ' · +' + p + '% к добыче' : 'Пока ни одной · на ферме до ' + m + ' штук'; },
+    gdPk: function (n) { return n + ' ' + plural(n, 'карта', 'карты', 'карт'); }, gdFull: function (m) { return 'Все ' + m + ' карт на ферме ✓'; },
+    gdNoFit: 'не влезет', skLive: 'Живая сцена',
     skNone: 'Обычная', skNoneS: 'Без темы', skWear: 'Надеть', skOn: 'Надета ✓', skBuy: function (p) { return 'Купить · ' + p + ' ₽'; }, skForever: 'навсегда',
     skWorn: 'Тема надета 🎨', skOff: 'Тема снята',
     slxAm: function (x) { return '≈ ' + x + ' SLX'; }, slxFor: function (t) { return 'на ' + t + ' ' + (/[а-я]/.test(t) ? 'токенов' : tw(t)); },   // «на 1 млрд токенов»
@@ -1245,7 +1369,7 @@
     xNote: 'Те же пакеты и цены, что у токенов, — только в SLX по курсу. SLX можно продать за токены или вложить в ферму.',
     dnMsgS: function (n, t, x, p, id) { return 'Привет! Хочу купить в «⛏ Майнинге SLX»: 💠 ' + n + ' — SLX на ' + t + ' токенов (≈ ' + x + ' SLX) за ' + p + ' ₽. Мой ID: ' + id; },
     hbL: function (s) { return '🍀 Удача ×3 · ' + s; },
-    hbT: function (s) { return '🚀 Турбо ×2 · ' + s; }, hbA: function (s) { return '🤖 Автосбор · ' + s; }, hbG: '💎 +10%',
+    hbT: function (s) { return '🚀 Турбо ×2 · ' + s; }, hbA: function (s) { return '🤖 Автосбор · ' + s; }, hbG: function (p) { return '💎 +' + p + '%'; },
     ocf: function (s) { return '⚡ без остывания: ' + s; }, topEmpty: 'свободно',
     farmK: function (p, t) { return '⛏ Ферма майнит SLX: сколько SLX — не меняется, а в токенах — по курсу. Сейчас (средний за сутки) 1 SLX = ' + p + ' токенов, поэтому 1 MH/s ≈ ' + t + ' ' + tkW(t) + ' в сутки. SLX дорожает — добыча и устройства стоят больше токенов, дешевеет — меньше.'; },
     tokU: 'ток.', inSlx: function (s) { return '≈ ' + s + ' SLX'; },
@@ -1482,12 +1606,232 @@
   $('wal-logo').innerHTML = logo(22); $('core-logo').innerHTML = logo(70); $('wb-logo').innerHTML = logo(54);
   $('wal-chip').addEventListener('click', function () { hap('sel'); openTab('wallet'); });
 
+  // ── v391: сцены тем фермы в стиле аниме — свои картинки (без чужих персонажей): SVG на весь экран, рисуется один раз при смене
+  // темы (дальше — неподвижная картинка). Живые части — отдельными слоями .fa/.fb (CSS), частицы — слоями .pz. «§» в id — суффикс:
+  // у фона «», у превью в донате «p» (одинаковые id в одной странице путают градиенты) ──
+  function srand(seed) { return function () { seed = seed * 16807 % 2147483647; return (seed - 1) / 2147483646; }; }
+  function svgStars(n, seed, y0, y1, cols, rmax) {
+    var r = srand(seed), h = '';
+    for (var i = 0; i < n; i++) h += '<circle cx="' + (r() * 400).toFixed(1) + '" cy="' + (y0 + r() * (y1 - y0)).toFixed(1) + '" r="' + (0.45 + r() * (rmax || 1.1)).toFixed(2)
+      + '" fill="' + cols[(r() * cols.length) | 0] + '" opacity="' + (0.4 + r() * 0.6).toFixed(2) + '"/>';
+    return h;
+  }
+  function gStops(st) { return st.map(function (s) { return '<stop offset="' + s[0] + '" stop-color="' + s[1] + '"' + (s[2] != null ? ' stop-opacity="' + s[2] + '"' : '') + '/>'; }).join(''); }
+  function lg(id, x2, y2, st) { return '<linearGradient id="' + id + '§" x1="0" y1="0" x2="' + x2 + '" y2="' + y2 + '">' + gStops(st) + '</linearGradient>'; }
+  function rg(id, st, cx, cy, r) { return '<radialGradient id="' + id + '§"' + (cx != null ? ' cx="' + cx + '" cy="' + cy + '" r="' + r + '"' : '') + '>' + gStops(st) + '</radialGradient>'; }
+  function blossoms(seed, pts) {                     // гроздья цветков сакуры вокруг точек
+    var r = srand(seed), h = '', cs = ['#fbcfe8', '#f9a8d4', '#f472b6', '#fce7f3'];
+    pts.forEach(function (p) {
+      for (var i = 0; i < 7; i++) h += '<circle cx="' + (p[0] + (r() * 2 - 1) * 13).toFixed(1) + '" cy="' + (p[1] + (r() * 2 - 1) * 10).toFixed(1) + '" r="' + (3.8 + r() * 4.6).toFixed(1)
+        + '" fill="' + cs[(r() * 4) | 0] + '" opacity="' + (0.78 + r() * 0.2).toFixed(2) + '"/>';
+    });
+    return h;
+  }
+  function pagoda() {                                // золотой храм: 5 ярусов, крыши с загнутыми краями, окна светятся
+    var h = '<rect x="22" y="698" width="116" height="10" rx="2" fill="#1a0e04"/>';
+    for (var k = 0; k < 5; k++) {
+      var wb = 698 - 28 * k, wt = wb - 20, ww = 62 - 9 * k, rw = ww + 36, l = 80 - rw / 2, rr = 80 + rw / 2;
+      h += '<rect x="' + (80 - ww / 2) + '" y="' + wt + '" width="' + ww + '" height="20" fill="#2a1707"/>'
+        + '<rect x="76" y="' + (wt + 6) + '" width="8" height="9" rx="1" fill="#fde68a" opacity=".85"/>'
+        + '<path d="M' + (l - 6) + ' ' + (wt + 2) + 'Q' + (l + 4) + ' ' + (wt - 1) + ' ' + (l + 10) + ' ' + (wt - 8) + 'L' + (rr - 10) + ' ' + (wt - 8) + 'Q' + (rr - 4) + ' ' + (wt - 1) + ' ' + (rr + 6) + ' ' + (wt + 2)
+        + 'Z" fill="#1a0e04" stroke="#fbbf24" stroke-opacity=".55" stroke-width="1"/>';
+    }
+    return h + '<path d="M80 558V522" stroke="#fde68a" stroke-width="2"/><path d="M74 532H86M75 540H85M76 548H84" stroke="#fbbf24" stroke-width="1.6"/><circle cx="80" cy="520" r="3.2" fill="#fde68a"/>';
+  }
+  function torii() {
+    return '<path d="M58 622Q150 606 242 622L246 614Q150 594 54 614Z" fill="#1a0610"/><rect x="70" y="622" width="160" height="9" fill="url(#sk-tor§)"/>'
+      + '<rect x="80" y="648" width="140" height="8" fill="url(#sk-tor§)"/><rect x="145" y="631" width="10" height="17" fill="url(#sk-tor§)"/>'
+      + '<path d="M98 631H108L113 760H93Z" fill="url(#sk-tor§)"/><path d="M192 631H202L207 760H187Z" fill="url(#sk-tor§)"/>'
+      + '<rect x="90" y="752" width="26" height="8" fill="#1a0610"/><rect x="184" y="752" width="26" height="8" fill="#1a0610"/>';
+  }
+  var SCN = {
+    space: { pv: '0 20 400 226', svg: function () {             // 🌌 планета с кольцами, туманность, обсерватория на холме
+      return '<defs>' + lg('sp-sky', 0, 1, [[0, '#04020f'], [.35, '#0b0a2e'], [.7, '#1b1152'], [1, '#2d1b69']])
+        + rg('sp-n1', [[0, '#8b5cf6', .5], [1, '#8b5cf6', 0]]) + rg('sp-n2', [[0, '#22d3ee', .3], [1, '#22d3ee', 0]]) + rg('sp-n3', [[0, '#f472b6', .28], [1, '#f472b6', 0]])
+        + rg('sp-pl', [[0, '#a5f3fc'], [.42, '#6366f1'], [.78, '#312e81'], [1, '#110d33']], .34, .3, .82) + rg('sp-gl', [[0, '#818cf8', .55], [1, '#818cf8', 0]])
+        + lg('sp-ring', 1, 0, [[0, '#c7d2fe', .08], [.5, '#e0e7ff', .9], [1, '#a5b4fc', .08]]) + lg('sp-hz', 0, 1, [[0, '#22d3ee', 0], [1, '#22d3ee', .38]])
+        + '<clipPath id="sp-pc§"><circle cx="300" cy="150" r="86"/></clipPath><clipPath id="sp-cf§"><rect x="80" y="150" width="460" height="160" transform="rotate(-16 300 150)"/></clipPath></defs>'
+        + '<rect width="400" height="860" fill="url(#sp-sky§)"/>'
+        + '<ellipse cx="80" cy="330" rx="260" ry="170" fill="url(#sp-n1§)"/><ellipse cx="330" cy="560" rx="230" ry="150" fill="url(#sp-n2§)"/><ellipse cx="170" cy="190" rx="200" ry="120" fill="url(#sp-n3§)"/>'
+        + svgStars(80, 7, 0, 700, ['#ffffff', '#e0e7ff', '#a5f3fc', '#fbcfe8'], 1.2)
+        + '<circle cx="300" cy="150" r="190" fill="url(#sp-gl§)"/>'
+        + '<g fill="none" transform="rotate(-16 300 150)"><ellipse cx="300" cy="150" rx="168" ry="36" stroke="url(#sp-ring§)" stroke-width="8"/><ellipse cx="300" cy="150" rx="142" ry="29" stroke="#c7d2fe" stroke-opacity=".35" stroke-width="2"/></g>'
+        + '<circle cx="300" cy="150" r="86" fill="url(#sp-pl§)"/>'
+        + '<g clip-path="url(#sp-pc§)"><g fill="#e0e7ff" opacity=".2" transform="rotate(-16 300 150)"><ellipse cx="300" cy="118" rx="140" ry="7"/><ellipse cx="300" cy="150" rx="140" ry="4"/><ellipse cx="300" cy="178" rx="140" ry="9"/></g></g>'
+        + '<g clip-path="url(#sp-cf§)"><g fill="none" transform="rotate(-16 300 150)"><ellipse cx="300" cy="150" rx="168" ry="36" stroke="url(#sp-ring§)" stroke-width="8"/><ellipse cx="300" cy="150" rx="142" ry="29" stroke="#c7d2fe" stroke-opacity=".35" stroke-width="2"/></g></g>'
+        + '<circle cx="74" cy="98" r="17" fill="#c4b5fd" opacity=".92"/><circle cx="68" cy="93" r="4" fill="#a78bfa" opacity=".6"/><circle cx="80" cy="104" r="2.6" fill="#a78bfa" opacity=".55"/>'
+        + '<rect x="0" y="600" width="400" height="160" fill="url(#sp-hz§)"/>'
+        + '<path d="M0 742C70 712 140 722 200 736C260 750 330 716 400 726V860H0Z" fill="#0a0820"/><path d="M0 742C70 712 140 722 200 736C260 750 330 716 400 726" fill="none" stroke="#818cf8" stroke-opacity=".55" stroke-width="1.5"/>'
+        + '<rect x="297" y="708" width="42" height="24" fill="#120e2a"/><path d="M295 709A23 23 0 0 1 341 709Z" fill="#1c1640" stroke="#a5b4fc" stroke-opacity=".5"/>'
+        + '<path d="M313 688L322 686L324 709L312 709Z" fill="#67e8f9" opacity=".75"/><circle cx="306" cy="720" r="1.6" fill="#fde68a"/><circle cx="330" cy="720" r="1.6" fill="#fde68a"/>'
+        + '<path d="M72 724V706" stroke="#2a2550" stroke-width="2"/><path d="M60 702Q72 716 86 700" fill="#1c1640" stroke="#c7d2fe" stroke-opacity=".6" stroke-width="1.5"/><circle cx="73" cy="699" r="1.8" fill="#f472b6"/>'
+        + '<path d="M0 792C90 772 170 788 240 802C300 814 350 792 400 798V860H0Z" fill="#05040f"/>';
+    } },
+    lava: { pv: '0 540 400 226', svg: function () {             // 🔥 вулкан, реки лавы, дым, красная луна
+      return '<defs>' + lg('lv-sky', 0, 1, [[0, '#070202'], [.3, '#1f0505'], [.62, '#4a0d08'], [.86, '#8a210b'], [1, '#b4410f']])
+        + rg('lv-cr', [[0, '#fff7cc'], [.25, '#fde047'], [.55, '#f97316', .85], [1, '#f97316', 0]]) + lg('lv-st', 0, 1, [[0, '#fde047'], [.4, '#f97316'], [1, '#b91c1c']])
+        + rg('lv-sm', [[0, '#2a1010', .9], [1, '#2a1010', 0]]) + rg('lv-gl', [[0, '#f97316', .6], [1, '#f97316', 0]]) + rg('lv-mo', [[0, '#fca5a5', .55], [.5, '#ef4444', .18], [1, '#ef4444', 0]])
+        + rg('lv-mn', [[0, '#fee2e2'], [.55, '#fca5a5'], [1, '#dc2626']], .4, .36, .75)
+        + lg('lv-pl', 0, 1, [[0, '#1a0606', 0], [.25, '#1f0707', .8], [.75, '#3b0a07', .85], [1, '#7f1d1d', .55]]) + lg('lv-mt', 0, 1, [[0, '#2e0d08'], [1, '#100403']]) + '</defs>'
+        + '<rect width="400" height="860" fill="url(#lv-sky§)"/>' + svgStars(18, 11, 0, 300, ['#fecaca', '#fde68a'], 0.7)
+        + '<circle cx="312" cy="128" r="125" fill="url(#lv-mo§)"/><circle cx="312" cy="128" r="40" fill="url(#lv-mn§)" opacity=".9"/>'
+        + '<g fill="#b91c1c" opacity=".3"><circle cx="300" cy="116" r="8"/><circle cx="326" cy="142" r="5"/><circle cx="322" cy="110" r="3.5"/></g>'
+        + '<g fill="#1a0606"><ellipse cx="300" cy="150" rx="120" ry="7" opacity=".7"/><ellipse cx="250" cy="168" rx="150" ry="5" opacity=".55"/></g>'
+        + '<ellipse cx="120" cy="300" rx="220" ry="90" fill="url(#lv-sm§)"/><ellipse cx="300" cy="235" rx="200" ry="70" fill="url(#lv-sm§)"/><ellipse cx="230" cy="430" rx="260" ry="100" fill="url(#lv-sm§)"/>'
+        + '<ellipse cx="60" cy="520" rx="190" ry="70" fill="url(#lv-sm§)"/>'
+        + '<path d="M212 604C192 530 232 474 204 410C180 352 222 300 194 238C176 196 206 160 236 140L296 150C266 176 256 214 274 254C302 314 262 362 282 422C302 484 272 544 266 604Z" fill="url(#lv-pl§)"/>'
+        + '<g fill="none" stroke="#f97316" stroke-linecap="round"><path d="M214 560C206 520 222 488 210 452" stroke-opacity=".28" stroke-width="3"/><path d="M262 560C270 520 254 486 268 450" stroke-opacity=".22" stroke-width="2.5"/></g>'
+        + '<ellipse cx="250" cy="470" rx="190" ry="34" fill="#991b1b" opacity=".32"/><ellipse cx="120" cy="545" rx="150" ry="22" fill="#c2410c" opacity=".25"/>'
+        + '<ellipse cx="238" cy="600" rx="90" ry="62" fill="url(#lv-cr§)"/>'
+        + '<path d="M0 650L60 606L110 628L170 590L212 615V860H0Z" fill="#1c0806"/><path d="M290 640L336 600L400 620V860H290Z" fill="#1c0806"/>'
+        + '<path d="M30 860L168 642C182 618 198 606 214 601L262 601C278 606 294 618 308 642L400 790V860Z" fill="url(#lv-mt§)"/>'
+        + '<path d="M168 642C182 618 198 606 214 601L262 601C278 606 294 618 308 642" fill="none" stroke="#f97316" stroke-opacity=".55" stroke-width="2"/>'
+        + '<ellipse cx="238" cy="602" rx="25" ry="5" fill="#fde047"/>'
+        + '<g fill="none" stroke-linecap="round"><path d="M232 606C226 640 214 668 206 700C198 730 190 760 174 806" stroke="#f97316" stroke-opacity=".28" stroke-width="15"/>'
+        + '<path d="M246 606C254 636 262 660 276 690C290 720 300 748 320 796" stroke="#f97316" stroke-opacity=".25" stroke-width="13"/>'
+        + '<path d="M232 606C226 640 214 668 206 700C198 730 190 760 174 806" stroke="url(#lv-st§)" stroke-width="5"/>'
+        + '<path d="M246 606C254 636 262 660 276 690C290 720 300 748 320 796" stroke="url(#lv-st§)" stroke-width="4"/><path d="M240 606C242 630 238 650 244 672" stroke="url(#lv-st§)" stroke-width="2.5"/></g>'
+        + '<ellipse cx="200" cy="860" rx="270" ry="95" fill="url(#lv-gl§)"/>'
+        + '<path d="M0 806C60 786 120 800 170 816C230 834 300 810 400 822V860H0Z" fill="#0c0302"/><path d="M0 806C60 786 120 800 170 816C230 834 300 810 400 822" fill="none" stroke="#ea580c" stroke-opacity=".35" stroke-width="1.5"/>';
+    } },
+    ice: { pv: '0 290 400 226', svg: function () {              // ❄️ северное сияние над горами, замёрзшее озеро, домик со светом
+      var rays = '';
+      [22, 58, 96, 134, 172, 212, 252, 292, 330, 370].forEach(function (x, i) { rays += '<rect x="' + x + '" y="' + (150 + (i % 3) * 14) + '" width="3.4" height="' + (200 + (i % 4) * 22) + '" fill="url(#ic-ray§)"/>'; });
+      return '<defs>' + lg('ic-sky', 0, 1, [[0, '#020814'], [.38, '#062038'], [.68, '#0a3550'], [1, '#13606f']])
+        + lg('ic-a1', 0, 1, [[0, '#4ade80', 0], [.5, '#4ade80', .55], [.78, '#2dd4bf', .32], [1, '#2dd4bf', 0]]) + lg('ic-a2', 0, 1, [[0, '#c084fc', 0], [.5, '#c084fc', .42], [.8, '#22d3ee', .26], [1, '#22d3ee', 0]])
+        + lg('ic-ray', 0, 1, [[0, '#bbf7d0', 0], [.65, '#bbf7d0', .34], [1, '#bbf7d0', 0]]) + lg('ic-m1', 0, 1, [[0, '#0b2c3f'], [1, '#061824']]) + lg('ic-m2', 0, 1, [[0, '#06192a'], [1, '#020a12']])
+        + lg('ic-sn', 0, 1, [[0, '#f0f9ff'], [1, '#93c5fd']]) + lg('ic-lk', 0, 1, [[0, '#0e4a63'], [1, '#03121c']]) + rg('ic-cab', [[0, '#fde68a', .8], [1, '#fde68a', 0]]) + '</defs>'
+        + '<rect width="400" height="860" fill="url(#ic-sky§)"/>' + svgStars(70, 23, 0, 520, ['#ffffff', '#e0f2fe', '#a7f3d0'], 1.1)
+        + '<path d="M-20 170C60 130 120 200 200 156C280 116 330 186 420 146L420 330C330 356 270 300 200 326C120 356 60 300 -20 340Z" fill="url(#ic-a1§)"/>'
+        + '<path d="M-20 250C80 220 150 280 240 240C310 210 360 260 420 230L420 400C340 420 280 370 220 398C140 430 70 380 -20 410Z" fill="url(#ic-a2§)" opacity=".85"/>' + rays
+        + '<path d="M0 570L52 518L92 544L150 470L200 530L250 486L302 540L352 498L400 528V860H0Z" fill="url(#ic-m1§)"/>'
+        + '<path d="M0 570L52 518L92 544L150 470L200 530L250 486L302 540L352 498L400 528" fill="none" stroke="#bae6fd" stroke-opacity=".4" stroke-width="1.4"/>'
+        + '<g fill="url(#ic-sn§)" opacity=".7"><path d="M150 470L128 498L141 492L151 506L160 492L174 500Z"/><path d="M52 518L36 536L47 532L54 542L61 531L69 536Z"/>'
+        + '<path d="M250 486L232 508L244 503L252 516L260 502L271 508Z"/><path d="M352 498L336 518L347 514L355 524L363 514L373 519Z"/></g>'
+        + '<path d="M0 724L70 652L110 690L170 630L240 702L300 660L360 706L400 682V860H0Z" fill="url(#ic-m2§)"/>'
+        + '<path d="M0 724L70 652L110 690L170 630L240 702L300 660L360 706L400 682" fill="none" stroke="#e0f2fe" stroke-opacity=".32" stroke-width="1.4"/>'
+        + '<g fill="url(#ic-sn§)" opacity=".62"><path d="M70 652L50 674L63 669L71 682L80 668L93 676Z"/><path d="M170 630L146 656L161 651L171 667L181 650L197 659Z"/><path d="M300 660L281 682L294 677L302 690L310 676L322 683Z"/></g>'
+        + '<path d="M0 760C120 748 280 748 400 760V860H0Z" fill="url(#ic-lk§)"/><rect x="0" y="762" width="400" height="40" fill="#4ade80" opacity=".08"/>'
+        + '<g stroke="#bae6fd" stroke-opacity=".25" stroke-width="1.2"><path d="M40 780H120M210 792H330M90 810H170M250 826H360M30 842H110"/></g>'
+        + '<circle cx="330" cy="744" r="22" fill="url(#ic-cab§)"/><path d="M318 756V743L330 732L342 743V756Z" fill="#030b12"/>'
+        + '<path d="M316 744L330 731L344 744" fill="none" stroke="#e0f2fe" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/><rect x="327" y="745" width="6" height="5" fill="#fde68a"/>';
+    } },
+    gold: { pv: '0 470 400 226', svg: function () {             // 👑 закат, золотое море, храм на скале, птицы
+      var refl = '';
+      for (var i = 0; i < 13; i++) { var w = 52 - i * 3.2; refl += '<path d="M' + (260 - w).toFixed(1) + ' ' + (700 + i * 11) + 'H' + (260 + w).toFixed(1) + '" stroke="#fde68a" stroke-opacity="' + (0.7 - i * 0.045).toFixed(2) + '" stroke-width="2"/>'; }
+      return '<defs>' + lg('gd-sky', 0, 1, [[0, '#0c0602'], [.3, '#2e1806'], [.6, '#6b3a0c'], [.82, '#b06a14'], [1, '#e3a33a']])
+        + rg('gd-sun', [[0, '#fffbeb'], [.35, '#fde68a'], [.72, '#fbbf24'], [1, '#f59e0b']]) + rg('gd-gl', [[0, '#fde68a', .7], [.4, '#fbbf24', .25], [1, '#fbbf24', 0]])
+        + lg('gd-cl', 1, 0, [[0, '#fde68a', 0], [.5, '#fde68a', .65], [1, '#fde68a', 0]]) + lg('gd-cf', 0, 1, [[0, '#2a1606'], [1, '#0e0702']]) + lg('gd-sea', 0, 1, [[0, '#5a3208'], [1, '#1a0d03']]) + '</defs>'
+        + '<rect width="400" height="860" fill="url(#gd-sky§)"/>' + svgStars(30, 31, 0, 260, ['#fef3c7', '#fde68a'], 0.8)
+        + '<circle cx="260" cy="560" r="230" fill="url(#gd-gl§)"/><circle cx="260" cy="560" r="62" fill="url(#gd-sun§)"/>'
+        + '<path d="M-10 372C30 330 80 336 100 350C122 318 172 316 192 344C216 328 252 334 264 356L264 378H-10Z" fill="#4a2a0b" opacity=".85"/>'
+        + '<path d="M-10 372C30 330 80 336 100 350C122 318 172 316 192 344C216 328 252 334 264 356" fill="none" stroke="#fbbf24" stroke-opacity=".45" stroke-width="1.5"/>'
+        + '<path d="M200 270C236 240 280 246 296 262C316 238 360 240 374 262C392 252 412 258 420 270V288H200Z" fill="#4a2a0b" opacity=".75"/>'
+        + '<path d="M200 270C236 240 280 246 296 262C316 238 360 240 374 262C392 252 412 258 420 270" fill="none" stroke="#fde68a" stroke-opacity=".4" stroke-width="1.5"/>'
+        + '<ellipse cx="200" cy="600" rx="190" ry="8" fill="url(#gd-cl§)"/><ellipse cx="300" cy="582" rx="130" ry="6" fill="url(#gd-cl§)"/><ellipse cx="230" cy="626" rx="210" ry="9" fill="url(#gd-cl§)" opacity=".8"/>'
+        + '<g fill="none" stroke="#2a1606" stroke-width="1.6" stroke-linecap="round"><path d="M300 470q5-4 10 0q5-4 10 0"/><path d="M326 456q4-3 8 0q4-3 8 0"/><path d="M286 488q3-3 7 0q3-3 7 0"/></g>'
+        + '<path d="M0 652L60 622L120 642L190 606L260 642L330 616L400 636V700H0Z" fill="#3b2108" opacity=".92"/>'
+        + '<rect x="0" y="690" width="400" height="170" fill="url(#gd-sea§)"/>' + refl
+        + '<path d="M0 860V700C30 690 70 688 110 700C150 712 175 740 190 780C200 810 210 840 214 860Z" fill="url(#gd-cf§)"/>' + pagoda();
+    } },
+    sakura: { pv: '0 548 400 226', svg: function () {           // 🌸 луна, гора, тории в воде, ветви сакуры, фонари
+      return '<defs>' + lg('sk-sky', 0, 1, [[0, '#0b0619'], [.3, '#24123d'], [.58, '#5a2257'], [.8, '#a8456f'], [.94, '#f08f86'], [1, '#f7b79a']])
+        + rg('sk-mo', [[0, '#fffaf5'], [.6, '#ffe4ef'], [1, '#fbcfe8']], .42, .4, .7) + rg('sk-mg', [[0, '#ffe4ef', .55], [1, '#ffe4ef', 0]])
+        + lg('sk-mt', 0, 1, [[0, '#7a3f78'], [1, '#2b1435']]) + lg('sk-cap', 0, 1, [[0, '#fff1f7'], [1, '#f9c6dc']]) + lg('sk-tor', 0, 1, [[0, '#f43f5e'], [1, '#9f1239']])
+        + lg('sk-wat', 0, 1, [[0, '#4a1d45'], [1, '#12060f']]) + rg('sk-lan', [[0, '#fde68a', .9], [1, '#fb923c', 0]]) + '</defs>'
+        + '<rect width="400" height="860" fill="url(#sk-sky§)"/>' + svgStars(40, 41, 0, 380, ['#ffffff', '#fce7f3', '#e9d5ff'], 0.9)
+        + '<circle cx="292" cy="250" r="150" fill="url(#sk-mg§)"/><circle cx="292" cy="250" r="56" fill="url(#sk-mo§)"/>'
+        + '<g fill="#f9a8d4" opacity=".16"><circle cx="276" cy="236" r="9"/><circle cx="306" cy="268" r="6"/><circle cx="300" cy="228" r="4"/></g>'
+        + '<g fill="#ffd5e5"><ellipse cx="240" cy="290" rx="120" ry="5" opacity=".28"/><ellipse cx="330" cy="304" rx="90" ry="4" opacity=".22"/><ellipse cx="120" cy="420" rx="140" ry="6" opacity=".18"/></g>'
+        + '<path d="M10 704L150 590C170 572 188 562 200 560C212 562 230 572 250 590L390 704Z" fill="url(#sk-mt§)"/>'
+        + '<path d="M150 590C170 572 188 562 200 560C212 562 230 572 250 590L237 600L224 590L211 604L198 591L184 603L168 592Z" fill="url(#sk-cap§)"/>'
+        + '<path d="M0 694C60 672 120 682 170 692C230 702 300 674 400 686V860H0Z" fill="#2a1233"/>'
+        + '<rect x="326" y="694" width="8" height="16" fill="#1a0b1d"/><path d="M321 696h18l-4-7h-10z" fill="#1a0b1d"/><circle cx="330" cy="702" r="11" fill="url(#sk-lan§)"/>'
+        + '<rect x="362" y="690" width="8" height="16" fill="#1a0b1d"/><path d="M357 692h18l-4-7h-10z" fill="#1a0b1d"/><circle cx="366" cy="698" r="11" fill="url(#sk-lan§)"/>'
+        + '<rect x="0" y="724" width="400" height="136" fill="url(#sk-wat§)"/>'
+        + '<g stroke="#ffe4ef" stroke-linecap="round" stroke-width="2"><path d="M270 740H314" stroke-opacity=".45"/><path d="M262 752H322" stroke-opacity=".32"/><path d="M276 764H308" stroke-opacity=".28"/><path d="M266 778H318" stroke-opacity=".2"/></g>'
+        + '<g opacity=".22" transform="matrix(1 0 0 -1 0 1520)">' + torii() + '</g>' + torii()
+        + '<g fill="none" stroke="#2a0f1d" stroke-linecap="round"><path d="M-10 64C40 76 80 98 120 94C152 92 176 108 204 130" stroke-width="7"/><path d="M60 86C70 118 66 148 82 176" stroke-width="4"/>'
+        + '<path d="M120 94C142 68 166 58 192 50" stroke-width="3.5"/><path d="M160 104C170 130 168 150 182 168" stroke-width="3"/><path d="M410 400C380 410 352 424 330 444" stroke-width="5"/></g>'
+        + blossoms(53, [[30, 66], [62, 84], [96, 98], [128, 92], [170, 112], [204, 132], [80, 170], [192, 52], [150, 72], [180, 164], [372, 412], [346, 432], [392, 398]]);
+    } },
+    neon: { pv: '0 520 400 226', svg: function () {             // 🌃 ночной город, вывески SLX, провода, эстакада, мокрый асфальт
+      var r = srand(97), far = '', win = '', cs = ['#fde68a', '#67e8f9', '#f0abfc', '#fef3c7'];
+      for (var x = 0; x < 400;) {
+        var w = 18 + r() * 30, top = 470 + r() * 180;
+        far += '<rect x="' + x.toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + (762 - top).toFixed(1) + '"/>';
+        for (var yy = top + 8; yy < 690; yy += 10) for (var xx = x + 3; xx < x + w - 4; xx += 7) if (r() < 0.24) win += '<rect x="' + xx.toFixed(1) + '" y="' + yy.toFixed(1) + '" width="2.4" height="3.4" fill="' + cs[(r() * 4) | 0] + '" opacity="' + (0.35 + r() * 0.5).toFixed(2) + '"/>';
+        x += w + 2 + r() * 6;
+      }
+      return '<defs>' + lg('nn-sky', 0, 1, [[0, '#04020c'], [.4, '#0e0526'], [.75, '#250843'], [1, '#3a0b52']]) + lg('nn-hz', 0, 1, [[0, '#d946ef', 0], [1, '#d946ef', .45]])
+        + rg('nn-mg', [[0, '#e9d5ff', .45], [1, '#e9d5ff', 0]]) + lg('nn-wet', 0, 1, [[0, '#12061f'], [1, '#05020a']]) + '</defs>'
+        + '<rect width="400" height="860" fill="url(#nn-sky§)"/>' + svgStars(14, 61, 0, 260, ['#e9d5ff', '#a5f3fc'], 0.6)
+        + '<circle cx="250" cy="330" r="130" fill="url(#nn-mg§)"/><circle cx="250" cy="330" r="54" fill="#f5e8ff" opacity=".85"/>'
+        + '<rect x="0" y="470" width="400" height="230" fill="url(#nn-hz§)"/>'
+        + '<g fill="#140b2b">' + far + '</g>' + win
+        + '<path d="M0 694H400" stroke="#1d1035" stroke-width="5"/><path d="M0 698H400" stroke="#2e1a52" stroke-width="1"/><path d="M30 698V762M110 698V762M190 698V762M270 698V762M350 698V762" stroke="#120a24" stroke-width="5"/>'
+        + '<path d="M0 470H40V440H66V470H92V860H0Z" fill="#07040f"/><path d="M296 430H330V400H352V430H400V860H296Z" fill="#07040f"/>'
+        + '<rect x="58" y="520" width="24" height="122" rx="4" fill="none" stroke="#22d3ee" stroke-opacity=".3" stroke-width="8"/><rect x="58" y="520" width="24" height="122" rx="4" fill="#0b0716" stroke="#22d3ee" stroke-width="2"/>'
+        + '<g fill="#a5f3fc" font-family="Arial,sans-serif" font-weight="900" font-size="19" text-anchor="middle"><text x="70" y="552">S</text><text x="70" y="582">L</text><text x="70" y="612">X</text></g>'
+        + '<rect x="252" y="562" width="106" height="44" rx="9" fill="none" stroke="#f0abfc" stroke-opacity=".3" stroke-width="10"/><rect x="252" y="562" width="106" height="44" rx="9" fill="#12061f" stroke="#f0abfc" stroke-width="2.5"/>'
+        + '<text x="305" y="595" fill="#fdf4ff" font-family="Arial,sans-serif" font-weight="900" font-size="28" letter-spacing="4" text-anchor="middle">SLX</text>'
+        + '<rect x="306" y="452" width="50" height="24" rx="5" fill="#0b0716" stroke="#facc15" stroke-width="1.6"/><text x="331" y="469" fill="#fde68a" font-family="Arial,sans-serif" font-weight="800" font-size="13" text-anchor="middle">24/7</text>'
+        + '<path d="M372 300V760" stroke="#020105" stroke-width="7"/><path d="M352 322H392M356 340H388" stroke="#020105" stroke-width="4"/>'
+        + '<g fill="none" stroke="#020105" stroke-width="1.5"><path d="M354 322Q180 372 -10 330"/><path d="M390 322Q230 384 -10 352"/><path d="M358 340Q200 396 -10 378"/></g>'
+        + '<rect x="0" y="760" width="400" height="100" fill="url(#nn-wet§)"/><rect x="62" y="764" width="16" height="80" fill="#22d3ee" opacity=".16"/><rect x="262" y="764" width="86" height="60" fill="#e879f9" opacity=".13"/>'
+        + '<path d="M0 800H400" stroke="#f0abfc" stroke-opacity=".12"/><path d="M40 830H140M220 830H330" stroke="#67e8f9" stroke-opacity=".2" stroke-width="2"/>';
+    } }
+  };
+  var SCN_CACHE = {};
+  function sceneSvg(id, sfx, pv) {
+    var sc = SCN[id]; if (!sc) return '';
+    var key = id + (pv ? ':p' : '');
+    if (!SCN_CACHE[key]) SCN_CACHE[key] = '<svg viewBox="' + (pv ? sc.pv : '0 0 400 860') + '" preserveAspectRatio="' + (pv ? 'xMidYMid slice' : 'xMidYMax slice')
+      + '" aria-hidden="true" focusable="false">' + sc.svg() + '</svg>';
+    return SCN_CACHE[key].replace(/§/g, sfx || '');
+  }
+  function sceneFit() {                              // масштаб и сдвиг картинки (xMidYMax slice) — живые слои встают в её точки
+    var el = $('scene'); if (!el || !el.firstChild) return;
+    var W = window.innerWidth || 390, H = window.innerHeight || 844, s = Math.max(W / 400, H / 860);
+    el.style.setProperty('--s', s.toFixed(4)); el.style.setProperty('--ox', ((W - 400 * s) / 2).toFixed(1) + 'px'); el.style.setProperty('--oy', (H - 860 * s).toFixed(1) + 'px');
+  }
+  function applyScene(sk) {
+    var el = $('scene'); if (!el || (el.getAttribute('data-sk') || '') === sk) return;
+    el.setAttribute('data-sk', sk);
+    el.innerHTML = sk && SCN[sk] ? sceneSvg(sk, '') + '<i class="fa"></i><i class="fb"></i>' : '';
+    sceneFit();
+  }
+  window.addEventListener('resize', sceneFit);
+  // особенность темы — от нажатий и при сборе вылетают её частицы (звёзды, искры, снежинки, монеты, лепестки, неон)
+  var tpcN = 0;
+  function themeBit(sk, x, y, big, i) {
+    var el = document.createElement('i'); el.className = 'tpc' + (i % 2 ? ' alt' : '');
+    if (sk === 'ice') el.textContent = '❄';
+    el.style.left = x + 'px'; el.style.top = y + 'px';
+    $('fx').appendChild(el); tpcN++;
+    var a = -Math.PI / 2 + (Math.random() * 2 - 1) * (big ? 1.5 : 1.15), r = (big ? 70 : 36) + Math.random() * (big ? 70 : 34);
+    var dx = Math.cos(a) * r, dy = Math.sin(a) * r, fall = sk === 'lava' || sk === 'space' ? -18 : sk === 'neon' ? 10 : 46;
+    var rot = Math.round(Math.random() * 300 - 150), done = false;
+    var fin = function () { if (done) return; done = true; el.remove(); tpcN--; };
+    el.animate([{ transform: 'translate(0,0) scale(.3) rotate(0deg)', opacity: 1 },
+                { transform: 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(1) rotate(' + Math.round(rot / 2) + 'deg)', opacity: 1, offset: 0.45 },
+                { transform: 'translate(' + (dx * 1.3).toFixed(1) + 'px,' + (dy + fall).toFixed(1) + 'px) scale(.6) rotate(' + rot + 'deg)', opacity: 0 }],
+               { duration: 950 + Math.random() * 500, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' }).onfinish = fin;
+    setTimeout(fin, 2200);
+  }
+  function themeBits(x, y, n, big) {
+    var sk = document.body.getAttribute('data-skin');
+    if (!sk || !SCN[sk] || !document.body.animate || document.hidden || document.documentElement.classList.contains('calm')) return;
+    for (var i = 0; i < n && tpcN < 18; i++) themeBit(sk, x, y, big, i);
+  }
+
   // ── отрисовка ──
   function render() {
     var d = S.d; if (!d) return;
     document.body.setAttribute('data-ch', String(d.ch || 1));
     var sk = d.started && d.skin ? d.skin : '';                       // v390: тема фермы (донат)
     if ((document.body.getAttribute('data-skin') || '') !== sk) { if (sk) document.body.setAttribute('data-skin', sk); else document.body.removeAttribute('data-skin'); }
+    applyScene(sk);                                                   // v391: сцена темы на фоне (рисуется только при смене)
     $('pause').hidden = d.on !== false; $('pause').textContent = T.paused;
     renderEv();
     $('adm-btn').hidden = !(d.adm && d.started);                  // v387: «🛠 Проверка» — только администратору
@@ -1542,7 +1886,7 @@
       if (tb) bh += '<span class="hb">' + esc(T.hbT(L.bsl >= 86400 ? dur(L.bsl) : hms(L.bsl))) + '</span>';
       if (d.auto_until > L.snow) bh += '<span class="hb a">' + esc(T.hbA(dur(d.auto_until - L.snow))) + '</span>';
       if (d.luck_until > L.snow) bh += '<span class="hb l">' + esc(T.hbL(dur(d.luck_until - L.snow))) + '</span>';    // v390
-      if (d.gold) bh += '<span class="hb g">' + esc(T.hbG) + '</span>';
+      if (d.gold) bh += '<span class="hb g">' + esc(T.hbG(goldPct(d.gold))) + '</span>';      // v391: карт несколько — +10% за каждую
       setHtml('h-bs', bh);
       if ($('h-bs').hidden !== !bh) $('h-bs').hidden = !bh;
       ocCard(L, full);
@@ -1635,13 +1979,14 @@
   }
   function renderSlots() {
     var d = S.d, ids = rigsSorted(d.own), n = slotsN(), cols = n <= 4 ? 4 : n <= 12 ? 4 : n <= 20 ? 5 : 6;
-    var sig = ids.join(',') + '|' + n + (d.gold ? '|g' : '');
+    var sig = ids.join(',') + '|' + n + (d.gold ? '|g' + d.gold : '');
     var box = $('slots');
     box.style.setProperty('--cols', cols);
     if (box.getAttribute('data-sig') === sig) return;
     var prev = S.seenRigs || {}, cnt = {}, h = '';
     if (d.gold) h += '<button type="button" class="sl gld" data-gold="1" style="--d:-.4s"><span class="dv"><svg class="ri" viewBox="0 0 48 48" aria-hidden="true">'   // v388: донат
-      + '<use href="#ic-gold" xlink:href="#ic-gold"></use></svg>' + FX.gpu + '</span><i class="led"></i></button>';
+      + '<use href="#ic-gold" xlink:href="#ic-gold"></use></svg>' + FX.gpu + '</span><i class="led"></i>'
+      + (d.gold > 1 ? '<b class="gcnt">×' + Number(d.gold) + '</b>' : '') + '</button>';      // v391: сколько золотых карт
     ids.forEach(function (id, i) {
       cnt[id] = (cnt[id] || 0) + 1;
       var isNew = S.seenRigs && cnt[id] > (prev[id] || 0);
@@ -1772,8 +2117,7 @@
     $('sell-h').textContent = T.sellH; $('sell-in').placeholder = T.sellPh; $('sell-eq').textContent = T.sellEq(d.fee || 3);
     $('sell-chips').innerHTML = [25, 50, 100].map(function (p) { return '<button type="button" class="chip' + (S.sellPct === p ? ' on' : '') + '" data-pct="' + p + '">' + (p === 100 ? T.all : p + '%') + '</button>'; }).join('');
     $('buy-h').textContent = T.buyH; $('buy-in').placeholder = T.buyPh;
-    sellBtn(); buyBtn();
-    $('b-tok').textContent = T.dnTokB; $('b-tok').hidden = !(S.packs && S.packs.length && S.order);       // v388: пакеты токенов
+    sellBtn(); buyBtn();                             // v391: «💰 Купить токены» отсюда убрана — пакеты токенов только в боте
     // v388: курс фермы — почему SLX с фермы такие маленькие и сколько платит 1 MH/s
     $('wb-k').textContent = d.pf && S.cfg && S.cfg.r ? T.farmK(num(d.pf), tkF(S.cfg.r * 24 * d.pf * (d.mult || 1))) : '';
     $('st-h').textContent = T.statsH;
@@ -1829,7 +2173,6 @@
     send('notify', { on: on });
   });
   $('b-ex').addEventListener('click', function () { if (S.ex) { hap('sel'); location.href = S.ex; } });
-  $('b-tok').addEventListener('click', function () { hap('sel'); donSheet('packs'); });
   $('dnc').addEventListener('click', function () { hap('sel'); donSheet(); });
 
   // ── v388: донат — бусты, золотая видеокарта, автосбор и токены. Оплата — в личке @SloppyX (сообщение уже вписано), выдаёт
@@ -1838,16 +2181,22 @@
   // превью, SLX за рубли и токены плитками. Товары и цены — с сервера (администратор меняет цену и скрывает товар в админке)
   var DN_ICO = { bst: 'ic-d-rocket', ocf: 'ic-d-bolt', auto: 'ic-d-robot', luck: 'ic-d-clover', gold: 'ic-gold', starter: 'ic-d-gift' };
   var DN_RGB = { bst: '56,189,248', ocf: '249,115,22', auto: '52,211,153', luck: '74,222,128', gold: '251,191,36' };
-  var SKIN_RGB = { space: '129,140,248', lava: '249,115,22', ice: '125,211,252', gold: '251,191,36', none: '139,92,246' };
-  var PK_RGB = ['52,211,153', '56,189,248', '167,139,250', '251,191,36', '248,113,113', '250,204,21'];
+  var SKIN_RGB = { space: '129,140,248', lava: '249,115,22', ice: '125,211,252', gold: '251,191,36', sakura: '244,114,182', neon: '217,70,239', none: '139,92,246' };
+  function goldPct(n) { return Math.round((((S.cfg && S.cfg.gold_x) || 1.1) - 1) * 100 * (Number(n) || 0)); }      // v391: +10% за каждую карту
   function dnIco(id) { return '<svg viewBox="0 0 48 48" aria-hidden="true"><use href="#' + id + '"/></svg>'; }
   function dnSub(sh) {                              // строка под «Ускорь ферму»: стартовый набор, пока не куплен; потом — турбо
     var st = sh.filter(function (x) { return x.kind === 'starter'; })[0];
     return st && !(S.d && S.d.starter) ? T.dnS2(num(st.price)) : T.dnS3(num(turboFrom(sh)));
   }
-  function starterWorth(sh) {                      // сколько стоил бы набор по частям: турбо 3 дня + автосбор 3/7 + без остывания + удача
+  function starterWorth(sh, st) {                  // сколько стоил бы набор по частям; v391 — считает сервер по составу из админки
+    if (st && st.worth > 0) return st.worth;
     var by = {}; sh.forEach(function (x) { by[x.id] = x.price; });
     return (by.turbo3 || 0) + Math.round((by.auto7 || 0) * 3 / 7) + (by.oc1 || 0) + (by.luck1 || 0);
+  }
+  function starterChips(st) {                      // v391: части набора — с сервера (состав меняет администратор)
+    var p = st && (EN ? st.parts_en : st.parts_ru);
+    if (!p || !p.length) return T.stCh;
+    return p.map(function (x) { return x[0] + ' ' + x[1] + ' · ' + x[2]; });
   }
   function coinsSvg(i, gold) {                      // стопки монет: больше пакет — выше и шире стопка; снизу свет, у крупных — искры
     var st = [[2], [3], [3, 2], [4, 3], [4, 3, 2], [6, 5, 3]][Math.min(i, 5)], xs = st.length === 1 ? [30] : st.length === 2 ? [22, 39] : [14, 30, 46];
@@ -1869,15 +2218,15 @@
     return f ? (d[f] || 0) - now : 0;
   }
   function donSheet(where) {
-    var d = S.d, sh = S.shop || [], pk = S.packs || [], now = live() ? live().snow : (d.t || 0), h = '';
+    var d = S.d, sh = S.shop || [], now = live() ? live().snow : (d.t || 0), h = '';
     var by = function (k) { return sh.filter(function (x) { return x.kind === k; }); };
     h += '<div class="dn-hd">' + dnIco('ic-d-gem') + '<h3>' + esc(T.dnHd) + '</h3><p>' + esc(T.dnP) + '</p></div>';
     var st = by('starter')[0];
     if (st) {                                        // «🎁 Стартовый набор» — один раз, в радужной рамке
-      var worth = starterWorth(sh), off = worth > st.price ? Math.round((1 - st.price / worth) * 100) : 0;
+      var worth = starterWorth(sh, st), off = worth > st.price ? Math.round((1 - st.price / worth) * 100) : 0;
       h += '<div class="dn-st' + (d.starter ? ' got' : '') + '"><div class="in">' + (off && !d.starter ? '<span class="tg2">−' + off + '%</span>' : '')
         + '<div class="shd">' + dnIco('ic-d-gift') + '<div><b>' + esc(EN ? st.en : st.ru) + '</b><small>' + esc(d.starter ? T.stGot : T.stS) + '</small></div></div>'
-        + '<div class="chs">' + T.stCh.map(function (c) { return '<span>' + esc(c) + '</span>'; }).join('') + '</div>'
+        + '<div class="chs">' + starterChips(st).map(function (c) { return '<span>' + esc(c) + '</span>'; }).join('') + '</div>'
         + '<div class="ft">' + (off && !d.starter ? '<s>' + num(worth) + ' ₽</s>' : '') + '<b>' + num(st.price) + ' ₽</b>'
         + (d.starter ? '<button type="button" class="bb ghost" disabled>' + esc(T.dnHave) + '</button>'
                      : '<button type="button" class="bb hot" data-dbuy="' + esc(st.id) + '">' + esc(T.dnBuy) + '</button>') + '</div></div></div>';
@@ -1893,18 +2242,29 @@
         + (x.kind === 'bst' && x.h > 24 ? '<small>' + esc(T.perDay(num(Math.round(x.price / (x.h / 24))))) + '</small>' : '')
         + '<button type="button" class="bb hot" data-dbuy="' + esc(x.id) + '">' + esc(T.dnBuy) + '</button></div></div>';
     });
-    var gd = by('gold')[0], sk = by('skin');
-    if (gd || sk.length) h += '<div class="dn-sec">💎 ' + esc(T.secF) + '</div>';
-    if (gd) h += '<div class="dn-it bd" style="--ic:' + DN_RGB.gold + '"><span class="dn-bd g">' + esc(T.bdEver) + '</span><div class="ico">' + dnIco('ic-gold') + '</div><div class="tx"><b>'
-      + esc(EN ? gd.en : gd.ru) + '</b><small>' + esc(EN ? gd.d_en : gd.d_ru) + '</small></div><div class="pr"><b>' + num(gd.price) + ' ₽</b>'
-      + (d.gold ? '<button type="button" class="bb ghost" disabled>' + esc(T.dnHave) + '</button>' : '<button type="button" class="bb hot" data-dbuy="' + esc(gd.id) + '">' + esc(T.dnBuy) + '</button>')
-      + '</div></div>';
-    var own = d.skins || [], SKN = { space: ['🌌', 'Космос', 'Space'], lava: ['🔥', 'Лава', 'Lava'], ice: ['❄️', 'Арктика', 'Arctic'], gold: ['👑', 'Золото', 'Gold'] };
+    var gds = by('gold').sort(function (a, b) { return (a.val || 1) - (b.val || 1); }), sk = by('skin');
+    if (gds.length || sk.length) h += '<div class="dn-sec">💎 ' + esc(T.secF) + '</div>';
+    if (gds.length) {                                // v391: золотых видеокарт — несколько: ячейки «сколько есть» и наборы кнопками
+      var g1 = gds[0], gn = Number(d.gold) || 0, gm = (S.cfg && S.cfg.gold_max) || 10, unit = g1.price / (g1.val || 1);
+      h += '<div class="dn-it gd bd" style="--ic:' + DN_RGB.gold + '"><span class="dn-bd g">' + esc(T.bdEver) + '</span><div class="ico">' + dnIco('ic-gold') + '</div><div class="tx"><b>'
+        + esc(EN ? g1.en : g1.ru) + '</b><small>' + esc(EN ? g1.d_en : g1.d_ru) + '</small><small class="on" style="color:#fde68a">' + esc(T.gdHave(gn, gm, goldPct(gn))) + '</small></div>'
+        + '<div class="gsl">' + Array.apply(null, Array(gm)).map(function (_, i) { return '<i' + (i < gn ? ' class="on"' : '') + '></i>'; }).join('') + '</div>';
+      if (gn >= gm) h += '<div class="gfull">' + esc(T.gdFull(gm)) + '</div>';
+      else h += '<div class="gpk">' + gds.map(function (x) {
+          var n = x.val || 1, fit = gn + n <= gm, off = n > 1 ? Math.round((1 - x.price / (unit * n)) * 100) : 0;
+          return '<button type="button" class="bb hot" data-dbuy="' + esc(x.id) + '"' + (fit ? '' : ' disabled') + '><span>' + esc(T.gdPk(n)) + (off > 0 ? '<em>−' + off + '%</em>' : '')
+            + '</span><small>' + (fit ? num(x.price) + ' ₽' : esc(T.gdNoFit)) + '</small></button>';
+        }).join('') + '</div>';
+      h += '</div>';
+    }
+    var own = d.skins || [], SKN = { space: ['🌌', 'Космос', 'Space'], lava: ['🔥', 'Лава', 'Lava'], ice: ['❄️', 'Арктика', 'Arctic'], gold: ['👑', 'Золото', 'Gold'],
+                                     sakura: ['🌸', 'Сакура', 'Sakura'], neon: ['🌃', 'Неон', 'Neon'] };       // v391
     own.forEach(function (v) {                       // купленная тема, которую администратор скрыл из продажи, — всё равно в гардеробе
       if (SKN[v] && !sk.some(function (x) { return x.val === v; })) sk.push({ val: v, e: SKN[v][0], ru: '«' + SKN[v][1] + '»', en: '“' + SKN[v][2] + '”', price: 0, id: '' });
     });
-    if (sk.length || own.length) {                   // темы: превью комнаты с устройствами в цветах темы
-      var pv = function (p) { return '<div class="pv" data-p="' + p + '"><i>' + dnIco('ic-gpu') + '</i><i>' + dnIco('ic-asic') + '</i><i>' + dnIco('ic-quant') + '</i></div>'; };
+    if (sk.length || own.length) {                   // темы: превью — сцена темы (v391); «Обычная» — устройства в цветах фермы
+      var pv = function (p) { return SCN[p] ? '<div class="pv scn" data-p="' + p + '">' + sceneSvg(p, 'p', true) + '</div>'
+        : '<div class="pv" data-p="' + p + '"><i>' + dnIco('ic-gpu') + '</i><i>' + dnIco('ic-asic') + '</i><i>' + dnIco('ic-quant') + '</i></div>'; };
       h += '<div class="dn-sec" id="dn-sk">🎨 ' + esc(T.secK) + '</div><div class="dn-sk">';
       if (own.length) h += '<div class="sk' + (!d.skin ? ' on' : '') + '" style="--skc:' + SKIN_RGB.none + '">' + pv('none') + '<div class="sb"><b>' + esc(T.skNone) + '</b><small>'
         + esc(T.skNoneS) + '</small>' + (!d.skin ? '<button type="button" class="bb ghost" disabled>' + esc(T.skOn) + '</button>' : '<button type="button" class="bb" data-wear="">' + esc(T.skWear) + '</button>')
@@ -1927,18 +2287,11 @@
       });
       h += '</div><p class="note" style="margin-top:8px">' + esc(T.xNote) + '</p>';
     }
-    if (pk.length) {
-      h += '<div class="dn-sec" id="dn-pk">💰 ' + esc(T.secT) + '</div><div class="dn-pk">';
-      pk.forEach(function (p, i) {
-        h += '<div class="pk" style="--pc:' + PK_RGB[i % PK_RGB.length] + '">' + coinsSvg(i, true) + '<b>' + esc(p[3] + ' ' + p[0]) + '</b><div class="am mono">' + esc(tokShort(p[2])) + '</div><small>'
-          + esc(EN ? 'tokens' : tw(num(p[2]))) + '</small><button type="button" class="bb" data-dpk="' + i + '">' + num(p[1]) + ' ₽</button></div>';
-      });
-      h += '</div>';
-    }
+    // v391: пакетов токенов здесь больше нет (Кирилл — «убери отсюда покупку токенов»); токены — «💳 Купить токены» в боте
     h += '<div class="dn-ft">' + esc(T.dnHow) + '</div><div class="row"><button type="button" class="btn sec sm" data-sa="close">' + esc(T.cancel) + '</button></div>';
     sheet(h);
     S.donOpen = true;
-    var to = where === 'packs' ? $('dn-pk') : where === 'skins' ? $('dn-sk') : null;
+    var to = where === 'skins' ? $('dn-sk') : null;
     if (to) try { to.scrollIntoView({ block: 'start' }); } catch (e) {}
   }
   function turboFrom(sh) {                          // «Турбо ×2 от N ₽» — самое дешёвое турбо (нет турбо — самое дешёвое вообще)
@@ -1951,15 +2304,12 @@
     try { window.open(url, '_blank'); } catch (e) { location.href = url; }
   }
   $('sheet').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-dbuy]'), p = e.target.closest('[data-dpk]'), w = e.target.closest('[data-wear]'), id = S.cid || UID;
+    var b = e.target.closest('[data-dbuy]'), w = e.target.closest('[data-wear]'), id = S.cid || UID;
     if (b) {
       var x = (S.shop || []).filter(function (y) { return y.id === b.getAttribute('data-dbuy'); })[0]; if (!x) return;
       hap('medium');
       if (x.kind === 'slx') donOpen(T.dnMsgS(EN ? x.en : x.ru, num(x.val), slx(x.val / fp()), x.price, id));
       else donOpen(T.dnMsg(x.e, EN ? x.en : x.ru, x.price, id));
-    } else if (p) {
-      var k = (S.packs || [])[Number(p.getAttribute('data-dpk'))]; if (!k) return;
-      hap('medium'); donOpen(T.dnMsgT(k[0], num(k[2]), k[1], id));
     } else if (w) {                                  // v390: надеть свою тему (или обычную) — сразу на ферме и в топе
       var v = w.getAttribute('data-wear');
       hap('sel');
@@ -2005,13 +2355,13 @@
         if (!r) return '<div class="pd em" ' + st + '><div class="pw"><div class="pav">?</div><span class="pnum">' + (i + 1) + '</span></div><div class="pn">' + esc(T.topEmpty) + '</div></div>';
         return '<div class="pd' + (r.me ? ' me' : '') + '" ' + st + '><div class="pw">' + fzHtml(p.s, p.lvl)
           + (i === 0 ? '<svg class="crn" viewBox="0 0 26 20" aria-hidden="true"><path d="M2 17 4 5 9.5 10 13 2 16.5 10 22 5 24 17Z" fill="url(#mgG)"/><rect x="2" y="17" width="22" height="2.5" rx="1" fill="url(#mgG)"/></svg>' : '')
-          + '<div class="pav">' + avHtml(r) + '</div><span class="pnum">' + (i + 1) + '</span></div><div class="pn">' + esc(r.name) + (r.gold ? ' 💎' : '') + (r.adm ? ' 🛡' : '')
+          + '<div class="pav">' + avHtml(r) + '</div><span class="pnum">' + (i + 1) + '</span></div><div class="pn">' + esc(r.name) + (r.gold ? ' 💎' + (r.gold > 1 ? '×' + Number(r.gold) : '') : '') + (r.adm ? ' 🛡' : '')
           + '</div><div class="ph mono">' + hashS(r.hash) + '</div><div class="pl">' + chIco(r.ch || 1) + ' ' + esc(T.titles[r.title || 0]) + '</div></div>';
       }).join('') + '</div>' : '');
     }
     setHtml('top-list', list.slice(3).map(function (r, j) {
       return '<div class="tr' + (r.me ? ' me' : '') + '"><span class="tp">' + (j + 4) + '</span><div class="tav"' + (r.skin ? ' data-sk="' + esc(r.skin) + '"' : '') + '>' + avHtml(r) + '</div><div class="tn"><b>'
-        + esc(r.name) + (r.gold ? ' 💎' : '') + (r.adm ? ' 🛡' : '') + (r.me ? ' · ' + esc(T.you) : '') + '</b><small>' + chIco(r.ch || 1) + ' ' + esc(T.titles[r.title || 0]) + '</small></div><span class="th mono">'
+        + esc(r.name) + (r.gold ? ' 💎' + (r.gold > 1 ? '×' + Number(r.gold) : '') : '') + (r.adm ? ' 🛡' : '') + (r.me ? ' · ' + esc(T.you) : '') + '</b><small>' + chIco(r.ch || 1) + ' ' + esc(T.titles[r.title || 0]) + '</small></div><span class="th mono">'
         + hashS(r.hash) + '</span></div>';
     }).join(''));
     $('top-note').textContent = T.topNote(d.place, d.farms);
@@ -2098,7 +2448,7 @@
     var prevCh = S.d && S.d.ch, prevDone = S.d && S.d.done;
     if (j.cfg) S.cfg = j.cfg;
     if (j.ex) S.ex = j.ex;
-    if (j.shop) { S.shop = j.shop; S.order = j.order; S.cid = j.cid; S.packs = j.packs; }     // v388: донат — приходит с full=1
+    if (j.shop) { S.shop = j.shop; S.order = j.order; S.cid = j.cid; }     // v388: донат — приходит с full=1 (v391: без пакетов токенов)
     if (!S.cfg) return;
     // v388: курс фермы сменился (раз в час) — цены в SLX тоже: сразу взять свежие
     if (j.k && S.cfg.k && Math.abs(j.k / S.cfg.k - 1) > 1e-9 && !S.needCfg) { S.needCfg = true; setTimeout(function () { load(true); }, 60); }
@@ -2118,6 +2468,8 @@
       S.drain = { amt: L.st, t0: performance.now(), dur: 900 };
       tokenFly($('tank'), L.st);
       A = S.acc;
+      var cb = $('b-col').getBoundingClientRect();
+      themeBits(cb.left + cb.width / 2, cb.top + cb.height / 2, 10, true);   // v391: при сборе — фейерверк частиц темы
     }
     send('collect', {}, $('b-col')).then(function (j) {
       if (A) A.ok = true;
@@ -2220,6 +2572,7 @@
     S.pend++;
     hap('light');
     floatText('+' + tkS(d.tap_val), x, y);
+    themeBits(x, y, 2, false);                                // v391: частицы темы
     var c = $('core');
     if (c.getElementsByClassName('rip').length < 4) {       // волна от нажатия
       var rp = document.createElement('i'); rp.className = 'rip'; c.appendChild(rp);
@@ -2493,7 +2846,7 @@
 
   // ── загрузка, опрос, кэш ──
   var CK = 'mine_v2_' + UID;                      // v388: v2 — суммы в настоящих SLX (старую память v1 не берём: там SLX фермы)
-  function cachePut() { try { localStorage.setItem(CK, JSON.stringify({ t: Date.now(), d: S.d, cfg: S.cfg, ex: S.ex, shop: S.shop, order: S.order, cid: S.cid, packs: S.packs })); } catch (e) {} }
+  function cachePut() { try { localStorage.setItem(CK, JSON.stringify({ t: Date.now(), d: S.d, cfg: S.cfg, ex: S.ex, shop: S.shop, order: S.order, cid: S.cid })); } catch (e) {} }
   function cacheGet() {
     try { var o = JSON.parse(localStorage.getItem(CK) || 'null'); if (!o || !o.d || !o.cfg || Date.now() - o.t > 7 * 86400000) return null; return o; } catch (e) { return null; }
   }
@@ -2558,7 +2911,7 @@
   var c0 = cacheGet();
   if (c0 && c0.d && c0.d.started) {
     S.cfg = c0.cfg; S.ex = c0.ex || ''; S.d = c0.d; S.at = performance.now(); S.d.stored = c0.d.stored; S.loaded = true; S.needCfg = true;
-    S.shop = c0.shop; S.order = c0.order; S.cid = c0.cid; S.packs = c0.packs;          // v388: донат из памяти телефона
+    S.shop = c0.shop; S.order = c0.order; S.cid = c0.cid;          // v388: донат из памяти телефона
     document.body.setAttribute('data-state', 'ready');
     render();
   }
