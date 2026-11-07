@@ -715,7 +715,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v391';
+  var VER = 'v392';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -1365,7 +1365,8 @@ window.addEventListener('error', function (e) {
     var lf = function (s) { return s >= 86400 ? Math.floor(s / 86400) + ' дн ' + Math.floor(s % 86400 / 3600) + ' ч' : s >= 3600 ? Math.floor(s / 3600) + ' ч ' + Math.floor(s % 3600 / 60) + ' мин' : Math.ceil(s / 60) + ' мин'; };
     var SKN = { space: '🌌 Космос', lava: '🔥 Лава', ice: '❄️ Арктика', gold: '👑 Золото', sakura: '🌸 Сакура', neon: '🌃 Неон' };    // v391: + сакура, неон
     var gm = x.gold_max || 10, gn = Number(x.gold) || 0;          // v391: золотых видеокарт — несколько (до gm), каждая +10%
-    var act = [gn ? '💎 Золотые видеокарты: ' + gn + ' из ' + gm + ' (+' + gn * 10 + '% навсегда)' : '', x.bst ? '🚀 Турбо ×2 — ещё ' + lf(x.bst) : '',
+    var act = [gn ? '💎 Золотые видеокарты: ' + gn + ' из ' + gm + ' (+' + gn * 10 + '% навсегда)' + (x.gold_next ? ' · следующая — ' + fmt(x.gold_next) + ' ₽' : '') : '',   // v392
+               x.bst ? '🚀 Турбо ×2 — ещё ' + lf(x.bst) : '',
                x.auto ? '🤖 Автосбор — ещё ' + lf(x.auto) : '', x.ocf ? '⚡ Разгон без остывания — ещё ' + lf(x.ocf) : '',
                x.luck ? '🍀 Удача ×3 — ещё ' + lf(x.luck) : '', x.starter ? '🎁 Стартовый набор — уже получал' : '',          // v390
                (x.skins || []).length ? '🎨 Темы: ' + x.skins.map(function (k) { return (SKN[k] || k) + (k === x.skin ? ' (надета)' : ''); }).join(', ') : ''].filter(Boolean);
@@ -1376,7 +1377,7 @@ window.addEventListener('error', function (e) {
           var got = (it.kind === 'gold' && gn + (Number(it.val) || 1) > gm) || (it.kind === 'starter' && x.starter)      // v391: карт — не больше gm
             || (it.kind === 'skin' && (x.skins || []).indexOf(it.val) >= 0);   // v390
           return '<button type="button" class="chip" data-mng="' + esc(it.id) + '"' + (got ? ' disabled' : '') + '>' + esc(it.e + ' ' + it.ru)
-            + ' · ' + fmt(it.price) + ' ₽</button>'; }).join('') + '</div>'
+            + ' · ' + (it.kind === 'gold' && it.fit === false ? 'не влезет' : fmt(it.price) + ' ₽') + '</button>'; }).join('') + '</div>'   // v392: карты — цена по лестнице
       + '<div class="small">Сначала проверь оплату в личке. Турбо, автосбор, удача и разгон без остывания добавляются к оставшемуся времени. '
       + '💠 SLX — на сумму токенов пакета по курсу фермы в момент выдачи. Стартовый набор — один раз на игрока. '
       + 'Золотых видеокарт — до ' + gm + ' на ферме: набор, который не влезает, выдать нельзя.</div>'
@@ -2966,6 +2967,31 @@ window.addEventListener('error', function (e) {
       + (same ? '<br><span class="small">состав по умолчанию</span>' : '') + '</div>'
       + '<div class="row"><button type="button" class="f1" data-mn="st_save">💾 Сохранить состав</button>' + (same ? '' : '<button type="button" data-mn="st_reset">По умолчанию</button>') + '</div>';
   }
+  // v392: золотые видеокарты — «каждая следующая дороже на N %»: поле, лестница цен 1-й…10-й, все 10 разом с нуля
+  function mnGoldHtml(mi) {
+    var l = mi.gold_ladder || [], st = Number(mi.gold_step) || 0, off = mi.gold_off || {}, sum = function (a, b) { return l.slice(a, b).reduce(function (s, x) { return s + x; }, 0); };
+    return '<div class="lbl">💎 Золотые видеокарты — каждая следующая дороже</div>'
+      + '<div class="small">1-я карта стоит как товар «💎 Золотая видеокарта» ниже, каждая следующая — дороже на столько процентов. Наборы (3, 5, 10 карт) считаются сами: '
+      + 'сумма их карт по лестнице минус скидка набора (3 — ' + (off['3'] || 0) + '%, 5 — ' + (off['5'] || 0) + '%, 10 — ' + (off['10'] || 0) + '%). У игрока с 3 картами набор начинается с 4-й.</div>'
+      + '<div class="row" style="align-items:center"><span class="f1">Каждая следующая дороже на, %</span>'
+      + '<input id="mn-gstep" inputmode="numeric" value="' + st + '" style="width:72px;flex:0 0 auto" autocomplete="off"><button type="button" data-mn="gold_step">% ✓</button></div>'
+      + '<div class="note mt" style="margin-top:6px">' + l.map(function (p, i) { return (i + 1) + '-я — <b>' + fmt(p) + ' ₽</b>'; }).join(' · ')
+      + '<br>Все ' + l.length + ' по одной — ' + fmt(sum(0, l.length)) + ' ₽ · набором из ' + l.length + ' с нуля — <b>' + fmt(Math.round(sum(0, l.length) * (1 - (off[String(l.length)] || 0) / 100))) + ' ₽</b></div>';
+  }
+  // v392: «📊 Сколько идёт игра» — бот сам считает по своим настоящим числам (с «Добычей у всех»): дни до финала и доход в сутки
+  function mnCalcHtml(mi) {
+    var c = mi.calc, d0 = function (x) { return x == null ? '>' + ((c && c.days) || 200) : String(Math.ceil(x - 1e-9)); };
+    var h = '<div class="lbl">📊 Сколько идёт игра — расчёт по настоящим числам</div>'
+      + '<div class="small">Бот прогоняет игрока день за днём: заходит в своё время, собирает, жмёт разгон, всё вкладывает в ферму. «Добыча у всех» учитывается — поменял её, нажми ещё раз.</div>';
+    if (c && c.rows) {
+      h += '<div class="hist" style="margin-top:6px">' + c.rows.map(function (r) {
+          return '<div><b>' + esc(r.name) + '</b> — финал: ' + r.cols.map(function (x, i) { return esc((c.dons[i] || [])[1] || x.id) + ' — <b>' + d0(x.done) + ' дн</b>'; }).join(' · ')
+            + '<br><span class="small">без доната в сутки: 1-й день ' + short(r.cols[0].d1) + ' · неделя ' + short(r.cols[0].d7) + ' · месяц ' + short(r.cols[0].d30) + '</span></div>'; }).join('')
+        + '</div><div class="small">Полная ферма стоит ≈ ' + short(c.full_cost) + ' · приносит ≈ ' + short(c.plateau) + ' в сутки без нажатий · предел на всех ' + short(c.cap_tok)
+        + ' · нажатие от ' + fmt(c.tap) + (c.mult !== 1 ? ' · добыча ' + mnX(c.mult) : '') + ' · посчитано ' + dt(c.t) + '</div>';
+    }
+    return h + '<div class="row"><button type="button" class="f1" data-mn="calc">📊 ' + (c ? 'Посчитать ещё раз' : 'Посчитать') + '</button></div>';
+  }
   function mineHtml(mi, price) {
     // v388: вся экономика игры — в «SLX фермы» (1 = mi.pref токенов), в кошелёк — настоящие SLX по курсу фермы. Статистика — в SLX фермы,
     // поэтому в токены она переводится по mi.pref (до v388 бот слал только курс биржи)
@@ -3014,17 +3040,21 @@ window.addEventListener('error', function (e) {
       + (mi.notify ? '🔕 Выключить напоминания «хранилище полное»' : '🔔 Включить напоминания «хранилище полное»') + '</button></div>'
       + '<div class="row"><button type="button" class="f1' + (mi.on ? '' : ' b-acc') + '" data-mn="on" data-v="' + (mi.on ? 0 : 1) + '">'
       + (mi.on ? '⏸ Поставить майнинг на паузу' : '▶️ Включить майнинг') + '</button></div>'
+      + mnCalcHtml(mi)                                                       // v392: «📊 Сколько идёт игра»
       // v388: донат в майнинге — цены, «показывать», сколько продано; выдаёшь в карточке игрока («⛏ Майнинг» → «Выдать»)
       + ((mi.shop || []).length ? '<div class="lbl">💎 Донат в майнинге</div>'
           + '<div class="small">Игрок жмёт «Купить» в игре — открывается личка @SloppyX с готовым сообщением: что купить, цена и его ID. Оплатил — найди его по ID '
           + '(вкладка «Игроки») → карточка → «⛏ Майнинг» → «Выдать». Бот сам напишет игроку, что покупка работает.</div>'
           + '<div class="grid" style="margin-top:8px">' + kv('Продано за 7 дней', fmt(mi.rub7 || 0) + ' ₽') + kv('Всего', fmt(mi.rub || 0) + ' ₽') + '</div>'
           + (mi.starter ? mnStarterHtml(mi) : '')                                  // v391: состав стартового набора
+          + (mi.gold_ladder ? mnGoldHtml(mi) : '')                              // v392: лестница цен золотых карт
           + mi.shop.map(function (x) {
+              var pk = x.kind === 'gold' && (Number(x.val) || 1) > 1;            // v392: цену набора считает лестница — поля цены нет
               return '<div class="row" style="align-items:center"><span class="f1">' + esc(x.e + ' ' + x.ru) + (x.on ? '' : ' <span class="bd wn">скрыт</span>')
-                + '<br><span class="small">продано: за 7 дн — ' + fmt(x.n7) + ', всего — ' + fmt(x.n) + '</span></span>'
-                + '<input id="mnp-' + esc(x.id) + '" inputmode="numeric" value="' + x.price + '" style="width:72px;flex:0 0 auto" autocomplete="off">'
-                + '<button type="button" data-mn="shop_price" data-id="' + esc(x.id) + '">₽ ✓</button>'
+                + '<br><span class="small">' + (pk ? 'с нуля — ' + fmt(x.price) + ' ₽ (по лестнице −' + ((mi.gold_off || {})[String(x.val)] || 0) + '%) · ' : '')
+                + 'продано: за 7 дн — ' + fmt(x.n7) + ', всего — ' + fmt(x.n) + '</span></span>'
+                + (pk ? '' : '<input id="mnp-' + esc(x.id) + '" inputmode="numeric" value="' + x.price + '" style="width:72px;flex:0 0 auto" autocomplete="off">'
+                  + '<button type="button" data-mn="shop_price" data-id="' + esc(x.id) + '">₽ ✓</button>')
                 + '<button type="button" class="' + (x.on ? '' : 'b-acc') + '" data-mn="shop_on" data-id="' + esc(x.id) + '" data-v="' + (x.on ? 0 : 1) + '">'
                 + (x.on ? 'Скрыть' : 'Показать') + '</button></div>';
             }).join('')
@@ -3046,6 +3076,13 @@ window.addEventListener('error', function (e) {
     var a = b.getAttribute('data-mn'), v = Number(b.getAttribute('data-v') || 0), mi = (S.ec && S.ec.mine) || {};
     // v388: предел — в токенах; донат — цена и «показывать»
     if ((a === 'cap_tok' || a === 'cap_c' || a === 'shop_price' || a === 'shop_on') && botVer() < 388) { toast('Заработает, когда бот на сервере обновится до v388', true); return; }
+    if (a === 'calc' || a === 'gold_step') {                        // v392: расчёт игры; «каждая следующая карта дороже на %»
+      if (botVer() < 392) { toast('Заработает, когда бот на сервере обновится до v392', true); return; }
+      if (a === 'calc') return ecDo({ op: 'mine_calc' }, '', b);
+      var gs = parseAmount(($('mn-gstep') || {}).value);
+      if (!(gs >= 0 && gs <= 50)) { toast('Каждая следующая дороже — от 0 до 50 %', true); return; }
+      return ecDo({ op: 'mine_gold', step: gs }, 'Каждая следующая золотая видеокарта дороже на ' + gs + '%?\nИгроки увидят новые цены, когда откроют донат.', b);
+    }
     if (a === 'st_save' || a === 'st_reset') {                      // v391: состав «🎁 Стартового набора»
       if (botVer() < 391) { toast('Заработает, когда бот на сервере обновится до v391', true); return; }
       if (a === 'st_reset') return ecDo({ op: 'mine_starter', reset: true }, 'Вернуть стартовый набор по умолчанию?\nТурбо ×2 и автосбор на 3 дня, разгон без остывания и удача ×3 на сутки.', b);
