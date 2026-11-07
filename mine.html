@@ -122,22 +122,54 @@
 
   /* ── хранилище ── */
   .card { position: relative; border-radius: 20px; background: var(--card); border: 1px solid var(--ln); padding: 14px; margin-bottom: 12px; }
-  .hero { overflow: hidden; background: linear-gradient(160deg, rgba(139,92,246,.16), rgba(255,255,255,.025) 55%); border-color: rgba(167,139,250,.26); }
-  .hero .hl { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--tx3); }
+  /* v392: хранилище — стеклянная капсула, в ней поднимается светящаяся жидкость (волна по краю, пузырьки), цифры — поверх;
+     сверху — сколько процентов. Кирилл: «измени дизайн — более современное хранилище, где копится». Цвет жидкости — --lq/--lq2:
+     обычно фиолетовый → голубой, тема — её цвета, разгон — огонь, турбо — синий, полное — золото. Двигаются только transform */
+  .hero { overflow: hidden; background: linear-gradient(160deg, rgba(139,92,246,.16), rgba(255,255,255,.025) 55%); border-color: rgba(167,139,250,.26);
+          --lq: 139,92,246; --lq2: 34,211,238; }
+  .hero .hl { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--tx3); }
+  .hero .hl .hlt { display: inline-flex; align-items: center; gap: 6px; flex: 1; min-width: 0; font-size: 11.5px; font-weight: 750; letter-spacing: .07em;
+                   text-transform: uppercase; color: var(--tx2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hero .hl .hlt svg { width: 19px; height: 19px; flex: 0 0 auto; }
   .hero .hl b { color: var(--tx2); font-weight: 600; }
-  .hero .big { margin-top: 6px; font-size: 31px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; white-space: nowrap; }
-  .hero .big small { font-size: 15px; font-weight: 700; color: var(--p3); margin-left: 4px; }
-  .hero .eq { font-size: 13px; color: var(--tx3); margin-top: 2px; }
-  .tank { position: relative; height: 12px; margin: 12px 0 8px; border-radius: 99px; background: rgba(255,255,255,.07); overflow: hidden; }
-  .tank i { position: absolute; inset: 0; transform-origin: 0 50%; transform: scaleX(0); border-radius: 99px;
-            background: linear-gradient(90deg, var(--p4), var(--p1) 55%, var(--cy)); transition: transform .5s var(--ease); }
-  .tank.full i { background: linear-gradient(90deg, #b45309, var(--gold)); }
-  .tank em { position: absolute; top: 0; bottom: 0; width: 40%; left: 0; transform: translateX(-120%);
-             background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation: sh 2.6s linear infinite; }
-  @keyframes sh { to { transform: translateX(320%); } }
-  .rate { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--tx2); }
+  .hero .hl .hcap { flex: 0 0 auto; padding: 2px 9px; border-radius: 99px; font-size: 11.5px; font-weight: 700; background: rgba(255,255,255,.06); border: 1px solid var(--ln2); }
+  .hero .hl .hpct { flex: 0 0 auto; min-width: 48px; text-align: center; padding: 2px 9px; border-radius: 99px; font-size: 12px; font-weight: 850; color: #fff;
+                    background: linear-gradient(135deg, rgba(var(--lq), .6), rgba(var(--lq2), .45)); border: 1px solid rgba(var(--lq2), .55); }
+  .tank { position: relative; height: 100px; margin: 10px 0; border-radius: 22px; overflow: hidden; isolation: isolate;
+          background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01)), rgba(8,6,16,.6);
+          border: 1px solid rgba(255,255,255,.13); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 -12px 26px rgba(0,0,0,.4); transition: border-color .4s, box-shadow .4s; }
+  .tank .liq { position: absolute; top: 0; bottom: 0; left: 0; width: 100%; transform: translateX(-100%); will-change: transform; transition: transform .6s var(--ease);
+               background: linear-gradient(90deg, rgba(var(--lq), .3), rgba(var(--lq), .72) 48%, rgb(var(--lq2))); }
+  .tank .liq .lqw { position: absolute; top: 0; right: -13px; width: 15px; height: 200%; color: rgb(var(--lq2)); will-change: transform; animation: wv 2.6s linear infinite; }
+  .tank .liq .lqw path { fill: currentColor; }
+  .tank.empty .liq .lqw { display: none; }
+  @keyframes wv { to { transform: translateY(-50%); } }
+  .tank .liq .bubl { position: absolute; inset: 0; overflow: hidden; }
+  .tank .liq .bubl b { position: absolute; left: 0; right: 0; top: 0; height: calc(100% + 120px); will-change: transform; animation: bubu 5.5s linear infinite;
+                       background-size: 130px 120px;
+                       background-image: radial-gradient(circle at 18px 26px, rgba(255,255,255,.5) 0 1.8px, rgba(255,255,255,.12) 2.6px, transparent 3.4px),
+                                         radial-gradient(circle at 64px 88px, rgba(255,255,255,.45) 0 1.3px, rgba(255,255,255,.1) 2.1px, transparent 2.8px),
+                                         radial-gradient(circle at 102px 48px, rgba(255,255,255,.55) 0 2.2px, rgba(255,255,255,.14) 3px, transparent 3.9px),
+                                         radial-gradient(circle at 40px 108px, rgba(255,255,255,.4) 0 1px, transparent 2.2px); }
+  @keyframes bubu { to { transform: translate3d(0, -120px, 0); } }
+  .tank .shn { position: absolute; top: 0; bottom: 0; left: 0; width: 28%; z-index: 2; pointer-events: none; transform: translateX(-160%) skewX(-18deg);
+               background: linear-gradient(90deg, transparent, rgba(255,255,255,.13), transparent); animation: shn 6s ease-in-out infinite; }
+  @keyframes shn { 0%, 55% { transform: translateX(-160%) skewX(-18deg); } 100% { transform: translateX(460%) skewX(-18deg); } }
+  .tank .gls { position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
+               background: linear-gradient(180deg, rgba(255,255,255,.15), transparent 36%), radial-gradient(ellipse 55% 45% at 12% 0%, rgba(255,255,255,.1), transparent 70%); }
+  .tank .vt { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; justify-content: center; padding: 0 16px; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+  .hero .big { font-size: 31px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; white-space: nowrap; }
+  .hero .big small { font-size: 15px; font-weight: 700; color: #ede9fe; margin-left: 4px; }
+  .hero .eq { font-size: 12.5px; color: rgba(255,255,255,.68); margin-top: 3px; }
+  .tank.full { border-color: rgba(251,191,36,.75); box-shadow: 0 0 0 3px rgba(251,191,36,.13), 0 0 26px -4px rgba(251,191,36,.65), inset 0 1px 0 rgba(255,255,255,.1); }
+  .tank.full .liq { background: linear-gradient(90deg, rgba(180,83,9,.55), rgba(245,158,11,.85) 50%, #fcd34d); }
+  .tank.full .liq .lqw { color: #fcd34d; }
+  .rate { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 8px; font-size: 12.5px; color: var(--tx2); }
+  .rate > span { display: inline-block; max-width: 100%; line-height: 1.35; padding: 5px 10px; border-radius: 99px; background: rgba(255,255,255,.05); border: 1px solid var(--ln);
+                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hero.vfull .hl .hpct { color: #1c1203; background: linear-gradient(135deg, #fde047, #f59e0b); border-color: rgba(253,230,138,.8); }   /* v392: полное — золото */
   .rate .fl { color: var(--tx3); text-align: right; }
-  .rate .fl.full { color: var(--gold); font-weight: 600; }
+  .rate .fl.full { color: var(--gold); font-weight: 650; border-color: rgba(251,191,36,.45); }
   .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 50px; border-radius: 15px;
          font-weight: 750; font-size: 16px; letter-spacing: .01em; transition: transform .15s var(--ease), opacity .2s; }
   .btn:active { transform: scale(.97); }
@@ -184,7 +216,10 @@
   .room.hot::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
                      box-shadow: inset 0 0 34px rgba(249,115,22,.55); animation: hot 1.1s ease-in-out infinite alternate; }
   @keyframes hot { from { opacity: .3; } to { opacity: 1; } }
-  .hero.hot .tank i { background: linear-gradient(90deg, #f59e0b, #ef4444 60%, #fde047); }
+  .hero.hot { --lq: 220,38,38; --lq2: 251,146,60; }                /* v392: разгон — жидкость-огонь, волна и пузырьки быстрее */
+  .hero.hot .tank .liq .lqw { animation-duration: 1.1s; }
+  .hero.hot .tank .liq .bubl b { animation-duration: 2.2s; }
+  .hero.tb:not(.hot) { --lq: 37,99,235; --lq2: 56,189,248; }       /* v392: турбо — синяя */
   .hero.hot { border-color: rgba(239,68,68,.45); }
   .rh { position: relative; display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; font-size: 13px; color: var(--tx3); }
   .rh b { color: var(--tx); font-size: 15px; }
@@ -436,8 +471,7 @@
   body[data-skin="ice"], body[data-skin="ice"][data-ch] { --a1: #e0f2fe; --a2: #38bdf8; --sk: 125,211,252; --sk2: 240,249,255; }
   body[data-skin="gold"], body[data-skin="gold"][data-ch] { --a1: #fde68a; --a2: #f59e0b; --sk: 251,191,36; --sk2: 254,243,199; }
   body[data-skin] .hero:not(.hot) { background: linear-gradient(160deg, rgba(var(--sk), .2), rgba(255,255,255,.025) 58%); border-color: rgba(var(--sk), .38); }
-  body[data-skin] .hero:not(.hot) .tank i { background: linear-gradient(90deg, rgba(var(--sk), .5), rgb(var(--sk)) 55%, rgb(var(--sk2))); }
-  body[data-skin] .hero .tank.full i { background: linear-gradient(90deg, #b45309, var(--gold)); }
+  body[data-skin] .hero:not(.hot):not(.tb) { --lq: var(--sk); --lq2: var(--sk); }     /* v392: жидкость в хранилище — цвета темы */
   body[data-skin] .room { border-color: rgba(var(--sk), .42); }
   body[data-skin] .sl:not(.em):not(.gld) { border-color: rgba(var(--sk), .36); background: radial-gradient(circle at 50% 46%, rgba(var(--sk), .34), rgba(255,255,255,.03) 70%); }
   body[data-skin] .room .beam { background: linear-gradient(180deg, transparent, rgba(var(--sk2), .10) 55%, rgba(var(--sk2), .24) 60%, transparent 62%); }
@@ -646,6 +680,9 @@
   .dn-it.gd .gpk .bb em { font-style: normal; font-size: 10.5px; font-weight: 850; color: #1c1203; background: #fde047; border-radius: 99px; padding: 0 5px; margin-left: 4px; }
   .dn-it.gd .gpk .bb[disabled] { opacity: .38; }
   .dn-it.gd .gfull { flex: 1 0 100%; text-align: center; font-size: 13px; font-weight: 750; color: #fde68a; padding: 6px 0 2px; }
+  .dn-it.gd .gsl i.nx { border-style: solid; border-color: rgba(253,230,138,.85); animation: gnx 1.4s ease-in-out infinite; }       /* v392: следующая карта */
+  @keyframes gnx { 50% { opacity: .4; } }
+  .dn-it.gd .gnx { flex: 1 0 100%; font-size: 12px; font-weight: 650; color: #fde68a; margin-top: -2px; }
   .sl.gld .gcnt { position: absolute; left: 5px; bottom: 4px; z-index: 3; padding: 0 5px; border-radius: 99px; font-size: 10.5px; font-weight: 850; line-height: 15px;
                   color: #1c1203; background: linear-gradient(135deg, #fde047, #f59e0b); }
   .dn-pk { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -877,6 +914,13 @@
     <circle cx="9.4" cy="13.6" r="1.5" fill="#22d3ee"/>
     <circle cx="38.6" cy="13.6" r="1.5" fill="#f0abfc"/>
   </symbol>
+  <!-- v392: значок хранилища — сейф с ручкой -->
+  <symbol id="ic-vault" viewBox="0 0 24 24">
+    <rect x="3" y="3.5" width="18" height="16" rx="3.6" fill="url(#mgB)" stroke="#a78bfa" stroke-opacity=".85"/>
+    <circle cx="12" cy="11.5" r="4.3" fill="#0d0817" stroke="#c4b5fd" stroke-width="1.4"/>
+    <path d="M12 8.6v1.5M12 12.9v1.5M9.1 11.5h1.5M13.4 11.5h1.5" stroke="#67e8f9" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M6.5 19.5v1.6M17.5 19.5v1.6" stroke="#a78bfa" stroke-width="1.7" stroke-linecap="round"/>
+  </symbol>
   <!-- v388: «💎 Золотая видеокарта» (донат) -->
   <symbol id="ic-gold" viewBox="0 0 48 48">
     <rect x="2.4" y="12.5" width="2.2" height="24" rx=".8" fill="#b45309"/>
@@ -1039,10 +1083,12 @@
 
   <section class="tab" id="t-farm">
     <div class="card hero" id="hero">
-      <div class="hl"><span>📦 <span id="h-lbl">Хранилище</span></span><b id="h-cap"></b></div>
-      <div class="big mono"><span id="h-val"><span class="zd" id="h-z"></span><span id="h-n">0</span></span><small id="h-u">токенов</small></div>
-      <div class="eq" id="h-eq"></div>
-      <div class="tank" id="tank"><i id="tank-i"></i><em></em></div>
+      <div class="hl"><span class="hlt"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-vault" xlink:href="#ic-vault"></use></svg><span id="h-lbl">Хранилище</span></span><b class="hcap" id="h-cap"></b><b class="hpct mono" id="h-pct">0%</b></div>
+      <div class="tank empty" id="tank">
+        <div class="liq" id="tank-i"><svg class="lqw" viewBox="0 0 16 128" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0H8C14 8 14 24 8 32C2 40 2 56 8 64C14 72 14 88 8 96C2 104 2 120 8 128H0Z"/></svg><div class="bubl"><b></b></div></div>
+        <div class="shn"></div><div class="gls"></div>
+        <div class="vt"><div class="big mono"><span id="h-val"><span class="zd" id="h-z"></span><span id="h-n">0</span></span><small id="h-u">токенов</small></div><div class="eq" id="h-eq"></div></div>
+      </div>
       <div class="rate"><span id="h-rate"></span><span class="fl" id="h-full"></span></div>
       <div class="hbs" id="h-bs" hidden></div>
       <button type="button" class="btn pri" id="b-col">⛏ <span id="b-col-t">Собрать</span></button>
@@ -1252,7 +1298,8 @@
     adm: { title: '🛠 Test mode (only you see it)', open: '🔓 Everything unlocked', openS: 'Any devices and storage, moving and the finale — no goals needed',
            ch: 'Jump to chapter', fill: '📦 Fill the storage', energy: '⚡ Energy 100', lucky: '🍀 Lucky block on collect', oc: '⚡ Overclock without waiting',
            reset: '♻️ Start over (prologue)', resetQ: 'Delete your farm and start from the prologue?', note: 'Your farm is not part of the network — it does not affect players. Any chapter’s story — in the “Story” tab.',
-           done: 'Done ✓', donH: '💎 Try the boosts on yourself', unb: '✖️ Remove all boosts' },
+           done: 'Done ✓', donH: '💎 Try the boosts on yourself', unb: '✖️ Remove all boosts',
+           goldH: '💎 Golden cards on your farm — check ×N and prices', skinH: '🎨 Try any theme — free, only for you' },
     // v388: донат в майнинге и курс фермы
     dnT: 'Speed up your farm', dnS: function (p) { return 'Turbo ×2 from ' + p + ' ₽ · golden graphics card · auto-collect'; },
     dnH: '💎 Farm boosts', dnP: 'Payment — in a private chat with @SloppyX: tap “Buy”, the message is already typed. The admin gives it to you — the bot sends a message.',
@@ -1268,6 +1315,8 @@
     gdHave: function (n, m, p) { return n ? 'You have ' + n + ' of ' + m + ' · +' + p + '% mining' : 'You have none yet · up to ' + m + ' on a farm'; },
     gdPk: function (n) { return n === 1 ? '1 card' : n + ' cards'; }, gdFull: function (m) { return 'All ' + m + ' cards are on your farm ✓'; },
     gdNoFit: 'won’t fit', skLive: 'Live scene',
+    gdNext: function (p) { return 'Next card — ' + p + ' ₽'; },
+    gdPkOff: function (o) { return '−' + o + '% vs one by one'; },
     skNone: 'Classic', skNoneS: 'No theme', skWear: 'Wear', skOn: 'On ✓', skBuy: function (p) { return 'Buy · ' + p + ' ₽'; }, skForever: 'forever',
     skWorn: 'Theme is on 🎨', skOff: 'Theme removed',
     slxAm: function (x) { return '≈ ' + x + ' SLX'; }, slxFor: function (t) { return 'worth ' + t + ' tokens'; }, tokAm: function (t) { return t + ' tokens'; },
@@ -1346,7 +1395,8 @@
     adm: { title: '🛠 Проверка (видишь только ты)', open: '🔓 Всё открыто', openS: 'Любые устройства и хранилище, переезд и финал — без целей',
            ch: 'Перейти в главу', fill: '📦 Заполнить хранилище', energy: '⚡ Энергия 100', lucky: '🍀 Удачный блок при сборе', oc: '⚡ Разгон без ожидания',
            reset: '♻️ Начать заново (пролог)', resetQ: 'Удалить свою ферму и начать с пролога?', note: 'Твоя ферма не входит в сеть — игрокам не мешает. Сюжет любой главы — во вкладке «Сюжет».',
-           done: 'Готово ✓', donH: '💎 Проверить донат на себе', unb: '✖️ Снять всё купленное' },
+           done: 'Готово ✓', donH: '💎 Проверить донат на себе', unb: '✖️ Снять всё купленное',
+           goldH: '💎 Золотых карт на твоей ферме — проверить ×N и цены', skinH: '🎨 Примерить любую тему — бесплатно, только тебе' },
     // v388: донат в майнинге и курс фермы
     dnT: 'Ускорь ферму', dnS: function (p) { return 'Турбо ×2 от ' + p + ' ₽ · золотая видеокарта · автосбор'; },
     dnH: '💎 Донат в майнинге', dnP: 'Оплата — в личке @SloppyX: нажми «Купить», сообщение уже вписано. Выдаст администратор — бот пришлёт сообщение.',
@@ -1362,6 +1412,8 @@
     gdHave: function (n, m, p) { return n ? 'У тебя ' + n + ' из ' + m + ' · +' + p + '% к добыче' : 'Пока ни одной · на ферме до ' + m + ' штук'; },
     gdPk: function (n) { return n + ' ' + plural(n, 'карта', 'карты', 'карт'); }, gdFull: function (m) { return 'Все ' + m + ' карт на ферме ✓'; },
     gdNoFit: 'не влезет', skLive: 'Живая сцена',
+    gdNext: function (p) { return 'Следующая карта — ' + p + ' ₽'; },
+    gdPkOff: function (o) { return '−' + o + '% от цены по одной'; },
     skNone: 'Обычная', skNoneS: 'Без темы', skWear: 'Надеть', skOn: 'Надета ✓', skBuy: function (p) { return 'Купить · ' + p + ' ₽'; }, skForever: 'навсегда',
     skWorn: 'Тема надета 🎨', skOff: 'Тема снята',
     slxAm: function (x) { return '≈ ' + x + ' SLX'; }, slxFor: function (t) { return 'на ' + t + ' ' + (/[а-я]/.test(t) ? 'токенов' : tw(t)); },   // «на 1 млрд токенов»
@@ -1868,8 +1920,11 @@
       setTxt('h-n', sv); setTxt('h-u', tkW(sv));
       setTxt('h-eq', T.inSlx(slx(st)));
       var pct = L.cap > 0 ? Math.min(1, st / L.cap) : 0;
-      setAttr('tank-i', 'tf', 'scaleX(' + pct.toFixed(3) + ')');
+      setAttr('tank-i', 'tf', 'translateX(' + ((pct - 1) * 100).toFixed(2) + '%)');      // v392: жидкость в капсуле
+      setTxt('h-pct', Math.floor(pct * 100 + 1e-9) + '%');
       $('tank').classList.toggle('full', full);
+      $('tank').classList.toggle('empty', pct < 0.015);
+      $('hero').classList.toggle('vfull', full);
       var hot = L.ocl > 0 && d.on !== false, tb = L.bsl > 0 && d.on !== false;
       var sb = $('slots');
       sb.classList.toggle('stop', d.on === false || full);
@@ -2246,14 +2301,18 @@
     if (gds.length || sk.length) h += '<div class="dn-sec">💎 ' + esc(T.secF) + '</div>';
     if (gds.length) {                                // v391: золотых видеокарт — несколько: ячейки «сколько есть» и наборы кнопками
       var g1 = gds[0], gn = Number(d.gold) || 0, gm = (S.cfg && S.cfg.gold_max) || 10, unit = g1.price / (g1.val || 1);
+      var gp = d.gold_px || null;                    // v392: лестница цен для этого игрока — каждая следующая карта дороже
       h += '<div class="dn-it gd bd" style="--ic:' + DN_RGB.gold + '"><span class="dn-bd g">' + esc(T.bdEver) + '</span><div class="ico">' + dnIco('ic-gold') + '</div><div class="tx"><b>'
         + esc(EN ? g1.en : g1.ru) + '</b><small>' + esc(EN ? g1.d_en : g1.d_ru) + '</small><small class="on" style="color:#fde68a">' + esc(T.gdHave(gn, gm, goldPct(gn))) + '</small></div>'
-        + '<div class="gsl">' + Array.apply(null, Array(gm)).map(function (_, i) { return '<i' + (i < gn ? ' class="on"' : '') + '></i>'; }).join('') + '</div>';
+        + '<div class="gsl">' + Array.apply(null, Array(gm)).map(function (_, i) { return '<i' + (i < gn ? ' class="on"' : i === gn ? ' class="nx"' : '') + '></i>'; }).join('') + '</div>';
+      if (gp && gp.next && gn < gm) h += '<div class="gnx">' + esc(T.gdNext(num(gp.next), gp.step)) + '</div>';
       if (gn >= gm) h += '<div class="gfull">' + esc(T.gdFull(gm)) + '</div>';
       else h += '<div class="gpk">' + gds.map(function (x) {
-          var n = x.val || 1, fit = gn + n <= gm, off = n > 1 ? Math.round((1 - x.price / (unit * n)) * 100) : 0;
-          return '<button type="button" class="bb hot" data-dbuy="' + esc(x.id) + '"' + (fit ? '' : ' disabled') + '><span>' + esc(T.gdPk(n)) + (off > 0 ? '<em>−' + off + '%</em>' : '')
-            + '</span><small>' + (fit ? num(x.price) + ' ₽' : esc(T.gdNoFit)) + '</small></button>';
+          var n = x.val || 1, gi = gp && gp.items && gp.items[x.id];
+          var fit = gi ? gi.price != null : gn + n <= gm, price = gi ? gi.price : x.price;
+          var off = gi ? (n > 1 ? gi.off : 0) : (n > 1 ? Math.round((1 - x.price / (unit * n)) * 100) : 0);
+          return '<button type="button" class="bb hot" data-dbuy="' + esc(x.id) + '"' + (fit ? '' : ' disabled') + '><span>' + esc(T.gdPk(n)) + (off > 0 && fit ? '<em>−' + off + '%</em>' : '')
+            + '</span><small>' + (fit ? num(price) + ' ₽' : esc(T.gdNoFit)) + '</small></button>';
         }).join('') + '</div>';
       h += '</div>';
     }
@@ -2308,8 +2367,9 @@
     if (b) {
       var x = (S.shop || []).filter(function (y) { return y.id === b.getAttribute('data-dbuy'); })[0]; if (!x) return;
       hap('medium');
+      var gpi = x.kind === 'gold' && S.d && S.d.gold_px && S.d.gold_px.items && S.d.gold_px.items[x.id];      // v392: цена по лестнице
       if (x.kind === 'slx') donOpen(T.dnMsgS(EN ? x.en : x.ru, num(x.val), slx(x.val / fp()), x.price, id));
-      else donOpen(T.dnMsg(x.e, EN ? x.en : x.ru, x.price, id));
+      else donOpen(T.dnMsg(x.e, EN ? x.en : x.ru, gpi && gpi.price ? gpi.price : x.price, id));
     } else if (w) {                                  // v390: надеть свою тему (или обычную) — сразу на ферме и в топе
       var v = w.getAttribute('data-wear');
       hap('sel');
@@ -2503,9 +2563,17 @@
       + (S.shop ? '<div class="sh" style="margin:12px 0 4px">' + esc(T.adm.donH) + '</div><div class="admgrid">' + (S.shop || []).filter(function (x) { return x.kind !== 'slx'; }).map(function (x) {   // v390: SLX пакеты — не на себе
           return '<button type="button" class="btn sec" data-adm="give" data-v="' + esc(x.id) + '">' + esc(x.e + ' ' + (EN ? x.en : x.ru)) + '</button>'; }).join('')
           + '<button type="button" class="btn sec" data-adm="unboost">' + esc(T.adm.unb) + '</button></div>' : '')
+      // v392: «чтобы админ смог всё проверить» — сразу любое число золотых карт (×N и лестница цен в донате) и любая тема без покупки
+      + '<div class="sh" style="margin:12px 0 4px">' + esc(T.adm.goldH) + '</div><div class="chips">' + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function (n) {
+          return '<button type="button" class="chip' + ((Number(d.gold) || 0) === n ? ' on' : '') + '" data-adm="gold" data-v="' + n + '">' + (n ? '💎' + n : '0') + '</button>'; }).join('') + '</div>'
+      + '<div class="sh" style="margin:12px 0 4px">' + esc(T.adm.skinH) + '</div><div class="chips">' + [''].concat(Object.keys(SKIN_NM)).map(function (k) {
+          return '<button type="button" class="chip' + ((d.skin || '') === k ? ' on' : '') + '" data-adm="skin" data-v="' + k + '">'
+            + esc(k ? SKIN_NM[k][0] + ' ' + SKIN_NM[k][EN ? 2 : 1] : T.skNone) + '</button>'; }).join('') + '</div>'
       + '<button type="button" class="btn sec sm" style="margin-top:8px;color:var(--red)" data-adm="reset">' + esc(T.adm.reset) + '</button>'
       + '<p class="note">' + esc(T.adm.note) + '</p>');
   }
+  var SKIN_NM = { space: ['🌌', 'Космос', 'Space'], lava: ['🔥', 'Лава', 'Lava'], ice: ['❄️', 'Арктика', 'Arctic'], gold: ['👑', 'Золото', 'Gold'],
+                  sakura: ['🌸', 'Сакура', 'Sakura'], neon: ['🌃', 'Неон', 'Neon'] };          // v392: темы — для «🛠 Проверки»
   function askYes(q) {                              // подтверждение: окно Telegram, иначе обычное
     return new Promise(function (ok) {
       try { if (tg && tg.showConfirm) { tg.showConfirm(q, function (y) { ok(!!y); }); return; } } catch (e) {}
@@ -2515,7 +2583,8 @@
   function admAct(a, v) {
     var ops = { open: ['adm_open', { on: !S.d.open }], ch: ['adm_ch', { ch: Number(v) }], fill: ['adm_fill', {}], energy: ['adm_energy', {}],
                 lucky: ['adm_lucky', {}], oc: ['adm_oc', {}], reset: ['adm_reset', {}],
-                give: ['adm_give', { item: v }], unboost: ['adm_unboost', {}] }, o = ops[a];             // v388: донат на себе
+                give: ['adm_give', { item: v }], unboost: ['adm_unboost', {}],             // v388: донат на себе
+                gold: ['adm_gold', { n: Number(v) }], skin: ['adm_skin', { id: v || '' }] }, o = ops[a];     // v392: любое число карт, любая тема
     if (!o) return;
     (a === 'reset' ? askYes(T.adm.resetQ) : Promise.resolve(true)).then(function (yes) {
       if (!yes) return;
