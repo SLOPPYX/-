@@ -555,13 +555,7 @@
     -webkit-mask-image: radial-gradient(closest-side, #000 22%, transparent); mask-image: radial-gradient(closest-side, #000 22%, transparent); }
   body[data-skin="gold"] .scene .fb { --x: 170; --y: 470; --w: 180; --h: 180; border-radius: 50%; animation: brt 4s ease-in-out infinite;
     background: radial-gradient(closest-side, rgba(255,251,235,.6), rgba(251,191,36,.2) 55%, transparent); }
-  /* 🌸 луна мерцает, у подножия горы плывёт розовый туман */
-  body[data-skin="sakura"] .scene .fa { --x: 172; --y: 130; --w: 240; --h: 240; border-radius: 50%; animation: halo 6s ease-in-out infinite;
-    background: radial-gradient(closest-side, rgba(255,241,247,.4), rgba(251,207,232,.13) 55%, transparent); }
-  body[data-skin="sakura"] .scene .fb { --x: -80; --y: 652; --w: 560; --h: 74; border-radius: 50%; animation: mist 15s ease-in-out infinite alternate;
-    background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(251,207,232,.3), transparent 72%); }
-  @keyframes halo { 0%, 100% { transform: scale(.92); opacity: .55; } 50% { transform: scale(1.06); opacity: 1; } }
-  @keyframes mist { from { transform: translateX(-9%); } to { transform: translateX(9%); } }
+  /* 🌸 «Сакура» с v393 — 3D-сцена (.scene.s3, ниже) */
   /* 🌃 вывеска SLX мигает, по эстакаде едет поезд */
   body[data-skin="neon"] .scene .fa { --x: 232; --y: 540; --w: 146; --h: 82; border-radius: 50%; animation: flick 5s linear infinite;
     background: radial-gradient(closest-side, rgba(240,171,252,.6), rgba(217,70,239,.22) 58%, transparent); }
@@ -604,6 +598,123 @@
   body[data-skin="sakura"] .fx .tpc { width: 11px; height: 7px; border-radius: 80% 0 80% 0; background: linear-gradient(135deg, #fdf2f8, #f9a8d4 55%, #ec4899); }
   body[data-skin="neon"] .fx .tpc { width: 3px; height: 13px; margin: -6px 0 0 -1.5px; border-radius: 2px; background: #67e8f9; box-shadow: 0 0 8px #22d3ee; }
   body[data-skin="neon"] .fx .tpc.alt { background: #f0abfc; box-shadow: 0 0 8px #e879f9; }
+
+  /* v393: 3D-сцены тем. Неподвижное одной глубины — один слой-план (.ly), живые части — свои небольшие слои (.an). Каждый слой
+     стоит в точке холста 1200×860 (JS), сдвигается от наклона/мыши (свойство translate), ближние (.dr) ещё и медленно «дышат».
+     Замер (CPU ×4): дорого не движение, а число и размер слоёв — поэтому планов 3–4, а не 20 */
+  .scene.s3 { background: #07060c; }
+  /* сцена ярче старых — сверху, под шапкой (название главы, кошелёк), чуть темнее: текст читается и на цветах сакуры */
+  .bg .scene.s3::after { background: linear-gradient(180deg, rgba(7,6,12,.55) 0%, rgba(7,6,12,.32) 8%, rgba(7,6,12,.34) 24%, rgba(7,6,12,.56) 48%, rgba(7,6,12,.4) 74%, rgba(7,6,12,.1) 100%); }
+  .scene.s3 .ly { position: absolute; left: 0; top: 0; pointer-events: none; will-change: transform; }
+  .scene.s3 .ly.dr { animation: s3dr 23s ease-in-out infinite alternate; }
+  .scene.s3 .ly.full { right: 0; bottom: 0; }
+  .scene.s3 .ly > .an { position: absolute; inset: 0; will-change: transform; }
+  .scene.s3 .ly svg, .scene.s3 .ly img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+  @keyframes s3dr { from { transform: translate3d(calc(var(--d, 0) * -10px), calc(var(--d, 0) * 5px), 0); } to { transform: translate3d(calc(var(--d, 0) * 10px), calc(var(--d, 0) * -5px), 0); } }
+  .s3 .a-rot { animation: s3rot 150s linear infinite; }
+  .s3 .a-pulse { animation: s3pulse 7s ease-in-out infinite; }
+  .s3 .a-lx { animation: s3lx 200s linear infinite; }
+  .s3 .a-lxr { animation: s3lxr 260s linear infinite; }
+  .s3 .a-sw { animation: s3sw 19s ease-in-out infinite alternate; }
+  .s3 .a-tw { animation: s3tw 3.2s ease-in-out infinite; }
+  .s3 .a-shim { transform-origin: 50% 0; animation: s3shim 2.6s ease-in-out infinite; }
+  .s3 .a-flick { animation: s3flk 4.3s linear infinite; }
+  .s3 .a-bsl { transform-origin: 0 9%; animation: s3bsl 9s ease-in-out infinite; }
+  .s3 .a-bsr { transform-origin: 100% 28%; animation: s3bsr 11s ease-in-out infinite; }
+  .s3 .a-shoot, .s3 .a-shoot2 { opacity: 0; animation: s3shoot 7s ease-in infinite; }
+  .s3 .a-shoot2 { animation-name: s3shoot2; }
+  .s3 .a-blink { animation: s3blk 2.2s linear infinite; }
+  .s3 .a-train { animation: s3train 26s linear infinite; }
+  .s3 .a-hair { transform-origin: 54% 20%; animation: s3hair 2.4s ease-in-out infinite; }
+  .s3 .a-orb { animation: s3orb 9s ease-in-out infinite alternate; }
+  .s3 .a-orb2 { animation: s3orb2 12s ease-in-out infinite alternate; }
+  @keyframes s3rot { to { transform: rotate(360deg); } }
+  @keyframes s3pulse { 0%, 100% { transform: scale(.94); opacity: .7; } 50% { transform: scale(1.05); opacity: 1; } }
+  @keyframes s3lx { to { transform: translate3d(-50%, 0, 0); } }
+  @keyframes s3lxr { from { transform: translate3d(-50%, 0, 0); } to { transform: none; } }
+  @keyframes s3sw { from { transform: translate3d(-6%, 0, 0); } to { transform: translate3d(6%, 0, 0); } }
+  @keyframes s3tw { 0%, 100% { opacity: .15; } 50% { opacity: 1; } }
+  @keyframes s3shim { 0%, 100% { transform: scaleX(1); opacity: .95; } 50% { transform: scaleX(.84); opacity: .6; } }
+  @keyframes s3flk { 0%, 100% { opacity: 1; } 18% { opacity: .8; } 22% { opacity: .96; } 47% { opacity: .74; } 52% { opacity: 1; } 76% { opacity: .85; } 80% { opacity: .97; } }
+  @keyframes s3bsl { 0%, 100% { transform: rotate(0); } 24% { transform: rotate(1deg); } 48% { transform: rotate(-.5deg); } 68% { transform: rotate(2.4deg); } 80% { transform: rotate(-.7deg); } }
+  @keyframes s3bsr { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-1.1deg); } 55% { transform: rotate(.5deg); } 72% { transform: rotate(-2.2deg); } 84% { transform: rotate(.6deg); } }
+  @keyframes s3shoot { 0% { transform: translate3d(-30%, -30%, 0) scale(.4); opacity: 0; } 2% { opacity: 1; } 13% { transform: translate3d(60%, 60%, 0) scale(1); opacity: 0; } 100% { transform: translate3d(60%, 60%, 0); opacity: 0; } }
+  @keyframes s3shoot2 { 0% { transform: translate3d(-30%, -30%, 0) scale(.4); opacity: 0; } 2% { opacity: .9; } 10% { transform: translate3d(55%, 55%, 0) scale(1); opacity: 0; } 100% { transform: translate3d(55%, 55%, 0); opacity: 0; } }
+  @keyframes s3blk { 0%, 55%, 100% { opacity: .12; } 64%, 80% { opacity: 1; } }
+  @keyframes s3train { 0% { transform: translate3d(-30%, 0, 0); } 60%, 100% { transform: translate3d(110%, 0, 0); } }
+  @keyframes s3hair { 0%, 100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.8deg) skewX(-1.5deg); } }
+  @keyframes s3orb { from { transform: translate3d(0, 0, 0); opacity: .55; } to { transform: translate3d(-16px, -30px, 0); opacity: 1; } }
+  @keyframes s3orb2 { from { transform: translate3d(0, 0, 0) scale(1); opacity: .5; } to { transform: translate3d(20px, -24px, 0) scale(1.15); opacity: .95; } }
+
+  /* 🌸 лепесток летит по ветру и кружится в объёме — одной анимацией (путь и поворот в одних кадрах), перспектива — общая */
+  .s3 .k-pts { perspective: 640px; }
+  .s3 .pt { position: absolute; background: center/contain no-repeat; will-change: transform; }
+  @keyframes s3pf1 { 0% { transform: translate3d(0, 0, 0) rotate3d(1, .55, .25, 0deg); } 28% { transform: translate3d(16vw, 30vh, 0) rotate3d(1, .55, .25, 560deg); }
+                     52% { transform: translate3d(34vw, 52vh, 0) rotate3d(1, .55, .25, 1040deg); } 76% { transform: translate3d(44vw, 82vh, 0) rotate3d(1, .55, .25, 1520deg); }
+                     100% { transform: translate3d(66vw, 128vh, 0) rotate3d(1, .55, .25, 2000deg); } }
+  @keyframes s3pf2 { 0% { transform: translate3d(0, 0, 0) rotate3d(.4, 1, .3, 0deg); } 30% { transform: translate3d(28vw, 22vh, 0) rotate3d(.4, 1, .3, 480deg); }
+                     55% { transform: translate3d(36vw, 56vh, 0) rotate3d(.4, 1, .3, 900deg); } 80% { transform: translate3d(64vw, 88vh, 0) rotate3d(.4, 1, .3, 1320deg); }
+                     100% { transform: translate3d(80vw, 126vh, 0) rotate3d(.4, 1, .3, 1640deg); } }
+  @keyframes s3pf3 { 0% { transform: translate3d(0, 0, 0) rotate3d(1, .2, .6, 0deg); } 35% { transform: translate3d(8vw, 40vh, 0) rotate3d(1, .2, .6, 700deg); }
+                     60% { transform: translate3d(30vw, 64vh, 0) rotate3d(1, .2, .6, 1200deg); } 100% { transform: translate3d(48vw, 130vh, 0) rotate3d(1, .2, .6, 2000deg); } }
+  /* 🌸 светлячки над водой: одна полоса-узор у воды, поднимается */
+  .s3 .ly.k-ff { overflow: hidden; }
+  .s3 .ffp { position: absolute; left: 0; right: 0; top: 0; height: calc(100% + 420px); will-change: transform; animation: s3ffu 40s linear infinite; background-size: 380px 420px;
+             background-image: radial-gradient(circle at 40px 60px, rgba(255,243,196,.95) 0 1.3px, rgba(255,205,120,.45) 3px, transparent 8px),
+                               radial-gradient(circle at 170px 250px, rgba(255,243,196,.9) 0 1.1px, rgba(255,190,110,.4) 2.6px, transparent 7px),
+                               radial-gradient(circle at 300px 140px, rgba(255,236,180,.95) 0 1.5px, rgba(255,200,120,.45) 3.2px, transparent 9px),
+                               radial-gradient(circle at 250px 370px, rgba(255,243,196,.8) 0 1px, rgba(255,190,110,.35) 2.4px, transparent 6px),
+                               radial-gradient(circle at 90px 330px, rgba(255,236,180,.9) 0 1.2px, rgba(255,200,120,.4) 2.8px, transparent 7.5px); }
+  @keyframes s3ffu { to { transform: translate3d(0, -420px, 0); } }
+
+  /* 🌌 туманность (картинка, пока грузится — свой градиент) и звёзды — один неподвижный план (наплыв всего экрана стоил кадров); звёзды летят навстречу */
+  .s3 .nb { position: absolute; inset: 0;
+            background: radial-gradient(ellipse 55% 38% at 28% 68%, rgba(168,85,247,.38), transparent 70%), radial-gradient(ellipse 50% 36% at 76% 30%, rgba(34,211,238,.2), transparent 70%),
+                        radial-gradient(ellipse 70% 55% at 55% 48%, rgba(236,72,153,.2), transparent 72%), #05040f; }
+  .s3 .nb .im { position: absolute; inset: 0; background: url(img/mine/deep_neb.webp?v=393) center/cover no-repeat; opacity: 0; transition: opacity 1.4s; }
+  .s3 .nb.on .im { opacity: 1; }
+  .s3 .fly { position: absolute; inset: 0; opacity: 0; will-change: transform, opacity; transform-origin: var(--fo, 50% 40%); animation: s3fly 11s linear infinite;
+             background-size: 260px 260px;
+             background-image: radial-gradient(1.7px 1.7px at 30px 40px, #fff, transparent), radial-gradient(1.2px 1.2px at 140px 90px, #c7d2fe, transparent),
+                               radial-gradient(1.9px 1.9px at 210px 180px, #fff, transparent), radial-gradient(1.1px 1.1px at 80px 220px, #a5f3fc, transparent),
+                               radial-gradient(1.4px 1.4px at 190px 30px, #fde68a, transparent), radial-gradient(1.3px 1.3px at 100px 150px, #fff, transparent); }
+  @keyframes s3fly { 0% { transform: scale(.4); opacity: 0; } 22% { opacity: .9; } 80% { opacity: .9; } 100% { transform: scale(2.2); opacity: 0; } }
+  /* чёрная дыра: свечение и свет вокруг тени (SVG), диск в 3D — задняя половина за тенью, передняя перед ней */
+  .s3 .k-bh .dk { position: absolute; inset: 0; perspective: 1000px; }
+  .s3 .k-bh .dk.f { -webkit-clip-path: inset(50% 0 0 0); clip-path: inset(50% 0 0 0); }
+  .s3 .k-bh .dk i { position: absolute; left: 5%; top: 5%; width: 90%; height: 90%; border-radius: 50%; will-change: transform;
+                  background: conic-gradient(from 0deg, #fffaf0, #ffe2a8 8%, #ffb15c 17%, #ff7b3a 27%, #ffd08a 37%, #fff6e2 46%, #ffc069 56%, #ff8a3d 66%, #ffd8a0 78%, #ff9f4f 89%, #fffaf0);
+                  -webkit-mask: radial-gradient(closest-side, transparent 30%, #000 33%, #000 41%, rgba(0,0,0,.3) 58%, rgba(0,0,0,.08) 78%, transparent 92%);
+                          mask: radial-gradient(closest-side, transparent 30%, #000 33%, #000 41%, rgba(0,0,0,.3) 58%, rgba(0,0,0,.08) 78%, transparent 92%);
+                  transform: rotateX(82deg) rotate(0deg); animation: s3disk 9s linear infinite; }
+  @keyframes s3disk { to { transform: rotateX(82deg) rotate(360deg); } }
+  .s3 .k-bh .dop { position: absolute; left: 14%; top: 46.5%; width: 34%; height: 7%; border-radius: 50%;
+                 background: radial-gradient(closest-side, rgba(255,252,240,.8), rgba(255,210,140,.3) 55%, transparent); }
+
+  /* 🌠 поезд: светлые окна едут по эстакаде */
+  .s3 .trw { position: absolute; left: 0; top: 0; width: 22%; height: 100%; }
+  .s3 .trw b { position: absolute; top: 14%; width: 9%; height: 58%; border-radius: 1px; background: #ffd99a; box-shadow: 0 0 6px rgba(255,210,122,.85); }
+
+  /* v393: «Глубокий космос» и «Мечтатель» — цвета страницы, хранилища и комнаты, кольцо в топе, частицы от нажатий; узор искр/лепестков
+     .pz под 3D-темами не нужен — у сцен свои звёзды, огоньки и лепестки (и это два больших движущихся слоя) */
+  body[data-skin="deep"], body[data-skin="deep"][data-ch] { --a1: #c4b5fd; --a2: #22d3ee; --sk: 167,139,250; --sk2: 255,196,130; }
+  body[data-skin="dream"], body[data-skin="dream"][data-ch] { --a1: #ffb38a; --a2: #a5b4fc; --sk: 125,190,255; --sk2: 255,179,138; }
+  body[data-skin="deep"] .room { background: radial-gradient(ellipse 90% 55% at 70% -10%, rgba(255,170,100,.16), transparent 70%), linear-gradient(180deg, rgba(49,20,99,.38), rgba(255,255,255,.012)); }
+  body[data-skin="dream"] .room { background: radial-gradient(ellipse 90% 50% at 50% 110%, rgba(255,157,108,.2), transparent 70%), linear-gradient(180deg, rgba(24,24,74,.4), rgba(255,255,255,.012)); }
+  .tr .tav[data-sk="deep"] { border-color: #c4b5fd; box-shadow: 0 0 10px -1px rgba(255,170,100,.85); }
+  .tr .tav[data-sk="dream"] { border-color: #7dbeff; box-shadow: 0 0 10px -1px rgba(255,157,108,.85); }
+  body[data-skin="sakura"] .bg .pz, body[data-skin="deep"] .bg .pz, body[data-skin="dream"] .bg .pz { display: none; }
+  body[data-skin="deep"] .fx .tpc { width: 15px; height: 15px; margin: -7.5px 0 0 -7.5px; background: radial-gradient(circle, #fff 0 20%, #ffd9a0 46%, rgba(167,139,250,.65) 72%);
+    -webkit-clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); }
+  body[data-skin="deep"] .fx .tpc.alt { background: radial-gradient(circle, #fff 0 20%, #a5f3fc 46%, rgba(129,140,248,.6) 72%); }
+  body[data-skin="dream"] .fx .tpc { width: 14px; height: 14px; margin: -7px 0 0 -7px; background: radial-gradient(circle, #fff 0 22%, #fde68a 50%, rgba(251,146,60,.65) 74%);
+    -webkit-clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+  body[data-skin="dream"] .fx .tpc.alt { background: radial-gradient(circle, #fff 0 22%, #a5f3fc 50%, rgba(96,165,250,.6) 74%); }
+  /* превью 3D-тем в донате — снимок сцены (img/mine/pv_*.webp), пока грузится — цвет темы */
+  .dn-sk .pv.s3p img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .dn-sk .pv[data-p="sakura"] { background: #3a1747; }
+  .dn-sk .pv[data-p="deep"] { background: radial-gradient(ellipse 70% 80% at 70% 40%, rgba(255,170,100,.3), transparent 70%), #0b0718; }
+  .dn-sk .pv[data-p="dream"] { background: linear-gradient(180deg, #121a48, #84347f 70%, #f0706c); }
 
   /* v390: окно доната заново — шапка с камнем, «🎁 Стартовый набор» в бегущей радужной рамке, разделы, карточки со значками,
      темы с живым превью, SLX и токены плитками */
@@ -1228,7 +1339,7 @@
   var useInit = !SECRET && !!INIT;
   var EN = q.get('lang') === 'en';
   if (q.get('motion') === 'reduce') document.documentElement.classList.add('calm');
-  tgInit(); if (!tg) window.__mineTg = tgInit;
+  tgInit(); if (!tg) window.__mineTg = function () { tgInit(); if (s3Cur) p3Gyro(); };     // v393: SDK пришёл позже — включить гироскоп для 3D-темы
 
   // ── устройства, места, герои ──
   var RIG = {
@@ -1299,7 +1410,7 @@
            ch: 'Jump to chapter', fill: '📦 Fill the storage', energy: '⚡ Energy 100', lucky: '🍀 Lucky block on collect', oc: '⚡ Overclock without waiting',
            reset: '♻️ Start over (prologue)', resetQ: 'Delete your farm and start from the prologue?', note: 'Your farm is not part of the network — it does not affect players. Any chapter’s story — in the “Story” tab.',
            done: 'Done ✓', donH: '💎 Try the boosts on yourself', unb: '✖️ Remove all boosts',
-           goldH: '💎 Golden cards on your farm — check ×N and prices', skinH: '🎨 Try any theme — free, only for you' },
+           goldH: '💎 Golden cards on your farm — check ×N and prices', skinH: '🎨 Try any theme — free, only for you (💤 — hidden from sale)' },
     // v388: донат в майнинге и курс фермы
     dnT: 'Speed up your farm', dnS: function (p) { return 'Turbo ×2 from ' + p + ' ₽ · golden graphics card · auto-collect'; },
     dnH: '💎 Farm boosts', dnP: 'Payment — in a private chat with @SloppyX: tap “Buy”, the message is already typed. The admin gives it to you — the bot sends a message.',
@@ -1396,7 +1507,7 @@
            ch: 'Перейти в главу', fill: '📦 Заполнить хранилище', energy: '⚡ Энергия 100', lucky: '🍀 Удачный блок при сборе', oc: '⚡ Разгон без ожидания',
            reset: '♻️ Начать заново (пролог)', resetQ: 'Удалить свою ферму и начать с пролога?', note: 'Твоя ферма не входит в сеть — игрокам не мешает. Сюжет любой главы — во вкладке «Сюжет».',
            done: 'Готово ✓', donH: '💎 Проверить донат на себе', unb: '✖️ Снять всё купленное',
-           goldH: '💎 Золотых карт на твоей ферме — проверить ×N и цены', skinH: '🎨 Примерить любую тему — бесплатно, только тебе' },
+           goldH: '💎 Золотых карт на твоей ферме — проверить ×N и цены', skinH: '🎨 Примерить любую тему — бесплатно, только тебе (💤 — скрыта из продажи)' },
     // v388: донат в майнинге и курс фермы
     dnT: 'Ускорь ферму', dnS: function (p) { return 'Турбо ×2 от ' + p + ' ₽ · золотая видеокарта · автосбор'; },
     dnH: '💎 Донат в майнинге', dnP: 'Оплата — в личке @SloppyX: нажми «Купить», сообщение уже вписано. Выдаст администратор — бот пришлёт сообщение.',
@@ -1671,14 +1782,6 @@
   function gStops(st) { return st.map(function (s) { return '<stop offset="' + s[0] + '" stop-color="' + s[1] + '"' + (s[2] != null ? ' stop-opacity="' + s[2] + '"' : '') + '/>'; }).join(''); }
   function lg(id, x2, y2, st) { return '<linearGradient id="' + id + '§" x1="0" y1="0" x2="' + x2 + '" y2="' + y2 + '">' + gStops(st) + '</linearGradient>'; }
   function rg(id, st, cx, cy, r) { return '<radialGradient id="' + id + '§"' + (cx != null ? ' cx="' + cx + '" cy="' + cy + '" r="' + r + '"' : '') + '>' + gStops(st) + '</radialGradient>'; }
-  function blossoms(seed, pts) {                     // гроздья цветков сакуры вокруг точек
-    var r = srand(seed), h = '', cs = ['#fbcfe8', '#f9a8d4', '#f472b6', '#fce7f3'];
-    pts.forEach(function (p) {
-      for (var i = 0; i < 7; i++) h += '<circle cx="' + (p[0] + (r() * 2 - 1) * 13).toFixed(1) + '" cy="' + (p[1] + (r() * 2 - 1) * 10).toFixed(1) + '" r="' + (3.8 + r() * 4.6).toFixed(1)
-        + '" fill="' + cs[(r() * 4) | 0] + '" opacity="' + (0.78 + r() * 0.2).toFixed(2) + '"/>';
-    });
-    return h;
-  }
   function pagoda() {                                // золотой храм: 5 ярусов, крыши с загнутыми краями, окна светятся
     var h = '<rect x="22" y="698" width="116" height="10" rx="2" fill="#1a0e04"/>';
     for (var k = 0; k < 5; k++) {
@@ -1689,12 +1792,6 @@
         + 'Z" fill="#1a0e04" stroke="#fbbf24" stroke-opacity=".55" stroke-width="1"/>';
     }
     return h + '<path d="M80 558V522" stroke="#fde68a" stroke-width="2"/><path d="M74 532H86M75 540H85M76 548H84" stroke="#fbbf24" stroke-width="1.6"/><circle cx="80" cy="520" r="3.2" fill="#fde68a"/>';
-  }
-  function torii() {
-    return '<path d="M58 622Q150 606 242 622L246 614Q150 594 54 614Z" fill="#1a0610"/><rect x="70" y="622" width="160" height="9" fill="url(#sk-tor§)"/>'
-      + '<rect x="80" y="648" width="140" height="8" fill="url(#sk-tor§)"/><rect x="145" y="631" width="10" height="17" fill="url(#sk-tor§)"/>'
-      + '<path d="M98 631H108L113 760H93Z" fill="url(#sk-tor§)"/><path d="M192 631H202L207 760H187Z" fill="url(#sk-tor§)"/>'
-      + '<rect x="90" y="752" width="26" height="8" fill="#1a0610"/><rect x="184" y="752" width="26" height="8" fill="#1a0610"/>';
   }
   var SCN = {
     space: { pv: '0 20 400 226', svg: function () {             // 🌌 планета с кольцами, туманность, обсерватория на холме
@@ -1786,27 +1883,6 @@
         + '<rect x="0" y="690" width="400" height="170" fill="url(#gd-sea§)"/>' + refl
         + '<path d="M0 860V700C30 690 70 688 110 700C150 712 175 740 190 780C200 810 210 840 214 860Z" fill="url(#gd-cf§)"/>' + pagoda();
     } },
-    sakura: { pv: '0 548 400 226', svg: function () {           // 🌸 луна, гора, тории в воде, ветви сакуры, фонари
-      return '<defs>' + lg('sk-sky', 0, 1, [[0, '#0b0619'], [.3, '#24123d'], [.58, '#5a2257'], [.8, '#a8456f'], [.94, '#f08f86'], [1, '#f7b79a']])
-        + rg('sk-mo', [[0, '#fffaf5'], [.6, '#ffe4ef'], [1, '#fbcfe8']], .42, .4, .7) + rg('sk-mg', [[0, '#ffe4ef', .55], [1, '#ffe4ef', 0]])
-        + lg('sk-mt', 0, 1, [[0, '#7a3f78'], [1, '#2b1435']]) + lg('sk-cap', 0, 1, [[0, '#fff1f7'], [1, '#f9c6dc']]) + lg('sk-tor', 0, 1, [[0, '#f43f5e'], [1, '#9f1239']])
-        + lg('sk-wat', 0, 1, [[0, '#4a1d45'], [1, '#12060f']]) + rg('sk-lan', [[0, '#fde68a', .9], [1, '#fb923c', 0]]) + '</defs>'
-        + '<rect width="400" height="860" fill="url(#sk-sky§)"/>' + svgStars(40, 41, 0, 380, ['#ffffff', '#fce7f3', '#e9d5ff'], 0.9)
-        + '<circle cx="292" cy="250" r="150" fill="url(#sk-mg§)"/><circle cx="292" cy="250" r="56" fill="url(#sk-mo§)"/>'
-        + '<g fill="#f9a8d4" opacity=".16"><circle cx="276" cy="236" r="9"/><circle cx="306" cy="268" r="6"/><circle cx="300" cy="228" r="4"/></g>'
-        + '<g fill="#ffd5e5"><ellipse cx="240" cy="290" rx="120" ry="5" opacity=".28"/><ellipse cx="330" cy="304" rx="90" ry="4" opacity=".22"/><ellipse cx="120" cy="420" rx="140" ry="6" opacity=".18"/></g>'
-        + '<path d="M10 704L150 590C170 572 188 562 200 560C212 562 230 572 250 590L390 704Z" fill="url(#sk-mt§)"/>'
-        + '<path d="M150 590C170 572 188 562 200 560C212 562 230 572 250 590L237 600L224 590L211 604L198 591L184 603L168 592Z" fill="url(#sk-cap§)"/>'
-        + '<path d="M0 694C60 672 120 682 170 692C230 702 300 674 400 686V860H0Z" fill="#2a1233"/>'
-        + '<rect x="326" y="694" width="8" height="16" fill="#1a0b1d"/><path d="M321 696h18l-4-7h-10z" fill="#1a0b1d"/><circle cx="330" cy="702" r="11" fill="url(#sk-lan§)"/>'
-        + '<rect x="362" y="690" width="8" height="16" fill="#1a0b1d"/><path d="M357 692h18l-4-7h-10z" fill="#1a0b1d"/><circle cx="366" cy="698" r="11" fill="url(#sk-lan§)"/>'
-        + '<rect x="0" y="724" width="400" height="136" fill="url(#sk-wat§)"/>'
-        + '<g stroke="#ffe4ef" stroke-linecap="round" stroke-width="2"><path d="M270 740H314" stroke-opacity=".45"/><path d="M262 752H322" stroke-opacity=".32"/><path d="M276 764H308" stroke-opacity=".28"/><path d="M266 778H318" stroke-opacity=".2"/></g>'
-        + '<g opacity=".22" transform="matrix(1 0 0 -1 0 1520)">' + torii() + '</g>' + torii()
-        + '<g fill="none" stroke="#2a0f1d" stroke-linecap="round"><path d="M-10 64C40 76 80 98 120 94C152 92 176 108 204 130" stroke-width="7"/><path d="M60 86C70 118 66 148 82 176" stroke-width="4"/>'
-        + '<path d="M120 94C142 68 166 58 192 50" stroke-width="3.5"/><path d="M160 104C170 130 168 150 182 168" stroke-width="3"/><path d="M410 400C380 410 352 424 330 444" stroke-width="5"/></g>'
-        + blossoms(53, [[30, 66], [62, 84], [96, 98], [128, 92], [170, 112], [204, 132], [80, 170], [192, 52], [150, 72], [180, 164], [372, 412], [346, 432], [392, 398]]);
-    } },
     neon: { pv: '0 520 400 226', svg: function () {             // 🌃 ночной город, вывески SLX, провода, эстакада, мокрый асфальт
       var r = srand(97), far = '', win = '', cs = ['#fde68a', '#67e8f9', '#f0abfc', '#fef3c7'];
       for (var x = 0; x < 400;) {
@@ -1834,6 +1910,606 @@
         + '<path d="M0 800H400" stroke="#f0abfc" stroke-opacity=".12"/><path d="M40 830H140M220 830H330" stroke="#67e8f9" stroke-opacity=".2" stroke-width="2"/>';
     } }
   };
+  // ── v393: 3D-сцены тем («Сакура» заново, «Глубокий космос», «Мечтатель»). Сцена — слои на разной глубине d: небо почти
+  // стоит, ближнее сдвигается сильнее. Наклон телефона (гироскоп Telegram), мышь на ПК и тихое «дыхание» камеры дают объём.
+  // Холст 1200×860: на телефоне видна середина (x 400–800), на широком ПК — почти всё; у героев сцены (луна, тории, парень,
+  // чёрная дыра) на широком экране своё место — сбоку от колонки игры. Каждый слой — своя картинка SVG, рисуется один раз;
+  // живые части — отдельными слоями, двигаются только transform/translate/opacity (как и всё на этой странице) ──
+  var S3W = 1200, S3H = 860, S3 = {}, s3Cur = '', s3Els = [], s3S = 1;
+  function s3f(n) { return String(Math.round(n * 10) / 10); }
+  function s3st(a) { return a.map(function (s) { return '<stop offset="' + s[0] + '" stop-color="' + s[1] + '"' + (s[2] != null ? ' stop-opacity="' + s[2] + '"' : '') + '/>'; }).join(''); }
+  function s3lin(id, x1, y1, x2, y2, st, bb) {     // bb — в долях фигуры, иначе — в координатах рисунка
+    return '<linearGradient id="' + id + '" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"' + (bb ? '' : ' gradientUnits="userSpaceOnUse"') + '>' + s3st(st) + '</linearGradient>';
+  }
+  function s3rad(id, cx, cy, r, st, bb, fx, fy) {
+    return '<radialGradient id="' + id + '" cx="' + cx + '" cy="' + cy + '" r="' + r + '"' + (fx != null ? ' fx="' + fx + '" fy="' + fy + '"' : '')
+      + (bb ? '' : ' gradientUnits="userSpaceOnUse"') + '>' + s3st(st) + '</radialGradient>';
+  }
+  function s3stars(seed, n, x0, x1, y0, y1, cols, r0, r1, fy) {      // звёзды; fy — к этой высоте гаснут (дымка у горизонта)
+    var r = srand(seed), h = '';
+    for (var i = 0; i < n; i++) {
+      var x = x0 + r() * (x1 - x0), y = y0 + r() * (y1 - y0), o = 0.3 + r() * 0.7, rr = r0 + Math.pow(r(), 2.4) * (r1 - r0), c = cols[(r() * cols.length) | 0];
+      if (fy) o *= Math.max(0.12, 1 - Math.max(0, y - y0) / (fy - y0) * 0.88);
+      h += '<circle cx="' + s3f(x) + '" cy="' + s3f(y) + '" r="' + rr.toFixed(2) + '" fill="' + c + '" opacity="' + o.toFixed(2) + '"/>';
+    }
+    return h;
+  }
+  function s3glint(x, y, s, c, o) {                  // яркая звезда с лучами
+    return '<g transform="translate(' + s3f(x) + ' ' + s3f(y) + ')" opacity="' + o + '"><circle r="' + s3f(s * 4) + '" fill="' + c + '" opacity=".16"/>'
+      + '<path d="M-' + s3f(s * 8) + ' 0H' + s3f(s * 8) + 'M0-' + s3f(s * 8) + 'V' + s3f(s * 8) + '" stroke="' + c + '" stroke-width="' + (s * 0.42).toFixed(2) + '" stroke-linecap="round" opacity=".8"/>'
+      + '<circle r="' + (s * 1.15).toFixed(2) + '" fill="#fff"/></g>';
+  }
+  function s3cr(p, n) {                              // сглаженная линия через точки (Catmull-Rom)
+    var o = [];
+    for (var i = 0; i < p.length - 1; i++) {
+      var a = p[i - 1] || p[i], b = p[i], c = p[i + 1], d = p[i + 2] || c;
+      for (var k = 0; k < n; k++) {
+        var t = k / n, t2 = t * t, t3 = t2 * t;
+        o.push([0.5 * (2 * b[0] + (c[0] - a[0]) * t + (2 * a[0] - 5 * b[0] + 4 * c[0] - d[0]) * t2 + (3 * b[0] - a[0] - 3 * c[0] + d[0]) * t3),
+                0.5 * (2 * b[1] + (c[1] - a[1]) * t + (2 * a[1] - 5 * b[1] + 4 * c[1] - d[1]) * t2 + (3 * b[1] - a[1] - 3 * c[1] + d[1]) * t3)]);
+      }
+    }
+    o.push(p[p.length - 1]);
+    return o;
+  }
+  function s3limb(p, w0, w1) {                       // ветка, сужающаяся к концу: контур по обе стороны линии
+    var s = s3cr(p, 7), L = [], R = [], n = s.length;
+    for (var i = 0; i < n; i++) {
+      var a = s[Math.max(0, i - 1)], b = s[Math.min(n - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], ln = Math.sqrt(dx * dx + dy * dy) || 1;
+      var w = (w0 + (w1 - w0) * Math.pow(i / (n - 1), 0.8)) / 2, nx = -dy / ln * w, ny = dx / ln * w;
+      L.push(s3f(s[i][0] + nx) + ' ' + s3f(s[i][1] + ny)); R.push(s3f(s[i][0] - nx) + ' ' + s3f(s[i][1] - ny));
+    }
+    return 'M' + L.join('L') + 'L' + R.reverse().join('L') + 'Z';
+  }
+  function s3along(p, step, f) {                     // точки вдоль ветки — для гроздей цветов
+    var s = s3cr(p, 7), acc = 0;
+    for (var i = 1; i < s.length; i++) {
+      acc += Math.sqrt(Math.pow(s[i][0] - s[i - 1][0], 2) + Math.pow(s[i][1] - s[i - 1][1], 2));
+      if (acc >= step) { acc = 0; f(s[i][0], s[i][1], i / (s.length - 1)); }
+    }
+  }
+
+  // ── сборка и раскладка слоёв. Неподвижное одной глубины нарисовано ОДНИМ слоем-планом (на слабом телефоне дорого не движение,
+  // а число больших слоёв: замер v393 — 21 слой «стоя» отнимал 22 кадра из 60); планы, где герои стоят по-разному на телефоне и
+  // на ПК (pw), перерисовываются, когда раскладка меняется (поворот, окно шире) ──
+  var s3Wd = null, s3Urls = [];
+  function s3IsWide() { return (window.innerWidth || 390) / (window.innerHeight || 844) > 1.05; }
+  // слой — картинка из своего SVG (Blob): браузер переводит рисунок в растр ОДИН раз и дальше только копирует. Живой SVG с сотнями
+  // фигур (цветы сакуры, окна города) перерисовывался каждый кадр: замер — ветка с цветами −11 кадров, она же без цветов — 0
+  function s3Img(vb, inner) {
+    var sv = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="' + vb + '" preserveAspectRatio="none">' + inner + '</svg>';
+    try {
+      var u = URL.createObjectURL(new Blob([sv], { type: 'image/svg+xml' }));
+      s3Urls.push(u);
+      return '<img src="' + u + '" alt="" decoding="async" draggable="false">';
+    } catch (e) {
+      return sv.replace('<svg ', '<svg aria-hidden="true" focusable="false" ');      // нет Blob — живой SVG, как раньше
+    }
+  }
+  function s3Html(id, sfx, wide) {
+    var sc = S3[id]; if (!sc) return '';
+    sfx = sfx || '';
+    return sc.els.map(function (sp, i) {
+      var b = sp.b, inner = '';
+      if (sp.svg) inner = s3Img(sp.local ? '0 0 ' + b[2] + ' ' + b[3] : b.join(' '), sp.svg(sfx, !!wide));
+      else if (sp.html) inner = sp.html(sfx, !!wide);
+      if (sp.a) inner = '<i class="an ' + sp.a + '"' + (sp.t ? ' style="animation-duration:' + sp.t + 's' + (sp.dl != null ? ';animation-delay:' + sp.dl + 's' : '') + '"' : '') + '>' + inner + '</i>';
+      return '<div class="ly k-' + sp.k + (sp.full ? ' full' : '') + ((sp.d || 0) >= 0.2 ? ' dr' : '') + '" data-i="' + i + '" style="--d:' + (sp.d || 0) + '">' + inner + '</div>';
+    }).join('');
+  }
+  function s3Free() {                                // старые картинки слоёв — освободить (после того как их убрали со страницы)
+    var u = s3Urls; s3Urls = [];
+    u.forEach(function (x) { try { URL.revokeObjectURL(x); } catch (e) {} });
+  }
+  function s3Build(el, sk) {
+    var old = s3Urls; s3Urls = [];
+    s3Wd = s3IsWide();
+    el.className = 'scene s3'; el.innerHTML = s3Html(sk, '', s3Wd); s3Cur = sk; s3Els = [].slice.call(el.children);
+    setTimeout(function () { old.forEach(function (x) { try { URL.revokeObjectURL(x); } catch (e) {} }); }, 3000);
+  }
+  function s3Fit() {
+    var el = $('scene'); if (!el || !s3Cur) return;
+    var sc = S3[s3Cur], W = window.innerWidth || 390, H = window.innerHeight || 844;
+    var s = Math.max(W / S3W, H / S3H), ox = (W - S3W * s) / 2, oy = sc.al === 'mid' ? (H - S3H * s) / 2 : H - S3H * s, wide = W / H > 1.05;
+    if (wide !== s3Wd) { s3Build(el, s3Cur); s3Load(s3Cur); }     // телефон ⇄ широкий экран — герои сцены переставлены
+    s3S = s;
+    s3Els.forEach(function (n) {
+      var sp = sc.els[+n.getAttribute('data-i')];
+      if (!sp || sp.full) return;
+      var b = sp.b, p = (wide ? sp.wb : sp.pb) || b, w = p[2] || b[2], h = p[3] || b[3];    // pb — место и размер на телефоне, wb — на широком экране
+      if (sp.wo) n.style.display = wide ? '' : 'none';  // wo — только на широком экране (на телефоне интерфейс закрывает всё, слой мешал бы тексту)
+      n.style.left = (ox + p[0] * s).toFixed(1) + 'px'; n.style.top = (oy + p[1] * s).toFixed(1) + 'px';
+      n.style.width = (w * s).toFixed(1) + 'px'; n.style.height = (h * s).toFixed(1) + 'px';
+      if (sp.org) {                                  // точка, к которой «летим» (звёзды навстречу) — в пикселях экрана
+        var oc = (wide ? sp.worg : sp.porg) || sp.org;
+        el.style.setProperty('--fo', (ox + oc[0] * s).toFixed(0) + 'px ' + (oy + oc[1] * s).toFixed(0) + 'px');
+      }
+    });
+    el.style.setProperty('--s3', s.toFixed(4));
+    p3Apply(true);
+  }
+  function s3Load(sk) {                              // картинка-фон темы (туманность) — проявляется, когда загрузилась
+    var sc = S3[sk]; if (!sc || !sc.img) return;
+    var im = new Image();
+    im.onload = function () { var n = document.querySelector('#scene .ly .nb'); if (n && s3Cur === sk) n.classList.add('on'); };
+    im.src = sc.img;
+  }
+  function s3Intro() {                               // при смене темы — «камера наезжает»: дальнее проявляется раньше ближнего
+    if (!document.body.animate || document.documentElement.classList.contains('calm')) return;
+    s3Els.forEach(function (n, i) {
+      var sp = S3[s3Cur].els[i], d = sp.d || 0;
+      try { n.animate([{ opacity: 0, scale: String(1 + d * 0.07) }, { opacity: 1, scale: '1' }], { duration: 1300 + d * 500, delay: d * 260, easing: 'cubic-bezier(.2,.75,.25,1)', fill: 'backwards' }); } catch (e) {}
+    });
+  }
+
+  // ── объём: наклон телефона, мышь, камера «дышит» сама (CSS) ──
+  var P3 = { x: 0, y: 0, tx: 0, ty: 0, raf: 0, b0: null, g0: null, bound: false, tg: false, win: false };
+  function p3Set(x, y) {
+    P3.tx = Math.max(-1, Math.min(1, x)); P3.ty = Math.max(-1, Math.min(1, y));
+    if (!P3.raf && s3Cur) P3.raf = requestAnimationFrame(p3Step);
+  }
+  function p3Step() {
+    P3.raf = 0;
+    P3.x += (P3.tx - P3.x) * 0.09; P3.y += (P3.ty - P3.y) * 0.09;
+    var done = Math.abs(P3.tx - P3.x) < 0.003 && Math.abs(P3.ty - P3.y) < 0.003;
+    if (done) { P3.x = P3.tx; P3.y = P3.ty; }
+    p3Apply();
+    if (!done && !document.hidden) P3.raf = requestAnimationFrame(p3Step);
+  }
+  function p3Apply(all) {
+    var sc = S3[s3Cur]; if (!sc) return;
+    var ax = 30 * s3S, ay = 18 * s3S;
+    s3Els.forEach(function (n, i) {
+      var d = sc.els[i].d || 0; if (!d && !all) return;
+      var v = (-P3.x * d * ax).toFixed(1) + 'px ' + (-P3.y * d * ay).toFixed(1) + 'px';
+      if (n.__t !== v) { n.__t = v; n.style.translate = v; }
+    });
+  }
+  function p3Tilt(b, g) {                            // наклон (радианы): середина — как человек держит телефон, подстраивается сама
+    if (!s3Cur || b == null || g == null || isNaN(b) || isNaN(g)) return;
+    if (P3.b0 == null) { P3.b0 = b; P3.g0 = g; }
+    P3.b0 += (b - P3.b0) * 0.01; P3.g0 += (g - P3.g0) * 0.01;
+    p3Set((g - P3.g0) / 0.3, (b - P3.b0) / 0.3);
+  }
+  function p3Gyro() {
+    if (!s3Cur || document.documentElement.classList.contains('calm')) return;
+    var t = window.Telegram && window.Telegram.WebApp;
+    if (t && t.DeviceOrientation && t.isVersionAtLeast && t.isVersionAtLeast('8.0')) {
+      try {
+        if (!P3.tg) { P3.tg = true; t.onEvent('deviceOrientationChanged', function () { var o = t.DeviceOrientation; p3Tilt(o.beta, o.gamma); }); }
+        t.DeviceOrientation.start({ refresh_rate: 50 }, function (ok) { if (!ok) p3Win(); });
+        return;
+      } catch (e) {}
+    }
+    p3Win();
+  }
+  function p3Win() {                                 // запасной путь — датчик браузера (на iPhone он просит разрешения — там не трогаем)
+    if (P3.win || !('DeviceOrientationEvent' in window) || typeof DeviceOrientationEvent.requestPermission === 'function') return;
+    P3.win = true;
+    window.addEventListener('deviceorientation', function (e) { if (e.beta != null) p3Tilt(e.beta * Math.PI / 180, e.gamma * Math.PI / 180); }, { passive: true });
+  }
+  function p3Off() {
+    try { var t = window.Telegram && window.Telegram.WebApp; if (P3.tg && t && t.DeviceOrientation && t.DeviceOrientation.isStarted) t.DeviceOrientation.stop(); } catch (e) {}
+  }
+  function p3Start() {
+    if (document.documentElement.classList.contains('calm')) return;
+    if (!P3.bound) {
+      P3.bound = true;
+      window.addEventListener('pointermove', function (e) {
+        if (!s3Cur || e.pointerType !== 'mouse') return;
+        p3Set((e.clientX / (window.innerWidth || 1) - 0.5) * 2, (e.clientY / (window.innerHeight || 1) - 0.5) * 2);
+      }, { passive: true });
+      document.documentElement.addEventListener('mouseleave', function () { if (s3Cur) p3Set(0, 0); });
+      document.addEventListener('visibilitychange', function () { if (!s3Cur) return; if (document.hidden) p3Off(); else p3Gyro(); });
+    }
+    p3Gyro();
+  }
+  // 🌸 «Сакура» (v393 — заново, в 3D): ночь, большая луна с лучами, Фудзи, озеро с отражениями и плывущими фонариками, тории
+  // в воде, каменные фонари, светлячки, ветки сакуры качаются на ветру, лепестки кружатся в объёме
+  function s3Flower(id) {                            // цветок сакуры: 5 лепестков с вырезом на конце
+    var p = 'M0 0C-3.9-2-6.6-6.6-3.7-10.6L0-9L3.7-10.6C6.6-6.6 3.9-2 0 0Z', h = '';
+    ['', 'd'].forEach(function (v) {
+      h += '<g id="' + id + v + '" fill="url(#' + id + 'g' + v + ')">';
+      for (var i = 0; i < 5; i++) h += '<path d="' + p + '" transform="rotate(' + (i * 72) + ')"/>';
+      h += '<circle r="2.3" fill="' + (v ? '#c45a85' : '#ffd3e4') + '"/>';
+      for (var j = 0; j < 5; j++) { var a = (j * 72 + 36) * Math.PI / 180; h += '<circle cx="' + (Math.cos(a) * 3.6).toFixed(1) + '" cy="' + (Math.sin(a) * 3.6).toFixed(1) + '" r=".75" fill="' + (v ? '#7a1f48' : '#e0447f') + '"/>'; }
+      h += '</g>';
+    });
+    return h + s3lin(id + 'g', 0, 1, 0, 0, [[0, '#f590b9'], [0.45, '#ffc9dd'], [1, '#fff3f8']], 1)
+      + s3lin(id + 'gd', 0, 1, 0, 0, [[0, '#a8456f'], [0.5, '#d07a9f'], [1, '#e8a7c2']], 1);
+  }
+  function s3Bloom(r, x, y, n, sz, id) {             // гроздь: цветки (дальние — в тени), бутоны, лепестки
+    var h = '';
+    for (var i = 0; i < n; i++) {
+      var a = r() * 6.283, d = Math.sqrt(r()) * sz, k = (0.62 + r() * 0.7) * sz / 17;
+      h += '<use xlink:href="#' + id + (r() < 0.34 ? 'd' : '') + '" transform="translate(' + s3f(x + Math.cos(a) * d) + ' ' + s3f(y + Math.sin(a) * d * 0.8) + ') rotate(' + ((r() * 72) | 0) + ') scale(' + k.toFixed(2) + ')"/>';
+    }
+    for (var j = 0; j < n / 3; j++) {
+      var b = r() * 6.283, e = sz * (0.8 + r() * 0.5);
+      h += '<ellipse cx="' + s3f(x + Math.cos(b) * e) + '" cy="' + s3f(y + Math.sin(b) * e * 0.8) + '" rx="2.6" ry="3.6" fill="#e2558d" transform="rotate(' + ((r() * 180) | 0) + ' ' + s3f(x + Math.cos(b) * e) + ' ' + s3f(y + Math.sin(b) * e * 0.8) + ')"/>';
+    }
+    return h;
+  }
+  function s3Branch(seed, id, limbs, w0, clusters) {  // ветка: тень-подсветка луной (смещённая копия) + тёмная ветка + грозди
+    var r = srand(seed), rim = '', body = '', fl = '';
+    limbs.forEach(function (L) { var d = s3limb(L[0], L[1], L[2]); rim += '<path d="' + d + '"/>'; body += '<path d="' + d + '"/>'; });
+    limbs.forEach(function (L, li) {
+      s3along(L[0], li ? 30 : 38, function (x, y, t) { if (r() < 0.25 + t * 0.7) fl += s3Bloom(r, x, y, 4 + ((r() * 6) | 0), 14 + r() * 12 * (1 - t * 0.4), id); });
+    });
+    (clusters || []).forEach(function (c) { fl += s3Bloom(r, c[0], c[1], c[2], c[3], id); });
+    return '<defs>' + s3Flower(id) + '</defs><g fill="#8a4a6c" transform="translate(1.6 -1.8)">' + rim + '</g><g fill="#22101d">' + body + '</g>' + fl;
+  }
+  function s3Torii(x) {                              // ворота: чёрная крыша, красные балки и столбы с объёмом, подсветка луной справа
+    var red = 'url(#' + x + 'r)', pil = 'url(#' + x + 'p)';
+    return '<path d="M8 46Q170 14 332 46L336 35Q170 0 4 35Z" fill="#1c0710"/><path d="M20 48Q170 22 320 48L318 61Q170 37 22 61Z" fill="' + red + '"/>'
+      + '<path d="M22 61Q170 37 318 61L316 66Q170 43 24 66Z" fill="#1c0710" opacity=".55"/>'
+      + '<rect x="38" y="97" width="264" height="15" rx="2" fill="' + red + '"/><rect x="38" y="110" width="264" height="3" fill="#1c0710" opacity=".45"/>'
+      + '<rect x="159" y="62" width="22" height="35" fill="' + red + '"/><rect x="163" y="68" width="14" height="22" fill="#1c0710" opacity=".7"/>'
+      + '<path d="M82 63H104L110 236H76Z" fill="' + pil + '"/><path d="M236 63H258L264 236H230Z" fill="' + pil + '"/>'
+      + '<rect x="71" y="224" width="44" height="14" rx="3" fill="#1c0710"/><rect x="225" y="224" width="44" height="14" rx="3" fill="#1c0710"/>'
+      + '<g stroke="#ffc2bd" stroke-opacity=".5" stroke-width="1.6" fill="none"><path d="M103 66L108.5 222"/><path d="M257 66L262.5 222"/><path d="M40 98H300"/><path d="M26 48Q170 23 316 48"/></g>';
+  }
+  function s3ToriiDefs(x) {
+    return s3lin(x + 'r', 0, 0, 0, 1, [[0, '#ff6a55'], [0.55, '#e0342f'], [1, '#9d1726']], 1)
+      + s3lin(x + 'p', 0, 0, 1, 0, [[0, '#8e1424'], [0.32, '#e8473d'], [0.6, '#f0574a'], [1, '#86101f']], 1);
+  }
+  function s3Lantern(cx, by, k) {                    // каменный фонарь-торо: основание, столб, площадка, окошко, крыша
+    function R(x, y, w, h) { return '<rect x="' + s3f(cx + x * k) + '" y="' + s3f(by + y * k) + '" width="' + s3f(w * k) + '" height="' + s3f(h * k) + '"/>'; }
+    return '<g fill="#2b1631">' + R(-18, -10, 36, 10) + R(-6, -52, 12, 42) + R(-20, -60, 40, 8) + R(-14, -86, 28, 26)
+      + '<path d="M' + s3f(cx - 31 * k) + ' ' + s3f(by - 84 * k) + 'Q' + s3f(cx) + ' ' + s3f(by - 112 * k) + ' ' + s3f(cx + 31 * k) + ' ' + s3f(by - 84 * k) + 'L' + s3f(cx + 25 * k) + ' ' + s3f(by - 82 * k)
+      + 'Q' + s3f(cx) + ' ' + s3f(by - 98 * k) + ' ' + s3f(cx - 25 * k) + ' ' + s3f(by - 82 * k) + 'Z"/><circle cx="' + s3f(cx) + '" cy="' + s3f(by - 106 * k) + '" r="' + s3f(5 * k) + '"/></g>'
+      + '<rect x="' + s3f(cx - 8 * k) + '" y="' + s3f(by - 81 * k) + '" width="' + s3f(16 * k) + '" height="' + s3f(17 * k) + '" fill="#ffd590"/>'
+      + '<path d="M' + s3f(cx - 31 * k) + ' ' + s3f(by - 84 * k) + 'Q' + s3f(cx) + ' ' + s3f(by - 112 * k) + ' ' + s3f(cx + 31 * k) + ' ' + s3f(by - 84 * k) + '" fill="none" stroke="#e9a2c0" stroke-opacity=".45" stroke-width="1.4"/>';
+  }
+  var S3_PETAL = 'url(\'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 24"><defs><linearGradient id="g" x1="0" y1="1" x2="0" y2="0">'
+    + '<stop offset="0" stop-color="#f27aab"/><stop offset=".5" stop-color="#ffc4da"/><stop offset="1" stop-color="#fff2f7"/></linearGradient></defs>'
+    + '<path d="M10 24C2.5 19 0 10 4 2.2L10 5.4L16 2.2C20 10 17.5 19 10 24Z" fill="url(#g)"/></svg>') + '\')';
+
+  function s3kSky(x) {                               // небо: ночь → розовый закат у воды, звёзды, яркие звёзды с лучами
+    return '<defs>' + s3lin('k3s' + x, 0, -80, 0, 940, [[0, '#06030f'], [0.17, '#130a2c'], [0.34, '#2a1447'], [0.47, '#4d1d5e'], [0.57, '#7d2c67'], [0.65, '#b24c77'],
+                                                     [0.71, '#e07c86'], [0.75, '#f3a593'], [0.8, '#f7c0a3'], [1, '#f7c0a3']])
+      + s3rad('k3h' + x, 600, 700, 780, [[0, '#ffd9c4', 0.55], [0.35, '#f7a1a6', 0.22], [1, '#f7a1a6', 0]]) + '</defs>'
+      + '<rect x="-80" y="-80" width="1360" height="1020" fill="url(#k3s' + x + ')"/><ellipse cx="600" cy="705" rx="820" ry="150" fill="url(#k3h' + x + ')"/>'
+      + s3stars(71, 230, -80, 1280, -80, 600, ['#ffffff', '#ffe4f0', '#e9d5ff', '#fde68a'], 0.4, 1.6, 600)
+      + s3glint(470, 120, 1.1, '#ffe4f0', 0.9) + s3glint(160, 260, 0.9, '#e9d5ff', 0.8) + s3glint(1060, 330, 0.8, '#fff', 0.7)
+      + s3glint(610, 40, 0.8, '#fff', 0.75) + s3glint(330, 420, 0.7, '#ffe4f0', 0.55) + s3glint(880, 70, 0.9, '#e9d5ff', 0.8);
+  }
+  function s3kMoon(x) {                              // луна (центр 190,190): ореол, моря, кратеры, светлый край
+    return '<defs>' + s3rad('k3mh' + x, 0.5, 0.5, 0.5, [[0, '#ffeaf3', 0.6], [0.32, '#ffd6e6', 0.24], [0.65, '#f9a8d4', 0.07], [1, '#f9a8d4', 0]], 1)
+      + s3rad('k3md' + x, 0.4, 0.36, 0.72, [[0, '#fffdfb'], [0.5, '#fff1f6'], [0.85, '#ffdbe9'], [1, '#f4bfd6']], 1)
+      + s3rad('k3mm' + x, 0.5, 0.5, 0.5, [[0, '#d98fb2', 0.5], [0.7, '#e6a5c3', 0.22], [1, '#e6a5c3', 0]], 1) + '</defs>'
+      + '<circle cx="190" cy="190" r="190" fill="url(#k3mh' + x + ')"/>'
+      + '<circle cx="190" cy="190" r="66" fill="url(#k3md' + x + ')"/><g fill="url(#k3mm' + x + ')"><ellipse cx="170" cy="174" rx="24" ry="17"/><ellipse cx="209" cy="207" rx="17" ry="12"/>'
+      + '<ellipse cx="200" cy="164" rx="11" ry="8"/><ellipse cx="166" cy="214" rx="10" ry="8"/><ellipse cx="222" cy="182" rx="8" ry="6"/></g>'
+      + '<g fill="none" stroke="#fff" stroke-opacity=".45" stroke-width=".9"><circle cx="182" cy="228" r="4"/><circle cx="226" cy="160" r="3"/><circle cx="150" cy="190" r="2.6"/></g>'
+      + '<circle cx="190" cy="190" r="66" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.3"/>';
+  }
+  function s3kFuji(x) {                              // Фудзи: снежная шапка, освещённый луной склон, холмы, лес у воды
+    var r = srand(5), trees = '', streak = '';
+    for (var tx = -80; tx < 1290; tx += 7 + r() * 11) trees += '<circle cx="' + s3f(tx) + '" cy="' + s3f(714 - r() * 4) + '" r="' + s3f(5 + r() * 8) + '"/>';
+    [[548, 530, 500, 600], [574, 540, 552, 640], [632, 526, 668, 610], [656, 520, 716, 600], [600, 548, 598, 600]].forEach(function (s) {
+      streak += '<path d="M' + s[0] + ' ' + s[1] + 'Q' + ((s[0] + s[2]) / 2 + 6) + ' ' + ((s[1] + s[3]) / 2) + ' ' + s[2] + ' ' + s[3] + '"/>';
+    });
+    return '<defs>' + s3lin('k3f' + x, 0, 468, 0, 718, [[0, '#7d4388'], [0.45, '#4d2660'], [1, '#2a1439']]) + s3lin('k3fl' + x, 600, 0, 1000, 0, [[0, '#ffc1dc', 0], [1, '#ffc1dc', 0.26]])
+      + s3lin('k3sn' + x, 0, 466, 0, 548, [[0, '#fffbfd'], [1, '#f2c9dc']]) + s3lin('k3hl' + x, 0, 640, 0, 760, [[0, '#45204f'], [1, '#2a1336']]) + '</defs>'
+      + '<path d="M170 718C300 680 420 614 520 522C548 496 572 478 590 471L610 471C628 478 652 496 680 522C780 614 900 680 1030 718Z" fill="url(#k3f' + x + ')"/>'
+      + '<path d="M610 471C628 478 652 496 680 522C780 614 900 680 1030 718L780 718C716 640 660 560 610 471Z" fill="url(#k3fl' + x + ')"/>'
+      + '<g fill="none" stroke="#2a1236" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"><path d="M560 540Q520 600 470 650"/><path d="M584 548Q560 620 540 690"/><path d="M520 560Q470 610 400 660"/></g>'
+      + '<path d="M520 522C548 496 572 478 590 471L610 471C628 478 652 496 680 522L668 530L656 520L646 538L634 524L622 546L612 528L600 550L590 530L578 548L566 526L554 538L542 522L530 532Z" fill="url(#k3sn' + x + ')"/>'
+      + '<g fill="none" stroke="#fde8f1" stroke-opacity=".38" stroke-width="2" stroke-linecap="round">' + streak + '</g>'
+      + '<path d="M-80 700C40 662 140 652 240 672C320 688 380 700 470 712V760H-80Z" fill="url(#k3hl' + x + ')"/><path d="M730 712C820 692 900 668 1000 664C1100 660 1200 676 1290 690V760H730Z" fill="url(#k3hl' + x + ')"/>'
+      + '<g fill="none" stroke="#f3a6c4" stroke-opacity=".28" stroke-width="1.4"><path d="M-80 700C40 662 140 652 240 672C320 688 380 700 470 712"/><path d="M730 712C820 692 900 668 1000 664C1100 660 1200 676 1290 690"/></g>'
+      + '<g fill="#1b0a24">' + trees + '</g>';
+  }
+  function s3kLake(x) {                              // озеро: цвет неба в воде, неподвижные блики-полосы
+    var r = srand(8), h = '';
+    for (var i = 0; i < 70; i++) {
+      var y = 708 + Math.pow(r(), 1.7) * 150, w = 18 + r() * 110, xx = -80 + r() * 1360;
+      h += '<path d="M' + s3f(xx) + ' ' + s3f(y) + 'h' + s3f(w) + '" stroke-opacity="' + (0.05 + r() * 0.16 * (1 - (y - 708) / 170)).toFixed(2) + '"/>';
+    }
+    return '<defs>' + s3lin('k3w' + x, 0, 704, 0, 924, [[0, '#6a2a5c'], [0.12, '#47194b'], [0.4, '#250c2b'], [1, '#0b0410']]) + '</defs>'
+      + '<rect x="-80" y="704" width="1360" height="236" fill="url(#k3w' + x + ')"/><rect x="-80" y="704" width="1360" height="22" fill="#f7a8b8" opacity=".14"/>'
+      + '<g stroke="#ffd1e3" stroke-width="1.6" stroke-linecap="round">' + h + '</g><path d="M-80 705H1280" stroke="#ffc9d9" stroke-opacity=".4" stroke-width="1.3"/>';
+  }
+  function s3kIsland() {                             // островок с двумя каменными фонарями (свои координаты 230×200)
+    return '<path d="M18 168C30 148 60 140 100 142C150 144 190 150 214 168C190 182 120 188 60 184C40 182 24 178 18 168Z" fill="#1d0b20"/>'
+      + '<path d="M28 160C50 146 90 142 120 143C160 145 190 151 206 162" fill="none" stroke="#f5a3c3" stroke-opacity=".35" stroke-width="1.5"/>'
+      + s3Lantern(78, 150, 1) + s3Lantern(160, 154, 0.74);
+  }
+  function s3at(p, inner) { return '<g transform="translate(' + p[0] + ' ' + p[1] + ')' + (p[2] && p[2] !== 1 ? ' scale(' + p[2] + ')' : '') + '">' + inner + '</g>'; }
+  // где стоят герои: телефон (узко) / широкий экран — [x, y, масштаб] в точках холста
+  var S3K = { moon: [[490, 10, 1], [795, 25, 1]], tor: [[384, 520, 0.8], [70, 470, 1]], trf: [[384, 708, 0.8], [70, 708, 1]], isl: [[640, 618, 0.8], [960, 590, 1]] };
+  function s3kp(k, w) { return S3K[k][w ? 1 : 0]; }
+
+  S3.sakura = { al: 'max', els: [
+    { k: 'far', d: 0.04, pw: 1, b: [-80, -80, 1360, 1020], svg: function (x, w) { return s3kSky(x) + s3at(s3kp('moon', w), s3kMoon(x)); } },     // небо, звёзды, луна — один план
+    { k: 'rays', d: 0.04, b: [380, -100, 600, 600], pb: [380, -100], wb: [685, -85], local: 1, a: 'a-rot', t: 150, svg: function (x) {    // лучи луны медленно вращаются
+      var r = srand(12), h = '<defs>' + s3rad('k3r' + x, 300, 300, 300, [[0, '#ffe4ef', 0], [0.16, '#ffe4ef', 0.24], [0.5, '#ffcfe2', 0.07], [1, '#ffcfe2', 0]]) + '</defs><g fill="url(#k3r' + x + ')">';
+      for (var i = 0; i < 16; i++) {
+        var a = (i * 22.5 + r() * 9) * Math.PI / 180, wd = (1 + r() * 2.2) * Math.PI / 180;
+        h += '<path d="M300 300L' + s3f(300 + Math.cos(a - wd) * 300) + ' ' + s3f(300 + Math.sin(a - wd) * 300) + 'L' + s3f(300 + Math.cos(a + wd) * 300) + ' ' + s3f(300 + Math.sin(a + wd) * 300) + 'Z"/>';
+      }
+      return h + '</g>';
+    } },
+    { k: 'cl', d: 0.1, b: [-100, 150, 2800, 260], local: 1, a: 'a-lx', t: 210, svg: function (x) {    // облака-полосы плывут перед луной
+      var r = srand(33), h = '<defs>' + s3rad('k3c' + x, 0.5, 0.5, 0.5, [[0, '#ffd1e3', 0.5], [0.6, '#f0a6c8', 0.18], [1, '#f0a6c8', 0]], 1) + '</defs><g fill="url(#k3c' + x + ')">';
+      for (var c = 0; c < 2; c++) for (var i = 0; i < 9; i++) {
+        var cx = c * 1400 + i * 155 + r() * 90, cy = 40 + r() * 170;
+        h += '<ellipse cx="' + s3f(cx) + '" cy="' + s3f(cy) + '" rx="' + s3f(110 + r() * 170) + '" ry="' + s3f(7 + r() * 11) + '" opacity="' + (0.35 + r() * 0.45).toFixed(2) + '"/>';
+      }
+      return h + '</g>';
+    } },
+    { k: 'mid', d: 0.18, pw: 1, b: [-80, 440, 1360, 500], svg: function (x, w) {    // Фудзи, холмы, озеро и отражение ворот — один план
+      var p = s3kp('trf', w);
+      return s3kFuji(x) + s3kLake(x) + '<defs>' + s3ToriiDefs('k3tr' + x) + s3lin('k3tm' + x, 0, 0, 0, 1, [[0, '#fff', 0.42], [1, '#fff', 0]], 1)
+        + '<mask id="k3tk' + x + '"><rect width="340" height="210" fill="url(#k3tm' + x + ')"/></mask></defs>'
+        + s3at(p, '<g mask="url(#k3tk' + x + ')"><g transform="translate(0 236) scale(1 -1)">' + s3Torii('k3tr' + x) + '</g></g>');
+    } },
+    { k: 'mist', d: 0.2, b: [-80, 600, 1360, 230], a: 'a-sw', t: 21, svg: function (x) {    // розовый туман у подножия и над водой
+      return '<defs>' + s3rad('k3m1' + x, 0.5, 0.5, 0.5, [[0, '#ffd3e4', 0.4], [0.6, '#f5b3cf', 0.13], [1, '#f5b3cf', 0]], 1) + '</defs>'
+        + '<ellipse cx="420" cy="672" rx="520" ry="62" fill="url(#k3m1' + x + ')"/><ellipse cx="860" cy="742" rx="560" ry="50" fill="url(#k3m1' + x + ')" opacity=".75"/>';
+    } },
+    { k: 'gla', d: 0.2, b: [-80, 712, 1360, 110], a: 'a-tw', t: 3.2, svg: function () { return s3Glints(21); } },     // искры на воде мерцают
+    { k: 'mref', d: 0.2, b: [570, 708, 220, 170], pb: [570, 708], wb: [875, 708], local: 1, a: 'a-shim', t: 2.6, svg: function () {    // лунная дорожка дрожит
+      var r = srand(3), h = '';
+      for (var i = 0; i < 15; i++) { var wd = (92 - i * 4.6) * (0.7 + r() * 0.55); h += '<path d="M' + s3f(110 - wd / 2 + (r() - 0.5) * 14) + ' ' + (5 + i * 11) + 'h' + s3f(wd) + '" stroke-opacity="' + (0.8 - i * 0.048).toFixed(2) + '"/>'; }
+      return '<g stroke="#fff0f6" stroke-width="3" stroke-linecap="round">' + h + '</g>';
+    } },
+    { k: 'flo', d: 0.22, b: [-100, 716, 2800, 70], local: 1, a: 'a-lxr', t: 260, svg: function (x) {    // плывущие бумажные фонарики
+      var h = '<defs>' + s3rad('k3fg' + x, 0.5, 0.5, 0.5, [[0, '#ffd590', 0.75], [0.4, '#ff9f6b', 0.25], [1, '#ff9f6b', 0]], 1) + '</defs>', r = srand(44);
+      for (var c = 0; c < 2; c++) for (var i = 0; i < 6; i++) {
+        var lx = c * 1400 + i * 230 + r() * 120, ly = 14 + r() * 42, k = 0.6 + (ly / 56) * 0.6;
+        h += '<ellipse cx="' + s3f(lx) + '" cy="' + s3f(ly) + '" rx="' + s3f(26 * k) + '" ry="' + s3f(14 * k) + '" fill="url(#k3fg' + x + ')"/>'
+          + '<path d="M' + s3f(lx) + ' ' + s3f(ly + 7 * k) + 'v' + s3f(9 * k) + '" stroke="#ffc58a" stroke-opacity=".3" stroke-width="' + s3f(5 * k) + '" stroke-linecap="round"/>'
+          + '<rect x="' + s3f(lx - 5 * k) + '" y="' + s3f(ly - 7 * k) + '" width="' + s3f(10 * k) + '" height="' + s3f(11 * k) + '" rx="' + s3f(1.5 * k) + '" fill="#ffe3b0"/>'
+          + '<rect x="' + s3f(lx - 6 * k) + '" y="' + s3f(ly + 3 * k) + '" width="' + s3f(12 * k) + '" height="' + s3f(3 * k) + '" fill="#3a1a2a"/>';
+      }
+      return h;
+    } },
+    { k: 'near', d: 0.3, pw: 1, b: [-80, 440, 1360, 400], svg: function (x, w) {    // ворота в воде и островок с фонарями — один план
+      return '<defs>' + s3ToriiDefs('k3t' + x) + '</defs>' + s3at(s3kp('tor', w), s3Torii('k3t' + x)) + s3at(s3kp('isl', w), s3kIsland());
+    } },
+    { k: 'lgl', d: 0.3, b: [640, 618, 184, 160], pb: [640, 618, 184, 160], wb: [960, 590, 230, 200], local: 1, a: 'a-flick', t: 4.3, svg: function (x) {    // огонь в фонарях мерцает
+      return '<defs>' + s3rad('k3lg' + x, 0.5, 0.5, 0.5, [[0, '#ffd27a', 0.7], [0.35, '#ff9a5c', 0.28], [1, '#ff9a5c', 0]], 1) + '</defs><g fill="url(#k3lg' + x + ')" transform="scale(.8)">'
+        + '<circle cx="78" cy="77" r="44"/><circle cx="160" cy="100" r="34"/><ellipse cx="78" cy="182" rx="12" ry="26" opacity=".7"/><ellipse cx="160" cy="184" rx="9" ry="20" opacity=".6"/></g>';
+    } },
+    { k: 'ff', d: 0.45, b: [-80, 560, 1360, 320], html: function () { return '<i class="ffp"></i>'; } },     // светлячки поднимаются над водой
+    { k: 'brr', d: 0.85, b: [320, 300, 520, 430], pb: [600, 300, 280, 232], wb: [700, 320], local: 1, a: 'a-bsr', t: 11, svg: function (x) {     // ветка справа
+      return s3Branch(57, 'k3br' + x, [[[[540, 120], [470, 136], [400, 160], [330, 154], [262, 182], [190, 176], [120, 204], [60, 212]], 24, 3],
+                                       [[[400, 160], [384, 214], [356, 262], [330, 300]], 9, 2], [[[262, 182], [236, 140], [200, 110], [170, 100]], 8, 2],
+                                       [[[190, 176], [160, 236], [150, 286]], 6, 1.5], [[[470, 136], [450, 84], [430, 52]], 8, 2]], 22,
+                      [[60, 212, 9, 22], [120, 204, 8, 20], [330, 300, 7, 18], [170, 100, 7, 18], [150, 286, 6, 16], [430, 52, 7, 18]]);
+    } },
+    { k: 'brl', d: 0.95, b: [372, -40, 620, 460], pb: [336, -46, 400, 297], wb: [-30, 110], wo: 1, local: 1, a: 'a-bsl', t: 9, svg: function (x) {     // ветка слева сверху — ближе всех (только на широком экране)
+      return s3Branch(19, 'k3bl' + x, [[[[-30, 36], [80, 56], [170, 72], [262, 104], [342, 114], [424, 106], [508, 124], [600, 112]], 30, 3],
+                                       [[[170, 72], [198, 112], [212, 162], [236, 206]], 10, 2], [[[262, 104], [292, 72], [332, 50], [376, 40]], 9, 2],
+                                       [[[342, 114], [356, 154], [382, 182], [398, 222]], 8, 1.5], [[[424, 106], [454, 142], [474, 166]], 6, 1.5],
+                                       [[[80, 56], [110, 100], [116, 150]], 9, 2], [[[508, 124], [536, 160], [552, 196]], 5, 1.2]], 30,
+                      [[600, 112, 10, 22], [236, 206, 9, 22], [376, 40, 9, 22], [398, 222, 8, 20], [474, 166, 7, 18], [116, 150, 8, 20], [552, 196, 7, 18]]);
+    } },
+    { k: 'pts', d: 1.2, full: 1, html: function () {    // лепестки: каждый летит по ветру и кружится в объёме — одной анимацией
+      var r = srand(7), h = '';
+      for (var i = 0; i < 10; i++) {
+        var z = 0.6 + r() * 0.9, t = 10 + r() * 8, v = 1 + (i % 3);
+        h += '<i class="pt" style="left:' + ((r() * 70 - 20) | 0) + '%;top:' + ((r() * 30 - 22) | 0) + '%;width:' + (13 * z).toFixed(1) + 'px;height:' + (16 * z).toFixed(1)
+          + 'px;animation:s3pf' + v + ' ' + t.toFixed(1) + 's linear ' + (-(r() * t)).toFixed(1) + 's infinite;opacity:' + (0.55 + z * 0.3).toFixed(2) + ';background-image:' + S3_PETAL + '"></i>';
+      }
+      return h;
+    } }
+  ] };
+  function s3Glints(seed) {                          // искры на воде
+    var r = srand(seed), h = '';
+    for (var i = 0; i < 46; i++) { var y = 716 + Math.pow(r(), 1.5) * 96, w = 3 + r() * 9; h += '<path d="M' + s3f(-80 + r() * 1360) + ' ' + s3f(y) + 'h' + s3f(w) + '"/>'; }
+    return '<g stroke="#fff4f8" stroke-width="1.7" stroke-linecap="round" opacity=".85">' + h + '</g>';
+  }
+  // 🌌 «Глубокий космос» (v393): туманность (картинка img/mine/deep_neb.webp, пока грузится — свой градиент) вместе со звёздами —
+  // один медленно наплывающий план; звёзды летят навстречу из чёрной дыры; чёрная дыра как в кино — тонкий горячий диск вращается
+  // в объёме (CSS 3D) и проходит перед тенью, свет дальней стороны диска огибает тень; планета с кольцами и спутником; метеоры
+  S3.deep = { al: 'mid', img: 'img/mine/deep_neb.webp?v=393', els: [
+    { k: 'neb', d: 0.04, b: [-80, -80, 1360, 1020], html: function () {
+      var r = srand(404), sp = '';
+      for (var i = 0; i < 14; i++) sp += s3glint(-60 + r() * 1320, -60 + r() * 980, 0.7 + r() * 0.9, ['#ffffff', '#c7d2fe', '#a5f3fc', '#fbcfe8', '#fde68a'][i % 5], (0.6 + r() * 0.4).toFixed(2));
+      return '<i class="nb"><b class="im"></b>' + s3Img('-80 -80 1360 1020', s3stars(401, 420, -80, 1280, -80, 940, ['#ffffff', '#e0e7ff', '#c7d2fe', '#a5f3fc', '#fbcfe8', '#fde68a'], 0.35, 1.7) + sp) + '</i>';
+    } },
+    { k: 'fly1', full: 1, html: function () { return '<i class="fly"></i>'; } },
+    { k: 'pl', d: 0.3, b: [150, 470, 600, 600], pb: [250, 600, 380, 380], wb: [-120, 400], local: 1, svg: function (x) {    // планета с кольцами и спутником
+      var r = srand(77), bands = '', cs = ['#7dd3fc', '#38bdf8', '#a5b4fc', '#c4b5fd', '#0ea5e9', '#e0f2fe'];
+      for (var i = 0; i < 16; i++) {
+        var y = 120 + i * 24 + r() * 10, ry = 10 + r() * 12;
+        bands += '<ellipse cx="300" cy="' + s3f(y) + '" rx="240" ry="' + s3f(ry) + '" fill="none" stroke="' + cs[(r() * cs.length) | 0] + '" stroke-width="' + s3f(4 + r() * 10) + '" opacity="' + (0.12 + r() * 0.22).toFixed(2) + '"/>';
+      }
+      var ring = function (half) {
+        return '<g clip-path="url(#k3' + half + x + ')" transform="rotate(-14 300 300)"><ellipse cx="300" cy="300" rx="290" ry="58" fill="none" stroke="url(#k3pr' + x + ')" stroke-width="18"/>'
+          + '<ellipse cx="300" cy="300" rx="262" ry="51" fill="none" stroke="#c7d2fe" stroke-opacity=".28" stroke-width="5"/><ellipse cx="300" cy="300" rx="318" ry="64" fill="none" stroke="#a5b4fc" stroke-opacity=".18" stroke-width="3"/></g>';
+      };
+      return '<defs><clipPath id="k3pc' + x + '"><circle cx="300" cy="300" r="180"/></clipPath>'
+        + '<clipPath id="k3rb' + x + '"><rect x="-40" y="-40" width="680" height="340"/></clipPath><clipPath id="k3rf' + x + '"><rect x="-40" y="300" width="680" height="340"/></clipPath>'
+        + s3rad('k3pb' + x, 0.66, 0.3, 0.85, [[0, '#bae6fd'], [0.35, '#3b82f6'], [0.7, '#312e81'], [1, '#0b0a24']], 1)
+        + s3rad('k3ps' + x, 0.7, 0.26, 0.9, [[0, '#000', 0], [0.5, '#020617', 0.18], [0.78, '#020617', 0.8], [1, '#020617', 0.96]], 1)
+        + s3rad('k3pa' + x, 300, 300, 230, [[0.74, '#93c5fd', 0], [0.79, '#bae6fd', 0.55], [0.86, '#60a5fa', 0.14], [1, '#60a5fa', 0]])
+        + s3rad('k3pm' + x, 0.68, 0.3, 0.8, [[0, '#e0e7ff'], [0.5, '#818cf8'], [1, '#1e1b4b']], 1)
+        + s3lin('k3pr' + x, 0, 0, 1, 0, [[0, '#e0e7ff', 0.08], [0.3, '#c7d2fe', 0.55], [0.55, '#fde68a', 0.5], [0.8, '#c7d2fe', 0.5], [1, '#e0e7ff', 0.1]], 1) + '</defs>'
+        + ring('rb') + '<circle cx="300" cy="300" r="230" fill="url(#k3pa' + x + ')"/>'
+        + '<g clip-path="url(#k3pc' + x + ')"><circle cx="300" cy="300" r="180" fill="url(#k3pb' + x + ')"/><g transform="rotate(-14 300 300)">' + bands + '</g>'
+        + '<circle cx="300" cy="300" r="180" fill="url(#k3ps' + x + ')"/></g>'
+        + '<path d="M190 158A180 180 0 0 1 452 200" fill="none" stroke="#e0f2fe" stroke-opacity=".8" stroke-width="2.2" stroke-linecap="round"/>' + ring('rf')
+        + '<circle cx="540" cy="70" r="22" fill="url(#k3pm' + x + ')"/>';
+    } },
+    { k: 'bh', d: 0.14, b: [220, -60, 760, 760], pb: [250, -100, 700, 700], wb: [560, 0], local: 1, org: [600, 310], porg: [600, 250], worg: [940, 380], html: function (x) {    // чёрная дыра
+      return s3Img('0 0 760 760', '<defs>' + s3rad('k3bg' + x, 380, 380, 380, [[0, '#ffd6a0', 0.5], [0.26, '#ff8c50', 0.2], [0.5, '#a855f7', 0.12], [0.74, '#a855f7', 0]]) + '</defs>'
+        + '<circle cx="380" cy="380" r="380" fill="url(#k3bg' + x + ')"/>')
+        + '<div class="dk"><i></i></div>' + s3Img('0 0 760 760', '<defs>'
+        + s3lin('k3lz' + x, 0, 0, 0, 1, [[0, '#fffaf0', 1], [0.25, '#ffe0a8', 0.95], [0.45, '#ffad5a', 0.6], [0.56, '#ff7a3d', 0]], 1)
+        + s3lin('k3lb' + x, 0, 0, 0, 1, [[0, '#ff7a3d', 0], [0.6, '#ffb36b', 0], [0.8, '#ffd9a0', 0.75], [1, '#fff4dc', 0.95]], 1)
+        + s3lin('k3lw' + x, 0, 0, 0, 1, [[0, '#ffcf8f', 0.55], [0.45, '#ff8a4a', 0.2], [0.6, '#ff8a4a', 0]], 1)
+        + s3rad('k3ev' + x, 380, 380, 96, [[0.74, '#ffb070', 0], [0.75, '#fff0d7', 0.95], [0.8, '#ffbe78', 0.5], [1, '#ff8246', 0]]) + '</defs>'
+        + '<ellipse cx="380" cy="374" rx="112" ry="104" fill="none" stroke="url(#k3lw' + x + ')" stroke-width="44" opacity=".45"/>'
+        + '<ellipse cx="380" cy="372" rx="98" ry="92" fill="none" stroke="url(#k3lz' + x + ')" stroke-width="13"/>'
+        + '<ellipse cx="380" cy="388" rx="86" ry="78" fill="none" stroke="url(#k3lb' + x + ')" stroke-width="4"/>'
+        + '<circle cx="380" cy="380" r="96" fill="url(#k3ev' + x + ')"/><circle cx="380" cy="380" r="72" fill="#000"/>')
+        + '<div class="dk f"><i></i></div><i class="dop"></i>';
+    } },
+    { k: 'cm1', d: 0.2, b: [160, 60, 420, 160], wb: [80, 120], local: 1, a: 'a-shoot', t: 9, dl: 2, svg: function (x) { return s3Streak(x, 'k3c1', '#e0f2fe', 420, 160); } },
+    { k: 'cm2', d: 0.2, b: [520, 520, 360, 140], wb: [1160, 560], local: 1, a: 'a-shoot2', t: 13, dl: 7, svg: function (x) { return s3Streak(x, 'k3c2', '#fbcfe8', 360, 140); } }
+  ] };
+  function s3Streak(x, id, c, w, h) {                // метеор: хвост и яркая голова
+    return '<defs>' + s3lin(id + x, 0, 0, w - 10, h - 6, [[0, c, 0], [0.7, c, 0.45], [1, '#fff', 1]]) + '</defs>'
+      + '<path d="M0 0L' + (w - 10) + ' ' + (h - 6) + '" stroke="url(#' + id + x + ')" stroke-width="2.6" stroke-linecap="round"/><circle cx="' + (w - 10) + '" cy="' + (h - 6) + '" r="3" fill="#fff"/>';
+  }
+  // 🌠 «Мечтатель» (v393): аниме-вечер — парень на крыше смотрит, как над городом пролетает комета и падают звёзды. Млечный
+  // Путь, облака в свете заката, город с огнями и поездом, провода с птицами; ветер треплет волосы; огоньки летят мимо
+  var S3_BOY = {
+    legs: 'M106 300L190 298C188 352 186 404 184 452L152 452L148 352L142 352L138 452L108 452C106 404 106 352 106 300Z',
+    armL: 'M92 150C78 162 70 190 68 222C66 250 70 274 80 292L98 300L104 286C96 270 94 250 96 226C98 200 102 180 108 166Z',
+    armR: 'M198 146C212 158 220 186 222 218C224 246 220 270 210 290L192 298L186 284C194 268 196 248 194 224C192 198 188 178 182 164Z',
+    body: 'M92 150C104 140 122 135 146 134C170 133 188 138 198 146C206 160 206 186 202 214L204 302C190 314 168 318 146 318C122 318 102 314 94 304L96 214C90 188 88 164 92 150Z',
+    hood: 'M114 136C120 124 172 122 180 134C184 148 170 162 148 164C126 165 110 152 114 136Z',
+    neck: 'M134 108L160 108L162 134L132 134Z',
+    head: 'M120 84C120 64 132 52 147 52C164 52 175 66 174 85C173 104 161 116 147 116C131 116 120 103 120 84Z',
+    ear: 'M170 84C176 81 180 87 179 95C178 102 173 105 169 101Z',
+    hair: 'M174 76C176 54 162 38 144 37C140 27 144 18 154 13C142 15 133 24 135 37C120 40 108 50 104 62Q90 58 76 62Q92 66 100 74Q82 80 70 92Q88 90 98 90Q86 102 82 116Q96 106 104 104Q98 116 98 128'
+      + 'Q108 118 114 116Q114 126 118 136Q124 124 128 122Q132 130 138 138Q142 128 146 124Q152 132 160 134Q160 124 162 118Q170 122 176 122Q172 112 170 104Q178 94 174 76Z',
+    phones: 'M128 118C128 128 136 136 147 136C158 136 166 128 166 118L170 118C170 132 160 140 147 140C134 140 124 132 124 118Z',
+    cupL: 'M118 112C112 112 108 120 110 128C112 134 118 136 124 132L126 116Z',
+    cupR: 'M176 112C182 112 186 120 184 128C182 134 176 136 170 132L168 116Z'
+  };
+  function s3Sil(parts, x) {                         // силуэт с подсветкой: розовая — слева (закат), голубая — справа (комета)
+    var d = parts.map(function (k) { return '<path d="' + S3_BOY[k] + '"/>'; }).join('');
+    return '<g fill="#ff9cc4" opacity=".7" transform="translate(-2.2 1)">' + d + '</g><g fill="#a5ecff" opacity=".9" transform="translate(2 -1.4)">' + d + '</g>'
+      + '<g fill="' + (x || '#0b0d22') + '">' + d + '</g>';
+  }
+  function s3Cloud(r, cx, by, w, h, id) {            // кучевое облако: верхушка из мелких «клубов», ровное основание, низ в свете заката
+    var c = '', rim = '', n = 24;
+    for (var i = 0; i < n; i++) {                    // кромка: клубы по арке, к середине выше и крупнее
+      var t = i / (n - 1), s = Math.pow(Math.sin(t * Math.PI), 0.7), rr = h * (0.12 + s * 0.2) * (0.8 + r() * 0.45);
+      var x = cx + (t - 0.5) * w + (r() - 0.5) * 8, y = by - h * (0.18 + s * 0.78) + rr * 0.9 + (r() - 0.5) * h * 0.08;
+      c += '<circle cx="' + s3f(x) + '" cy="' + s3f(y) + '" r="' + s3f(rr) + '"/>';
+      rim += '<circle cx="' + s3f(x + 1.5) + '" cy="' + s3f(y - 1.5) + '" r="' + s3f(rr) + '"/>';
+    }
+    c += '<path d="M' + s3f(cx - w * 0.5) + ' ' + s3f(by) + 'Q' + s3f(cx) + ' ' + s3f(by - h * 1.25) + ' ' + s3f(cx + w * 0.5) + ' ' + s3f(by) + 'Z"/>';   // тело облака
+    return '<defs>' + s3lin(id, 0, by - h, 0, by, [[0, '#6a58b4'], [0.4, '#93519a'], [0.75, '#e06f82'], [1, '#ffbf92']])
+      + '<clipPath id="' + id + 'c"><rect x="' + s3f(cx - w) + '" y="' + s3f(by - h * 2) + '" width="' + s3f(w * 2) + '" height="' + s3f(h * 2) + '"/></clipPath></defs>'
+      + '<g clip-path="url(#' + id + 'c)"><g fill="#c9b8ff" opacity=".35">' + rim + '</g><g fill="url(#' + id + ')">' + c + '</g>'
+      + '<rect x="' + s3f(cx - w * 0.55) + '" y="' + s3f(by - 4) + '" width="' + s3f(w * 1.1) + '" height="4" fill="#ffd2a6" opacity=".55"/></g>';
+  }
+  function s3Tail(head, end, w0, w1, id, n, op) {   // хвост кометы: несколько клиньев разной ширины — мягкие края
+    var dx = end[0] - head[0], dy = end[1] - head[1], ln = Math.sqrt(dx * dx + dy * dy), nx = -dy / ln, ny = dx / ln, h = '';
+    for (var i = 0; i < n; i++) {
+      var k = 1 - i / n, a = w0 * k, b = w1 * k;
+      h += '<path d="M' + s3f(head[0] + nx * a) + ' ' + s3f(head[1] + ny * a) + 'L' + s3f(end[0] + nx * b) + ' ' + s3f(end[1] + ny * b) + 'L' + s3f(end[0] - nx * b) + ' ' + s3f(end[1] - ny * b)
+        + 'L' + s3f(head[0] - nx * a) + ' ' + s3f(head[1] - ny * a) + 'Z" opacity="' + op + '"/>';
+    }
+    return '<g fill="url(#' + id + ')">' + h + '</g>';
+  }
+  function s3dComet(x) {                             // комета (голова в 880,430): голубой хвост, тёплый пылевой, искры, свечение головы
+    var r = srand(9), sp = '';
+    for (var i = 0; i < 40; i++) { var t = r(), w = (r() - 0.5) * 70 * t; sp += '<circle cx="' + s3f(880 - 920 * t + w * 0.45) + '" cy="' + s3f(430 - 460 * t - w * 0.9) + '" r="' + (0.5 + r() * 1.3).toFixed(2) + '" fill="#e0fbff" opacity="' + (0.3 + r() * 0.6).toFixed(2) + '"/>'; }
+    return '<defs>' + s3lin('k3ci' + x, 880, 430, -60, -40, [[0, '#f0fdff', 0.5], [0.2, '#a5f3fc', 0.32], [0.6, '#818cf8', 0.08], [1, '#818cf8', 0]])
+      + s3lin('k3cg' + x, 880, 430, -60, -60, [[0, '#a5f3fc', 0.16], [0.45, '#818cf8', 0.05], [1, '#818cf8', 0]])
+      + s3lin('k3cd' + x, 880, 430, 20, 250, [[0, '#fff4e0', 0.34], [0.35, '#ffd59a', 0.14], [0.75, '#f9a8d4', 0.04], [1, '#f9a8d4', 0]])
+      + s3lin('k3cj' + x, 880, 430, -60, -40, [[0, '#ffffff', 0.7], [0.25, '#cffafe', 0.35], [0.7, '#a5b4fc', 0.05], [1, '#a5b4fc', 0]])
+      + s3rad('k3ch' + x, 880, 430, 150, [[0, '#e6fdff', 0.5], [0.25, '#a5f3fc', 0.2], [1, '#a5f3fc', 0]]) + '</defs>'
+      + s3Tail([880, 430], [-80, -90], 6, 150, 'k3cg' + x, 6, 0.5)
+      + s3Tail([880, 432], [20, 250], 4, 90, 'k3cd' + x, 6, 0.5)
+      + s3Tail([880, 430], [-60, -40], 3, 40, 'k3ci' + x, 6, 0.55) + s3Tail([880, 430], [120, 100], 1.5, 16, 'k3cj' + x, 4, 0.4) + sp
+      + '<circle cx="880" cy="430" r="150" fill="url(#k3ch' + x + ')"/>';
+  }
+  S3.dream = { al: 'max', els: [
+    { k: 'sky', d: 0.03, pw: 1, b: [-80, -80, 1360, 1020], svg: function (x, wd) {     // небо, Млечный Путь, звёзды и комета — один план
+      var r = srand(23), mw = '';
+      for (var i = 0; i < 300; i++) {
+        var gx = (r() * 2 - 1) * 820, gy = (r() + r() + r() - 1.5) * 56;
+        mw += '<circle cx="' + s3f(gx) + '" cy="' + s3f(gy) + '" r="' + (0.35 + Math.pow(r(), 3) * 1.4).toFixed(2) + '" fill="' + ['#fff', '#e0e7ff', '#fbcfe8', '#c7d2fe'][(r() * 4) | 0] + '" opacity="' + (0.35 + r() * 0.6).toFixed(2) + '"/>';
+      }
+      return '<defs>' + s3lin('k3ds' + x, 0, -80, 0, 940, [[0, '#050818'], [0.18, '#0a1030'], [0.33, '#18184a'], [0.45, '#2c1f63'], [0.54, '#4f2a78'], [0.61, '#84347f'],
+                                                      [0.67, '#c4457a'], [0.715, '#f0706c'], [0.755, '#ff9d6c'], [0.785, '#ffc187'], [1, '#ffd9a0']])
+        + s3rad('k3dm' + x, 0.5, 0.5, 0.5, [[0, '#d8ccff', 0.26], [0.45, '#a78bfa', 0.1], [1, '#a78bfa', 0]], 1) + s3rad('k3dn' + x, 0.5, 0.5, 0.5, [[0, '#fde2f3', 0.22], [1, '#fbcfe8', 0]], 1)
+        + s3rad('k3dh' + x, 600, 690, 760, [[0, '#ffd2a0', 0.55], [0.4, '#ff8a7a', 0.2], [1, '#ff8a7a', 0]]) + '</defs>'
+        + '<rect x="-80" y="-80" width="1360" height="1020" fill="url(#k3ds' + x + ')"/><ellipse cx="600" cy="700" rx="900" ry="190" fill="url(#k3dh' + x + ')"/>'
+        + s3stars(29, 220, -80, 1280, -80, 600, ['#ffffff', '#e0e7ff', '#c7d2fe', '#fbcfe8', '#fde68a'], 0.35, 1.5, 560)
+        + '<g transform="translate(560 250) rotate(-28)"><ellipse rx="900" ry="150" fill="url(#k3dm' + x + ')"/><ellipse rx="640" ry="70" fill="url(#k3dn' + x + ')"/>'
+        + '<ellipse cx="-80" cy="10" rx="420" ry="15" fill="#0a0f2e" opacity=".3"/><ellipse cx="260" cy="-16" rx="280" ry="10" fill="#0a0f2e" opacity=".24"/>'
+        + '<ellipse cx="-420" cy="-8" rx="200" ry="8" fill="#0a0f2e" opacity=".2"/>' + mw + '</g>'
+        + s3glint(420, 90, 1, '#e0e7ff', 0.85) + s3glint(980, 140, 0.9, '#fff', 0.8) + s3glint(170, 330, 0.8, '#fbcfe8', 0.65) + s3glint(760, 40, 0.8, '#c7d2fe', 0.75)
+        + '<g transform="translate(' + (wd ? '180 -210' : '-180 -190') + ')">' + s3dComet(x) + '</g>';
+    } },
+    { k: 'cmh', d: 0.05, b: [580, 120, 240, 240], wb: [940, 100], local: 1, a: 'a-pulse', t: 3.4, svg: function (x) {    // голова кометы горит
+      return '<defs>' + s3rad('k3cc' + x, 120, 120, 120, [[0, '#ffffff', 1], [0.06, '#f0fdff', 0.95], [0.18, '#a5f3fc', 0.5], [0.45, '#67e8f9', 0.12], [1, '#67e8f9', 0]]) + '</defs>'
+        + '<circle cx="120" cy="120" r="120" fill="url(#k3cc' + x + ')"/><path d="M88 120H152M120 90V150" stroke="#fff" stroke-opacity=".7" stroke-width="1.2" stroke-linecap="round"/>';
+    } },
+    { k: 'mt1', d: 0.08, b: [80, 40, 300, 120], wb: [380, 60], local: 1, a: 'a-shoot', t: 7, dl: 1.5, svg: function (x) { return s3Streak(x, 'k3m1', '#e0e7ff', 300, 120); } },
+    { k: 'mt2', d: 0.08, b: [430, 300, 260, 100], wb: [700, 310], local: 1, a: 'a-shoot2', t: 9.5, dl: 4.5, svg: function (x) { return s3Streak(x, 'k3m2', '#fbcfe8', 260, 100); } },
+    { k: 'cld', d: 0.1, b: [-100, 420, 2800, 300], local: 1, a: 'a-lx', t: 280, svg: function (x) {    // облака плывут над городом
+      var r = srand(61), h = '';
+      for (var c = 0; c < 2; c++) {
+        var rr = srand(61 + c * 0);
+        for (var i = 0; i < 7; i++) h += s3Cloud(rr, c * 1400 + 80 + i * 200 + rr() * 60, 238 + rr() * 26, 120 + rr() * 140, 60 + rr() * 70, 'k3cl' + x + c + i);
+      }
+      return h;
+    } },
+    { k: 'cty', d: 0.2, b: [-80, 560, 1360, 260], svg: function (x) {    // город: дымка, дальние и ближние дома с окнами, башня, эстакада
+      var r = srand(31), far = '', near = '', win = '', cs = ['#ffd27a', '#ffb08a', '#ffe7b0', '#a5f3fc'];
+      for (var bx = -80; bx < 1290;) { var w = 18 + r() * 30, top = 632 + r() * 58; far += '<rect x="' + s3f(bx) + '" y="' + s3f(top) + '" width="' + s3f(w) + '" height="' + s3f(740 - top) + '"/>'; bx += w + 1 + r() * 4; }
+      for (var nx = -80; nx < 1290;) {
+        var nw = 26 + r() * 50, nt = 662 + r() * 52;
+        near += '<rect x="' + s3f(nx) + '" y="' + s3f(nt) + '" width="' + s3f(nw) + '" height="' + s3f(800 - nt) + '"/>';
+        for (var wy = nt + 6; wy < 780; wy += 8) for (var wx = nx + 4; wx < nx + nw - 4; wx += 6) if (r() < 0.2)
+          win += '<rect x="' + s3f(wx) + '" y="' + s3f(wy) + '" width="2.3" height="3.2" fill="' + cs[(r() * cs.length) | 0] + '" opacity="' + (0.45 + r() * 0.5).toFixed(2) + '"/>';
+        nx += nw + 2 + r() * 8;
+      }
+      return '<defs>' + s3lin('k3hz' + x, 0, 560, 0, 740, [[0, '#ff9d6c', 0], [0.7, '#ffb07a', 0.3], [1, '#ffd0a0', 0.48]]) + '</defs>'
+        + '<rect x="-80" y="560" width="1360" height="180" fill="url(#k3hz' + x + ')"/>'
+        + '<g fill="#4a2f73" opacity=".85">' + far + '</g>'
+        + '<path d="M694 742L700 548L706 742Z" fill="#241a4d"/><path d="M700 548V520" stroke="#241a4d" stroke-width="2"/><path d="M690 640H710M688 690H712" stroke="#241a4d" stroke-width="2.4"/>'
+        + '<g fill="#1c1640">' + near + '</g>' + win
+        + '<path d="M-80 724H1280" stroke="#120e2c" stroke-width="7"/><path d="M-80 720H1280" stroke="#ff9fb1" stroke-opacity=".25" stroke-width="1"/>'
+        + '<g stroke="#120e2c" stroke-width="5">' + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(function (i) { return '<path d="M' + (-40 + i * 110) + ' 726V800"/>'; }).join('') + '</g>';
+    } },
+    { k: 'blk', d: 0.2, b: [690, 510, 20, 20], local: 1, a: 'a-blink', t: 2.2, svg: function (x) {
+      return '<defs>' + s3rad('k3bk' + x, 10, 10, 10, [[0, '#fff', 1], [0.25, '#ff4d4d', 0.9], [1, '#ff4d4d', 0]]) + '</defs><circle cx="10" cy="10" r="10" fill="url(#k3bk' + x + ')"/>';
+    } },
+    { k: 'trn', d: 0.2, b: [-80, 712, 1360, 14], a: 'a-train', t: 26, dl: 3, html: function () {    // поезд на эстакаде
+      var h = '';
+      for (var i = 0; i < 9; i++) h += '<b style="left:' + (i * 11.2) + '%"></b>';
+      return '<i class="trw">' + h + '</i>';
+    } },
+    { k: 'wir', d: 0.42, b: [-400, 300, 1300, 560], wb: [-60, 300], local: 1, svg: function () {    // столб и провода, птицы
+      var birds = [[938, 105], [968, 109], [1018, 106]].map(function (p, i) {
+        var s = i === 1 ? -1 : 1;
+        return '<g transform="translate(' + p[0] + ' ' + p[1] + ') scale(' + s + ' 1)"><ellipse cx="0" cy="-6" rx="5.6" ry="4.6"/><circle cx="4.4" cy="-10.6" r="2.8"/>'
+          + '<path d="M6.8-11.2l3 1-3 .8z"/><path d="M-5-5l-6 4 7-1z"/></g>';
+      }).join('');
+      return '<g fill="none" stroke="#0a0a1c" stroke-width="2" stroke-linecap="round"><path d="M1112 44Q560 170 -20 70"/><path d="M1142 44Q600 200 -20 120"/>'
+        + '<path d="M1214 44Q700 240 -20 190"/><path d="M1132 74Q640 250 -20 250"/></g>'
+        + '<g fill="#0a0a1c"><path d="M1170 0H1190L1194 560H1166Z"/><rect x="1100" y="36" width="160" height="9" rx="2"/><rect x="1122" y="66" width="120" height="8" rx="2"/>'
+        + '<rect x="1108" y="28" width="7" height="10"/><rect x="1138" y="28" width="7" height="10"/><rect x="1210" y="28" width="7" height="10"/><rect x="1240" y="28" width="7" height="10"/>' + birds + '</g>'
+        + '<path d="M1189 6L1193 552" stroke="#ff9cc4" stroke-opacity=".35" stroke-width="1.6"/><path d="M1102 37H1258" stroke="#a5ecff" stroke-opacity=".3" stroke-width="1.2"/>';
+    } },
+    { k: 'boy', d: 0.66, b: [380, 396, 260, 456], wb: [80, 396], local: 1, svg: function () {    // парень: спиной, смотрит на комету
+      return s3Sil(['legs', 'armL', 'armR', 'body', 'hood', 'neck', 'head', 'ear'])
+        + '<g fill="none" stroke="#262b5e" stroke-width="1.5" stroke-linecap="round" opacity=".95"><path d="M146 166V314"/><path d="M118 150C132 160 164 160 178 148"/>'
+        + '<path d="M96 214C102 240 102 266 98 290"/><path d="M196 212C190 238 190 264 194 288"/><path d="M106 300H194"/><path d="M128 238L134 262M166 236L160 260"/>'
+        + '<path d="M182 154L112 296" stroke="#3a3f7e" stroke-width="3"/></g>'
+        + '<path d="M182 154L112 296" fill="none" stroke="#a5ecff" stroke-opacity=".35" stroke-width="1" transform="translate(1.5 -.5)"/>'
+        + s3Sil(['phones', 'cupL', 'cupR'], '#141838') + '<path d="M180 118C182 122 182 126 180 130" stroke="#a5ecff" stroke-width="1.4" fill="none" opacity=".9"/>';
+    } },
+    { k: 'hair', d: 0.66, b: [380, 396, 260, 456], wb: [80, 396], local: 1, a: 'a-hair', t: 2.6, svg: function () {
+      return s3Sil(['hair'], '#0c0e26') + '<g fill="none" stroke="#2a3070" stroke-width="1.3" stroke-linecap="round" opacity=".9"><path d="M136 44Q126 60 112 70"/>'
+        + '<path d="M150 46Q148 70 140 90"/><path d="M162 58Q166 80 160 100"/><path d="M124 58Q112 80 104 96"/></g>';
+    } },
+    { k: 'rf', d: 0.7, b: [-80, 730, 1360, 200], svg: function () {    // крыша: перила и парапет, кромки в свете заката
+      var posts = '';
+      for (var px = -70; px < 1290; px += 34) posts += '<rect x="' + px + '" y="748" width="4" height="56"/>';
+      return '<g fill="#0a0918">' + posts + '<rect x="-80" y="744" width="1360" height="6" rx="2"/><rect x="-80" y="772" width="1360" height="4"/>'
+        + '<rect x="-80" y="800" width="1360" height="130"/></g><path d="M-80 744.6H1280" stroke="#ffb3c7" stroke-opacity=".55" stroke-width="1.2"/>'
+        + '<path d="M-80 800.6H1280" stroke="#ff9fb1" stroke-opacity=".45" stroke-width="1.4"/><path d="M-80 772.6H1280" stroke="#ffb3c7" stroke-opacity=".25" stroke-width="1"/>';
+    } },
+    { k: 'ob1', d: 1.1, b: [430, 560, 90, 90], pb: [650, 610, 80, 80], wb: [330, 520], local: 1, a: 'a-orb', t: 9, svg: function (x) { return s3Orb(x, 'k3o1', '#ffd27a'); } },
+    { k: 'ob2', d: 1.25, b: [700, 380, 120, 120], wb: [1020, 420], local: 1, a: 'a-orb2', t: 12, svg: function (x) { return s3Orb(x, 'k3o2', '#a5f3fc'); } }
+  ] };
+  function s3Orb(x, id, c) {                         // огонёк-боке рядом с «камерой» — размытый, плывёт
+    return '<defs>' + s3rad(id + x, 0.5, 0.5, 0.5, [[0, c, 0.55], [0.45, c, 0.22], [0.75, c, 0.06], [1, c, 0]], 1) + '</defs><circle cx="50%" cy="50%" r="50%" fill="url(#' + id + x + ')"/>';
+  }
   var SCN_CACHE = {};
   function sceneSvg(id, sfx, pv) {
     var sc = SCN[id]; if (!sc) return '';
@@ -1850,10 +2526,18 @@
   function applyScene(sk) {
     var el = $('scene'); if (!el || (el.getAttribute('data-sk') || '') === sk) return;
     el.setAttribute('data-sk', sk);
+    if (S3[sk]) {                                    // v393: 3D-сцена — слои на разной глубине, объём от наклона телефона и мыши
+      s3Build(el, sk); P3.b0 = null;
+      s3Fit(); s3Load(sk); s3Intro(); p3Start();
+      return;
+    }
+    if (s3Cur) { s3Cur = ''; s3Els = []; p3Off(); }
+    el.className = 'scene';
     el.innerHTML = sk && SCN[sk] ? sceneSvg(sk, '') + '<i class="fa"></i><i class="fb"></i>' : '';
+    s3Free();                                        // картинки слоёв 3D-сцены больше не нужны
     sceneFit();
   }
-  window.addEventListener('resize', sceneFit);
+  window.addEventListener('resize', function () { sceneFit(); s3Fit(); });
   // особенность темы — от нажатий и при сборе вылетают её частицы (звёзды, искры, снежинки, монеты, лепестки, неон)
   var tpcN = 0;
   function themeBit(sk, x, y, big, i) {
@@ -1862,18 +2546,19 @@
     el.style.left = x + 'px'; el.style.top = y + 'px';
     $('fx').appendChild(el); tpcN++;
     var a = -Math.PI / 2 + (Math.random() * 2 - 1) * (big ? 1.5 : 1.15), r = (big ? 70 : 36) + Math.random() * (big ? 70 : 34);
-    var dx = Math.cos(a) * r, dy = Math.sin(a) * r, fall = sk === 'lava' || sk === 'space' ? -18 : sk === 'neon' ? 10 : 46;
-    var rot = Math.round(Math.random() * 300 - 150), done = false;
+    var dx = Math.cos(a) * r, dy = Math.sin(a) * r, fall = sk === 'lava' || sk === 'space' || sk === 'deep' ? -18 : sk === 'neon' ? 10 : sk === 'dream' ? -6 : 46;
+    var rot = Math.round(Math.random() * 300 - 150), done = false, rz = sk === 'sakura' ? 'rotate3d(1,.5,.2,' : 'rotate(';     // v393: лепестки кружатся в объёме
+    if (sk === 'sakura') rot *= 2;
     var fin = function () { if (done) return; done = true; el.remove(); tpcN--; };
-    el.animate([{ transform: 'translate(0,0) scale(.3) rotate(0deg)', opacity: 1 },
-                { transform: 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(1) rotate(' + Math.round(rot / 2) + 'deg)', opacity: 1, offset: 0.45 },
-                { transform: 'translate(' + (dx * 1.3).toFixed(1) + 'px,' + (dy + fall).toFixed(1) + 'px) scale(.6) rotate(' + rot + 'deg)', opacity: 0 }],
+    el.animate([{ transform: 'translate(0,0) scale(.3) ' + rz + '0deg)', opacity: 1 },
+                { transform: 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(1) ' + rz + Math.round(rot / 2) + 'deg)', opacity: 1, offset: 0.45 },
+                { transform: 'translate(' + (dx * 1.3).toFixed(1) + 'px,' + (dy + fall).toFixed(1) + 'px) scale(.6) ' + rz + rot + 'deg)', opacity: 0 }],
                { duration: 950 + Math.random() * 500, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' }).onfinish = fin;
     setTimeout(fin, 2200);
   }
   function themeBits(x, y, n, big) {
     var sk = document.body.getAttribute('data-skin');
-    if (!sk || !SCN[sk] || !document.body.animate || document.hidden || document.documentElement.classList.contains('calm')) return;
+    if (!sk || (!SCN[sk] && !S3[sk]) || !document.body.animate || document.hidden || document.documentElement.classList.contains('calm')) return;
     for (var i = 0; i < n && tpcN < 18; i++) themeBit(sk, x, y, big, i);
   }
 
@@ -2236,7 +2921,8 @@
   // превью, SLX за рубли и токены плитками. Товары и цены — с сервера (администратор меняет цену и скрывает товар в админке)
   var DN_ICO = { bst: 'ic-d-rocket', ocf: 'ic-d-bolt', auto: 'ic-d-robot', luck: 'ic-d-clover', gold: 'ic-gold', starter: 'ic-d-gift' };
   var DN_RGB = { bst: '56,189,248', ocf: '249,115,22', auto: '52,211,153', luck: '74,222,128', gold: '251,191,36' };
-  var SKIN_RGB = { space: '129,140,248', lava: '249,115,22', ice: '125,211,252', gold: '251,191,36', sakura: '244,114,182', neon: '217,70,239', none: '139,92,246' };
+  var SKIN_RGB = { space: '129,140,248', lava: '249,115,22', ice: '125,211,252', gold: '251,191,36', sakura: '244,114,182', neon: '217,70,239', none: '139,92,246',
+                  deep: '167,139,250', dream: '125,190,255' };       // v393
   function goldPct(n) { return Math.round((((S.cfg && S.cfg.gold_x) || 1.1) - 1) * 100 * (Number(n) || 0)); }      // v391: +10% за каждую карту
   function dnIco(id) { return '<svg viewBox="0 0 48 48" aria-hidden="true"><use href="#' + id + '"/></svg>'; }
   function dnSub(sh) {                              // строка под «Ускорь ферму»: стартовый набор, пока не куплен; потом — турбо
@@ -2316,13 +3002,14 @@
         }).join('') + '</div>';
       h += '</div>';
     }
-    var own = d.skins || [], SKN = { space: ['🌌', 'Космос', 'Space'], lava: ['🔥', 'Лава', 'Lava'], ice: ['❄️', 'Арктика', 'Arctic'], gold: ['👑', 'Золото', 'Gold'],
-                                     sakura: ['🌸', 'Сакура', 'Sakura'], neon: ['🌃', 'Неон', 'Neon'] };       // v391
+    var own = d.skins || [], SKN = SKIN_NM;          // v393: одна таблица тем на всю страницу
     own.forEach(function (v) {                       // купленная тема, которую администратор скрыл из продажи, — всё равно в гардеробе
+      if (d.adm && v !== d.skin) return;             // v393: админ видит донат как игроки (скрытые темы — в «🛠 Проверке»)
       if (SKN[v] && !sk.some(function (x) { return x.val === v; })) sk.push({ val: v, e: SKN[v][0], ru: '«' + SKN[v][1] + '»', en: '“' + SKN[v][2] + '”', price: 0, id: '' });
     });
     if (sk.length || own.length) {                   // темы: превью — сцена темы (v391); «Обычная» — устройства в цветах фермы
-      var pv = function (p) { return SCN[p] ? '<div class="pv scn" data-p="' + p + '">' + sceneSvg(p, 'p', true) + '</div>'
+      var pv = function (p) { return S3[p] ? '<div class="pv scn s3p" data-p="' + p + '"><img src="img/mine/pv_' + p + '.webp?v=393" alt="" loading="lazy" decoding="async"></div>'
+        : SCN[p] ? '<div class="pv scn" data-p="' + p + '">' + sceneSvg(p, 'p', true) + '</div>'
         : '<div class="pv" data-p="' + p + '"><i>' + dnIco('ic-gpu') + '</i><i>' + dnIco('ic-asic') + '</i><i>' + dnIco('ic-quant') + '</i></div>'; };
       h += '<div class="dn-sec" id="dn-sk">🎨 ' + esc(T.secK) + '</div><div class="dn-sk">';
       if (own.length) h += '<div class="sk' + (!d.skin ? ' on' : '') + '" style="--skc:' + SKIN_RGB.none + '">' + pv('none') + '<div class="sb"><b>' + esc(T.skNone) + '</b><small>'
@@ -2568,12 +3255,15 @@
           return '<button type="button" class="chip' + ((Number(d.gold) || 0) === n ? ' on' : '') + '" data-adm="gold" data-v="' + n + '">' + (n ? '💎' + n : '0') + '</button>'; }).join('') + '</div>'
       + '<div class="sh" style="margin:12px 0 4px">' + esc(T.adm.skinH) + '</div><div class="chips">' + [''].concat(Object.keys(SKIN_NM)).map(function (k) {
           return '<button type="button" class="chip' + ((d.skin || '') === k ? ' on' : '') + '" data-adm="skin" data-v="' + k + '">'
-            + esc(k ? SKIN_NM[k][0] + ' ' + SKIN_NM[k][EN ? 2 : 1] : T.skNone) + '</button>'; }).join('') + '</div>'
+            + esc(k ? SKIN_NM[k][0] + ' ' + SKIN_NM[k][EN ? 2 : 1] + (skSale(k) ? '' : ' 💤') : T.skNone) + '</button>'; }).join('') + '</div>'
       + '<button type="button" class="btn sec sm" style="margin-top:8px;color:var(--red)" data-adm="reset">' + esc(T.adm.reset) + '</button>'
       + '<p class="note">' + esc(T.adm.note) + '</p>');
   }
-  var SKIN_NM = { space: ['🌌', 'Космос', 'Space'], lava: ['🔥', 'Лава', 'Lava'], ice: ['❄️', 'Арктика', 'Arctic'], gold: ['👑', 'Золото', 'Gold'],
-                  sakura: ['🌸', 'Сакура', 'Sakura'], neon: ['🌃', 'Неон', 'Neon'] };          // v392: темы — для «🛠 Проверки»
+  // v392: темы — для «🛠 Проверки»; v393: одна таблица на всю страницу, порядок как в донате, + «Глубокий космос» и «Мечтатель»
+  var SKIN_NM = { sakura: ['🌸', 'Сакура', 'Sakura'], deep: ['🌌', 'Глубокий космос', 'Deep space'], dream: ['🌠', 'Мечтатель', 'Dreamer'],
+                  space: ['🪐', 'Космос', 'Space'], lava: ['🔥', 'Лава', 'Lava'], ice: ['❄️', 'Арктика', 'Arctic'], gold: ['👑', 'Золото', 'Gold'],
+                  neon: ['🌃', 'Неон', 'Neon'] };
+  function skSale(k) { return (S.shop || []).some(function (x) { return x.kind === 'skin' && x.val === k; }); }    // в продаже (не скрыта админом)
   function askYes(q) {                              // подтверждение: окно Telegram, иначе обычное
     return new Promise(function (ok) {
       try { if (tg && tg.showConfirm) { tg.showConfirm(q, function (y) { ok(!!y); }); return; } } catch (e) {}
