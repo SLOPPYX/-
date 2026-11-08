@@ -122,9 +122,10 @@
 
   /* ── хранилище ── */
   .card { position: relative; border-radius: 20px; background: var(--card); border: 1px solid var(--ln); padding: 14px; margin-bottom: 12px; }
-  /* v392: хранилище — стеклянная капсула, в ней поднимается светящаяся жидкость (волна по краю, пузырьки), цифры — поверх;
-     сверху — сколько процентов. Кирилл: «измени дизайн — более современное хранилище, где копится». Цвет жидкости — --lq/--lq2:
-     обычно фиолетовый → голубой, тема — её цвета, разгон — огонь, турбо — синий, полное — золото. Двигаются только transform */
+  /* v394: хранилище — строгий прибор (Кирилл: «выглядит по-игрушечному, сделай более серьёзнее»): тёмная панель с тонкой
+     рамкой и полосой цвета сверху, крупное табло, лампочка состояния, шкала из 40 делений (горят целые деления, край — маркер
+     точно по уровню), подписи 0–100%. Цвет — --lq/--lq2: обычно фиолетовый → голубой, тема — её цвета, разгон — огонь, турбо —
+     синий, полное — золото. Деления меняются шагом, а не каждый кадр; двигаются только transform и opacity */
   .hero { overflow: hidden; background: linear-gradient(160deg, rgba(139,92,246,.16), rgba(255,255,255,.025) 55%); border-color: rgba(167,139,250,.26);
           --lq: 139,92,246; --lq2: 34,211,238; }
   .hero .hl { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--tx3); }
@@ -135,41 +136,51 @@
   .hero .hl .hcap { flex: 0 0 auto; padding: 2px 9px; border-radius: 99px; font-size: 11.5px; font-weight: 700; background: rgba(255,255,255,.06); border: 1px solid var(--ln2); }
   .hero .hl .hpct { flex: 0 0 auto; min-width: 48px; text-align: center; padding: 2px 9px; border-radius: 99px; font-size: 12px; font-weight: 850; color: #fff;
                     background: linear-gradient(135deg, rgba(var(--lq), .6), rgba(var(--lq2), .45)); border: 1px solid rgba(var(--lq2), .55); }
-  .tank { position: relative; height: 100px; margin: 10px 0; border-radius: 22px; overflow: hidden; isolation: isolate;
-          background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01)), rgba(8,6,16,.6);
-          border: 1px solid rgba(255,255,255,.13); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 -12px 26px rgba(0,0,0,.4); transition: border-color .4s, box-shadow .4s; }
-  .tank .liq { position: absolute; top: 0; bottom: 0; left: 0; width: 100%; transform: translateX(-100%); will-change: transform; transition: transform .6s var(--ease);
-               background: linear-gradient(90deg, rgba(var(--lq), .3), rgba(var(--lq), .72) 48%, rgb(var(--lq2))); }
-  .tank .liq .lqw { position: absolute; top: 0; right: -13px; width: 15px; height: 200%; color: rgb(var(--lq2)); will-change: transform; animation: wv 2.6s linear infinite; }
-  .tank .liq .lqw path { fill: currentColor; }
-  .tank.empty .liq .lqw { display: none; }
-  @keyframes wv { to { transform: translateY(-50%); } }
-  .tank .liq .bubl { position: absolute; inset: 0; overflow: hidden; }
-  .tank .liq .bubl b { position: absolute; left: 0; right: 0; top: 0; height: calc(100% + 120px); will-change: transform; animation: bubu 5.5s linear infinite;
-                       background-size: 130px 120px;
-                       background-image: radial-gradient(circle at 18px 26px, rgba(255,255,255,.5) 0 1.8px, rgba(255,255,255,.12) 2.6px, transparent 3.4px),
-                                         radial-gradient(circle at 64px 88px, rgba(255,255,255,.45) 0 1.3px, rgba(255,255,255,.1) 2.1px, transparent 2.8px),
-                                         radial-gradient(circle at 102px 48px, rgba(255,255,255,.55) 0 2.2px, rgba(255,255,255,.14) 3px, transparent 3.9px),
-                                         radial-gradient(circle at 40px 108px, rgba(255,255,255,.4) 0 1px, transparent 2.2px); }
-  @keyframes bubu { to { transform: translate3d(0, -120px, 0); } }
-  .tank .shn { position: absolute; top: 0; bottom: 0; left: 0; width: 28%; z-index: 2; pointer-events: none; transform: translateX(-160%) skewX(-18deg);
-               background: linear-gradient(90deg, transparent, rgba(255,255,255,.13), transparent); animation: shn 6s ease-in-out infinite; }
-  @keyframes shn { 0%, 55% { transform: translateX(-160%) skewX(-18deg); } 100% { transform: translateX(460%) skewX(-18deg); } }
-  .tank .gls { position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
-               background: linear-gradient(180deg, rgba(255,255,255,.15), transparent 36%), radial-gradient(ellipse 55% 45% at 12% 0%, rgba(255,255,255,.1), transparent 70%); }
-  .tank .vt { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; justify-content: center; padding: 0 16px; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
-  .hero .big { font-size: 31px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; white-space: nowrap; }
-  .hero .big small { font-size: 15px; font-weight: 700; color: #ede9fe; margin-left: 4px; }
-  .hero .eq { font-size: 12.5px; color: rgba(255,255,255,.68); margin-top: 3px; }
-  .tank.full { border-color: rgba(251,191,36,.75); box-shadow: 0 0 0 3px rgba(251,191,36,.13), 0 0 26px -4px rgba(251,191,36,.65), inset 0 1px 0 rgba(255,255,255,.1); }
-  .tank.full .liq { background: linear-gradient(90deg, rgba(180,83,9,.55), rgba(245,158,11,.85) 50%, #fcd34d); }
-  .tank.full .liq .lqw { color: #fcd34d; }
-  .rate { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 8px; font-size: 12.5px; color: var(--tx2); }
-  .rate > span { display: inline-block; max-width: 100%; line-height: 1.35; padding: 5px 10px; border-radius: 99px; background: rgba(255,255,255,.05); border: 1px solid var(--ln);
-                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vault { position: relative; margin: 10px 0; padding: 12px 14px 9px; border-radius: 16px; overflow: hidden; isolation: isolate;
+           background: linear-gradient(180deg, rgba(15,13,26,.94), rgba(8,7,14,.92)); border: 1px solid rgba(255,255,255,.1);
+           box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 12px 28px -20px rgba(var(--lq), .7); transition: border-color .4s, box-shadow .4s; }
+  .vault::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px; z-index: 2; pointer-events: none;
+                   background: linear-gradient(90deg, rgba(var(--lq), 0), rgb(var(--lq)) 30%, rgb(var(--lq2)) 70%, rgba(var(--lq2), 0)); }
+  .vault::after { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+                  background: repeating-linear-gradient(180deg, rgba(255,255,255,.02) 0 1px, transparent 1px 3px); }
+  .vault > * { position: relative; z-index: 1; }
+  .vault .vd { font-size: 32px; font-weight: 800; letter-spacing: -.01em; line-height: 1.08; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vault .vd small { font-size: 11px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; color: var(--tx3); margin-left: 7px; }
+  .vault .vr2 { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 4px; }
+  .vault .eq { min-width: 0; font-size: 12px; color: var(--tx3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vault .vstat { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 10px; font-weight: 800;
+                  letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; color: var(--tx2); background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); }
+  .vault .vled { width: 7px; height: 7px; border-radius: 50%; background: rgb(var(--lq2)); box-shadow: 0 0 8px rgb(var(--lq2)); animation: vled 1.8s ease-in-out infinite; }
+  @keyframes vled { 50% { opacity: .3; } }
+  .vault.stop .vled { animation: none; background: rgba(255,255,255,.35); box-shadow: none; }
+  .vm { position: relative; height: 16px; margin-top: 11px; }
+  .vm > i { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
+  .vm .vm-b { border-radius: 3px; background: rgba(255,255,255,.075); }
+  .vm .vm-f { overflow: hidden; border-radius: 3px; background: linear-gradient(90deg, rgba(var(--lq), .5), rgb(var(--lq)) 45%, rgb(var(--lq2)));
+              -webkit-clip-path: inset(0 100% 0 0); clip-path: inset(0 100% 0 0); }
+  .vm::after { content: ''; position: absolute; left: 0; right: 0; top: -1px; bottom: -1px; z-index: 2; pointer-events: none;     /* 40 делений: промежутки цвета панели */
+               background: repeating-linear-gradient(90deg, transparent 0 calc(2.5% - 2px), #0b0a13 calc(2.5% - 2px) 2.5%); }
+  .vm .vflow { display: none; position: absolute; top: 0; bottom: 0; left: 0; width: 30%; will-change: transform;
+               background: linear-gradient(90deg, transparent, rgba(255,255,255,.75), transparent); }
+  .vm .vm-hw { z-index: 3; pointer-events: none; will-change: transform; }
+  .vm .vm-hw b { position: absolute; left: -2px; top: -4px; bottom: -4px; width: 3px; border-radius: 2px; background: #fff;
+                 box-shadow: 0 0 10px rgb(var(--lq2)), 0 0 3px #fff; animation: vled 1.2s ease-in-out infinite; }
+  .vtk { display: flex; justify-content: space-between; margin-top: 5px; font-size: 9.5px; letter-spacing: .06em; color: rgba(255,255,255,.32); }
+  .vault.empty .vm-hw, .vault.full .vm-hw { display: none; }
+  .vault.full { border-color: rgba(251,191,36,.55); box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 0 0 3px rgba(251,191,36,.1), 0 0 26px -6px rgba(251,191,36,.6); }
+  .vault.full .vm-f { background: linear-gradient(90deg, #b45309, #f59e0b 50%, #fcd34d); }
+  .vault.full .vd { color: #fde68a; }
+  .vault.full .vstat { color: #fde68a; border-color: rgba(251,191,36,.5); background: rgba(251,191,36,.1); }
+  .vault.full .vled { background: #fbbf24; box-shadow: 0 0 8px #fbbf24; animation-duration: .8s; }
+  /* под табло — скорость и «до полного»: подписи капсом, цифры ровными столбиками */
+  .rate { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; font-size: 13.5px; }
+  .rate > div { min-width: 0; }
+  .rate > .fr { flex: 0 0 auto; max-width: 56%; text-align: right; }
+  .rate small { display: block; font-size: 9.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--tx3); margin-bottom: 2px; }
+  .rate span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .rate .fl { color: var(--tx2); }
+  .rate .fl.full { color: var(--gold); font-weight: 750; }
   .hero.vfull .hl .hpct { color: #1c1203; background: linear-gradient(135deg, #fde047, #f59e0b); border-color: rgba(253,230,138,.8); }   /* v392: полное — золото */
-  .rate .fl { color: var(--tx3); text-align: right; }
-  .rate .fl.full { color: var(--gold); font-weight: 650; border-color: rgba(251,191,36,.45); }
   .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 50px; border-radius: 15px;
          font-weight: 750; font-size: 16px; letter-spacing: .01em; transition: transform .15s var(--ease), opacity .2s; }
   .btn:active { transform: scale(.97); }
@@ -216,9 +227,7 @@
   .room.hot::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
                      box-shadow: inset 0 0 34px rgba(249,115,22,.55); animation: hot 1.1s ease-in-out infinite alternate; }
   @keyframes hot { from { opacity: .3; } to { opacity: 1; } }
-  .hero.hot { --lq: 220,38,38; --lq2: 251,146,60; }                /* v392: разгон — жидкость-огонь, волна и пузырьки быстрее */
-  .hero.hot .tank .liq .lqw { animation-duration: 1.1s; }
-  .hero.hot .tank .liq .bubl b { animation-duration: 2.2s; }
+  .hero.hot { --lq: 220,38,38; --lq2: 251,146,60; }                /* v392: разгон — огонь (v394: эффекты — ниже, «⚡ Разгон» по-настоящему) */
   .hero.tb:not(.hot) { --lq: 37,99,235; --lq2: 56,189,248; }       /* v392: турбо — синяя */
   .hero.hot { border-color: rgba(239,68,68,.45); }
   .rh { position: relative; display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; font-size: 13px; color: var(--tx3); }
@@ -819,7 +828,7 @@
   .nav button.on .ni { transform: translateY(-1px) scale(1.08); }
   /* v387: подсветка выбранной вкладки переезжает к нажатой (а не появляется на месте) */
   .nav .in { position: relative; }
-  .nav .pill { position: absolute; top: 5px; bottom: 5px; left: 5px; width: calc((100% - 26px) / 5); border-radius: 15px; pointer-events: none;
+  .nav .pill { position: absolute; top: 5px; bottom: 5px; left: 5px; width: calc((100% - 30px) / 6); border-radius: 15px; pointer-events: none;
                background: rgba(139,92,246,.26); box-shadow: inset 0 0 0 1px rgba(167,139,250,.3); transition: transform .42s var(--spring); }
   .nav button .dot { position: absolute; top: 6px; right: calc(50% - 17px); width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px var(--gold); }
 
@@ -913,9 +922,151 @@
   .errs p { color: var(--tx2); font-size: 14.5px; line-height: 1.5; max-width: 340px; margin-bottom: 18px; }
   .errs button { padding: 12px 22px; border-radius: 14px; background: var(--p1); font-weight: 700; }
   .stale { margin: 0 0 10px; padding: 8px 12px; border-radius: 12px; font-size: 12.5px; text-align: center; color: var(--tx2); background: rgba(255,255,255,.05); border: 1px solid var(--ln); }
+  /* v394: «⚡ Разгон» по-настоящему — шкала горит огнём, по делениям бежит поток, табло светится, в панели поднимаются искры,
+     из устройств в шкалу летят монеты, над табло всплывает «+N за секунду», по краям экрана — отсвет огня, у карточки разгона
+     бегут полосы. Двигаются только transform и opacity; монет на экране не больше 8 */
+  .hero.hot .vault { border-color: rgba(249,115,22,.6); box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 0 0 3px rgba(239,68,68,.12), 0 0 30px -6px rgba(249,115,22,.8); }
+  .hero.hot .vflow { display: block; animation: vflow .8s linear infinite; }
+  @keyframes vflow { from { transform: translate3d(-100%, 0, 0); } to { transform: translate3d(340%, 0, 0); } }
+  .hero.hot .vd { color: #fff7ed; text-shadow: 0 0 18px rgba(249,115,22,.6); }
+  .hero.hot .vled { background: #f97316; box-shadow: 0 0 10px #f97316; animation-duration: .45s; }
+  .hero.hot .vstat { color: #fed7aa; border-color: rgba(249,115,22,.55); background: rgba(249,115,22,.14); }
+  .hero.tb:not(.hot) .vstat { color: #bae6fd; border-color: rgba(56,189,248,.5); background: rgba(56,189,248,.1); }
+  .vault .vheat { display: none; position: absolute; left: 0; right: 0; top: 0; height: calc(100% + 140px); z-index: 0; pointer-events: none; will-change: transform;
+                  background-size: 180px 140px;
+                  background-image: radial-gradient(circle at 20px 120px, rgba(254,215,170,.9) 0 1.2px, rgba(249,115,22,.4) 2.6px, transparent 5px),
+                                    radial-gradient(circle at 90px 60px, rgba(253,186,116,.85) 0 1px, rgba(239,68,68,.35) 2.3px, transparent 4.5px),
+                                    radial-gradient(circle at 150px 100px, rgba(254,240,138,.9) 0 1.3px, rgba(249,115,22,.4) 2.6px, transparent 5px),
+                                    radial-gradient(circle at 60px 20px, rgba(253,186,116,.8) 0 .9px, rgba(239,68,68,.3) 2px, transparent 4px); }
+  .hero.hot .vheat { display: block; animation: vheat 1.5s linear infinite; }
+  @keyframes vheat { to { transform: translate3d(0, -140px, 0); } }
+  .vault .vglow { display: none; position: absolute; left: -12%; top: -50%; width: 75%; height: 150%; z-index: 0; pointer-events: none; border-radius: 50%;
+                  background: radial-gradient(closest-side, rgba(249,115,22,.36), transparent); will-change: opacity, transform; }
+  .hero.hot .vglow { display: block; animation: vglow 1.1s ease-in-out infinite alternate; }
+  @keyframes vglow { from { opacity: .45; transform: scale(.92); } to { opacity: 1; transform: scale(1.06); } }
+  .fx .vplus { position: absolute; left: 0; top: 0; font-weight: 850; font-size: 15px; color: #fed7aa; white-space: nowrap;
+               text-shadow: 0 0 10px rgba(249,115,22,.9); will-change: transform, opacity; font-variant-numeric: tabular-nums; }
+  .fx .ocn { position: absolute; left: 0; top: 0; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%;
+             background: var(--tokimg) center / 100% 100% no-repeat; box-shadow: 0 0 12px rgba(249,115,22,.85); will-change: transform, opacity; }
+  .hotvig { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 15; pointer-events: none; opacity: 0; transition: opacity .6s;
+            background: radial-gradient(ellipse 85% 30% at 50% 108%, rgba(249,115,22,.3), transparent 70%), radial-gradient(ellipse 70% 18% at 50% -5%, rgba(239,68,68,.18), transparent 70%); }
+  body.ochot .hotvig { opacity: 1; }
+  .occ.on .ocb i { position: relative; overflow: hidden; }
+  .occ.on .ocb i::after { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: calc(100% + 17px); will-change: transform;
+                          background: repeating-linear-gradient(-45deg, rgba(255,255,255,.38) 0 5px, transparent 5px 12px); animation: ocstr .55s linear infinite; }
+  @keyframes ocstr { to { transform: translate3d(-17px, 0, 0); } }
+  .hbs .hb.shl { background: rgba(96,165,250,.13); border-color: rgba(96,165,250,.5); color: #bfdbfe; }       /* v394: «🛡 Щит» (не .sh — так зовутся заголовки разделов) */
+
+  /* ── v394: «⚔️ Взлом ферм» ── */
+  .rda { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; border-color: rgba(239,68,68,.55);
+         background: linear-gradient(120deg, rgba(239,68,68,.2), rgba(255,255,255,.02) 70%); }
+  .rda .re { font-size: 24px; flex: 0 0 auto; animation: rdal 1s ease-in-out infinite; }
+  @keyframes rdal { 50% { transform: scale(1.15); } }
+  .rda .rt { flex: 1; min-width: 0; }
+  .rda .rt b { display: block; font-size: 14.5px; }
+  .rda .rt small { display: block; font-size: 12px; color: var(--tx2); }
+  .rda .ra2 { color: #fca5a5; font-size: 20px; }
+  .rdh { padding: 14px; background: linear-gradient(160deg, rgba(239,68,68,.13), rgba(255,255,255,.02) 60%); border-color: rgba(248,113,113,.3); }
+  .rdh .rhr { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .rdh h3 { font-size: 17px; margin: 0; }
+  .rdh .rdn { display: flex; gap: 5px; flex: 0 0 auto; }
+  .rdh .rdn i { width: 12px; height: 12px; border-radius: 3px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); }
+  .rdh .rdn i.on { background: linear-gradient(135deg, #f87171, #dc2626); border-color: rgba(254,202,202,.6); box-shadow: 0 0 8px rgba(239,68,68,.7); }
+  .rdh .rds { font-size: 12.5px; color: var(--tx2); margin-top: 6px; line-height: 1.45; }
+  .rdh .rdb { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .rdh .rdb span { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 700; white-space: nowrap;
+                   background: rgba(255,255,255,.05); border: 1px solid var(--ln2); }
+  .rdh .rdb span.shl { color: #bfdbfe; border-color: rgba(96,165,250,.5); background: rgba(96,165,250,.12); }
+  .rdh .rdb span.no { color: var(--tx3); cursor: pointer; }
+  .rdt { display: flex; align-items: center; gap: 12px; padding: 12px; }
+  .rdt .ra { width: 46px; height: 46px; flex: 0 0 auto; border-radius: 14px; overflow: hidden; display: grid; place-items: center; font-size: 20px; font-weight: 800;
+             background: linear-gradient(145deg, rgba(255,255,255,.1), rgba(255,255,255,.02)); border: 1px solid var(--ln2); }
+  .rdt .ra img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .rdt .ri2 { flex: 1; min-width: 0; }
+  .rdt .ri2 b { display: block; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rdt .ri2 small { display: block; font-size: 12px; color: var(--tx3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .rdt .ri2 small.lt { color: #fde68a; font-weight: 700; }
+  .rdt .bb { flex: 0 0 auto; }
+  .rdt .bb[disabled] { opacity: .4; }
+  .rdt .df { display: inline-block; padding: 1px 6px; border-radius: 5px; font-size: 10px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; margin-left: 5px; vertical-align: 1px; }
+  .rdt .df.e { color: #a7f3d0; background: rgba(52,211,153,.14); }
+  .rdt .df.m { color: #fde68a; background: rgba(251,191,36,.14); }
+  .rdt .df.h { color: #fecaca; background: rgba(239,68,68,.16); }
+  .rdt.rv { border-color: rgba(239,68,68,.5); background: linear-gradient(120deg, rgba(239,68,68,.15), rgba(255,255,255,.02) 70%); }
+  .rdth { display: flex; align-items: center; justify-content: space-between; }
+  .rdth button { font-size: 12.5px; letter-spacing: 0; text-transform: none; color: var(--p3); padding: 4px 8px; border-radius: 8px; }
+  .rdem { text-align: center; padding: 18px 14px; font-size: 13.5px; color: var(--tx2); line-height: 1.5; }
+  .rdu { display: flex; align-items: center; gap: 12px; padding: 12px; }
+  .rdu .ue { width: 44px; height: 44px; flex: 0 0 auto; border-radius: 13px; display: grid; place-items: center; font-size: 22px; background: rgba(255,255,255,.06); border: 1px solid var(--ln2); }
+  .rdu .ut { flex: 1; min-width: 0; }
+  .rdu .ut b { display: block; font-size: 14px; }
+  .rdu .ut small { display: block; font-size: 12px; color: var(--tx3); line-height: 1.35; }
+  .rdu .lv { display: flex; gap: 3px; margin-top: 6px; }
+  .rdu .lv i { width: 16px; height: 5px; border-radius: 2px; background: rgba(255,255,255,.1); }
+  .rdu .lv i.on { background: linear-gradient(90deg, #a78bfa, #22d3ee); }
+  .rdu .bb { flex: 0 0 auto; }
+  .rdu.rsh { border-color: rgba(96,165,250,.4); background: linear-gradient(120deg, rgba(96,165,250,.12), rgba(255,255,255,.02) 70%); }
+  .rdlg { padding: 4px 12px; }
+  .rdlg .le2 { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--ln); font-size: 13px; }
+  .rdlg .le2:last-child { border-bottom: 0; }
+  .rdlg .le2 .li { width: 24px; text-align: center; font-size: 16px; flex: 0 0 auto; }
+  .rdlg .le2 .lx { flex: 1; min-width: 0; line-height: 1.35; }
+  .rdlg .le2 .lx small { display: block; font-size: 11.5px; color: var(--tx3); }
+  .rdlg .le2 .lv2 { flex: 0 0 auto; font-weight: 750; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .rdlg .le2 .lv2.p { color: #86efac; }
+  .rdlg .le2 .lv2.m { color: #fca5a5; }
+  .rdlock { text-align: center; padding: 22px 16px; }
+  .rdlock .lk { font-size: 40px; }
+  .rdlock b { display: block; font-size: 17px; margin-top: 6px; }
+  .rdlock p { font-size: 13px; color: var(--tx2); margin-top: 8px; line-height: 1.5; }
+  .rdhow { margin: 0; padding: 4px 4px 0 20px; font-size: 13px; color: var(--tx2); line-height: 1.55; }
+  .rdhow li { margin: 4px 0; }
+  .nav button .dot.rd { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
+  /* взлом — экран-терминал: кольца защиты, полоса с «уязвимым окном» и бегунком, кнопка «Пробить»; итог — сколько унёс */
+  .hk { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 72; display: flex; align-items: center; justify-content: center; padding: 18px;
+        background: radial-gradient(ellipse 90% 60% at 50% 38%, rgba(8,30,26,.97), rgba(3,7,10,.985)); opacity: 0; pointer-events: none; transition: opacity .25s; }
+  .hk.on { opacity: 1; pointer-events: auto; }
+  .hk::before { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none;
+                background: repeating-linear-gradient(180deg, rgba(52,211,153,.05) 0 1px, transparent 1px 3px), linear-gradient(90deg, rgba(52,211,153,.04) 1px, transparent 1px) 0 0 / 26px 26px; }
+  .hk-in { position: relative; width: 100%; max-width: 420px; text-align: center; color: #c7f9e1; }
+  .hk-x { position: absolute; top: calc(10px + env(safe-area-inset-top)); right: 12px; z-index: 2; width: 36px; height: 36px; border-radius: 50%; font-size: 16px;
+          color: #a7f3d0; background: rgba(52,211,153,.1); border: 1px solid rgba(52,211,153,.3); }
+  .hk-top b { display: block; font-size: 18px; color: #fff; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hk-top small { display: block; color: #6ee7b7; font-size: 12.5px; margin-top: 4px; letter-spacing: .03em; }
+  .hk-rings { position: relative; width: 160px; height: 160px; margin: 16px auto 6px; }
+  .hk-rings i { position: absolute; border-radius: 50%; border: 3px solid rgba(52,211,153,.8); box-shadow: 0 0 14px rgba(52,211,153,.4), inset 0 0 14px rgba(52,211,153,.18); will-change: transform; }
+  .hk-rings .r1 { top: 0; right: 0; bottom: 0; left: 0; border-style: dashed; animation: hkspin 9s linear infinite; }
+  .hk-rings .r2 { top: 22px; right: 22px; bottom: 22px; left: 22px; animation: hkspin 6s linear infinite reverse; }
+  .hk-rings .r3 { top: 44px; right: 44px; bottom: 44px; left: 44px; border-style: dotted; animation: hkspin 4s linear infinite; }
+  .hk-rings i.br { animation: hkbr .55s ease-out forwards; border-color: #fde68a; }
+  .hk-rings i.cur { border-color: #fde68a; box-shadow: 0 0 18px rgba(253,230,138,.6), inset 0 0 14px rgba(253,230,138,.2); }
+  @keyframes hkspin { to { transform: rotate(360deg); } }
+  @keyframes hkbr { from { transform: scale(1); opacity: 1; } to { transform: scale(1.7); opacity: 0; } }
+  .hk-core { position: absolute; top: 60px; right: 60px; bottom: 60px; left: 60px; display: grid; place-items: center; font-size: 26px; border-radius: 50%; background: rgba(52,211,153,.08); }
+  .hk-lay { font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: #6ee7b7; margin: 6px 0 10px; min-height: 18px; }
+  .hk-bar { position: relative; height: 34px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid rgba(52,211,153,.4); overflow: hidden; }
+  .hk-zone { position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: rgba(52,211,153,.28); box-shadow: inset 0 0 0 1px rgba(110,231,183,.9); }
+  .hk-cw { position: absolute; top: 0; right: 0; bottom: 0; left: 0; will-change: transform; }
+  .hk-cw b { position: absolute; top: -2px; bottom: -2px; left: -2px; width: 4px; border-radius: 2px; background: #fff; box-shadow: 0 0 10px #fff, 0 0 18px #34d399; }
+  .hk.miss .hk-bar { border-color: #ef4444; animation: hkmiss .35s; }
+  .hk.hit .hk-bar { border-color: #fde68a; }
+  @keyframes hkmiss { 25% { transform: translateX(-7px); } 60% { transform: translateX(7px); } }
+  .hk-msg { min-height: 20px; margin-top: 8px; font-size: 13px; font-weight: 800; letter-spacing: .1em; }
+  .hk-msg.ok { color: #fde68a; }
+  .hk-msg.no { color: #fca5a5; }
+  .hk-info { font-size: 13px; color: #a7f3d0; line-height: 1.5; margin: 4px 0 2px; padding-left: 20px; text-align: left; }
+  .hk-info li { margin: 3px 0; }
+  .hk .btn { margin-top: 12px; }
+  .hk-go { height: 54px; letter-spacing: .12em; background: linear-gradient(135deg, #10b981, #047857); box-shadow: 0 10px 26px -10px rgba(16,185,129,.9); }
+  .hk-res .rb { font-size: 28px; font-weight: 850; color: #fff; margin: 10px 0 4px; }
+  .hk-res .rb.ok { color: #fde68a; text-shadow: 0 0 22px rgba(251,191,36,.6); }
+  .hk-res .rb.no { color: #fca5a5; }
+  .hk-res .re2 { font-size: 46px; }
+  .hk-res p { font-size: 13.5px; color: #a7f3d0; line-height: 1.5; margin: 6px 0 4px; }
   @media (max-width: 360px) {
     main { padding-left: 10px; padding-right: 10px; }
-    .hero .big { font-size: 26px; }
+    .vault .vd { font-size: 27px; }
     .core { width: 92px; height: 92px; }
     .slots { gap: 6px; }
     .it .ie { width: 44px; height: 44px; font-size: 23px; }
@@ -1177,6 +1328,11 @@
     </g>
     <circle cx="24" cy="23" r="1.6" fill="#f0fdf4"/>
   </symbol>
+  <symbol id="ic-d-shield" viewBox="0 0 48 48">
+    <path d="M24 4.5l15.5 5.6v11.6c0 10.3-6.6 18.1-15.5 21.8C15.1 39.8 8.5 32 8.5 21.7V10.1z" fill="url(#mgS)" stroke="#bfdbfe" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M24 10.2l10.2 3.8v7.9c0 7.2-4.4 12.8-10.2 15.4-5.8-2.6-10.2-8.2-10.2-15.4V14z" fill="none" stroke="#e0f2fe" stroke-opacity=".5" stroke-width="1.1"/>
+    <path d="M18.3 23.4l4 4 7.6-8.2" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
 </svg>
 <div class="bg"><i class="gl g1"></i><i class="gl g2"></i><div class="scene" id="scene"></div><div class="grid"></div><div class="scan"></div><div class="pz"><b></b><b></b></div><div class="stars" id="stars"></div></div>
 <main>
@@ -1195,17 +1351,20 @@
   <section class="tab" id="t-farm">
     <div class="card hero" id="hero">
       <div class="hl"><span class="hlt"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-vault" xlink:href="#ic-vault"></use></svg><span id="h-lbl">Хранилище</span></span><b class="hcap" id="h-cap"></b><b class="hpct mono" id="h-pct">0%</b></div>
-      <div class="tank empty" id="tank">
-        <div class="liq" id="tank-i"><svg class="lqw" viewBox="0 0 16 128" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0H8C14 8 14 24 8 32C2 40 2 56 8 64C14 72 14 88 8 96C2 104 2 120 8 128H0Z"/></svg><div class="bubl"><b></b></div></div>
-        <div class="shn"></div><div class="gls"></div>
-        <div class="vt"><div class="big mono"><span id="h-val"><span class="zd" id="h-z"></span><span id="h-n">0</span></span><small id="h-u">токенов</small></div><div class="eq" id="h-eq"></div></div>
+      <div class="vault empty" id="tank">
+        <div class="vd mono"><span id="h-val"><span class="zd" id="h-z"></span><span id="h-n">0</span></span><small id="h-u">токенов</small></div>
+        <div class="vr2"><div class="eq" id="h-eq"></div><div class="vstat"><i class="vled"></i><span id="v-st"></span></div></div>
+        <div class="vm" id="vm"><i class="vm-b"></i><i class="vm-f" id="tank-i"><i class="vflow"></i></i><i class="vm-hw" id="vm-h"><b></b></i></div>
+        <div class="vtk mono"><span>0</span><span>25</span><span>50</span><span>75</span><span>100%</span></div>
+        <i class="vheat"></i><i class="vglow"></i>
       </div>
-      <div class="rate"><span id="h-rate"></span><span class="fl" id="h-full"></span></div>
+      <div class="rate"><div><small id="h-rl"></small><span id="h-rate"></span></div><div class="fr"><small id="h-fl"></small><span class="fl" id="h-full"></span></div></div>
       <div class="hbs" id="h-bs" hidden></div>
       <button type="button" class="btn pri" id="b-col">⛏ <span id="b-col-t">Собрать</span></button>
     </div>
     <div class="card occ" id="occ" hidden><div class="oci">⚡</div><div class="oct"><b id="oc-t"></b><small id="oc-s"></small><div class="ocb"><i id="oc-bar"></i></div></div>
       <button type="button" class="bb" id="b-oc"></button></div>
+    <div class="card rda" id="rda" hidden><span class="re">🚨</span><div class="rt"><b id="rda-t"></b><small id="rda-s"></small></div><span class="ra2">›</span></div>
     <div class="card dnc" id="dnc" hidden><div class="de"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#ic-d-gem"/></svg></div><div class="dt"><b id="dn-t"></b><small id="dn-s"></small></div><span class="da">›</span></div>
     <div class="card room" id="room">
       <i class="beam"></i>
@@ -1274,6 +1433,18 @@
     <div id="top-pod"></div>
     <div id="top-list"></div>
   </section>
+
+  <section class="tab" id="t-raid" hidden>
+    <div id="rd-top"></div>
+    <div id="rd-rv"></div>
+    <div class="sh rdth" id="rd-th"></div>
+    <div id="rd-tg"></div>
+    <div class="sh" id="rd-dh"></div>
+    <div id="rd-up"></div>
+    <div class="sh" id="rd-lh"></div>
+    <div class="card rdlg" id="rd-log"></div>
+    <div class="card" id="rd-note"></div>
+  </section>
 </main>
 <nav class="nav" id="nav"><div class="in"><i class="pill" id="pill"></i>
   <button type="button" class="on" data-tab="farm"><span class="ni">⛏</span><span data-l="farm"></span></button>
@@ -1281,6 +1452,7 @@
   <button type="button" data-tab="story"><span class="ni">📖</span><span data-l="story"></span></button>
   <button type="button" data-tab="wallet"><span class="ni">💼</span><span data-l="wallet"></span></button>
   <button type="button" data-tab="top"><span class="ni">🏆</span><span data-l="top"></span></button>
+  <button type="button" data-tab="raid"><span class="ni">⚔️</span><span data-l="raid"></span></button>
 </div></nav>
 <div class="shade" id="shade"></div>
 <div class="sheet" id="sheet"><div class="grab"></div><div id="sheet-in"></div></div>
@@ -1289,6 +1461,8 @@
   <div class="dl"><div class="lines" id="ov-lines"></div><div class="ctl"><button type="button" class="btn pri" id="ov-next"></button></div></div>
 </div>
 <div class="fx" id="fx"></div>
+<div class="hotvig" aria-hidden="true"></div>
+<div class="hk" id="hk"><button type="button" class="hk-x" id="hk-x" aria-label="close" hidden>✕</button><div class="hk-in" id="hk-in"></div></div>
 <div class="toast" id="toast"></div>
 <div class="errs" id="err" hidden><div class="ic" id="err-ic">📡</div><h2 id="err-h"></h2><p id="err-p"></p><button type="button" id="err-retry"></button></div>
 <script>
@@ -1350,7 +1524,7 @@
   var SPK = { x: { e: '✖️', c: '#c084fc' }, ded: { e: '👴', c: '#fbbf24' }, lisa: { e: '🦊', c: '#fb923c' }, block: { e: '🕴', c: '#f87171' }, me: { e: '🙂', c: '#a78bfa' } };
 
   var T = EN ? {
-    farm: 'Farm', shop: 'Shop', story: 'Story', wallet: 'Wallet', top: 'Top',
+    farm: 'Farm', shop: 'Shop', story: 'Story', wallet: 'Wallet', top: 'Top', raid: 'Raids',
     ch: function (n) { return 'Chapter ' + n + ' of 7'; }, storage: 'Storage', hours: function (h) { return h + ' h'; },
     collect: 'Collect', collectFull: 'Collect — the farm has stopped!', perH: '/h', fullIn: function (s) { return 'full in ' + s; },
     full: 'Storage is full — the farm stands still', stopped: 'The farm is paused', eq: function (t) { return '≈ ' + t + ' tokens'; },
@@ -1402,7 +1576,11 @@
             frozen: '❄️ Your account is frozen', maintenance: '🔧 The bot is under maintenance', no_funds: 'Not enough tokens', no_coins: 'Not enough SLX',
             bad_qty: 'How much SLX?', net: 'No connection — try again', oc_wait: 'The overclock is still cooling down', forbidden: 'Administrator only',
             bad_ch: 'Chapter — from 1 to 7', no_farm: 'Build the farm first', have: 'You already have it', bad_item: 'No such item',
-            no_skin: 'Buy this theme first' },
+            no_skin: 'Buy this theme first',
+            raid_off: 'Farm raids are off now', bad_target: 'Target not found — refresh the list', newbie: 'This farm is still under newbie protection',
+            same_net: 'Not allowed: this farm is on the same network as you', shield: 'This farm has a shield — pick another target',
+            gap: 'You already raided this farm — pick another one', no_left: 'No raids left today — new ones at midnight', no_rv: 'The time for revenge is over',
+            no_sess: 'This raid is already over', adm_train: 'The admin tests raids on the training farm', bad_kind: 'No such upgrade', bad_lvl: 'Level — from 0 to 5' },
     ocT: 'Overclock ×3', ocReady: '10 minutes — the farm mines three times faster', ocOnT: '🔥 Overclock ×3 is on',
     ocOn: function (s) { return s + ' left — collect more often, the storage fills faster'; }, ocCool: function (s) { return 'Cooling down — ' + s + ' left'; },
     ocBtn: '⚡ Turn on', ocStart: 'OVERCLOCK!', ocStartS: '×3 for 10 minutes', ocFull: 'The storage is full — collect first, or the overclock is wasted',
@@ -1410,7 +1588,10 @@
            ch: 'Jump to chapter', fill: '📦 Fill the storage', energy: '⚡ Energy 100', lucky: '🍀 Lucky block on collect', oc: '⚡ Overclock without waiting',
            reset: '♻️ Start over (prologue)', resetQ: 'Delete your farm and start from the prologue?', note: 'Your farm is not part of the network — it does not affect players. Any chapter’s story — in the “Story” tab.',
            done: 'Done ✓', donH: '💎 Try the boosts on yourself', unb: '✖️ Remove all boosts',
-           goldH: '💎 Golden cards on your farm — check ×N and prices', skinH: '🎨 Try any theme — free, only for you (💤 — hidden from sale)' },
+           goldH: '💎 Golden cards on your farm — check ×N and prices', skinH: '🎨 Try any theme — free, only for you (💤 — hidden from sale)',
+           raidH: '⚔️ Raids — test on yourself', rme: function (n) { return '🚨 Raided me: ' + n + ' of 3'; }, rme0: '🛡 Defense held',
+           rfw: '🧱 Your firewall level', rvr: '🦠 Your virus level', rreset: '♻️ Reset raids (attacks, shield, log, revenge)',
+           rnote: 'Raid in the “⚔️ Raids” tab — you get a “🤖 Training farm” there, real players are never touched. “Raided me” also sends you the bot message.' },
     // v388: донат в майнинге и курс фермы
     dnT: 'Speed up your farm', dnS: function (p) { return 'Turbo ×2 from ' + p + ' ₽ · golden graphics card · auto-collect'; },
     dnH: '💎 Farm boosts', dnP: 'Payment — in a private chat with @SloppyX: tap “Buy”, the message is already typed. The admin gives it to you — the bot sends a message.',
@@ -1444,9 +1625,55 @@
     errNet: ['No connection to the server', 'Check your internet — or the bot is restarting, it takes a couple of minutes.'], retry: 'Try again',
     stale: 'No connection — showing the last data', evT: function (x, s) { return '⚡ Event: mining ×' + x + ' — ' + s + ' left'; },
     paused: '⏸ Mining is paused by the administrator — your farm is safe, back soon', now: 'now',
-    coachTap: '👆 Tap to mine by hand', coachCol: '⛏ Collect the mining', coachShop: '🛒 Buy another device'
+    coachTap: '👆 Tap to mine by hand', coachCol: '⛏ Collect the mining', coachShop: '🛒 Buy another device',
+    // v394: хранилище-прибор и «⚔️ Взлом ферм»
+    vRate: 'Mining speed', vFl: 'Full in', vFarm: 'Farm', vFull: 'Stopped — collect!', vPause: 'Paused',
+    vSt: { on: 'Mining', full: 'Full', off: 'Paused', oc: 'Overclock', tb: 'Turbo' },
+    hbS: function (s) { return '🛡 Shield · ' + s; }, secS: 'Farm protection',
+    rd: {
+      t: '⚔️ Farm raids', left: function (a, n) { return 'Raids today: ' + a + ' of ' + n; }, noLeft: 'No raids left today',
+      reset: function (s) { return 'new ones in ' + s; },
+      sh: function (s) { return '🛡 Shield · ' + s; }, noSh: '🛡 No shield', fw: function (n, m) { return '🧱 Firewall ' + n + '/' + m; }, vr: function (n, m) { return '🦠 Virus ' + n + '/' + m; },
+      rvH: '🔥 Revenge', rvS: function (t) { return 'Took ' + t + ' from you'; }, rvT: function (s) { return '⏳ revenge — ' + s + ' left'; }, rvGo: '⚔️ Revenge',
+      rvNote: 'Revenge does not use a daily raid and goes even through a shield',
+      tgH: '🎯 Targets', more: '↻ Others', loading: 'Looking for farms…',
+      none: 'No suitable farms right now — shields everywhere or empty storages. Come back later.',
+      tgS: function (ch, h, fw) { return 'Ch. ' + ch + ' · ' + h + (fw ? ' · 🧱 ' + fw : ''); }, loot: function (t) { return '💰 up to ≈ ' + t; },
+      go: 'Raid', dfE: 'easy', dfM: 'medium', dfH: 'hard',
+      train: 'This is a training farm: as the admin you never raid real players — the loot is only for testing.',
+      defH: '🛡 Defense and attack',
+      fwT: function (n, m) { return 'Firewall · lv ' + n + '/' + m; }, fwS: function (x) { return 'Raiders take ' + x + '% less per level, their window is narrower'; },
+      vrT: function (n, m) { return 'Virus · lv ' + n + '/' + m; }, vrS: function (x) { return 'You take ' + x + '% more per level, your window is wider'; },
+      up: function (t) { return '⬆ ' + t; }, max: 'Max ✓',
+      shT: 'Shield', shS: 'Nobody can raid your farm while the shield is on. Buy more — the time adds up',
+      shOn: function (s) { return 'On — ' + s + ' left'; }, shFrom: function (p) { return 'from ' + p + ' ₽'; }, shBuy: 'Buy',
+      logH: '📜 Log', logNone: 'All quiet — no raids yet, by you or on you', now: 'just now', ago: function (s) { return s + ' ago'; },
+      lg: { out_ok: function (n, h) { return 'You raided “' + n + '” · ' + h + ' of 3'; }, out_zero: function (n) { return 'You raided “' + n + '” — the storage was empty'; },
+            out_fail: function (n) { return 'Caught raiding “' + n + '”'; }, out_quit: function (n) { return 'Raid on “' + n + '” abandoned'; },
+            in_ok: function (n, h) { return '“' + n + '” raided you · ' + h + ' of 3'; }, in_fail: function (n) { return '“' + n + '” tried to raid you — the defense held'; } },
+      howH: 'How it works',
+      how: function (R) { return ['Up to ' + R.n + ' raids a day (new ones at midnight, Moscow time). The same farm — once in ' + R.gap_h + ' h.',
+        'A raid takes up to ' + R.pct + '% of their storage, but no more than ' + R.cap_h + ' h of your own mining.',
+        'After a raid the farm gets a ' + R.shield_h + ' h shield, and its owner can take revenge within a day.',
+        'Broke no layer — you are caught: the target takes ' + R.fail_pct + '% of your storage.',
+        'Defense: collect often (an empty storage gives nothing), upgrade the 🧱 firewall, turn on a 🛡 shield.']; },
+      lockT: function (n) { return 'Opens in chapter ' + n; }, lockS: 'Raid other farms and take tokens from their storages — and protect your own.',
+      off: 'Farm raids are turned off by the administrator for now', soon: 'Farm raids will appear after the bot update — very soon',
+      alT: function (n) { return 'Your farm was attacked ' + n + (n === 1 ? ' time' : ' times'); }, alS: 'Open “⚔️ Raids” — the log and revenge',
+      hkH: function (n) { return 'Raid: ' + n; }, hkS: function (t, fw) { return 'Up to ≈ ' + t + ' to take · firewall ' + fw; },
+      hkRules: function (R) { return ['3 defense layers. A cursor runs along the bar — tap “BREAK” when it is in the green zone.',
+        '1 layer — you take 40% of the haul, 2 — 70%, all 3 — everything.', 'Broke none — you are caught: the firewall takes ' + R.fail_pct + '% of your storage.']; },
+      hkStart: '▶ Start the raid', hkCancel: 'Cancel', hkLay: function (i) { return 'Layer ' + i + ' of 3'; }, hkTap: 'BREAK',
+      hkHit: 'BROKEN ✓', hkMiss: 'MISSED ✗', hkWait: 'Connecting…', hkSend: 'Hacking…', hkQuitQ: 'Abandon the raid? The attempt is already used.',
+      resOkS: function (h, n) { return h + ' of 3 layers broken — the haul from “' + n + '” is already in your wallet.'; }, resTrain: ' (training farm)',
+      resZero: 'The storage was empty', resZeroS: 'Layers broken, but there was nothing to take.',
+      resFail: 'Caught!', resFailS: function (t) { return t ? 'The target’s firewall seized ' + t + ' from your storage.' : 'No layer broken — but your storage was empty, so no penalty.'; },
+      resSh: 'Too late — a shield is on', resShS: 'Someone else has just raided this farm. Your attempt is not used.',
+      resGone: 'The farm is gone', resBtn: 'Done',
+      upOk: function (k, n) { return (k === 'fw' ? '🧱 Firewall' : '🦠 Virus') + ' — level ' + n; }
+    }
   } : {
-    farm: 'Ферма', shop: 'Магазин', story: 'Сюжет', wallet: 'Кошелёк', top: 'Топ',
+    farm: 'Ферма', shop: 'Магазин', story: 'Сюжет', wallet: 'Кошелёк', top: 'Топ', raid: 'Взлом',
     ch: function (n) { return 'Глава ' + n + ' из 7'; }, storage: 'Хранилище', hours: function (h) { return h + ' ч'; },
     collect: 'Собрать', collectFull: 'Собрать — ферма стоит!', perH: '/ч', fullIn: function (s) { return 'полное через ' + s; },
     full: 'Хранилище полное — ферма стоит', stopped: 'Ферма на паузе', eq: function (t) { return '≈ ' + t + ' ' + tw(t); },
@@ -1499,7 +1726,11 @@
             frozen: '❄️ Аккаунт заморожен', maintenance: '🔧 Бот на обслуживании', no_funds: 'Не хватает токенов', no_coins: 'Не хватает SLX',
             bad_qty: 'Сколько SLX?', net: 'Нет связи — попробуй ещё раз', oc_wait: 'Разгон ещё остывает', forbidden: 'Только для администратора',
             bad_ch: 'Глава — от 1 до 7', no_farm: 'Сначала построй ферму', have: 'Это у тебя уже есть', bad_item: 'Такого товара нет',
-            no_skin: 'Эту тему сначала нужно купить' },
+            no_skin: 'Эту тему сначала нужно купить',
+            raid_off: 'Взлом ферм сейчас выключен', bad_target: 'Цель не найдена — обнови список', newbie: 'Эта ферма ещё под защитой новичка',
+            same_net: 'Нельзя: эта ферма в одной сети с тобой', shield: 'На ферме щит — выбери другую цель', gap: 'Эту ферму ты уже взламывал — выбери другую',
+            no_left: 'Атаки на сегодня закончились — новые в полночь', no_rv: 'Время на месть вышло', no_sess: 'Этот взлом уже закончился',
+            adm_train: 'Администратор проверяет взлом на учебной ферме', bad_kind: 'Такого улучшения нет', bad_lvl: 'Уровень — от 0 до 5' },
     ocT: 'Разгон ×3', ocReady: '10 минут — ферма майнит втрое быстрее', ocOnT: '🔥 Идёт разгон ×3',
     ocOn: function (s) { return 'Ещё ' + s + ' — собирай чаще, хранилище копится быстрее'; }, ocCool: function (s) { return 'Остывает — ещё ' + s; },
     ocBtn: '⚡ Включить', ocStart: 'РАЗГОН!', ocStartS: '×3 на 10 минут', ocFull: 'Хранилище полное — сначала собери, иначе разгон уйдёт впустую',
@@ -1507,7 +1738,10 @@
            ch: 'Перейти в главу', fill: '📦 Заполнить хранилище', energy: '⚡ Энергия 100', lucky: '🍀 Удачный блок при сборе', oc: '⚡ Разгон без ожидания',
            reset: '♻️ Начать заново (пролог)', resetQ: 'Удалить свою ферму и начать с пролога?', note: 'Твоя ферма не входит в сеть — игрокам не мешает. Сюжет любой главы — во вкладке «Сюжет».',
            done: 'Готово ✓', donH: '💎 Проверить донат на себе', unb: '✖️ Снять всё купленное',
-           goldH: '💎 Золотых карт на твоей ферме — проверить ×N и цены', skinH: '🎨 Примерить любую тему — бесплатно, только тебе (💤 — скрыта из продажи)' },
+           goldH: '💎 Золотых карт на твоей ферме — проверить ×N и цены', skinH: '🎨 Примерить любую тему — бесплатно, только тебе (💤 — скрыта из продажи)',
+           raidH: '⚔️ Взлом — проверить на себе', rme: function (n) { return '🚨 Меня взломали: ' + n + ' из 3'; }, rme0: '🛡 Защита отбила',
+           rfw: '🧱 Твой файрвол — уровень', rvr: '🦠 Твой вирус — уровень', rreset: '♻️ Взлом с нуля (атаки, щит, журнал, месть)',
+           rnote: 'Взламывать — во вкладке «⚔️ Взлом»: там у тебя «🤖 Учебная ферма», настоящих игроков не трогаешь. «Меня взломали» — придёт и сообщение в боте.' },
     // v388: донат в майнинге и курс фермы
     dnT: 'Ускорь ферму', dnS: function (p) { return 'Турбо ×2 от ' + p + ' ₽ · золотая видеокарта · автосбор'; },
     dnH: '💎 Донат в майнинге', dnP: 'Оплата — в личке @SloppyX: нажми «Купить», сообщение уже вписано. Выдаст администратор — бот пришлёт сообщение.',
@@ -1542,7 +1776,53 @@
     errNet: ['Нет связи с сервером', 'Проверь интернет — или бот перезапускается, это пара минут.'], retry: 'Повторить',
     stale: 'Нет связи — показываю последние данные', evT: function (x, s) { return '⚡ Ивент: добыча ×' + x + ' — ещё ' + s; },
     paused: '⏸ Майнинг на паузе у администратора — ферма в сохранности, скоро вернётся', now: 'сейчас',
-    coachTap: '👆 Жми — майни вручную', coachCol: '⛏ Собери добычу', coachShop: '🛒 Купи ещё устройство'
+    coachTap: '👆 Жми — майни вручную', coachCol: '⛏ Собери добычу', coachShop: '🛒 Купи ещё устройство',
+    // v394: хранилище-прибор и «⚔️ Взлом ферм»
+    vRate: 'Скорость добычи', vFl: 'До полного', vFarm: 'Ферма', vFull: 'Стоит — собери!', vPause: 'На паузе',
+    vSt: { on: 'Майнит', full: 'Полное', off: 'Пауза', oc: 'Разгон', tb: 'Турбо' },
+    hbS: function (s) { return '🛡 Щит · ' + s; }, secS: 'Защита фермы',
+    rd: {
+      t: '⚔️ Взлом ферм', left: function (a, n) { return 'Атак сегодня: ' + a + ' из ' + n; }, noLeft: 'Атаки на сегодня закончились',
+      reset: function (s) { return 'новые через ' + s; },
+      sh: function (s) { return '🛡 Щит · ' + s; }, noSh: '🛡 Щита нет', fw: function (n, m) { return '🧱 Файрвол ' + n + '/' + m; }, vr: function (n, m) { return '🦠 Вирус ' + n + '/' + m; },
+      rvH: '🔥 Месть', rvS: function (t) { return 'Унёс у тебя ' + t; }, rvT: function (s) { return '⏳ месть — ещё ' + s; }, rvGo: '⚔️ Месть',
+      rvNote: 'Месть не тратит атаку дня и проходит даже сквозь щит',
+      tgH: '🎯 Цели', more: '↻ Другие', loading: 'Ищу фермы…',
+      none: 'Сейчас подходящих ферм нет — у всех щиты или пустые хранилища. Загляни позже.',
+      tgS: function (ch, h, fw) { return 'Глава ' + ch + ' · ' + h + (fw ? ' · 🧱 ' + fw : ''); }, loot: function (t) { return '💰 до ≈ ' + t; },
+      go: 'Взломать', dfE: 'легко', dfM: 'средне', dfH: 'сложно',
+      train: 'Это учебная ферма: администратор настоящих игроков не взламывает — добыча только для проверки.',
+      defH: '🛡 Защита и атака',
+      fwT: function (n, m) { return 'Файрвол · ур. ' + n + '/' + m; }, fwS: function (x) { return 'Взломщик уносит на ' + x + '% меньше за каждый уровень, окно у него уже'; },
+      vrT: function (n, m) { return 'Вирус · ур. ' + n + '/' + m; }, vrS: function (x) { return 'Ты уносишь на ' + x + '% больше за каждый уровень, окно шире'; },
+      up: function (t) { return '⬆ ' + t; }, max: 'Максимум ✓',
+      shT: 'Щит', shS: 'Пока горит щит, ферму не взломать. Купил ещё — время добавляется',
+      shOn: function (s) { return 'Горит — ещё ' + s; }, shFrom: function (p) { return 'от ' + p + ' ₽'; }, shBuy: 'Купить',
+      logH: '📜 Журнал', logNone: 'Пока тихо — ни ты, ни тебя не взламывали', now: 'только что', ago: function (s) { return s + ' назад'; },
+      lg: { out_ok: function (n, h) { return 'Взломал «' + n + '» · ' + h + ' из 3'; }, out_zero: function (n) { return 'Взломал «' + n + '» — хранилище пустое'; },
+            out_fail: function (n) { return 'Попался на взломе «' + n + '»'; }, out_quit: function (n) { return 'Бросил взлом «' + n + '»'; },
+            in_ok: function (n, h) { return '«' + n + '» взломал тебя · ' + h + ' из 3'; }, in_fail: function (n) { return '«' + n + '» пытался взломать — защита отбила'; } },
+      howH: 'Как это работает',
+      how: function (R) { return ['В день — до ' + R.n + ' ' + plural(R.n, 'атаки', 'атак', 'атак') + ' (новые в полночь по Москве). Одну ферму — не чаще раза в ' + R.gap_h + ' ч.',
+        'Удачный взлом уносит до ' + R.pct + '% чужого хранилища, но не больше ' + R.cap_h + ' ч твоей добычи.',
+        'После взлома у фермы включается щит на ' + R.shield_h + ' ч, а у хозяина — право мести на сутки.',
+        'Не пробил ни одного слоя — попался: цель забирает ' + R.fail_pct + '% твоего хранилища.',
+        'Защита: собирай чаще (из пустого хранилища нечего брать), качай 🧱 файрвол, включай 🛡 щит.']; },
+      lockT: function (n) { return 'Откроется в главе ' + n; }, lockS: 'Взламывай чужие фермы и уноси токены из их хранилищ — и защищай свою.',
+      off: 'Взлом ферм сейчас выключен администратором', soon: 'Взлом ферм появится после обновления бота — уже скоро',
+      alT: function (n) { return 'На твою ферму напали: ' + n + ' ' + plural(n, 'раз', 'раза', 'раз'); }, alS: 'Открой «⚔️ Взлом» — журнал и месть',
+      hkH: function (n) { return 'Взлом: ' + n; }, hkS: function (t, fw) { return 'Можно унести до ≈ ' + t + ' · файрвол ' + fw; },
+      hkRules: function (R) { return ['3 слоя защиты. По полосе бегает курсор — жми «ПРОБИТЬ», когда он в зелёной зоне.',
+        'Пробил 1 слой — уносишь 40% добычи, 2 — 70%, все 3 — всю.', 'Не пробил ни одного — попался: файрвол заберёт ' + R.fail_pct + '% твоего хранилища.']; },
+      hkStart: '▶ Начать взлом', hkCancel: 'Отмена', hkLay: function (i) { return 'Слой ' + i + ' из 3'; }, hkTap: 'ПРОБИТЬ',
+      hkHit: 'ПРОБИТ ✓', hkMiss: 'МИМО ✗', hkWait: 'Подключаюсь…', hkSend: 'Взламываю…', hkQuitQ: 'Бросить взлом? Попытка уже потрачена.',
+      resOkS: function (h, n) { return 'Пробито слоёв: ' + h + ' из 3 — добыча фермы «' + n + '» уже в твоём кошельке.'; }, resTrain: ' (учебная ферма)',
+      resZero: 'Хранилище оказалось пустым', resZeroS: 'Слои пробиты, но брать было нечего.',
+      resFail: 'Попался!', resFailS: function (t) { return t ? 'Файрвол цели перехватил ' + t + ' из твоего хранилища.' : 'Ни одного слоя — но твоё хранилище было пустым, штрафа нет.'; },
+      resSh: 'Не успел — на ферме щит', resShS: 'Её только что взломал кто-то другой. Попытка не потрачена.',
+      resGone: 'Этой фермы больше нет', resBtn: 'Готово',
+      upOk: function (k, n) { return (k === 'fw' ? '🧱 Файрвол' : '🦠 Вирус') + ' — уровень ' + n; }
+    }
   };
 
   // ── сюжет: [кто, текст]; n — рассказчик. v386: те же события, короче (Кирилл: «сюжет оставь, убери лишние слова») ──
@@ -1743,7 +2023,7 @@
   function chIco(n) { return '<svg class="chi" viewBox="0 0 48 48" aria-hidden="true"><use href="#ic-c' + n + '" xlink:href="#ic-c' + n + '"></use></svg>'; }
 
   // ── вкладки ──
-  var TABS = ['farm', 'shop', 'story', 'wallet', 'top'];
+  var TABS = ['farm', 'shop', 'story', 'wallet', 'top', 'raid'];      // v394: + «⚔️ Взлом»
   function openTab(t) {
     var was = S.tab;
     S.tab = t;
@@ -1753,6 +2033,7 @@
     $('pill').style.transform = 'translateX(calc(' + Math.max(0, TABS.indexOf(t)) + ' * (100% + 4px)))';     // v387: подсветка переезжает
     try { window.scrollTo(0, 0); } catch (e) {}
     render();
+    if (t === 'raid') rdOpen();                        // v394: цели и «на тебя напали — прочитано»
     if (was !== t && document.body.animate && !document.documentElement.classList.contains('calm')) {
       // v387: содержимое вкладки выезжает по очереди — анимацией из кода (без пересчёта всей страницы ради перезапуска CSS)
       Array.prototype.forEach.call($('t-' + t).children, function (el, i) {
@@ -2582,9 +2863,12 @@
     else if (S.tab === 'story') renderStory();
     else if (S.tab === 'wallet') renderWallet();
     else if (S.tab === 'top') renderTop();
+    else if (S.tab === 'raid') renderRaid();
     var dot = goalsReady();
     var sb = document.querySelector('.nav button[data-tab="story"]');
     if (sb) { var dd = sb.querySelector('.dot'); if (dot && !dd) sb.insertAdjacentHTML('beforeend', '<i class="dot"></i>'); if (!dot && dd) dd.remove(); }
+    var rb = document.querySelector('.nav button[data-tab="raid"]'), RR = d.raid, rdot = !!(RR && RR.on && RR.ok && RR.rin > 0);     // v394: на тебя напали
+    if (rb) { var rd2 = rb.querySelector('.dot'); if (rdot && !rd2) rb.insertAdjacentHTML('beforeend', '<i class="dot rd"></i>'); if (!rdot && rd2) rd2.remove(); }
   }
   function goalsReady() { var d = S.d; return !!(d && d.started && !d.done && d.goals && d.goals.length && d.goals.every(function (g) { return g.ok; })); }
   function renderEv() {
@@ -2604,13 +2888,15 @@
       var sv = tkF(st * fp());                                          // v389: в токенах по курсу фермы, SLX — строкой ниже
       setTxt('h-n', sv); setTxt('h-u', tkW(sv));
       setTxt('h-eq', T.inSlx(slx(st)));
-      var pct = L.cap > 0 ? Math.min(1, st / L.cap) : 0;
-      setAttr('tank-i', 'tf', 'translateX(' + ((pct - 1) * 100).toFixed(2) + '%)');      // v392: жидкость в капсуле
-      setTxt('h-pct', Math.floor(pct * 100 + 1e-9) + '%');
-      $('tank').classList.toggle('full', full);
-      $('tank').classList.toggle('empty', pct < 0.015);
-      $('hero').classList.toggle('vfull', full);
+      var pct = L.cap > 0 ? Math.min(1, st / L.cap) : 0, seg = Math.ceil(pct * 40 - 1e-9) / 40;
       var hot = L.ocl > 0 && d.on !== false, tb = L.bsl > 0 && d.on !== false;
+      // v394: шкала из 40 делений — горят целые деления (меняются шагом, а не каждый кадр), маркер — точно по уровню
+      setAttr('tank-i', 'clip', 'inset(0 ' + ((1 - seg) * 100).toFixed(1) + '% 0 0)');
+      setAttr('vm-h', 'tf', 'translateX(' + (pct * 100).toFixed(1) + '%)');
+      setTxt('h-pct', Math.floor(pct * 100 + 1e-9) + '%');
+      setAttr('tank', 'cls', 'vault' + (full ? ' full' : '') + (pct < 0.015 ? ' empty' : '') + (d.on === false || full ? ' stop' : ''));
+      setTxt('v-st', d.on === false ? T.vSt.off : full ? T.vSt.full : L.mx > 1 ? (hot ? T.vSt.oc : T.vSt.tb) + ' ×' + L.mx : T.vSt.on);
+      $('hero').classList.toggle('vfull', full);
       var sb = $('slots');
       sb.classList.toggle('stop', d.on === false || full);
       sb.classList.toggle('off', d.on === false);
@@ -2619,6 +2905,7 @@
       $('room').classList.toggle('hot', hot && !full);
       $('hero').classList.toggle('hot', hot);
       $('hero').classList.toggle('tb', tb && !hot);                   // v388: «🚀 Турбо» — голубая рамка
+      setTxt('h-rl', T.vRate);
       setHtml('h-rate', '⛏ ' + esc(tkS(L.rate * 3600)) + ' ' + esc(T.tokU) + T.perH
         + (L.mx > 1 && d.on !== false ? ' <b style="color:' + (hot ? '#fb923c' : '#38bdf8') + '">×' + L.mx + '</b>' : ''));
       // v388: что из доната работает — турбо (обратный отсчёт), автосбор, золотая видеокарта
@@ -2627,12 +2914,15 @@
       if (d.auto_until > L.snow) bh += '<span class="hb a">' + esc(T.hbA(dur(d.auto_until - L.snow))) + '</span>';
       if (d.luck_until > L.snow) bh += '<span class="hb l">' + esc(T.hbL(dur(d.luck_until - L.snow))) + '</span>';    // v390
       if (d.gold) bh += '<span class="hb g">' + esc(T.hbG(goldPct(d.gold))) + '</span>';      // v391: карт несколько — +10% за каждую
+      var rsh = d.raid && d.raid.sh > L.snow ? d.raid.sh - L.snow : 0;                          // v394: щит от взлома
+      if (rsh) bh += '<span class="hb shl">' + esc(T.hbS(dur(rsh))) + '</span>';
       setHtml('h-bs', bh);
       if ($('h-bs').hidden !== !bh) $('h-bs').hidden = !bh;
       ocCard(L, full);
-      if (d.on === false) { setTxt('h-full', T.stopped); setAttr('h-full', 'cls', 'fl'); }
-      else if (full) { setTxt('h-full', T.full); setAttr('h-full', 'cls', 'fl full'); }
-      else { setTxt('h-full', T.fullIn(dur(fullIn(L.cap, st, L.base, L.bs, L.snow)))); setAttr('h-full', 'cls', 'fl'); }
+      hotFx(hot && !full && !Dr, L);                                    // v394: огонь разгона — монеты в шкалу, «+N», отсвет
+      if (d.on === false) { setTxt('h-fl', T.vFarm); setTxt('h-full', T.vPause); setAttr('h-full', 'cls', 'fl'); }
+      else if (full) { setTxt('h-fl', T.vFarm); setTxt('h-full', T.vFull); setAttr('h-full', 'cls', 'fl full'); }
+      else { setTxt('h-fl', T.vFl); setTxt('h-full', dur(fullIn(L.cap, st, L.base, L.bs, L.snow))); setAttr('h-full', 'cls', 'fl'); }
       var bc = $('b-col');
       bc.classList.toggle('gold', full); bc.classList.toggle('pri', !full); bc.classList.toggle('pulse', full);
       setTxt('b-col-t', full ? T.collectFull : T.collect);
@@ -2647,13 +2937,15 @@
       setTxt('wb-v', slxShort(L.wallet));
       setTxt('wb-t', T.walletT(num(L.wallet * price()), num(price())));
     }
+    if (S.tab !== 'farm') hotFx(false);                                // v394: огонь разгона — только на ферме
+    if (S.tab === 'raid' && now - RD.rt > 1000) { RD.rt = now; renderRaid(); }    // обратные отсчёты: щит, месть, новые атаки
   }
   // раз в 150 мс пишем в страницу ТОЛЬКО то, что поменялось: каждая запись (даже того же текста) заставляет браузер
   // пересчитывать вёрстку — на слабом телефоне это и есть «подтормаживания» (v387: так просело с 71 до 54 кадров)
   var _dom = {};
   function setHtml(id, h) { if (_dom['h' + id] !== h) { _dom['h' + id] = h; $(id).innerHTML = h; } }
   function setTxt(id, t) { if (_dom['t' + id] !== t) { _dom['t' + id] = t; $(id).textContent = t; } }
-  function setAttr(id, k, v) { if (_dom[k + id] !== v) { _dom[k + id] = v; var e = $(id); if (k === 'cls') e.className = v; else if (k === 'dis') e.disabled = v; else e.style.transform = v; } }
+  function setAttr(id, k, v) { if (_dom[k + id] !== v) { _dom[k + id] = v; var e = $(id); if (k === 'cls') e.className = v; else if (k === 'dis') e.disabled = v; else if (k === 'clip') { e.style.webkitClipPath = v; e.style.clipPath = v; } else e.style.transform = v; } }
   function ocCard(L, full) {                        // v387: «⚡ Разгон» — готов / идёт (обратный отсчёт) / остывает
     var d = S.d, cf = S.cfg || {}, box = $('occ'), hide = d.on === false;
     if (box.hidden !== hide) box.hidden = hide;
@@ -2690,6 +2982,9 @@
       $('dn-t').textContent = T.dnT;
       $('dn-s').textContent = dnSub(sh);
     }
+    var R = d.raid || {}, ra = !!(R.on && R.ok && R.rin > 0);           // v394: «на тебя напали» — пока не открыл «⚔️ Взлом»
+    if ($('rda').hidden !== !ra) $('rda').hidden = !ra;
+    if (ra) { setTxt('rda-t', T.rd.alT(R.rin)); setTxt('rda-s', T.rd.alS); }
     $('tp-t').textContent = T.tapT; $('tp-s').textContent = T.tapS(tkS(d.tap_val));
     // цели коротко
     var g = d.goals || [], ok = g.filter(function (x) { return x.ok; }).length;
@@ -2919,8 +3214,8 @@
   // администратор; страница только показывает цены и открывает чат ──
   // v390: окно заново — «🎁 Стартовый набор» сверху, дальше разделы: ускорители, навсегда (золотая видеокарта), темы фермы с
   // превью, SLX за рубли и токены плитками. Товары и цены — с сервера (администратор меняет цену и скрывает товар в админке)
-  var DN_ICO = { bst: 'ic-d-rocket', ocf: 'ic-d-bolt', auto: 'ic-d-robot', luck: 'ic-d-clover', gold: 'ic-gold', starter: 'ic-d-gift' };
-  var DN_RGB = { bst: '56,189,248', ocf: '249,115,22', auto: '52,211,153', luck: '74,222,128', gold: '251,191,36' };
+  var DN_ICO = { bst: 'ic-d-rocket', ocf: 'ic-d-bolt', auto: 'ic-d-robot', luck: 'ic-d-clover', gold: 'ic-gold', starter: 'ic-d-gift', shield: 'ic-d-shield' };
+  var DN_RGB = { bst: '56,189,248', ocf: '249,115,22', auto: '52,211,153', luck: '74,222,128', gold: '251,191,36', shield: '96,165,250' };
   var SKIN_RGB = { space: '129,140,248', lava: '249,115,22', ice: '125,211,252', gold: '251,191,36', sakura: '244,114,182', neon: '217,70,239', none: '139,92,246',
                   deep: '167,139,250', dream: '125,190,255' };       // v393
   function goldPct(n) { return Math.round((((S.cfg && S.cfg.gold_x) || 1.1) - 1) * 100 * (Number(n) || 0)); }      // v391: +10% за каждую карту
@@ -2955,6 +3250,7 @@
     return '<svg viewBox="0 0 60 50" aria-hidden="true">' + h + '</svg>';
   }
   function dnLeft(d, x, now) {
+    if (x.kind === 'shield') return ((d.raid && d.raid.sh) || 0) - now;             // v394: щит от взлома
     var f = { bst: 'bst_until', auto: 'auto_until', ocf: 'ocf_until', luck: 'luck_until' }[x.kind];
     return f ? (d[f] || 0) - now : 0;
   }
@@ -2981,6 +3277,15 @@
         + '<div class="ico">' + dnIco(DN_ICO[x.kind]) + '</div><div class="tx"><b>' + esc(EN ? x.en : x.ru) + '</b><small>' + esc(EN ? x.d_en : x.d_ru) + '</small>'
         + (left > 0 ? '<small class="on">' + esc(T.dnOn(dur(left))) + '</small>' : '') + '</div><div class="pr"><b>' + num(x.price) + ' ₽</b>'
         + (x.kind === 'bst' && x.h > 24 ? '<small>' + esc(T.perDay(num(Math.round(x.price / (x.h / 24))))) + '</small>' : '')
+        + '<button type="button" class="bb hot" data-dbuy="' + esc(x.id) + '">' + esc(T.dnBuy) + '</button></div></div>';
+    });
+    var shs = by('shield');                          // v394: «🛡 Защита фермы» — щит от взлома
+    if (shs.length) h += '<div class="dn-sec" id="dn-sh">🛡 ' + esc(T.secS) + '</div>';
+    shs.forEach(function (x) {
+      var left = dnLeft(d, x, now);
+      h += '<div class="dn-it" style="--ic:' + DN_RGB.shield + '"><div class="ico">' + dnIco(DN_ICO.shield) + '</div><div class="tx"><b>' + esc(EN ? x.en : x.ru) + '</b><small>'
+        + esc(EN ? x.d_en : x.d_ru) + '</small>' + (left > 0 ? '<small class="on">' + esc(T.dnOn(dur(left))) + '</small>' : '') + '</div><div class="pr"><b>' + num(x.price) + ' ₽</b>'
+        + (x.h > 24 ? '<small>' + esc(T.perDay(num(Math.round(x.price / (x.h / 24))))) + '</small>' : '')
         + '<button type="button" class="bb hot" data-dbuy="' + esc(x.id) + '">' + esc(T.dnBuy) + '</button></div></div>';
     });
     var gds = by('gold').sort(function (a, b) { return (a.val || 1) - (b.val || 1); }), sk = by('skin');
@@ -3037,7 +3342,7 @@
     h += '<div class="dn-ft">' + esc(T.dnHow) + '</div><div class="row"><button type="button" class="btn sec sm" data-sa="close">' + esc(T.cancel) + '</button></div>';
     sheet(h);
     S.donOpen = true;
-    var to = where === 'skins' ? $('dn-sk') : null;
+    var to = where === 'skins' ? $('dn-sk') : where === 'shield' ? $('dn-sh') : null;
     if (to) try { to.scrollIntoView({ block: 'start' }); } catch (e) {}
   }
   function turboFrom(sh) {                          // «Турбо ×2 от N ₽» — самое дешёвое турбо (нет турбо — самое дешёвое вообще)
@@ -3175,7 +3480,7 @@
           var jj = r.j || {};
           if (r.status === 200 && jj.ok) { S.lastOp = op; S.lastRes = jj.res || {}; apply(jj); return jj; }
           if (!quiet) {
-            if (jj.error === 'no_slx' && jj.need != null) shortSheet(jj.need, jj.have || 0, op === 'buy' ? 'buy:' + (body || {}).rig : op);
+            if (jj.error === 'no_slx' && jj.need != null) shortSheet(jj.need, jj.have || 0, op === 'buy' ? 'buy:' + (body || {}).rig : op === 'raid_up' ? 'raid_up:' + (body || {}).kind : op);
             else toast((T.errs[jj.error] || jj.message || T.errs.net), true);
             hap('error');
           }
@@ -3203,6 +3508,7 @@
     if (!S.loaded) { S.loaded = true; document.body.setAttribute('data-state', 'ready'); $('err').hidden = true; }
     cachePut();
     render();
+    goStart();
     storyCheck(prevCh, prevDone, first);
   }
 
@@ -3256,6 +3562,13 @@
       + '<div class="sh" style="margin:12px 0 4px">' + esc(T.adm.skinH) + '</div><div class="chips">' + [''].concat(Object.keys(SKIN_NM)).map(function (k) {
           return '<button type="button" class="chip' + ((d.skin || '') === k ? ' on' : '') + '" data-adm="skin" data-v="' + k + '">'
             + esc(k ? SKIN_NM[k][0] + ' ' + SKIN_NM[k][EN ? 2 : 1] + (skSale(k) ? '' : ' 💤') : T.skNone) + '</button>'; }).join('') + '</div>'
+      // v394: «⚔️ Взлом» — что видит игрок, когда его взломали (и сообщение в боте), уровни файрвола и вируса, всё с нуля
+      + (d.raid ? '<div class="sh" style="margin:12px 0 4px">' + esc(T.adm.raidH) + '</div><div class="admgrid">' + [1, 2, 3, 0].map(function (n) {
+          return '<button type="button" class="btn sec" data-adm="rme" data-v="' + n + '">' + esc(n ? T.adm.rme(n) : T.adm.rme0) + '</button>'; }).join('') + '</div>'
+          + [['rfw', T.adm.rfw, d.raid.fw], ['rvr', T.adm.rvr, d.raid.vr]].map(function (r) {
+              return '<div class="sh" style="margin:10px 0 4px">' + esc(r[1]) + '</div><div class="chips">' + [0, 1, 2, 3, 4, 5].slice(0, (d.raid.max || 5) + 1).map(function (n) {
+                return '<button type="button" class="chip' + (r[2] === n ? ' on' : '') + '" data-adm="' + r[0] + '" data-v="' + n + '">' + n + '</button>'; }).join('') + '</div>'; }).join('')
+          + '<button type="button" class="btn sec sm" style="margin-top:8px" data-adm="rreset">' + esc(T.adm.rreset) + '</button><p class="note">' + esc(T.adm.rnote) + '</p>' : '')
       + '<button type="button" class="btn sec sm" style="margin-top:8px;color:var(--red)" data-adm="reset">' + esc(T.adm.reset) + '</button>'
       + '<p class="note">' + esc(T.adm.note) + '</p>');
   }
@@ -3274,7 +3587,9 @@
     var ops = { open: ['adm_open', { on: !S.d.open }], ch: ['adm_ch', { ch: Number(v) }], fill: ['adm_fill', {}], energy: ['adm_energy', {}],
                 lucky: ['adm_lucky', {}], oc: ['adm_oc', {}], reset: ['adm_reset', {}],
                 give: ['adm_give', { item: v }], unboost: ['adm_unboost', {}],             // v388: донат на себе
-                gold: ['adm_gold', { n: Number(v) }], skin: ['adm_skin', { id: v || '' }] }, o = ops[a];     // v392: любое число карт, любая тема
+                gold: ['adm_gold', { n: Number(v) }], skin: ['adm_skin', { id: v || '' }],     // v392: любое число карт, любая тема
+                rme: ['adm_raid_me', { hits: Number(v) }], rfw: ['adm_raid_lvl', { fw: Number(v) }], rvr: ['adm_raid_lvl', { vr: Number(v) }],   // v394
+                rreset: ['adm_raid_reset', {}] }, o = ops[a];
     if (!o) return;
     (a === 'reset' ? askYes(T.adm.resetQ) : Promise.resolve(true)).then(function (yes) {
       if (!yes) return;
@@ -3283,6 +3598,7 @@
       send(o[0], o[1]).then(function (j) {
         if (!j) return;
         toast(T.adm.done);
+        if (a === 'rreset' || a === 'rfw' || a === 'rvr') RD.at = 0;                // v394: цели — заново
         if (a !== 'ch' && a !== 'reset') admSheet();
       });
     });
@@ -3319,6 +3635,7 @@
       if (then.indexOf('buy:') === 0) buyRig(then.slice(4));
       else if (then === 'storage') buyStorage();
       else if (then === 'move') doMove();
+      else if (then.indexOf('raid_up:') === 0) rdUp(then.slice(8));      // v394
     });
   }
 
@@ -3472,12 +3789,12 @@
     sparkOne(hot); if (hot) { sparkOne(hot); setTimeout(function () { sparkOne(hot); }, 320); }
   }
   function sparkOne(hot) {
-    if (document.hidden || S.tab !== 'farm' || S.ovOpen || spkN >= (hot ? 10 : 4) || !document.body.animate) return;
+    if (document.hidden || S.tab !== 'farm' || S.ovOpen || HK || spkN >= (hot ? 10 : 4) || !document.body.animate) return;
     if (document.documentElement.classList.contains('calm')) return;
     var d = S.d, L = live(), box = $('slots');
     if (!d || !L || d.on === false || L.full || S.drain || box.classList.contains('idle')) return;
     var rigs = box.querySelectorAll('.sl[data-rig]'); if (!rigs.length) return;
-    var t = $('tank').getBoundingClientRect(); if (t.bottom < 0 || t.top > window.innerHeight) return;
+    var t = $('vm').getBoundingClientRect(); if (t.bottom < 0 || t.top > window.innerHeight) return;      // v394: в шкалу хранилища
     var r = rigs[(Math.random() * rigs.length) | 0].getBoundingClientRect(); if (r.bottom < 0 || r.top > window.innerHeight) return;
     var sx = r.left + r.width / 2, sy = r.top + r.height * 0.35;
     var tx = t.left + t.width * Math.max(0.04, Math.min(1, L.st / (L.cap || 1))), ty = t.top + t.height / 2;
@@ -3603,6 +3920,277 @@
     }
   }
 
+  // ── v394: «⚔️ Взлом ферм» — цели, месть, файрвол и вирус, щит, журнал; взлом — мини-игра из 3 слоёв. Всё решает сервер:
+  // страница только показывает бегунок по его параметрам и отправляет, через сколько мс после старта слоя нажали ──
+  var RD = { tg: null, at: 0, busy: false, train: false, rt: 0 };
+  function li(s) { return '<li>' + esc(s) + '</li>'; }
+  function rdNow() { var L = live(); return L ? L.snow : (S.d && S.d.t) || Date.now() / 1000; }
+  function rdAv(x) { return x.train ? '🤖' : avHtml(x); }
+  function rdTok(x) { return tokShort((Number(x) || 0) * fp()) + ' ' + T.tokU; }
+  function ago(s) { return s < 60 ? T.rd.now : T.rd.ago(dur(s)); }
+  function renderRaid() {
+    var d = S.d, R = d && d.raid, parts = ['rd-rv', 'rd-th', 'rd-tg', 'rd-dh', 'rd-up', 'rd-lh', 'rd-log', 'rd-note'];
+    if (!d) return;
+    if (!R) {                                        // страница уже новая, а бот ещё старый (минуты выкладки) — не пустая вкладка
+      setHtml('rd-top', '<div class="card rdlock"><div class="lk">⏳</div><b>' + esc(T.rd.soon) + '</b></div>');
+      parts.forEach(function (k) { if (!$(k).hidden) $(k).hidden = true; });
+      return;
+    }
+    var now = rdNow();
+    if (!R.on || !R.ok) {                            // выключен администратором / ещё закрыт — что это и с какой главы
+      setHtml('rd-top', '<div class="card rdlock"><div class="lk">' + (R.on ? '🔒' : '⏸') + '</div><b>' + esc(R.on ? T.rd.lockT(R.unlock) : T.rd.off) + '</b><p>'
+        + esc(T.rd.lockS) + '</p><ol class="rdhow">' + T.rd.how(R).map(li).join('') + '</ol></div>');
+      parts.forEach(function (k) { if (!$(k).hidden) $(k).hidden = true; });
+      return;
+    }
+    parts.forEach(function (k) { if ($(k).hidden) $(k).hidden = false; });
+    var shl = R.sh > now ? R.sh - now : 0, rs = Math.max(60, (R.reset_in || 0) - (now - (d.t || now))), dots = '';
+    for (var i = 0; i < R.n; i++) dots += '<i' + (i < R.left ? ' class="on"' : '') + '></i>';
+    setHtml('rd-top', '<div class="card rdh"><div class="rhr"><h3>' + esc(T.rd.t) + '</h3><div class="rdn">' + dots + '</div></div>'
+      + '<div class="rds">' + esc((R.left > 0 ? T.rd.left(R.left, R.n) : T.rd.noLeft) + ' · ' + T.rd.reset(dur(rs))) + '</div>'
+      + '<div class="rdb">' + (shl > 0 ? '<span class="shl">' + esc(T.rd.sh(dur(shl))) + '</span>' : '<span class="no" data-rshop="1">' + esc(T.rd.noSh) + '</span>')
+      + '<span>' + esc(T.rd.fw(R.fw, R.max)) + '</span><span>' + esc(T.rd.vr(R.vr, R.max)) + '</span></div></div>');
+    var rv = (R.rv || []).map(function (x) {          // месть: кто взломал тебя за сутки — без атаки дня и сквозь щит
+      return '<div class="card rdt rv"><div class="ra">' + rdAv(x) + '</div><div class="ri2"><b>' + esc(x.name) + '</b><small>' + esc(T.rd.rvS(rdTok(x.took)))
+        + '</small><small>' + esc(T.rd.rvT(dur(Math.max(60, 86400 - (now - x.t))))) + '</small><small class="lt">' + esc(T.rd.loot(rdTok(x.loot))) + '</small></div>'
+        + '<button type="button" class="bb hot" data-rgo="' + Number(x.u) + '" data-rv="1">' + esc(T.rd.rvGo) + '</button></div>';
+    }).join('');
+    setHtml('rd-rv', rv ? '<div class="sh">' + esc(T.rd.rvH) + '</div>' + rv + '<p class="note" style="margin:-4px 2px 12px">' + esc(T.rd.rvNote) + '</p>' : '');
+    setHtml('rd-th', '<span>' + esc(T.rd.tgH) + '</span><button type="button" data-rref="1">' + esc(T.rd.more) + '</button>');
+    var tg = RD.tg, can = R.left > 0 || R.adm;
+    setHtml('rd-tg', tg === null ? '<div class="card rdem">' + esc(T.rd.loading) + '</div>'
+      : !tg.length ? '<div class="card rdem">' + esc(T.rd.none) + '</div>'
+      : tg.map(function (x) {
+          var df = x.w >= 0.17 ? ['e', T.rd.dfE] : x.w >= 0.125 ? ['m', T.rd.dfM] : ['h', T.rd.dfH];
+          return '<div class="card rdt"><div class="ra">' + rdAv(x) + '</div><div class="ri2"><b>' + esc(x.name) + '<span class="df ' + df[0] + '">' + esc(df[1]) + '</span></b>'
+            + '<small>' + chIco(x.ch || 1) + ' ' + esc(T.rd.tgS(x.ch || 1, hashS(x.hash), x.fw)) + '</small><small class="lt">' + esc(T.rd.loot(rdTok(x.loot))) + '</small></div>'
+            + '<button type="button" class="bb hot" data-rgo="' + Number(x.u) + '"' + (can ? '' : ' disabled') + '>' + esc(T.rd.go) + '</button></div>';
+        }).join('') + (RD.train ? '<p class="note" style="margin:-4px 2px 12px">' + esc(T.rd.train) + '</p>' : ''));
+    setTxt('rd-dh', T.rd.defH);
+    var up = function (k, ico, tt, ss, cost, lv) {
+      var bars = ''; for (var j = 0; j < R.max; j++) bars += '<i' + (j < lv ? ' class="on"' : '') + '></i>';
+      return '<div class="card rdu"><div class="ue">' + ico + '</div><div class="ut"><b>' + esc(tt) + '</b><small>' + esc(ss) + '</small><div class="lv">' + bars + '</div></div>'
+        + (cost != null ? '<button type="button" class="bb" data-rup="' + k + '">' + esc(T.rd.up(rdTok(cost))) + '</button>'
+                        : '<button type="button" class="bb ghost" disabled>' + esc(T.rd.max) + '</button>') + '</div>';
+    };
+    var shs = (S.shop || []).filter(function (x) { return x.kind === 'shield'; });
+    var shMin = shs.length ? Math.min.apply(null, shs.map(function (x) { return x.price; })) : 0;
+    setHtml('rd-up', up('fw', '🧱', T.rd.fwT(R.fw, R.max), T.rd.fwS(R.fwx), R.fw_cost, R.fw) + up('vr', '🦠', T.rd.vrT(R.vr, R.max), T.rd.vrS(R.vrx), R.vr_cost, R.vr)
+      + (shs.length ? '<div class="card rdu rsh"><div class="ue">🛡</div><div class="ut"><b>' + esc(T.rd.shT) + '</b><small>' + esc(shl > 0 ? T.rd.shOn(dur(shl)) : T.rd.shS) + '</small><small>'
+        + esc(T.rd.shFrom(num(shMin))) + '</small></div><button type="button" class="bb hot" data-rshop="1">' + esc(T.rd.shBuy) + '</button></div>' : ''));
+    setTxt('rd-lh', T.rd.logH);
+    var LI = { out_ok: '💰', out_zero: '🕳', out_fail: '🚨', out_quit: '🏳', in_ok: '🔓', in_fail: '🛡' }, lg = R.log || [];
+    setHtml('rd-log', lg.length ? lg.map(function (e) {
+      var k = e.k, fn = T.rd.lg[k] || function (n) { return n; }, sg = k === 'out_ok' || k === 'in_fail' ? 'p' : k === 'in_ok' || k === 'out_fail' ? 'm' : '';
+      return '<div class="le2"><span class="li">' + (LI[k] || '•') + '</span><div class="lx">' + esc(fn(e.name, e.hits)) + '<small>' + esc(ago(Math.max(0, now - e.t))) + '</small></div>'
+        + (e.amt > 0 && sg ? '<span class="lv2 ' + sg + '">' + (sg === 'p' ? '+' : '−') + esc(tkS(e.amt) + ' ' + T.tokU) + '</span>' : '') + '</div>';
+    }).join('') : '<div class="rdem" style="padding:12px 4px">' + esc(T.rd.logNone) + '</div>');
+    setHtml('rd-note', '<div class="sh" style="margin:0 0 4px">' + esc(T.rd.howH) + '</div><ol class="rdhow">' + T.rd.how(R).map(li).join('') + '</ol>');
+  }
+  function rdOpen() {                               // открыли вкладку: цели (раз в минуту) и «на тебя напали» — прочитано
+    var R = S.d && S.d.raid; if (!R) return;
+    rdScout(false);
+    if (R.rin > 0) { R.rin = 0; send('raid_seen', {}, null, true); render(); }
+  }
+  function rdScout(force) {
+    var R = S.d && S.d.raid;
+    if (!R || !R.on || !R.ok || RD.busy) return;
+    if (!force && RD.tg && Date.now() - RD.at < 60000) return;
+    RD.busy = true;
+    if (force) { RD.tg = null; if (S.tab === 'raid') renderRaid(); }
+    send('raid_scout', {}, null, true).then(function (j) {
+      RD.busy = false;
+      var r = j && j.res;
+      RD.tg = r && r.targets ? r.targets : (RD.tg || []); RD.train = !!(r && r.train); RD.at = Date.now();
+      if (S.tab === 'raid') renderRaid();
+    });
+  }
+  function rdUp(k, btn) {
+    send('raid_up', { kind: k }, btn).then(function (j) {
+      if (!j) return;
+      toast(T.rd.upOk(k, (j.res || {})[k] || 0)); hap('success');
+    });
+  }
+  $('t-raid').addEventListener('click', function (e) {
+    var g = e.target.closest('[data-rgo]'), u = e.target.closest('[data-rup]'), r = e.target.closest('[data-rref]'), sh = e.target.closest('[data-rshop]');
+    if (g) { if (!g.disabled) { hap('medium'); hkOpen(Number(g.getAttribute('data-rgo')), g.getAttribute('data-rv') === '1'); } }
+    else if (u) { hap('light'); rdUp(u.getAttribute('data-rup'), u); }
+    else if (r) { hap('sel'); rdScout(true); }
+    else if (sh) { hap('sel'); donSheet('shield'); }
+  });
+  $('rda').addEventListener('click', function () { hap('sel'); openTab('raid'); });
+
+  // взлом: заставка (что брать, правила) → «Начать» (попытка тратится) → 3 слоя: бегунок ходит туда-обратно, «Пробить» в
+  // зелёной зоне → итог. Бегунок — только transform, раз в кадр; нажатие — pointerdown (точнее, чем click)
+  var HK = null;
+  function hkTop(name, loot, fw, ico) {
+    return '<div class="hk-top"><b>' + esc(T.rd.hkH(name)) + '</b><small>' + esc(T.rd.hkS(rdTok(loot), fw)) + '</small></div>'
+      + '<div class="hk-rings" id="hk-rings"><i class="r1"></i><i class="r2"></i><i class="r3"></i><div class="hk-core">' + ico + '</div></div>';
+  }
+  function hkOpen(u, rv) {
+    var R = S.d && S.d.raid; if (!R || HK) return;
+    if (!rv && R.left <= 0 && !R.adm) { toast(T.errs.no_left, true); hap('error'); return; }
+    var x = (rv ? R.rv || [] : RD.tg || []).filter(function (y) { return Number(y.u) === u; })[0];
+    if (!x) return;
+    HK = { u: u, rv: rv, stage: 'intro', taps: [], hits: 0, i: 0, win: 0 };
+    $('hk-in').innerHTML = hkTop(x.name, x.loot, x.fw || 0, rv ? '🔥' : '🔒') + '<ul class="hk-info">' + T.rd.hkRules(R).map(li).join('') + '</ul>'
+      + '<button type="button" class="btn hk-go" id="hk-go">' + esc(T.rd.hkStart) + '</button>'
+      + '<button type="button" class="btn sec sm" id="hk-cancel">' + esc(T.rd.hkCancel) + '</button>';
+    $('hk-x').hidden = true;
+    $('hk').classList.remove('hit', 'miss'); $('hk').classList.add('on');
+  }
+  function hkStart() {
+    HK.stage = 'wait';
+    var g = $('hk-go'), c = $('hk-cancel'); g.disabled = true; g.textContent = T.rd.hkWait; if (c) c.remove();
+    send('raid_go', { u: HK.u, rv: HK.rv ? 1 : 0 }).then(function (j) {
+      if (!HK) return;
+      var r = j && j.res && j.res.raid;
+      if (!r) { hkClose(); rdScout(true); return; }          // не вышло — всплывашка уже сказала почему
+      HK.sid = r.sid; HK.w = r.w; HK.p = r.p; HK.ph = r.ph; HK.c = r.c; HK.i = 0; HK.taps = []; HK.hits = 0;
+      $('hk-in').innerHTML = hkTop(r.name, r.loot, r.fw || 0, r.rv ? '🔥' : '🔒')
+        + '<div class="hk-lay" id="hk-lay"></div><div class="hk-bar" id="hk-bar"><i class="hk-zone" id="hk-zone"></i><i class="hk-cw" id="hk-cw"><b></b></i></div>'
+        + '<div class="hk-msg" id="hk-msg"></div><button type="button" class="btn hk-go" id="hk-go">' + esc(T.rd.hkTap) + '</button>';
+      $('hk-x').hidden = false;
+      hkLayer();
+    });
+  }
+  function hkX(e, i) { var u = ((e / HK.p[i] + HK.ph[i]) % 1 + 1) % 1; return u < 0.5 ? u * 2 : 2 - u * 2; }      // как на сервере
+  function hkLayer() {
+    var i = HK.i, z = $('hk-zone'), rg = $('hk-rings').children;
+    HK.stage = 'play';
+    $('hk').classList.remove('hit', 'miss');
+    $('hk-lay').textContent = T.rd.hkLay(i + 1);
+    $('hk-msg').textContent = ''; $('hk-msg').className = 'hk-msg';
+    z.style.left = ((HK.c[i] - HK.w / 2) * 100).toFixed(2) + '%'; z.style.width = (HK.w * 100).toFixed(2) + '%';
+    for (var k = 0; k < 3; k++) rg[k].classList.toggle('cur', k === i);
+    $('hk-go').disabled = false;
+    HK.t0 = performance.now();
+    cancelAnimationFrame(HK.raf); HK.raf = requestAnimationFrame(hkFrame);
+    clearTimeout(HK.tm); HK.tm = setTimeout(function () { if (HK && HK.stage === 'play' && HK.i === i) hkTap(0, true); }, 12000);   // не нажал — слой мимо
+  }
+  function hkFrame() {
+    if (!HK || HK.stage !== 'play') return;
+    $('hk-cw').style.transform = 'translate3d(' + (hkX(performance.now() - HK.t0, HK.i) * 100).toFixed(2) + '%,0,0)';
+    HK.raf = requestAnimationFrame(hkFrame);
+  }
+  function hkTap(ts, timeout) {
+    if (!HK || HK.stage !== 'play') return;
+    var i = HK.i, e = timeout ? 0 : Math.max(0, (ts || performance.now()) - HK.t0);
+    if (!timeout && e < 400) return;                 // сервер не засчитывает нажатие раньше 0,35 с — слой не тратим
+    var x = hkX(e, i), hit = !timeout && Math.abs(x - HK.c[i]) <= HK.w / 2 + 0.015;
+    HK.taps[i] = e; HK.stage = 'flash'; HK.hits += hit ? 1 : 0;
+    cancelAnimationFrame(HK.raf); clearTimeout(HK.tm);
+    $('hk-cw').style.transform = 'translate3d(' + (x * 100).toFixed(2) + '%,0,0)';     // бегунок замер там, где нажал
+    $('hk-go').disabled = true;
+    $('hk').classList.toggle('hit', hit); $('hk').classList.toggle('miss', !hit);
+    var m = $('hk-msg'); m.textContent = hit ? T.rd.hkHit : T.rd.hkMiss; m.className = 'hk-msg ' + (hit ? 'ok' : 'no');
+    if (hit) $('hk-rings').children[i].classList.add('br');
+    hap(hit ? 'success' : 'error');
+    setTimeout(function () { if (!HK || HK.stage !== 'flash') return; HK.i++; if (HK.i < 3) hkLayer(); else hkSend(); }, 750);
+  }
+  function hkSend() {
+    HK.stage = 'send';
+    $('hk-lay').textContent = T.rd.hkSend; $('hk-x').hidden = true;
+    send('raid_hit', { sid: HK.sid, taps: HK.taps.slice() }).then(function (j) {
+      if (!HK) return;
+      var r = j && j.res && j.res.raid_res;
+      if (!r) { hkClose(); rdScout(true); return; }
+      hkResult(r);
+    });
+  }
+  function hkResult(r) {
+    HK.stage = 'res';
+    var k = r.kind, ic = '❔', big = T.rd.resGone, cls = '', tt = '';
+    if (k === 'ok') { ic = '💰'; big = '+' + tkS(r.stolen) + ' ' + T.tokU; cls = 'ok'; tt = T.rd.resOkS(r.hits, r.name) + (r.train ? T.rd.resTrain : ''); HK.win = r.stolen; }
+    else if (k === 'zero') { ic = '🕳'; big = T.rd.resZero; tt = T.rd.resZeroS; }
+    else if (k === 'fail') { ic = '🚨'; big = T.rd.resFail; cls = 'no'; tt = T.rd.resFailS(r.pen > 0 ? tkS(r.pen) + ' ' + T.tokU : ''); }
+    else if (k === 'shield') { ic = '🛡'; big = T.rd.resSh; tt = T.rd.resShS; }
+    $('hk-in').innerHTML = '<div class="hk-res" id="hk-res" data-kind="' + esc(k) + '"><div class="re2">' + ic + '</div><div class="rb ' + cls + '">' + esc(big) + '</div><p>' + esc(tt) + '</p></div>'
+      + '<button type="button" class="btn hk-go" id="hk-done">' + esc(T.rd.resBtn) + '</button>';
+    hap(k === 'ok' ? 'success' : k === 'fail' ? 'error' : 'warning');
+  }
+  function hkClose() {
+    var win = HK && HK.stage === 'res' ? HK.win : 0;
+    if (HK) { cancelAnimationFrame(HK.raf); clearTimeout(HK.tm); }
+    HK = null;
+    $('hk').classList.remove('on', 'hit', 'miss');
+    if (win > 0 && S.loaded) {                       // добыча летит в кошелёк (сервер уже положил — цифра догоняет)
+      var src = S.tab === 'raid' ? $('rd-top') : $('tank');
+      tokenFly(src, win);
+      var A = S.acc; if (A) { A.to = A.from; A.from = A.to - win; A.shown = A.from; A.ok = true; }
+    }
+    if (S.tab === 'raid') renderRaid();
+  }
+  $('hk').addEventListener('pointerdown', function (e) {
+    if (!HK || HK.stage !== 'play' || !e.target.closest('#hk-go, #hk-bar')) return;
+    e.preventDefault();
+    var ts = e.timeStamp;                            // время нажатия; у старых WebView — другое начало отсчёта: тогда «сейчас»
+    if (!(ts > 0) || ts > performance.now() + 50 || ts < HK.t0 - 50) ts = performance.now();
+    hkTap(ts);
+  });
+  $('hk').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b || !HK) return;
+    if (b.id === 'hk-cancel') { hap('sel'); hkClose(); }
+    else if (b.id === 'hk-done') { hap('sel'); hkClose(); rdScout(true); }
+    else if (b.id === 'hk-go' && HK.stage === 'intro') { hap('heavy'); hkStart(); }
+    else if (b.id === 'hk-x' && (HK.stage === 'play' || HK.stage === 'flash')) {
+      askYes(T.rd.hkQuitQ).then(function (y) { if (y && HK) { hkClose(); rdScout(true); } });
+    }
+  });
+  // для проверок (e2e): где взлом сейчас и «нажать в нужный миг» слоя — в зону (hit) или мимо
+  window.__hkDbg = function () { return HK ? { stage: HK.stage, i: HK.i, hits: HK.hits, taps: HK.taps.slice(), w: HK.w, t0: HK.t0, p: HK.p, ph: HK.ph, c: HK.c } : null; };
+  window.__hkAim = function (hit) {
+    if (!HK || HK.stage !== 'play') return -1;
+    var i = HK.i, p = HK.p[i], c = hit ? HK.c[i] : (HK.c[i] > 0.5 ? 0.02 : 0.98), t0 = HK.t0;
+    var e = ((c / 2 - HK.ph[i]) % 1 + 1) % 1 * p; while (e < 450) e += p;
+    setTimeout(function () { if (HK && HK.i === i && HK.stage === 'play') hkTap(t0 + e); }, Math.max(0, t0 + e - performance.now()));
+    return e;
+  };
+
+  // v394: «⚡ Разгон» — из устройств в шкалу летят монеты, над табло раз в секунду «+N», края экрана в отсвете огня
+  var HF = { t: 0, p: 0, n: 0, pl: 0 };
+  function hotFx(on, L) {
+    if (document.body.classList.contains('ochot') !== on) document.body.classList.toggle('ochot', on);
+    if (!on || document.hidden || S.ovOpen || HK || !document.body.animate || document.documentElement.classList.contains('calm')) return;
+    var now = performance.now();
+    if (now - HF.t >= 260) { HF.t = now; ocCoin(L); }
+    if (now - HF.p >= 1000) { HF.p = now; ocPlus(L.rate * fp()); }
+  }
+  function ocCoin(L) {
+    if (HF.n >= 8) return;
+    var m = $('vm').getBoundingClientRect(); if (m.bottom < 0 || m.top > window.innerHeight) return;
+    var rigs = $('slots').classList.contains('idle') ? [] : $('slots').querySelectorAll('.sl[data-rig], .sl.gld'), a;
+    if (rigs.length) { a = rigs[(Math.random() * rigs.length) | 0].getBoundingClientRect(); if (a.bottom < 0 || a.top > window.innerHeight) a = null; }
+    if (!a) a = document.querySelector('#occ .oci').getBoundingClientRect();
+    if (!a.width) return;
+    var sx = a.left + a.width * (0.3 + Math.random() * 0.4), sy = a.top + a.height * 0.4;
+    var tx = m.left + m.width * Math.max(0.03, Math.min(1, L.st / (L.cap || 1))), ty = m.top + m.height / 2;
+    var el = document.createElement('i'); el.className = 'ocn'; el.style.left = sx + 'px'; el.style.top = sy + 'px';
+    $('fx').appendChild(el); HF.n++;
+    var dx = tx - sx, dy = ty - sy, side = Math.random() * 60 - 30, done = false;
+    var fin = function () { if (done) return; done = true; el.remove(); HF.n--; };
+    el.animate([{ transform: 'translate(0,0) scale(.4)', opacity: 0 },
+                { transform: 'translate(' + (dx * 0.3 + side).toFixed(1) + 'px,' + (dy * 0.3 - 30).toFixed(1) + 'px) scale(1.1)', opacity: 1, offset: 0.35 },
+                { transform: 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(.45)', opacity: 0.2 }],
+               { duration: 760 + Math.random() * 240, easing: 'cubic-bezier(.45,0,.3,1)', fill: 'forwards' }).onfinish = fin;
+    setTimeout(fin, 1600);
+  }
+  function ocPlus(tok) {
+    if (!(tok >= 0.01) || HF.pl >= 3) return;
+    var v = $('tank').getBoundingClientRect(); if (v.bottom < 0 || v.top > window.innerHeight) return;
+    var el = document.createElement('div'); el.className = 'vplus'; el.textContent = '+' + tkF(tok);
+    el.style.left = (v.right - 104 + Math.random() * 30).toFixed(1) + 'px'; el.style.top = (v.top + 34).toFixed(1) + 'px';     // справа от цифр, в панели
+    $('fx').appendChild(el); HF.pl++;
+    var done = false, fin = function () { if (done) return; done = true; el.remove(); HF.pl--; };
+    el.animate([{ transform: 'translateY(8px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1, offset: 0.2 }, { transform: 'translateY(-30px)', opacity: 0 }],
+               { duration: 1150, easing: 'ease-out', fill: 'forwards' }).onfinish = fin;
+    setTimeout(fin, 1800);
+  }
+
+  function goStart() {                              // v394: «⚔️ Отомстить» из сообщения бота (?tab=raid) — сразу во «Взлом»
+    if (S.startTab && S.d && S.d.started) { var t0 = S.startTab; S.startTab = ''; openTab(t0); }
+  }
+
   // ── загрузка, опрос, кэш ──
   var CK = 'mine_v2_' + UID;                      // v388: v2 — суммы в настоящих SLX (старую память v1 не берём: там SLX фермы)
   function cachePut() { try { localStorage.setItem(CK, JSON.stringify({ t: Date.now(), d: S.d, cfg: S.cfg, ex: S.ex, shop: S.shop, order: S.order, cid: S.cid })); } catch (e) {} }
@@ -3667,12 +4255,14 @@
   })();
 
   // старт: сначала — последние данные из памяти телефона (мгновенно), потом — свежие с сервера
+  S.startTab = TABS.indexOf(q.get('tab') || '') > 0 ? q.get('tab') : '';
   var c0 = cacheGet();
   if (c0 && c0.d && c0.d.started) {
     S.cfg = c0.cfg; S.ex = c0.ex || ''; S.d = c0.d; S.at = performance.now(); S.d.stored = c0.d.stored; S.loaded = true; S.needCfg = true;
     S.shop = c0.shop; S.order = c0.order; S.cid = c0.cid;          // v388: донат из памяти телефона
     document.body.setAttribute('data-state', 'ready');
     render();
+    goStart();
   }
   load(false);
 })();
