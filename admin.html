@@ -715,7 +715,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v395';
+  var VER = 'v396';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -1373,7 +1373,7 @@ window.addEventListener('error', function (e) {
                x.luck ? '🍀 Удача ×3 — ещё ' + lf(x.luck) : '', x.starter ? '🎁 Стартовый набор — уже получал' : '',          // v390
                (x.skins || []).length ? '🎨 Темы: ' + x.skins.map(function (k) { return (SKN[k] || k) + (k === x.skin ? ' (надета)' : ''); }).join(', ') : '',
                rdx.sh ? '🛡 Щит от взлома — ещё ' + lf(rdx.sh) : '',                                                          // v394: «⚔️ Взлом ферм»
-               rdx.fw || rdx.vr ? '⚔️ Файрвол ' + (rdx.fw || 0) + '/5 · вирус ' + (rdx.vr || 0) + '/5' : '',
+               rdx.fw || rdx.vr || rdx.sl ? '⚔️ Файрвол ' + (rdx.fw || 0) + '/5 · вирус ' + (rdx.vr || 0) + '/5' + (rdx.sl != null ? ' · 🔐 сейф ' + rdx.sl + '/5' : '') : '',   // v396
                rdx.used ? '⚔️ Атак сегодня: ' + rdx.used : '',
                rdx.st && rdx.st[0] ? '⚔️ Взломов: ' + rdx.st[0] + ' (удачных ' + rdx.st[1] + ') · унёс ≈ ' + short(rdx.st[2]) + ' · потерял ≈ ' + short(rdx.st[3]) : '',   // v395
                x.mod && (x.mod.cool || x.mod.rack || x.mod.bat) ? '🔧 Модули: ❄️ охлаждение ' + (x.mod.cool || 0) + '/5 · 🛰 стойки ' + (x.mod.rack || 0) + '/5 · 🔋 аккумуляторы '
@@ -1394,7 +1394,8 @@ window.addEventListener('error', function (e) {
           return dt(o.t) + ' — ' + esc(it ? it.e + ' ' + it.ru : o.item) + ' · ' + fmt(o.rub) + ' ₽'; })
       + list('⚔️ Взлом — журнал', 'mrlog', rdx.log || [], function (o) {                 // v394
           var L = { out_ok: '💰 взломал', out_zero: '🕳 взломал (пусто)', out_fail: '🚨 попался у', out_quit: '🏳 бросил взлом', in_ok: '🔓 его взломал', in_fail: '🛡 отбил' };
-          return dt(o.t) + ' — ' + (L[o.k] || o.k) + ' ' + esc(o.name) + (o.hits ? ' · ' + o.hits + '/3' : '') + (o.tok ? ' · ≈ ' + short(o.tok) + ' 💰' : ''); });
+          return dt(o.t) + ' — ' + (L[o.k] || o.k) + ' ' + esc(o.name) + (o.hits ? ' · ' + o.hits + '/3' : '') + (o.tok ? ' · ≈ ' + short(o.tok) + ' 💰' : '')
+            + (o.sf ? ' · 🔐 сейф ≈ ' + short(o.sf) + ' 💰' : '') + (o.al ? ' · 🔔 сигнализация' : ''); });      // v396
     return h;
   }
   function modSecHtml(p) {
@@ -3005,7 +3006,8 @@ window.addEventListener('error', function (e) {
   }
   // v394: «⚔️ Взлом ферм» — игроки нападают на чужие фермы и уносят часть НЕсобранного хранилища; защита — собирать чаще,
   // файрвол (SLX сгорают), щит (донат), месть. Вкл/выкл, 8 настроек, сегодня и 7 дней, расчёт по главам, последние взломы
-  var MN_RD = ['ch', 'n', 'pct', 'cap_h', 'shield_h', 'fail_pct', 'gap_h', 'min_m', 'gh_h'];      // v395: + часы награды «ГигаХэша»
+  var MN_RD = ['ch', 'n', 'pct', 'cap_h', 'shield_h', 'fail_pct', 'gap_h', 'min_m', 'gh_h',      // v395: + часы награды «ГигаХэша»
+               'safe_pct', 'safe_cap_h', 'safe_day', 'safe_fail'];                                // v396: «🔐 Сейф»
   function mnRaidHtml(mi) {
     var r = mi.raid || {}, c = r.cfg || {}, df = r.def || {}, tx = r.txt || {}, lm = r.lim || {}, td = r.today || {}, wk = r.week || {}, pf = Number(mi.pf) || 0;
     var KS = MN_RD.filter(function (k) { return k in c; });          // v395: бот v394 не знает «gh_h» — поля нет
@@ -3018,6 +3020,9 @@ window.addEventListener('error', function (e) {
             + c.gap_h + ' ч</b> · цель — если в её хранилище от <b>' + c.min_m + ' мин</b> добычи'
             + ('adm' in c ? '<br>👑 Админ во взломе: <b>' + (c.adm ? 'да — нападаешь на настоящие фермы, тебя тоже могут взломать' : 'нет — только «🤖 Учебная ферма»') + '</b>' : '')
             + ('gh' in c ? '<br>🏢 «ГигаХэш» (цель дня): <b>' + (c.gh ? 'открыт — раз в сутки, без штрафа, до ' + c.gh_h + ' ч своей добычи' : 'закрыт') + '</b>' : '')
+            + ('safe' in c ? '<br>🔐 «Сейф» (кража SLX из кошелька): <b>' + (c.safe ? 'включён — после 3 из 3 взломщик может вскрыть сейф: ' + c.safe_pct
+                + '% незащищённой части кошелька, не больше ' + c.safe_cap_h + ' ч своей добычи; игрок теряет в сутки не больше ' + c.safe_day
+                + '% кошелька; не вскрыл — сигнализация, −' + c.safe_fail + '% добычи' : 'выключен — крадут только из хранилища') + '</b>' : '')      // v396
           : 'Выключен: во вкладке «⚔️ Взлом» игроки видят «выключен администратором». Уровни, щиты и журналы сохранены.') + '</div>'
       + '<div class="small">Уносят только НЕсобранное из хранилища — кошелёк и баланс не трогаются; токенов в игре не прибавляется: что унёс один, потерял другой. '
       + 'Взлом — мини-игра «пробей 3 слоя» (нажатия проверяет бот): 1 слой — 40% добычи, 2 — 70%, 3 — вся; ни одного — попался. Защита: собирать чаще, '
@@ -3028,7 +3033,11 @@ window.addEventListener('error', function (e) {
       + kv('Сегодня попались', fmt(td.fail || 0) + '<small>файрвол забрал ≈ ' + short(td.pen || 0) + ' 💰</small>')
       + kv('За 7 дней', fmt(wk.n || 0) + ' взл.<small>удачных ' + fmt(wk.ok || 0) + ' · унесли ≈ ' + short(wk.tok || 0) + ' · попались ' + fmt(wk.fail || 0) + '</small>')
       + kv('Взлом открыт', fmt(r.open || 0) + ' ферм<small>сейчас со щитом: ' + fmt(r.shields || 0) + '</small>')
-      + ('gh' in c ? kv('«🏢 ГигаХэш» сегодня', fmt(td.gh || 0) + ' взл.<small>выдано ≈ ' + short(td.gh_tok || 0) + ' 💰 · за 7 дней ' + fmt(wk.gh || 0) + ' взл., ≈ ' + short(wk.gh_tok || 0) + '</small>') : '') + '</div>'
+      + ('gh' in c ? kv('«🏢 ГигаХэш» сегодня', fmt(td.gh || 0) + ' взл.<small>выдано ≈ ' + short(td.gh_tok || 0) + ' 💰 · за 7 дней ' + fmt(wk.gh || 0) + ' взл., ≈ ' + short(wk.gh_tok || 0) + '</small>') : '')
+      + ('safe' in c ? kv('«🔐 Сейф» сегодня', fmt(td.safe || 0) + ' вскрыто<small>унесли из кошельков ≈ ' + short(td.safe_tok || 0) + ' 💰 · сигнализаций ' + fmt(td.alarm || 0)
+          + ' · за 7 дней вскрыто ' + fmt(wk.safe || 0) + ', ≈ ' + short(wk.safe_tok || 0) + '</small>') : '') + '</div>'      // v396
+      + ('safe' in c && (r.prot || []).length ? '<div class="small" style="margin-top:6px">🔐 Сейф защищает кошелёк по уровням: ' + r.prot.map(function (p, i) { return i + ' ур. — ' + p + '%'; }).join(' · ')
+          + (r.safes ? '<br>Ферм на уровнях сейфа: ' + r.safes.map(function (n, i) { return i + ' — ' + fmt(n); }).join(' · ') : '') + '. Уровни стоят как файрвол (SLX сжигаются).</div>' : '')
       + '<div class="lbl">Настройки взлома</div>'
       + '<div class="grid" style="margin-top:6px">' + KS.map(function (k) {
           var l = lm[k] || [0, 0];
@@ -3041,6 +3050,8 @@ window.addEventListener('error', function (e) {
       + (c.adm ? '👑 Выключить «админ во взломе» (только учебная ферма)' : '👑 Включить «админ во взломе» — нападать на игроков') + '</button></div>' : '')
       + ('gh' in c ? '<div class="row"><button type="button" class="f1' + (c.gh ? '' : ' b-acc') + '" data-mn="raid_gh" data-v="' + (c.gh ? 0 : 1) + '">'
       + (c.gh ? '🏢 Закрыть «ГигаХэш» (цель дня)' : '🏢 Открыть «ГигаХэш» (цель дня)') + '</button></div>' : '')
+      + ('safe' in c ? '<div class="row"><button type="button" class="f1' + (c.safe ? '' : ' b-acc') + '" data-mn="raid_safe" data-v="' + (c.safe ? 0 : 1) + '">'      // v396
+      + (c.safe ? '🔐 Выключить «Сейф» (красть только из хранилища)' : '🔐 Включить «Сейф» — кража SLX из кошелька') + '</button></div>' : '')
       + ((r.calc || []).length ? '<div class="lbl">📊 Сколько уносит атака — по главам (токены по курсу фермы сейчас)</div>'
           + '<div class="small">Ферма к концу главы (мощность из цели главы), самое большое хранилище главы; взломщик — такая же ферма. «Удачный» — 3 слоя из 3 у полного '
           + 'хранилища, «в среднем» — 2 слоя у наполовину полного.</div>'
@@ -3180,6 +3191,11 @@ window.addEventListener('error', function (e) {
       if (bad) { toast(bad, true); return; }
       if (!parts.length) { toast('Набор не может быть пустым — оставь хотя бы одну часть', true); return; }
       return ecDo(stb, 'Сохранить состав стартового набора?\n' + parts.join('\n') + '\n\nКто набор уже получил — второй раз не получит.', b);
+    }
+    if (a === 'raid_safe') {                                         // v396: «🔐 Сейф» — кража SLX из кошелька
+      if (botVer() < 396) { toast('Заработает, когда бот на сервере обновится до v396', true); return; }
+      return ecDo({ op: 'mine_raid', safe: !!v }, v ? 'Включить «🔐 Сейф»?\nПосле 3 из 3 взломщик сможет рискнуть и унести часть SLX из кошелька цели (сверх защищённой части).'
+        : 'Выключить «🔐 Сейф»?\nВзломщики будут уносить только несобранное из хранилища.', b);
     }
     if (a === 'raid_adm' || a === 'raid_gh') {                        // v395: админ во взломе, «ГигаХэш»
       if (botVer() < 395) { toast('Заработает, когда бот на сервере обновится до v395', true); return; }
