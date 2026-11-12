@@ -1187,6 +1187,28 @@
   .hk.safe .hk-rings i { border-color: #fbbf24; }
   .hk.safe .hk-core { color: #fde68a; text-shadow: 0 0 16px rgba(251,191,36,.8); }
   .hk.safe .hk-lay { color: #fde68a; }
+  /* ── v397: «⚡ Контратака», администратор — цель, обмен ровно по курсу ── */
+  .rdc { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; position: relative; border-color: rgba(239,68,68,.75);
+         background: linear-gradient(120deg, rgba(239,68,68,.3), rgba(255,255,255,.02) 75%); }
+  .rdc::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; border: 2px solid rgba(248,113,113,.95); opacity: 0; pointer-events: none;
+                animation: rdcp 1.2s ease-out infinite; }
+  @keyframes rdcp { 0% { opacity: .95; } 100% { opacity: 0; } }
+  .rdc.af { border-color: rgba(251,191,36,.65); background: linear-gradient(120deg, rgba(251,191,36,.22), rgba(255,255,255,.02) 75%); }
+  .rdc.af::after { border-color: rgba(251,191,36,.95); }
+  .rdc .re { font-size: 24px; flex: 0 0 auto; animation: rdal 1s ease-in-out infinite; }
+  .rdc .rt { flex: 1; min-width: 0; }
+  .rdc .rt b { display: block; font-size: 14.5px; }
+  .rdc .rt small { display: block; font-size: 12px; color: var(--tx2); font-variant-numeric: tabular-nums; }
+  .rdc .bb { flex: 0 0 auto; }
+  .hk.ctr .hk-rings i { border-color: #38bdf8; }
+  .hk.ctr .hk-core { color: #bae6fd; text-shadow: 0 0 16px rgba(56,189,248,.85); }
+  .hk.ctr .hk-lay { color: #bae6fd; }
+  .rdt.adm { border-color: rgba(251,191,36,.45); }
+  .rdt .df.ad { color: #fde68a; background: rgba(251,191,36,.18); text-transform: none; letter-spacing: 0; }
+  .xinf { display: flex; align-items: center; justify-content: space-between; gap: 4px 10px; flex-wrap: wrap; }
+  .xlv { display: inline-flex; align-items: center; gap: 6px; color: #6ee7b7; font-size: 11.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .xlv i { width: 7px; height: 7px; border-radius: 50%; background: #34d399; box-shadow: 0 0 8px rgba(52,211,153,.9); }
+  .xlim { margin: 6px 2px 0; font-size: 12px; color: var(--tx2); line-height: 1.4; }
   .rdt .lt.sf { color: #fde68a; }
   .hbs .hb.cl { background: rgba(34,211,238,.12); border-color: rgba(34,211,238,.45); color: #a5f3fc; }        /* v395: «❄️ Охлаждение» */
   /* v395: «🔧 Модули фермы» в магазине */
@@ -1544,6 +1566,7 @@
     </div>
     <div class="card occ" id="occ" hidden><div class="oci">⚡</div><div class="oct"><b id="oc-t"></b><small id="oc-s"></small><div class="ocb"><i id="oc-bar"></i></div></div>
       <button type="button" class="bb" id="b-oc"></button></div>
+    <div class="card rdc" id="rdc" hidden><span class="re" id="rdc-e">🚨</span><div class="rt"><b id="rdc-t"></b><small id="rdc-s"></small></div><button type="button" class="bb hot" id="rdc-b"></button></div>
     <div class="card rda" id="rda" hidden><span class="re">🚨</span><div class="rt"><b id="rda-t"></b><small id="rda-s"></small></div><span class="ra2">›</span></div>
     <div class="card dnc" id="dnc" hidden><div class="de"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#ic-d-gem"/></svg></div><div class="dt"><b id="dn-t"></b><small id="dn-s"></small></div><span class="da">›</span></div>
     <div class="card room" id="room">
@@ -1597,7 +1620,8 @@
       <button type="button" class="xflip" id="x-flip" aria-label="⇅">⇅</button>
       <div class="xf"><div class="xf-h"><span id="xb-l"></span><span class="xbal" id="xb-b"></span></div>
         <div class="xf-r"><input class="xin mono" id="xb-in" inputmode="decimal" autocomplete="off" placeholder="0"><span class="xu" id="xb-u"></span></div></div>
-      <div class="xinf" id="x-inf"></div>
+      <div class="xinf"><span id="x-inf"></span><span class="xlv" id="x-lv"><i id="x-dot"></i><span id="x-live"></span></span></div>
+      <div class="xlim" id="x-lim" hidden></div>
       <button type="button" class="btn pri" id="b-x"></button>
       <p class="note" id="x-note"></p>
     </div>
@@ -1615,6 +1639,7 @@
   </section>
 
   <section class="tab" id="t-raid" hidden>
+    <div id="rd-ctr"></div>
     <div id="rd-top"></div>
     <div id="rd-rv"></div>
     <div id="rd-gh"></div>
@@ -1740,8 +1765,11 @@
     xNoTok: 'Not enough tokens', xNoSlx: 'Not that much SLX', xBuyB: function (q, t) { return '🛒 Buy ' + q + ' SLX for ' + t + ' tokens'; },
     xSellB: function (q, t) { return '💱 Sell ' + q + ' SLX for ≈ ' + t + ' tokens'; },
     xInfo: function (p, f) { return '1 SLX = ' + p + ' · fee ' + f + '%'; }, xSlip: function (x) { return ' · big trade: ≈ ' + x + '% off the rate'; },
-    xNoteB: 'Type tokens or SLX — the other side is counted right away. A regular exchange purchase: shows up in “📈 Invest” → “History”.',
-    xNoteS: function (f) { return 'A regular sale on the SLX exchange: same rate and ' + f + '% fee. Big sales get a slightly worse price.'; },
+    xExact: ' · exactly at the rate', xLim: 'Over today’s limit',                                     // v397: обмен ровно по курсу
+    xLimL: function (b, s) { return 'At-the-rate exchange today: buy for ' + b + ' more, sell for ' + s + ' tokens'; },
+    xLive: function (s) { return 'rate updates in ' + s + ' s'; }, xLiveNow: 'updating the rate…', xLiveOff: 'no connection',
+    xNoteB: 'Type tokens or SLX — the other side is counted right away. The trade shows up in “📈 Invest” → “History”.',
+    xNoteS: function (f) { return 'Selling SLX for tokens, ' + f + '% fee. The trade shows up in “📈 Invest” → “History”.'; },
     xDay: 'SLX rate · 24 h', wSafe: function (l, p) { return 'Safe lv ' + l + ': ' + p + '% protected'; },
     wSafeS: function (t) { return '≈ ' + t + ' tokens of your SLX are on view — raiders can take a part. Upgrade in “⚔️ Raids”'; },
     topSlx: function (s) { return '◈ ' + s + ' SLX'; }, walletT: function (t, p) { return '≈ ' + t + ' tokens · 1 SLX = ' + p; },
@@ -1772,7 +1800,9 @@
             same_net: 'Not allowed: this farm is on the same network as you', shield: 'This farm has a shield — pick another target',
             gap: 'You already raided this farm — pick another one', no_left: 'No raids left today — new ones at midnight', no_rv: 'The time for revenge is over',
             no_sess: 'This raid is already over', adm_train: 'The admin tests raids on the training farm', bad_kind: 'No such upgrade', bad_lvl: 'Level — from 0 to 5',
-            gh_off: '“GigaHash” is closed now', gh_used: '“GigaHash” is already hacked today — again tomorrow' },
+            gh_off: '“GigaHash” is closed now', gh_used: '“GigaHash” is already hacked today — again tomorrow',
+            spot_limit: 'Today’s at-the-rate exchange limit is used up — trade more on the exchange 📈',          // v397
+            px_moved: 'The rate has updated — check the amount and tap again', no_ctr: 'The counter-attack is no longer available' },
     ocT: 'Overclock ×3', ocReady: '10 minutes — the farm mines three times faster', ocOnT: '🔥 Overclock ×3 is on',
     ocOn: function (s) { return s + ' left — collect more often, the storage fills faster'; }, ocCool: function (s) { return 'Cooling down — ' + s + ' left'; },
     ocBtn: '⚡ Turn on', ocStart: 'OVERCLOCK!', ocStartS: '×3 for 10 minutes', ocFull: 'The storage is full — collect first, or the overclock is wasted',
@@ -1783,7 +1813,8 @@
            goldH: '💎 Golden cards on your farm — check ×N and prices', skinH: '🎨 Try any theme — free, only for you (💤 — hidden from sale)',
            raidH: '⚔️ Raids — test on yourself', rme: function (n) { return '🚨 Raided me: ' + n + ' of 3'; }, rme0: '🛡 Defense held',
            rfw: '🧱 Your firewall level', rvr: '🦠 Your virus level', rsl: '🔐 Your safe level',
-           rmesf: '🔐 Raided me + cracked the safe', rmeal: '🔔 Raided me + safe alarm', rreset: '♻️ Reset raids (attacks, shield, log, revenge)',
+           rmesf: '🔐 Raided me + cracked the safe', rmeal: '🔔 Raided me + safe alarm',
+           rlive: '⚡ Being raided — counter-attack', rliveA: '💸 Raided me — take it back', rreset: '♻️ Reset raids (attacks, shield, log, revenge)',
            rnote: 'In the “⚔️ Raids” tab you have a “🤖 Training farm” for tests (and real targets while “admin in raids” is on in Economy). “Raided me” also sends you the bot message.',
            modH: '🔧 Farm modules — level (right away, no purchase)' },
     // v388: донат в майнинге и курс фермы
@@ -1851,7 +1882,8 @@
       logH: '📜 Log', logNone: 'All quiet — no raids yet, by you or on you', now: 'just now', ago: function (s) { return s + ' ago'; },
       lg: { out_ok: function (n, h) { return 'You raided “' + n + '” · ' + h + ' of 3'; }, out_zero: function (n) { return 'You raided “' + n + '” — the storage was empty'; },
             out_fail: function (n) { return 'Caught raiding “' + n + '”'; }, out_quit: function (n) { return 'Raid on “' + n + '” abandoned'; },
-            in_ok: function (n, h) { return '“' + n + '” raided you · ' + h + ' of 3'; }, in_fail: function (n) { return '“' + n + '” tried to raid you — the defense held'; } },
+            in_ok: function (n, h) { return '“' + n + '” raided you · ' + h + ' of 3'; }, in_fail: function (n) { return '“' + n + '” tried to raid you — the defense held'; },
+            ctr_ok: function (n) { return 'Counter-attack on “' + n + '” — success'; }, ctr_in: function (n) { return '“' + n + '” hit back with a counter-attack'; } },
       howH: 'How it works',
       how: function (R) { return ['Up to ' + R.n + ' raids a day (new ones at midnight, Moscow time). The same farm — once in ' + R.gap_h + ' h.',
         'A raid takes up to ' + R.pct + '% of their storage, but no more than ' + R.cap_h + ' h of your own mining.',
@@ -1860,7 +1892,8 @@
         'Defense: collect often (an empty storage gives nothing), upgrade the 🧱 firewall, turn on a 🛡 shield.']
         .concat(R.gh && R.gh.on ? ['Target of the day “🏢 GigaHash” — once a day, no penalty: up to ' + R.gh.h + ' h of your own mining.'] : [])
         .concat(R.safe && R.safe.on ? ['🔐 Safe: after 3 of 3 the raider may crack it and take ' + R.safe.pct + '% of the unprotected part of the wallet (no more than ' + R.safe.cap_h
-          + ' h of their own mining). Nobody loses more than ' + R.safe.day + '% of the wallet a day. Upgrade the safe — it protects 80% → 98%.'] : []); },
+          + ' h of their own mining). Nobody loses more than ' + R.safe.day + '% of the wallet a day. Upgrade the safe — it protects 80% → 98%.'] : [])
+        .concat(R.ctr ? [T.rd.ctHow(Math.round(R.ctr.after / 60))] : []); },
       lockT: function (n) { return 'Opens in chapter ' + n; }, lockS: 'Raid other farms and take tokens from their storages — and protect your own.',
       off: 'Farm raids are turned off by the administrator for now', soon: 'Farm raids will appear after the bot update — very soon',
       alT: function (n) { return 'Your farm was attacked ' + n + (n === 1 ? ' time' : ' times'); }, alS: 'Open “⚔️ Raids” — the log and revenge',
@@ -1902,7 +1935,25 @@
       slT: function (n, m) { return 'Safe · lv ' + n + '/' + m; },
       slS: function (p, n, t) { return p + '% of your wallet is protected' + (n > p ? ' (next level — ' + n + '%)' : '') + ' · on view ≈ ' + t; },
       sfQuitQ: 'Abandon the safe?\nThe alarm will go off: half the haul stays with the target.',
-      lgSf: function (t) { return ' · 🔐 ' + t; }, lgAl: ' · 🔔 alarm'
+      lgSf: function (t) { return ' · 🔐 ' + t; }, lgAl: ' · 🔔 alarm',
+      // v397: «⚡ Counter-attack», the admin as a target, why there are no targets
+      admB: '👑 admin', lootNone: '💰 storage is empty — only the safe',
+      whyH: 'No suitable farms right now:', whySh: function (n) { return '🛡 shielded — ' + n; }, whyEmpty: function (n) { return '📭 nothing to take — ' + n; },
+      whyGap: function (n) { return '⏳ raided recently — ' + n; }, whyNet: function (n) { return '🔗 on your network — ' + n; },
+      whyNew: function (n) { return '🐣 newbie protection — ' + n; }, whyT: 'Come back later: shields fade, storages fill up.',
+      whyNone: 'No other farms yet — invite friends to mining!',
+      ctNowT: 'You are being raided right now!', ctNowS: function (n) { return n + ' is breaking your defense'; },
+      ctAfT: function (n, t) { return n + ' took ≈ ' + t; }, ctAfS: 'Take it back with a counter-attack',
+      ctGo: '⚡ Counter', ctBack: '⚡ Take back', ctWait: 'Preparing the counter-attack…', ctLay: '⚡ Counter-attack',
+      ctH: function (n) { return '⚡ Counter-attack: ' + n; }, ctSn: 'Block the raid — and your firewall seizes part of their storage',
+      ctSa: function (t) { return 'Take your loot back ≈ ' + t; },
+      ctBlock: 'Raid blocked!', ctBlockS: function (n, t) { return '“' + n + '” took nothing' + (t ? ', and your firewall seized ≈ ' + t + ' from them — already in your wallet.' : '.'); },
+      ctBackS: function (n, part) { return part ? 'You took back all “' + n + '” still had in the wallet — the rest was already spent.' : 'The loot is yours again — “' + n + '” is left with nothing.'; },
+      ctLate: 'Too late', ctLateS: 'The raid is already over — nobody to counter.',
+      ctMiss: 'Missed', ctMissS: function (n) { return 'The counter-attack failed — “' + n + '” keeps the loot. There was one attempt.'; },
+      ctQuitQ: 'Abandon the counter-attack? There is one attempt — it will be lost.',
+      resCtr: 'Raid foiled!', resCtrS: function (n, t) { return '“' + n + '” spotted the raid and blocked it with a counter-attack' + (t ? ': their firewall seized ' + t + ' from your storage.' : '.'); },
+      ctHow: function (m) { return '⚡ Counter-attack: when you are raided, the bot messages you — block it in time (one task): the raider takes nothing and your firewall seizes part of their storage. Too late — for ' + m + ' min after the raid you can take the loot back.'; }
     }
   } : {
     farm: 'Ферма', shop: 'Магазин', story: 'Сюжет', wallet: 'Кошелёк', top: 'Топ', raid: 'Взлом',
@@ -1940,8 +1991,11 @@
     xNoTok: 'Не хватает токенов', xNoSlx: 'Столько SLX нет', xBuyB: function (q, t) { return '🛒 Купить ' + q + ' SLX за ' + t + ' ' + tw(t); },
     xSellB: function (q, t) { return '💱 Продать ' + q + ' SLX за ≈ ' + t + ' ' + tw(t); },
     xInfo: function (p, f) { return '1 SLX = ' + p + ' · комиссия ' + f + '%'; }, xSlip: function (x) { return ' · крупная сделка: курс хуже на ≈ ' + x + '%'; },
-    xNoteB: 'Впиши токены или SLX — вторая сторона посчитается сразу. Это обычная покупка на бирже SLX: сделка появится в «📈 Инвестиции» → «История».',
-    xNoteS: function (f) { return 'Это обычная продажа на бирже SLX: тот же курс и комиссия ' + f + '%. Крупная продажа — чуть ниже курса.'; },
+    xNoteB: 'Впиши токены или SLX — вторая сторона посчитается сразу. Сделка появится в «📈 Инвестиции» → «История».',
+    xNoteS: function (f) { return 'Продажа SLX за токены, комиссия ' + f + '%. Сделка появится в «📈 Инвестиции» → «История».'; },
+    xExact: ' · ровно по курсу', xLim: 'Больше лимита на сегодня',                                     // v397: обмен ровно по курсу
+    xLimL: function (b, s) { return 'Обмен по курсу сегодня: купить ещё на ' + b + ', продать на ' + s + ' ' + tw(s); },
+    xLive: function (s) { return 'курс обновится через ' + s + ' с'; }, xLiveNow: 'курс обновляется…', xLiveOff: 'нет связи',
     xDay: 'Курс SLX · сутки', wSafe: function (l, p) { return 'Сейф ' + l + ' ур.: защищено ' + p + '%'; },
     wSafeS: function (t) { return 'На виду ≈ ' + t + ' токенов твоих SLX — взломщики могут унести часть. Прокачать — во «⚔️ Взломе»'; },
     topSlx: function (s) { return '◈ ' + s + ' SLX'; }, walletT: function (t, p) { return '≈ ' + t + ' ' + tw(t) + ' · 1 SLX = ' + p; },
@@ -1972,7 +2026,9 @@
             same_net: 'Нельзя: эта ферма в одной сети с тобой', shield: 'На ферме щит — выбери другую цель', gap: 'Эту ферму ты уже взламывал — выбери другую',
             no_left: 'Атаки на сегодня закончились — новые в полночь', no_rv: 'Время на месть вышло', no_sess: 'Этот взлом уже закончился',
             adm_train: 'Администратор проверяет взлом на учебной ферме', bad_kind: 'Такого улучшения нет', bad_lvl: 'Уровень — от 0 до 5',
-            gh_off: '«ГигаХэш» сейчас закрыт', gh_used: '«ГигаХэш» сегодня уже взломан — завтра снова' },
+            gh_off: '«ГигаХэш» сейчас закрыт', gh_used: '«ГигаХэш» сегодня уже взломан — завтра снова',
+            spot_limit: 'Лимит обмена по курсу на сегодня исчерпан — больше на бирже 📈',                       // v397
+            px_moved: 'Курс обновился — проверь сумму и нажми ещё раз', no_ctr: 'Контратака уже недоступна' },
     ocT: 'Разгон ×3', ocReady: '10 минут — ферма майнит втрое быстрее', ocOnT: '🔥 Идёт разгон ×3',
     ocOn: function (s) { return 'Ещё ' + s + ' — собирай чаще, хранилище копится быстрее'; }, ocCool: function (s) { return 'Остывает — ещё ' + s; },
     ocBtn: '⚡ Включить', ocStart: 'РАЗГОН!', ocStartS: '×3 на 10 минут', ocFull: 'Хранилище полное — сначала собери, иначе разгон уйдёт впустую',
@@ -1983,7 +2039,8 @@
            goldH: '💎 Золотых карт на твоей ферме — проверить ×N и цены', skinH: '🎨 Примерить любую тему — бесплатно, только тебе (💤 — скрыта из продажи)',
            raidH: '⚔️ Взлом — проверить на себе', rme: function (n) { return '🚨 Меня взломали: ' + n + ' из 3'; }, rme0: '🛡 Защита отбила',
            rfw: '🧱 Твой файрвол — уровень', rvr: '🦠 Твой вирус — уровень', rsl: '🔐 Твой сейф — уровень',
-           rmesf: '🔐 Меня взломали + вскрыли сейф', rmeal: '🔔 Меня взломали + сигнализация', rreset: '♻️ Взлом с нуля (атаки, щит, журнал, месть)',
+           rmesf: '🔐 Меня взломали + вскрыли сейф', rmeal: '🔔 Меня взломали + сигнализация',
+           rlive: '⚡ На меня нападают — контратака', rliveA: '💸 Меня взломали — вернуть', rreset: '♻️ Взлом с нуля (атаки, щит, журнал, месть)',
            rnote: 'Во вкладке «⚔️ Взлом» у тебя «🤖 Учебная ферма» для проверки (и настоящие цели, пока в «Экономике» включено «админ во взломе»). «Меня взломали» — придёт и сообщение в боте.',
            modH: '🔧 Модули фермы — уровень (сразу, без покупки)' },
     // v388: донат в майнинге и курс фермы
@@ -2052,7 +2109,8 @@
       logH: '📜 Журнал', logNone: 'Пока тихо — ни ты, ни тебя не взламывали', now: 'только что', ago: function (s) { return s + ' назад'; },
       lg: { out_ok: function (n, h) { return 'Взломал «' + n + '» · ' + h + ' из 3'; }, out_zero: function (n) { return 'Взломал «' + n + '» — хранилище пустое'; },
             out_fail: function (n) { return 'Попался на взломе «' + n + '»'; }, out_quit: function (n) { return 'Бросил взлом «' + n + '»'; },
-            in_ok: function (n, h) { return '«' + n + '» взломал тебя · ' + h + ' из 3'; }, in_fail: function (n) { return '«' + n + '» пытался взломать — защита отбила'; } },
+            in_ok: function (n, h) { return '«' + n + '» взломал тебя · ' + h + ' из 3'; }, in_fail: function (n) { return '«' + n + '» пытался взломать — защита отбила'; },
+            ctr_ok: function (n) { return 'Контратака на «' + n + '» — удалась'; }, ctr_in: function (n) { return '«' + n + '» ответил контратакой'; } },
       howH: 'Как это работает',
       how: function (R) { return ['В день — до ' + R.n + ' ' + plural(R.n, 'атаки', 'атак', 'атак') + ' (новые в полночь по Москве). Одну ферму — не чаще раза в ' + R.gap_h + ' ч.',
         'Удачный взлом уносит до ' + R.pct + '% чужого хранилища, но не больше ' + R.cap_h + ' ч твоей добычи.',
@@ -2061,7 +2119,8 @@
         'Защита: собирай чаще (из пустого хранилища нечего брать), качай 🧱 файрвол, включай 🛡 щит.']
         .concat(R.gh && R.gh.on ? ['Цель дня «🏢 ГигаХэш» — раз в сутки, без штрафа: за взлом — до ' + R.gh.h + ' ч твоей добычи.'] : [])
         .concat(R.safe && R.safe.on ? ['🔐 Сейф: после 3 из 3 взломщик может вскрыть его и унести ' + R.safe.pct + '% незащищённой части кошелька (не больше ' + R.safe.cap_h
-          + ' ч своей добычи). За сутки никто не теряет больше ' + R.safe.day + '% кошелька. Качай сейф — он защищает 80% → 98%.'] : []); },
+          + ' ч своей добычи). За сутки никто не теряет больше ' + R.safe.day + '% кошелька. Качай сейф — он защищает 80% → 98%.'] : [])
+        .concat(R.ctr ? [T.rd.ctHow(Math.round(R.ctr.after / 60))] : []); },
       lockT: function (n) { return 'Откроется в главе ' + n; }, lockS: 'Взламывай чужие фермы и уноси токены из их хранилищ — и защищай свою.',
       off: 'Взлом ферм сейчас выключен администратором', soon: 'Взлом ферм появится после обновления бота — уже скоро',
       alT: function (n) { return 'На твою ферму напали: ' + n + ' ' + plural(n, 'раз', 'раза', 'раз'); }, alS: 'Открой «⚔️ Взлом» — журнал и месть',
@@ -2103,7 +2162,25 @@
       slT: function (n, m) { return 'Сейф · ур. ' + n + '/' + m; },
       slS: function (p, n, t) { return 'Защищено ' + p + '% кошелька' + (n > p ? ' (след. уровень — ' + n + '%)' : '') + ' · на виду ≈ ' + t; },
       sfQuitQ: 'Бросить сейф?\nСработает сигнализация: половина добычи останется у цели.',
-      lgSf: function (t) { return ' · 🔐 ' + t; }, lgAl: ' · 🔔 сигнализация'
+      lgSf: function (t) { return ' · 🔐 ' + t; }, lgAl: ' · 🔔 сигнализация',
+      // v397: «⚡ Контратака», администратор — цель, почему целей нет
+      admB: '👑 админ', lootNone: '💰 хранилище пустое — только сейф',
+      whyH: 'Сейчас подходящих ферм нет:', whySh: function (n) { return '🛡 под щитом — ' + n; }, whyEmpty: function (n) { return '📭 нечего взять — ' + n; },
+      whyGap: function (n) { return '⏳ уже взламывал — ' + n; }, whyNet: function (n) { return '🔗 в одной сети с тобой — ' + n; },
+      whyNew: function (n) { return '🐣 защита новичка — ' + n; }, whyT: 'Загляни позже: щиты гаснут, хранилища наполняются.',
+      whyNone: 'Других ферм пока нет — позови друзей в майнинг!',
+      ctNowT: 'Тебя взламывают прямо сейчас!', ctNowS: function (n) { return n + ' ломает защиту'; },
+      ctAfT: function (n, t) { return n + ' унёс ≈ ' + t; }, ctAfS: 'Верни добычу контратакой',
+      ctGo: '⚡ Контратака', ctBack: '⚡ Вернуть', ctWait: 'Готовлю контратаку…', ctLay: '⚡ Контратака',
+      ctH: function (n) { return '⚡ Контратака: ' + n; }, ctSn: 'Отбей взлом — и твой файрвол заберёт у него часть хранилища',
+      ctSa: function (t) { return 'Верни свою добычу ≈ ' + t; },
+      ctBlock: 'Взлом отбит!', ctBlockS: function (n, t) { return '«' + n + '» ничего не унёс' + (t ? ', а твой файрвол забрал у него ≈ ' + t + ' — уже в твоём кошельке.' : '.'); },
+      ctBackS: function (n, part) { return part ? 'Вернул всё, что было у «' + n + '» в кошельке, — остальное он успел потратить.' : 'Добыча снова твоя — «' + n + '» остался ни с чем.'; },
+      ctLate: 'Поздно', ctLateS: 'Взлом уже закончился — контратаковать некого.',
+      ctMiss: 'Мимо', ctMissS: function (n) { return 'Контратака не вышла — «' + n + '» остался с добычей. Попытка была одна.'; },
+      ctQuitQ: 'Бросить контратаку? Попытка одна — она сгорит.',
+      resCtr: 'Взлом сорван!', resCtrS: function (n, t) { return '«' + n + '» заметил взлом и отбил его контратакой' + (t ? ': его файрвол забрал ' + t + ' из твоего хранилища.' : '.'); },
+      ctHow: function (m) { return '⚡ Контратака: когда тебя взламывают, придёт сообщение — успей отбить (одно задание): взломщик ничего не унесёт, а твой файрвол заберёт у него часть хранилища. Не успел — ещё ' + m + ' мин после взлома можно вернуть добычу.'; }
     }
   };
 
@@ -3153,7 +3230,7 @@
     var dot = goalsReady();
     var sb = document.querySelector('.nav button[data-tab="story"]');
     if (sb) { var dd = sb.querySelector('.dot'); if (dot && !dd) sb.insertAdjacentHTML('beforeend', '<i class="dot"></i>'); if (!dot && dd) dd.remove(); }
-    var rb = document.querySelector('.nav button[data-tab="raid"]'), RR = d.raid, rdot = !!(RR && RR.on && RR.ok && RR.rin > 0);     // v394: на тебя напали
+    var rb = document.querySelector('.nav button[data-tab="raid"]'), RR = d.raid, rdot = !!(RR && RR.on && RR.ok && (RR.rin > 0 || (RR.live && S.tab !== 'raid')));      // v397: контратака — пока не открыл «Взлом»     // v394: на тебя напали
     if (rb) { var rd2 = rb.querySelector('.dot'); if (rdot && !rd2) rb.insertAdjacentHTML('beforeend', '<i class="dot rd"></i>'); if (!rdot && rd2) rd2.remove(); }
   }
   function goalsReady() { var d = S.d; return !!(d && d.started && !d.done && d.goals && d.goals.length && d.goals.every(function (g) { return g.ok; })); }
@@ -3219,11 +3296,13 @@
       setTxt('en-r', d.taps_on === false ? T.tapsOff : en < 1 ? T.noEnergy : T.regen(L.regen));
       $('core').classList.toggle('dry', en < 1 || d.taps_on === false || d.on === false);
       coach(L);
+      ctrFarm();                                                       // v397: «⚡ Контратака» — баннер на ферме
     } else if (S.tab === 'wallet' && !S.acc) {
       setTxt('wb-v', slxShort(L.wallet));
       setTxt('wb-t', T.walletT(num(L.wallet * price()), num(price())));
     }
     if (S.tab !== 'farm') hotFx(false);                                // v394: огонь разгона — только на ферме
+    if (S.tab === 'wallet') xcLive();                                  // v397: «курс обновится через N с»
     if (S.tab === 'raid' && now - RD.rt > 1000) { RD.rt = now; renderRaid(); }    // обратные отсчёты: щит, месть, новые атаки
   }
   // раз в 150 мс пишем в страницу ТОЛЬКО то, что поменялось: каждая запись (даже того же текста) заставляет браузер
@@ -3438,36 +3517,29 @@
 
   // ── кошелёк (v396: Кирилл — «поменяй дизайн кошелька, чтобы всё было современно; „купить SLX на бирже“ — сразу перевод»): карта
   // баланса — SLX, ≈ токены, курс и график за сутки, «🔐 Сейф» (сколько на виду у взломщиков); обмен «Отдаёшь → Получаешь» с ⇅:
-  // вписал любую сторону — вторая считается сразу (курс, комиссия, проскальзывание — как на бирже и в боте), 25 / 50 / Всё — от
-  // того, что отдаёшь. Покупка уходит «на N токенов» (новый бот сам считает SLX) и с запасным «сколько SLX» (бот v395)
-  var XC = { mode: 'buy', side: 'a', pct: 0 };
-  function xcR() { var d = S.d || {}; return { p: price(), f: (d.fee || 3) / 100, L: Number(d.liq) || 0, S: Number(d.slip) || 0.4 }; }
-  function xcImp(r, q) { return r.L > 0 ? Math.min(r.S, r.p * q / r.L) : 0; }
-  function xcBuyCost(q) { var r = xcR(); return r.p * q * (1 + xcImp(r, q) / 2) * (1 + r.f); }      // купить q SLX — токенов спишется
-  function xcBuyQty(t) {                            // на t токенов — SLX выйдет (как бот: квадратное уравнение с проскальзыванием)
-    var r = xcR(), g = t / (1 + r.f); if (!(g > 0) || !(r.p > 0)) return 0;
-    var q = g / (r.p * (1 + r.S / 2));
-    if (r.L > 0) { var a = r.p * r.p / (2 * r.L), q2 = (-r.p + Math.sqrt(r.p * r.p + 4 * a * g)) / (2 * a); if (r.p * q2 / r.L <= r.S) q = q2; }
-    return Math.max(0, q);
-  }
-  function xcSellPay(q) { var r = xcR(); return r.p * q * (1 - xcImp(r, q) / 2) * (1 - r.f); }      // продать q SLX — токенов придёт
-  function xcSellQty(t) {                           // чтобы получить t токенов — сколько SLX продать
-    var r = xcR(), g = t / (1 - r.f); if (!(g > 0) || !(r.p > 0)) return 0;
-    var q = g / (r.p * (1 - r.S / 2));
-    if (r.L > 0) { var a = r.p * r.p / (2 * r.L), D = r.p * r.p - 4 * a * g; if (D >= 0) { var q2 = (r.p - Math.sqrt(D)) / (2 * a); if (r.p * q2 / r.L <= r.S) q = q2; } }
-    return Math.max(0, q);
-  }
+  // вписал любую сторону — вторая считается сразу, 25 / 50 / Всё — от того, что отдаёшь. v397 (Кирилл: «чтобы обмен всегда был
+  // только по курсу, всё обновлялось каждые 5 сек»): ровно по курсу и комиссии, без проскальзывания (бот v397 меняет так же);
+  // курс приходит каждые 5 с — рядом обратный отсчёт; предел обмена в сутки — видно, сколько осталось, «Всё» — не больше него;
+  // со сделкой уходит курс, который видел игрок (разошёлся с ботом больше 1% — бот попросит проверить сумму)
+  var XC = { mode: 'buy', side: 'a', pct: 0, cap: false, px: 0, pxT: 0 };
+  function xcR() { var d = S.d || {}; return { p: price(), f: (d.fee || 3) / 100 }; }
+  function xcSpot() { var s = (S.d || {}).spot; return s && s.day > 0 ? s : null; }        // null — без предела (админ) или бот ещё старый
+  function xcLeft(buy) { var s = xcSpot(); return s ? Math.max(0, Number(buy ? s.buy : s.sell) || 0) : Infinity; }   // по курсу, токенов
+  function xcBuyCost(q) { var r = xcR(); return r.p * q * (1 + r.f); }                     // купить q SLX — токенов спишется
+  function xcBuyQty(t) { var r = xcR(); return r.p > 0 && t > 0 ? t / (r.p * (1 + r.f)) : 0; }      // на t токенов — SLX выйдет
+  function xcSellPay(q) { var r = xcR(); return r.p * q * (1 - r.f); }                     // продать q SLX — токенов придёт
+  function xcSellQty(t) { var r = xcR(); return r.p > 0 && t > 0 ? t / (r.p * (1 - r.f)) : 0; }     // чтобы получить t — сколько SLX продать
   function xcBal() { var d = S.d || {}, L = live(); return { tok: Number(d.balance_s || 0), slx: L ? L.wallet : (d.wallet || 0) }; }
   function xcCut(x) { return String(Math.floor(x * 1e8) / 1e8); }      // SLX в поле — до 8 знаков, вниз (не больше, чем есть)
   function xcNum(v) { return parseQ(v); }
   // что сейчас в обмене: q — SLX, t — токены (отдаёшь при покупке / получаешь при продаже), ok — можно жать
   function xcCalc() {
-    var buy = XC.mode === 'buy', a = xcNum($('xa-in').value), b = xcNum($('xb-in').value), bal = xcBal(), q = 0, t = 0;
+    var buy = XC.mode === 'buy', a = xcNum($('xa-in').value), b = xcNum($('xb-in').value), bal = xcBal(), q = 0, t = 0, r = xcR();
     if (XC.side === 'a') { if (buy) { t = a; q = xcBuyQty(t); } else { q = a; t = xcSellPay(q); } }
     else { if (buy) { q = b; t = xcBuyCost(q); } else { t = b; q = xcSellQty(t); } }
-    var r = xcR(), imp = xcImp(r, q);
     var over = buy ? t > bal.tok + 0.5 : q > bal.slx + 1e-12;
-    return { buy: buy, q: q, t: t, imp: imp, over: over, ok: q > 0 && t >= 1 && !over };
+    var lim = q * r.p > xcLeft(buy) + 0.5;                      // сверх предела на сегодня
+    return { buy: buy, q: q, t: t, over: over, lim: lim, ok: q > 0 && t >= 1 && !over && !lim };
   }
   function xcRender(keep) {
     var buy = XC.mode === 'buy', bal = xcBal(), d = S.d || {};
@@ -3479,26 +3551,43 @@
     setTxt('xa-b', T.xBal(buy ? num(bal.tok) + ' ' + T.tokU : slx(bal.slx) + ' SLX'));
     setTxt('xb-b', T.xHave(buy ? slx(bal.slx) + ' SLX' : num(bal.tok) + ' ' + T.tokU));
     setHtml('xa-chips', [25, 50, 100].map(function (p) { return '<button type="button" class="chip' + (XC.pct === p ? ' on' : '') + '" data-xp="' + p + '">' + (p === 100 ? T.all : p + '%') + '</button>'; }).join(''));
-    if (!keep && XC.pct) xcPct(XC.pct, true);        // выбранная доля — от свежего баланса
+    if (!keep && XC.pct) xcPct(XC.pct, true);        // выбранная доля — от свежего баланса (и свежего курса)
     var c = xcCalc(), other = XC.side === 'a' ? $('xb-in') : $('xa-in');
     if (document.activeElement !== other) {
       var v = XC.side === 'a' ? (buy ? c.q : c.t) : (buy ? c.t : c.q);
-      other.value = v > 0 ? (XC.side === 'a' ? (buy ? xcCut(v) : String(Math.floor(v))) : (buy ? String(Math.ceil(v)) : xcCut(v))) : '';
+      var ov = v > 0 ? (XC.side === 'a' ? (buy ? xcCut(v) : String(Math.floor(v))) : (buy ? String(Math.ceil(v)) : xcCut(v))) : '';
+      if (other.value !== ov) other.value = ov;
     }
-    var r = xcR();
-    setTxt('x-inf', T.xInfo(num(r.p), d.fee || 3) + (c.imp > 0.0005 ? T.xSlip(dec(c.imp * 50, 2)) : ''));
+    var r = xcR(), sp = xcSpot();
+    setTxt('x-inf', T.xInfo(num(r.p), d.fee || 3) + (d.spot ? T.xExact : ''));
+    var lh = sp ? T.xLimL(num(Math.floor(xcLeft(true))), num(Math.floor(xcLeft(false)))) : '';
+    setTxt('x-lim', lh); if ($('x-lim').hidden !== !lh) $('x-lim').hidden = !lh;
     var b = $('b-x');
-    b.textContent = !(c.q > 0) ? T.xEnter : c.over ? (buy ? T.xNoTok : T.xNoSlx) : buy ? T.xBuyB(slx(c.q), num(Math.ceil(c.t))) : T.xSellB(slx(c.q), num(Math.floor(c.t)));
+    b.textContent = !(c.q > 0) ? T.xEnter : c.over ? (buy ? T.xNoTok : T.xNoSlx) : c.lim ? T.xLim : buy ? T.xBuyB(slx(c.q), num(Math.ceil(c.t))) : T.xSellB(slx(c.q), num(Math.floor(c.t)));
     b.disabled = !c.ok;
     b.classList.toggle('sell', !buy);
     setTxt('x-note', buy ? T.xNoteB : T.xNoteS(d.fee || 3));
   }
   function xcPct(p, quiet) {
-    var buy = XC.mode === 'buy', bal = xcBal();
+    var buy = XC.mode === 'buy', bal = xcBal(), r = xcR(), lf = xcLeft(buy);
     XC.pct = p; XC.side = 'a';
     var v = buy ? Math.floor(bal.tok * p / 100) : bal.slx * p / 100;
+    XC.cap = false;
+    if (buy && v / (1 + r.f) > lf) { v = Math.floor(lf * (1 + r.f)); XC.cap = true; }               // v397: не больше предела на сегодня
+    if (!buy && v * r.p > lf && r.p > 0) { v = Math.floor(lf / r.p * 1e8) / 1e8; XC.cap = true; }
     $('xa-in').value = v > 0 ? (buy ? String(v) : xcCut(v)) : '';
     if (!quiet) xcRender(true);
+  }
+  function xcLive() {                               // v397: курс обновится через N с (опрос — раз в 5 с); новый курс — точка мигнёт
+    var p = price();
+    if (p !== XC.px) {
+      var dt = $('x-dot');
+      if (XC.px && dt.animate && !document.documentElement.classList.contains('calm'))
+        dt.animate([{ transform: 'scale(2.2)', opacity: 1 }, { transform: 'scale(1)', opacity: 0.85 }], { duration: 700, easing: 'ease-out' });
+      XC.px = p;
+    }
+    var s = S.pollAt ? Math.max(0, Math.ceil((S.pollAt - Date.now()) / 1000)) : 0;
+    setTxt('x-live', S.stale ? T.xLiveOff : s > 0 ? T.xLive(s) : T.xLiveNow);
   }
   $('xch').addEventListener('click', function (e) {
     var m = e.target.closest('[data-xm]'), c = e.target.closest('[data-xp]');
@@ -3511,15 +3600,16 @@
   $('xb-in').addEventListener('input', function () { XC.side = 'b'; XC.pct = 0; xcRender(true); });
   $('b-x').addEventListener('click', function () {
     var c = xcCalc(); if (!c.ok) return;
+    var px = Math.round(price());                    // v397: курс, который видел игрок
     if (c.buy) {
       var tok = XC.side === 'a' ? Math.floor(c.t) : Math.ceil(c.t);
-      send('buy_slx', { tok: tok, qty: Math.floor(xcBuyQty(tok) * 0.995 * 1e12) / 1e12 }, $('b-x')).then(function (j) {    // qty — для бота v395
+      send('buy_slx', { tok: tok, px: px, qty: Math.floor(xcBuyQty(tok) * 0.99 * 1e12) / 1e12 }, $('b-x')).then(function (j) {    // qty — для бота v395
         if (!j) return;
         var r = j.res || {}; toast(T.boughtSlx(r.bought || c.q, num(r.total || tok))); hap('success');
         $('xa-in').value = ''; $('xb-in').value = ''; XC.pct = 0; renderWallet();
       });
     } else {
-      var body = XC.pct === 100 ? { all: true } : { qty: Math.floor(c.q * 1e12) / 1e12 };
+      var body = XC.pct === 100 && !XC.cap ? { all: true, px: px } : { qty: Math.floor(c.q * 1e12) / 1e12, px: px };
       send('sell_slx', body, $('b-x')).then(function (j) {
         if (!j) return;
         var r = j.res || {}; toast(T.soldSlx(r.sold || c.q, num(r.payout || 0))); hap('success');
@@ -3556,16 +3646,17 @@
     if ($('w-safe').hidden !== !showSf) $('w-safe').hidden = !showSf;
     if (showSf) setHtml('w-safe', '<span class="wsi">🔐</span><span class="wst"><b>' + esc(T.wSafe(sl, R.prot[sl])) + '</b><small>' + esc(T.wSafeS(tokShort(SF.open * price()))) + '</small></span><span class="wsa">›</span>');
     xcRender();
-    $('wb-k').textContent = d.pf && S.cfg && S.cfg.r ? T.farmK(num(d.pf), tkF(S.cfg.r * 24 * d.pf * (d.mult || 1))) : '';
-    $('st-h').textContent = T.statsH;
+    xcLive();
+    setTxt('wb-k', d.pf && S.cfg && S.cfg.r ? T.farmK(num(d.pf), tkF(S.cfg.r * 24 * d.pf * (d.mult || 1))) : '');
+    setTxt('st-h', T.statsH);
     var sd = new Date((d.start || 0) * 1000);
-    $('stats').innerHTML = [[T.st.mined, tkS(d.mined) + ' ' + T.tokU], [T.st.tapped, tkS(d.tapped) + ' ' + T.tokU], [T.st.lucky, num(d.lucky) + (d.bonus ? ' · +' + tkS(d.bonus) : '')],
-                            [T.st.col, num(d.col)], [T.st.spent, tkS(Math.max(0, d.spent || 0)) + ' ' + T.tokU],
-                            [T.st.since, d.start ? ('0' + sd.getDate()).slice(-2) + '.' + ('0' + (sd.getMonth() + 1)).slice(-2) + '.' + sd.getFullYear() : '—']]
-      .map(function (x) { return '<div><i>' + esc(x[0]) + '</i><b class="mono">' + esc(x[1]) + '</b></div>'; }).join('');
-    $('ntf-t').innerHTML = esc(T.ntf) + '<small>' + esc(T.ntfS) + '</small>';
+    setHtml('stats', [[T.st.mined, tkS(d.mined) + ' ' + T.tokU], [T.st.tapped, tkS(d.tapped) + ' ' + T.tokU], [T.st.lucky, num(d.lucky) + (d.bonus ? ' · +' + tkS(d.bonus) : '')],
+                      [T.st.col, num(d.col)], [T.st.spent, tkS(Math.max(0, d.spent || 0)) + ' ' + T.tokU],
+                      [T.st.since, d.start ? ('0' + sd.getDate()).slice(-2) + '.' + ('0' + (sd.getMonth() + 1)).slice(-2) + '.' + sd.getFullYear() : '—']]
+      .map(function (x) { return '<div><i>' + esc(x[0]) + '</i><b class="mono">' + esc(x[1]) + '</b></div>'; }).join(''));
+    setHtml('ntf-t', esc(T.ntf) + '<small>' + esc(T.ntfS) + '</small>');
     $('ntf-sw').classList.toggle('on', d.notify !== false);
-    $('b-ex').textContent = T.ex; $('b-ex').hidden = !S.ex; $('ex-note').textContent = T.exNote;
+    setTxt('b-ex', T.ex); if ($('b-ex').hidden !== !S.ex) $('b-ex').hidden = !S.ex; setTxt('ex-note', T.exNote);
   }
   function parseQ(v) { var x = parseFloat(String(v || '').replace(/\s/g, '').replace(',', '.')); return isFinite(x) && x > 0 ? x : 0; }
   $('ntf-sw').addEventListener('click', function () {
@@ -3938,7 +4029,9 @@
       + (d.raid ? '<div class="sh" style="margin:12px 0 4px">' + esc(T.adm.raidH) + '</div><div class="admgrid">' + [1, 2, 3, 0].map(function (n) {
           return '<button type="button" class="btn sec" data-adm="rme" data-v="' + n + '">' + esc(n ? T.adm.rme(n) : T.adm.rme0) + '</button>'; }).join('')
           + (d.raid.safe ? '<button type="button" class="btn sec" data-adm="rmesf" data-v="ok">' + esc(T.adm.rmesf) + '</button>'          // v396: «🔐 Сейф»
-            + '<button type="button" class="btn sec" data-adm="rmesf" data-v="alarm">' + esc(T.adm.rmeal) + '</button>' : '') + '</div>'
+            + '<button type="button" class="btn sec" data-adm="rmesf" data-v="alarm">' + esc(T.adm.rmeal) + '</button>' : '')
+          + (d.raid.ctr ? '<button type="button" class="btn sec" data-adm="rlive" data-v="now">' + esc(T.adm.rlive) + '</button>'                // v397: «⚡ Контратака»
+            + '<button type="button" class="btn sec" data-adm="rlive" data-v="after">' + esc(T.adm.rliveA) + '</button>' : '') + '</div>'
           + [['rfw', T.adm.rfw, d.raid.fw], ['rvr', T.adm.rvr, d.raid.vr]].concat(d.raid.safe ? [['rsl', T.adm.rsl, d.raid.sl || 0]] : []).map(function (r) {
               return '<div class="sh" style="margin:10px 0 4px">' + esc(r[1]) + '</div><div class="chips">' + [0, 1, 2, 3, 4, 5].slice(0, (d.raid.max || 5) + 1).map(function (n) {
                 return '<button type="button" class="chip' + (r[2] === n ? ' on' : '') + '" data-adm="' + r[0] + '" data-v="' + n + '">' + n + '</button>'; }).join('') + '</div>'; }).join('')
@@ -3971,6 +4064,7 @@
                 rme: ['adm_raid_me', { hits: Number(v) }], rfw: ['adm_raid_lvl', { fw: Number(v) }], rvr: ['adm_raid_lvl', { vr: Number(v) }],   // v394
                 rreset: ['adm_raid_reset', {}],
                 rsl: ['adm_raid_lvl', { sl: Number(v) }], rmesf: ['adm_raid_me', { hits: 3, safe: v }],      // v396: «🔐 Сейф»
+                rlive: ['adm_raid_live', { ph: v }],                                                     // v397: «⚡ Контратака» на себе
                 mod: ['adm_mod', { kind: String(v || '').split(':')[0], n: Number(String(v || '').split(':')[1]) }] }, o = ops[a];   // v395
     if (!o) return;
     (a === 'reset' ? askYes(T.adm.resetQ) : Promise.resolve(true)).then(function (yes) {
@@ -3981,6 +4075,7 @@
         if (!j) return;
         toast(T.adm.done);
         if (a === 'rreset' || a === 'rfw' || a === 'rvr' || a === 'rsl') RD.at = 0;  // v394: цели — заново
+        if (a === 'rlive') sheetClose();                                               // v397: баннер контратаки — на ферме
         if (a !== 'ch' && a !== 'reset') admSheet();
       });
     });
@@ -4305,8 +4400,10 @@
 
   // ── v394–v396: «⚔️ Взлом ферм» — цели, месть, «🏢 ГигаХэш» (цель дня), файрвол, вирус и «🔐 Сейф», щит, топ недели, журнал; взлом — 3 задания
   // разных видов (v395: ⏱ тайминг с движущейся зоной, 🔢 код доступа, 🔍 сигнатура, 🔌 порты). Всё решает сервер: страница только
-  // рисует задания и отправляет, что нажал и через сколько мс после начала слоя ──
-  var RD = { tg: null, at: 0, busy: false, train: false, rt: 0 };
+  // рисует задания и отправляет, что нажал и через сколько мс после начала слоя. v397: «⚡ Контратака» — тебя ломают (или только
+  // что взломали) — баннер на ферме и во «Взломе», одно задание: отбил — взлом сорван, вернул — добыча снова твоя; администратор —
+  // тоже цель («👑»); целей нет — видно почему ──
+  var RD = { tg: null, at: 0, busy: false, train: false, rt: 0, why: null, ctrK: '' };
   function li(s) { return '<li>' + esc(s) + '</li>'; }
   function rpt(s, n) { var o = ''; for (var i = 0; i < n; i++) o += s; return o; }
   function rdNow() { var L = live(); return L ? L.snow : (S.d && S.d.t) || Date.now() / 1000; }
@@ -4317,9 +4414,31 @@
     var lv = p >= 1 ? 1 : Math.max(0.05, p), pad = r.width * 13 / 112;
     return { x: r.left + r.width / 2, y: r.top + pad + (r.height - 2 * pad) * (1 - lv) };
   }
+  // v397: «⚡ Контратака» — что показать: фаза (ломают сейчас / только что унёс), кто, сколько секунд ещё можно; null — нечего
+  function ctrInfo() {
+    var d = S.d, R = d && d.raid, C = R && R.live; if (!C || (HK && HK.ctr)) return null;
+    var left = (Number(C.left) || 0) - Math.max(0, rdNow() - (d.t || rdNow()));
+    return left > 0 ? { c: C, left: left, af: C.ph === 'after' } : null;
+  }
+  function ctrTxt(ci) {
+    return { t: ci.af ? T.rd.ctAfT(ci.c.name, rdTok(ci.c.got || 0)) : T.rd.ctNowT, s: (ci.af ? T.rd.ctAfS : T.rd.ctNowS(ci.c.name)) + ' · ⏱ ' + mmss(ci.left),
+             b: ci.af ? T.rd.ctBack : T.rd.ctGo };
+  }
+  function ctrFarm() {                              // баннер на ферме (раз в 150 мс из tick — пишется только изменившееся)
+    var ci = ctrInfo(), el = $('rdc');
+    if (el.hidden !== !ci) el.hidden = !ci;
+    if (!ci) return;
+    var x = ctrTxt(ci), k = ci.c.ph + '|' + ci.c.u;
+    setAttr('rdc', 'cls', 'card rdc' + (ci.af ? ' af' : ''));
+    setTxt('rdc-e', ci.af ? '💸' : '🚨'); setTxt('rdc-t', x.t); setTxt('rdc-s', x.s); setTxt('rdc-b', x.b);
+    if (RD.ctrK !== k) { RD.ctrK = k; hap('heavy'); }           // новый взлом — телефон дрогнет
+  }
   function renderRaid() {
     var d = S.d, R = d && d.raid, parts = ['rd-rv', 'rd-gh', 'rd-th', 'rd-tg', 'rd-dh', 'rd-up', 'rd-wk', 'rd-lh', 'rd-log', 'rd-note'];
     if (!d) return;
+    var ci = R && R.on ? ctrInfo() : null, cx = ci ? ctrTxt(ci) : null;            // v397: «⚡ Контратака» — наверху вкладки
+    setHtml('rd-ctr', ci ? '<div class="card rdc' + (ci.af ? ' af' : '') + '" data-rctr="1"><span class="re">' + (ci.af ? '💸' : '🚨') + '</span><div class="rt"><b>'
+      + esc(cx.t) + '</b><small>' + esc(cx.s) + '</small></div><button type="button" class="bb hot" data-rctr="1">' + esc(cx.b) + '</button></div>' : '');
     if (!R) {                                        // страница уже новая, а бот ещё старый (минуты выкладки) — не пустая вкладка
       setHtml('rd-top', '<div class="card rdlock"><div class="lk">⏳</div><b>' + esc(T.rd.soon) + '</b></div>');
       parts.forEach(function (k) { if (!$(k).hidden) $(k).hidden = true; });
@@ -4355,11 +4474,13 @@
     setHtml('rd-th', '<span>' + esc(T.rd.tgH) + '</span><button type="button" data-rref="1">' + esc(T.rd.more) + '</button>');
     var tg = RD.tg, can = R.left > 0 || (R.adm && !R.adm_on);      // v395: админ во взломе — атаки дня как у всех (учебная — всегда)
     setHtml('rd-tg', tg === null ? '<div class="card rdem">' + esc(T.rd.loading) + '</div>'
-      : !tg.length ? '<div class="card rdem">' + esc(T.rd.none) + '</div>'
+      : !tg.length ? '<div class="card rdem">' + esc(rdWhy(RD.why)) + '</div>'
       : tg.map(function (x) {
           var df = x.w >= 0.12 ? ['e', T.rd.dfE] : x.w >= 0.09 ? ['m', T.rd.dfM] : ['h', T.rd.dfH];      // v395: окно уже (0,12 у файрвола 0)
-          return '<div class="card rdt"><div class="ra">' + rdAv(x) + '</div><div class="ri2"><b>' + esc(x.name) + '<span class="df ' + df[0] + '">' + esc(df[1]) + '</span></b>'
-            + '<small>' + chIco(x.ch || 1) + ' ' + esc(T.rd.tgS(x.ch || 1, hashS(x.hash), x.fw)) + '</small><small class="lt">' + esc(T.rd.loot(rdTok(x.loot))) + '</small>'
+          return '<div class="card rdt' + (x.adm ? ' adm' : '') + '"><div class="ra">' + rdAv(x) + '</div><div class="ri2"><b>' + esc(x.name)
+            + (x.adm ? '<span class="df ad">' + esc(T.rd.admB) + '</span>' : '') + '<span class="df ' + df[0] + '">' + esc(df[1]) + '</span></b>'      // v397: «👑 админ»
+            + '<small>' + chIco(x.ch || 1) + ' ' + esc(T.rd.tgS(x.ch || 1, hashS(x.hash), x.fw)) + '</small><small class="lt">'
+            + esc((Number(x.loot) || 0) * fp() >= 1 ? T.rd.loot(rdTok(x.loot)) : T.rd.lootNone) + '</small>'      // v397: хранилище пустое — цель ради сейфа
             + (x.w_loot > 0 ? '<small class="lt sf">' + esc(T.rd.sfLoot(rdTok(x.w_loot), x.sl || 0)) + '</small>' : '') + '</div>'      // v396: «🔐 Сейф» цели
             + '<button type="button" class="bb hot" data-rgo="' + Number(x.u) + '"' + (can || x.train ? '' : ' disabled') + '>' + esc(T.rd.go) + '</button></div>';
         }).join('') + (RD.train ? '<p class="note" style="margin:-4px 2px 12px">' + esc(R.adm_on ? T.rd.trainAdm : T.rd.train) + '</p>' : ''));
@@ -4385,15 +4506,26 @@
         }).join('') + (W.place > W.top.length ? '<div class="le2 me"><span class="li pl">' + W.place + '</span><span class="av2">★</span><div class="lx">' + esc(T.you) + '</div><span class="lv2 p">'
           + esc(rdTok(W.mine)) + '</span></div>' : '') : '<div class="rdem" style="padding:12px 4px">' + esc(T.rd.wkNone) + '</div>') + '</div>' : '');
     setTxt('rd-lh', T.rd.logH);
-    var LI = { out_ok: '💰', out_zero: '🕳', out_fail: '🚨', out_quit: '🏳', in_ok: '🔓', in_fail: '🛡' }, lg = R.log || [];
+    var LI = { out_ok: '💰', out_zero: '🕳', out_fail: '🚨', out_quit: '🏳', in_ok: '🔓', in_fail: '🛡', ctr_ok: '⚡', ctr_in: '⚡' }, lg = R.log || [];   // v397: + контратаки
     setHtml('rd-log', lg.length ? lg.map(function (e) {
-      var k = e.k, fn = T.rd.lg[k] || function (n) { return n; }, sg = k === 'out_ok' || k === 'in_fail' ? 'p' : k === 'in_ok' || k === 'out_fail' ? 'm' : '';
+      var k = e.k, fn = T.rd.lg[k] || function (n) { return n; };
+      var sg = k === 'out_ok' || k === 'in_fail' || k === 'ctr_ok' ? 'p' : k === 'in_ok' || k === 'out_fail' || k === 'ctr_in' ? 'm' : '';
       var tot = (e.amt || 0) + (e.sf || 0);          // v396: + SLX из сейфа; 🔔 — сработала сигнализация
       return '<div class="le2"><span class="li">' + (e.sf > 0 ? '🔐' : LI[k] || '•') + '</span><div class="lx">' + esc(fn(e.name, e.hits) + (e.sf > 0 ? T.rd.lgSf(tkS(e.sf)) : '') + (e.al ? T.rd.lgAl : ''))
         + '<small>' + esc(ago(Math.max(0, now - e.t))) + '</small></div>'
         + (tot > 0 && sg ? '<span class="lv2 ' + sg + '">' + (sg === 'p' ? '+' : '−') + esc(tkS(tot) + ' ' + T.tokU) + '</span>' : '') + '</div>';
     }).join('') : '<div class="rdem" style="padding:12px 4px">' + esc(T.rd.logNone) + '</div>');
     setHtml('rd-note', '<div class="sh" style="margin:0 0 4px">' + esc(T.rd.howH) + '</div><ol class="rdhow">' + T.rd.how(R).map(li).join('') + '</ol>');
+  }
+  function rdWhy(w) {                               // v397: целей нет — почему (считает бот v397; старый бот — общая фраза)
+    if (!w) return T.rd.none;
+    var p = [];
+    if (w.sh) p.push(T.rd.whySh(w.sh));
+    if (w.empty) p.push(T.rd.whyEmpty(w.empty));
+    if (w.gap) p.push(T.rd.whyGap(w.gap));
+    if (w.net) p.push(T.rd.whyNet(w.net));
+    if (w['new']) p.push(T.rd.whyNew(w['new']));
+    return p.length ? T.rd.whyH + ' ' + p.join(' · ') + '. ' + T.rd.whyT : T.rd.whyNone;
   }
   function rdOpen() {                               // открыли вкладку: цели (раз в минуту) и «на тебя напали» — прочитано
     var R = S.d && S.d.raid; if (!R) return;
@@ -4410,6 +4542,7 @@
       RD.busy = false;
       var r = j && j.res;
       RD.tg = r && r.targets ? r.targets : (RD.tg || []); RD.train = !!(r && r.train); RD.at = Date.now();
+      RD.why = r && r.why ? r.why : null;              // v397
       if (S.tab === 'raid') renderRaid();
     });
   }
@@ -4421,6 +4554,7 @@
   }
   $('t-raid').addEventListener('click', function (e) {
     var g = e.target.closest('[data-rgo]'), u = e.target.closest('[data-rup]'), r = e.target.closest('[data-rref]'), sh = e.target.closest('[data-rshop]'), tr = e.target.closest('[data-rtrain]');
+    if (e.target.closest('[data-rctr]')) { ctrStart(); return; }                  // v397: «⚡ Контратака»
     if (g) { if (!g.disabled) { hap('medium'); hkOpen(Number(g.getAttribute('data-rgo')), g.getAttribute('data-rv') === '1'); } }
     else if (tr) { hap('sel'); hkOpen(0, false, true); }
     else if (u) { hap('light'); rdUp(u.getAttribute('data-rup'), u); }
@@ -4428,6 +4562,7 @@
     else if (sh) { hap('sel'); donSheet('shield'); }
   });
   $('rda').addEventListener('click', function () { hap('sel'); openTab('raid'); });
+  $('rdc').addEventListener('click', function () { ctrStart(); });                 // v397: «⚡ Контратака» прямо с фермы
 
   // взлом: заставка (что брать, правила) → «Начать» (попытка тратится) → 3 слоя-задания → итог. Бегунок и время — только
   // transform, раз в кадр; нажатие — pointerdown (точнее, чем click). Тренировка — те же задания, но всё здесь, без сервера
@@ -4515,10 +4650,10 @@
     var i = HK.i, L = HK.layers[i], rg = $('hk-rings').children, a;
     HK.stage = 'play'; HK.L = L; HK.pos = 0; HK.picks = []; HK.open = L.t !== 'code';
     $('hk').classList.remove('hit', 'miss');
-    $('hk-lay').textContent = (HK.safe ? T.rd.sfLay : T.rd.hkLay(i + 1)) + ' · ' + T.rd.kn[L.t];      // v396: слой сейфа
+    $('hk-lay').textContent = (HK.ctr ? T.rd.ctLay : HK.safe ? T.rd.sfLay : T.rd.hkLay(i + 1)) + ' · ' + T.rd.kn[L.t];      // v396: слой сейфа; v397: контратака
     $('hk-task').textContent = T.rd.kh[L.t];
     $('hk-msg').textContent = ''; $('hk-msg').className = 'hk-msg';
-    for (var k = 0; k < 3; k++) { if (HK.safe) rg[k].classList.add('br'); rg[k].classList.toggle('cur', !HK.safe && k === i); }
+    for (var k = 0; k < 3; k++) { if (HK.safe) rg[k].classList.add('br'); rg[k].classList.toggle('cur', !HK.safe && (HK.ctr || k === i)); }
     if (L.t === 'bar') a = '<div class="hk-bar" id="hk-bar"><i class="hk-zw" id="hk-zw"><i class="hk-zone" style="left:' + ((L.c - L.w / 2) * 100).toFixed(2) + '%;width:'
       + (L.w * 100).toFixed(2) + '%"></i></i><i class="hk-cw" id="hk-cw"><b></b></i></div><button type="button" class="btn hk-go" id="hk-go">' + esc(T.rd.hkTap) + '</button>';
     else if (L.t === 'code') a = '<div class="hk-code" id="hk-code">' + esc(L.seq.map(function (j) { return L.keys[j]; }).join('')) + '</div><div class="hk-dots" id="hk-dots">'
@@ -4599,7 +4734,7 @@
     setTimeout(function () {
       if (!HK || HK.stage !== 'flash') return;
       HK.i++;
-      if (HK.safe) hkSafeSend(); else if (HK.i < 3) hkLayer(); else hkSend();      // v396: после слоя сейфа — итог
+      if (HK.ctr) ctrSend(); else if (HK.safe) hkSafeSend(); else if (HK.i < 3) hkLayer(); else hkSend();      // v396: после слоя сейфа — итог; v397: контратака
     }, 800);
   }
   function hkSend() {
@@ -4667,6 +4802,7 @@
     send('raid_safe', { sid: HK.sid }).then(function (j) {
       if (!HK) return;
       var L = j && j.res && j.res.safe_layer;
+      if (!L && j && j.res && j.res.raid_res) { hkResult(j.res.raid_res); return; }      // v397: пока выбирал — сорвали контратакой
       if (!L) { hkClose(); rdScout(true); return; }
       HK.sl = j.res.sl || 0;
       go(L);
@@ -4698,9 +4834,56 @@
     else if (k === 'zero') { ic = '🕳'; big = T.rd.resZero; tt = T.rd.resZeroS; }
     else if (k === 'fail') { ic = '🚨'; big = T.rd.resFail; cls = 'no'; tt = r.npc ? T.rd.resGhF : T.rd.resFailS(r.pen > 0 ? tkS(r.pen) + ' ' + T.tokU : ''); }
     else if (k === 'shield') { ic = '🛡'; big = T.rd.resSh; tt = T.rd.resShS; }
+    else if (k === 'countered') { ic = '⚡'; big = T.rd.resCtr; cls = 'no'; tt = T.rd.resCtrS(r.name, r.pen > 0 ? tkS(r.pen) + ' ' + T.tokU : ''); }   // v397
     $('hk').className = 'hk on';
     $('hk-in').innerHTML = '<div class="hk-res" id="hk-res" data-kind="' + esc(k) + '"><div class="re2">' + ic + '</div><div class="rb ' + cls + '">' + esc(big) + '</div><p>' + esc(tt) + '</p>' + btns + '</div>';
-    hap(k === 'ok' || (k === 'train' && r.hits) ? 'success' : k === 'fail' ? 'error' : 'warning');
+    hap(k === 'ok' || (k === 'train' && r.hits) ? 'success' : k === 'fail' || k === 'countered' ? 'error' : 'warning');
+  }
+  // v397: «⚡ Контратака» — одно задание (то же окно, что у взлома, голубое): отбил, пока ломают, — взлом сорван и файрвол забирает
+  // у взломщика часть хранилища; уже унёс — добыча возвращается. Попытка одна (бот отмечает её, как только выдал задание)
+  function ctrStart() {
+    var ci = ctrInfo(); if (!ci || HK) return;
+    hap('heavy');
+    HK = { ctr: true, ph: ci.c.ph, name: ci.c.name, got: ci.c.got || 0, stage: 'wait', res: [], hits: 0, i: 0, win: 0, fw: 0 };
+    $('hk').className = 'hk on ctr';
+    $('hk-x').hidden = true;
+    $('hk-in').innerHTML = '<div class="hk-res"><div class="re2">⚡</div><div class="rb">' + esc(T.rd.ctWait) + '</div></div>';
+    if (S.tab === 'raid') renderRaid();
+    send('raid_ctr_go', {}).then(function (j) {
+      if (!HK || !HK.ctr) return;
+      var c = j && j.res && j.res.ctr;
+      if (!c || !c.layer) { hkClose(); return; }      // уже нельзя — всплывашка сказала почему
+      HK.cid = c.cid; HK.layers = [c.layer]; HK.ph = c.ph; HK.name = c.name;
+      $('hk').className = 'hk on play ctr';
+      $('hk-in').innerHTML = '<div class="hk-top"><b>' + esc(T.rd.ctH(c.name)) + '</b><small>' + esc(c.ph === 'after' ? T.rd.ctSa(rdTok(HK.got)) : T.rd.ctSn) + '</small></div>'
+        + '<div class="hk-rings" id="hk-rings"><i class="r1"></i><i class="r2"></i><i class="r3"></i><div class="hk-core">⚡</div></div>'
+        + '<div class="hk-lay" id="hk-lay"></div><div class="hk-task" id="hk-task"></div><div class="hk-time"><i id="hk-tm"></i></div>'
+        + '<div id="hk-area"></div><div class="hk-msg" id="hk-msg"></div>';
+      $('hk-x').hidden = false;
+      hkLayer();
+    });
+  }
+  function ctrSend(quit) {
+    HK.stage = 'send'; cancelAnimationFrame(HK.raf); clearTimeout(HK.tm); clearTimeout(HK.tc);
+    $('hk-lay').textContent = T.rd.hkSend; $('hk-x').hidden = true;
+    send('raid_ctr_hit', { cid: HK.cid, res: quit ? { e: -1 } : HK.res[0] }).then(function (j) {
+      if (!HK) return;
+      var r = j && j.res && j.res.ctr_res;
+      if (!r) { hkClose(); return; }
+      ctrResult(r);
+    });
+  }
+  function ctrResult(r) {
+    HK.stage = 'res';
+    var k = r.kind, ic = '⚡', big, tt, cls = '';
+    if (k === 'block') { big = T.rd.ctBlock; tt = T.rd.ctBlockS(r.name, r.amt > 0 ? rdTok(r.amt) : ''); cls = 'ok'; HK.win = r.amt || 0; }
+    else if (k === 'back') { ic = '💸'; big = '+' + tkS(r.amt || 0) + ' ' + T.tokU; tt = T.rd.ctBackS(r.name, (r.amt || 0) + 1e-12 < (r.got || 0)); cls = 'ok'; HK.win = r.amt || 0; }
+    else if (k === 'late') { ic = '⌛'; big = T.rd.ctLate; tt = T.rd.ctLateS; }
+    else { ic = '✗'; big = T.rd.ctMiss; cls = 'no'; tt = T.rd.ctMissS(r.name); }
+    $('hk').className = 'hk on ctr';
+    $('hk-in').innerHTML = '<div class="hk-res" id="hk-res" data-kind="ctr_' + esc(k) + '"><div class="re2">' + ic + '</div><div class="rb ' + cls + '">' + esc(big) + '</div><p>' + esc(tt) + '</p>'
+      + '<button type="button" class="btn hk-go" id="hk-done">' + esc(T.rd.resBtn) + '</button></div>';
+    hap(cls === 'ok' ? 'success' : cls === 'no' ? 'error' : 'warning');
   }
   function hkClose() {
     var win = HK && HK.stage === 'res' ? HK.win : 0;
@@ -4725,6 +4908,7 @@
     else if (b.id === 'of-safe') { hap('heavy'); hkSafe(); }                         // v396: «🔐 Вскрыть сейф»
     else if (b.id === 'hk-x' && (HK.stage === 'play' || HK.stage === 'flash')) {
       if (HK.train) { hkClose(); return; }
+      if (HK.ctr) { askYes(T.rd.ctQuitQ).then(function (y) { if (y && HK && HK.ctr && (HK.stage === 'play' || HK.stage === 'flash')) ctrSend(true); }); return; }   // v397
       if (HK.safe) { askYes(T.rd.sfQuitQ).then(function (y) { if (y && HK && HK.safe && (HK.stage === 'play' || HK.stage === 'flash')) hkSafeSend(true); }); return; }
       askYes(T.rd.hkQuitQ).then(function (y) { if (y && HK) { hkClose(); rdScout(true); } });
     }
@@ -4732,7 +4916,7 @@
   // для проверок (e2e): где взлом сейчас и «решить» текущее задание верно (hit) или неверно; real — настоящими событиями pointerdown
   window.__hkDbg = function () {
     return HK ? { stage: HK.stage, i: HK.i, hits: HK.hits, kind: HK.L ? HK.L.t : '', L: HK.L ? JSON.parse(JSON.stringify(HK.L)) : null, t0: HK.t0,
-                  res: HK.res.slice(), open: !!HK.open, train: HK.train, safe: !!HK.safe, of: HK.of || null } : null;
+                  res: HK.res.slice(), open: !!HK.open, train: HK.train, safe: !!HK.safe, of: HK.of || null, ctr: !!HK.ctr } : null;
   };
   window.__hkAim = function (hit, real) {
     if (!HK || HK.stage !== 'play') return -1;
@@ -4837,7 +5021,12 @@
 
   // ── загрузка, опрос, кэш ──
   var CK = 'mine_v2_' + UID;                      // v388: v2 — суммы в настоящих SLX (старую память v1 не берём: там SLX фермы)
-  function cachePut() { try { localStorage.setItem(CK, JSON.stringify({ t: Date.now(), d: S.d, cfg: S.cfg, ex: S.ex, shop: S.shop, order: S.order, cid: S.cid })); } catch (e) {} }
+  var cpT = 0;
+  function cachePut(now) {                         // v397: опрос раз в 5 с — в память телефона не чаще раза в 30 с (и когда игру свернули)
+    if (!now && Date.now() - cpT < 30000) return;
+    cpT = Date.now();
+    try { localStorage.setItem(CK, JSON.stringify({ t: Date.now(), d: S.d, cfg: S.cfg, ex: S.ex, shop: S.shop, order: S.order, cid: S.cid })); } catch (e) {}
+  }
   function cacheGet() {
     try { var o = JSON.parse(localStorage.getItem(CK) || 'null'); if (!o || !o.d || !o.cfg || Date.now() - o.t > 7 * 86400000) return null; return o; } catch (e) { return null; }
   }
@@ -4850,8 +5039,11 @@
     $('err').hidden = false;
   }
   function staleOn() { if (!S.stale) { S.stale = true; $('stale').textContent = T.stale; $('stale').hidden = false; } }
-  var POLL = 25000, pollT = 0;
-  function schedule() { clearTimeout(pollT); if (!document.hidden && S.loaded) pollT = setTimeout(function () { load(true); }, POLL); }
+  var POLL = 5000, pollT = 0;                    // v397: Кирилл — «чтобы всё обновлялось каждые 5 сек» (курс биржи — тоже раз в 5 с)
+  function schedule() {
+    clearTimeout(pollT); S.pollAt = 0;
+    if (!document.hidden && S.loaded) { S.pollAt = Date.now() + POLL; pollT = setTimeout(function () { load(true); }, POLL); }
+  }
   function load(silent) {
     if (S.busy) return;
     if (!canLoad()) { if (!S.loaded) fail('params'); return; }
@@ -4883,7 +5075,7 @@
   }
   document.addEventListener('visibilitychange', function () {
     document.documentElement.classList.toggle('paused', document.hidden);
-    if (document.hidden) { clearTimeout(pollT); if (S.pend && !flushBeacon()) flush(); }
+    if (document.hidden) { clearTimeout(pollT); S.pollAt = 0; if (S.pend && !flushBeacon()) flush(); if (S.loaded) cachePut(true); }
     else if (S.loaded && !S.busy) load(true);
   });
   setInterval(function () { if (!document.hidden && S.loaded) tick(); }, 150);
