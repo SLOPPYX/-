@@ -715,7 +715,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v396';
+  var VER = 'v397';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -1393,7 +1393,8 @@ window.addEventListener('error', function (e) {
           var it = sh.filter(function (y) { return y.id === o.item; })[0];
           return dt(o.t) + ' — ' + esc(it ? it.e + ' ' + it.ru : o.item) + ' · ' + fmt(o.rub) + ' ₽'; })
       + list('⚔️ Взлом — журнал', 'mrlog', rdx.log || [], function (o) {                 // v394
-          var L = { out_ok: '💰 взломал', out_zero: '🕳 взломал (пусто)', out_fail: '🚨 попался у', out_quit: '🏳 бросил взлом', in_ok: '🔓 его взломал', in_fail: '🛡 отбил' };
+          var L = { out_ok: '💰 взломал', out_zero: '🕳 взломал (пусто)', out_fail: '🚨 попался у', out_quit: '🏳 бросил взлом', in_ok: '🔓 его взломал', in_fail: '🛡 отбил',
+                    ctr_ok: '⚡ контратака на', ctr_in: '⚡ получил контратаку от' };                                  // v397
           return dt(o.t) + ' — ' + (L[o.k] || o.k) + ' ' + esc(o.name) + (o.hits ? ' · ' + o.hits + '/3' : '') + (o.tok ? ' · ≈ ' + short(o.tok) + ' 💰' : '')
             + (o.sf ? ' · 🔐 сейф ≈ ' + short(o.sf) + ' 💰' : '') + (o.al ? ' · 🔔 сигнализация' : ''); });      // v396
     return h;
@@ -3012,7 +3013,7 @@ window.addEventListener('error', function (e) {
     var r = mi.raid || {}, c = r.cfg || {}, df = r.def || {}, tx = r.txt || {}, lm = r.lim || {}, td = r.today || {}, wk = r.week || {}, pf = Number(mi.pf) || 0;
     var KS = MN_RD.filter(function (k) { return k in c; });          // v395: бот v394 не знает «gh_h» — поля нет
     var same = KS.every(function (k) { return Number(c[k]) === Number(df[k]); });
-    var KIND = { ok: '💰', zero: '🕳', fail: '🚨' };
+    var KIND = { ok: '💰', zero: '🕳', fail: '🚨', ctr: '⚡', ctr_back: '💸' };                  // v397: + контратаки
     return '<div class="lbl">⚔️ Взлом ферм</div>'
       + '<div class="note ' + (c.on ? 'mt' : 'wn') + '">' + (c.on
           ? 'Включён: с главы <b>' + c.ch + '</b> · атак в сутки <b>' + c.n + '</b> · удачный взлом уносит до <b>' + c.pct + '%</b> хранилища, но не больше <b>' + c.cap_h
@@ -3024,10 +3025,16 @@ window.addEventListener('error', function (e) {
                 + '% незащищённой части кошелька, не больше ' + c.safe_cap_h + ' ч своей добычи; игрок теряет в сутки не больше ' + c.safe_day
                 + '% кошелька; не вскрыл — сигнализация, −' + c.safe_fail + '% добычи' : 'выключен — крадут только из хранилища') + '</b>' : '')      // v396
           : 'Выключен: во вкладке «⚔️ Взлом» игроки видят «выключен администратором». Уровни, щиты и журналы сохранены.') + '</div>'
-      + '<div class="small">Уносят только НЕсобранное из хранилища — кошелёк и баланс не трогаются; токенов в игре не прибавляется: что унёс один, потерял другой. '
+      + '<div class="small">Уносят несобранное из хранилища (а с «🔐 Сейфом» — и часть SLX кошелька сверх защищённой), баланс токенов не трогается; '
+      + 'токенов в игре не прибавляется: что унёс один, потерял другой. '
       + 'Взлом — мини-игра «пробей 3 слоя» (нажатия проверяет бот): 1 слой — 40% добычи, 2 — 70%, 3 — вся; ни одного — попался. Защита: собирать чаще, '
       + '🧱 файрвол (за SLX — они сжигаются, как за устройства; −' + (r.fwx || 10) + '% к добыче взломщика за уровень и уже окно), 🛡 щит (донат), месть в течение суток — без атаки дня и сквозь щит '
-      + '(месть за месть не даётся). Фермы одной сети друг друга не видят; твоя ферма — не цель, ты проверяешь на «🤖 Учебной ферме».</div>'
+      + '(месть за месть не даётся). Фермы одной сети друг друга не видят' + (r.ctr ? ' (кроме твоей: тебя можно взломать и со второго аккаунта на том же телефоне)' : '')
+      + '; «🤖 Учебная ферма» — твоя, для проверки.'
+      + (r.ctr ? '<br>⚡ Контратака: как только взлом начался, хозяину фермы приходит «🚨 Тебя взламывают прямо сейчас!». Отбил одно задание, пока ломают, — '
+        + 'взлом сорван: взломщик ничего не уносит, а файрвол хозяина забирает у него ' + c.fail_pct + '% хранилища. Не успел — ещё '
+        + Math.round(r.ctr.after / 60) + ' мин после взлома можно вернуть добычу из кошелька взломщика (месть тогда тратится). Попытка одна, против мести контратаки нет.' : '')
+      + '</div>'
       + '<div class="grid" style="margin-top:8px">'
       + kv('Сегодня взломов', fmt(td.n || 0) + '<small>удачных ' + fmt(td.ok || 0) + ' · унесли ≈ ' + short(td.tok || 0) + ' 💰</small>')
       + kv('Сегодня попались', fmt(td.fail || 0) + '<small>файрвол забрал ≈ ' + short(td.pen || 0) + ' 💰</small>')
@@ -3035,7 +3042,9 @@ window.addEventListener('error', function (e) {
       + kv('Взлом открыт', fmt(r.open || 0) + ' ферм<small>сейчас со щитом: ' + fmt(r.shields || 0) + '</small>')
       + ('gh' in c ? kv('«🏢 ГигаХэш» сегодня', fmt(td.gh || 0) + ' взл.<small>выдано ≈ ' + short(td.gh_tok || 0) + ' 💰 · за 7 дней ' + fmt(wk.gh || 0) + ' взл., ≈ ' + short(wk.gh_tok || 0) + '</small>') : '')
       + ('safe' in c ? kv('«🔐 Сейф» сегодня', fmt(td.safe || 0) + ' вскрыто<small>унесли из кошельков ≈ ' + short(td.safe_tok || 0) + ' 💰 · сигнализаций ' + fmt(td.alarm || 0)
-          + ' · за 7 дней вскрыто ' + fmt(wk.safe || 0) + ', ≈ ' + short(wk.safe_tok || 0) + '</small>') : '') + '</div>'      // v396
+          + ' · за 7 дней вскрыто ' + fmt(wk.safe || 0) + ', ≈ ' + short(wk.safe_tok || 0) + '</small>') : '')      // v396
+      + ('ctr' in td ? kv('«⚡ Контратаки» сегодня', fmt(td.ctr || 0) + '<small>отбили и вернули ≈ ' + short(td.ctr_tok || 0) + ' 💰 · за 7 дней '
+          + fmt(wk.ctr || 0) + ', ≈ ' + short(wk.ctr_tok || 0) + (r.ctr && r.ctr.live ? ' · взломов идёт сейчас: ' + fmt(r.ctr.live) : '') + '</small>') : '') + '</div>'      // v397
       + ('safe' in c && (r.prot || []).length ? '<div class="small" style="margin-top:6px">🔐 Сейф защищает кошелёк по уровням: ' + r.prot.map(function (p, i) { return i + ' ур. — ' + p + '%'; }).join(' · ')
           + (r.safes ? '<br>Ферм на уровнях сейфа: ' + r.safes.map(function (n, i) { return i + ' — ' + fmt(n); }).join(' · ') : '') + '. Уровни стоят как файрвол (SLX сжигаются).</div>' : '')
       + '<div class="lbl">Настройки взлома</div>'
@@ -3066,7 +3075,8 @@ window.addEventListener('error', function (e) {
           return '<div>' + (i + 1) + '. ' + esc(x.name) + ' — ≈ ' + short(x.amt * pf) + ' 💰</div>'; }).join('') + '</div>' : '')
       + ((r.recent || []).length ? '<div class="lbl">Последние взломы</div><div class="hist">' + r.recent.map(function (x) {
           return '<div>' + dt(x.t) + ' — ' + (KIND[x.kind] || '•') + ' ' + esc(x.a) + ' → ' + esc(x.v) + ' · '
-            + (x.kind === 'fail' ? 'попался, файрвол забрал ≈ ' + short(x.tok) : x.hits + '/3 · унёс ≈ ' + short(x.tok)) + ' 💰</div>';
+            + (x.kind === 'ctr' ? 'контратака: взлом отбит, забрал ≈ ' + short(x.tok) : x.kind === 'ctr_back' ? 'контратака: вернул добычу ≈ ' + short(x.tok)     // v397
+               : x.kind === 'fail' ? 'попался, файрвол забрал ≈ ' + short(x.tok) : x.hits + '/3 · унёс ≈ ' + short(x.tok)) + ' 💰</div>';
         }).join('') + '</div>' : '<div class="small" style="margin-top:6px">Взломов пока не было.</div>');
   }
   // v395: «🔧 Модули фермы» — магазин игры: охлаждение (+10% к добыче), стойки (+1 место), аккумуляторы (+2 ч хранилища); за SLX,
@@ -3114,6 +3124,9 @@ window.addEventListener('error', function (e) {
       + kv('Майнили сегодня', fmt(td.players) + ' игр.<small>сборов: ' + fmt(td.collects) + '</small>')
       + kv('За 7 дней добыто', (p ? '≈ ' + short(((wk.mined || 0) + (wk.tapped || 0) + (wk.rewards || 0)) * p) + ' 💰' : mnS((wk.mined || 0) + (wk.tapped || 0) + (wk.rewards || 0)) + ' SLX')
            + '<small>продано ≈ ' + short((wk.sold || 0) * p) + ' · сожжено ≈ ' + short((wk.spent || 0) * p) + '</small>') + '</div>'
+      + (mi.spot ? '<div class="small" style="margin-top:6px">💱 Обмен в кошельке игры — <b>ровно по курсу</b> биржи (комиссия как на бирже), до <b>' + short(mi.spot.day)
+          + '</b> токенов в сутки на покупку и столько же на продажу (ты — без предела; больше — на бирже). Сегодня меняли: <b>' + fmt(mi.spot.n || 0)
+          + '</b> игр. · купили на ≈ ' + short(mi.spot.buy || 0) + ' · продали на ≈ ' + short(mi.spot.sell || 0) + '</div>' : '')      // v397
       + '<div class="small">Игрок: «Подарки 🎁» → «⛏ Майнинг SLX». Добытое — в его кошельке SLX (как на бирже), продаёт за токены там же или прямо в игре: '
       + 'токены при продаже появляются заново — поэтому добыча привязана к токенам, а не к курсу биржи. Устройства и переезды покупаются за SLX — эти SLX сжигаются. '
       + '«Предел» — сколько токенов в сутки могут намайнить все фермы вместе; игроков станет больше — у каждого будет меньше (как в настоящей сети). Твоя ферма в сеть не входит.</div>'
