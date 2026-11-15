@@ -715,7 +715,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v397';
+  var VER = 'v398';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -1375,6 +1375,9 @@ window.addEventListener('error', function (e) {
                rdx.sh ? '🛡 Щит от взлома — ещё ' + lf(rdx.sh) : '',                                                          // v394: «⚔️ Взлом ферм»
                rdx.fw || rdx.vr || rdx.sl ? '⚔️ Файрвол ' + (rdx.fw || 0) + '/5 · вирус ' + (rdx.vr || 0) + '/5' + (rdx.sl != null ? ' · 🔐 сейф ' + rdx.sl + '/5' : '') : '',   // v396
                rdx.used ? '⚔️ Атак сегодня: ' + rdx.used : '',
+               x.duel && x.duel.st && x.duel.st[4] ? '⚔️ Дуэли: побед ' + x.duel.st[0] + ' · поражений ' + x.duel.st[1] + ' · ничьих ' + x.duel.st[2] + ' · итог '
+                 + (x.duel.st[3] >= 0 ? '+' : '−') + short(Math.abs(x.duel.st[3])) + ' 💰' : '',                                    // v398
+               x.duel && x.duel.rf ? '↩️ За уровни взлома вернули ≈ ' + short(x.duel.rf) + ' 💰 (в SLX)' : '',
                rdx.st && rdx.st[0] ? '⚔️ Взломов: ' + rdx.st[0] + ' (удачных ' + rdx.st[1] + ') · унёс ≈ ' + short(rdx.st[2]) + ' · потерял ≈ ' + short(rdx.st[3]) : '',   // v395
                x.mod && (x.mod.cool || x.mod.rack || x.mod.bat) ? '🔧 Модули: ❄️ охлаждение ' + (x.mod.cool || 0) + '/5 · 🛰 стойки ' + (x.mod.rack || 0) + '/5 · 🔋 аккумуляторы '
                  + (x.mod.bat || 0) + '/5' : ''].filter(Boolean);
@@ -3081,6 +3084,34 @@ window.addEventListener('error', function (e) {
   }
   // v395: «🔧 Модули фермы» — магазин игры: охлаждение (+10% к добыче), стойки (+1 место), аккумуляторы (+2 ч хранилища); за SLX,
   // 5 уровней, уровень открывается с главы. Здесь — цены в токенах и сколько ферм на каком уровне
+  // v398: «⚔️ Дуэль хакеров» (вместо взлома ферм) — вкл/выкл, комиссия, сегодня и 7 дней, сейчас, топ недели, последние дуэли
+  function mnDuelHtml(mi) {
+    var u = mi.duel || {}, c = u.cfg || {}, td = u.today || {}, wk = u.week || {}, sec = u.sec || {};
+    return '<div class="lbl">⚔️ Дуэль хакеров (вместо взлома ферм)</div>'
+      + '<div class="note ' + (c.on ? 'mt' : 'wn') + '">' + (c.on
+          ? 'Включена: игроки, у которых сейчас открыт майнинг, вызывают друг друга (или «🎲 Найти соперника») на ставку <b>' + (u.stakes || []).map(short).join(' / ')
+            + '</b> токенов. Оба одновременно проходят 3 одинаковых задания; больше верных — победа, поровну — меньше общее время. Победитель получает банк минус <b>'
+            + (c.fee || 0) + '%</b> (на «🏦 Счёт комиссий»), ничья — ставки назад. Ответить на вызов — ' + (sec.inv || 30) + ' с, очередь — ' + (sec.q || 60) + ' с, дуэль — до ' + (sec.len || 75) + ' с.'
+          : 'Выключена: вызвать и найти соперника нельзя.') + '</div>'
+      + '<div class="small">Ставка списывается с обоих сразу (или ни с кого); перезапуск бота посреди дуэли — ставки возвращаются. Игроки одной сети (один телефон или Wi-Fi) '
+      + 'друг с другом не играют — кроме тебя: проверяй со второго аккаунта или в игре «🛠 Проверка» → «Дуэль с учебным соперником». Купленные уровни файрвола, вируса и сейфа '
+      + 'игрокам вернулись в SLX (по цене уровней), щиты из доната убраны.</div>'
+      + '<div class="grid" style="margin-top:8px">'
+      + kv('Дуэлей сегодня', fmt(td.n || 0) + '<small>банк ≈ ' + short(td.pot || 0) + ' · ничьих ' + fmt(td.draw || 0) + '</small>')
+      + kv('Комиссия сегодня', '≈ ' + short(td.fee || 0) + ' 💰<small>на «🏦 Счёт комиссий»</small>')
+      + kv('За 7 дней', fmt(wk.n || 0) + ' дуэл.<small>банк ≈ ' + short(wk.pot || 0) + ' · комиссия ≈ ' + short(wk.fee || 0) + '</small>')
+      + kv('Сейчас', fmt(u.live || 0) + ' дуэл.<small>в игре: ' + fmt(u.online || 0) + '</small>') + '</div>'
+      + '<div class="lbl">Комиссия дуэли, % банка (0–20)</div>'
+      + '<div class="row"><input id="mdu-fee" inputmode="numeric" value="' + Number(c.fee || 0) + '" class="f1" autocomplete="off"><button type="button" data-mn="duel_fee">Поставить</button></div>'
+      + '<div class="row"><button type="button" class="f1' + (c.on ? '' : ' b-acc') + '" data-mn="duel_on" data-v="' + (c.on ? 0 : 1) + '">'
+      + (c.on ? '⏸ Выключить дуэли' : '▶️ Включить дуэли') + '</button></div>'
+      + ((u.top || []).length ? '<div class="lbl">🏆 Топ дуэлянтов недели (итог токенами)</div><div class="hist">' + u.top.map(function (x, i) {
+          return '<div>' + (i + 1) + '. ' + esc(x.name) + ' — +' + short(x.net) + ' 💰</div>'; }).join('') + '</div>' : '')
+      + ((u.recent || []).length ? '<div class="lbl">Последние дуэли</div><div class="hist">' + u.recent.map(function (x) {
+          return '<div>' + dt(x.t) + ' — ' + esc(x.a) + ' ⚔️ ' + esc(x.b) + ' · ' + short(x.stake) + ' · '
+            + (x.win ? '🏆 ' + esc(x.win) + (x.fee ? ' · комиссия ' + short(x.fee) : '') : '🤝 ничья') + '</div>'; }).join('') + '</div>'
+        : '<div class="small" style="margin-top:6px">Дуэлей пока не было.</div>');
+  }
   function mnModsHtml(mi) {
     var ms = mi.mods || [];
     if (!ms.length) return '';
@@ -3124,9 +3155,12 @@ window.addEventListener('error', function (e) {
       + kv('Майнили сегодня', fmt(td.players) + ' игр.<small>сборов: ' + fmt(td.collects) + '</small>')
       + kv('За 7 дней добыто', (p ? '≈ ' + short(((wk.mined || 0) + (wk.tapped || 0) + (wk.rewards || 0)) * p) + ' 💰' : mnS((wk.mined || 0) + (wk.tapped || 0) + (wk.rewards || 0)) + ' SLX')
            + '<small>продано ≈ ' + short((wk.sold || 0) * p) + ' · сожжено ≈ ' + short((wk.spent || 0) * p) + '</small>') + '</div>'
-      + (mi.spot ? '<div class="small" style="margin-top:6px">💱 Обмен в кошельке игры — <b>ровно по курсу</b> биржи (комиссия как на бирже), до <b>' + short(mi.spot.day)
-          + '</b> токенов в сутки на покупку и столько же на продажу (ты — без предела; больше — на бирже). Сегодня меняли: <b>' + fmt(mi.spot.n || 0)
-          + '</b> игр. · купили на ≈ ' + short(mi.spot.buy || 0) + ' · продали на ≈ ' + short(mi.spot.sell || 0) + '</div>' : '')      // v397
+      + (mi.spot ? '<div class="small" style="margin-top:6px">💱 Обмен в кошельке игры — <b>ровно по курсу</b> биржи (комиссия как на бирже), '
+          + (mi.spot.day ? 'до <b>' + short(mi.spot.day) + '</b> токенов в сутки на покупку и столько же на продажу' : '<b>без лимита</b>')
+          + ' (ты — без предела; больше — на бирже). Сегодня меняли: <b>' + fmt(mi.spot.n || 0)
+          + '</b> игр. · купили на ≈ ' + short(mi.spot.buy || 0) + ' · продали на ≈ ' + short(mi.spot.sell || 0) + '</div>'
+          + ('def' in mi.spot ? '<div class="row"><input id="mn-spot" inputmode="numeric" placeholder="Лимит обмена по курсу в сутки, токенов (0 — без лимита)" value="'
+             + Number(mi.spot.day || 0) + '" class="f1" autocomplete="off"><button type="button" data-mn="spot_save">Поставить</button></div>' : '') : '')      // v397; v398 — лимит меняется
       + '<div class="small">Игрок: «Подарки 🎁» → «⛏ Майнинг SLX». Добытое — в его кошельке SLX (как на бирже), продаёт за токены там же или прямо в игре: '
       + 'токены при продаже появляются заново — поэтому добыча привязана к токенам, а не к курсу биржи. Устройства и переезды покупаются за SLX — эти SLX сжигаются. '
       + '«Предел» — сколько токенов в сутки могут намайнить все фермы вместе; игроков станет больше — у каждого будет меньше (как в настоящей сети). Твоя ферма в сеть не входит.</div>'
@@ -3146,7 +3180,7 @@ window.addEventListener('error', function (e) {
       + '<div class="row"><button type="button" class="f1' + (mi.on ? '' : ' b-acc') + '" data-mn="on" data-v="' + (mi.on ? 0 : 1) + '">'
       + (mi.on ? '⏸ Поставить майнинг на паузу' : '▶️ Включить майнинг') + '</button></div>'
       + mnCalcHtml(mi)                                                       // v392: «📊 Сколько идёт игра»
-      + (mi.raid ? mnRaidHtml(mi) : '')                                      // v394: «⚔️ Взлом ферм»
+      + (mi.duel ? mnDuelHtml(mi) : mi.raid ? mnRaidHtml(mi) : '')          // v394: «⚔️ Взлом ферм»; v398 — «⚔️ Дуэль хакеров» вместо него
       + mnModsHtml(mi)                                                       // v395: «🔧 Модули фермы»
       // v388: донат в майнинге — цены, «показывать», сколько продано; выдаёшь в карточке игрока («⛏ Майнинг» → «Выдать»)
       + ((mi.shop || []).length ? '<div class="lbl">💎 Донат в майнинге</div>'
@@ -3204,6 +3238,21 @@ window.addEventListener('error', function (e) {
       if (bad) { toast(bad, true); return; }
       if (!parts.length) { toast('Набор не может быть пустым — оставь хотя бы одну часть', true); return; }
       return ecDo(stb, 'Сохранить состав стартового набора?\n' + parts.join('\n') + '\n\nКто набор уже получил — второй раз не получит.', b);
+    }
+    if (a === 'duel_on' || a === 'duel_fee') {                       // v398: «⚔️ Дуэль хакеров»
+      if (botVer() < 398) { toast('Заработает, когда бот на сервере обновится до v398', true); return; }
+      if (a === 'duel_on') return ecDo({ op: 'mine_duel', on: !!v }, v ? 'Включить дуэли хакеров?\nИгроки онлайн смогут вызывать друг друга на ставку токенами.'
+        : 'Выключить дуэли хакеров?\nВызвать и найти соперника станет нельзя. Идущие дуэли доиграются.', b);
+      var fx = parseAmount(($('mdu-fee') || {}).value);
+      if (!(fx >= 0 && fx <= 20) || fx !== Math.floor(fx)) { toast('Комиссия — целое число от 0 до 20 %', true); return; }
+      return ecDo({ op: 'mine_duel', fee: fx }, 'Комиссия дуэли — ' + fx + '% банка?\nОна идёт на «🏦 Счёт комиссий».', b);
+    }
+    if (a === 'spot_save') {                                         // v398: лимит обмена по курсу в сутки (0 — без лимита)
+      if (botVer() < 398) { toast('Заработает, когда бот на сервере обновится до v398', true); return; }
+      var sv = parseAmount(($('mn-spot') || {}).value);
+      if (!(sv >= 0 && sv <= 1e15) || sv !== Math.floor(sv)) { toast('Лимит — целое число токенов, 0 — без лимита', true); return; }
+      return ecDo({ op: 'mine_spot', day: sv }, sv ? 'Лимит обмена по курсу — ' + short(sv) + ' токенов в сутки на покупку и столько же на продажу?'
+        : 'Убрать лимит обмена по курсу?\nИгрок с большим балансом сможет менять сколько угодно ровно по курсу.', b);
     }
     if (a === 'raid_safe') {                                         // v396: «🔐 Сейф» — кража SLX из кошелька
       if (botVer() < 396) { toast('Заработает, когда бот на сервере обновится до v396', true); return; }
