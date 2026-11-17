@@ -156,7 +156,7 @@
             background: radial-gradient(circle at 50% 64%, rgba(var(--lq), .24), rgba(9,8,16,.96) 72%);
             box-shadow: inset 0 0 0 1px rgba(255,255,255,.16), inset 0 -12px 22px rgba(0,0,0,.55), 0 0 26px -6px rgba(var(--lq2), .75); }
   .rx-liq { position: absolute; left: 0; right: 0; bottom: 0; height: 100%; transform: translateY(95%); transition: transform .6s ease; will-change: transform; }
-  .rx-liq::before { content: ''; position: absolute; left: 0; right: 0; top: 5px; bottom: 0; background: linear-gradient(0deg, rgb(var(--lq)), rgba(var(--lq2), .92)); }
+  .rx-liq::before { content: ''; position: absolute; left: 0; right: 0; top: 5px; bottom: -10px; background: linear-gradient(0deg, rgb(var(--lq)), rgba(var(--lq2), .92)); }   /* v399: слой поднят на 5px — низ продолжен */
   .rx-liq i { position: absolute; left: 0; top: 0; width: 200%; height: 8px; background: rgba(var(--lq2), .95); will-change: transform; animation: rxwv 2.2s linear infinite;
               -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 8'%3E%3Cpath d='M0 4 Q10 0 20 4 T40 4 V8 H0Z'/%3E%3C/svg%3E") repeat-x 0 0/50% 100%;
                       mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 8'%3E%3Cpath d='M0 4 Q10 0 20 4 T40 4 V8 H0Z'/%3E%3C/svg%3E") repeat-x 0 0/50% 100%; }
@@ -746,6 +746,27 @@
   .dn-sk .pv[data-p="sakura"] { background: #3a1747; }
   .dn-sk .pv[data-p="deep"] { background: radial-gradient(ellipse 70% 80% at 70% 40%, rgba(255,170,100,.3), transparent 70%), #0b0718; }
   .dn-sk .pv[data-p="dream"] { background: linear-gradient(180deg, #121a48, #84347f 70%, #f0706c); }
+  /* v399: 🖤 «Black» — без цвета: серебряные рамки, белая плазма ядра, белые искры; пыль поднимается; линия сканера бежит по сцене */
+  body[data-skin="black"], body[data-skin="black"][data-ch] { --a1: #f4f4f5; --a2: #71717a; --sk: 228,228,231; --sk2: 161,161,170; }
+  body[data-skin="black"] .scene.s3 { background: #000; }
+  body[data-skin="black"] .room { background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.01) 60%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), inset 0 0 26px rgba(255,255,255,.05); }
+  .tr .tav[data-sk="black"] { border-color: #e4e4e7; box-shadow: 0 0 10px -1px rgba(255,255,255,.75); }
+  body[data-skin="black"] .bg .pz { display: block; -webkit-mask-image: linear-gradient(180deg, transparent, #000 15%, #000 85%, transparent); mask-image: linear-gradient(180deg, transparent, #000 15%, #000 85%, transparent); }
+  body[data-skin="black"] .bg .pz b { animation: pzl 26s linear infinite;
+    background-image: radial-gradient(circle at 34px 52px, #fff 0 1.1px, rgba(255,255,255,.25) 2px, transparent 3.6px), radial-gradient(circle at 118px 268px, #e4e4e7 0 .9px, rgba(255,255,255,.2) 1.8px, transparent 3.4px),
+      radial-gradient(circle at 205px 140px, #fff 0 1px, rgba(255,255,255,.22) 1.9px, transparent 3.6px), radial-gradient(circle at 296px 330px, #d4d4d8 0 1.2px, rgba(255,255,255,.25) 2.1px, transparent 3.8px),
+      radial-gradient(circle at 362px 96px, #fff 0 .8px, rgba(255,255,255,.2) 1.7px, transparent 3.2px); }
+  body[data-skin="black"] .bg .pz b + b { animation-duration: 37s; opacity: .6;
+    background-image: radial-gradient(circle at 70px 180px, #fff 0 .9px, rgba(255,255,255,.2) 1.7px, transparent 3.2px), radial-gradient(circle at 160px 40px, #e4e4e7 0 .8px, rgba(255,255,255,.18) 1.6px, transparent 3px),
+      radial-gradient(circle at 230px 310px, #fff 0 1px, rgba(255,255,255,.2) 1.8px, transparent 3.4px), radial-gradient(circle at 285px 120px, #d4d4d8 0 .8px, rgba(255,255,255,.18) 1.6px, transparent 3px); }
+  body[data-skin="black"] .fx .tpc { width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 1px; background: #fff; box-shadow: 0 0 7px rgba(255,255,255,.95); }
+  body[data-skin="black"] .fx .tpc.alt { width: 2px; height: 11px; margin: -5.5px 0 0 -1px; border-radius: 1px; background: linear-gradient(180deg, #fff, rgba(255,255,255,0)); box-shadow: none; }
+  .dn-sk .pv[data-p="black"] { background: radial-gradient(ellipse 70% 70% at 50% 20%, #26262c, #000 75%); }
+  .s3 .ly.k-scan { overflow: hidden; }
+  .s3 .kbs { position: absolute; left: 0; right: 0; top: -40px; height: 40px; pointer-events: none; will-change: transform; animation: kbscan 14s linear infinite;
+             background: linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,.05) 70%, rgba(255,255,255,.32) 98%, rgba(255,255,255,.5)); }
+  @keyframes kbscan { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(0, 120vh, 0); } }
+  html.calm .s3 .kbs { animation: none !important; }
 
   /* v390: окно доната заново — шапка с камнем, «🎁 Стартовый набор» в бегущей радужной рамке, разделы, карточки со значками,
      темы с живым превью, SLX и токены плитками */
@@ -1210,11 +1231,23 @@
   .xlv i { width: 7px; height: 7px; border-radius: 50%; background: #34d399; box-shadow: 0 0 8px rgba(52,211,153,.9); }
   .xlim { margin: 6px 2px 0; font-size: 12px; color: var(--tx2); line-height: 1.4; }
   /* ── v398: лимит обмена кончился — крупно ── */
-  .xlim.out { margin: 10px 0 0; padding: 11px 12px; border-radius: 13px; background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.45); color: #fde68a; }
-  .xlim.out b { display: block; font-size: 13.5px; color: #fde68a; }
-  .xlim.out span { display: block; font-size: 12px; color: var(--tx2); margin-top: 3px; }
-  .xlim .xlx { margin-top: 8px; height: 32px; padding: 0 12px; border-radius: 10px; font-size: 12.5px; font-weight: 750; color: #fff;
-               background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+  /* v399: лимит — две шкалы (куплено / продано сегодня), кончился — плашка над ними; «📜 Правила обмена» — карточка */
+  .xlim.met { margin: 10px 0 0; padding: 10px 12px; border-radius: 13px; background: rgba(255,255,255,.035); border: 1px solid var(--ln2); color: var(--tx2); }
+  .xlim .xlo { margin: 0 0 10px; padding: 11px 12px; border-radius: 11px; background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.45); color: #fde68a; }
+  .xlim .xlo b { display: block; font-size: 13.5px; color: #fde68a; }
+  .xlim .xlo span { display: block; font-size: 12px; color: var(--tx2); margin-top: 3px; }
+  .xlim .xlx { margin-top: 8px; height: 32px; padding: 0 12px; border-radius: 10px; font-size: 12.5px; font-weight: 750; color: #fff; background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+  .xlr { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 12px; margin-top: 7px; }
+  .xlim .xlo + .xlr, .xlim > .xlr:first-child { margin-top: 0; }
+  .xlk { color: var(--tx2); font-weight: 650; }
+  .xlmv { font-variant-numeric: tabular-nums; color: #e9d5ff; font-weight: 750; white-space: nowrap; } .xlmv.ex { color: #fde68a; }
+  .xlb { display: block; height: 7px; margin-top: 4px; border-radius: 4px; background: rgba(255,255,255,.07); overflow: hidden; }
+  .xlb b { display: block; height: 100%; width: 100%; border-radius: 4px; transform-origin: 0 50%; background: linear-gradient(90deg, #34d399, #a3e635 55%, #fbbf24); transition: transform .5s ease; }
+  .xlb.ex b { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+  .xlms { display: block; margin-top: 8px; font-size: 11.5px; color: var(--tx3); line-height: 1.4; }
+  .xrules { padding: 12px 14px; }
+  .xrh { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #fff; } .xrh svg { width: 22px; height: 22px; color: #c4b5fd; flex: 0 0 auto; }
+  .xrl { margin: 8px 0 0; padding-left: 18px; font-size: 12.5px; color: var(--tx2); line-height: 1.5; } .xrl li { margin: 4px 0; }
   /* ── v398: живое ядро — пульс-кольца, сердце плазмы, круг от каждого сгустка энергии (только transform и opacity) ── */
   .rx-pls { position: absolute; top: 6px; right: 6px; bottom: 6px; left: 6px; border-radius: 50%; border: 1.5px solid rgba(var(--lq2), .6); opacity: 0;
             will-change: transform, opacity; animation: rxpls 2.6s ease-out infinite; pointer-events: none; }
@@ -1316,6 +1349,70 @@
   .dcd { margin: 30px 0 14px; }
   .dcd b { display: block; font-size: 88px; font-weight: 900; color: #fff; line-height: 1; text-shadow: 0 0 34px rgba(167,139,250,.95); font-variant-numeric: tabular-nums; }
   .dcd small { display: block; margin-top: 12px; color: #c4b5fd; font-size: 13px; }
+  /* ── v399: дуэль — SVG-дизайн: эмблема и радар в шапке, монеты на ставках, соты-рамки, кольцо отсчёта, фон-плата, сканер, осколки, монеты ── */
+  .duh { position: relative; overflow: hidden; }
+  .duh > * { position: relative; }
+  .duh .duem { position: absolute; right: -16px; top: -12px; width: 124px; height: 124px; color: #c4b5fd; opacity: .12; pointer-events: none; }
+  .don .drad { display: inline-grid; width: 18px; height: 18px; color: #4ade80; }
+  .don .drad svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .don .drad .swp { transform-origin: 12px 12px; animation: hkspin 3s linear infinite; }
+  .dsk .chip { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+  .dsk .chip .dcn { width: 15px; height: 15px; flex: 0 0 auto; }
+  .dpz { display: flex; align-items: center; gap: 6px; } .dpz .dpzi { width: 16px; height: 16px; flex: 0 0 auto; }
+  .dpl .ra { position: relative; isolation: isolate; border: 0; border-radius: 0; padding: 0; -webkit-clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%); clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%);
+             background: linear-gradient(150deg, rgba(196,181,253,.8), rgba(139,92,246,.2) 70%); }
+  .dpl .ra::after { content: ''; position: absolute; inset: 1.6px; z-index: -1; -webkit-clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%); clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%); background: #17132a; }
+  .dpl .ra img { border-radius: 0; }
+  .dpl .ond { animation: none; } .dpl .ond::after { content: ''; position: absolute; inset: -3px; border-radius: 50%; border: 1.5px solid #22c55e; animation: rxpls 1.8s ease-out infinite; }
+  .dbar .dbi { width: 18px; height: 18px; flex: 0 0 auto; color: #7dd3fc; }
+  .dinv .davw { position: relative; width: 84px; height: 84px; margin: 0 auto; display: grid; place-items: center; }
+  .dinv .dring { position: absolute; inset: 0; border-radius: 50%; border: 2px dashed rgba(251,146,60,.75); will-change: transform; animation: hkspin 7s linear infinite; }
+  .dinv .dav { margin: 0; border: 0; border-radius: 0; animation: none; -webkit-clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%); clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%);
+               background: linear-gradient(160deg, rgba(251,146,60,.9), rgba(251,191,36,.4)); }
+  .dinv h3 { display: flex; align-items: center; justify-content: center; gap: 6px; } .dinv h3 .dbolt { width: 22px; height: 22px; flex: 0 0 auto; }
+  .hk-bg { position: absolute; inset: 0; opacity: 0; pointer-events: none; overflow: hidden; transition: opacity .4s; }
+  .hk.duel .hk-bg { opacity: .6; }
+  .hk-bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .hk-bg::before { content: ''; position: absolute; top: -10%; left: 20%; width: 30%; height: 120%; background: linear-gradient(90deg, transparent, rgba(167,139,250,.14), transparent);
+                   transform: skewX(-14deg) translate3d(-120%, 0, 0); }
+  .hk.on.duel .hk-bg::before { will-change: transform; animation: dcb 9s ease-in-out infinite alternate; }      /* луч ходит только на экране дуэли (замер: всегда — минус кадр на ферме) */
+  .hk-fx { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
+  .hk-fx .dsp { position: absolute; left: 0; top: 0; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 2px; will-change: transform, opacity; }
+  .hk-fx .dshd { position: absolute; left: 0; top: 0; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; background: #fde68a; will-change: transform, opacity;
+                 -webkit-clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  .hk-fx .dcoin { position: absolute; left: 0; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; will-change: transform, opacity;
+                  background: radial-gradient(circle at 35% 30%, #fffbeb 0 18%, #fbbf24 50%, #b45309 84%); box-shadow: 0 0 6px rgba(251,191,36,.7); }
+  .dhx { position: relative; width: 58px; height: 58px; display: grid; place-items: center; color: #c4b5fd; }
+  .dhx .dhxr { position: absolute; left: -6px; top: -6px; width: 70px; height: 70px; color: rgba(196,181,253,.6); will-change: transform; animation: hkspin 9s linear infinite; }
+  .dhx.op .dhxr { animation-direction: reverse; color: rgba(251,146,60,.65); }
+  .dhx .dhxf { position: absolute; inset: 0; width: 100%; height: 100%; } .dhx.op .dhxf { color: #fb923c; }
+  .dhx .dhxi { position: relative; width: 40px; height: 40px; display: grid; place-items: center; overflow: hidden; font-size: 18px; font-weight: 850; color: #fff; background: rgba(255,255,255,.06);
+               -webkit-clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%); clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%); }
+  .dhx .dhxi img { width: 100%; height: 100%; object-fit: cover; display: block; } .dhx .dhxi svg { width: 28px; height: 28px; color: #e9d5ff; }
+  .dvs .vs { position: relative; display: grid; place-items: center; width: 46px; height: 48px; font-size: 13px; }
+  .dvs .vs svg { position: absolute; inset: 0; width: 100%; height: 100%; color: #fb923c; }
+  .dvs .vs b { position: relative; color: #fff; text-shadow: 0 0 10px rgba(251,146,60,.9); }
+  .dcdw { position: relative; width: 150px; height: 150px; margin: 0 auto; display: grid; place-items: center; }
+  .dcdr { position: absolute; inset: 0; width: 100%; height: 100%; } .dcdr .bg { fill: none; stroke: rgba(167,139,250,.22); stroke-width: 4; }
+  .dcdr .arc { fill: none; stroke: #fde68a; stroke-width: 4; stroke-linecap: round; stroke-dasharray: 339.3; stroke-dashoffset: 0; transform: rotate(-90deg); transform-origin: 60px 60px; }
+  .dcd .dcdw b { font-size: 72px; }
+  .hk-core svg { width: 60%; height: 60%; color: #a7f3d0; } .hk.duel .hk-core svg { color: #ddd6fe; }
+  .hk-scan { position: absolute; left: 0; right: 0; top: 0; height: 2px; pointer-events: none; will-change: transform; animation: hkscan 2.8s linear infinite;
+             background: linear-gradient(90deg, transparent, rgba(196,181,253,.7), transparent); box-shadow: 0 0 12px rgba(167,139,250,.6); }
+  @keyframes hkscan { from { transform: translate3d(0, 0, 0); opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } to { transform: translate3d(0, 540px, 0); opacity: 0; } }
+  .hk.duel #hk-area { position: relative; }
+  .hk.duel #hk-area::before, .hk.duel #hk-area::after { content: ''; position: absolute; width: 16px; height: 16px; border: 2px solid rgba(196,181,253,.6); pointer-events: none; }
+  .hk.duel #hk-area::before { left: -10px; top: -8px; border-right: 0; border-bottom: 0; } .hk.duel #hk-area::after { right: -10px; bottom: -8px; border-left: 0; border-top: 0; }
+  .hk.miss .hk-in { animation: hkglitch .4s; }
+  @keyframes hkglitch { 20% { transform: translate3d(-4px, 0, 0) skewX(-2deg); } 40% { transform: translate3d(4px, 1px, 0) skewX(2deg); } 60% { transform: translate3d(-2px, 0, 0); } }
+  .hk-res .re2 { position: relative; display: grid; place-items: center; width: 110px; height: 110px; margin: 0 auto; }
+  .hk-res .re2 svg { position: relative; width: 84px; height: 84px; color: #e9d5ff; }
+  .hk-res .re2.lose svg { color: #fca5a5; } .hk-res .re2.draw svg { color: #ddd6fe; }
+  .hk-res .re2 .drays { position: absolute; left: 50%; top: 50%; width: 230px; height: 230px; margin: -115px 0 0 -115px; border-radius: 50%; pointer-events: none; will-change: transform; animation: rxspin 16s linear infinite;
+                        background: repeating-conic-gradient(from 0deg, rgba(253,224,71,.17) 0deg 7deg, rgba(253,224,71,0) 7deg 22deg);
+                        -webkit-mask-image: radial-gradient(closest-side, #000 25%, transparent); mask-image: radial-gradient(closest-side, #000 25%, transparent); }
+  .hk-res .re2.lose::before { content: ''; position: absolute; inset: 8px; border-radius: 50%; border: 2px solid rgba(239,68,68,.6); animation: rxpls 1.6s ease-out infinite; }
+  html.calm .drad .swp, html.calm .dring, html.calm .dhxr, html.calm .hk-scan, html.calm .drays, html.calm .hk-bg::before, html.calm .dpl .ond::after { animation: none !important; }
   .du-res .dr-h { display: block; font-size: 25px; font-weight: 900; margin-top: 2px; }
   .du-res .dr-h.win { color: #fde68a; text-shadow: 0 0 20px rgba(251,191,36,.6); } .du-res .dr-h.lose { color: #fca5a5; } .du-res .dr-h.draw { color: #e9d5ff; }
   .du-res p { color: #ddd6fe; }
@@ -1599,6 +1696,62 @@
     <circle cx="5" cy="14" r="2" fill="#fde68a"/><circle cx="24" cy="8" r="2" fill="#fde68a"/><circle cx="43" cy="14" r="2" fill="#fde68a"/>
   </symbol>
   <!-- v390: донат — тот же стиль: тёмный корпус, цветной контур, светящиеся детали -->
+  <!-- v399: «⚔️ Дуэль хакеров» — значки вместо эмодзи (цвет — currentColor) и «📜 Правила обмена» -->
+  <symbol id="ic-duel" viewBox="0 0 48 48">
+    <polygon points="24,3 42,13.5 42,34.5 24,45 6,34.5 6,13.5" fill="currentColor" fill-opacity=".08" stroke="currentColor" stroke-opacity=".55" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M33 13L15 31M15 13l18 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M33 13l-1.5 4.5M15 13l1.5 4.5" stroke="#fff" stroke-opacity=".8" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M15.5 25.5l5 5M32.5 25.5l-5 5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M18 28l-4.5 4.5M30 28l4.5 4.5" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
+    <circle cx="12.8" cy="33.2" r="1.9" fill="currentColor"/><circle cx="35.2" cy="33.2" r="1.9" fill="currentColor"/><circle cx="24" cy="22" r="2.2" fill="#fff"/>
+  </symbol>
+  <symbol id="ic-vs" viewBox="0 0 48 48">
+    <path d="M24 4l17 7v12c0 10-7 17-17 21C14 40 7 33 7 23V11z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M27 11l-9 15h7l-3 11 10-16h-7z" fill="#fde68a" fill-opacity=".9"/>
+  </symbol>
+  <symbol id="ic-trophy" viewBox="0 0 48 48">
+    <path d="M15 7h18v10c0 6.5-4 11-9 11s-9-4.5-9-11z" fill="#fbbf24"/>
+    <path d="M15 10H9c0 6 3 9.5 7.5 10.5M33 10h6c0 6-3 9.5-7.5 10.5" fill="none" stroke="#fbbf24" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M21.5 27.5h5V34h-5z" fill="#d97706"/><path d="M15.5 36h17a2 2 0 0 1 2 2v3h-21v-3a2 2 0 0 1 2-2z" fill="#f59e0b"/>
+    <path d="M24 11.5l1.7 3.4 3.7.5-2.7 2.6.7 3.7-3.4-1.8-3.4 1.8.7-3.7-2.7-2.6 3.7-.5z" fill="#fff" fill-opacity=".9"/>
+    <path d="M18 9.5c0 5 1 9 3 12" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="1.4" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-skull" viewBox="0 0 48 48">
+    <path d="M24 5c-9.4 0-15.5 6.8-15.5 15.5 0 5.2 2.6 9 6.2 11.2V38h18.6v-6.3c3.6-2.2 6.2-6 6.2-11.2C39.5 11.8 33.4 5 24 5z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+    <circle cx="17.8" cy="21.5" r="3.8" fill="currentColor"/><circle cx="30.2" cy="21.5" r="3.8" fill="currentColor"/>
+    <path d="M22 29.5h4L24 33.5z" fill="currentColor"/><path d="M19 38v4.5M24 38v4.5M29 38v4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M27.5 6.5l2.3 6.5-3 3.2 1.4 3" fill="none" stroke="currentColor" stroke-opacity=".85" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="ic-draw" viewBox="0 0 48 48">
+    <path d="M24 7v33M13 41h22" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M8 13h32" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M9 13l-5.5 13h11zM39 13l-5.5 13h11z" fill="currentColor" fill-opacity=".22" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+    <path d="M3.5 26c0 3 2.5 5 5.5 5s5.5-2 5.5-5M33.5 26c0 3 2.5 5 5.5 5s5.5-2 5.5-5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="24" cy="8" r="2.4" fill="currentColor"/>
+  </symbol>
+  <symbol id="ic-bolt" viewBox="0 0 48 48"><path d="M27.5 4L10 27.5h11l-3.5 16.5L37.5 19H26.5z" fill="#fde68a" stroke="#f59e0b" stroke-width="1.3" stroke-linejoin="round"/></symbol>
+  <symbol id="ic-coins" viewBox="0 0 48 48">
+    <path d="M10 27v7c0 2.8 6.3 5 14 5s14-2.2 14-5v-7" fill="#d97706"/><ellipse cx="24" cy="27" rx="14" ry="5" fill="#f59e0b"/>
+    <path d="M10 20v7c0 2.8 6.3 5 14 5s14-2.2 14-5v-7" fill="#b45309"/><ellipse cx="24" cy="20" rx="14" ry="5" fill="#f59e0b"/>
+    <path d="M10 13v7c0 2.8 6.3 5 14 5s14-2.2 14-5v-7" fill="#d97706"/><ellipse cx="24" cy="13" rx="14" ry="5" fill="#fbbf24"/>
+    <ellipse cx="24" cy="13" rx="14" ry="5" fill="none" stroke="#fef3c7" stroke-opacity=".8"/><path d="M18.5 12.6c1.8-1.5 9.2-1.5 11 0" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="1.5" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-target" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="17" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-width="2.2"/><circle cx="24" cy="24" r="10" fill="none" stroke="currentColor" stroke-width="2.2"/>
+    <circle cx="24" cy="24" r="3.6" fill="currentColor"/><path d="M24 2v8M24 38v8M2 24h8M38 24h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-you" viewBox="0 0 48 48">
+    <path d="M24 5c-8.3 0-13.5 7-13.5 15.5V27h27v-6.5C37.5 12 32.3 5 24 5z" fill="currentColor" fill-opacity=".22" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+    <path d="M15.5 21.5c0-5 3.8-9 8.5-9s8.5 4 8.5 9v4h-17z" fill="#0b0a14" fill-opacity=".75"/><path d="M19 20.5h3.5M25.5 20.5H29" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+    <path d="M7 43c2.2-8.3 8.6-12.5 17-12.5S38.8 34.7 41 43" fill="currentColor" fill-opacity=".28" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-bot" viewBox="0 0 48 48">
+    <rect x="8.5" y="14" width="31" height="24" rx="6.5" fill="currentColor" fill-opacity=".18" stroke="currentColor" stroke-width="1.9"/>
+    <circle cx="18" cy="25.5" r="3.2" fill="currentColor"/><circle cx="30" cy="25.5" r="3.2" fill="currentColor"/><path d="M18 33h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M24 14V8.5" stroke="currentColor" stroke-width="2.2"/><circle cx="24" cy="6.5" r="2.4" fill="currentColor"/><path d="M4.5 22v8M43.5 22v8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-rules" viewBox="0 0 48 48">
+    <rect x="10" y="5.5" width="28" height="37" rx="4" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.9"/>
+    <path d="M16.5 15.5h15M16.5 22.5h15M16.5 29.5h9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="31.5" cy="31" r="3" fill="none" stroke="#fde68a" stroke-width="1.8"/>
+  </symbol>
   <symbol id="ic-d-gem" viewBox="0 0 48 48">
     <path d="M14 8h20l9 11-19 23L5 19z" fill="url(#mgGm)" stroke="#f5d0fe" stroke-opacity=".85" stroke-linejoin="round"/>
     <path d="M5 19h38M14 8l5 11 5-11 5 11 5-11M19 19l5 23 5-23" fill="none" stroke="#fff" stroke-opacity=".42" stroke-linejoin="round"/>
@@ -1743,6 +1896,7 @@
       <button type="button" class="btn pri" id="b-x"></button>
       <p class="note" id="x-note"></p>
     </div>
+    <div class="card xrules" id="x-rules" hidden></div>
     <div class="card"><div class="sh" style="margin-top:0" id="st-h"></div><div class="kv" id="stats"></div><div class="note" id="wb-k"></div></div>
     <div class="card tg" id="ntf"><div class="tx" id="ntf-t"></div><button type="button" class="sw" id="ntf-sw"><i></i></button></div>
     <button type="button" class="btn sec" id="b-ex"></button>
@@ -1784,7 +1938,7 @@
 </div>
 <div class="fx" id="fx"></div>
 <div class="hotvig" aria-hidden="true"></div>
-<div class="hk" id="hk"><button type="button" class="hk-x" id="hk-x" aria-label="close" hidden>✕</button><div class="hk-in" id="hk-in"></div></div>
+<div class="hk" id="hk"><i class="hk-bg" id="hk-bg"><img id="hk-bgi" alt=""></i><button type="button" class="hk-x" id="hk-x" aria-label="close" hidden>✕</button><div class="hk-in" id="hk-in"></div><i class="hk-fx" id="hk-fx"></i></div>
 <div class="dinv" id="dinv" hidden><div class="dinv-in" id="dinv-in"></div></div>
 <div class="dbar" id="dbar" hidden></div>
 <div class="toast" id="toast"></div>
@@ -1863,7 +2017,9 @@
             rig: 'Six graphics cards on one frame', asic: 'Built for mining only', hydro: 'Boards in liquid — no dust, no heat', quant: 'Computes in all universes at once' },
     locs: ['Basement', 'Garage', 'Port warehouse', 'Northern hangar', 'Data center', 'Volcano', 'Orbit'],
     titles: ['Rookie', 'Garage miner', 'Port farmer', 'Northern wolf', 'Data-center tycoon', 'Volcano lord', 'Orbit conqueror', 'SLX Keeper'],
-    buy: 'Buy', replace: 'Replace', noSlot: 'No slots', lockCh: function (n, l) { return '🔒 Opens in chapter ' + n + ' · ' + l; },
+    buy: 'Buy', replace: 'Replace', noSlot: 'No slots',
+    repPay: function (x) { return 'swap: pay ' + x; }, repGain: function (x) { return 'swap: +' + x + ' back'; },          // v400
+    boughtX: function (n, x) { return n + ' is installed ⚡ +' + x + ' tokens back from the swap'; }, lockCh: function (n, l) { return '🔒 Opens in chapter ' + n + ' · ' + l; },
     payback: function (s) { return 'pays back in ~' + s; }, owned: function (n) { return '×' + n; },
     storT: 'Storage', storNow: function (h) { return 'Now: the farm works <b>' + h + ' h</b> without you'; }, storNext: function (h) { return 'Up to ' + h + ' h'; },
     storMax: 'Biggest storage already', storLock: function (n) { return '🔒 Bigger storage — from chapter ' + n; },
@@ -1888,6 +2044,14 @@
     xLimOut: function (buy) { return '🔒 Today’s at-the-rate ' + (buy ? 'buying' : 'selling') + ' limit is used up'; },        // v398
     xLimNew: function (s) { return 'A new limit in ' + s + ' (midnight Moscow time). More — on the exchange.'; }, xLimEx: '📈 Open the exchange',
     xLimBtn: 'Today’s limit is used up',
+    xLmBuy: 'Bought today', xLmSell: 'Sold today', xLmOf: function (u, d) { return u + ' of ' + d; }, xLmNew: function (s) { return 'new limit in ' + s; },   // v399
+    xRulH: 'Exchange rules',
+    xRul: function (f, tol, lim, adm) { return ['The rate is exactly the “📈 Invest” exchange rate, no slippage. Fee ' + f + '% — same as on the exchange.',
+      'The rate updates every 5 s. If it moved more than ' + tol + '% while you were typing, the trade will not go through — check the amount and tap again.',
+      lim ? 'Limit — ' + lim + ' tokens a day to buy and as many to sell. Resets at midnight Moscow time. More — on the exchange.'
+          : adm ? 'You have no limit — you are the administrator.' : 'There is no limit right now — exchange as much as you like.',
+      'Buy — SLX land in this wallet at once (it is the exchange wallet too). Sell — tokens go to your balance at once.',
+      'Every trade shows up in “📈 Invest” → “History”.']; },
     xNoteB: 'Type tokens or SLX — the other side is counted right away. The trade shows up in “📈 Invest” → “History”.',
     xNoteS: function (f) { return 'Selling SLX for tokens, ' + f + '% fee. The trade shows up in “📈 Invest” → “History”.'; },
     xDay: 'SLX rate · 24 h', wSafe: function (l, p) { return 'Safe lv ' + l + ': ' + p + '% protected'; },
@@ -1916,6 +2080,10 @@
             bad_qty: 'How much SLX?', net: 'No connection — try again', oc_wait: 'The overclock is still cooling down', forbidden: 'Administrator only',
             bad_ch: 'Chapter — from 1 to 7', no_farm: 'Build the farm first', have: 'You already have it', bad_item: 'No such item',
             no_skin: 'Buy this theme first',
+            unauthorized: 'The button is outdated — reopen the game from the bot', unregistered: 'Register in the bot first (/start)',     // v400
+            slx: 'The exchange is unavailable right now — try a bit later', bad_rig: 'No such device', bad_op: 'Update the game — reopen it from the bot',
+            recall: 'The player declined — challenge them again in a minute', bad_n: 'Cards — from 0 to 10',
+            gold_max: 'All golden cards are already on the farm',
             raid_off: 'Farm raids are off now', bad_target: 'Target not found — refresh the list', newbie: 'This farm is still under newbie protection',
             same_net: 'Not allowed: you are on the same network (one phone or Wi-Fi)', shield: 'This farm has a shield — pick another target',
             gap: 'You already raided this farm — pick another one', no_left: 'No raids left today — new ones at midnight', no_rv: 'The time for revenge is over',
@@ -2130,7 +2298,9 @@
             rig: 'Шесть видеокарт на одной раме', asic: 'Создан только для майнинга', hydro: 'Платы в жидкости — ни пылинки, ни перегрева', quant: 'Считает во всех вселенных сразу' },
     locs: ['Подвал', 'Гараж', 'Склад в порту', 'Ангар на севере', 'Дата-центр', 'Вулкан', 'Орбита'],
     titles: ['Новичок', 'Гаражный майнер', 'Портовый фермер', 'Северный волк', 'Магнат дата-центра', 'Повелитель вулкана', 'Покоритель орбиты', 'Хранитель SLX'],
-    buy: 'Купить', replace: 'Заменить', noSlot: 'Нет мест', lockCh: function (n, l) { return '🔒 Откроется в главе ' + n + ' · ' + l; },
+    buy: 'Купить', replace: 'Заменить', noSlot: 'Нет мест',
+    repPay: function (x) { return 'с заменой: доплата ' + x; }, repGain: function (x) { return 'с заменой: +' + x + ' тебе'; },          // v400
+    boughtX: function (n, x) { return n + ' — на ферме ⚡ +' + x + ' ' + tkW(x) + ' — разница за замену'; }, lockCh: function (n, l) { return '🔒 Откроется в главе ' + n + ' · ' + l; },
     payback: function (s) { return 'окупится за ~' + s; }, owned: function (n) { return '×' + n; },
     storT: 'Хранилище', storNow: function (h) { return 'Сейчас ферма работает без тебя <b>' + h + ' ч</b>'; }, storNext: function (h) { return 'До ' + h + ' ч'; },
     storMax: 'Хранилище уже самое большое', storLock: function (n) { return '🔒 Больше — с главы ' + n; },
@@ -2158,6 +2328,14 @@
     xLimOut: function (buy) { return '🔒 Лимит ' + (buy ? 'покупки' : 'продажи') + ' по курсу на сегодня исчерпан'; },             // v398
     xLimNew: function (s) { return 'Новый лимит — через ' + s + ' (в полночь по Москве). Больше — на бирже.'; }, xLimEx: '📈 Открыть биржу',
     xLimBtn: 'Лимит на сегодня исчерпан',
+    xLmBuy: 'Куплено сегодня', xLmSell: 'Продано сегодня', xLmOf: function (u, d) { return u + ' из ' + d; }, xLmNew: function (s) { return 'новый лимит через ' + s; },   // v399
+    xRulH: 'Правила обмена',
+    xRul: function (f, tol, lim, adm) { return ['Курс — ровно как на бирже «📈 Инвестиции», без проскальзывания. Комиссия ' + f + '% — как на бирже.',
+      'Курс обновляется каждые 5 с. Если он ушёл больше чем на ' + tol + '%, пока ты вписывал сумму, сделка не пройдёт — проверь сумму и нажми ещё раз.',
+      lim ? 'Лимит — ' + lim + ' токенов в сутки на покупку и столько же на продажу. Обнуляется в полночь по Москве. Больше — на бирже.'
+          : adm ? 'У тебя лимита нет — ты администратор.' : 'Лимита сейчас нет — меняй сколько угодно.',
+      'Купил — SLX сразу в этом кошельке (он же кошелёк биржи). Продал — токены сразу на балансе.',
+      'Каждая сделка видна в «📈 Инвестиции» → «История».']; },
     xDay: 'Курс SLX · сутки', wSafe: function (l, p) { return 'Сейф ' + l + ' ур.: защищено ' + p + '%'; },
     wSafeS: function (t) { return 'На виду ≈ ' + t + ' токенов твоих SLX — взломщики могут унести часть. Прокачать — во «⚔️ Взломе»'; },
     topSlx: function (s) { return '◈ ' + s + ' SLX'; }, walletT: function (t, p) { return '≈ ' + t + ' ' + tw(t) + ' · 1 SLX = ' + p; },
@@ -2184,6 +2362,10 @@
             bad_qty: 'Сколько SLX?', net: 'Нет связи — попробуй ещё раз', oc_wait: 'Разгон ещё остывает', forbidden: 'Только для администратора',
             bad_ch: 'Глава — от 1 до 7', no_farm: 'Сначала построй ферму', have: 'Это у тебя уже есть', bad_item: 'Такого товара нет',
             no_skin: 'Эту тему сначала нужно купить',
+            unauthorized: 'Кнопка устарела — открой игру заново из бота', unregistered: 'Сначала зарегистрируйся в боте (/start)',          // v400
+            slx: 'Биржа сейчас недоступна — попробуй чуть позже', bad_rig: 'Такого устройства нет', bad_op: 'Обнови игру — открой её заново из бота',
+            recall: 'Игрок отказался — вызови его снова через минуту', bad_n: 'Карт — от 0 до 10',
+            gold_max: 'Все золотые карты уже на ферме',
             raid_off: 'Взлом ферм сейчас выключен', bad_target: 'Цель не найдена — обнови список', newbie: 'Эта ферма ещё под защитой новичка',
             same_net: 'Нельзя: вы в одной сети (один телефон или Wi-Fi)', shield: 'На ферме щит — выбери другую цель', gap: 'Эту ферму ты уже взламывал — выбери другую',
             no_left: 'Атаки на сегодня закончились — новые в полночь', no_rv: 'Время на месть вышло', no_sess: 'Этот взлом уже закончился',
@@ -3261,6 +3443,56 @@
       + s3Tail([880, 430], [-60, -40], 3, 40, 'k3ci' + x, 6, 0.55) + s3Tail([880, 430], [120, 100], 1.5, 16, 'k3cj' + x, 4, 0.4) + sp
       + '<circle cx="880" cy="430" r="150" fill="url(#k3ch' + x + ')"/>';
   }
+  // 🖤 «Black» (v399, 29 ₽; Кирилл: «красивый чёрный фон, современный»): чистый чёрный, соты и световые нити вдали, два мягких луча
+  // ходят, линия сканера бежит сверху вниз, ближе — чёрное стекло с серебряной кромкой (дышит и сдвигается от наклона), блики мерцают
+  function s3bHex(x0, y0, x1, y1, s) {               // соты — контуры шестиугольников одной линией
+    var w = Math.sqrt(3) * s, d = '', k = 0;
+    for (var cy = y0; cy < y1 + s; cy += s * 1.5, k++) for (var cx = x0 - (k % 2 ? w / 2 : 0); cx < x1 + w; cx += w) {
+      var p = [];
+      for (var i = 0; i < 6; i++) { var a = (60 * i + 30) * Math.PI / 180; p.push(s3f(cx + Math.cos(a) * s * 0.92) + ' ' + s3f(cy + Math.sin(a) * s * 0.92)); }
+      d += 'M' + p.join('L') + 'Z';
+    }
+    return d;
+  }
+  function s3bGlass(x, y, r, rot, sfx, n) {           // чёрная стеклянная пластина-шестиугольник: серебряная кромка, блик сверху
+    var p = [], id = 'kb' + n + sfx;
+    for (var i = 0; i < 6; i++) { var a = (60 * i + rot) * Math.PI / 180; p.push(s3f(x + Math.cos(a) * r) + ' ' + s3f(y + Math.sin(a) * r)); }
+    return '<defs>' + s3lin(id + 'f', 0, 0, 1, 1, [[0, '#2a2a30', 0.96], [0.5, '#0a0a0d', 0.97], [1, '#000000', 0.98]], 1)
+      + s3lin(id + 'r', 0, 0, 1, 1, [[0, '#ffffff', 0.9], [0.45, '#a1a1aa', 0.28], [1, '#ffffff', 0.06]], 1)
+      + s3lin(id + 'h', 0, 0, 0, 1, [[0, '#ffffff', 0.2], [1, '#ffffff', 0]], 1) + '</defs>'
+      + '<polygon points="' + p.join(' ') + '" fill="url(#' + id + 'f)" stroke="url(#' + id + 'r)" stroke-width="2.2" stroke-linejoin="round"/>'
+      + '<polygon points="' + [p[3], p[4], p[5], p[0]].join(' ') + '" fill="url(#' + id + 'h)"/>';
+  }
+  S3.black = { al: 'mid', els: [
+    { k: 'far', d: 0.03, b: [-80, -80, 1360, 1020], svg: function (x) {       // чёрный фон, соты, световые нити, пыль, виньетка — один план
+      var r = srand(707), fib = '';
+      for (var i = 0; i < 7; i++) {
+        var x1 = -80 + r() * 1360, x2 = x1 + (r() * 2 - 1) * 700;
+        fib += '<line x1="' + s3f(x1) + '" y1="-80" x2="' + s3f(x2) + '" y2="940" stroke="url(#kbfb' + x + ')" stroke-width="' + (0.8 + r() * 1.6).toFixed(1) + '" opacity="' + (0.35 + r() * 0.5).toFixed(2) + '"/>';
+      }
+      return '<defs>' + s3rad('kbbg' + x, 0.5, 0.12, 0.95, [[0, '#19191f'], [0.4, '#09090b'], [1, '#000000']], 1)
+        + s3lin('kbfb' + x, 0, 0, 0, 1, [[0, '#e4e4e7', 0], [0.35, '#e4e4e7', 0.5], [0.6, '#ffffff', 0.7], [1, '#e4e4e7', 0]], 1)
+        + s3rad('kbvg' + x, 0.5, 0.5, 0.72, [[0.55, '#000000', 0], [1, '#000000', 0.88]], 1) + '</defs>'
+        + '<rect x="-80" y="-80" width="1360" height="1020" fill="url(#kbbg' + x + ')"/>'
+        + '<path d="' + s3bHex(-80, -80, 1280, 940, 38) + '" fill="none" stroke="#ffffff" stroke-opacity=".035" stroke-width="1"/>'
+        + fib + s3stars(709, 150, -80, 1280, -80, 940, ['#ffffff', '#d4d4d8', '#a1a1aa'], 0.3, 1.2)
+        + '<rect x="-80" y="-80" width="1360" height="1020" fill="url(#kbvg' + x + ')"/>';
+    } },
+    { k: 'beam', d: 0.07, b: [60, -140, 1080, 1140], local: 1, a: 'a-sw', t: 27, svg: function (x) {      // два мягких луча света ходят
+      return '<defs>' + s3lin('kbb1' + x, 0, 0, 1, 0, [[0, '#ffffff', 0], [0.5, '#ffffff', 0.09], [1, '#ffffff', 0]], 1) + s3lin('kbb2' + x, 0, 0, 1, 0, [[0, '#ffffff', 0], [0.5, '#ffffff', 0.05], [1, '#ffffff', 0]], 1) + '</defs>'
+        + '<polygon points="300 0 520 0 900 1140 620 1140" fill="url(#kbb1' + x + ')"/><polygon points="40 0 150 0 560 1140 420 1140" fill="url(#kbb2' + x + ')"/>';
+    } },
+    { k: 'scan', full: 1, html: function () { return '<i class="kbs"></i>'; } },                        // линия сканера бежит сверху вниз
+    { k: 'gl1', d: 0.3, b: [560, 10, 260, 260], pb: [540, 20, 240, 240], wb: [820, 40], local: 1, svg: function (x) {    // стекло справа сверху
+      return s3bGlass(150, 118, 92, 0, x, 1) + s3bGlass(62, 196, 38, 12, x, 2)
+        + '<path d="M150 210V250H190" fill="none" stroke="#ffffff" stroke-opacity=".25" stroke-width="1.2"/><circle cx="190" cy="250" r="2.6" fill="#ffffff" fill-opacity=".7"/>';
+    } },
+    { k: 'gl2', d: 0.42, b: [340, 540, 240, 240], pb: [430, 560, 220, 220], wb: [120, 520], local: 1, svg: function (x) {    // стекло слева снизу
+      return s3bGlass(100, 130, 74, 30, x, 3) + '<path d="M170 60L220 20" fill="none" stroke="#ffffff" stroke-opacity=".3" stroke-width="1.2"/><circle cx="220" cy="20" r="2.4" fill="#ffffff" fill-opacity=".75"/>';
+    } },
+    { k: 'gt1', d: 0.5, b: [430, 300, 90, 90], wb: [240, 300], local: 1, a: 'a-tw', t: 3.6, svg: function () { return s3glint(45, 45, 2.2, '#ffffff', 0.9); } },
+    { k: 'gt2', d: 0.36, b: [700, 420, 70, 70], wb: [1010, 300], local: 1, a: 'a-tw', t: 4.4, dl: 1.3, svg: function () { return s3glint(35, 35, 1.7, '#e4e4e7', 0.85); } }
+  ] };
   S3.dream = { al: 'max', els: [
     { k: 'sky', d: 0.03, pw: 1, b: [-80, -80, 1360, 1020], svg: function (x, wd) {     // небо, Млечный Путь, звёзды и комета — один план
       var r = srand(23), mw = '';
@@ -3393,7 +3625,7 @@
     el.style.left = x + 'px'; el.style.top = y + 'px';
     $('fx').appendChild(el); tpcN++;
     var a = -Math.PI / 2 + (Math.random() * 2 - 1) * (big ? 1.5 : 1.15), r = (big ? 70 : 36) + Math.random() * (big ? 70 : 34);
-    var dx = Math.cos(a) * r, dy = Math.sin(a) * r, fall = sk === 'lava' || sk === 'space' || sk === 'deep' ? -18 : sk === 'neon' ? 10 : sk === 'dream' ? -6 : 46;
+    var dx = Math.cos(a) * r, dy = Math.sin(a) * r, fall = sk === 'lava' || sk === 'space' || sk === 'deep' ? -18 : sk === 'neon' ? 10 : sk === 'dream' ? -6 : sk === 'black' ? -14 : 46;
     var rot = Math.round(Math.random() * 300 - 150), done = false, rz = sk === 'sakura' ? 'rotate3d(1,.5,.2,' : 'rotate(';     // v393: лепестки кружатся в объёме
     if (sk === 'sakura') rot *= 2;
     var fin = function () { if (done) return; done = true; el.remove(); tpcN--; };
@@ -3457,7 +3689,7 @@
       var pct = L.cap > 0 ? Math.min(1, st / L.cap) : 0, q4 = Math.round(pct * 400) / 400;
       var hot = L.ocl > 0 && d.on !== false, tb = L.bsl > 0 && d.on !== false;
       // v396: ядро — уровень плазмы (шагом 0,25%; на донышке всегда немного — видно, что живое); сдвиг слоя — без перерисовки
-      setAttr('tank-i', 'tf', 'translateY(' + ((1 - (full ? 1 : Math.max(0.05, q4))) * 100).toFixed(2) + '%)');
+      setAttr('tank-i', 'tf', 'translateY(calc(' + ((1 - (full ? 1 : Math.max(0.05, q4))) * 100).toFixed(2) + '% - 5px))');   // v399: на 100% — до края, без тёмной шапки
       setTxt('h-pct', Math.floor(pct * 100 + 1e-9) + '%');
       setAttr('tank', 'cls', 'vault' + (full ? ' full' : '') + (pct < 0.015 ? ' empty' : '') + (d.on === false || full ? ' stop' : ''));
       setTxt('v-st', d.on === false ? T.vSt.off : full ? T.vSt.full : L.mx > 1 ? (hot ? T.vSt.oc : T.vSt.tb) + ' ×' + L.mx : T.vSt.on);
@@ -3666,7 +3898,8 @@
         : '<button type="button" class="bb' + (wl + 1e-12 < need ? ' ghost' : '') + '" data-buy="' + id + '">' + (canRep ? esc(T.replace) + ' ' + rigIcon(wk.id) : esc(T.buy)) + '</button>';
       h += '<div class="it" style="--rc:' + RIG[id].c + '"><div class="ie">' + rigIcon(id) + '</div><div class="im"><b>' + esc(T.rigs[id]) + (own ? '<span class="own">' + T.owned(own) + '</span>' : '')
         + '</b><small><span class="hs">+' + hashS(hs) + '</span> · ' + esc(T.rigd[id]) + '</small>' + (pb > 0 ? '<small>' + esc(T.payback(dur(pb))) + '</small>' : '')
-        + '</div><div class="ib"><span class="pr mono">' + esc(tkS(pr)) + ' ' + esc(T.tokU) + '<small>' + esc(slx(pr)) + ' SLX</small></span>' + btn + '</div></div>';
+        + '</div><div class="ib"><span class="pr mono">' + esc(tkS(pr)) + ' ' + esc(T.tokU) + '<small>'
+        + esc(canRep ? (need >= 0 ? T.repPay(tkS(need)) : T.repGain(tkS(-need))) : slx(pr) + ' SLX') + '</small></span>' + btn + '</div></div>';      // v400: с заменой — сколько на самом деле
     });
     $('shop-rigs').innerHTML = h;
     $('shop-note').textContent = T.shopNote;
@@ -3768,16 +4001,34 @@
     // v398: лимит на сегодня кончился — крупно (Кирилл жал «50%» и видел пустое поле): когда новый и где больше — на бирже
     var t0 = d.t || rdNow(), ri = sp && sp.reset_in != null ? Number(sp.reset_in) || 0 : 86400 - (Math.floor(t0) + 10800) % 86400;   // бот v397 не присылает — до полуночи МСК сами
     var out = !!sp && xcLeft(buy) < 1, rs = sp ? Math.max(60, ri - (rdNow() - t0)) : 0;
-    var lh = !sp ? '' : out ? '<b>' + esc(T.xLimOut(buy)) + '</b><span>' + esc(T.xLimNew(dur(rs))) + '</span>' + (S.ex ? '<button type="button" class="xlx" data-xex="1">' + esc(T.xLimEx) + '</button>' : '')
-                            : esc(T.xLimL(num(Math.floor(xcLeft(true))), num(Math.floor(xcLeft(false)))));
+    // v399 (Кирилл: «чтобы пользователь видел правила перевода и свой лимит»): две шкалы — куплено и продано сегодня из лимита, когда новый
+    var lh = '';
+    if (sp) {
+      var lb = xcLeft(true), ls = xcLeft(false);
+      lh = (out ? '<div class="xlo"><b>' + esc(T.xLimOut(buy)) + '</b><span>' + esc(T.xLimNew(dur(rs))) + '</span>' + (S.ex ? '<button type="button" class="xlx" data-xex="1">' + esc(T.xLimEx) + '</button>' : '') + '</div>' : '')
+        + xlMeter(T.xLmBuy, sp.day - lb, sp.day, lb) + xlMeter(T.xLmSell, sp.day - ls, sp.day, ls)
+        + '<small class="xlms">' + esc(T.xLimL(num(Math.floor(lb)), num(Math.floor(ls)))) + ' · ' + esc(T.xLmNew(dur(rs))) + '</small>';
+    }
     setHtml('x-lim', lh); if ($('x-lim').hidden !== !lh) $('x-lim').hidden = !lh;
-    setAttr('x-lim', 'cls', 'xlim' + (out ? ' out' : ''));
+    setAttr('x-lim', 'cls', 'xlim' + (sp ? ' met' : '') + (out ? ' out' : ''));
     XC.out = out;
     var b = $('b-x');
     b.textContent = out ? T.xLimBtn : !(c.q > 0) ? T.xEnter : c.over ? (buy ? T.xNoTok : T.xNoSlx) : c.lim ? T.xLim : buy ? T.xBuyB(slx(c.q), num(Math.ceil(c.t))) : T.xSellB(slx(c.q), num(Math.floor(c.t)));
     b.disabled = !c.ok;
     b.classList.toggle('sell', !buy);
     setTxt('x-note', buy ? T.xNoteB : T.xNoteS(d.fee || 3));
+  }
+  function xlMeter(lbl, used, day, left) {            // v399: шкала лимита — сколько из дневного уже обменяно (и что осталось)
+    var p = day > 0 ? Math.min(1, Math.max(0, used) / day) : 0, ex = left < 1;
+    return '<div class="xlr"><span class="xlk">' + esc(lbl) + '</span><span class="xlmv' + (ex ? ' ex' : '') + '">' + esc(T.xLmOf(tokShort(Math.max(0, used)), tokShort(day))) + (ex ? ' 🔒' : '') + '</span></div>'
+      + '<i class="xlb' + (ex ? ' ex' : '') + '"><b style="transform:scaleX(' + p.toFixed(3) + ')"></b></i>';
+  }
+  function xcRules() {                               // v399: «📜 Правила обмена» — карточка под обменом: курс, комиссия, лимит, куда приходит, где видно
+    var d = S.d || {}, sp = d.spot, el = $('x-rules'); if (!el) return;
+    if (!sp) { if (!el.hidden) el.hidden = true; return; }           // бот старше v397 — правил не знает
+    var rows = T.xRul(d.fee || 3, Math.round((Number(sp.tol) || 0.01) * 100), sp.day > 0 ? tokShort(sp.day) : '', !!d.adm);
+    setHtml('x-rules', '<div class="xrh">' + dnIco('ic-rules') + '<b>' + esc(T.xRulH) + '</b></div><ul class="xrl">' + rows.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>');
+    if (el.hidden) el.hidden = false;
   }
   function xcPct(p, quiet) {
     var buy = XC.mode === 'buy', bal = xcBal(), r = xcR(), lf = xcLeft(buy);
@@ -3860,6 +4111,7 @@
     if (showSf) setHtml('w-safe', '<span class="wsi">🔐</span><span class="wst"><b>' + esc(T.wSafe(sl, R.prot[sl])) + '</b><small>' + esc(T.wSafeS(tokShort(SF.open * price()))) + '</small></span><span class="wsa">›</span>');
     xcRender();
     xcLive();
+    xcRules();                                        // v399: правила обмена и лимит
     setTxt('wb-k', d.pf && S.cfg && S.cfg.r ? T.farmK(num(d.pf), tkF(S.cfg.r * 24 * d.pf * (d.mult || 1))) : '');
     setTxt('st-h', T.statsH);
     var sd = new Date((d.start || 0) * 1000);
@@ -3887,7 +4139,7 @@
   var DN_ICO = { bst: 'ic-d-rocket', ocf: 'ic-d-bolt', auto: 'ic-d-robot', luck: 'ic-d-clover', gold: 'ic-gold', starter: 'ic-d-gift', shield: 'ic-d-shield' };
   var DN_RGB = { bst: '56,189,248', ocf: '249,115,22', auto: '52,211,153', luck: '74,222,128', gold: '251,191,36', shield: '96,165,250' };
   var SKIN_RGB = { space: '129,140,248', lava: '249,115,22', ice: '125,211,252', gold: '251,191,36', sakura: '244,114,182', neon: '217,70,239', none: '139,92,246',
-                  deep: '167,139,250', dream: '125,190,255' };       // v393
+                  deep: '167,139,250', dream: '125,190,255', black: '228,228,231' };       // v393; v399: «Black»
   function goldPct(n) { return Math.round((((S.cfg && S.cfg.gold_x) || 1.1) - 1) * 100 * (Number(n) || 0)); }      // v391: +10% за каждую карту
   function dnIco(id) { return '<svg viewBox="0 0 48 48" aria-hidden="true"><use href="#' + id + '"/></svg>'; }
   function dnSub(sh) {                              // строка под «Ускорь ферму»: стартовый набор, пока не куплен; потом — турбо
@@ -3983,7 +4235,7 @@
       if (SKN[v] && !sk.some(function (x) { return x.val === v; })) sk.push({ val: v, e: SKN[v][0], ru: '«' + SKN[v][1] + '»', en: '“' + SKN[v][2] + '”', price: 0, id: '' });
     });
     if (sk.length || own.length) {                   // темы: превью — сцена темы (v391); «Обычная» — устройства в цветах фермы
-      var pv = function (p) { return S3[p] ? '<div class="pv scn s3p" data-p="' + p + '"><img src="img/mine/pv_' + p + '.webp?v=393" alt="" loading="lazy" decoding="async"></div>'
+      var pv = function (p) { return S3[p] ? '<div class="pv scn s3p" data-p="' + p + '"><img src="img/mine/pv_' + p + '.webp?v=' + (p === 'black' ? '399' : '393') + '" alt="" loading="lazy" decoding="async"></div>'
         : SCN[p] ? '<div class="pv scn" data-p="' + p + '">' + sceneSvg(p, 'p', true) + '</div>'
         : '<div class="pv" data-p="' + p + '"><i>' + dnIco('ic-gpu') + '</i><i>' + dnIco('ic-asic') + '</i><i>' + dnIco('ic-quant') + '</i></div>'; };
       h += '<div class="dn-sec" id="dn-sk">🎨 ' + esc(T.secK) + '</div><div class="dn-sk">';
@@ -4265,7 +4517,7 @@
   // v392: темы — для «🛠 Проверки»; v393: одна таблица на всю страницу, порядок как в донате, + «Глубокий космос» и «Мечтатель»
   var SKIN_NM = { sakura: ['🌸', 'Сакура', 'Sakura'], deep: ['🌌', 'Глубокий космос', 'Deep space'], dream: ['🌠', 'Мечтатель', 'Dreamer'],
                   space: ['🪐', 'Космос', 'Space'], lava: ['🔥', 'Лава', 'Lava'], ice: ['❄️', 'Арктика', 'Arctic'], gold: ['👑', 'Золото', 'Gold'],
-                  neon: ['🌃', 'Неон', 'Neon'] };
+                  neon: ['🌃', 'Неон', 'Neon'], black: ['🖤', 'Black', 'Black'] };
   function skSale(k) { return (S.shop || []).some(function (x) { return x.kind === 'skin' && x.val === k; }); }    // в продаже (не скрыта админом)
   function askYes(q) {                              // подтверждение: окно Telegram, иначе обычное
     return new Promise(function (ok) {
@@ -4304,7 +4556,11 @@
     var back = full && wk && wk.hash < r.hash ? (d.refunds[wk.id] || 0) : 0, need = d.prices[id] - back;
     if (L && L.wallet + 1e-12 < need) { shortSheet(need, L.wallet, 'buy:' + id); return; }
     hap('light');
-    send('buy', { rig: id }).then(function (j) { if (j) { toast(T.bought(T.rigs[id])); hap('success'); } });
+    send('buy', { rig: id }).then(function (j) {
+      if (!j) return;
+      var ex = (j.res || {}).extra || 0;                                                     // v400: возврат за замену больше цены — разница в кошелёк
+      toast(ex > 0 ? T.boughtX(T.rigs[id], tkS(ex)) : T.bought(T.rigs[id])); hap('success');
+    });
   }
   function buyStorage() {
     var d = S.d, nx = S.cfg.storage[d.st + 1], L = live();
@@ -4659,15 +4915,17 @@
       + '<button type="button" class="btn sec sm" data-drf="1">' + esc(T.du.rfOk) + '</button></div>' : '');
     var st = D.st || [0, 0, 0, 0, 0], stk = duStake(), b = duBal(), fee = D.fee || 0;
     var chips = (D.stakes || []).map(function (s) {
-      return '<button type="button" class="chip' + (s === stk ? ' on' : '') + (s > b ? ' no' : '') + '" data-dsk="' + s + '">' + esc(tokShort(s)) + '</button>'; }).join('');
+      return '<button type="button" class="chip' + (s === stk ? ' on' : '') + (s > b ? ' no' : '') + '" data-dsk="' + s + '">' + dIco('ic-coins', 'dcn') + esc(tokShort(s)) + '</button>'; }).join('');
     var Q = D.q, busy = !!(Q || (D.out && D.out.st === 'wait') || (D.cur && !D.cur.done));
     var net = Number(st[3]) || 0;
-    setHtml('du-top', '<div class="card duh"><div class="rhr"><h3>' + esc(T.du.t) + '</h3><span class="don"><i></i>' + esc(T.du.onl(D.online || 0)) + '</span></div>'
+    setHtml('du-top', '<div class="card duh">' + dIco('ic-duel', 'duem') + '<div class="rhr"><h3>' + esc(T.du.t) + '</h3><span class="don"><i class="drad"><svg viewBox="0 0 24 24" aria-hidden="true">'
+      + '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-opacity=".35"/><circle cx="12" cy="12" r="5.5" fill="none" stroke="currentColor" stroke-opacity=".35"/>'
+      + '<path class="swp" d="M12 12V2a10 10 0 0 1 8.7 5z" fill="currentColor" fill-opacity=".55"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/></svg></i>' + esc(T.du.onl(D.online || 0)) + '</span></div>'
       + '<p>' + esc(T.du.s) + '</p>'
       + (st[4] ? '<div class="dst"><span class="p">' + esc(T.du.w(st[0])) + '</span><span class="m">' + esc(T.du.l(st[1])) + '</span>' + (st[2] ? '<span>' + esc(T.du.d(st[2])) + '</span>' : '')
         + '<span class="' + (net >= 0 ? 'p' : 'm') + '">' + esc((net >= 0 ? '+' : '−') + tokShort(Math.abs(net)) + ' ' + T.tokU) + '</span></div>' : '')
       + '<div class="dlb">' + esc(T.du.stake) + '</div><div class="dsk">' + chips + '</div>'
-      + '<div class="dpz">' + esc(T.du.prize(num(stk * 2 - Math.floor(stk * 2 * fee / 100)), fee)) + '</div>'
+      + '<div class="dpz">' + dIco('ic-trophy', 'dpzi') + '<span>' + esc(T.du.prize(num(stk * 2 - Math.floor(stk * 2 * fee / 100)), fee)) + '</span></div>'
       + (Q ? '<div class="dq"><i class="spin"></i><span class="dqt" id="du-qt">' + esc(T.du.finding(tokShort(Q.stake), mmss(duLeft(Q.left)))) + '</span>'
              + '<button type="button" class="bb ghost" data-dcan="1">' + esc(T.du.cancel) + '</button></div>'
            : '<button type="button" class="btn pri dfind" data-dfind="1"' + (busy || stk > b ? ' disabled' : '') + '>' + esc(T.du.find) + '</button>')
@@ -4742,7 +5000,7 @@
     var box = $('dinv');
     if (DU.invSeen !== I.id) {
       DU.invSeen = I.id;
-      $('dinv-in').innerHTML = '<div class="dav">' + (I.u > 0 ? avHtml(I) : '🤖') + '</div><h3>' + esc(T.du.invH) + '</h3><p>' + esc(T.du.invS(I.name)) + '</p>'
+      $('dinv-in').innerHTML = '<div class="davw"><i class="dring"></i><div class="dav">' + (I.u > 0 ? avHtml(I) : '🤖') + '</div></div><h3>' + dIco('ic-bolt', 'dbolt') + esc(T.du.invH) + '</h3><p>' + esc(T.du.invS(I.name)) + '</p>'
         + '<div class="dstk">' + esc(T.du.invSt(num(I.stake), num(I.stake * 2 - Math.floor(I.stake * 2 * ((du() || {}).fee || 0) / 100)))) + '</div>'
         + '<div class="tmr"><i id="dinv-tm"></i></div><small class="dinv-l" id="dinv-l"></small>'
         + '<div class="row2"><button type="button" class="btn sec" data-dno="1">' + esc(T.du.no) + '</button><button type="button" class="btn hk-go" data-dyes="1">' + esc(T.du.yes) + '</button></div>';
@@ -4765,7 +5023,7 @@
       if (Q) h = '<i class="spin"></i><span class="dqt" id="dbar-t">' + esc(T.du.finding(tokShort(Q.stake), mmss(duLeft(Q.left)))) + '</span>';
       else if (O && O.st === 'wait') h = '<i class="spin"></i><span class="dqt" id="dbar-t">' + esc(T.du.outWait(O.name, tokShort(O.stake), mmss(duLeft(O.left)))) + '</span>';
       else if (O && (O.st === 'no' || O.st === 'gone')) h = '<span class="dqt">' + esc(O.st === 'no' ? T.du.outNo(O.name) : T.du.outGone(O.name)) + '</span>';
-      if (h) h += '<button type="button" class="bb ghost" data-dbar="1">' + esc(Q || (O && O.st === 'wait') ? T.du.cancel : T.du.open) + '</button>';
+      if (h) h = dIco('ic-duel', 'dbi') + h + '<button type="button" class="bb ghost" data-dbar="1">' + esc(Q || (O && O.st === 'wait') ? T.du.cancel : T.du.open) + '</button>';
     }
     setHtml('dbar', h);
     if ($('dbar').hidden !== !h) $('dbar').hidden = !h;
@@ -4813,10 +5071,17 @@
   }
 
   // ── дуэль: отсчёт 3-2-1 → 3 задания (как в тренировке) → «ждём соперника» → итог ──
+  function duHex(inner, cls) {                      // v399: рамка-шестиугольник с вращающимся пунктирным кольцом (SVG)
+    return '<div class="dhx ' + cls + '"><svg class="dhxr" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="33" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 8"/></svg>'
+      + '<svg class="dhxf" viewBox="0 0 72 72" aria-hidden="true"><polygon points="36,3 64,19.5 64,52.5 36,69 8,52.5 8,19.5" fill="currentColor" fill-opacity=".08" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>'
+      + '<span class="dhxi">' + inner + '</span></div>';
+  }
   function duHead(C) {
     var dots = function (p) { return '<span class="dots">' + [0, 1, 2].map(function (i) { return '<i id="' + p + i + '"></i>'; }).join('') + '</span>'; };
-    return '<div class="dvs"><div class="side"><span class="nm">' + esc(T.du.you) + '</span>' + dots('dmy') + '</div><span class="vs">VS</span>'
-      + '<div class="side"><span class="nm">' + esc(C.opp.name) + '</span>' + dots('dop') + '</div></div>'
+    var op = C.opp || {};
+    return '<div class="dvs"><div class="side">' + duHex(dIco('ic-you', ''), 'me') + '<span class="nm">' + esc(T.du.you) + '</span>' + dots('dmy') + '</div>'
+      + '<span class="vs">' + dIco('ic-vs', '') + '<b>VS</b></span>'
+      + '<div class="side">' + duHex(op.u > 0 ? avHtml(op) : dIco('ic-bot', ''), 'op') + '<span class="nm">' + esc(op.name) + '</span>' + dots('dop') + '</div></div>'
       + '<div class="dsub">' + esc(C.bot ? T.du.botTag : T.du.stakeTag(num(C.stake))) + '</div>';
   }
   function duOpen(C) {
@@ -4825,7 +5090,11 @@
     HK.startAt = performance.now() + duLeft(C.start) * 1000;
     $('hk').className = 'hk on duel';
     $('hk-x').hidden = true;
-    $('hk-in').innerHTML = duHead(C) + '<div class="dcd"><b id="dcd-n">' + Math.max(1, Math.ceil(duLeft(C.start))) + '</b><small>' + esc(T.du.cdS) + '</small></div>';
+    duBg();
+    $('hk-in').innerHTML = duHead(C) + '<div class="dcd"><div class="dcdw"><svg class="dcdr" viewBox="0 0 120 120" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="54"/><circle class="arc" id="dcd-arc" cx="60" cy="60" r="54"/></svg><b id="dcd-n">'
+      + Math.max(1, Math.ceil(duLeft(C.start))) + '</b></div><small>' + esc(T.du.cdS) + '</small></div>';
+    var arc = $('dcd-arc'), lf = duLeft(C.start);                  // v399: кольцо отсчёта тает ровно до старта
+    if (arc && lf > 0.05) requestAnimationFrame(function () { requestAnimationFrame(function () { arc.style.transition = 'stroke-dashoffset ' + lf.toFixed(2) + 's linear'; arc.style.strokeDashoffset = '339.3'; }); });
     duUpd(C);
     hap('heavy');
     duCd();
@@ -4843,7 +5112,7 @@
     HK.stage = 'play'; HK.i = 0; HK.res = []; HK.hits = 0;
     $('hk').className = 'hk on play duel';
     $('hk-in').innerHTML = duHead(C && C.id === HK.id ? C : { opp: HK.opp, stake: HK.stake, bot: HK.bot })
-      + '<div class="hk-rings" id="hk-rings"><i class="r1"></i><i class="r2"></i><i class="r3"></i><div class="hk-core">⚔️</div></div>'
+      + '<div class="hk-rings" id="hk-rings"><i class="r1"></i><i class="r2"></i><i class="r3"></i><div class="hk-core">' + dIco('ic-duel', '') + '</div></div><i class="hk-scan"></i>'
       + '<div class="hk-lay" id="hk-lay"></div><div class="hk-task" id="hk-task"></div><div class="hk-time"><i id="hk-tm"></i></div>'
       + '<div id="hk-area"></div><div class="hk-msg" id="hk-msg"></div>';
     $('hk-x').hidden = false;
@@ -4887,20 +5156,72 @@
     var rows = (C.L || []).map(function (L, i) { return '<tr><td>' + (i + 1) + '. ' + esc(T.rd.kn[L.t]) + '</td>' + cell(my[i]) + cell(hs[i]) + '</tr>'; }).join('');
     $('hk').className = 'hk on duel';
     $('hk-x').hidden = true;
-    $('hk-in').innerHTML = '<div class="hk-res du-res" id="hk-res" data-kind="duel_' + esc(k) + '"><div class="re2">' + (k === 'win' ? '🏆' : k === 'lose' ? '💀' : '🤝') + '</div>'
+    $('hk-in').innerHTML = '<div class="hk-res du-res" id="hk-res" data-kind="duel_' + esc(k) + '"><div class="re2 ' + k + '">' + (k === 'win' ? '<i class="drays"></i>' : '')
+      + dIco(k === 'win' ? 'ic-trophy' : k === 'lose' ? 'ic-skull' : 'ic-draw', '') + '</div>'
       + '<b class="dr-h ' + k + '">' + esc(head) + '</b>' + (big ? '<div class="rb ' + (k === 'win' ? 'ok' : k === 'lose' ? 'no' : '') + '">' + esc(big) + '</div>' : '')
       + '<p>' + esc(tt) + '</p><table class="dtab"><tr><th></th><th>' + esc(T.du.you) + '</th><th>' + esc(C.opp.name) + '</th></tr>' + rows + '</table>'
       + '<div class="row2">' + (R.rematch && !C.bot ? '<button type="button" class="btn sec" id="du-re">' + esc(T.du.rematch) + '</button>' : '')
       + '<button type="button" class="btn hk-go" id="du-done">' + esc(T.du.done) + '</button></div></div>';
     hap(k === 'win' ? 'success' : k === 'lose' ? 'error' : 'warning');
-    if (k === 'win') duBurst();
+    if (k === 'win') { duBurst(); duCoins(); }
+  }
+  function dIco(id, cls) { return '<svg' + (cls ? ' class="' + cls + '"' : '') + ' viewBox="0 0 48 48" aria-hidden="true"><use href="#' + id + '"/></svg>'; }   // v399: значки SVG
+  var DUBG = { done: false };
+  function duBg() {                                 // v399: фон экрана дуэли — соты и дорожки платы, ОДНА картинка (рисуется один раз, урок v393)
+    if (DUBG.done || !window.Blob || !window.URL || !URL.createObjectURL) return;
+    DUBG.done = true;
+    var W = 600, H = 1000, seed = 19, rnd = function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+    var s = 26, w = s * Math.sqrt(3), hx = '', k = 0;
+    for (var cy = -s; cy < H + s; cy += s * 1.5, k++) for (var cx = (k % 2 ? w / 2 : 0) - w; cx < W + w; cx += w) {
+      var p = [];
+      for (var i = 0; i < 6; i++) { var a = (60 * i + 30) * Math.PI / 180; p.push((cx + Math.cos(a) * s * 0.9).toFixed(1) + ' ' + (cy + Math.sin(a) * s * 0.9).toFixed(1)); }
+      hx += 'M' + p.join('L') + 'Z';
+    }
+    var tr = '', nd = '', cols = ['rgba(167,139,250,.3)', 'rgba(34,211,238,.26)', 'rgba(196,181,253,.22)'];
+    for (var t = 0; t < 22; t++) {
+      var x = rnd() * W, y = rnd() * H, d = 'M' + x.toFixed(0) + ' ' + y.toFixed(0), c = cols[t % 3];
+      nd += '<circle cx="' + x.toFixed(0) + '" cy="' + y.toFixed(0) + '" r="3" fill="' + c + '"/>';
+      for (var j = 0; j < 3 + ((rnd() * 3) | 0); j++) {
+        var L = 30 + rnd() * 120, hz = rnd() < 0.5;
+        x += hz ? (rnd() < 0.5 ? -L : L) : 0; y += hz ? 0 : (rnd() < 0.5 ? -L : L);
+        d += 'L' + x.toFixed(0) + ' ' + y.toFixed(0);
+      }
+      tr += '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="1.5" stroke-linejoin="round"/>';
+      nd += '<rect x="' + (x - 3).toFixed(0) + '" y="' + (y - 3).toFixed(0) + '" width="6" height="6" fill="' + c + '"/>';
+    }
+    var sv = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '"><path d="' + hx + '" fill="none" stroke="rgba(167,139,250,.085)" stroke-width="1"/>' + tr + nd + '</svg>';
+    var im = $('hk-bgi'); if (im) im.src = URL.createObjectURL(new Blob([sv], { type: 'image/svg+xml' }));
+  }
+  function duShards() {                             // v399: верный ответ — осколки из центра (только transform и opacity)
+    var c = $('hk-rings'); if (!c || !document.body.animate || document.documentElement.classList.contains('calm')) return;
+    var r = c.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    for (var i = 0; i < 10; i++) {
+      var el = document.createElement('i'); el.className = 'dshd'; el.style.left = cx + 'px'; el.style.top = cy + 'px'; if (i % 3 === 0) el.style.background = '#fff';
+      $('hk-fx').appendChild(el);
+      var a = i / 10 * Math.PI * 2 + Math.random() * 0.5, d = 46 + Math.random() * 54;
+      el.animate([{ transform: 'translate(0,0) scale(.5) rotate(0deg)', opacity: 1 },
+                  { transform: 'translate(' + (Math.cos(a) * d).toFixed(1) + 'px,' + (Math.sin(a) * d).toFixed(1) + 'px) scale(1) rotate(' + Math.round(90 + Math.random() * 180) + 'deg)', opacity: 0 }],
+                 { duration: 620 + Math.random() * 260, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' }).onfinish = (function (x) { return function () { x.remove(); }; })(el);
+    }
+  }
+  function duCoins() {                              // v399: победа — монеты сыплются сверху
+    var c = $('hk-in'); if (!c || !document.body.animate || document.documentElement.classList.contains('calm')) return;
+    var r = c.getBoundingClientRect();
+    for (var i = 0; i < 14; i++) {
+      var el = document.createElement('i'); el.className = 'dcoin'; el.style.left = (r.left + 10 + Math.random() * (r.width - 20)).toFixed(1) + 'px'; el.style.top = (r.top - 20).toFixed(1) + 'px';
+      $('hk-fx').appendChild(el);
+      var dx = (Math.random() * 60 - 30).toFixed(1), dy = (r.height * (0.55 + Math.random() * 0.45)).toFixed(1);
+      el.animate([{ transform: 'translate(0,0) rotate(0deg) scale(.6)', opacity: 0 }, { transform: 'translate(' + (dx / 3).toFixed(1) + 'px,' + (dy / 4).toFixed(1) + 'px) rotate(120deg) scale(1)', opacity: 1, offset: 0.25 },
+                  { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + Math.round(300 + Math.random() * 300) + 'deg) scale(.8)', opacity: 0 }],
+                 { duration: 1300 + Math.random() * 700, delay: Math.random() * 500, easing: 'cubic-bezier(.3,0,.7,1)', fill: 'forwards' }).onfinish = (function (x) { return function () { x.remove(); }; })(el);
+    }
   }
   function duBurst() {                              // победа — вспышка искр из кубка (только transform и opacity)
     var c = document.querySelector('#hk-res .re2'); if (!c || !document.body.animate || document.documentElement.classList.contains('calm')) return;
     var r = c.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, cols = ['#fde68a', '#fb923c', '#a78bfa', '#34d399', '#f472b6'];
     for (var i = 0; i < 16; i++) {
       var el = document.createElement('i'); el.className = 'dsp'; el.style.left = cx + 'px'; el.style.top = cy + 'px'; el.style.background = cols[i % cols.length];
-      $('fx').appendChild(el);
+      $('hk-fx').appendChild(el);                      // v399: слой поверх экрана дуэли (#fx — под ним)
       var a = i / 16 * Math.PI * 2 + Math.random() * 0.3, d = 70 + Math.random() * 70;
       el.animate([{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: 'translate(' + (Math.cos(a) * d).toFixed(1) + 'px,' + (Math.sin(a) * d + 30).toFixed(1) + 'px) scale(.3)', opacity: 0 }],
                  { duration: 900 + Math.random() * 300, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' }).onfinish = (function (x) { return function () { x.remove(); }; })(el);
@@ -4916,7 +5237,7 @@
   function hkOpen(u, rv, train) {                   // только тренировка (дуэль открывает duOpen)
     if (HK) return;
     HK = { u: 0, rv: false, train: true, npc: false, stage: 'intro', res: [], hits: 0, i: 0, win: 0, name: '', loot: 0, fw: 0 };
-    $('hk-in').innerHTML = hkTop('', 0, 0, '🎯', true) + '<ul class="hk-info">' + T.rd.trainRules.map(li).join('') + '</ul>'
+    $('hk-in').innerHTML = hkTop('', 0, 0, dIco('ic-target', ''), true) + '<ul class="hk-info">' + T.rd.trainRules.map(li).join('') + '</ul>'
       + '<button type="button" class="btn hk-go" id="hk-go">' + esc(T.rd.trainStart) + '</button>'
       + '<button type="button" class="btn sec sm" id="hk-cancel">' + esc(T.rd.hkCancel) + '</button>';
     $('hk-x').hidden = true;
@@ -4950,7 +5271,7 @@
   function hkPlay() {
     HK.i = 0; HK.res = []; HK.hits = 0;
     $('hk').className = 'hk on play';
-    $('hk-in').innerHTML = hkTop('', 0, 0, '🎯', true)
+    $('hk-in').innerHTML = hkTop('', 0, 0, dIco('ic-target', ''), true)
       + '<div class="hk-lay" id="hk-lay"></div><div class="hk-task" id="hk-task"></div><div class="hk-time"><i id="hk-tm"></i></div>'
       + '<div id="hk-area"></div><div class="hk-msg" id="hk-msg"></div>';
     $('hk-x').hidden = false;
@@ -5052,6 +5373,7 @@
     var ks = $('hk-keys'); if (ks) ks.setAttribute('aria-disabled', 'true');
     if (HK.duel) { var C = (du() || {}).cur; if (C && C.id === HK.id) duUpd(C); }
     hap(ok ? 'success' : 'error');
+    if (ok && HK.duel) duShards();                    // v399: верный ответ — осколки
     setTimeout(function () {
       if (!HK || HK.stage !== 'flash') return;
       HK.i++;
@@ -5066,10 +5388,10 @@
   }
   function hkResult(r) {
     HK.stage = 'res';
-    var ic = r.hits === 3 ? '🏆' : r.hits ? '🎯' : '🤖';
+    var ic = dIco(r.hits === 3 ? 'ic-trophy' : r.hits ? 'ic-target' : 'ic-bot', '');
     var btns = '<div class="row2"><button type="button" class="btn sec" id="hk-again">' + esc(T.rd.again) + '</button><button type="button" class="btn hk-go" id="hk-done">' + esc(T.rd.resBtn) + '</button></div>';
     $('hk').className = 'hk on';
-    $('hk-in').innerHTML = '<div class="hk-res" id="hk-res" data-kind="train"><div class="re2">' + ic + '</div><div class="rb ' + (r.hits ? 'ok' : 'no') + '">' + esc(T.rd.resTr(r.hits))
+    $('hk-in').innerHTML = '<div class="hk-res" id="hk-res" data-kind="train"><div class="re2' + (r.hits === 3 ? ' win' : '') + '">' + (r.hits === 3 ? '<i class="drays"></i>' : '') + ic + '</div><div class="rb ' + (r.hits ? 'ok' : 'no') + '">' + esc(T.rd.resTr(r.hits))
       + '</div><p>' + esc(T.du.trS(r.hits)) + '</p>' + btns + '</div>';
     hap(r.hits ? 'success' : 'warning');
   }
