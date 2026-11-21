@@ -105,6 +105,16 @@
   .vault small { display: block; margin-top: 2px; font-size: 11.5px; color: var(--tx3); word-break: break-all; }
   /* v384: «🔑 Код дня» — код крупно моноширинным; текст для канала — как будет в посте (с переносами строк) */
   .vault .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .06em; }
+  /* v401: «🧠 Викторина» — вопросы и настройки */
+  .qzq { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--ln2); margin-top: 8px; }
+  .qzq.off { opacity: .55; }
+  .qzq.rep { border-color: rgba(248,113,113,.45); }
+  .qzq b { display: block; font-size: 13.5px; line-height: 1.35; font-weight: 600; }
+  .qzq .ok { color: #86efac; }
+  .qzq .row { margin-top: 8px; }
+  .qzg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .qzg label { display: block; margin-bottom: 3px; font-size: 11.5px; color: var(--tx3); }
+  .qzg input, .qzg select { width: 100%; }
   .post { white-space: pre-line; word-break: break-word; }
   .dcp { cursor: pointer; }                 /* не .cp: у .cp ниже высота 72px (график) — текст вылезал из рамки */
   b.dcp { border-bottom: 1px dashed var(--tx3); }
@@ -715,7 +725,7 @@ window.addEventListener('error', function (e) {
 <script>
 (function () {
   'use strict';
-  var VER = 'v398';
+  var VER = 'v401';
   function $(i) { return document.getElementById(i); }
   var Q = new URLSearchParams(location.search);
   var API = (Q.get('api_url') || '').replace(/\/+$/, '');
@@ -2823,6 +2833,7 @@ window.addEventListener('error', function (e) {
         + (g.wb ? wbHtml(g.wb) : ''));
     }
     if (e.mine) h += mineHtml(e.mine, x.price);          // v385: «⛏ Майнинг SLX»
+    if (e.quiz) h += quizHtml(e.quiz);                   // v401: «🧠 Викторина»
     if (e.vault) {                                       // v381: счёт комиссий — копится с переводов, тратит только админ
       var vt = e.vault, VK = { start: '🏦 Комиссия прошлых переводов', me: '💳 Себе на баланс', pool: '🔒 В пул биржи',
                                back: '↩️ Возврат перевода', undo: '⚠️ Не прошло — вернули на счёт' };
@@ -3212,6 +3223,113 @@ window.addEventListener('error', function (e) {
                       esc(r.hash_s || mnH(r.hash)) + '<br><small>добыл ' + (p ? '≈ ' + short(r.mined * p) + ' 💰' : mnS(r.mined) + ' SLX') + '</small>');
         }).join('') : '<div class="small">Ферм пока нет — появятся, когда игроки нажмут «⛏ Майнинг SLX».</div>'));
   }
+  // v401: «🧠 Викторина» — игра прямо в боте («🎁 Подарки» → «💰 Заработок»): 10 вопросов в день, награды, серия, пределы, вопросы
+  var QZF = { f: 'all', s: '', lim: 30 };                 // фильтр списка вопросов (живёт между перерисовками)
+  var QZ_FLD = [['base', 'За верный ответ', 'токенов'], ['fast', 'Бонус за скорость, до', 'токенов'], ['perfect', 'Все ответы дня верные', 'токенов'],
+                ['n', 'Вопросов в день', 'шт.'], ['sec', 'Секунд на ответ', 'с'], ['fast_sec', 'Весь бонус, если ответил за', 'с'],
+                ['st_step', 'Серия: + за каждый день подряд', '%'], ['st_max', 'Серия: не больше', '%'],
+                ['cap', 'Предел игрока в день', 'токенов'], ['cap_all', 'Предел всех вместе в день (0 — без предела)', 'токенов']];
+  function qzPct(a, b) { return b ? Math.round(a / b * 100) : 0; }
+  function qzListHtml(q) {
+    var s = QZF.s.trim().toLowerCase(), all = (q.qs || []).filter(function (x) {
+      if (QZF.f === 'rep' && !x.rep) return false;
+      if (QZF.f === 'hard' && !(x.sh >= 20 && x.ok / x.sh < 0.25)) return false;
+      if (QZF.f === 'off' && x.on) return false;
+      if (QZF.f === 'own' && !x.own) return false;
+      return !s || (x.q + ' ' + x.a.join(' ') + ' ' + x.id).toLowerCase().indexOf(s) >= 0;
+    });
+    all.sort(function (a, b) { return (b.rep - a.rep) || ((b.sh >= 20 ? 1 : 0) - (a.sh >= 20 ? 1 : 0)) || 0; });
+    var cats = q.cats || {};
+    var h = all.slice(0, QZF.lim).map(function (x) {
+      var ce = (cats[x.cat] || ['🎮', ''])[0];
+      return '<div class="qzq' + (x.on ? '' : ' off') + (x.rep ? ' rep' : '') + '"><b>' + ce + ' ' + new Array(x.d + 1).join('⭐') + ' ' + esc(x.q) + '</b>'
+        + '<div class="small"><span class="ok">✅ ' + esc(x.a[0]) + '</span> · ' + x.a.slice(1).map(esc).join(' · ') + '</div>'
+        + '<div class="small">' + esc(x.id) + (x.own ? ' · ✍️ свой' : '') + ' · показан ' + fmt(x.sh) + (x.sh ? ' · верно ' + qzPct(x.ok, x.sh) + '%' : '')
+        + (x.sh >= 20 && x.ok / x.sh < 0.25 ? ' · <span class="bd wn">почти никто не знает — проверь ответ</span>' : '')
+        + (x.rep ? ' · <span class="bd wn">⚠️ жалоб: ' + x.rep + '</span>' : '') + (x.on ? '' : ' · <span class="bd wn">отключён</span>') + '</div>'
+        + '<div class="row">' + '<button type="button" class="f1' + (x.on ? '' : ' b-acc') + '" data-qz="' + (x.on ? 'q_off' : 'q_on') + '" data-id="' + esc(x.id) + '">'
+        + (x.on ? '⛔ Отключить' : '✅ Включить') + '</button>'
+        + (x.rep ? '<button type="button" class="f1" data-qz="q_clear" data-id="' + esc(x.id) + '">Снять жалобы</button>' : '')
+        + (x.own ? '<button type="button" class="f1" data-qz="q_del" data-id="' + esc(x.id) + '">🗑 Удалить</button>' : '') + '</div></div>';
+    }).join('');
+    if (!all.length) h = '<div class="small" style="margin-top:8px">' + (QZF.f === 'rep' ? 'Жалоб нет 👍' : 'Ничего не нашлось') + '</div>';
+    if (all.length > QZF.lim) h += '<div class="row"><button type="button" class="f1" data-qz="more">Показать ещё (' + (all.length - QZF.lim) + ')</button></div>';
+    return h;
+  }
+  function quizHtml(q) {
+    var c = q.cfg || {}, td = q.today || {}, wk = q.week || {}, b = q.bank || {};
+    var acc = wk.answers ? wk.right / wk.answers : 0.6;          // доля верных — по неделе (нет игр — 60%)
+    var avg = Math.round(c.n * acc * (c.base + c.fast * 0.5) + (acc > 0.97 ? c.perfect : 0));
+    return sec('🧠 Викторина', '<div class="note ' + (c.on ? 'mt' : 'wn') + '">' + (c.on
+        ? 'Работает: игрок жмёт «🎁 Подарки» → «💰 Заработок» → «🧠 Викторина» (или /quiz). Каждый день <b>' + c.n + '</b> вопросов, на ответ <b>' + c.sec + ' с</b>.'
+          + '<br>Первый день — до <b>' + fmt(q.max1) + '</b>, с серией — до <b>' + fmt(q.maxs) + '</b> в день (предел игрока — ' + fmt(c.cap) + ').'
+          + ' Обычный игрок (верно ~' + Math.round(acc * 100) + '%) — около <b>' + fmt(avg) + '</b> в день.'
+        : 'На паузе: игроки видят «⏸ Викторина на паузе», серия и прогресс сохраняются.') + '</div>'
+      + '<div class="grid" style="margin-top:8px">' + kv('Играли сегодня', fmt(td.players) + '<small>прошли все вопросы: ' + fmt(td.done) + '</small>')
+      + kv('Ответов сегодня', fmt(td.answers) + '<small>верных ' + qzPct(td.right, td.answers) + '%</small>')
+      + kv('Выдано сегодня', bigS(td.paid_s) + ' 💰') + kv('За 7 дней', bigS(wk.paid_s) + ' 💰<small>ответов ' + fmt(wk.answers) + ' · верных ' + qzPct(wk.right, wk.answers) + '%</small>')
+      + kv('Играли хоть раз', fmt(q.players)) + kv('Вопросов', fmt(b.on) + ' из ' + fmt(b.all) + '<small>своих ' + fmt(b.own) + (b.rep ? ' · ⚠️ с жалобами ' + fmt(b.rep) : '') + '</small>') + '</div>'
+      + '<div class="lbl">Настройки</div><div class="qzg">' + QZ_FLD.map(function (f) {
+          return '<div><label for="qz-' + f[0] + '">' + f[1] + ', ' + f[2] + '</label><input id="qz-' + f[0] + '" inputmode="numeric" autocomplete="off" value="' + Number(c[f[0]] || 0) + '"></div>';
+        }).join('') + '</div>'
+      + '<div class="row"><button type="button" class="f1 b-acc" data-qz="save">💾 Сохранить настройки</button><button type="button" data-qz="def">По умолчанию</button></div>'
+      + '<div class="small">По умолчанию: верный ответ 10 000 + до 6 000 за скорость, все верные +40 000, серия +10% в день до +50% — ровно 300 000 в день у того, кто играет каждый день и отвечает всё верно и быстро. Награды — новые токены, поэтому есть общий предел на всех.</div>'
+      + '<div class="row"><button type="button" class="f1' + (c.on ? '' : ' b-acc') + '" data-qz="on" data-v="' + (c.on ? 0 : 1) + '">'
+      + (c.on ? '⏸ Поставить викторину на паузу' : '▶️ Включить викторину') + '</button></div>'
+      + ((q.top || []).length ? '<div class="lbl">🏆 Топ недели — по верным ответам</div>' + q.top.map(function (r, i) {
+          return erow({ uid: r.uid, name: (i + 1) + '. ' + (r.name || 'без имени'), cid: r.cid, tier: r.tier },
+                      fmt(r.ok) + ' верн.<br><small>+' + short(Number(r.earn_s)) + ' · ответов ' + fmt(r.n) + '</small>');
+        }).join('') : '<div class="small" style="margin-top:8px">На этой неделе ещё никто не играл.</div>')
+      + '<details data-k="qz-qs"' + (QZF.open ? ' open' : '') + '><summary>❓ Вопросы (' + fmt(b.all) + (b.rep ? ', ⚠️ ' + fmt(b.rep) : '') + ')</summary>'
+      + '<div class="small">Игроки жмут «⚠️ Ошибка в вопросе» — такие вопросы здесь сверху. Неверный — «Отключить» (встроенный не удаляется) и добавь свой правильный ниже. «Почти никто не знает» — верно меньше 25% из 20+ показов: проверь, не ошибка ли в ответе.</div>'
+      + '<div class="chips wrap" style="margin-top:8px">' + [['all', 'Все'], ['rep', '⚠️ С жалобами'], ['hard', '📉 Трудные'], ['off', '⛔ Отключённые'], ['own', '✍️ Свои']].map(function (f) {
+          return '<button type="button" class="chip' + (QZF.f === f[0] ? ' on' : '') + '" data-qz="flt" data-v="' + f[0] + '">' + f[1] + '</button>'; }).join('') + '</div>'
+      + '<div class="row"><input id="qz-s" class="f1" placeholder="Поиск по тексту вопроса или ответа" autocomplete="off" value="' + esc(QZF.s) + '"></div>'
+      + '<div id="qz-list">' + qzListHtml(q) + '</div>'
+      + '<div class="lbl">✍️ Свой вопрос</div>'
+      + '<textarea id="qz-q" maxlength="300" placeholder="Вопрос, например: Сколько игроков в отряде в Clash Squad?"></textarea>'
+      + '<div class="qzg" style="margin-top:8px"><div><label for="qz-a0">✅ Верный ответ</label><input id="qz-a0" maxlength="100" autocomplete="off"></div>'
+      + [1, 2, 3].map(function (i) { return '<div><label for="qz-a' + i + '">Неверный ' + i + '</label><input id="qz-a' + i + '" maxlength="100" autocomplete="off"></div>'; }).join('')
+      + '<div><label for="qz-cat">Раздел</label><select id="qz-cat">' + Object.keys(q.cats || {}).map(function (k) {
+          return '<option value="' + k + '"' + (k === 'ff' ? ' selected' : '') + '>' + q.cats[k][0] + ' ' + esc(q.cats[k][1]) + '</option>'; }).join('') + '</select></div>'
+      + '<div><label for="qz-d">Сложность</label><select id="qz-d"><option value="1">⭐ лёгкий</option><option value="2" selected>⭐⭐ средний</option><option value="3">⭐⭐⭐ сложный</option></select></div></div>'
+      + '<div class="small">Игрок увидит варианты в случайном порядке. Свой вопрос — только по-русски (английским игрокам — тоже по-русски).</div>'
+      + '<div class="row"><button type="button" class="f1 b-acc" data-qz="add">➕ Добавить вопрос</button></div></details>');
+  }
+  function quizAct(b) {
+    if (botVer() < 401) { toast('Заработает, когда бот на сервере обновится до v401', true); return; }
+    var a = b.getAttribute('data-qz'), q = (S.ec && S.ec.quiz) || {}, id = b.getAttribute('data-id');
+    var dt = b.closest('details'); QZF.open = !!(dt && dt.open);
+    if (a === 'flt') { QZF.f = b.getAttribute('data-v'); QZF.lim = 30; QZF.open = true; renderEcon(); return; }
+    if (a === 'more') { QZF.lim += 30; var l = $('qz-list'); if (l) l.innerHTML = qzListHtml(q); return; }
+    if (a === 'on') return ecDo({ op: 'quiz_cfg', on: b.getAttribute('data-v') === '1' }, b.getAttribute('data-v') === '1' ? 'Включить викторину?' : 'Поставить викторину на паузу?\nСерия и прогресс игроков сохранятся.', b);
+    if (a === 'save' || a === 'def') {
+      var body = { op: 'quiz_cfg' }, bad = '';
+      QZ_FLD.forEach(function (f) {
+        var v = a === 'def' ? Number((q.def || {})[f[0]]) : parseAmount(($('qz-' + f[0]) || {}).value);
+        var lim = (q.lim || {})[f[0]] || [0, 1e15];
+        if (!(v >= lim[0] && v <= lim[1])) bad = bad || (f[1] + ' — от ' + fmt(lim[0]) + ' до ' + fmt(lim[1]));
+        body[f[0]] = Math.round(v);
+      });
+      if (bad) { toast(bad, true); return; }
+      var mx1 = Math.min(body.cap, (body.n * (body.base + body.fast) + body.perfect)), mxs = Math.min(body.cap, Math.round(mx1 * (100 + body.st_max) / 100));
+      return ecDo(body, (a === 'def' ? 'Вернуть настройки по умолчанию?\n' : 'Сохранить настройки викторины?\n') + 'Первый день — до ' + fmt(mx1) + ', с серией — до ' + fmt(mxs) + ' в день.', b);
+    }
+    if (a === 'q_off' || a === 'q_on' || a === 'q_clear' || a === 'q_del') {
+      var act = a.slice(2), it = (q.qs || []).filter(function (x) { return x.id === id; })[0] || {};
+      var txt = { off: 'Отключить вопрос?\n«' + (it.q || id) + '»\nИгрокам он больше не попадётся.', on: 'Включить вопрос снова?', clear: 'Снять жалобы с вопроса?', del: 'Удалить свой вопрос?\n«' + (it.q || id) + '»' }[act];
+      QZF.open = true;
+      return ecDo({ op: 'quiz_q', act: act, id: id }, txt, b);
+    }
+    if (a === 'add') {
+      var qq = (($('qz-q') || {}).value || '').trim(), ans = [0, 1, 2, 3].map(function (i) { return (($('qz-a' + i) || {}).value || '').trim(); });
+      if (qq.length < 5) { toast('Напиши вопрос — от 5 букв', true); return; }
+      if (ans.some(function (x) { return !x; })) { toast('Нужно 4 варианта: верный и три неверных', true); return; }
+      QZF.open = true;
+      return ecDo({ op: 'quiz_q', act: 'add', q: qq, a: ans, cat: ($('qz-cat') || {}).value, d: Number(($('qz-d') || {}).value || 2) },
+                  'Добавить вопрос?\n«' + qq + '»\n✅ ' + ans[0], b);
+    }
+  }
   function mineAct(b) {
     if (botVer() < 385) { toast('Заработает, когда бот на сервере обновится до v385', true); return; }
     var a = b.getAttribute('data-mn'), v = Number(b.getAttribute('data-v') || 0), mi = (S.ec && S.ec.mine) || {};
@@ -3434,12 +3552,19 @@ window.addEventListener('error', function (e) {
       return ecDo({ op: 'slx_price', price: pr }, 'Поставить курс SLX ровно ' + fmt(pr) + '?\nСейчас: ' + fmt(x.price), b);
     }
   }
+  $('ec').addEventListener('input', function (e) {          // v401: поиск по вопросам викторины — перерисовываем только список
+    if (!e.target || e.target.id !== 'qz-s') return;
+    QZF.s = e.target.value; QZF.lim = 30;
+    var l = $('qz-list'); if (l && S.ec && S.ec.quiz) l.innerHTML = qzListHtml(S.ec.quiz);
+  });
   $('ec').addEventListener('click', function (e) {
     var sx = e.target.closest('[data-sx]'); if (sx) { slxAct(sx); return; }
     var gr = e.target.closest('[data-glo]');                // v376: подарок дня — пределы кнопкой
     if (gr) { giftSet(Number(gr.getAttribute('data-glo')), Number(gr.getAttribute('data-ghi')), gr); return; }
     var gb = e.target.closest('[data-gift]');               // v376: свои «от» и «до»
     if (gb) { giftSet(parseAmount($('gift-lo').value), parseAmount($('gift-hi').value), gb); return; }
+    var qzb = e.target.closest('[data-qz]');                // v401: «🧠 Викторина»
+    if (qzb) { quizAct(qzb); return; }
     var mn = e.target.closest('[data-mn]');                 // v385: «⛏ Майнинг SLX»
     if (mn) { mineAct(mn); return; }
     var wb = e.target.closest('[data-wb]');                 // v384: «💤 Мы скучали»
